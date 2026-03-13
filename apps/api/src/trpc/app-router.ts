@@ -16,6 +16,10 @@ import { createGalaxyService } from '../modules/galaxy/galaxy.service.js';
 import { createGalaxyRouter } from '../modules/galaxy/galaxy.router.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { createFleetRouter } from '../modules/fleet/fleet.router.js';
+import { createMessageService } from '../modules/message/message.service.js';
+import { createMessageRouter } from '../modules/message/message.router.js';
+import { createRankingService } from '../modules/ranking/ranking.service.js';
+import { createRankingRouter } from '../modules/ranking/ranking.router.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 
@@ -27,7 +31,9 @@ export function buildAppRouter(db: Database) {
   const researchService = createResearchService(db, resourceService, researchCompletionQueue);
   const shipyardService = createShipyardService(db, resourceService, shipyardCompletionQueue);
   const galaxyService = createGalaxyService(db);
-  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed);
+  const messageService = createMessageService(db);
+  const rankingService = createRankingService(db);
+  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
@@ -37,6 +43,8 @@ export function buildAppRouter(db: Database) {
   const shipyardRouter = createShipyardRouter(shipyardService);
   const galaxyRouter = createGalaxyRouter(galaxyService);
   const fleetRouter = createFleetRouter(fleetService);
+  const messageRouter = createMessageRouter(messageService);
+  const rankingRouter = createRankingRouter(rankingService);
 
   return router({
     health: publicProcedure.query(() => ({
@@ -51,6 +59,8 @@ export function buildAppRouter(db: Database) {
     shipyard: shipyardRouter,
     galaxy: galaxyRouter,
     fleet: fleetRouter,
+    message: messageRouter,
+    ranking: rankingRouter,
   });
 }
 

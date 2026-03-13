@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch } from '@ogame-clone/db';
+import { planets, planetShips, planetDefenses, fleetEvents, userResearch } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import {
   fleetSpeed,
@@ -8,8 +8,13 @@ import {
   distance,
   fuelConsumption,
   totalCargoCapacity,
+  calculateMaxTemp,
+  calculateMinTemp,
+  calculateDiameter,
+  calculateMaxFields,
 } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
+import type { createMessageService } from '../message/message.service.js';
 import type { Queue } from 'bullmq';
 
 interface SendFleetInput {
@@ -30,6 +35,7 @@ export function createFleetService(
   fleetArrivalQueue: Queue,
   fleetReturnQueue: Queue,
   universeSpeed: number,
+  messageService?: ReturnType<typeof createMessageService>,
 ) {
   return {
     async sendFleet(userId: string, input: SendFleetInput) {
@@ -283,7 +289,11 @@ export function createFleetService(
         return { mission: 'station', stationed: true };
       }
 
-      // For other missions (attack, spy, colonize) — Phase 5
+      if (event.mission === 'colonize') {
+        return this.processColonize(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+      }
+
+      // For other missions (attack, spy) — Phase 5b
       await this.scheduleReturn(
         event.id, event.originPlanetId,
         { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
@@ -397,6 +407,166 @@ export function createFleetService(
         { fleetEventId },
         { delay: duration * 1000, jobId: `fleet-return-${fleetEventId}` },
       );
+    },
+
+    async processColonize(
+      event: typeof fleetEvents.$inferSelect,
+      ships: Record<string, number>,
+      metalCargo: number,
+      crystalCargo: number,
+      deuteriumCargo: number,
+    ) {
+      const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+
+      // Check if position is free
+      const [existing] = await db
+        .select()
+        .from(planets)
+        .where(
+          and(
+            eq(planets.galaxy, event.targetGalaxy),
+            eq(planets.system, event.targetSystem),
+            eq(planets.position, event.targetPosition),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        if (messageService) {
+          await messageService.createSystemMessage(
+            event.userId,
+            'colonization',
+            `Colonisation échouée ${coords}`,
+            `La position ${coords} est déjà occupée. Votre flotte fait demi-tour.`,
+          );
+        }
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, metalCargo, crystalCargo, deuteriumCargo,
+        );
+        return { mission: 'colonize', success: false, reason: 'occupied' };
+      }
+
+      // Check max planets
+      const userPlanets = await db
+        .select()
+        .from(planets)
+        .where(eq(planets.userId, event.userId));
+
+      if (userPlanets.length >= 9) {
+        if (messageService) {
+          await messageService.createSystemMessage(
+            event.userId,
+            'colonization',
+            `Colonisation échouée ${coords}`,
+            `Nombre maximum de planètes atteint (9). Votre flotte fait demi-tour.`,
+          );
+        }
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, metalCargo, crystalCargo, deuteriumCargo,
+        );
+        return { mission: 'colonize', success: false, reason: 'max_planets' };
+      }
+
+      // Success: create new planet
+      const randomOffset = Math.floor(Math.random() * 41) - 20;
+      const maxTemp = calculateMaxTemp(event.targetPosition, randomOffset);
+      const minTemp = calculateMinTemp(maxTemp);
+      const diameter = calculateDiameter(event.targetPosition, Math.random());
+      const maxFields = calculateMaxFields(diameter);
+
+      const [newPlanet] = await db
+        .insert(planets)
+        .values({
+          userId: event.userId,
+          name: 'Colonie',
+          galaxy: event.targetGalaxy,
+          system: event.targetSystem,
+          position: event.targetPosition,
+          planetType: 'planet',
+          diameter,
+          maxFields,
+          minTemp,
+          maxTemp,
+        })
+        .returning();
+
+      // Create associated rows
+      await db.insert(planetShips).values({ planetId: newPlanet.id });
+      await db.insert(planetDefenses).values({ planetId: newPlanet.id });
+
+      // Colony ship is consumed — remove from fleet
+      const remainingShips = { ...ships };
+      if (remainingShips.colonyShip) {
+        remainingShips.colonyShip = Math.max(0, remainingShips.colonyShip - 1);
+      }
+
+      // Mark event completed
+      await db
+        .update(fleetEvents)
+        .set({ status: 'completed' })
+        .where(eq(fleetEvents.id, event.id));
+
+      // Return remaining ships (if any) with cargo
+      const hasRemainingShips = Object.values(remainingShips).some(v => v > 0);
+      if (hasRemainingShips) {
+        const driveTechs = await this.getDriveTechs(event.userId);
+        const speed = fleetSpeed(remainingShips, driveTechs);
+        const [originPlanet] = await db
+          .select()
+          .from(planets)
+          .where(eq(planets.id, event.originPlanetId))
+          .limit(1);
+
+        if (originPlanet && speed > 0) {
+          const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
+          const target = { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition };
+          const duration = travelTime(target, origin, speed, universeSpeed);
+          const now = new Date();
+          const returnTime = new Date(now.getTime() + duration * 1000);
+
+          const [returnEvent] = await db
+            .insert(fleetEvents)
+            .values({
+              userId: event.userId,
+              originPlanetId: event.originPlanetId,
+              targetPlanetId: newPlanet.id,
+              targetGalaxy: event.targetGalaxy,
+              targetSystem: event.targetSystem,
+              targetPosition: event.targetPosition,
+              mission: 'transport',
+              phase: 'return',
+              status: 'active',
+              departureTime: now,
+              arrivalTime: returnTime,
+              metalCargo: String(metalCargo),
+              crystalCargo: String(crystalCargo),
+              deuteriumCargo: String(deuteriumCargo),
+              ships: remainingShips,
+            })
+            .returning();
+
+          await fleetReturnQueue.add(
+            'return',
+            { fleetEventId: returnEvent.id },
+            { delay: duration * 1000, jobId: `fleet-return-${returnEvent.id}` },
+          );
+        }
+      }
+
+      if (messageService) {
+        await messageService.createSystemMessage(
+          event.userId,
+          'colonization',
+          `Colonisation réussie ${coords}`,
+          `Une nouvelle colonie a été fondée sur ${coords}. Diamètre : ${diameter}km, ${maxFields} cases disponibles.`,
+        );
+      }
+
+      return { mission: 'colonize', success: true, planetId: newPlanet.id };
     },
 
     async getDriveTechs(userId: string) {

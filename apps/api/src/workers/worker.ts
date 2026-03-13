@@ -7,6 +7,7 @@ import { startFleetArrivalWorker } from './fleet-arrival.worker.js';
 import { startFleetReturnWorker } from './fleet-return.worker.js';
 import { eventCatchup } from '../cron/event-catchup.js';
 import { resourceTick } from '../cron/resource-tick.js';
+import { rankingUpdate } from '../cron/ranking-update.js';
 
 const db = createDb(env.DATABASE_URL);
 
@@ -39,6 +40,15 @@ setInterval(async () => {
   }
 }, 15 * 60_000);
 console.log('[worker] Resource tick cron started (15min)');
+
+setInterval(async () => {
+  try {
+    await rankingUpdate(db);
+  } catch (err) {
+    console.error('[ranking-update] Error:', err);
+  }
+}, 30 * 60_000);
+console.log('[worker] Ranking update cron started (30min)');
 
 process.on('SIGTERM', () => {
   console.log('[worker] Shutting down...');
