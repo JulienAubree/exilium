@@ -51,9 +51,13 @@ Table de rapid fire : `rapidFire[attacker][target] = N` signifie que l'attaquant
 | heavyFighter | smallCargo | 3 |
 | cruiser | espionageProbe | 5 |
 | cruiser | lightFighter | 6 |
+| cruiser | smallCargo | 3 |
 | cruiser | rocketLauncher | 10 |
 | battleship | espionageProbe | 5 |
-| recycler | espionageProbe | 5 |
+| battleship | lightFighter | 4 |
+| battleship | smallCargo | 4 |
+| battleship | largeCargo | 4 |
+| colonyShip | espionageProbe | 5 |
 
 Export : `COMBAT_STATS` (armes/bouclier/blindage par unitId), `RAPID_FIRE` (table rapid fire).
 
@@ -85,9 +89,9 @@ Export : `COMBAT_STATS` (armes/bouclier/blindage par unitId), `RAPID_FIRE` (tabl
 
 ```typescript
 interface CombatTechs {
-  weaponsTech: number;
-  shieldingTech: number;
-  armorTech: number;
+  weapons: number;
+  shielding: number;
+  armor: number;
 }
 
 interface CombatResult {
@@ -138,7 +142,7 @@ interface CombatResult {
   - >= 7 : bâtiments visibles
   - >= 9 : recherches visibles
 
-- `détection% = min(100, nombre_sondes * 2 - (techAttaquant - techDéfenseur) * 4)`
+- `détection% = max(0, min(100, nombre_sondes * 2 - (techAttaquant - techDéfenseur) * 4))`
   - Si random(0-100) < détection% → sondes détectées et détruites
 
 #### Fonctions exportées
@@ -174,17 +178,25 @@ Index unique sur `(galaxy, system, position)`.
 
 ### Modifications existantes
 
-- `fleetMissionEnum` : ajouter `'recycle'`
-- `messageTypeEnum` : ajouter `'espionage'` et `'combat'`
+- `fleetMissionEnum` : ajouter `'recycle'` (nécessite migration Drizzle avec `ALTER TYPE ... ADD VALUE`)
+- `messageTypeEnum` : ajouter `'espionage'` et `'combat'` (même mécanisme)
+- Mettre à jour le type `SendFleetInput` dans fleet.service.ts pour inclure `'recycle'` dans l'union mission
 
 ---
 
 ## 5. Handlers fleet.service
 
+### Cas limites — processArrival routing
+
+- Remplacer le bloc catch-all stub Phase 5b (spy/attack) dans processArrival par le routing vers processAttack, processSpy, processRecycle
+- **Attaque sur position vide** : la flotte retourne avec un message "Pas de planète à cette position"
+- **Attaque sur sa propre planète** : interdit au niveau sendFleet (validation)
+- **Défenseur sans vaisseaux ni défenses** : attacker_wins sans combat, pillage direct
+
 ### Mission `attack` — processAttack
 
 1. Récupérer les vaisseaux/défenses du défenseur depuis planet_ships et planet_defenses
-2. Récupérer les techs combat des deux joueurs (weaponsTech, shieldingTech, armorTech depuis la table planets, colonnes research)
+2. Récupérer les techs combat des deux joueurs (weapons, shielding, armor depuis la table userResearch via userId)
 3. Appeler `simulateCombat()`
 4. Appliquer les pertes attaquant : décrémenter ses vaisseaux dans le fleet event
 5. Appliquer les pertes défenseur : décrémenter vaisseaux dans planet_ships, défenses dans planet_defenses
@@ -206,7 +218,7 @@ Index unique sur `(galaxy, system, position)`.
 
 ### Mission `recycle` — processRecycle
 
-1. Vérifier qu'un champ de débris existe à la position cible
+1. Vérifier qu'un champ de débris existe à la position cible. Si aucun débris → retourner la flotte à vide
 2. Calculer la capacité cargo totale des recycleurs
 3. Collecter métal puis cristal (limité par cargo)
 4. Réduire le champ de débris. Supprimer la row si vide
@@ -255,4 +267,5 @@ Ajouter un indicateur sur les positions ayant un champ de débris (icône ou bad
 | `apps/api/src/modules/galaxy/galaxy.service.ts` | Inclure les débris dans getSystem |
 | `apps/web/src/pages/Galaxy.tsx` | Indicateur débris |
 | `apps/web/src/pages/Fleet.tsx` | Activer missions spy, attack, recycle |
+| `apps/api/src/modules/fleet/fleet.service.ts` | Ajouter 'recycle' au type SendFleetInput |
 | `apps/web/src/pages/Messages.tsx` | Filtres combat/espionage |
