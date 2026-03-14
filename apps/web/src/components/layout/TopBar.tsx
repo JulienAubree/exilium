@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -32,9 +33,11 @@ function ResourceDisplay({ label, value, color }: ResourceDisplayProps) {
 
 export function TopBar({ planetId, planets }: { planetId: string | null; planets: Planet[] }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const clearActivePlanet = usePlanetStore((s) => s.clearActivePlanet);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const { data: unreadCount } = trpc.message.unreadCount.useQuery();
 
   const { data } = trpc.resource.production.useQuery(
     { planetId: planetId! },
@@ -114,6 +117,21 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         />
       </div>
       <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate('/messages')}
+          className="relative rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          title="Messages"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
+          {(unreadCount ?? 0) > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+              {unreadCount}
+            </span>
+          )}
+        </button>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           Déconnexion
         </Button>
