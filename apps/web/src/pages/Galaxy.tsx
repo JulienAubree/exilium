@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,9 +108,13 @@ export default function Galaxy() {
                         <td className="px-2 py-1">
                           {slot.username}
                           {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
-                            <span className="text-xs text-orange-400 ml-2" title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}>
+                            <Link
+                              to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                              className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
+                              title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}
+                            >
                               DF
-                            </span>
+                            </Link>
                           )}
                         </td>
                         <td className="px-2 py-1">
