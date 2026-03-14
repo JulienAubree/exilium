@@ -12,3 +12,6 @@ export * from './constants/ship-stats.js';
 export * from './formulas/fleet.js';
 export * from './prerequisites/prerequisites.js';
 export * from './formulas/ranking.js';
+export * from './constants/combat-stats.js';
+export * from './formulas/combat.js';
+export * from './formulas/espionage.js';

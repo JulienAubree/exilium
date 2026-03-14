@@ -36,7 +36,7 @@ export function createMessageService(db: Database) {
 
     async createSystemMessage(
       recipientId: string,
-      type: 'system' | 'colonization',
+      type: 'system' | 'colonization' | 'espionage' | 'combat',
       subject: string,
       body: string,
     ) {
@@ -56,11 +56,16 @@ export function createMessageService(db: Database) {
 
     async listMessages(
       userId: string,
-      options?: { page?: number; limit?: number },
+      options?: { page?: number; limit?: number; type?: 'system' | 'colonization' | 'player' | 'espionage' | 'combat' },
     ) {
       const page = options?.page ?? 1;
       const limit = options?.limit ?? 20;
       const offset = (page - 1) * limit;
+
+      const conditions = [eq(messages.recipientId, userId)];
+      if (options?.type) {
+        conditions.push(eq(messages.type, options.type));
+      }
 
       return db
         .select({
@@ -74,7 +79,7 @@ export function createMessageService(db: Database) {
         })
         .from(messages)
         .leftJoin(users, eq(users.id, messages.senderId))
-        .where(eq(messages.recipientId, userId))
+        .where(and(...conditions))
         .orderBy(desc(messages.createdAt))
         .limit(limit)
         .offset(offset);

@@ -8,6 +8,7 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
       .input(z.object({
         page: z.number().int().min(1).default(1),
         limit: z.number().int().min(1).max(50).default(20),
+        type: z.enum(['system', 'player', 'combat', 'espionage', 'colonization']).optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         return messageService.listMessages(ctx.userId!, input);

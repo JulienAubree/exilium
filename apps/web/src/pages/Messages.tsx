@@ -9,8 +9,11 @@ export default function Messages() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [newMsg, setNewMsg] = useState({ recipientUsername: '', subject: '', body: '' });
+  const [typeFilter, setTypeFilter] = useState<string | undefined>();
 
-  const { data: inbox, isLoading } = trpc.message.inbox.useQuery();
+  const { data: inbox, isLoading } = trpc.message.inbox.useQuery(
+    typeFilter ? { type: typeFilter as any } : undefined,
+  );
   const { data: detail } = trpc.message.detail.useQuery(
     { messageId: selectedId! },
     { enabled: !!selectedId },
@@ -88,6 +91,26 @@ export default function Messages() {
           </CardContent>
         </Card>
       )}
+
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { label: 'Tous', value: undefined },
+          { label: 'Système', value: 'system' },
+          { label: 'Joueur', value: 'player' },
+          { label: 'Combat', value: 'combat' },
+          { label: 'Espionnage', value: 'espionage' },
+          { label: 'Colonisation', value: 'colonization' },
+        ].map(({ label, value }) => (
+          <Button
+            key={label}
+            variant={typeFilter === value ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
 
       <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
         {/* Inbox list */}

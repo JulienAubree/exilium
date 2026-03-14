@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize';
+type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
 
 const MISSION_LABELS: Record<Mission, string> = {
   transport: 'Transporter',
@@ -13,7 +13,34 @@ const MISSION_LABELS: Record<Mission, string> = {
   spy: 'Espionner',
   attack: 'Attaquer',
   colonize: 'Coloniser',
+  recycle: 'Recycler',
 };
+
+const COMBAT_SHIPS = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'];
+
+function getMissionValidationError(mission: Mission, selectedShips: Record<string, number>): string | null {
+  const hasShip = (id: string) => (selectedShips[id] ?? 0) > 0;
+
+  switch (mission) {
+    case 'spy':
+      if (!hasShip('espionageProbe')) return 'La mission Espionner nécessite au moins 1 sonde d\'espionnage.';
+      return null;
+    case 'attack':
+      if (!COMBAT_SHIPS.some(hasShip)) return 'La mission Attaquer nécessite au moins 1 vaisseau de combat (chasseur léger, chasseur lourd, croiseur ou vaisseau de bataille).';
+      return null;
+    case 'recycle': {
+      const hasNonRecycler = Object.entries(selectedShips).some(([id, count]) => count > 0 && id !== 'recycler');
+      if (!hasShip('recycler')) return 'La mission Recycler nécessite au moins 1 recycleur.';
+      if (hasNonRecycler) return 'La mission Recycler n\'autorise que les recycleurs.';
+      return null;
+    }
+    case 'colonize':
+      if (!hasShip('colonyShip')) return 'La mission Coloniser nécessite au moins 1 vaisseau de colonisation.';
+      return null;
+    default:
+      return null;
+  }
+}
 
 export default function Fleet() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -228,6 +255,10 @@ export default function Fleet() {
               </div>
             )}
 
+            {getMissionValidationError(mission, selectedShips) && (
+              <p className="text-sm text-destructive">{getMissionValidationError(mission, selectedShips)}</p>
+            )}
+
             {sendMutation.error && (
               <p className="text-sm text-destructive">{sendMutation.error.message}</p>
             )}
@@ -250,7 +281,7 @@ export default function Fleet() {
                     deuteriumCargo: cargo.deuterium,
                   })
                 }
-                disabled={sendMutation.isPending}
+                disabled={sendMutation.isPending || !!getMissionValidationError(mission, selectedShips)}
               >
                 Envoyer la flotte
               </Button>

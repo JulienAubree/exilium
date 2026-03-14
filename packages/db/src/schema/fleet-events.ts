@@ -9,6 +9,7 @@ export const fleetMissionEnum = pgEnum('fleet_mission', [
   'spy',
   'attack',
   'colonize',
+  'recycle',
 ]);
 
 export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'return']);

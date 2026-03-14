@@ -104,7 +104,14 @@ export default function Galaxy() {
                     {slot ? (
                       <>
                         <td className="px-2 py-1">{slot.planetName}</td>
-                        <td className="px-2 py-1">{slot.username}</td>
+                        <td className="px-2 py-1">
+                          {slot.username}
+                          {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
+                            <span className="text-xs text-orange-400 ml-2" title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}>
+                              DF
+                            </span>
+                          )}
+                        </td>
                         <td className="px-2 py-1">
                           <span className="text-xs text-muted-foreground">-</span>
                         </td>

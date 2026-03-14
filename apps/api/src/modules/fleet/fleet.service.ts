@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, fleetEvents, userResearch } from '@ogame-clone/db';
+import { planets, planetShips, planetDefenses, fleetEvents, userResearch, debrisFields, users } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import {
   fleetSpeed,
@@ -12,6 +12,11 @@ import {
   calculateMinTemp,
   calculateDiameter,
   calculateMaxFields,
+  calculateSpyReport,
+  calculateDetectionChance,
+  simulateCombat,
+  SHIP_STATS,
+  type CombatTechs,
 } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
@@ -22,7 +27,7 @@ interface SendFleetInput {
   targetGalaxy: number;
   targetSystem: number;
   targetPosition: number;
-  mission: 'transport' | 'station' | 'spy' | 'attack' | 'colonize';
+  mission: 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
   ships: Record<string, number>;
   metalCargo?: number;
   crystalCargo?: number;
@@ -75,6 +80,33 @@ export function createFleetService(
       const totalCargo = metalCargo + crystalCargo + deuteriumCargo;
       if (totalCargo > cargo) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Capacité de fret dépassée' });
+      }
+
+      // Validate: cannot attack own planet
+      if (input.mission === 'attack') {
+        const [targetCheck] = await db
+          .select({ userId: planets.userId })
+          .from(planets)
+          .where(
+            and(
+              eq(planets.galaxy, input.targetGalaxy),
+              eq(planets.system, input.targetSystem),
+              eq(planets.position, input.targetPosition),
+            ),
+          )
+          .limit(1);
+        if (targetCheck && targetCheck.userId === userId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vous ne pouvez pas attaquer votre propre planète' });
+        }
+      }
+
+      // Validate: recycle mission requires only recyclers
+      if (input.mission === 'recycle') {
+        for (const [shipType, count] of Object.entries(input.ships)) {
+          if (count > 0 && shipType !== 'recycler') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seuls les recycleurs peuvent être envoyés en mission recyclage' });
+          }
+        }
       }
 
       // Find target planet (may not exist for colonization)
@@ -293,7 +325,19 @@ export function createFleetService(
         return this.processColonize(event, ships, metalCargo, crystalCargo, deuteriumCargo);
       }
 
-      // For other missions (attack, spy) — Phase 5b
+      if (event.mission === 'spy') {
+        return this.processSpy(event, ships);
+      }
+
+      if (event.mission === 'attack') {
+        return this.processAttack(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+      }
+
+      if (event.mission === 'recycle') {
+        return this.processRecycle(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+      }
+
+      // Unknown mission — return fleet
       await this.scheduleReturn(
         event.id, event.originPlanetId,
         { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
@@ -567,6 +611,487 @@ export function createFleetService(
       }
 
       return { mission: 'colonize', success: true, planetId: newPlanet.id };
+    },
+
+    async getCombatTechs(userId: string): Promise<CombatTechs> {
+      const [research] = await db
+        .select({
+          weapons: userResearch.weapons,
+          shielding: userResearch.shielding,
+          armor: userResearch.armor,
+        })
+        .from(userResearch)
+        .where(eq(userResearch.userId, userId))
+        .limit(1);
+
+      return {
+        weapons: research?.weapons ?? 0,
+        shielding: research?.shielding ?? 0,
+        armor: research?.armor ?? 0,
+      };
+    },
+
+    async getEspionageTech(userId: string): Promise<number> {
+      const [research] = await db
+        .select({ espionageTech: userResearch.espionageTech })
+        .from(userResearch)
+        .where(eq(userResearch.userId, userId))
+        .limit(1);
+
+      return research?.espionageTech ?? 0;
+    },
+
+    async processSpy(
+      event: typeof fleetEvents.$inferSelect,
+      ships: Record<string, number>,
+    ) {
+      const probeCount = ships.espionageProbe ?? 0;
+      const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+
+      const attackerTech = await this.getEspionageTech(event.userId);
+
+      const [targetPlanet] = await db
+        .select()
+        .from(planets)
+        .where(
+          and(
+            eq(planets.galaxy, event.targetGalaxy),
+            eq(planets.system, event.targetSystem),
+            eq(planets.position, event.targetPosition),
+          ),
+        )
+        .limit(1);
+
+      if (!targetPlanet) {
+        if (messageService) {
+          await messageService.createSystemMessage(
+            event.userId,
+            'espionage',
+            `Espionnage ${coords}`,
+            `Aucune planète trouvée à la position ${coords}.`,
+          );
+        }
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, 0, 0, 0,
+        );
+        return { mission: 'spy', success: false, reason: 'no_planet' };
+      }
+
+      const defenderTech = await this.getEspionageTech(targetPlanet.userId);
+      const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech);
+
+      let body = `Rapport d'espionnage de ${coords}\n\n`;
+
+      if (visibility.resources) {
+        await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
+        const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
+        body += `Ressources :\nMétal : ${Math.floor(Number(planet.metal))}\nCristal : ${Math.floor(Number(planet.crystal))}\nDeutérium : ${Math.floor(Number(planet.deuterium))}\n\n`;
+      }
+
+      if (visibility.fleet) {
+        const [targetShips] = await db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
+        if (targetShips) {
+          body += `Flotte :\n`;
+          const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler'] as const;
+          for (const t of shipTypes) {
+            if (targetShips[t] > 0) body += `${t}: ${targetShips[t]}\n`;
+          }
+          body += '\n';
+        }
+      }
+
+      if (visibility.defenses) {
+        const [defs] = await db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
+        if (defs) {
+          body += `Défenses :\n`;
+          const defTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
+          for (const t of defTypes) {
+            if (defs[t] > 0) body += `${t}: ${defs[t]}\n`;
+          }
+          body += '\n';
+        }
+      }
+
+      if (visibility.buildings) {
+        const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
+        body += `Bâtiments :\n`;
+        const buildingCols = ['metalMineLevel', 'crystalMineLevel', 'deutSynthLevel', 'solarPlantLevel', 'roboticsLevel', 'shipyardLevel', 'researchLabLevel'] as const;
+        for (const col of buildingCols) {
+          if (planet[col] > 0) body += `${col}: ${planet[col]}\n`;
+        }
+        body += '\n';
+      }
+
+      if (visibility.research) {
+        const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
+        if (research) {
+          body += `Recherches :\n`;
+          const researchCols = ['espionageTech', 'computerTech', 'energyTech', 'combustion', 'impulse', 'hyperspaceDrive', 'weapons', 'shielding', 'armor'] as const;
+          for (const col of researchCols) {
+            if (research[col] > 0) body += `${col}: ${research[col]}\n`;
+          }
+        }
+      }
+
+      if (messageService) {
+        await messageService.createSystemMessage(
+          event.userId,
+          'espionage',
+          `Rapport d'espionnage ${coords}`,
+          body,
+        );
+      }
+
+      const detectionChance = calculateDetectionChance(probeCount, attackerTech, defenderTech);
+      const detected = Math.random() * 100 < detectionChance;
+
+      if (detected) {
+        if (messageService) {
+          const [attackerUser] = await db.select({ username: users.username }).from(users).where(eq(users.id, event.userId)).limit(1);
+          await messageService.createSystemMessage(
+            targetPlanet.userId,
+            'espionage',
+            `Activité d'espionnage détectée ${coords}`,
+            `${probeCount} sonde(s) d'espionnage provenant de ${attackerUser?.username ?? 'Inconnu'} ont été détectées et détruites.`,
+          );
+        }
+        await db
+          .update(fleetEvents)
+          .set({ status: 'completed' })
+          .where(eq(fleetEvents.id, event.id));
+
+        return { mission: 'spy', success: true, detected: true };
+      }
+
+      await this.scheduleReturn(
+        event.id, event.originPlanetId,
+        { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+        ships, 0, 0, 0,
+      );
+
+      return { mission: 'spy', success: true, detected: false };
+    },
+
+    async processRecycle(
+      event: typeof fleetEvents.$inferSelect,
+      ships: Record<string, number>,
+      metalCargo: number,
+      crystalCargo: number,
+      deuteriumCargo: number,
+    ) {
+      const [debris] = await db
+        .select()
+        .from(debrisFields)
+        .where(
+          and(
+            eq(debrisFields.galaxy, event.targetGalaxy),
+            eq(debrisFields.system, event.targetSystem),
+            eq(debrisFields.position, event.targetPosition),
+          ),
+        )
+        .limit(1);
+
+      if (!debris || (Number(debris.metal) <= 0 && Number(debris.crystal) <= 0)) {
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, metalCargo, crystalCargo, deuteriumCargo,
+        );
+        return { mission: 'recycle', collected: { metal: 0, crystal: 0 } };
+      }
+
+      const recyclerCount = ships.recycler ?? 0;
+      const cargoPerRecycler = SHIP_STATS.recycler.cargoCapacity;
+      const totalCargo = recyclerCount * cargoPerRecycler;
+
+      let remainingCargo = totalCargo;
+      const availableMetal = Number(debris.metal);
+      const availableCrystal = Number(debris.crystal);
+
+      const collectedMetal = Math.min(availableMetal, remainingCargo);
+      remainingCargo -= collectedMetal;
+      const collectedCrystal = Math.min(availableCrystal, remainingCargo);
+
+      const newMetal = availableMetal - collectedMetal;
+      const newCrystal = availableCrystal - collectedCrystal;
+
+      if (newMetal <= 0 && newCrystal <= 0) {
+        await db.delete(debrisFields).where(eq(debrisFields.id, debris.id));
+      } else {
+        await db
+          .update(debrisFields)
+          .set({
+            metal: String(newMetal),
+            crystal: String(newCrystal),
+            updatedAt: new Date(),
+          })
+          .where(eq(debrisFields.id, debris.id));
+      }
+
+      await this.scheduleReturn(
+        event.id, event.originPlanetId,
+        { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+        ships,
+        metalCargo + collectedMetal,
+        crystalCargo + collectedCrystal,
+        deuteriumCargo,
+      );
+
+      return { mission: 'recycle', collected: { metal: collectedMetal, crystal: collectedCrystal } };
+    },
+
+    async processAttack(
+      event: typeof fleetEvents.$inferSelect,
+      ships: Record<string, number>,
+      metalCargo: number,
+      crystalCargo: number,
+      deuteriumCargo: number,
+    ) {
+      const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+
+      const [targetPlanet] = await db
+        .select()
+        .from(planets)
+        .where(
+          and(
+            eq(planets.galaxy, event.targetGalaxy),
+            eq(planets.system, event.targetSystem),
+            eq(planets.position, event.targetPosition),
+          ),
+        )
+        .limit(1);
+
+      if (!targetPlanet) {
+        if (messageService) {
+          await messageService.createSystemMessage(
+            event.userId,
+            'combat',
+            `Attaque ${coords}`,
+            `Aucune planète trouvée à la position ${coords}. Votre flotte fait demi-tour.`,
+          );
+        }
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, metalCargo, crystalCargo, deuteriumCargo,
+        );
+        return { mission: 'attack', success: false, reason: 'no_planet' };
+      }
+
+      const [defShips] = await db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
+      const [defDefs] = await db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
+
+      const defenderFleet: Record<string, number> = {};
+      const defenderDefenses: Record<string, number> = {};
+      const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler'] as const;
+      const defenseTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
+
+      if (defShips) {
+        for (const t of shipTypes) {
+          if (defShips[t] > 0) defenderFleet[t] = defShips[t];
+        }
+      }
+      if (defDefs) {
+        for (const t of defenseTypes) {
+          if (defDefs[t] > 0) defenderDefenses[t] = defDefs[t];
+        }
+      }
+
+      const attackerTechs = await this.getCombatTechs(event.userId);
+      const defenderTechs = await this.getCombatTechs(targetPlanet.userId);
+
+      const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
+                           Object.values(defenderDefenses).some(v => v > 0);
+
+      // Merge defender fleet + defenses into one pool for simulateCombat
+      const defenderCombined: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
+
+      let outcome: 'attacker' | 'defender' | 'draw';
+      let attackerLosses: Record<string, number> = {};
+      let defenderLosses: Record<string, number> = {};
+      let debris = { metal: 0, crystal: 0 };
+      let repairedDefenses: Record<string, number> = {};
+      let roundCount = 0;
+
+      if (!hasDefenders) {
+        outcome = 'attacker';
+      } else {
+        const result = simulateCombat(ships, defenderCombined, attackerTechs, defenderTechs);
+        outcome = result.outcome;
+        attackerLosses = result.attackerLosses;
+        defenderLosses = result.defenderLosses;
+        debris = result.debris;
+        repairedDefenses = result.repairedDefenses;
+        roundCount = result.rounds.length;
+      }
+
+      // Apply attacker losses
+      const survivingShips: Record<string, number> = { ...ships };
+      for (const [type, lost] of Object.entries(attackerLosses)) {
+        survivingShips[type] = (survivingShips[type] ?? 0) - (lost as number);
+        if (survivingShips[type] <= 0) delete survivingShips[type];
+      }
+
+      // Apply defender ship losses
+      if (defShips) {
+        const shipUpdates: Record<string, number> = {};
+        for (const t of shipTypes) {
+          const lost = defenderLosses[t] ?? 0;
+          if (lost > 0) shipUpdates[t] = defShips[t] - lost;
+        }
+        if (Object.keys(shipUpdates).length > 0) {
+          await db.update(planetShips).set(shipUpdates).where(eq(planetShips.planetId, targetPlanet.id));
+        }
+      }
+
+      // Apply defender defense losses (minus repairs)
+      if (defDefs) {
+        const defUpdates: Record<string, number> = {};
+        for (const t of defenseTypes) {
+          const lost = defenderLosses[t] ?? 0;
+          const repaired = repairedDefenses[t] ?? 0;
+          const netLoss = lost - repaired;
+          if (netLoss > 0) defUpdates[t] = defDefs[t] - netLoss;
+        }
+        if (Object.keys(defUpdates).length > 0) {
+          await db.update(planetDefenses).set(defUpdates).where(eq(planetDefenses.planetId, targetPlanet.id));
+        }
+      }
+
+      // Create/accumulate debris field
+      if (debris.metal > 0 || debris.crystal > 0) {
+        const [existing] = await db
+          .select()
+          .from(debrisFields)
+          .where(
+            and(
+              eq(debrisFields.galaxy, event.targetGalaxy),
+              eq(debrisFields.system, event.targetSystem),
+              eq(debrisFields.position, event.targetPosition),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          await db
+            .update(debrisFields)
+            .set({
+              metal: String(Number(existing.metal) + debris.metal),
+              crystal: String(Number(existing.crystal) + debris.crystal),
+              updatedAt: new Date(),
+            })
+            .where(eq(debrisFields.id, existing.id));
+        } else {
+          await db.insert(debrisFields).values({
+            galaxy: event.targetGalaxy,
+            system: event.targetSystem,
+            position: event.targetPosition,
+            metal: String(debris.metal),
+            crystal: String(debris.crystal),
+          });
+        }
+      }
+
+      // Pillage resources if attacker wins
+      let pillagedMetal = 0;
+      let pillagedCrystal = 0;
+      let pillagedDeuterium = 0;
+
+      if (outcome === 'attacker') {
+        const remainingCargoCapacity = totalCargoCapacity(survivingShips);
+        const availableCargo = remainingCargoCapacity - metalCargo - crystalCargo - deuteriumCargo;
+
+        if (availableCargo > 0) {
+          await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
+          const [updatedPlanet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
+
+          const availMetal = Math.floor(Number(updatedPlanet.metal));
+          const availCrystal = Math.floor(Number(updatedPlanet.crystal));
+          const availDeut = Math.floor(Number(updatedPlanet.deuterium));
+
+          const thirdCargo = Math.floor(availableCargo / 3);
+
+          pillagedMetal = Math.min(availMetal, thirdCargo);
+          pillagedCrystal = Math.min(availCrystal, thirdCargo);
+          pillagedDeuterium = Math.min(availDeut, thirdCargo);
+
+          let remaining = availableCargo - pillagedMetal - pillagedCrystal - pillagedDeuterium;
+
+          if (remaining > 0) {
+            const extraMetal = Math.min(availMetal - pillagedMetal, remaining);
+            pillagedMetal += extraMetal;
+            remaining -= extraMetal;
+          }
+          if (remaining > 0) {
+            const extraCrystal = Math.min(availCrystal - pillagedCrystal, remaining);
+            pillagedCrystal += extraCrystal;
+            remaining -= extraCrystal;
+          }
+          if (remaining > 0) {
+            const extraDeut = Math.min(availDeut - pillagedDeuterium, remaining);
+            pillagedDeuterium += extraDeut;
+          }
+
+          await db
+            .update(planets)
+            .set({
+              metal: sql`${planets.metal} - ${pillagedMetal}`,
+              crystal: sql`${planets.crystal} - ${pillagedCrystal}`,
+              deuterium: sql`${planets.deuterium} - ${pillagedDeuterium}`,
+            })
+            .where(eq(planets.id, targetPlanet.id));
+        }
+      }
+
+      // Send combat reports
+      const outcomeText = outcome === 'attacker' ? 'Victoire' :
+                          outcome === 'defender' ? 'Défaite' : 'Match nul';
+
+      const reportBody = `Combat ${coords} — ${outcomeText}\n\n` +
+        `Rounds : ${roundCount}\n` +
+        `Pertes attaquant : ${JSON.stringify(attackerLosses)}\n` +
+        `Pertes défenseur : ${JSON.stringify(defenderLosses)}\n` +
+        `Défenses réparées : ${JSON.stringify(repairedDefenses)}\n` +
+        `Débris : ${debris.metal} métal, ${debris.crystal} cristal\n` +
+        (outcome === 'attacker' ?
+          `Pillage : ${pillagedMetal} métal, ${pillagedCrystal} cristal, ${pillagedDeuterium} deutérium\n` : '');
+
+      if (messageService) {
+        await messageService.createSystemMessage(
+          event.userId,
+          'combat',
+          `Rapport de combat ${coords} — ${outcomeText}`,
+          reportBody,
+        );
+        await messageService.createSystemMessage(
+          targetPlanet.userId,
+          'combat',
+          `Rapport de combat ${coords} — ${outcome === 'attacker' ? 'Défaite' : outcome === 'defender' ? 'Victoire' : 'Match nul'}`,
+          reportBody,
+        );
+      }
+
+      // Return surviving fleet with cargo + pillage
+      const hasShips = Object.values(survivingShips).some(v => v > 0);
+      if (hasShips) {
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          survivingShips,
+          metalCargo + pillagedMetal,
+          crystalCargo + pillagedCrystal,
+          deuteriumCargo + pillagedDeuterium,
+        );
+      } else {
+        await db
+          .update(fleetEvents)
+          .set({ status: 'completed' })
+          .where(eq(fleetEvents.id, event.id));
+      }
+
+      return { mission: 'attack', outcome };
     },
 
     async getDriveTechs(userId: string) {

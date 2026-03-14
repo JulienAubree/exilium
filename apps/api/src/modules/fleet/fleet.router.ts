@@ -7,7 +7,7 @@ const shipIds = [
   'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler',
 ] as const;
 
-const missionTypes = ['transport', 'station', 'spy', 'attack', 'colonize'] as const;
+const missionTypes = ['transport', 'station', 'spy', 'attack', 'colonize', 'recycle'] as const;
 
 export function createFleetRouter(fleetService: ReturnType<typeof createFleetService>) {
   return router({
