@@ -69,6 +69,14 @@ export const router = createBrowserRouter([
         path: 'ranking',
         lazy: () => import('./pages/Ranking').then((m) => ({ Component: m.default })),
       },
+      {
+        path: 'alliance',
+        lazy: () => import('./pages/Alliance').then((m) => ({ Component: m.default })),
+      },
+      {
+        path: 'alliance-ranking',
+        lazy: () => import('./pages/AllianceRanking').then((m) => ({ Component: m.default })),
+      },
     ],
   },
 ]);

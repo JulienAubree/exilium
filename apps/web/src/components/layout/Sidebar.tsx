@@ -13,6 +13,8 @@ const navItems = [
   { label: 'Mouvements', path: '/movements', icon: '🔄' },
   { label: 'Messages', path: '/messages', icon: '✉️' },
   { label: 'Classement', path: '/ranking', icon: '🏆' },
+  { label: 'Alliance', path: '/alliance', icon: '🤝' },
+  { label: 'Classement Alliances', path: '/alliance-ranking', icon: '🏅' },
 ];
 
 export function Sidebar() {

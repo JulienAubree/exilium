@@ -108,7 +108,7 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
   );
 }
 
-function AllianceView({ alliance }: { alliance: { id: string; name: string; tag: string; description: string | null; myRole: string; members: { userId: string; username: string; role: string; joinedAt: Date }[] } }) {
+function AllianceView({ alliance }: { alliance: { id: string; name: string; tag: string; description: string | null; myRole: string; members: { userId: string; username: string; role: string; joinedAt: string }[] } }) {
   const utils = trpc.useUtils();
   const [inviteUsername, setInviteUsername] = useState('');
   const [circularSubject, setCircularSubject] = useState('');

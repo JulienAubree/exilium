@@ -100,6 +100,7 @@ export default function Messages() {
           { label: 'Combat', value: 'combat' },
           { label: 'Espionnage', value: 'espionage' },
           { label: 'Colonisation', value: 'colonization' },
+          { label: 'Alliance', value: 'alliance' },
         ].map(({ label, value }) => (
           <Button
             key={label}

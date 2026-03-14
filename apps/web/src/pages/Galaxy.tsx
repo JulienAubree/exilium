@@ -106,6 +106,7 @@ export default function Galaxy() {
                       <>
                         <td className="px-2 py-1">{slot.planetName}</td>
                         <td className="px-2 py-1">
+                          {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
                           {slot.username}
                           {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
                             <Link
