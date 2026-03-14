@@ -36,7 +36,7 @@ export function createMessageService(db: Database) {
 
     async createSystemMessage(
       recipientId: string,
-      type: 'system' | 'colonization' | 'espionage' | 'combat',
+      type: 'system' | 'colonization' | 'espionage' | 'combat' | 'alliance',
       subject: string,
       body: string,
     ) {
@@ -56,7 +56,7 @@ export function createMessageService(db: Database) {
 
     async listMessages(
       userId: string,
-      options?: { page?: number; limit?: number; type?: 'system' | 'colonization' | 'player' | 'espionage' | 'combat' },
+      options?: { page?: number; limit?: number; type?: 'system' | 'colonization' | 'player' | 'espionage' | 'combat' | 'alliance' },
     ) {
       const page = options?.page ?? 1;
       const limit = options?.limit ?? 20;

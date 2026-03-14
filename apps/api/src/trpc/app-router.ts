@@ -20,6 +20,8 @@ import { createMessageService } from '../modules/message/message.service.js';
 import { createMessageRouter } from '../modules/message/message.router.js';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
 import { createRankingRouter } from '../modules/ranking/ranking.router.js';
+import { createAllianceService } from '../modules/alliance/alliance.service.js';
+import { createAllianceRouter } from '../modules/alliance/alliance.router.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 
@@ -34,6 +36,7 @@ export function buildAppRouter(db: Database) {
   const messageService = createMessageService(db);
   const rankingService = createRankingService(db);
   const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService);
+  const allianceService = createAllianceService(db, messageService);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
@@ -45,6 +48,7 @@ export function buildAppRouter(db: Database) {
   const fleetRouter = createFleetRouter(fleetService);
   const messageRouter = createMessageRouter(messageService);
   const rankingRouter = createRankingRouter(rankingService);
+  const allianceRouter = createAllianceRouter(allianceService);
 
   return router({
     health: publicProcedure.query(() => ({
@@ -61,6 +65,7 @@ export function buildAppRouter(db: Database) {
     fleet: fleetRouter,
     message: messageRouter,
     ranking: rankingRouter,
+    alliance: allianceRouter,
   });
 }
 

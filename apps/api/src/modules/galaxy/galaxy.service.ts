@@ -1,5 +1,5 @@
 import { eq, and } from 'drizzle-orm';
-import { planets, users, debrisFields } from '@ogame-clone/db';
+import { planets, users, debrisFields, allianceMembers, alliances } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 
 export function createGalaxyService(db: Database) {
@@ -13,9 +13,12 @@ export function createGalaxyService(db: Database) {
           planetType: planets.planetType,
           userId: planets.userId,
           username: users.username,
+          allianceTag: alliances.tag,
         })
         .from(planets)
         .leftJoin(users, eq(users.id, planets.userId))
+        .leftJoin(allianceMembers, eq(allianceMembers.userId, planets.userId))
+        .leftJoin(alliances, eq(alliances.id, allianceMembers.allianceId))
         .where(and(eq(planets.galaxy, galaxy), eq(planets.system, system)));
 
       const slots: (typeof systemPlanets[number] | null)[] = Array(15).fill(null);
