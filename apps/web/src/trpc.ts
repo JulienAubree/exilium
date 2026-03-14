@@ -1,5 +1,5 @@
 import { createTRPCReact } from '@trpc/react-query';
-import { httpBatchLink, TRPCClientError } from '@trpc/client';
+import { httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@ogame-clone/api/trpc';
 
 export const trpc = createTRPCReact<AppRouter>();
