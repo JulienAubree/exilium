@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,21 @@ export default function Messages() {
       setThreadId(null);
     },
   });
+
+  // Refresh unread count & inbox when a message detail or thread is loaded (marks as read server-side)
+  useEffect(() => {
+    if (detail) {
+      utils.message.unreadCount.invalidate();
+      utils.message.inbox.invalidate();
+    }
+  }, [detail?.id]);
+
+  useEffect(() => {
+    if (thread && thread.length > 0) {
+      utils.message.unreadCount.invalidate();
+      utils.message.inbox.invalidate();
+    }
+  }, [threadId]);
 
   if (isLoading && tab === 'inbox') {
     return <div className="p-6 text-muted-foreground">Chargement...</div>;
