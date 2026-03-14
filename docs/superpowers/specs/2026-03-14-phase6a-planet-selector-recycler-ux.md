@@ -12,22 +12,29 @@ Ajouter un sélecteur de planètes dans la topbar pour switcher entre colonies, 
 
 Fichier : `apps/web/src/stores/planet.store.ts`
 
-Zustand store avec persist (localStorage), même pattern que `authStore` :
+Zustand store avec localStorage manuelle, même pattern que `authStore` :
 
 ```typescript
 interface PlanetState {
   activePlanetId: string | null;
   setActivePlanet: (id: string) => void;
+  clearActivePlanet: () => void;
 }
 ```
 
-Au premier login (ou si `activePlanetId` est null), initialisé avec la première planète retournée par `planet.list`.
+- Au premier login (ou si `activePlanetId` est null), initialisé avec la première planète retournée par `planet.list`.
+- `clearActivePlanet()` doit être appelé lors du logout (aux côtés de `clearAuth()`).
 
-### Router tRPC : `planet.list`
+### Router tRPC : `planet.list` (existant)
 
-Ajouter une procédure `list` au `planetRouter` existant :
-- Retourne toutes les planètes du joueur : `id`, `name`, `galaxy`, `system`, `position`
-- Triées par date de création (planète mère en premier)
+La procédure `planet.list` et la méthode `listPlanets(userId)` existent déjà. Seule modification nécessaire : ajouter un tri par `createdAt` ascendant pour que la planète mère apparaisse en premier.
+
+### Layout.tsx : utiliser `activePlanetId`
+
+`Layout.tsx` est le point central de résolution du `planetId`. Actuellement il utilise `planets?.[0]?.id`. Modifier pour :
+- Lire `activePlanetId` depuis `planetStore`
+- Si `activePlanetId` est null ou ne correspond à aucune planète du joueur, fallback sur `planets?.[0]?.id` et appeler `setActivePlanet`
+- Toutes les pages enfants reçoivent déjà `planetId` via `useOutletContext`, donc aucune modification nécessaire dans les pages individuelles.
 
 ### TopBar : dropdown planète
 
@@ -37,13 +44,9 @@ Dans `apps/web/src/components/layout/TopBar.tsx` :
 - Liste déroulante avec toutes les planètes du joueur
 - Au clic sur une planète : `setActivePlanet(id)`, les compteurs de ressources se rafraîchissent
 
-### Impact sur les pages existantes
+### Logout : nettoyage
 
-Toutes les pages qui utilisent un `planetId` doivent lire depuis `planetStore.activePlanetId` :
-- Overview, Resources, Buildings, Research, Shipyard, Defense, Fleet
-- Les queries tRPC de ces pages doivent utiliser `activePlanetId` au lieu d'un ID hardcodé
-
-Vérifier comment `planetId` est actuellement résolu dans chaque page et unifier vers le store.
+Dans le composant qui appelle `clearAuth()`, ajouter aussi `clearActivePlanet()` pour éviter qu'un autre utilisateur sur le même navigateur hérite d'un `activePlanetId` obsolète.
 
 ---
 
@@ -58,9 +61,11 @@ Le badge "DF" dans la vue galaxie devient un lien cliquable. Au clic :
 
 Dans `Fleet.tsx`, au montage du composant :
 - Lire les query params `mission`, `galaxy`, `system`, `position` depuis l'URL
-- Si présents : pré-remplir la destination et la mission dans le wizard
+- Si présents : pré-remplir la destination et la mission
 - Si mission === 'recycle' : auto-sélectionner tous les recycleurs disponibles
-- Passer directement au step 2 ou 3 du wizard (destination + mission déjà remplis)
+- Atterrir sur le step 2 (destination + mission) avec les valeurs pré-remplies, pour que le joueur puisse vérifier avant confirmation
+
+**Edge case — zéro recycleurs :** Si le joueur n'a aucun recycleur sur la planète active, atterrir sur le step 1 avec un message d'avertissement : "Aucun recycleur disponible sur cette planète."
 
 ---
 
@@ -74,13 +79,9 @@ Dans `Fleet.tsx`, au montage du composant :
 
 | Fichier | Modification |
 |---------|-------------|
-| `apps/api/src/modules/planet/planet.service.ts` | Ajouter méthode listPlanets(userId) |
-| `apps/api/src/modules/planet/planet.router.ts` | Ajouter procédure list |
+| `apps/api/src/modules/planet/planet.service.ts` | Ajouter `.orderBy(planets.createdAt)` à `listPlanets` |
+| `apps/web/src/components/layout/Layout.tsx` | Utiliser `activePlanetId` du store au lieu de `planets?.[0]?.id` |
 | `apps/web/src/components/layout/TopBar.tsx` | Dropdown sélecteur de planètes |
 | `apps/web/src/pages/Galaxy.tsx` | Badge DF cliquable avec lien vers Fleet |
 | `apps/web/src/pages/Fleet.tsx` | Pré-remplissage depuis query params |
-| `apps/web/src/pages/Overview.tsx` | Utiliser activePlanetId du store |
-| `apps/web/src/pages/Resources.tsx` | Utiliser activePlanetId du store |
-| `apps/web/src/pages/Buildings.tsx` | Utiliser activePlanetId du store |
-| `apps/web/src/pages/Shipyard.tsx` | Utiliser activePlanetId du store |
-| `apps/web/src/pages/Defense.tsx` | Utiliser activePlanetId du store |
+| Composant logout (Sidebar ou TopBar) | Appeler `clearActivePlanet()` au logout |
