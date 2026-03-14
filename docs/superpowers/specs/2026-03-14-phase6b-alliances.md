@@ -41,10 +41,12 @@ Enum `alliance_role` : `'founder'` | `'officer'` | `'member'`
 | `allianceId` | uuid | NOT NULL, FK → alliances.id ON DELETE CASCADE |
 | `invitedUserId` | uuid | NOT NULL, FK → users.id ON DELETE CASCADE |
 | `invitedByUserId` | uuid | NOT NULL, FK → users.id |
-| `status` | pgEnum(`invitation_status`) | NOT NULL, default 'pending' |
+| `status` | pgEnum(`request_status`) | NOT NULL, default 'pending' |
 | `createdAt` | timestamp(tz) | NOT NULL, default now |
 
-Enum `invitation_status` : `'pending'` | `'accepted'` | `'declined'`
+Enum `request_status` (partagé entre invitations et applications) : `'pending'` | `'accepted'` | `'declined'`
+
+Index unique : `(allianceId, invitedUserId)` pour empêcher les doublons d'invitation.
 
 **`alliance_applications`**
 
@@ -53,10 +55,10 @@ Enum `invitation_status` : `'pending'` | `'accepted'` | `'declined'`
 | `id` | uuid | PK, default random |
 | `allianceId` | uuid | NOT NULL, FK → alliances.id ON DELETE CASCADE |
 | `applicantUserId` | uuid | NOT NULL, FK → users.id ON DELETE CASCADE |
-| `status` | pgEnum(`application_status`) | NOT NULL, default 'pending' |
+| `status` | pgEnum(`request_status`) | NOT NULL, default 'pending' |
 | `createdAt` | timestamp(tz) | NOT NULL, default now |
 
-Enum `application_status` : `'pending'` | `'accepted'` | `'declined'`
+Index unique : `(allianceId, applicantUserId)` pour empêcher les doublons de candidature.
 
 ### Modification existante
 
@@ -82,7 +84,7 @@ Fichier : `apps/api/src/modules/alliance/alliance.router.ts`
 
 - **`update`** — Input : `{ description: string }`. Réservé au founder/officer.
 
-- **`leave`** — Pas d'input. Si le joueur est founder : transfert du rôle founder au plus ancien officer, sinon au plus ancien membre. Si dernier membre : dissolution (suppression de l'alliance).
+- **`leave`** — Pas d'input. Si le joueur est le dernier membre : dissolution (suppression de l'alliance). Sinon, si le joueur est founder : transfert du rôle founder au plus ancien officer, sinon au plus ancien membre.
 
 - **`kick`** — Input : `{ userId: string }`. Réservé au founder/officer. Un officer ne peut pas kick un autre officer ni le founder. Le founder peut kick n'importe qui sauf lui-même.
 
@@ -92,7 +94,7 @@ Fichier : `apps/api/src/modules/alliance/alliance.router.ts`
 
 - **`respondInvitation`** — Input : `{ invitationId: string, accept: boolean }`. Le joueur invité accepte ou décline. Si accepte : vérifie qu'il n'a toujours pas d'alliance, crée le membership.
 
-- **`apply`** — Input : `{ allianceId: string }`. Vérifie que le joueur n'a pas d'alliance et n'a pas déjà une candidature pending pour cette alliance. Envoie un message système au founder.
+- **`apply`** — Input : `{ allianceId: string }`. Vérifie que le joueur n'a pas d'alliance et n'a pas déjà une candidature pending pour cette alliance. Envoie un message système à tous les founder + officers de l'alliance.
 
 - **`respondApplication`** — Input : `{ applicationId: string, accept: boolean }`. Réservé au founder/officer. Si accepte : vérifie que le candidat n'a toujours pas d'alliance, crée le membership.
 
@@ -182,7 +184,8 @@ Modifier la query pour joindre `alliance_members` → `alliances` et retourner `
 | `packages/db/src/schema/index.ts` | Ajouter export alliances |
 | `apps/api/src/trpc/app-router.ts` | Wiring allianceService + allianceRouter |
 | `apps/api/src/modules/galaxy/galaxy.service.ts` | Joindre alliance tag dans getSystem |
-| `apps/api/src/modules/message/message.service.ts` | Accepter type `'alliance'` dans createSystemMessage et listMessages |
+| `apps/api/src/modules/message/message.service.ts` | Ajouter `'alliance'` à la signature de type de `createSystemMessage` et au type filter de `listMessages` |
+| `apps/api/src/modules/message/message.router.ts` | Ajouter `'alliance'` au `z.enum` du filtre type dans inbox |
 | `apps/web/src/components/layout/Sidebar.tsx` | Liens Alliance + Classement Alliances |
 | `apps/web/src/router.tsx` | Routes /alliance et /alliance-ranking |
 | `apps/web/src/pages/Galaxy.tsx` | Afficher [TAG] devant le username |
