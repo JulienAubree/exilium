@@ -18,6 +18,7 @@ echo "==> Building all packages..."
 pnpm build
 
 echo "==> Pushing database schema..."
+set -a; source .env; set +a
 cd packages/db
 pnpm db:push
 cd ../..
