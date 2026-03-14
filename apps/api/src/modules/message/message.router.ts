@@ -14,6 +14,21 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
         return messageService.listMessages(ctx.userId!, input);
       }),
 
+    sent: protectedProcedure
+      .input(z.object({
+        page: z.number().int().min(1).default(1),
+        limit: z.number().int().min(1).max(50).default(20),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return messageService.listSentMessages(ctx.userId!, input);
+      }),
+
+    thread: protectedProcedure
+      .input(z.object({ threadId: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        return messageService.getThread(ctx.userId!, input.threadId);
+      }),
+
     detail: protectedProcedure
       .input(z.object({ messageId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
@@ -28,6 +43,15 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
       }))
       .mutation(async ({ ctx, input }) => {
         return messageService.sendMessage(ctx.userId!, input.recipientUsername, input.subject, input.body);
+      }),
+
+    reply: protectedProcedure
+      .input(z.object({
+        messageId: z.string().uuid(),
+        body: z.string().min(1).max(5000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return messageService.replyToMessage(ctx.userId!, input.messageId, input.body);
       }),
 
     markAsRead: protectedProcedure

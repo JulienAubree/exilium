@@ -11,7 +11,11 @@ export const messages = pgTable('messages', {
   subject: varchar('subject', { length: 255 }).notNull(),
   body: text('body').notNull(),
   read: boolean('read').notNull().default(false),
+  readBySender: boolean('read_by_sender').notNull().default(false),
+  threadId: uuid('thread_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('messages_recipient_idx').on(table.recipientId, table.createdAt),
+  index('messages_sender_idx').on(table.senderId, table.createdAt),
+  index('messages_thread_idx').on(table.threadId, table.createdAt),
 ]);
