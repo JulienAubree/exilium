@@ -1,10 +1,12 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
+import Redis from 'ioredis';
 import { createDb } from '@ogame-clone/db';
 import { buildAppRouter } from './trpc/app-router.js';
 import { createContext } from './trpc/context.js';
 import { env } from './config/env.js';
+import { registerSSE } from './modules/notification/notification.sse.js';
 
 const server = Fastify({ logger: true });
 
@@ -15,7 +17,9 @@ server.get('/health', async () => {
 });
 
 const db = createDb(env.DATABASE_URL);
-const appRouter = buildAppRouter(db);
+const redis = new Redis(env.REDIS_URL);
+const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
+const appRouter = buildAppRouter(db, redis);
 
 await server.register(fastifyTRPCPlugin, {
   prefix: '/trpc',
@@ -24,6 +28,8 @@ await server.register(fastifyTRPCPlugin, {
     createContext,
   },
 });
+
+registerSSE(server, env.REDIS_URL, JWT_SECRET);
 
 try {
   await server.listen({ port: env.API_PORT, host: '0.0.0.0' });
