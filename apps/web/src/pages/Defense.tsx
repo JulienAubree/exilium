@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { GameImage } from '@/components/common/GameImage';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -82,12 +83,21 @@ export default function Defense() {
           return (
             <Card key={defense.id} className={!defense.prerequisitesMet ? 'opacity-50' : ''}>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{defense.name}</CardTitle>
-                  <span className="text-sm text-muted-foreground">
-                    x{defense.count}
-                    {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <GameImage
+                    category="defenses"
+                    id={defense.id}
+                    size="icon"
+                    alt={defense.name}
+                    className="h-10 w-10 rounded"
+                  />
+                  <div className="flex flex-1 items-center justify-between">
+                    <CardTitle className="text-base">{defense.name}</CardTitle>
+                    <span className="text-sm text-muted-foreground">
+                      x{defense.count}
+                      {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
+                    </span>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">

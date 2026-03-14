@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
+import { GameImage } from '@/components/common/GameImage';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -79,9 +80,18 @@ export default function Buildings() {
           return (
             <Card key={building.id}>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{building.name}</CardTitle>
-                  <Badge variant="secondary">Niv. {building.currentLevel}</Badge>
+                <div className="flex items-center gap-3">
+                  <GameImage
+                    category="buildings"
+                    id={building.id}
+                    size="icon"
+                    alt={building.name}
+                    className="h-10 w-10 rounded"
+                  />
+                  <div className="flex flex-1 items-center justify-between">
+                    <CardTitle className="text-base">{building.name}</CardTitle>
+                    <Badge variant="secondary">Niv. {building.currentLevel}</Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">

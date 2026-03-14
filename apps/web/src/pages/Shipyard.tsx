@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
+import { GameImage } from '@/components/common/GameImage';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -111,9 +112,18 @@ export default function Shipyard() {
           return (
             <Card key={ship.id} className={!ship.prerequisitesMet ? 'opacity-50' : ''}>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{ship.name}</CardTitle>
-                  <span className="text-sm text-muted-foreground">x{ship.count}</span>
+                <div className="flex items-center gap-3">
+                  <GameImage
+                    category="ships"
+                    id={ship.id}
+                    size="icon"
+                    alt={ship.name}
+                    className="h-10 w-10 rounded"
+                  />
+                  <div className="flex flex-1 items-center justify-between">
+                    <CardTitle className="text-base">{ship.name}</CardTitle>
+                    <span className="text-sm text-muted-foreground">x{ship.count}</span>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
