@@ -51,7 +51,7 @@ export function createAllianceRouter(allianceService: ReturnType<typeof createAl
         return allianceService.respondInvitation(ctx.userId!, input.invitationId, input.accept);
       }),
 
-    apply: protectedProcedure
+    submitApplication: protectedProcedure
       .input(z.object({ allianceId: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
         return allianceService.apply(ctx.userId!, input.allianceId);

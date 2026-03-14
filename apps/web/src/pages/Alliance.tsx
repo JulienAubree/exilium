@@ -30,7 +30,7 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
     { enabled: searchQuery.length >= 2 },
   );
 
-  const applyMutation = trpc.alliance.apply.useMutation({
+  const applyMutation = trpc.alliance.submitApplication.useMutation({
     onSuccess: () => { utils.alliance.myAlliance.invalidate(); },
   });
 

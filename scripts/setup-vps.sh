@@ -97,7 +97,7 @@ systemctl reload caddy
 # --- PM2 startup ---
 echo ""
 echo "==> Configuring PM2 startup..."
-pm2 startup systemd -u root --hp /root | bash
+pm2 startup systemd -u root --hp /root
 
 echo ""
 echo "========================================"
