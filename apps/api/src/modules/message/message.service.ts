@@ -209,6 +209,30 @@ export function createMessageService(db: Database, redis: Redis) {
     },
 
     async getThread(userId: string, threadId: string) {
+      // Mark all unread messages in this thread where user is recipient as read
+      await db
+        .update(messages)
+        .set({ read: true })
+        .where(
+          and(
+            eq(messages.threadId, threadId),
+            eq(messages.recipientId, userId),
+            eq(messages.read, false),
+          ),
+        );
+
+      // Mark readBySender for messages where user is sender
+      await db
+        .update(messages)
+        .set({ readBySender: true })
+        .where(
+          and(
+            eq(messages.threadId, threadId),
+            eq(messages.senderId, userId),
+            eq(messages.readBySender, false),
+          ),
+        );
+
       return db
         .select({
           id: messages.id,

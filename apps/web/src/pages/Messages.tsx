@@ -69,7 +69,7 @@ export default function Messages() {
     },
   });
 
-  // Refresh unread count & inbox when a message detail or thread is loaded (marks as read server-side)
+  // Refresh unread count & inbox when a message detail is loaded (marks as read server-side)
   useEffect(() => {
     if (detail) {
       utils.message.unreadCount.invalidate();
@@ -77,12 +77,13 @@ export default function Messages() {
     }
   }, [detail?.id]);
 
+  // Refresh when thread data arrives (getThread marks messages as read server-side)
   useEffect(() => {
     if (thread && thread.length > 0) {
       utils.message.unreadCount.invalidate();
       utils.message.inbox.invalidate();
     }
-  }, [threadId]);
+  }, [thread]);
 
   if (isLoading && tab === 'inbox') {
     return <div className="p-6 text-muted-foreground">Chargement...</div>;
