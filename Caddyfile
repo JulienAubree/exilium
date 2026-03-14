@@ -1,7 +1,4 @@
 :80 {
-	root * /opt/ogame-clone/apps/web/dist
-	file_server
-
 	handle /trpc/* {
 		reverse_proxy localhost:3000
 	}
@@ -16,5 +13,9 @@
 		reverse_proxy localhost:3000
 	}
 
-	try_files {path} /index.html
+	handle {
+		root * /opt/ogame-clone/apps/web/dist
+		try_files {path} /index.html
+		file_server
+	}
 }
