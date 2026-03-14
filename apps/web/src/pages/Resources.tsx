@@ -1,12 +1,15 @@
+import { useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Resources() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
+  const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.resource.production.useQuery(
     { planetId: planetId! },
@@ -30,18 +33,31 @@ export default function Resources() {
       : undefined,
   );
 
+  const setPercentMutation = trpc.resource.setProductionPercent.useMutation({
+    onSuccess: () => {
+      utils.resource.production.invalidate({ planetId: planetId! });
+    },
+  });
+
+  const handlePercentChange = useCallback(
+    (field: 'metalMinePercent' | 'crystalMinePercent' | 'deutSynthPercent', value: number) => {
+      setPercentMutation.mutate({ planetId: planetId!, [field]: value });
+    },
+    [planetId, setPercentMutation],
+  );
+
   if (isLoading || !data) {
     return (
       <div className="space-y-6 p-6">
         <PageHeader title="Ressources" />
-        <CardGridSkeleton count={2} />
+        <CardGridSkeleton count={3} />
       </div>
     );
   }
 
   const resourceRows = [
     {
-      name: 'Métal',
+      name: 'Metal',
       color: 'text-metal',
       glowClass: 'glow-metal',
       current: resources.metal,
@@ -57,7 +73,7 @@ export default function Resources() {
       capacity: data.rates.storageCrystalCapacity,
     },
     {
-      name: 'Deutérium',
+      name: 'Deuterium',
       color: 'text-deuterium',
       glowClass: 'glow-deuterium',
       current: resources.deuterium,
@@ -65,6 +81,39 @@ export default function Resources() {
       capacity: data.rates.storageDeutCapacity,
     },
   ];
+
+  const energyGenerators = [
+    {
+      name: 'Mine de metal',
+      level: data.levels.metalMineLevel,
+      perHour: data.rates.metalPerHour,
+      energy: data.rates.metalMineEnergyConsumption,
+      percent: data.rates.metalMinePercent,
+      field: 'metalMinePercent' as const,
+      color: 'text-metal',
+    },
+    {
+      name: 'Mine de cristal',
+      level: data.levels.crystalMineLevel,
+      perHour: data.rates.crystalPerHour,
+      energy: data.rates.crystalMineEnergyConsumption,
+      percent: data.rates.crystalMinePercent,
+      field: 'crystalMinePercent' as const,
+      color: 'text-crystal',
+    },
+    {
+      name: 'Synth. deuterium',
+      level: data.levels.deutSynthLevel,
+      perHour: data.rates.deutPerHour,
+      energy: data.rates.deutSynthEnergyConsumption,
+      percent: data.rates.deutSynthPercent,
+      field: 'deutSynthPercent' as const,
+      color: 'text-deuterium',
+    },
+  ];
+
+  const energyBalance = data.rates.energyProduced - data.rates.energyConsumed;
+  const energySufficient = energyBalance >= 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -109,41 +158,78 @@ export default function Resources() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Énergie</CardTitle>
+          <CardTitle>Gestion d'energie</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-energy font-medium glow-energy">Balance</span>
-              <span
-                className={`text-sm font-semibold ${
-                  data.rates.energyProduced >= data.rates.energyConsumed
-                    ? 'text-energy'
-                    : 'text-destructive'
-                }`}
-              >
-                {data.rates.energyProduced - data.rates.energyConsumed} ({data.rates.energyProduced} /{' '}
-                {data.rates.energyConsumed})
-              </span>
-            </div>
-            {data.rates.energyConsumed > 0 && (
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-2 rounded-full transition-[width] duration-500 ${
-                    data.rates.energyProduced >= data.rates.energyConsumed ? 'bg-energy' : 'bg-destructive'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, (data.rates.energyProduced / Math.max(1, data.rates.energyConsumed)) * 100)}%`,
-                  }}
-                />
+          <div className="space-y-5">
+            {energyGenerators.map((gen) => (
+              <div key={gen.field} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${gen.color}`}>{gen.name}</span>
+                    <Badge variant="secondary" className="text-xs">Niv. {gen.level}</Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="text-muted-foreground">+{gen.perHour.toLocaleString('fr-FR')}/h</span>
+                    <span className="text-energy">-{gen.energy}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={10}
+                    value={gen.percent}
+                    onChange={(e) => handlePercentChange(gen.field, Number(e.target.value))}
+                    disabled={setPercentMutation.isPending}
+                    className="flex-1 h-1.5 appearance-none bg-muted rounded-full cursor-pointer accent-primary
+                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer
+                      [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full
+                      [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                  />
+                  <span className="text-sm font-mono w-10 text-right">{gen.percent}%</span>
+                </div>
               </div>
-            )}
-            {data.rates.productionFactor < 1 && (
-              <p className="mt-2 text-xs text-destructive">
-                Facteur de production : {(data.rates.productionFactor * 100).toFixed(1)}% — Construisez
-                une centrale solaire !
-              </p>
-            )}
+            ))}
+
+            <div className="border-t border-border pt-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-energy font-medium glow-energy">Centrale solaire</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">Niv. {data.levels.solarPlantLevel}</Badge>
+                  <span className="text-energy font-mono">+{data.rates.energyProduced}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm font-medium">
+                <span className="text-muted-foreground">Balance energetique</span>
+                <span className={energySufficient ? 'text-energy' : 'text-destructive'}>
+                  {energyBalance >= 0 ? '+' : ''}{energyBalance}
+                </span>
+              </div>
+
+              {data.rates.energyConsumed > 0 && (
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-[width] duration-500 ${
+                      energySufficient ? 'bg-energy' : 'bg-destructive'
+                    }`}
+                    style={{
+                      width: `${Math.min(100, (data.rates.energyProduced / Math.max(1, data.rates.energyConsumed)) * 100)}%`,
+                    }}
+                  />
+                </div>
+              )}
+
+              {data.rates.productionFactor < 1 && (
+                <p className="text-xs text-destructive">
+                  Facteur de production : {(data.rates.productionFactor * 100).toFixed(1)}% — Construisez
+                  une centrale solaire ou reduisez la puissance de vos mines !
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

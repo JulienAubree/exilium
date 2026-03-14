@@ -35,6 +35,11 @@ export const planets = pgTable('planets', {
   storageCrystalLevel: smallint('storage_crystal_level').notNull().default(0),
   storageDeutLevel: smallint('storage_deut_level').notNull().default(0),
 
+  // Production percentages (0-100, step 10)
+  metalMinePercent: smallint('metal_mine_percent').notNull().default(100),
+  crystalMinePercent: smallint('crystal_mine_percent').notNull().default(100),
+  deutSynthPercent: smallint('deut_synth_percent').notNull().default(100),
+
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   uniqueIndex('unique_coordinates').on(table.galaxy, table.system, table.position, table.planetType),

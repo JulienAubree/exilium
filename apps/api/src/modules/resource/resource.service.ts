@@ -35,6 +35,9 @@ export function createResourceService(db: Database) {
           storageCrystalLevel: planet.storageCrystalLevel,
           storageDeutLevel: planet.storageDeutLevel,
           maxTemp: planet.maxTemp,
+          metalMinePercent: planet.metalMinePercent,
+          crystalMinePercent: planet.crystalMinePercent,
+          deutSynthPercent: planet.deutSynthPercent,
         },
         planet.resourcesUpdatedAt,
         now,
@@ -79,6 +82,9 @@ export function createResourceService(db: Database) {
           storageCrystalLevel: planet.storageCrystalLevel,
           storageDeutLevel: planet.storageDeutLevel,
           maxTemp: planet.maxTemp,
+          metalMinePercent: planet.metalMinePercent,
+          crystalMinePercent: planet.crystalMinePercent,
+          deutSynthPercent: planet.deutSynthPercent,
         },
         planet.resourcesUpdatedAt,
         now,
@@ -106,6 +112,27 @@ export function createResourceService(db: Database) {
       return result;
     },
 
+    async setProductionPercent(
+      planetId: string,
+      userId: string,
+      percents: { metalMinePercent?: number; crystalMinePercent?: number; deutSynthPercent?: number },
+    ) {
+      // Materialize resources first so accumulated production with old % isn't lost
+      await this.materializeResources(planetId, userId);
+
+      const updates: Partial<{ metalMinePercent: number; crystalMinePercent: number; deutSynthPercent: number }> = {};
+      if (percents.metalMinePercent !== undefined) updates.metalMinePercent = percents.metalMinePercent;
+      if (percents.crystalMinePercent !== undefined) updates.crystalMinePercent = percents.crystalMinePercent;
+      if (percents.deutSynthPercent !== undefined) updates.deutSynthPercent = percents.deutSynthPercent;
+
+      if (Object.keys(updates).length === 0) return;
+
+      await db
+        .update(planets)
+        .set(updates)
+        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)));
+    },
+
     getProductionRates(planet: {
       metalMineLevel: number;
       crystalMineLevel: number;
@@ -115,6 +142,9 @@ export function createResourceService(db: Database) {
       storageCrystalLevel: number;
       storageDeutLevel: number;
       maxTemp: number;
+      metalMinePercent: number;
+      crystalMinePercent: number;
+      deutSynthPercent: number;
     }) {
       return calculateProductionRates(planet);
     },
