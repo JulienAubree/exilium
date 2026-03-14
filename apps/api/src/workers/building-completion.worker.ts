@@ -1,13 +1,17 @@
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { eq } from 'drizzle-orm';
+import Redis from 'ioredis';
+import { createDb, buildQueue } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';
 import { buildingCompletionQueue } from '../queues/queue.js';
+import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 
 export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
   const resourceService = createResourceService(db);
   const buildingService = createBuildingService(db, resourceService, buildingCompletionQueue);
+  const redis = new Redis(env.REDIS_URL);
 
   const worker = new Worker(
     'building-completion',
@@ -15,11 +19,23 @@ export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
       const { buildQueueId } = job.data as { buildQueueId: string };
       console.log(`[building-completion] Processing job ${job.id}, buildQueueId: ${buildQueueId}`);
 
+      const [entry] = await db
+        .select({ userId: buildQueue.userId, planetId: buildQueue.planetId })
+        .from(buildQueue)
+        .where(eq(buildQueue.id, buildQueueId))
+        .limit(1);
+
       const result = await buildingService.completeUpgrade(buildQueueId);
       if (result) {
         console.log(
           `[building-completion] ${result.buildingId} upgraded to level ${result.newLevel}`,
         );
+        if (entry) {
+          publishNotification(redis, entry.userId, {
+            type: 'building-done',
+            payload: { planetId: entry.planetId, buildingId: result.buildingId, level: result.newLevel },
+          });
+        }
       } else {
         console.log(
           `[building-completion] Build queue entry ${buildQueueId} not found or already completed`,
