@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useOutletContext } from 'react-router';
+import { useState, useEffect, useRef } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,11 +51,53 @@ export default function Fleet() {
   const [target, setTarget] = useState({ galaxy: 1, system: 1, position: 1 });
   const [mission, setMission] = useState<Mission>('transport');
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [prefillWarning, setPrefillWarning] = useState<string | null>(null);
 
   const { data: ships } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+
+  const prefillRef = useRef<{ mission: Mission; galaxy: number; system: number; position: number } | null>(null);
+
+  // Read query params once on mount
+  useEffect(() => {
+    const paramMission = searchParams.get('mission') as Mission | null;
+    if (!paramMission) return;
+
+    const data = {
+      mission: paramMission,
+      galaxy: Number(searchParams.get('galaxy')) || 1,
+      system: Number(searchParams.get('system')) || 1,
+      position: Number(searchParams.get('position')) || 1,
+    };
+
+    prefillRef.current = data;
+    setTarget({ galaxy: data.galaxy, system: data.system, position: data.position });
+    setMission(data.mission);
+
+    // Clear params from URL
+    setSearchParams({}, { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-select ships and jump to step 2 when ships data loads
+  useEffect(() => {
+    if (!prefillRef.current || !ships) return;
+
+    if (prefillRef.current.mission === 'recycle') {
+      const recyclerData = ships.find((s) => s.id === 'recycler');
+      if (!recyclerData || recyclerData.count === 0) {
+        setPrefillWarning('Aucun recycleur disponible sur cette planète.');
+        prefillRef.current = null;
+        return;
+      }
+      setSelectedShips({ recycler: recyclerData.count });
+    }
+
+    setStep(2);
+    prefillRef.current = null;
+  }, [ships]);
 
   const sendMutation = trpc.fleet.send.useMutation({
     onSuccess: () => {
@@ -117,6 +159,10 @@ export default function Fleet() {
                 </Button>
               </div>
             ))}
+
+            {prefillWarning && (
+              <p className="text-sm text-orange-400">{prefillWarning}</p>
+            )}
 
             {(!ships || ships.filter((s) => s.count > 0).length === 0) && (
               <p className="text-sm text-muted-foreground">Aucun vaisseau disponible</p>
