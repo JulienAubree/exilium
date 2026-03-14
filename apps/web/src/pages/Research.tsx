@@ -112,10 +112,13 @@ export default function Research() {
 
                 {tech.isResearching && tech.researchEndTime ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-primary">En recherche...</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-primary">En recherche...</span>
+                      </div>
                       <Timer
                         endTime={new Date(tech.researchEndTime)}
+                        totalDuration={tech.nextLevelTime}
                         onComplete={() => {
                           utils.research.list.invalidate({ planetId: planetId! });
                         }}

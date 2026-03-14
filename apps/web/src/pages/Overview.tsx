@@ -1,22 +1,128 @@
+import { useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Timer } from '@/components/common/Timer';
 
 export default function Overview() {
+  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const navigate = useNavigate();
+  const utils = trpc.useUtils();
+
   const { data: planets, isLoading } = trpc.planet.list.useQuery();
+
+  const { data: buildings } = trpc.building.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
+  const { data: techs } = trpc.research.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
+  const { data: queue } = trpc.shipyard.queue.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
 
   if (isLoading) {
     return <div className="p-6 text-muted-foreground">Chargement...</div>;
   }
 
-  const planet = planets?.[0];
+  const planet = planets?.find((p) => p.id === planetId) ?? planets?.[0];
   if (!planet) {
     return <div className="p-6 text-muted-foreground">Aucune planète trouvée.</div>;
   }
 
+  const activeBuilding = buildings?.find((b) => b.isUpgrading);
+  const activeResearch = techs?.find((t) => t.isResearching);
+  const activeQueue = queue?.filter((q) => q.endTime) ?? [];
+  const hasActivity = activeBuilding || activeResearch || activeQueue.length > 0;
+
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-bold">Vue d&apos;ensemble</h1>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Activités en cours</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!hasActivity && (
+            <p className="text-sm text-muted-foreground">Aucune activité en cours</p>
+          )}
+
+          {activeBuilding && activeBuilding.upgradeEndTime && (
+            <div
+              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              onClick={() => navigate('/buildings')}
+            >
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">Construction</Badge>
+                  <span>{activeBuilding.name} → Niv. {activeBuilding.currentLevel + 1}</span>
+                </div>
+              </div>
+              <Timer
+                endTime={new Date(activeBuilding.upgradeEndTime)}
+                totalDuration={activeBuilding.nextLevelTime}
+                onComplete={() => {
+                  utils.building.list.invalidate({ planetId: planetId! });
+                  utils.resource.production.invalidate({ planetId: planetId! });
+                }}
+              />
+            </div>
+          )}
+
+          {activeResearch && activeResearch.researchEndTime && (
+            <div
+              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              onClick={() => navigate('/research')}
+            >
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">Recherche</Badge>
+                  <span>{activeResearch.name} → Niv. {activeResearch.currentLevel + 1}</span>
+                </div>
+              </div>
+              <Timer
+                endTime={new Date(activeResearch.researchEndTime)}
+                totalDuration={activeResearch.nextLevelTime}
+                onComplete={() => {
+                  utils.research.list.invalidate({ planetId: planetId! });
+                }}
+              />
+            </div>
+          )}
+
+          {activeQueue.map((item) => (
+            <div
+              key={item.id}
+              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              onClick={() => navigate('/shipyard')}
+            >
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">Chantier</Badge>
+                  <span>{item.itemId} x{item.quantity - (item.completedCount ?? 0)}</span>
+                </div>
+              </div>
+              {item.endTime && (
+                <Timer
+                  endTime={new Date(item.endTime)}
+                  totalDuration={Math.floor((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 1000)}
+                  onComplete={() => {
+                    utils.shipyard.queue.invalidate({ planetId: planetId! });
+                    utils.shipyard.ships.invalidate({ planetId: planetId! });
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>

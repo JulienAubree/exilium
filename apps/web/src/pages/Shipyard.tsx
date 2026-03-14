@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { Timer } from '@/components/common/Timer';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -46,6 +47,11 @@ export default function Shipyard() {
       : undefined,
   );
 
+  const { data: queue } = trpc.shipyard.queue.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
   const buildMutation = trpc.shipyard.buildShip.useMutation({
     onSuccess: () => {
       utils.shipyard.ships.invalidate({ planetId: planetId! });
@@ -61,6 +67,33 @@ export default function Shipyard() {
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-bold">Chantier spatial</h1>
+
+      {queue && queue.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">File de construction</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {queue.map((item) => (
+              <div key={item.id} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{item.itemId} x{item.quantity - (item.completedCount ?? 0)}</span>
+                </div>
+                {item.endTime && (
+                  <Timer
+                    endTime={new Date(item.endTime)}
+                    totalDuration={Math.floor((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 1000)}
+                    onComplete={() => {
+                      utils.shipyard.queue.invalidate({ planetId: planetId! });
+                      utils.shipyard.ships.invalidate({ planetId: planetId! });
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {ships.map((ship) => {

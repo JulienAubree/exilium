@@ -106,10 +106,13 @@ export default function Buildings() {
 
                 {building.isUpgrading && building.upgradeEndTime ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-primary">En construction...</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-primary">En construction...</span>
+                      </div>
                       <Timer
                         endTime={new Date(building.upgradeEndTime)}
+                        totalDuration={building.nextLevelTime}
                         onComplete={() => {
                           utils.building.list.invalidate({ planetId: planetId! });
                           utils.resource.production.invalidate({ planetId: planetId! });
