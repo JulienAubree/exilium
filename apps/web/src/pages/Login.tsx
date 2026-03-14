@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { trpc } from '@/trpc';
+import { trpc, resetRefreshState } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
 
 export default function Login() {
@@ -15,6 +15,7 @@ export default function Login() {
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
+      resetRefreshState();
       setAuth(data.accessToken, data.refreshToken, data.user);
       navigate('/');
     },

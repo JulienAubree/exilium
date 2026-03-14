@@ -5,6 +5,7 @@ import type { AppRouter } from '@ogame-clone/api/trpc';
 export const trpc = createTRPCReact<AppRouter>();
 
 let refreshPromise: Promise<boolean> | null = null;
+let refreshFailed = false;
 
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = localStorage.getItem('refreshToken');
@@ -25,16 +26,43 @@ async function tryRefreshToken(): Promise<boolean> {
 
     localStorage.setItem('accessToken', result.accessToken);
     localStorage.setItem('refreshToken', result.refreshToken);
+    refreshFailed = false;
     return true;
   } catch {
     return false;
   }
 }
 
-function refreshOnUnauthorized() {
-  return (refreshPromise ??= tryRefreshToken().finally(() => {
+function forceLogout() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  // Redirect to login only if not already there
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+}
+
+function refreshOnUnauthorized(): Promise<boolean> {
+  // If refresh already failed this session, don't retry — force logout
+  if (refreshFailed) {
+    forceLogout();
+    return Promise.resolve(false);
+  }
+
+  return (refreshPromise ??= tryRefreshToken().then((success) => {
+    if (!success) {
+      refreshFailed = true;
+      forceLogout();
+    }
+    return success;
+  }).finally(() => {
     refreshPromise = null;
   }));
+}
+
+// Reset the failed flag when a new login succeeds (called externally)
+export function resetRefreshState() {
+  refreshFailed = false;
 }
 
 export function createTRPCClient() {
@@ -50,6 +78,12 @@ export function createTRPCClient() {
           let res = await fetch(url, options);
 
           if (res.status === 401) {
+            // Don't intercept auth endpoints
+            const urlStr = typeof url === 'string' ? url : url.toString();
+            if (urlStr.includes('auth.login') || urlStr.includes('auth.register')) {
+              return res;
+            }
+
             const refreshed = await refreshOnUnauthorized();
             if (refreshed) {
               const newToken = localStorage.getItem('accessToken');
