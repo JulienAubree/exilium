@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
@@ -50,7 +50,8 @@ export function createPlanetService(db: Database) {
       return db
         .select()
         .from(planets)
-        .where(eq(planets.userId, userId));
+        .where(eq(planets.userId, userId))
+        .orderBy(asc(planets.createdAt));
     },
 
     async getPlanet(userId: string, planetId: string) {
