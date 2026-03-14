@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Timer } from '@/components/common/Timer';
+import { OverviewSkeleton } from '@/components/common/PageSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Overview() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -62,12 +65,16 @@ export default function Overview() {
   });
 
   if (isLoading) {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return <OverviewSkeleton />;
   }
 
   const planet = planets?.find((p) => p.id === planetId) ?? planets?.[0];
   if (!planet) {
-    return <div className="p-6 text-muted-foreground">Aucune planète trouvée.</div>;
+    return (
+      <div className="p-6">
+        <EmptyState title="Aucune planète trouvée" description="Aucune planète n'est associée à votre compte." />
+      </div>
+    );
   }
 
   const activeBuilding = buildings?.find((b) => b.isUpgrading);
@@ -75,22 +82,31 @@ export default function Overview() {
   const activeQueue = queue?.filter((q) => q.endTime) ?? [];
   const hasActivity = activeBuilding || activeResearch || activeQueue.length > 0;
 
+  const activityBorderColor = (type: string) => {
+    switch (type) {
+      case 'building': return 'border-l-4 border-l-primary';
+      case 'research': return 'border-l-4 border-l-violet-500';
+      case 'shipyard': return 'border-l-4 border-l-orange-500';
+      default: return '';
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Vue d&apos;ensemble</h1>
+      <PageHeader title="Vue d'ensemble" />
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Activités en cours</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {!hasActivity && (
-            <p className="text-sm text-muted-foreground">Aucune activité en cours</p>
+            <EmptyState title="Aucune activité" description="Lancez une construction, une recherche ou un chantier." />
           )}
 
           {activeBuilding && activeBuilding.upgradeEndTime && (
             <div
-              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              className={`cursor-pointer space-y-1 rounded-md p-3 hover:bg-muted/50 ${activityBorderColor('building')}`}
               onClick={() => navigate('/buildings')}
             >
               <div className="flex items-center justify-between text-sm">
@@ -112,7 +128,7 @@ export default function Overview() {
 
           {activeResearch && activeResearch.researchEndTime && (
             <div
-              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              className={`cursor-pointer space-y-1 rounded-md p-3 hover:bg-muted/50 ${activityBorderColor('research')}`}
               onClick={() => navigate('/research')}
             >
               <div className="flex items-center justify-between text-sm">
@@ -134,7 +150,7 @@ export default function Overview() {
           {activeQueue.map((item) => (
             <div
               key={item.id}
-              className="cursor-pointer space-y-1 rounded-md p-2 hover:bg-muted/50"
+              className={`cursor-pointer space-y-1 rounded-md p-3 hover:bg-muted/50 ${activityBorderColor('shipyard')}`}
               onClick={() => navigate('/shipyard')}
             >
               <div className="flex items-center justify-between text-sm">
@@ -158,7 +174,7 @@ export default function Overview() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             {isRenaming ? (
@@ -221,15 +237,15 @@ export default function Overview() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-metal">Métal</span>
+              <span className="text-metal glow-metal">Métal</span>
               <span>{resources.metal.toLocaleString('fr-FR')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-crystal">Cristal</span>
+              <span className="text-crystal glow-crystal">Cristal</span>
               <span>{resources.crystal.toLocaleString('fr-FR')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-deuterium">Deutérium</span>
+              <span className="text-deuterium glow-deuterium">Deutérium</span>
               <span>{resources.deuterium.toLocaleString('fr-FR')}</span>
             </div>
           </CardContent>

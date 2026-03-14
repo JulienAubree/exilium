@@ -4,6 +4,8 @@ import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/common/Skeleton';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Galaxy() {
   const [galaxy, setGalaxy] = useState(1);
@@ -15,9 +17,9 @@ export default function Galaxy() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Galaxie</h1>
+      <PageHeader title="Galaxie" />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">Galaxie</label>
           <div className="flex items-center gap-1">
@@ -87,52 +89,92 @@ export default function Galaxy() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-muted-foreground">Chargement...</div>
+            <div className="space-y-2">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-2 py-1 w-12">Pos</th>
-                  <th className="px-2 py-1">Planète</th>
-                  <th className="px-2 py-1">Joueur</th>
-                  <th className="px-2 py-1 w-20">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.slots.map((slot, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
-                    {slot ? (
-                      <>
-                        <td className="px-2 py-1">{slot.planetName}</td>
-                        <td className="px-2 py-1">
-                          {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
-                          {slot.username}
-                          {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
-                            <Link
-                              to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
-                              className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
-                              title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}
-                            >
-                              DF
-                            </Link>
-                          )}
-                        </td>
-                        <td className="px-2 py-1">
-                          <span className="text-xs text-muted-foreground">-</span>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-2 py-1 text-muted-foreground">-</td>
-                        <td className="px-2 py-1 text-muted-foreground">-</td>
-                        <td className="px-2 py-1">-</td>
-                      </>
-                    )}
+            <>
+              {/* Desktop table */}
+              <table className="hidden sm:table w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="px-2 py-1 w-12">Pos</th>
+                    <th className="px-2 py-1">Planète</th>
+                    <th className="px-2 py-1">Joueur</th>
+                    <th className="px-2 py-1 w-20">Actions</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {data?.slots.map((slot, i) => (
+                    <tr key={i} className={`border-b border-border/50 ${!slot ? 'opacity-40' : ''}`}>
+                      <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
+                      {slot ? (
+                        <>
+                          <td className="px-2 py-1">{slot.planetName}</td>
+                          <td className="px-2 py-1">
+                            {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
+                            {slot.username}
+                            {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
+                              <Link
+                                to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                                className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
+                                title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}
+                              >
+                                DF
+                              </Link>
+                            )}
+                          </td>
+                          <td className="px-2 py-1">
+                            <span className="text-xs text-muted-foreground">-</span>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-2 py-1 text-muted-foreground">-</td>
+                          <td className="px-2 py-1 text-muted-foreground">-</td>
+                          <td className="px-2 py-1">-</td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-2">
+                {data?.slots.map((slot, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-md border border-border/50 p-3 text-sm ${!slot ? 'opacity-40' : ''}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-mono">{i + 1}</span>
+                      {slot ? (
+                        <span className="font-medium">{slot.planetName}</span>
+                      ) : (
+                        <span className="text-muted-foreground">Vide</span>
+                      )}
+                    </div>
+                    {slot && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
+                        {slot.username}
+                        {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
+                          <Link
+                            to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                            className="text-orange-400 ml-2 hover:underline"
+                          >
+                            DF
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

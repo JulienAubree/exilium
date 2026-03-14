@@ -4,6 +4,9 @@ import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PageHeader } from '@/components/common/PageHeader';
+import { cn } from '@/lib/utils';
 
 type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
 
@@ -16,7 +19,18 @@ const MISSION_LABELS: Record<Mission, string> = {
   recycle: 'Recycler',
 };
 
+const MISSION_ICONS: Record<Mission, string> = {
+  transport: 'T',
+  station: 'S',
+  spy: 'E',
+  attack: 'A',
+  colonize: 'C',
+  recycle: 'R',
+};
+
 const COMBAT_SHIPS = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'];
+
+const DANGEROUS_MISSIONS: Mission[] = ['attack', 'colonize'];
 
 function getMissionValidationError(mission: Mission, selectedShips: Record<string, number>): string | null {
   const hasShip = (id: string) => (selectedShips[id] ?? 0) > 0;
@@ -26,7 +40,7 @@ function getMissionValidationError(mission: Mission, selectedShips: Record<strin
       if (!hasShip('espionageProbe')) return 'La mission Espionner nécessite au moins 1 sonde d\'espionnage.';
       return null;
     case 'attack':
-      if (!COMBAT_SHIPS.some(hasShip)) return 'La mission Attaquer nécessite au moins 1 vaisseau de combat (chasseur léger, chasseur lourd, croiseur ou vaisseau de bataille).';
+      if (!COMBAT_SHIPS.some(hasShip)) return 'La mission Attaquer nécessite au moins 1 vaisseau de combat.';
       return null;
     case 'recycle': {
       const hasNonRecycler = Object.entries(selectedShips).some(([id, count]) => count > 0 && id !== 'recycler');
@@ -42,6 +56,35 @@ function getMissionValidationError(mission: Mission, selectedShips: Record<strin
   }
 }
 
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {[1, 2, 3].map((s, i) => (
+        <div key={s} className="flex items-center gap-2">
+          <div
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors',
+              s <= currentStep
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground',
+            )}
+          >
+            {s}
+          </div>
+          {i < 2 && (
+            <div
+              className={cn(
+                'h-0.5 w-8 rounded-full transition-colors',
+                s < currentStep ? 'bg-primary' : 'bg-muted',
+              )}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Fleet() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
@@ -53,6 +96,7 @@ export default function Fleet() {
   const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [searchParams, setSearchParams] = useSearchParams();
   const [prefillWarning, setPrefillWarning] = useState<string | null>(null);
+  const [confirmSend, setConfirmSend] = useState(false);
 
   const { data: ships } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -61,7 +105,6 @@ export default function Fleet() {
 
   const prefillRef = useRef<{ mission: Mission; galaxy: number; system: number; position: number } | null>(null);
 
-  // Read query params once on mount
   useEffect(() => {
     const paramMission = searchParams.get('mission') as Mission | null;
     if (!paramMission) return;
@@ -76,12 +119,9 @@ export default function Fleet() {
     prefillRef.current = data;
     setTarget({ galaxy: data.galaxy, system: data.system, position: data.position });
     setMission(data.mission);
-
-    // Clear params from URL
     setSearchParams({}, { replace: true });
   }, []);
 
-  // Auto-select ships and jump to step 2 when ships data loads
   useEffect(() => {
     if (!prefillRef.current || !ships) return;
 
@@ -106,26 +146,31 @@ export default function Fleet() {
       setStep(1);
       setSelectedShips({});
       setCargo({ metal: 0, crystal: 0, deuterium: 0 });
+      setConfirmSend(false);
     },
   });
 
   const hasShips = Object.values(selectedShips).some((v) => v > 0);
 
+  const handleSend = () => {
+    sendMutation.mutate({
+      originPlanetId: planetId!,
+      targetGalaxy: target.galaxy,
+      targetSystem: target.system,
+      targetPosition: target.position,
+      mission,
+      ships: selectedShips,
+      metalCargo: cargo.metal,
+      crystalCargo: cargo.crystal,
+      deuteriumCargo: cargo.deuterium,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Flotte</h1>
+      <PageHeader title="Flotte" />
 
-      {/* Step indicators */}
-      <div className="flex gap-2 text-sm">
-        {[1, 2, 3].map((s) => (
-          <span
-            key={s}
-            className={s === step ? 'text-primary font-bold' : 'text-muted-foreground'}
-          >
-            Étape {s}
-          </span>
-        ))}
-      </div>
+      <StepIndicator currentStep={step} />
 
       {step === 1 && (
         <Card>
@@ -181,7 +226,7 @@ export default function Fleet() {
             <CardTitle className="text-base">Destination et mission</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <div>
                 <label className="text-xs text-muted-foreground">Galaxie</label>
                 <Input
@@ -226,7 +271,9 @@ export default function Fleet() {
                     variant={mission === m ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setMission(m)}
+                    className="gap-1.5"
                   >
+                    <span className="text-xs font-bold opacity-60">{MISSION_ICONS[m]}</span>
                     {MISSION_LABELS[m]}
                   </Button>
                 ))}
@@ -266,7 +313,7 @@ export default function Fleet() {
             {(mission === 'transport' || mission === 'station') && (
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Cargo</label>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <div>
                     <label className="text-xs text-muted-foreground">Métal</label>
                     <Input
@@ -314,19 +361,13 @@ export default function Fleet() {
                 Retour
               </Button>
               <Button
-                onClick={() =>
-                  sendMutation.mutate({
-                    originPlanetId: planetId!,
-                    targetGalaxy: target.galaxy,
-                    targetSystem: target.system,
-                    targetPosition: target.position,
-                    mission,
-                    ships: selectedShips,
-                    metalCargo: cargo.metal,
-                    crystalCargo: cargo.crystal,
-                    deuteriumCargo: cargo.deuterium,
-                  })
-                }
+                onClick={() => {
+                  if (DANGEROUS_MISSIONS.includes(mission)) {
+                    setConfirmSend(true);
+                  } else {
+                    handleSend();
+                  }
+                }}
                 disabled={sendMutation.isPending || !!getMissionValidationError(mission, selectedShips)}
               >
                 Envoyer la flotte
@@ -335,6 +376,16 @@ export default function Fleet() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={confirmSend}
+        onConfirm={handleSend}
+        onCancel={() => setConfirmSend(false)}
+        title={`Confirmer la mission ${MISSION_LABELS[mission]} ?`}
+        description={`Vous êtes sur le point d'envoyer votre flotte en mission ${MISSION_LABELS[mission].toLowerCase()} vers [${target.galaxy}:${target.system}:${target.position}].`}
+        variant="destructive"
+        confirmLabel="Envoyer"
+      />
     </div>
   );
 }

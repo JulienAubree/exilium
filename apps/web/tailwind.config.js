@@ -48,6 +48,46 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-out',
+        'slide-in-left': 'slideInLeft 0.3s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'skeleton-shimmer': 'skeletonShimmer 1.5s ease-in-out infinite',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        slideInLeft: {
+          from: { transform: 'translateX(-100%)' },
+          to: { transform: 'translateX(0)' },
+        },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseGlow: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
+        },
+        skeletonShimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        slideInRight: {
+          from: { opacity: '0', transform: 'translateX(20px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
+      },
+      boxShadow: {
+        'glow-metal': 'var(--glow-metal)',
+        'glow-crystal': 'var(--glow-crystal)',
+        'glow-deuterium': 'var(--glow-deuterium)',
+        'glow-energy': 'var(--glow-energy)',
+      },
     },
   },
   plugins: [],

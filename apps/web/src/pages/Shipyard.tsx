@@ -8,13 +8,9 @@ import { Input } from '@/components/ui/input';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
-
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return [h > 0 ? `${h}h` : '', m > 0 ? `${m}m` : '', `${s}s`].filter(Boolean).join(' ');
-}
+import { formatDuration } from '@/lib/format';
+import { CardGridSkeleton } from '@/components/common/PageSkeleton';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Shipyard() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -62,12 +58,17 @@ export default function Shipyard() {
   });
 
   if (isLoading || !ships) {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <PageHeader title="Chantier spatial" />
+        <CardGridSkeleton count={6} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Chantier spatial</h1>
+      <PageHeader title="Chantier spatial" />
 
       {queue && queue.length > 0 && (
         <Card>
@@ -76,7 +77,7 @@ export default function Shipyard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {queue.map((item) => (
-              <div key={item.id} className="space-y-1">
+              <div key={item.id} className="space-y-1 border-l-4 border-l-orange-500 pl-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>{item.itemId} x{item.quantity - (item.completedCount ?? 0)}</span>
                 </div>
@@ -96,7 +97,7 @@ export default function Shipyard() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {ships.map((ship) => {
           const qty = quantities[ship.id] || 1;
           const totalCost = {
@@ -142,7 +143,13 @@ export default function Shipyard() {
                 </div>
 
                 {!ship.prerequisitesMet && (
-                  <p className="text-xs text-destructive">Prérequis manquants</p>
+                  <div className="flex items-center gap-1.5 text-xs text-destructive">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Prérequis manquants
+                  </div>
                 )}
 
                 {ship.prerequisitesMet && (

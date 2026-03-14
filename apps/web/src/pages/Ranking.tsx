@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TablePageSkeleton } from '@/components/common/PageSkeleton';
+import { PageHeader } from '@/components/common/PageHeader';
+import { cn } from '@/lib/utils';
+
+const MEDALS = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
 export default function Ranking() {
   const [page, setPage] = useState(1);
@@ -11,12 +16,14 @@ export default function Ranking() {
   const { data: myRank } = trpc.ranking.me.useQuery();
 
   if (isLoading) {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return <TablePageSkeleton />;
   }
+
+  const totalPages = rankings && rankings.length === limit ? page + 1 : page;
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Classement</h1>
+      <PageHeader title="Classement" />
 
       {myRank && myRank.rank > 0 && (
         <div className="text-sm text-muted-foreground">
@@ -38,13 +45,33 @@ export default function Ranking() {
               </tr>
             </thead>
             <tbody>
-              {rankings?.map((entry) => (
-                <tr key={entry.userId} className="border-b border-border/50">
-                  <td className="px-2 py-1 font-mono">{entry.rank}</td>
-                  <td className="px-2 py-1">{entry.username}</td>
-                  <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
-                </tr>
-              ))}
+              {rankings?.map((entry) => {
+                const isMe = myRank && entry.userId === myRank.userId;
+                const medalIdx = entry.rank - 1;
+                return (
+                  <tr
+                    key={entry.userId}
+                    className={cn(
+                      'border-b border-border/50',
+                      isMe && 'bg-primary/5',
+                    )}
+                  >
+                    <td className="px-2 py-1 font-mono">
+                      {medalIdx < 3 ? (
+                        <span className={cn('text-lg', MEDALS[medalIdx])}>
+                          {medalIdx === 0 ? '🥇' : medalIdx === 1 ? '🥈' : '🥉'}
+                        </span>
+                      ) : (
+                        entry.rank
+                      )}
+                    </td>
+                    <td className={cn('px-2 py-1', isMe && 'font-semibold text-primary')}>
+                      {entry.username}
+                    </td>
+                    <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
+                  </tr>
+                );
+              })}
               {(!rankings || rankings.length === 0) && (
                 <tr>
                   <td colSpan={3} className="px-2 py-4 text-center text-muted-foreground">
@@ -55,7 +82,7 @@ export default function Ranking() {
             </tbody>
           </table>
 
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="flex items-center justify-center gap-2 mt-4">
             <Button
               variant="outline"
               size="sm"
@@ -64,7 +91,20 @@ export default function Ranking() {
             >
               Précédent
             </Button>
-            <span className="text-sm text-muted-foreground self-center">Page {page}</span>
+            {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+              const p = i + 1;
+              return (
+                <Button
+                  key={p}
+                  variant={p === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setPage(p)}
+                  className="w-8 px-0"
+                >
+                  {p}
+                </Button>
+              );
+            })}
             <Button
               variant="outline"
               size="sm"

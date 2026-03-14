@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { TablePageSkeleton } from '@/components/common/PageSkeleton';
+import { PageHeader } from '@/components/common/PageHeader';
 
 type Tab = 'inbox' | 'sent';
 
@@ -17,6 +20,7 @@ export default function Messages() {
   const [showReply, setShowReply] = useState(false);
   const [newMsg, setNewMsg] = useState({ recipientUsername: '', subject: '', body: '' });
   const [typeFilter, setTypeFilter] = useState<string | undefined>();
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const { data: inbox, isLoading } = trpc.message.inbox.useQuery(
     typeFilter ? { type: typeFilter as any } : undefined,
@@ -66,10 +70,10 @@ export default function Messages() {
       utils.message.unreadCount.invalidate();
       setSelectedId(null);
       setThreadId(null);
+      setDeleteConfirm(null);
     },
   });
 
-  // Refresh unread count & inbox when a message detail is loaded (marks as read server-side)
   useEffect(() => {
     if (detail) {
       utils.message.unreadCount.invalidate();
@@ -77,7 +81,6 @@ export default function Messages() {
     }
   }, [detail?.id]);
 
-  // Refresh when thread data arrives (getThread marks messages as read server-side)
   useEffect(() => {
     if (thread && thread.length > 0) {
       utils.message.unreadCount.invalidate();
@@ -86,7 +89,7 @@ export default function Messages() {
   }, [thread]);
 
   if (isLoading && tab === 'inbox') {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return <TablePageSkeleton />;
   }
 
   const handleSelectMessage = (msgId: string, msgThreadId: string | null) => {
@@ -110,19 +113,20 @@ export default function Messages() {
     setShowReply(false);
   };
 
-  // Determine which message to reply to (last in thread or selected)
   const replyTargetId = threadId && thread && thread.length > 0
     ? thread[thread.length - 1].id
     : selectedId;
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Messages</h1>
-        <Button size="sm" onClick={() => { setShowCompose(!showCompose); setSelectedId(null); setThreadId(null); }}>
-          {showCompose ? 'Annuler' : 'Nouveau message'}
-        </Button>
-      </div>
+      <PageHeader
+        title="Messages"
+        actions={
+          <Button size="sm" onClick={() => { setShowCompose(!showCompose); setSelectedId(null); setThreadId(null); }}>
+            {showCompose ? 'Annuler' : 'Nouveau message'}
+          </Button>
+        }
+      />
 
       {showCompose && (
         <Card>
@@ -167,7 +171,6 @@ export default function Messages() {
         </Card>
       )}
 
-      {/* Tab selector */}
       <div className="flex gap-2">
         <Button
           variant={tab === 'inbox' ? 'default' : 'outline'}
@@ -185,7 +188,6 @@ export default function Messages() {
         </Button>
       </div>
 
-      {/* Type filter (inbox only) */}
       {tab === 'inbox' && (
         <div className="flex gap-2 flex-wrap">
           {[
@@ -209,7 +211,7 @@ export default function Messages() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-[1fr_1fr]">
         {/* Message list */}
         <Card>
           <CardHeader>
@@ -278,7 +280,7 @@ export default function Messages() {
 
         {/* Detail / Thread panel */}
         {threadId && thread && thread.length > 0 ? (
-          <Card>
+          <Card className="md:block hidden md:visible">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">
@@ -307,7 +309,6 @@ export default function Messages() {
                 </div>
               ))}
 
-              {/* Reply form (only for player messages) */}
               {thread[0].type === 'player' && (
                 showReply ? (
                   <div className="space-y-2 border-t border-border pt-3">
@@ -355,14 +356,14 @@ export default function Messages() {
             </CardContent>
           </Card>
         ) : selectedId && detail ? (
-          <Card>
+          <Card className="md:block hidden md:visible">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{detail.subject}</CardTitle>
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => deleteMutation.mutate({ messageId: selectedId })}
+                  onClick={() => setDeleteConfirm(selectedId)}
                   disabled={deleteMutation.isPending}
                 >
                   Supprimer
@@ -375,7 +376,6 @@ export default function Messages() {
             <CardContent className="space-y-3">
               <p className="text-sm whitespace-pre-wrap">{detail.body}</p>
 
-              {/* Reply button (only for player messages) */}
               {detail.type === 'player' && (
                 showReply ? (
                   <div className="space-y-2 border-t border-border pt-3">
@@ -419,7 +419,88 @@ export default function Messages() {
             </CardContent>
           </Card>
         ) : null}
+
+        {/* Mobile detail overlay */}
+        {(selectedId || threadId) && (
+          <div className="md:hidden fixed inset-0 z-40 bg-background/95 overflow-y-auto p-4 animate-slide-up">
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-4"
+              onClick={() => { setSelectedId(null); setThreadId(null); setShowReply(false); }}
+            >
+              ← Retour
+            </Button>
+            {threadId && thread && thread.length > 0 ? (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">{thread[0].subject}</h2>
+                {thread.map((msg) => (
+                  <div key={msg.id} className="rounded border border-border p-3 space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>De : {msg.senderUsername ?? 'Système'}</span>
+                      <span>{new Date(msg.createdAt).toLocaleString('fr-FR')}</span>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                  </div>
+                ))}
+                {thread[0].type === 'player' && (
+                  showReply ? (
+                    <div className="space-y-2">
+                      <textarea
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        rows={3}
+                        placeholder="Votre réponse..."
+                        value={replyBody}
+                        onChange={(e) => setReplyBody(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => { if (replyTargetId) replyMutation.mutate({ messageId: replyTargetId, body: replyBody }); }} disabled={replyMutation.isPending || !replyBody.trim()}>Envoyer</Button>
+                        <Button variant="outline" size="sm" onClick={() => { setShowReply(false); setReplyBody(''); }}>Annuler</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => setShowReply(true)}>Répondre</Button>
+                  )
+                )}
+              </div>
+            ) : detail ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">{detail.subject}</h2>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteConfirm(selectedId)}>Supprimer</Button>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  De : {detail.senderUsername ?? 'Système'} — {new Date(detail.createdAt).toLocaleString('fr-FR')}
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{detail.body}</p>
+                {detail.type === 'player' && (
+                  showReply ? (
+                    <div className="space-y-2">
+                      <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" rows={3} value={replyBody} onChange={(e) => setReplyBody(e.target.value)} placeholder="Votre réponse..." />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => replyMutation.mutate({ messageId: selectedId!, body: replyBody })} disabled={replyMutation.isPending || !replyBody.trim()}>Envoyer</Button>
+                        <Button variant="outline" size="sm" onClick={() => { setShowReply(false); setReplyBody(''); }}>Annuler</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => setShowReply(true)}>Répondre</Button>
+                  )
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onConfirm={() => { if (deleteConfirm) deleteMutation.mutate({ messageId: deleteConfirm }); }}
+        onCancel={() => setDeleteConfirm(null)}
+        title="Supprimer ce message ?"
+        description="Cette action est irréversible."
+        variant="destructive"
+        confirmLabel="Supprimer"
+      />
     </div>
   );
 }

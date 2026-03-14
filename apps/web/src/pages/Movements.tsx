@@ -1,7 +1,13 @@
+import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Timer } from '@/components/common/Timer';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { CardGridSkeleton } from '@/components/common/PageSkeleton';
+import { PageHeader } from '@/components/common/PageHeader';
+import { cn } from '@/lib/utils';
 
 const MISSION_LABELS: Record<string, string> = {
   transport: 'Transport',
@@ -11,35 +17,54 @@ const MISSION_LABELS: Record<string, string> = {
   colonize: 'Colonisation',
 };
 
+const MISSION_BORDER_COLORS: Record<string, string> = {
+  transport: 'border-l-primary',
+  station: 'border-l-green-500',
+  spy: 'border-l-violet-500',
+  attack: 'border-l-destructive',
+  colonize: 'border-l-orange-500',
+};
+
 export default function Movements() {
   const utils = trpc.useUtils();
+  const [recallConfirm, setRecallConfirm] = useState<string | null>(null);
 
   const { data: movements, isLoading } = trpc.fleet.movements.useQuery();
 
   const recallMutation = trpc.fleet.recall.useMutation({
     onSuccess: () => {
       utils.fleet.movements.invalidate();
+      setRecallConfirm(null);
     },
   });
 
   if (isLoading) {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <PageHeader title="Mouvements" />
+        <CardGridSkeleton count={3} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Mouvements</h1>
+      <PageHeader title="Mouvements" />
 
       {!movements || movements.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aucun mouvement de flotte en cours.</p>
+        <EmptyState
+          title="Aucun mouvement en cours"
+          description="Envoyez une flotte depuis la page Flotte pour voir vos mouvements ici."
+        />
       ) : (
         <div className="space-y-4">
           {movements.map((event) => {
             const ships = event.ships as Record<string, number>;
             const isOutbound = event.phase === 'outbound';
+            const borderColor = MISSION_BORDER_COLORS[event.mission] || 'border-l-muted';
 
             return (
-              <Card key={event.id}>
+              <Card key={event.id} className={cn('border-l-4', borderColor)}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">
@@ -68,7 +93,9 @@ export default function Movements() {
                   </div>
                   {(Number(event.metalCargo) > 0 || Number(event.crystalCargo) > 0 || Number(event.deuteriumCargo) > 0) && (
                     <div className="text-xs text-muted-foreground">
-                      Cargo : M:{Number(event.metalCargo).toLocaleString('fr-FR')} C:{Number(event.crystalCargo).toLocaleString('fr-FR')} D:{Number(event.deuteriumCargo).toLocaleString('fr-FR')}
+                      Cargo : <span className="text-metal">M:{Number(event.metalCargo).toLocaleString('fr-FR')}</span>{' '}
+                      <span className="text-crystal">C:{Number(event.crystalCargo).toLocaleString('fr-FR')}</span>{' '}
+                      <span className="text-deuterium">D:{Number(event.deuteriumCargo).toLocaleString('fr-FR')}</span>
                     </div>
                   )}
 
@@ -76,7 +103,7 @@ export default function Movements() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => recallMutation.mutate({ fleetEventId: event.id })}
+                      onClick={() => setRecallConfirm(event.id)}
                       disabled={recallMutation.isPending}
                     >
                       Rappeler
@@ -88,6 +115,18 @@ export default function Movements() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!recallConfirm}
+        onConfirm={() => {
+          if (recallConfirm) recallMutation.mutate({ fleetEventId: recallConfirm });
+        }}
+        onCancel={() => setRecallConfirm(null)}
+        title="Rappeler la flotte ?"
+        description="La flotte fera demi-tour et retournera à sa planète d'origine."
+        variant="destructive"
+        confirmLabel="Rappeler"
+      />
     </div>
   );
 }

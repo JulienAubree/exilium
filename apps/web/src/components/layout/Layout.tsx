@@ -12,12 +12,10 @@ export function Layout() {
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
 
-  // Resolve the active planet: use store value if valid, else fallback to first planet
   const resolvedPlanetId = planets?.find((p) => p.id === activePlanetId)
     ? activePlanetId
     : planets?.[0]?.id ?? null;
 
-  // Sync store if fallback was used
   useEffect(() => {
     if (resolvedPlanetId && resolvedPlanetId !== activePlanetId) {
       setActivePlanet(resolvedPlanetId);
@@ -27,11 +25,11 @@ export function Layout() {
   useNotifications();
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-background bg-stars text-foreground">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar planetId={resolvedPlanetId} planets={planets ?? []} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto animate-fade-in">
           <Outlet context={{ planetId: resolvedPlanetId }} />
         </main>
       </div>

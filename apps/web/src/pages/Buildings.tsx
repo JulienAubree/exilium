@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -7,17 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
-
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return [h > 0 ? `${h}h` : '', m > 0 ? `${m}m` : '', `${s}s`].filter(Boolean).join(' ');
-}
+import { formatDuration } from '@/lib/format';
+import { CardGridSkeleton } from '@/components/common/PageSkeleton';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Buildings() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
+  const [cancelConfirm, setCancelConfirm] = useState(false);
 
   const { data: buildings, isLoading } = trpc.building.list.useQuery(
     { planetId: planetId! },
@@ -57,20 +56,26 @@ export default function Buildings() {
     onSuccess: () => {
       utils.building.list.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      setCancelConfirm(false);
     },
   });
 
   if (isLoading || !buildings) {
-    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <PageHeader title="Bâtiments" />
+        <CardGridSkeleton count={6} />
+      </div>
+    );
   }
 
   const isAnyUpgrading = buildings.some((b) => b.isUpgrading);
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Bâtiments</h1>
+      <PageHeader title="Bâtiments" />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {buildings.map((building) => {
           const canAfford =
             resources.metal >= building.nextLevelCost.metal &&
@@ -78,7 +83,7 @@ export default function Buildings() {
             resources.deuterium >= building.nextLevelCost.deuterium;
 
           return (
-            <Card key={building.id}>
+            <Card key={building.id} className="hover:shadow-glow-metal/20">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
                   <GameImage
@@ -132,7 +137,7 @@ export default function Buildings() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => cancelMutation.mutate({ planetId: planetId! })}
+                      onClick={() => setCancelConfirm(true)}
                       disabled={cancelMutation.isPending}
                     >
                       Annuler
@@ -157,6 +162,16 @@ export default function Buildings() {
           );
         })}
       </div>
+
+      <ConfirmDialog
+        open={cancelConfirm}
+        onConfirm={() => cancelMutation.mutate({ planetId: planetId! })}
+        onCancel={() => setCancelConfirm(false)}
+        title="Annuler la construction ?"
+        description="Les ressources investies seront partiellement remboursées."
+        variant="destructive"
+        confirmLabel="Annuler la construction"
+      />
     </div>
   );
 }

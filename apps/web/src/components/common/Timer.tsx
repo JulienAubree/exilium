@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 interface TimerProps {
   endTime: Date;
@@ -22,6 +23,7 @@ export function Timer({ endTime, totalDuration, onComplete, className }: TimerPr
   const [secondsLeft, setSecondsLeft] = useState(() =>
     Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000)),
   );
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null;
@@ -31,6 +33,7 @@ export function Timer({ endTime, totalDuration, onComplete, className }: TimerPr
       setSecondsLeft(remaining);
       if (remaining <= 0) {
         if (id) clearInterval(id);
+        setCompleted(true);
         onCompleteRef.current?.();
       }
     };
@@ -44,13 +47,26 @@ export function Timer({ endTime, totalDuration, onComplete, className }: TimerPr
     ? Math.min(100, ((totalDuration - secondsLeft) / totalDuration) * 100)
     : null;
 
+  const isUrgent = secondsLeft > 0 && secondsLeft < 60;
+
   return (
     <div className={className}>
-      <span className="text-xs font-mono">{formatTimeLeft(secondsLeft)}</span>
+      <span className={cn(
+        'text-xs font-mono',
+        completed && 'text-green-400',
+        isUrgent && 'animate-pulse-glow text-energy',
+      )}>
+        {formatTimeLeft(secondsLeft)}
+      </span>
       {progress !== null && (
-        <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
+        <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-1.5 rounded-full bg-primary transition-[width] duration-1000 ease-linear"
+            className={cn(
+              'h-1.5 rounded-full transition-[width] duration-1000 ease-linear',
+              completed
+                ? 'bg-green-400'
+                : 'bg-gradient-to-r from-primary to-crystal',
+            )}
             style={{ width: `${progress}%` }}
           />
         </div>

@@ -3,12 +3,20 @@ import { trpc } from '@/trpc';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { CardGridSkeleton } from '@/components/common/PageSkeleton';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Alliance() {
   const { data: myAlliance, isLoading } = trpc.alliance.myAlliance.useQuery();
   const { data: invitations } = trpc.alliance.myInvitations.useQuery();
 
-  if (isLoading) return <div className="p-6 text-muted-foreground">Chargement...</div>;
+  if (isLoading) return (
+    <div className="space-y-6 p-6">
+      <PageHeader title="Alliance" />
+      <CardGridSkeleton count={2} />
+    </div>
+  );
 
   if (!myAlliance) return <NoAllianceView invitations={invitations ?? []} />;
   return <AllianceView alliance={myAlliance} />;
@@ -43,7 +51,7 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Alliance</h1>
+      <PageHeader title="Alliance" />
 
       <div className="flex gap-2">
         <Button variant={tab === 'create' ? 'default' : 'outline'} size="sm" onClick={() => setTab('create')}>Créer</Button>
@@ -93,7 +101,7 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
           <CardHeader><CardTitle className="text-base">Invitations reçues</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {invitations.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between border-b border-border/50 py-2">
+              <div key={inv.id} className="flex flex-wrap items-center justify-between border-b border-border/50 py-2 gap-2">
                 <span className="text-sm">[{inv.allianceTag}] {inv.allianceName} — invité par {inv.invitedByUsername}</span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => respondMutation.mutate({ invitationId: inv.id, accept: true })}>Accepter</Button>
@@ -115,6 +123,8 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   const [circularBody, setCircularBody] = useState('');
   const [description, setDescription] = useState(alliance.description ?? '');
   const [showApplications, setShowApplications] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [kickConfirm, setKickConfirm] = useState<string | null>(null);
 
   const { data: applications } = trpc.alliance.applications.useQuery(undefined, {
     enabled: showApplications && (alliance.myRole === 'founder' || alliance.myRole === 'officer'),
@@ -125,8 +135,12 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
     utils.alliance.applications.invalidate();
   };
 
-  const leaveMutation = trpc.alliance.leave.useMutation({ onSuccess: invalidateAll });
-  const kickMutation = trpc.alliance.kick.useMutation({ onSuccess: invalidateAll });
+  const leaveMutation = trpc.alliance.leave.useMutation({
+    onSuccess: () => { invalidateAll(); setLeaveConfirm(false); },
+  });
+  const kickMutation = trpc.alliance.kick.useMutation({
+    onSuccess: () => { invalidateAll(); setKickConfirm(null); },
+  });
   const setRoleMutation = trpc.alliance.setRole.useMutation({ onSuccess: invalidateAll });
   const inviteMutation = trpc.alliance.invite.useMutation({ onSuccess: () => setInviteUsername('') });
   const circularMutation = trpc.alliance.sendCircular.useMutation({ onSuccess: () => { setCircularSubject(''); setCircularBody(''); } });
@@ -138,19 +152,22 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">[{alliance.tag}] {alliance.name}</h1>
-        <Button variant="destructive" size="sm" onClick={() => leaveMutation.mutate()} disabled={leaveMutation.isPending}>
-          Quitter
-        </Button>
-      </div>
+      <PageHeader
+        title={`[${alliance.tag}] ${alliance.name}`}
+        actions={
+          <Button variant="destructive" size="sm" onClick={() => setLeaveConfirm(true)} disabled={leaveMutation.isPending}>
+            Quitter
+          </Button>
+        }
+      />
 
       {alliance.description && <p className="text-sm text-muted-foreground">{alliance.description}</p>}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Membres ({alliance.members.length})</CardTitle></CardHeader>
         <CardContent>
-          <table className="w-full text-sm">
+          {/* Desktop table */}
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
                 <th className="px-2 py-1">Joueur</th>
@@ -173,7 +190,7 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
                         </Button>
                       )}
                       {m.role !== 'founder' && !(m.role === 'officer' && !isFounder) && (
-                        <Button size="sm" variant="destructive" onClick={() => kickMutation.mutate({ userId: m.userId })}>
+                        <Button size="sm" variant="destructive" onClick={() => setKickConfirm(m.userId)}>
                           Expulser
                         </Button>
                       )}
@@ -183,6 +200,33 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
               ))}
             </tbody>
           </table>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-2">
+            {alliance.members.map((m) => (
+              <div key={m.userId} className="rounded-md border border-border/50 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{m.username}</span>
+                  <span className="text-xs capitalize text-muted-foreground">{m.role}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">Depuis {new Date(m.joinedAt).toLocaleDateString('fr-FR')}</div>
+                {isLeader && m.role !== 'founder' && (
+                  <div className="flex gap-1">
+                    {isFounder && (
+                      <Button size="sm" variant="outline" onClick={() => setRoleMutation.mutate({ userId: m.userId, role: m.role === 'officer' ? 'member' : 'officer' })}>
+                        {m.role === 'officer' ? 'Rétrograder' : 'Promouvoir'}
+                      </Button>
+                    )}
+                    {!(m.role === 'officer' && !isFounder) && (
+                      <Button size="sm" variant="destructive" onClick={() => setKickConfirm(m.userId)}>
+                        Expulser
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -190,7 +234,7 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
         <>
           <Card>
             <CardHeader><CardTitle className="text-base">Inviter un joueur</CardTitle></CardHeader>
-            <CardContent className="flex gap-2">
+            <CardContent className="flex flex-wrap gap-2">
               <Input value={inviteUsername} onChange={(e) => setInviteUsername(e.target.value)} placeholder="Nom du joueur" className="w-60" />
               <Button onClick={() => inviteMutation.mutate({ username: inviteUsername })} disabled={inviteMutation.isPending || !inviteUsername}>
                 Inviter
@@ -225,7 +269,7 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
                   <p className="text-sm text-muted-foreground">Aucune candidature en attente.</p>
                 ) : (
                   applications.map((app) => (
-                    <div key={app.id} className="flex items-center justify-between border-b border-border/50 py-2">
+                    <div key={app.id} className="flex flex-wrap items-center justify-between border-b border-border/50 py-2 gap-2">
                       <span className="text-sm">{app.applicantUsername}</span>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => respondAppMutation.mutate({ applicationId: app.id, accept: true })}>Accepter</Button>
@@ -249,6 +293,26 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
           </Card>
         </>
       )}
+
+      <ConfirmDialog
+        open={leaveConfirm}
+        onConfirm={() => leaveMutation.mutate()}
+        onCancel={() => setLeaveConfirm(false)}
+        title="Quitter l'alliance ?"
+        description="Vous ne pourrez pas revenir sans nouvelle invitation ou candidature."
+        variant="destructive"
+        confirmLabel="Quitter"
+      />
+
+      <ConfirmDialog
+        open={!!kickConfirm}
+        onConfirm={() => { if (kickConfirm) kickMutation.mutate({ userId: kickConfirm }); }}
+        onCancel={() => setKickConfirm(null)}
+        title="Expulser ce membre ?"
+        description="Le joueur sera immédiatement retiré de l'alliance."
+        variant="destructive"
+        confirmLabel="Expulser"
+      />
     </div>
   );
 }
