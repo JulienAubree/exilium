@@ -6,6 +6,39 @@ export const trpc = createTRPCReact<AppRouter>();
 
 let refreshPromise: Promise<boolean> | null = null;
 let refreshFailed = false;
+let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getTokenExpiry(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+function scheduleProactiveRefresh() {
+  if (proactiveRefreshTimer) clearTimeout(proactiveRefreshTimer);
+
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  const expiry = getTokenExpiry(token);
+  if (!expiry) return;
+
+  // Refresh 5 minutes before expiry, minimum 10 seconds from now
+  const refreshAt = Math.max(expiry - 5 * 60 * 1000, Date.now() + 10_000);
+  const delay = refreshAt - Date.now();
+
+  if (delay <= 0) return;
+
+  proactiveRefreshTimer = setTimeout(async () => {
+    const success = await tryRefreshToken();
+    if (success) {
+      scheduleProactiveRefresh();
+    }
+  }, delay);
+}
 
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = localStorage.getItem('refreshToken');
@@ -34,6 +67,7 @@ async function tryRefreshToken(): Promise<boolean> {
 }
 
 function forceLogout() {
+  if (proactiveRefreshTimer) clearTimeout(proactiveRefreshTimer);
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   // Redirect to login only if not already there
@@ -53,6 +87,8 @@ function refreshOnUnauthorized(): Promise<boolean> {
     if (!success) {
       refreshFailed = true;
       forceLogout();
+    } else {
+      scheduleProactiveRefresh();
     }
     return success;
   }).finally(() => {
@@ -63,7 +99,11 @@ function refreshOnUnauthorized(): Promise<boolean> {
 // Reset the failed flag when a new login succeeds (called externally)
 export function resetRefreshState() {
   refreshFailed = false;
+  scheduleProactiveRefresh();
 }
+
+// Schedule on page load if token exists
+scheduleProactiveRefresh();
 
 export function createTRPCClient() {
   return trpc.createClient({
