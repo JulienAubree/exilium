@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { SHIPS, type ShipId } from '@ogame-clone/game-engine';
+import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 export default function Shipyard() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -147,14 +148,10 @@ export default function Shipyard() {
                   </div>
                 </div>
 
-                {!ship.prerequisitesMet && (
-                  <div className="flex items-center gap-1.5 text-xs text-destructive">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Prérequis manquants
-                  </div>
+                {!ship.prerequisitesMet && ship.missingPrerequisites.length > 0 && (
+                  <p className="text-xs text-destructive">
+                    Prérequis : {ship.missingPrerequisites.map(formatMissingPrerequisite).join(', ')}
+                  </p>
                 )}
 
                 {ship.prerequisitesMet && (

@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { DefenseDetailContent } from '@/components/entity-details/DefenseDetailContent';
 import { DEFENSES, type DefenseId } from '@ogame-clone/game-engine';
+import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 export default function Defense() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -121,14 +122,10 @@ export default function Defense() {
                   </div>
                 </div>
 
-                {!defense.prerequisitesMet && (
-                  <div className="flex items-center gap-1.5 text-xs text-destructive">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Prérequis manquants
-                  </div>
+                {!defense.prerequisitesMet && defense.missingPrerequisites.length > 0 && (
+                  <p className="text-xs text-destructive">
+                    Prérequis : {defense.missingPrerequisites.map(formatMissingPrerequisite).join(', ')}
+                  </p>
                 )}
 
                 {defense.prerequisitesMet && maxQty > 0 && (

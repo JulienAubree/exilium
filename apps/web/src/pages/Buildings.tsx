@@ -86,6 +86,12 @@ export default function Buildings() {
             resources.crystal >= building.nextLevelCost.crystal &&
             resources.deuterium >= building.nextLevelCost.deuterium;
 
+          const unmetPrereqs = building.prerequisites.filter((prereq) => {
+            const prereqBuilding = buildings.find((b) => b.id === prereq.buildingId);
+            return !prereqBuilding || prereqBuilding.currentLevel < prereq.level;
+          });
+          const prereqsMet = unmetPrereqs.length === 0;
+
           return (
             <Card key={building.id} className="relative hover:shadow-glow-metal/20">
               <InfoButton onClick={() => setDetailId(building.id)} />
@@ -124,6 +130,15 @@ export default function Buildings() {
                   </div>
                 </div>
 
+                {!prereqsMet && (
+                  <p className="text-xs text-destructive">
+                    Prérequis : {unmetPrereqs.map((p) => {
+                      const b = buildings.find((b) => b.id === p.buildingId);
+                      return b ? `${b.name} niv. ${p.level}` : `${p.buildingId} niv. ${p.level}`;
+                    }).join(', ')}
+                  </p>
+                )}
+
                 {building.isUpgrading && building.upgradeEndTime ? (
                   <div className="space-y-2">
                     <div className="space-y-1">
@@ -157,7 +172,7 @@ export default function Buildings() {
                         buildingId: building.id,
                       })
                     }
-                    disabled={!canAfford || isAnyUpgrading || upgradeMutation.isPending}
+                    disabled={!canAfford || !prereqsMet || isAnyUpgrading || upgradeMutation.isPending}
                   >
                     Améliorer au niv. {building.currentLevel + 1}
                   </Button>
