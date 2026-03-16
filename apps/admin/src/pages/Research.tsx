@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -15,14 +16,42 @@ const FIELDS = [
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 
+const CREATE_FIELDS = [
+  { key: 'id', label: 'ID (identifiant unique)', type: 'text' as const },
+  { key: 'levelColumn', label: 'Colonne niveau (DB)', type: 'text' as const },
+  ...FIELDS,
+];
+
 export default function Research() {
   const { data, isLoading, refetch } = useGameConfig();
   const [editing, setEditing] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateResearch.useMutation({
     onSuccess: () => {
       refetch();
       setEditing(null);
+    },
+  });
+
+  const createMutation = trpc.gameConfig.admin.createResearch.useMutation({
+    onSuccess: () => {
+      refetch();
+      setCreating(false);
+    },
+  });
+
+  const deleteMutation = trpc.gameConfig.admin.deleteResearch.useMutation({
+    onSuccess: () => {
+      refetch();
+      setDeleting(null);
+      setDeleteError(null);
+    },
+    onError: (err) => {
+      setDeleting(null);
+      setDeleteError(err.message);
     },
   });
 
@@ -34,7 +63,19 @@ export default function Research() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-lg font-semibold text-gray-100 mb-4">Recherches</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-semibold text-gray-100">Recherches</h1>
+        <button onClick={() => setCreating(true)} className="admin-btn-primary flex items-center gap-1.5 text-sm">
+          <Plus className="w-4 h-4" /> Ajouter
+        </button>
+      </div>
+
+      {deleteError && (
+        <div className="mb-4 p-3 rounded bg-red-900/30 border border-red-800 text-red-300 text-sm">
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-2 text-red-400 hover:text-red-200">✕</button>
+        </div>
+      )}
 
       <div className="admin-card overflow-x-auto">
         <table className="admin-table">
@@ -66,12 +107,22 @@ export default function Research() {
                   ].join(', ') || '-'}
                 </td>
                 <td>
-                  <button
-                    onClick={() => setEditing(r.id)}
-                    className="admin-btn-ghost p-1.5"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setEditing(r.id)}
+                      className="admin-btn-ghost p-1.5"
+                      title="Modifier"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleting(r.id)}
+                      className="admin-btn-ghost p-1.5 text-red-400 hover:text-red-300"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -111,6 +162,52 @@ export default function Research() {
           saving={updateMutation.isPending}
         />
       )}
+
+      {creating && (
+        <EditModal
+          open={creating}
+          title="Nouvelle recherche"
+          fields={CREATE_FIELDS}
+          values={{
+            id: '',
+            levelColumn: '',
+            name: '',
+            description: '',
+            baseCostMinerai: 0,
+            baseCostSilicium: 0,
+            baseCostHydrogene: 0,
+            costFactor: 2,
+            sortOrder: 0,
+          }}
+          onSave={(values) => {
+            createMutation.mutate({
+              id: values.id as string,
+              name: values.name as string,
+              description: values.description as string,
+              baseCostMinerai: values.baseCostMinerai as number,
+              baseCostSilicium: values.baseCostSilicium as number,
+              baseCostHydrogene: values.baseCostHydrogene as number,
+              costFactor: values.costFactor as number,
+              levelColumn: values.levelColumn as string,
+              sortOrder: values.sortOrder as number,
+            });
+          }}
+          onClose={() => setCreating(false)}
+          saving={createMutation.isPending}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Supprimer la recherche"
+        message={`Êtes-vous sûr de vouloir supprimer "${deleting ? data.research[deleting]?.name : ''}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={() => {
+          if (deleting) deleteMutation.mutate({ id: deleting });
+        }}
+        onCancel={() => setDeleting(null)}
+      />
     </div>
   );
 }

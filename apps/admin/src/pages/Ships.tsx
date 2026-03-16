@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -20,14 +21,43 @@ const FIELDS = [
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 
+const CREATE_FIELDS = [
+  { key: 'id', label: 'ID (identifiant unique)', type: 'text' as const },
+  { key: 'countColumn', label: 'Colonne compteur (DB)', type: 'text' as const },
+  { key: 'driveType', label: 'Type de moteur', type: 'text' as const },
+  ...FIELDS,
+];
+
 export default function Ships() {
   const { data, isLoading, refetch } = useGameConfig();
   const [editing, setEditing] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateShip.useMutation({
     onSuccess: () => {
       refetch();
       setEditing(null);
+    },
+  });
+
+  const createMutation = trpc.gameConfig.admin.createShip.useMutation({
+    onSuccess: () => {
+      refetch();
+      setCreating(false);
+    },
+  });
+
+  const deleteMutation = trpc.gameConfig.admin.deleteShip.useMutation({
+    onSuccess: () => {
+      refetch();
+      setDeleting(null);
+      setDeleteError(null);
+    },
+    onError: (err) => {
+      setDeleting(null);
+      setDeleteError(err.message);
     },
   });
 
@@ -39,7 +69,19 @@ export default function Ships() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-lg font-semibold text-gray-100 mb-4">Vaisseaux</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-semibold text-gray-100">Vaisseaux</h1>
+        <button onClick={() => setCreating(true)} className="admin-btn-primary flex items-center gap-1.5 text-sm">
+          <Plus className="w-4 h-4" /> Ajouter
+        </button>
+      </div>
+
+      {deleteError && (
+        <div className="mb-4 p-3 rounded bg-red-900/30 border border-red-800 text-red-300 text-sm">
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-2 text-red-400 hover:text-red-200">✕</button>
+        </div>
+      )}
 
       <div className="admin-card overflow-x-auto">
         <table className="admin-table">
@@ -74,9 +116,18 @@ export default function Ships() {
                 <td className="font-mono text-sm">{s.cargoCapacity}</td>
                 <td className="text-xs text-gray-500">{s.driveType}</td>
                 <td>
-                  <button onClick={() => setEditing(s.id)} className="admin-btn-ghost p-1.5">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setEditing(s.id)} className="admin-btn-ghost p-1.5" title="Modifier">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleting(s.id)}
+                      className="admin-btn-ghost p-1.5 text-red-400 hover:text-red-300"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -126,6 +177,64 @@ export default function Ships() {
           saving={updateMutation.isPending}
         />
       )}
+
+      {creating && (
+        <EditModal
+          open={creating}
+          title="Nouveau vaisseau"
+          fields={CREATE_FIELDS}
+          values={{
+            id: '',
+            countColumn: '',
+            driveType: 'combustion',
+            name: '',
+            description: '',
+            costMinerai: 0,
+            costSilicium: 0,
+            costHydrogene: 0,
+            weapons: 0,
+            shield: 0,
+            armor: 0,
+            baseSpeed: 0,
+            fuelConsumption: 0,
+            cargoCapacity: 0,
+            sortOrder: 0,
+          }}
+          onSave={(values) => {
+            createMutation.mutate({
+              id: values.id as string,
+              name: values.name as string,
+              description: values.description as string,
+              costMinerai: values.costMinerai as number,
+              costSilicium: values.costSilicium as number,
+              costHydrogene: values.costHydrogene as number,
+              countColumn: values.countColumn as string,
+              driveType: values.driveType as string,
+              weapons: values.weapons as number,
+              shield: values.shield as number,
+              armor: values.armor as number,
+              baseSpeed: values.baseSpeed as number,
+              fuelConsumption: values.fuelConsumption as number,
+              cargoCapacity: values.cargoCapacity as number,
+              sortOrder: values.sortOrder as number,
+            });
+          }}
+          onClose={() => setCreating(false)}
+          saving={createMutation.isPending}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Supprimer le vaisseau"
+        message={`Êtes-vous sûr de vouloir supprimer "${deleting ? data.ships[deleting]?.name : ''}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={() => {
+          if (deleting) deleteMutation.mutate({ id: deleting });
+        }}
+        onCancel={() => setDeleting(null)}
+      />
     </div>
   );
 }

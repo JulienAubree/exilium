@@ -39,6 +39,32 @@ export function createGameConfigRouter(
         return { success: true };
       }),
 
+    createBuilding: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        baseCostMinerai: z.number().int().optional(),
+        baseCostSilicium: z.number().int().optional(),
+        baseCostHydrogene: z.number().int().optional(),
+        costFactor: z.number().optional(),
+        baseTime: z.number().int().optional(),
+        levelColumn: z.string().min(1),
+        categoryId: z.string().nullable().optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createBuilding(input);
+        return { success: true };
+      }),
+
+    deleteBuilding: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteBuilding(input.id);
+        return { success: true };
+      }),
+
     updateBuilding: adminProcedure
       .input(z.object({
         id: z.string(),
@@ -72,6 +98,31 @@ export function createGameConfigRouter(
         return { success: true };
       }),
 
+    createResearch: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        baseCostMinerai: z.number().int().optional(),
+        baseCostSilicium: z.number().int().optional(),
+        baseCostHydrogene: z.number().int().optional(),
+        costFactor: z.number().optional(),
+        levelColumn: z.string().min(1),
+        categoryId: z.string().nullable().optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createResearch(input);
+        return { success: true };
+      }),
+
+    deleteResearch: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteResearch(input.id);
+        return { success: true };
+      }),
+
     updateResearch: adminProcedure
       .input(z.object({
         id: z.string(),
@@ -102,6 +153,37 @@ export function createGameConfigRouter(
       }))
       .mutation(async ({ input }) => {
         await gameConfigService.updateResearchPrerequisites(input.researchId, input.prerequisites);
+        return { success: true };
+      }),
+
+    createShip: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        costMinerai: z.number().int().optional(),
+        costSilicium: z.number().int().optional(),
+        costHydrogene: z.number().int().optional(),
+        countColumn: z.string().min(1),
+        baseSpeed: z.number().int().optional(),
+        fuelConsumption: z.number().int().optional(),
+        cargoCapacity: z.number().int().optional(),
+        driveType: z.string().optional(),
+        weapons: z.number().int().optional(),
+        shield: z.number().int().optional(),
+        armor: z.number().int().optional(),
+        categoryId: z.string().nullable().optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createShip(input);
+        return { success: true };
+      }),
+
+    deleteShip: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteShip(input.id);
         return { success: true };
       }),
 
@@ -141,6 +223,34 @@ export function createGameConfigRouter(
       }))
       .mutation(async ({ input }) => {
         await gameConfigService.updateShipPrerequisites(input.shipId, input.prerequisites);
+        return { success: true };
+      }),
+
+    createDefense: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        costMinerai: z.number().int().optional(),
+        costSilicium: z.number().int().optional(),
+        costHydrogene: z.number().int().optional(),
+        countColumn: z.string().min(1),
+        weapons: z.number().int().optional(),
+        shield: z.number().int().optional(),
+        armor: z.number().int().optional(),
+        maxPerPlanet: z.number().int().nullable().optional(),
+        categoryId: z.string().nullable().optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createDefense(input);
+        return { success: true };
+      }),
+
+    deleteDefense: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteDefense(input.id);
         return { success: true };
       }),
 

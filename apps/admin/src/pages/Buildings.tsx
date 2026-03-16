@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil, ChevronDown, ChevronRight } from 'lucide-react';
+import { Pencil, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -14,6 +15,12 @@ const FIELDS = [
   { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
   { key: 'baseTime', label: 'Temps de base (s)', type: 'number' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
+];
+
+const CREATE_FIELDS = [
+  { key: 'id', label: 'ID (identifiant unique)', type: 'text' as const },
+  { key: 'levelColumn', label: 'Colonne niveau (DB)', type: 'text' as const },
+  ...FIELDS,
 ];
 
 const MAX_LEVEL = 25;
@@ -84,11 +91,33 @@ export default function Buildings() {
   const { data, isLoading, refetch } = useGameConfig();
   const [editing, setEditing] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateBuilding.useMutation({
     onSuccess: () => {
       refetch();
       setEditing(null);
+    },
+  });
+
+  const createMutation = trpc.gameConfig.admin.createBuilding.useMutation({
+    onSuccess: () => {
+      refetch();
+      setCreating(false);
+    },
+  });
+
+  const deleteMutation = trpc.gameConfig.admin.deleteBuilding.useMutation({
+    onSuccess: () => {
+      refetch();
+      setDeleting(null);
+      setDeleteError(null);
+    },
+    onError: (err) => {
+      setDeleting(null);
+      setDeleteError(err.message);
     },
   });
 
@@ -100,7 +129,19 @@ export default function Buildings() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-lg font-semibold text-gray-100 mb-4">Batiments</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-semibold text-gray-100">Batiments</h1>
+        <button onClick={() => setCreating(true)} className="admin-btn-primary flex items-center gap-1.5 text-sm">
+          <Plus className="w-4 h-4" /> Ajouter
+        </button>
+      </div>
+
+      {deleteError && (
+        <div className="mb-4 p-3 rounded bg-red-900/30 border border-red-800 text-red-300 text-sm">
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-2 text-red-400 hover:text-red-200">✕</button>
+        </div>
+      )}
 
       <div className="admin-card overflow-x-auto">
         <table className="admin-table">
@@ -163,13 +204,22 @@ export default function Buildings() {
                         : '-'}
                     </td>
                     <td>
-                      <button
-                        onClick={() => setEditing(b.id)}
-                        className="admin-btn-ghost p-1.5"
-                        title="Modifier"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditing(b.id)}
+                          className="admin-btn-ghost p-1.5"
+                          title="Modifier"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleting(b.id)}
+                          className="admin-btn-ghost p-1.5 text-red-400 hover:text-red-300"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {isExpanded && (
@@ -275,6 +325,54 @@ export default function Buildings() {
           saving={updateMutation.isPending}
         />
       )}
+
+      {creating && (
+        <EditModal
+          open={creating}
+          title="Nouveau bâtiment"
+          fields={CREATE_FIELDS}
+          values={{
+            id: '',
+            levelColumn: '',
+            name: '',
+            description: '',
+            baseCostMinerai: 0,
+            baseCostSilicium: 0,
+            baseCostHydrogene: 0,
+            costFactor: 1.5,
+            baseTime: 60,
+            sortOrder: 0,
+          }}
+          onSave={(values) => {
+            createMutation.mutate({
+              id: values.id as string,
+              name: values.name as string,
+              description: values.description as string,
+              baseCostMinerai: values.baseCostMinerai as number,
+              baseCostSilicium: values.baseCostSilicium as number,
+              baseCostHydrogene: values.baseCostHydrogene as number,
+              costFactor: values.costFactor as number,
+              baseTime: values.baseTime as number,
+              levelColumn: values.levelColumn as string,
+              sortOrder: values.sortOrder as number,
+            });
+          }}
+          onClose={() => setCreating(false)}
+          saving={createMutation.isPending}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Supprimer le bâtiment"
+        message={`Êtes-vous sûr de vouloir supprimer "${deleting ? data.buildings[deleting]?.name : ''}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={() => {
+          if (deleting) deleteMutation.mutate({ id: deleting });
+        }}
+        onCancel={() => setDeleting(null)}
+      />
     </div>
   );
 }

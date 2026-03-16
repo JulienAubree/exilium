@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 import {
   entityCategories,
   buildingDefinitions,
@@ -14,6 +14,7 @@ import {
   universeConfig,
 } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
+import { TRPCError } from '@trpc/server';
 
 export interface CategoryConfig {
   id: string;
@@ -291,6 +292,80 @@ export function createGameConfigService(db: Database) {
       invalidateCache();
     },
 
+    async createBuilding(data: {
+      id: string;
+      name: string;
+      description?: string;
+      baseCostMinerai?: number;
+      baseCostSilicium?: number;
+      baseCostHydrogene?: number;
+      costFactor?: number;
+      baseTime?: number;
+      levelColumn: string;
+      categoryId?: string | null;
+      sortOrder?: number;
+    }) {
+      await db.insert(buildingDefinitions).values({
+        id: data.id,
+        name: data.name,
+        description: data.description ?? '',
+        baseCostMinerai: data.baseCostMinerai ?? 0,
+        baseCostSilicium: data.baseCostSilicium ?? 0,
+        baseCostHydrogene: data.baseCostHydrogene ?? 0,
+        costFactor: data.costFactor ?? 1.5,
+        baseTime: data.baseTime ?? 60,
+        levelColumn: data.levelColumn,
+        categoryId: data.categoryId ?? null,
+        sortOrder: data.sortOrder ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async deleteBuilding(id: string) {
+      // Check if referenced as prerequisite by other buildings
+      const buildingPrereqRefs = await db.select().from(buildingPrerequisites)
+        .where(eq(buildingPrerequisites.requiredBuildingId, id));
+      if (buildingPrereqRefs.length > 0) {
+        const refIds = [...new Set(buildingPrereqRefs.map(r => r.buildingId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce bâtiment est requis comme prérequis par: ${refIds.join(', ')}`,
+        });
+      }
+      // Check if referenced as prerequisite by research
+      const researchPrereqRefs = await db.select().from(researchPrerequisites)
+        .where(eq(researchPrerequisites.requiredBuildingId, id));
+      if (researchPrereqRefs.length > 0) {
+        const refIds = [...new Set(researchPrereqRefs.map(r => r.researchId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce bâtiment est requis comme prérequis par les recherches: ${refIds.join(', ')}`,
+        });
+      }
+      // Check if referenced as prerequisite by ships
+      const shipPrereqRefs = await db.select().from(shipPrerequisites)
+        .where(eq(shipPrerequisites.requiredBuildingId, id));
+      if (shipPrereqRefs.length > 0) {
+        const refIds = [...new Set(shipPrereqRefs.map(r => r.shipId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce bâtiment est requis comme prérequis par les vaisseaux: ${refIds.join(', ')}`,
+        });
+      }
+      // Check if referenced as prerequisite by defenses
+      const defensePrereqRefs = await db.select().from(defensePrerequisites)
+        .where(eq(defensePrerequisites.requiredBuildingId, id));
+      if (defensePrereqRefs.length > 0) {
+        const refIds = [...new Set(defensePrereqRefs.map(r => r.defenseId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce bâtiment est requis comme prérequis par les défenses: ${refIds.join(', ')}`,
+        });
+      }
+      await db.delete(buildingDefinitions).where(eq(buildingDefinitions.id, id));
+      invalidateCache();
+    },
+
     async updateBuilding(id: string, data: Partial<{
       name: string;
       description: string;
@@ -311,6 +386,68 @@ export function createGameConfigService(db: Database) {
       if (prereqs.length > 0) {
         await db.insert(buildingPrerequisites).values(prereqs.map(p => ({ buildingId, ...p })));
       }
+      invalidateCache();
+    },
+
+    async createResearch(data: {
+      id: string;
+      name: string;
+      description?: string;
+      baseCostMinerai?: number;
+      baseCostSilicium?: number;
+      baseCostHydrogene?: number;
+      costFactor?: number;
+      levelColumn: string;
+      categoryId?: string | null;
+      sortOrder?: number;
+    }) {
+      await db.insert(researchDefinitions).values({
+        id: data.id,
+        name: data.name,
+        description: data.description ?? '',
+        baseCostMinerai: data.baseCostMinerai ?? 0,
+        baseCostSilicium: data.baseCostSilicium ?? 0,
+        baseCostHydrogene: data.baseCostHydrogene ?? 0,
+        costFactor: data.costFactor ?? 2,
+        levelColumn: data.levelColumn,
+        categoryId: data.categoryId ?? null,
+        sortOrder: data.sortOrder ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async deleteResearch(id: string) {
+      // Check if referenced as prerequisite by other research
+      const researchPrereqRefs = await db.select().from(researchPrerequisites)
+        .where(eq(researchPrerequisites.requiredResearchId, id));
+      if (researchPrereqRefs.length > 0) {
+        const refIds = [...new Set(researchPrereqRefs.map(r => r.researchId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Cette recherche est requise comme prérequis par: ${refIds.join(', ')}`,
+        });
+      }
+      // Check if referenced as prerequisite by ships
+      const shipPrereqRefs = await db.select().from(shipPrerequisites)
+        .where(eq(shipPrerequisites.requiredResearchId, id));
+      if (shipPrereqRefs.length > 0) {
+        const refIds = [...new Set(shipPrereqRefs.map(r => r.shipId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Cette recherche est requise comme prérequis par les vaisseaux: ${refIds.join(', ')}`,
+        });
+      }
+      // Check if referenced as prerequisite by defenses
+      const defensePrereqRefs = await db.select().from(defensePrerequisites)
+        .where(eq(defensePrerequisites.requiredResearchId, id));
+      if (defensePrereqRefs.length > 0) {
+        const refIds = [...new Set(defensePrereqRefs.map(r => r.defenseId))];
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Cette recherche est requise comme prérequis par les défenses: ${refIds.join(', ')}`,
+        });
+      }
+      await db.delete(researchDefinitions).where(eq(researchDefinitions.id, id));
       invalidateCache();
     },
 
@@ -338,6 +475,59 @@ export function createGameConfigService(db: Database) {
           requiredLevel: p.requiredLevel,
         })));
       }
+      invalidateCache();
+    },
+
+    async createShip(data: {
+      id: string;
+      name: string;
+      description?: string;
+      costMinerai?: number;
+      costSilicium?: number;
+      costHydrogene?: number;
+      countColumn: string;
+      baseSpeed?: number;
+      fuelConsumption?: number;
+      cargoCapacity?: number;
+      driveType?: string;
+      weapons?: number;
+      shield?: number;
+      armor?: number;
+      categoryId?: string | null;
+      sortOrder?: number;
+    }) {
+      await db.insert(shipDefinitions).values({
+        id: data.id,
+        name: data.name,
+        description: data.description ?? '',
+        costMinerai: data.costMinerai ?? 0,
+        costSilicium: data.costSilicium ?? 0,
+        costHydrogene: data.costHydrogene ?? 0,
+        countColumn: data.countColumn,
+        baseSpeed: data.baseSpeed ?? 0,
+        fuelConsumption: data.fuelConsumption ?? 0,
+        cargoCapacity: data.cargoCapacity ?? 0,
+        driveType: data.driveType ?? 'combustion',
+        weapons: data.weapons ?? 0,
+        shield: data.shield ?? 0,
+        armor: data.armor ?? 0,
+        categoryId: data.categoryId ?? null,
+        sortOrder: data.sortOrder ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async deleteShip(id: string) {
+      // Check if referenced in rapid fire
+      const rapidFireRefs = await db.select().from(rapidFire)
+        .where(or(eq(rapidFire.attackerId, id), eq(rapidFire.targetId, id)));
+      if (rapidFireRefs.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce vaisseau est référencé dans la matrice de tir rapide. Supprimez d'abord ces entrées.`,
+        });
+      }
+      await db.delete(shipDefinitions).where(eq(shipDefinitions.id, id));
       invalidateCache();
     },
 
@@ -371,6 +561,53 @@ export function createGameConfigService(db: Database) {
           requiredLevel: p.requiredLevel,
         })));
       }
+      invalidateCache();
+    },
+
+    async createDefense(data: {
+      id: string;
+      name: string;
+      description?: string;
+      costMinerai?: number;
+      costSilicium?: number;
+      costHydrogene?: number;
+      countColumn: string;
+      weapons?: number;
+      shield?: number;
+      armor?: number;
+      maxPerPlanet?: number | null;
+      categoryId?: string | null;
+      sortOrder?: number;
+    }) {
+      await db.insert(defenseDefinitions).values({
+        id: data.id,
+        name: data.name,
+        description: data.description ?? '',
+        costMinerai: data.costMinerai ?? 0,
+        costSilicium: data.costSilicium ?? 0,
+        costHydrogene: data.costHydrogene ?? 0,
+        countColumn: data.countColumn,
+        weapons: data.weapons ?? 0,
+        shield: data.shield ?? 0,
+        armor: data.armor ?? 0,
+        maxPerPlanet: data.maxPerPlanet ?? null,
+        categoryId: data.categoryId ?? null,
+        sortOrder: data.sortOrder ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async deleteDefense(id: string) {
+      // Check if referenced in rapid fire
+      const rapidFireRefs = await db.select().from(rapidFire)
+        .where(or(eq(rapidFire.attackerId, id), eq(rapidFire.targetId, id)));
+      if (rapidFireRefs.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Cette défense est référencée dans la matrice de tir rapide. Supprimez d'abord ces entrées.`,
+        });
+      }
+      await db.delete(defenseDefinitions).where(eq(defenseDefinitions.id, id));
       invalidateCache();
     },
 
