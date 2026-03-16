@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Outlet } from 'react-router';
-import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { ResourceBar } from './ResourceBar';
+import { Sidebar } from './Sidebar';
+import { BottomTabBar } from './BottomTabBar';
 import { Toaster } from '@/components/ui/Toaster';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -25,14 +27,25 @@ export function Layout() {
   useNotifications();
 
   return (
-    <div className="flex h-screen bg-background bg-stars text-foreground">
+    <div className="flex h-dvh flex-col bg-background bg-stars text-foreground">
+      {/* Desktop sidebar */}
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+
+      {/* Main area */}
+      <div className="flex flex-1 flex-col lg:ml-56">
         <TopBar planetId={resolvedPlanetId} planets={planets ?? []} />
-        <main className="flex-1 overflow-y-auto animate-fade-in">
-          <Outlet context={{ planetId: resolvedPlanetId }} />
+        <ResourceBar planetId={resolvedPlanetId} />
+
+        {/* Page content - pb-14 for bottom tab bar on mobile */}
+        <main className="flex-1 overflow-y-auto pb-14 lg:pb-0">
+          <div className="mx-auto lg:max-w-6xl">
+            <Outlet context={{ planetId: resolvedPlanetId }} />
+          </div>
         </main>
       </div>
+
+      {/* Mobile/tablet bottom navigation */}
+      <BottomTabBar />
       <Toaster />
     </div>
   );

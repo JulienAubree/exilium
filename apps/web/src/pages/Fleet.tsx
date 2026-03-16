@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router';
 import { trpc } from '@/trpc';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -167,214 +166,206 @@ export default function Fleet() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Flotte" />
 
       <StepIndicator currentStep={step} />
 
       {step === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Sélection des vaisseaux</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {ships?.filter((s) => s.count > 0).map((ship) => (
-              <div key={ship.id} className="flex items-center gap-3">
-                <span className="w-40 text-sm">{ship.name}</span>
-                <span className="text-xs text-muted-foreground">({ship.count} dispo)</span>
-                <Input
-                  type="number"
-                  min={0}
-                  max={ship.count}
-                  value={selectedShips[ship.id] || 0}
-                  onChange={(e) =>
-                    setSelectedShips({
-                      ...selectedShips,
-                      [ship.id]: Math.max(0, Math.min(ship.count, Number(e.target.value) || 0)),
-                    })
-                  }
-                  className="w-24"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedShips({ ...selectedShips, [ship.id]: ship.count })}
-                >
-                  Max
-                </Button>
-              </div>
-            ))}
+        <section className="glass-card p-4 space-y-3">
+          <h2 className="text-sm font-semibold">Sélection des vaisseaux</h2>
 
-            {prefillWarning && (
-              <p className="text-sm text-orange-400">{prefillWarning}</p>
-            )}
+          {ships?.filter((s) => s.count > 0).map((ship) => (
+            <div key={ship.id} className="flex items-center gap-3">
+              <span className="flex-1 text-sm truncate">{ship.name}</span>
+              <span className="text-xs text-muted-foreground shrink-0">({ship.count})</span>
+              <Input
+                type="number"
+                min={0}
+                max={ship.count}
+                value={selectedShips[ship.id] || 0}
+                onChange={(e) =>
+                  setSelectedShips({
+                    ...selectedShips,
+                    [ship.id]: Math.max(0, Math.min(ship.count, Number(e.target.value) || 0)),
+                  })
+                }
+                className="w-16 h-8 text-xs"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setSelectedShips({ ...selectedShips, [ship.id]: ship.count })}
+              >
+                Max
+              </Button>
+            </div>
+          ))}
 
-            {(!ships || ships.filter((s) => s.count > 0).length === 0) && (
-              <p className="text-sm text-muted-foreground">Aucun vaisseau disponible</p>
-            )}
+          {prefillWarning && (
+            <p className="text-sm text-orange-400">{prefillWarning}</p>
+          )}
 
-            <Button onClick={() => setStep(2)} disabled={!hasShips}>
-              Suivant
-            </Button>
-          </CardContent>
-        </Card>
+          {(!ships || ships.filter((s) => s.count > 0).length === 0) && (
+            <p className="text-sm text-muted-foreground">Aucun vaisseau disponible</p>
+          )}
+
+          <Button onClick={() => setStep(2)} disabled={!hasShips}>
+            Suivant
+          </Button>
+        </section>
       )}
 
       {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Destination et mission</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <label className="text-xs text-muted-foreground">Galaxie</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={9}
-                  value={target.galaxy}
-                  onChange={(e) => setTarget({ ...target, galaxy: Number(e.target.value) || 1 })}
-                  className="w-20"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Système</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={499}
-                  value={target.system}
-                  onChange={(e) => setTarget({ ...target, system: Number(e.target.value) || 1 })}
-                  className="w-24"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Position</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={15}
-                  value={target.position}
-                  onChange={(e) => setTarget({ ...target, position: Number(e.target.value) || 1 })}
-                  className="w-20"
-                />
-              </div>
-            </div>
+        <section className="glass-card p-4 space-y-4">
+          <h2 className="text-sm font-semibold">Destination et mission</h2>
 
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground">Mission</label>
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(MISSION_LABELS) as Mission[]).map((m) => (
-                  <Button
-                    key={m}
-                    variant={mission === m ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setMission(m)}
-                    className="gap-1.5"
-                  >
-                    <span className="text-xs font-bold opacity-60">{MISSION_ICONS[m]}</span>
-                    {MISSION_LABELS[m]}
-                  </Button>
-                ))}
-              </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Galaxie</label>
+              <Input
+                type="number"
+                min={1}
+                max={9}
+                value={target.galaxy}
+                onChange={(e) => setTarget({ ...target, galaxy: Number(e.target.value) || 1 })}
+                className="h-8 text-xs"
+              />
             </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Système</label>
+              <Input
+                type="number"
+                min={1}
+                max={499}
+                value={target.system}
+                onChange={(e) => setTarget({ ...target, system: Number(e.target.value) || 1 })}
+                className="h-8 text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Position</label>
+              <Input
+                type="number"
+                min={1}
+                max={15}
+                value={target.position}
+                onChange={(e) => setTarget({ ...target, position: Number(e.target.value) || 1 })}
+                className="h-8 text-xs"
+              />
+            </div>
+          </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                Retour
-              </Button>
-              <Button onClick={() => setStep(3)}>
-                Suivant
-              </Button>
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground">Mission</label>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+              {(Object.keys(MISSION_LABELS) as Mission[]).map((m) => (
+                <Button
+                  key={m}
+                  variant={mission === m ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMission(m)}
+                  className="gap-1.5"
+                >
+                  <span className="text-xs font-bold opacity-60">{MISSION_ICONS[m]}</span>
+                  {MISSION_LABELS[m]}
+                </Button>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setStep(1)}>
+              Retour
+            </Button>
+            <Button onClick={() => setStep(3)}>
+              Suivant
+            </Button>
+          </div>
+        </section>
       )}
 
       {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Chargement et confirmation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm space-y-1">
-              <div>Destination : [{target.galaxy}:{target.system}:{target.position}]</div>
-              <div>Mission : {MISSION_LABELS[mission]}</div>
-              <div>
-                Vaisseaux :{' '}
-                {Object.entries(selectedShips)
-                  .filter(([, v]) => v > 0)
-                  .map(([k, v]) => `${k}: ${v}`)
-                  .join(', ')}
-              </div>
-            </div>
+        <section className="glass-card p-4 space-y-4">
+          <h2 className="text-sm font-semibold">Chargement et confirmation</h2>
 
-            {(mission === 'transport' || mission === 'station') && (
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">Cargo</label>
-                <div className="flex flex-wrap gap-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Minerai</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={cargo.minerai}
-                      onChange={(e) => setCargo({ ...cargo, minerai: Number(e.target.value) || 0 })}
-                      className="w-28"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Silicium</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={cargo.silicium}
-                      onChange={(e) => setCargo({ ...cargo, silicium: Number(e.target.value) || 0 })}
-                      className="w-28"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Hydrogène</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={cargo.hydrogene}
-                      onChange={(e) => setCargo({ ...cargo, hydrogene: Number(e.target.value) || 0 })}
-                      className="w-28"
-                    />
-                  </div>
+          <div className="glass-card p-3 text-sm space-y-1">
+            <div>Destination : [{target.galaxy}:{target.system}:{target.position}]</div>
+            <div>Mission : {MISSION_LABELS[mission]}</div>
+            <div>
+              Vaisseaux :{' '}
+              {Object.entries(selectedShips)
+                .filter(([, v]) => v > 0)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ')}
+            </div>
+          </div>
+
+          {(mission === 'transport' || mission === 'station') && (
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Cargo</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Minerai</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={cargo.minerai}
+                    onChange={(e) => setCargo({ ...cargo, minerai: Number(e.target.value) || 0 })}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Silicium</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={cargo.silicium}
+                    onChange={(e) => setCargo({ ...cargo, silicium: Number(e.target.value) || 0 })}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Hydrogène</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={cargo.hydrogene}
+                    onChange={(e) => setCargo({ ...cargo, hydrogene: Number(e.target.value) || 0 })}
+                    className="h-8 text-xs"
+                  />
                 </div>
               </div>
-            )}
-
-            {getMissionValidationError(mission, selectedShips) && (
-              <p className="text-sm text-destructive">{getMissionValidationError(mission, selectedShips)}</p>
-            )}
-
-            {sendMutation.error && (
-              <p className="text-sm text-destructive">{sendMutation.error.message}</p>
-            )}
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                Retour
-              </Button>
-              <Button
-                onClick={() => {
-                  if (DANGEROUS_MISSIONS.includes(mission)) {
-                    setConfirmSend(true);
-                  } else {
-                    handleSend();
-                  }
-                }}
-                disabled={sendMutation.isPending || !!getMissionValidationError(mission, selectedShips)}
-              >
-                Envoyer la flotte
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {getMissionValidationError(mission, selectedShips) && (
+            <p className="text-sm text-destructive">{getMissionValidationError(mission, selectedShips)}</p>
+          )}
+
+          {sendMutation.error && (
+            <p className="text-sm text-destructive">{sendMutation.error.message}</p>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setStep(2)}>
+              Retour
+            </Button>
+            <Button
+              onClick={() => {
+                if (DANGEROUS_MISSIONS.includes(mission)) {
+                  setConfirmSend(true);
+                } else {
+                  handleSend();
+                }
+              }}
+              disabled={sendMutation.isPending || !!getMissionValidationError(mission, selectedShips)}
+            >
+              Envoyer la flotte
+            </Button>
+          </div>
+        </section>
       )}
 
       <ConfirmDialog

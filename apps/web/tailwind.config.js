@@ -42,6 +42,7 @@ export default {
         silicium: '#6ecfef',
         hydrogene: '#4db8a4',
         energy: '#f0c040',
+        'accent-glow': 'hsl(var(--accent-glow) / <alpha-value>)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -49,7 +50,9 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-up-sheet': 'slide-up-sheet 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+        'slide-down-sheet': 'slide-down-sheet 0.25s ease-out',
         'slide-in-left': 'slideInLeft 0.3s ease-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
@@ -80,6 +83,14 @@ export default {
         slideInRight: {
           from: { opacity: '0', transform: 'translateX(20px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-up-sheet': {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        'slide-down-sheet': {
+          '0%': { transform: 'translateY(-100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
       },
       boxShadow: {
