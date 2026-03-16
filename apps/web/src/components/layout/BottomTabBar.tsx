@@ -13,6 +13,7 @@ import {
   MovementsIcon,
   MessagesIcon,
   RankingIcon,
+  HistoryIcon,
 } from '@/lib/icons';
 import { useUIStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -108,6 +109,13 @@ export function BottomTabBar() {
       {activeSheet === 'plus' && (
         <BottomSheet open onClose={closeSheet}>
           <nav className="flex flex-col gap-1">
+            <button
+              onClick={() => handleSheetNav('/history')}
+              className="flex items-center gap-3 rounded-lg p-3 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <HistoryIcon width={20} height={20} />
+              <span className="text-sm font-medium">Historique</span>
+            </button>
             <button
               onClick={() => { closeSheet(); clearActivePlanet(); clearAuth(); }}
               className="flex items-center gap-3 rounded-lg p-3 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
