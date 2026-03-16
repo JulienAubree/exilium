@@ -15,6 +15,82 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import {
+  metalProduction, crystalProduction, deuteriumProduction,
+  solarPlantEnergy, metalMineEnergy, crystalMineEnergy, deutSynthEnergy,
+  storageCapacity,
+} from '@ogame-clone/game-engine';
+
+interface ProductionStats {
+  current: number;
+  next: number;
+  delta: number;
+  label: string;
+  unit: string;
+  color: string;
+  energyCurrent?: number;
+  energyNext?: number;
+  energyDelta?: number;
+}
+
+function getProductionStats(
+  buildingId: string,
+  level: number,
+  maxTemp: number,
+  productionFactor: number,
+): ProductionStats | null {
+  const pf = productionFactor;
+  switch (buildingId) {
+    case 'metalMine':
+      return {
+        current: metalProduction(level, pf),
+        next: metalProduction(level + 1, pf),
+        delta: metalProduction(level + 1, pf) - metalProduction(level, pf),
+        label: 'Production', unit: '/h', color: 'text-emerald-400',
+        energyCurrent: metalMineEnergy(level),
+        energyNext: metalMineEnergy(level + 1),
+        energyDelta: metalMineEnergy(level + 1) - metalMineEnergy(level),
+      };
+    case 'crystalMine':
+      return {
+        current: crystalProduction(level, pf),
+        next: crystalProduction(level + 1, pf),
+        delta: crystalProduction(level + 1, pf) - crystalProduction(level, pf),
+        label: 'Production', unit: '/h', color: 'text-emerald-400',
+        energyCurrent: crystalMineEnergy(level),
+        energyNext: crystalMineEnergy(level + 1),
+        energyDelta: crystalMineEnergy(level + 1) - crystalMineEnergy(level),
+      };
+    case 'deutSynth':
+      return {
+        current: deuteriumProduction(level, maxTemp, pf),
+        next: deuteriumProduction(level + 1, maxTemp, pf),
+        delta: deuteriumProduction(level + 1, maxTemp, pf) - deuteriumProduction(level, maxTemp, pf),
+        label: 'Production', unit: '/h', color: 'text-emerald-400',
+        energyCurrent: deutSynthEnergy(level),
+        energyNext: deutSynthEnergy(level + 1),
+        energyDelta: deutSynthEnergy(level + 1) - deutSynthEnergy(level),
+      };
+    case 'solarPlant':
+      return {
+        current: solarPlantEnergy(level),
+        next: solarPlantEnergy(level + 1),
+        delta: solarPlantEnergy(level + 1) - solarPlantEnergy(level),
+        label: 'Énergie', unit: '', color: 'text-amber-400',
+      };
+    case 'storageMetal':
+    case 'storageCrystal':
+    case 'storageDeut':
+      return {
+        current: storageCapacity(level),
+        next: storageCapacity(level + 1),
+        delta: storageCapacity(level + 1) - storageCapacity(level),
+        label: 'Capacité', unit: '', color: 'text-sky-400',
+      };
+    default:
+      return null;
+  }
+}
 
 export default function Buildings() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -75,6 +151,8 @@ export default function Buildings() {
   }
 
   const isAnyUpgrading = buildings.some((b) => b.isUpgrading);
+  const maxTemp = resourceData?.maxTemp ?? 50;
+  const productionFactor = resourceData?.rates.productionFactor ?? 1;
 
   return (
     <div className="space-y-6 p-6">
@@ -92,6 +170,8 @@ export default function Buildings() {
             return !prereqBuilding || prereqBuilding.currentLevel < prereq.level;
           });
           const prereqsMet = unmetPrereqs.length === 0;
+
+          const stats = getProductionStats(building.id, building.currentLevel, maxTemp, productionFactor);
 
           return (
             <Card key={building.id} className="relative hover:shadow-glow-metal/20">
@@ -113,6 +193,47 @@ export default function Buildings() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-xs text-muted-foreground">{building.description}</p>
+
+                {stats && building.currentLevel > 0 && (
+                  <div className="rounded-md bg-muted/30 px-3 py-2 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{stats.label} actuelle :</span>
+                      <span className={`font-mono font-medium ${stats.color}`}>
+                        {stats.current.toLocaleString('fr-FR')}{stats.unit}
+                      </span>
+                    </div>
+                    {stats.energyCurrent != null && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Énergie consommée :</span>
+                        <span className="font-mono font-medium text-amber-400">
+                          -{stats.energyCurrent.toLocaleString('fr-FR')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {stats && (
+                  <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 space-y-1">
+                    <div className="text-xs text-muted-foreground mb-1">Niveau {building.currentLevel + 1} :</div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{stats.label} :</span>
+                      <span className={`font-mono font-medium ${stats.color}`}>
+                        {stats.next.toLocaleString('fr-FR')}{stats.unit}
+                        <span className="text-xs ml-1 opacity-75">(+{stats.delta.toLocaleString('fr-FR')})</span>
+                      </span>
+                    </div>
+                    {stats.energyDelta != null && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Énergie :</span>
+                        <span className="font-mono font-medium text-amber-400">
+                          -{stats.energyNext!.toLocaleString('fr-FR')}
+                          <span className="text-xs ml-1 opacity-75">(-{stats.energyDelta.toLocaleString('fr-FR')})</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <div className="text-xs text-muted-foreground">
