@@ -93,7 +93,7 @@ export default function Fleet() {
   const [selectedShips, setSelectedShips] = useState<Record<string, number>>({});
   const [target, setTarget] = useState({ galaxy: 1, system: 1, position: 1 });
   const [mission, setMission] = useState<Mission>('transport');
-  const [cargo, setCargo] = useState({ metal: 0, crystal: 0, deuterium: 0 });
+  const [cargo, setCargo] = useState({ minerai: 0, silicium: 0, hydrogene: 0 });
   const [searchParams, setSearchParams] = useSearchParams();
   const [prefillWarning, setPrefillWarning] = useState<string | null>(null);
   const [confirmSend, setConfirmSend] = useState(false);
@@ -145,7 +145,7 @@ export default function Fleet() {
       utils.resource.production.invalidate({ planetId: planetId! });
       setStep(1);
       setSelectedShips({});
-      setCargo({ metal: 0, crystal: 0, deuterium: 0 });
+      setCargo({ minerai: 0, silicium: 0, hydrogene: 0 });
       setConfirmSend(false);
     },
   });
@@ -160,9 +160,9 @@ export default function Fleet() {
       targetPosition: target.position,
       mission,
       ships: selectedShips,
-      metalCargo: cargo.metal,
-      crystalCargo: cargo.crystal,
-      deuteriumCargo: cargo.deuterium,
+      mineraiCargo: cargo.minerai,
+      siliciumCargo: cargo.silicium,
+      hydrogeneCargo: cargo.hydrogene,
     });
   };
 
@@ -315,32 +315,32 @@ export default function Fleet() {
                 <label className="text-xs text-muted-foreground">Cargo</label>
                 <div className="flex flex-wrap gap-4">
                   <div>
-                    <label className="text-xs text-muted-foreground">Métal</label>
+                    <label className="text-xs text-muted-foreground">Minerai</label>
                     <Input
                       type="number"
                       min={0}
-                      value={cargo.metal}
-                      onChange={(e) => setCargo({ ...cargo, metal: Number(e.target.value) || 0 })}
+                      value={cargo.minerai}
+                      onChange={(e) => setCargo({ ...cargo, minerai: Number(e.target.value) || 0 })}
                       className="w-28"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Cristal</label>
+                    <label className="text-xs text-muted-foreground">Silicium</label>
                     <Input
                       type="number"
                       min={0}
-                      value={cargo.crystal}
-                      onChange={(e) => setCargo({ ...cargo, crystal: Number(e.target.value) || 0 })}
+                      value={cargo.silicium}
+                      onChange={(e) => setCargo({ ...cargo, silicium: Number(e.target.value) || 0 })}
                       className="w-28"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Deutérium</label>
+                    <label className="text-xs text-muted-foreground">Hydrogène</label>
                     <Input
                       type="number"
                       min={0}
-                      value={cargo.deuterium}
-                      onChange={(e) => setCargo({ ...cargo, deuterium: Number(e.target.value) || 0 })}
+                      value={cargo.hydrogene}
+                      onChange={(e) => setCargo({ ...cargo, hydrogene: Number(e.target.value) || 0 })}
                       className="w-28"
                     />
                   </div>

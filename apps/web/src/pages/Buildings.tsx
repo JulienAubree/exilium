@@ -16,8 +16,8 @@ import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetai
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import {
-  metalProduction, crystalProduction, deuteriumProduction,
-  solarPlantEnergy, metalMineEnergy, crystalMineEnergy, deutSynthEnergy,
+  mineraiProduction, siliciumProduction, hydrogeneProduction,
+  solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
 } from '@ogame-clone/game-engine';
 
@@ -41,35 +41,35 @@ function getProductionStats(
 ): ProductionStats | null {
   const pf = productionFactor;
   switch (buildingId) {
-    case 'metalMine':
+    case 'mineraiMine':
       return {
-        current: metalProduction(level, pf),
-        next: metalProduction(level + 1, pf),
-        delta: metalProduction(level + 1, pf) - metalProduction(level, pf),
+        current: mineraiProduction(level, pf),
+        next: mineraiProduction(level + 1, pf),
+        delta: mineraiProduction(level + 1, pf) - mineraiProduction(level, pf),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: metalMineEnergy(level),
-        energyNext: metalMineEnergy(level + 1),
-        energyDelta: metalMineEnergy(level + 1) - metalMineEnergy(level),
+        energyCurrent: mineraiMineEnergy(level),
+        energyNext: mineraiMineEnergy(level + 1),
+        energyDelta: mineraiMineEnergy(level + 1) - mineraiMineEnergy(level),
       };
-    case 'crystalMine':
+    case 'siliciumMine':
       return {
-        current: crystalProduction(level, pf),
-        next: crystalProduction(level + 1, pf),
-        delta: crystalProduction(level + 1, pf) - crystalProduction(level, pf),
+        current: siliciumProduction(level, pf),
+        next: siliciumProduction(level + 1, pf),
+        delta: siliciumProduction(level + 1, pf) - siliciumProduction(level, pf),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: crystalMineEnergy(level),
-        energyNext: crystalMineEnergy(level + 1),
-        energyDelta: crystalMineEnergy(level + 1) - crystalMineEnergy(level),
+        energyCurrent: siliciumMineEnergy(level),
+        energyNext: siliciumMineEnergy(level + 1),
+        energyDelta: siliciumMineEnergy(level + 1) - siliciumMineEnergy(level),
       };
-    case 'deutSynth':
+    case 'hydrogeneSynth':
       return {
-        current: deuteriumProduction(level, maxTemp, pf),
-        next: deuteriumProduction(level + 1, maxTemp, pf),
-        delta: deuteriumProduction(level + 1, maxTemp, pf) - deuteriumProduction(level, maxTemp, pf),
+        current: hydrogeneProduction(level, maxTemp, pf),
+        next: hydrogeneProduction(level + 1, maxTemp, pf),
+        delta: hydrogeneProduction(level + 1, maxTemp, pf) - hydrogeneProduction(level, maxTemp, pf),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: deutSynthEnergy(level),
-        energyNext: deutSynthEnergy(level + 1),
-        energyDelta: deutSynthEnergy(level + 1) - deutSynthEnergy(level),
+        energyCurrent: hydrogeneSynthEnergy(level),
+        energyNext: hydrogeneSynthEnergy(level + 1),
+        energyDelta: hydrogeneSynthEnergy(level + 1) - hydrogeneSynthEnergy(level),
       };
     case 'solarPlant':
       return {
@@ -78,9 +78,9 @@ function getProductionStats(
         delta: solarPlantEnergy(level + 1) - solarPlantEnergy(level),
         label: 'Énergie', unit: '', color: 'text-amber-400',
       };
-    case 'storageMetal':
-    case 'storageCrystal':
-    case 'storageDeut':
+    case 'storageMinerai':
+    case 'storageSilicium':
+    case 'storageHydrogene':
       return {
         current: storageCapacity(level),
         next: storageCapacity(level + 1),
@@ -112,16 +112,16 @@ export default function Buildings() {
   const resources = useResourceCounter(
     resourceData
       ? {
-          metal: resourceData.metal,
-          crystal: resourceData.crystal,
-          deuterium: resourceData.deuterium,
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
           resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          metalPerHour: resourceData.rates.metalPerHour,
-          crystalPerHour: resourceData.rates.crystalPerHour,
-          deutPerHour: resourceData.rates.deutPerHour,
-          storageMetalCapacity: resourceData.rates.storageMetalCapacity,
-          storageCrystalCapacity: resourceData.rates.storageCrystalCapacity,
-          storageDeutCapacity: resourceData.rates.storageDeutCapacity,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -161,9 +161,9 @@ export default function Buildings() {
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {buildings.map((building) => {
           const canAfford =
-            resources.metal >= building.nextLevelCost.metal &&
-            resources.crystal >= building.nextLevelCost.crystal &&
-            resources.deuterium >= building.nextLevelCost.deuterium;
+            resources.minerai >= building.nextLevelCost.minerai &&
+            resources.silicium >= building.nextLevelCost.silicium &&
+            resources.hydrogene >= building.nextLevelCost.hydrogene;
 
           const unmetPrereqs = building.prerequisites.filter((prereq) => {
             const prereqBuilding = buildings.find((b) => b.id === prereq.buildingId);
@@ -174,7 +174,7 @@ export default function Buildings() {
           const stats = getProductionStats(building.id, building.currentLevel, maxTemp, productionFactor);
 
           return (
-            <Card key={building.id} className="relative hover:shadow-glow-metal/20">
+            <Card key={building.id} className="relative hover:shadow-glow-minerai/20">
               <InfoButton onClick={() => setDetailId(building.id)} />
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
@@ -240,12 +240,12 @@ export default function Buildings() {
                     Coût niveau {building.currentLevel + 1} :
                   </div>
                   <ResourceCost
-                    metal={building.nextLevelCost.metal}
-                    crystal={building.nextLevelCost.crystal}
-                    deuterium={building.nextLevelCost.deuterium}
-                    currentMetal={resources.metal}
-                    currentCrystal={resources.crystal}
-                    currentDeuterium={resources.deuterium}
+                    minerai={building.nextLevelCost.minerai}
+                    silicium={building.nextLevelCost.silicium}
+                    hydrogene={building.nextLevelCost.hydrogene}
+                    currentMinerai={resources.minerai}
+                    currentSilicium={resources.silicium}
+                    currentHydrogene={resources.hydrogene}
                   />
                   <div className="text-xs text-muted-foreground">
                     Durée : {formatDuration(building.nextLevelTime)}

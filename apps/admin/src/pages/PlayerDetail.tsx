@@ -6,42 +6,42 @@ import { useState } from 'react';
 
 function ResourceEditor({
   planetId,
-  metal,
-  crystal,
-  deuterium,
+  minerai,
+  silicium,
+  hydrogene,
   onSaved,
 }: {
   planetId: string;
-  metal: string;
-  crystal: string;
-  deuterium: string;
+  minerai: string;
+  silicium: string;
+  hydrogene: string;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState({ metal, crystal, deuterium });
+  const [form, setForm] = useState({ minerai, silicium, hydrogene });
   const mutation = trpc.playerAdmin.updateResources.useMutation({ onSuccess: onSaved });
 
   return (
     <div className="flex items-center gap-2">
       <input
         type="text"
-        value={form.metal}
-        onChange={(e) => setForm({ ...form, metal: e.target.value })}
+        value={form.minerai}
+        onChange={(e) => setForm({ ...form, minerai: e.target.value })}
         className="admin-input w-28 py-1 text-xs"
-        title="Metal"
+        title="Minerai"
       />
       <input
         type="text"
-        value={form.crystal}
-        onChange={(e) => setForm({ ...form, crystal: e.target.value })}
+        value={form.silicium}
+        onChange={(e) => setForm({ ...form, silicium: e.target.value })}
         className="admin-input w-28 py-1 text-xs"
-        title="Cristal"
+        title="Silicium"
       />
       <input
         type="text"
-        value={form.deuterium}
-        onChange={(e) => setForm({ ...form, deuterium: e.target.value })}
+        value={form.hydrogene}
+        onChange={(e) => setForm({ ...form, hydrogene: e.target.value })}
         className="admin-input w-28 py-1 text-xs"
-        title="Deuterium"
+        title="Hydrogène"
       />
       <button
         onClick={() => mutation.mutate({ planetId, ...form })}
@@ -94,12 +94,12 @@ export default function PlayerDetail() {
             </div>
 
             <div className="mb-3">
-              <div className="text-xs text-gray-500 mb-1">Ressources (Metal / Cristal / Deut)</div>
+              <div className="text-xs text-gray-500 mb-1">Ressources (Minerai / Silicium / H₂)</div>
               <ResourceEditor
                 planetId={planet.id}
-                metal={String(Math.floor(Number(planet.metal ?? 0)))}
-                crystal={String(Math.floor(Number(planet.crystal ?? 0)))}
-                deuterium={String(Math.floor(Number(planet.deuterium ?? 0)))}
+                minerai={String(Math.floor(Number(planet.minerai ?? 0)))}
+                silicium={String(Math.floor(Number(planet.silicium ?? 0)))}
+                hydrogene={String(Math.floor(Number(planet.hydrogene ?? 0)))}
                 onSaved={refetch}
               />
             </div>

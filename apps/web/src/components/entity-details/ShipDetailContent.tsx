@@ -20,9 +20,9 @@ export function ShipDetailContent({ shipId }: { shipId: string }) {
 
       <DetailSection title="Cout unitaire">
         <ResourceCost
-          metal={details.cost.metal}
-          crystal={details.cost.crystal}
-          deuterium={details.cost.deuterium}
+          minerai={details.cost.minerai}
+          silicium={details.cost.silicium}
+          hydrogene={details.cost.hydrogene}
         />
       </DetailSection>
 

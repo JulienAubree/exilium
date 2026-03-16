@@ -37,16 +37,16 @@ export default function Research() {
   const resources = useResourceCounter(
     resourceData
       ? {
-          metal: resourceData.metal,
-          crystal: resourceData.crystal,
-          deuterium: resourceData.deuterium,
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
           resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          metalPerHour: resourceData.rates.metalPerHour,
-          crystalPerHour: resourceData.rates.crystalPerHour,
-          deutPerHour: resourceData.rates.deutPerHour,
-          storageMetalCapacity: resourceData.rates.storageMetalCapacity,
-          storageCrystalCapacity: resourceData.rates.storageCrystalCapacity,
-          storageDeutCapacity: resourceData.rates.storageDeutCapacity,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -84,9 +84,9 @@ export default function Research() {
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {techs.map((tech) => {
           const canAfford =
-            resources.metal >= tech.nextLevelCost.metal &&
-            resources.crystal >= tech.nextLevelCost.crystal &&
-            resources.deuterium >= tech.nextLevelCost.deuterium;
+            resources.minerai >= tech.nextLevelCost.minerai &&
+            resources.silicium >= tech.nextLevelCost.silicium &&
+            resources.hydrogene >= tech.nextLevelCost.hydrogene;
 
           return (
             <Card key={tech.id} className={`relative ${!tech.prerequisitesMet ? 'opacity-50' : ''}`}>
@@ -114,12 +114,12 @@ export default function Research() {
                     Coût niveau {tech.currentLevel + 1} :
                   </div>
                   <ResourceCost
-                    metal={tech.nextLevelCost.metal}
-                    crystal={tech.nextLevelCost.crystal}
-                    deuterium={tech.nextLevelCost.deuterium}
-                    currentMetal={resources.metal}
-                    currentCrystal={resources.crystal}
-                    currentDeuterium={resources.deuterium}
+                    minerai={tech.nextLevelCost.minerai}
+                    silicium={tech.nextLevelCost.silicium}
+                    hydrogene={tech.nextLevelCost.hydrogene}
+                    currentMinerai={resources.minerai}
+                    currentSilicium={resources.silicium}
+                    currentHydrogene={resources.hydrogene}
                   />
                   <div className="text-xs text-muted-foreground">
                     Durée : {formatDuration(tech.nextLevelTime)}

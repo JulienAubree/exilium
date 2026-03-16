@@ -1,29 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 
 interface ResourceCounterInput {
-  metal: number;
-  crystal: number;
-  deuterium: number;
+  minerai: number;
+  silicium: number;
+  hydrogene: number;
   resourcesUpdatedAt: string;
-  metalPerHour: number;
-  crystalPerHour: number;
-  deutPerHour: number;
-  storageMetalCapacity: number;
-  storageCrystalCapacity: number;
-  storageDeutCapacity: number;
+  mineraiPerHour: number;
+  siliciumPerHour: number;
+  hydrogenePerHour: number;
+  storageMineraiCapacity: number;
+  storageSiliciumCapacity: number;
+  storageHydrogeneCapacity: number;
 }
 
 interface ResourceCounterOutput {
-  metal: number;
-  crystal: number;
-  deuterium: number;
+  minerai: number;
+  silicium: number;
+  hydrogene: number;
 }
 
 export function useResourceCounter(input: ResourceCounterInput | undefined): ResourceCounterOutput {
   const [resources, setResources] = useState<ResourceCounterOutput>({
-    metal: 0,
-    crystal: 0,
-    deuterium: 0,
+    minerai: 0,
+    silicium: 0,
+    hydrogene: 0,
   });
 
   const inputRef = useRef(input);
@@ -41,17 +41,17 @@ export function useResourceCounter(input: ResourceCounterInput | undefined): Res
       const elapsedHours = (now - updatedAt) / (3600 * 1000);
 
       setResources({
-        metal: Math.min(
-          Math.floor(data.metal + data.metalPerHour * elapsedHours),
-          data.storageMetalCapacity,
+        minerai: Math.min(
+          Math.floor(data.minerai + data.mineraiPerHour * elapsedHours),
+          data.storageMineraiCapacity,
         ),
-        crystal: Math.min(
-          Math.floor(data.crystal + data.crystalPerHour * elapsedHours),
-          data.storageCrystalCapacity,
+        silicium: Math.min(
+          Math.floor(data.silicium + data.siliciumPerHour * elapsedHours),
+          data.storageSiliciumCapacity,
         ),
-        deuterium: Math.min(
-          Math.floor(data.deuterium + data.deutPerHour * elapsedHours),
-          data.storageDeutCapacity,
+        hydrogene: Math.min(
+          Math.floor(data.hydrogene + data.hydrogenePerHour * elapsedHours),
+          data.storageHydrogeneCapacity,
         ),
       });
     }
@@ -59,7 +59,7 @@ export function useResourceCounter(input: ResourceCounterInput | undefined): Res
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [input?.resourcesUpdatedAt, input?.metalPerHour, input?.crystalPerHour, input?.deutPerHour]);
+  }, [input?.resourcesUpdatedAt, input?.mineraiPerHour, input?.siliciumPerHour, input?.hydrogenePerHour]);
 
   return resources;
 }

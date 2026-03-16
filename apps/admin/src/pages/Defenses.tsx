@@ -8,9 +8,9 @@ import { Pencil } from 'lucide-react';
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
   { key: 'description', label: 'Description', type: 'textarea' as const },
-  { key: 'costMetal', label: 'Cout Metal', type: 'number' as const },
-  { key: 'costCrystal', label: 'Cout Cristal', type: 'number' as const },
-  { key: 'costDeuterium', label: 'Cout Deuterium', type: 'number' as const },
+  { key: 'costMinerai', label: 'Coût Minerai', type: 'number' as const },
+  { key: 'costSilicium', label: 'Coût Silicium', type: 'number' as const },
+  { key: 'costHydrogene', label: 'Coût Hydrogène', type: 'number' as const },
   { key: 'weapons', label: 'Armes', type: 'number' as const },
   { key: 'shield', label: 'Bouclier', type: 'number' as const },
   { key: 'armor', label: 'Coque', type: 'number' as const },
@@ -45,9 +45,9 @@ export default function Defenses() {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Metal</th>
-              <th>Cristal</th>
-              <th>Deut</th>
+              <th>Minerai</th>
+              <th>Silicium</th>
+              <th>H₂</th>
               <th>Armes</th>
               <th>Bouclier</th>
               <th>Coque</th>
@@ -60,9 +60,9 @@ export default function Defenses() {
               <tr key={d.id}>
                 <td className="font-mono text-xs text-gray-500">{d.id}</td>
                 <td className="font-medium">{d.name}</td>
-                <td className="font-mono text-sm">{d.cost.metal}</td>
-                <td className="font-mono text-sm">{d.cost.crystal}</td>
-                <td className="font-mono text-sm">{d.cost.deuterium}</td>
+                <td className="font-mono text-sm">{d.cost.minerai}</td>
+                <td className="font-mono text-sm">{d.cost.silicium}</td>
+                <td className="font-mono text-sm">{d.cost.hydrogene}</td>
                 <td className="font-mono text-sm text-red-400">{d.weapons}</td>
                 <td className="font-mono text-sm text-blue-400">{d.shield}</td>
                 <td className="font-mono text-sm text-yellow-400">{d.armor}</td>
@@ -86,9 +86,9 @@ export default function Defenses() {
           values={{
             name: editingDef.name,
             description: editingDef.description,
-            costMetal: editingDef.cost.metal,
-            costCrystal: editingDef.cost.crystal,
-            costDeuterium: editingDef.cost.deuterium,
+            costMinerai: editingDef.cost.minerai,
+            costSilicium: editingDef.cost.silicium,
+            costHydrogene: editingDef.cost.hydrogene,
             weapons: editingDef.weapons,
             shield: editingDef.shield,
             armor: editingDef.armor,
@@ -101,9 +101,9 @@ export default function Defenses() {
               data: {
                 name: values.name as string,
                 description: values.description as string,
-                costMetal: values.costMetal as number,
-                costCrystal: values.costCrystal as number,
-                costDeuterium: values.costDeuterium as number,
+                costMinerai: values.costMinerai as number,
+                costSilicium: values.costSilicium as number,
+                costHydrogene: values.costHydrogene as number,
                 weapons: values.weapons as number,
                 shield: values.shield as number,
                 armor: values.armor as number,

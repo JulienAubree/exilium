@@ -116,11 +116,11 @@ export default function Galaxy() {
                           <td className="px-2 py-1">
                             {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
                             {slot.username}
-                            {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
+                            {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
                               <Link
                                 to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
                                 className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
-                                title={`Débris: ${(slot as any).debris.metal.toLocaleString('fr-FR')} métal, ${(slot as any).debris.crystal.toLocaleString('fr-FR')} cristal`}
+                                title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
                               >
                                 DF
                               </Link>
@@ -161,7 +161,7 @@ export default function Galaxy() {
                       <div className="mt-1 text-xs text-muted-foreground">
                         {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
                         {slot.username}
-                        {(slot as any).debris && ((slot as any).debris.metal > 0 || (slot as any).debris.crystal > 0) && (
+                        {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
                           <Link
                             to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
                             className="text-orange-400 ml-2 hover:underline"

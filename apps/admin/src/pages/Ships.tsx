@@ -8,9 +8,9 @@ import { Pencil } from 'lucide-react';
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
   { key: 'description', label: 'Description', type: 'textarea' as const },
-  { key: 'costMetal', label: 'Cout Metal', type: 'number' as const },
-  { key: 'costCrystal', label: 'Cout Cristal', type: 'number' as const },
-  { key: 'costDeuterium', label: 'Cout Deuterium', type: 'number' as const },
+  { key: 'costMinerai', label: 'Coût Minerai', type: 'number' as const },
+  { key: 'costSilicium', label: 'Coût Silicium', type: 'number' as const },
+  { key: 'costHydrogene', label: 'Coût Hydrogène', type: 'number' as const },
   { key: 'weapons', label: 'Armes', type: 'number' as const },
   { key: 'shield', label: 'Bouclier', type: 'number' as const },
   { key: 'armor', label: 'Coque', type: 'number' as const },
@@ -47,9 +47,9 @@ export default function Ships() {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Metal</th>
-              <th>Cristal</th>
-              <th>Deut</th>
+              <th>Minerai</th>
+              <th>Silicium</th>
+              <th>H₂</th>
               <th>Armes</th>
               <th>Bouclier</th>
               <th>Coque</th>
@@ -64,9 +64,9 @@ export default function Ships() {
               <tr key={s.id}>
                 <td className="font-mono text-xs text-gray-500">{s.id}</td>
                 <td className="font-medium">{s.name}</td>
-                <td className="font-mono text-sm">{s.cost.metal}</td>
-                <td className="font-mono text-sm">{s.cost.crystal}</td>
-                <td className="font-mono text-sm">{s.cost.deuterium}</td>
+                <td className="font-mono text-sm">{s.cost.minerai}</td>
+                <td className="font-mono text-sm">{s.cost.silicium}</td>
+                <td className="font-mono text-sm">{s.cost.hydrogene}</td>
                 <td className="font-mono text-sm text-red-400">{s.weapons}</td>
                 <td className="font-mono text-sm text-blue-400">{s.shield}</td>
                 <td className="font-mono text-sm text-yellow-400">{s.armor}</td>
@@ -92,9 +92,9 @@ export default function Ships() {
           values={{
             name: editingShip.name,
             description: editingShip.description,
-            costMetal: editingShip.cost.metal,
-            costCrystal: editingShip.cost.crystal,
-            costDeuterium: editingShip.cost.deuterium,
+            costMinerai: editingShip.cost.minerai,
+            costSilicium: editingShip.cost.silicium,
+            costHydrogene: editingShip.cost.hydrogene,
             weapons: editingShip.weapons,
             shield: editingShip.shield,
             armor: editingShip.armor,
@@ -109,9 +109,9 @@ export default function Ships() {
               data: {
                 name: values.name as string,
                 description: values.description as string,
-                costMetal: values.costMetal as number,
-                costCrystal: values.costCrystal as number,
-                costDeuterium: values.costDeuterium as number,
+                costMinerai: values.costMinerai as number,
+                costSilicium: values.costSilicium as number,
+                costHydrogene: values.costHydrogene as number,
                 weapons: values.weapons as number,
                 shield: values.shield as number,
                 armor: values.armor as number,

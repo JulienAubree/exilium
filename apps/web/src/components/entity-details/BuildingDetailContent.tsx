@@ -20,9 +20,9 @@ export function BuildingDetailContent({ buildingId, planetContext }: Props) {
 
       <DetailSection title="Cout de base">
         <ResourceCost
-          metal={details.baseCost.metal}
-          crystal={details.baseCost.crystal}
-          deuterium={details.baseCost.deuterium}
+          minerai={details.baseCost.minerai}
+          silicium={details.baseCost.silicium}
+          hydrogene={details.baseCost.hydrogene}
         />
         <p className="text-xs text-muted-foreground mt-1">
           Facteur de cout : x{details.costFactor} par niveau

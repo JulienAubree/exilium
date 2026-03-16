@@ -65,16 +65,16 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
   const resources = useResourceCounter(
     data
       ? {
-          metal: data.metal,
-          crystal: data.crystal,
-          deuterium: data.deuterium,
+          minerai: data.minerai,
+          silicium: data.silicium,
+          hydrogene: data.hydrogene,
           resourcesUpdatedAt: data.resourcesUpdatedAt,
-          metalPerHour: data.rates.metalPerHour,
-          crystalPerHour: data.rates.crystalPerHour,
-          deutPerHour: data.rates.deutPerHour,
-          storageMetalCapacity: data.rates.storageMetalCapacity,
-          storageCrystalCapacity: data.rates.storageCrystalCapacity,
-          storageDeutCapacity: data.rates.storageDeutCapacity,
+          mineraiPerHour: data.rates.mineraiPerHour,
+          siliciumPerHour: data.rates.siliciumPerHour,
+          hydrogenePerHour: data.rates.hydrogenePerHour,
+          storageMineraiCapacity: data.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: data.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: data.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -160,9 +160,9 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         {/* Resources — hidden on mobile */}
         {!isMobile && (
           <div className="flex items-center gap-4">
-            <ResourceBadge label="Métal" value={resources.metal} glowClass="glow-metal" colorClass="text-metal" compact={isTablet} />
-            <ResourceBadge label="Cristal" value={resources.crystal} glowClass="glow-crystal" colorClass="text-crystal" compact={isTablet} />
-            <ResourceBadge label="Deutérium" value={resources.deuterium} glowClass="glow-deuterium" colorClass="text-deuterium" compact={isTablet} />
+            <ResourceBadge label="Minerai" value={resources.minerai} glowClass="glow-minerai" colorClass="text-minerai" compact={isTablet} />
+            <ResourceBadge label="Silicium" value={resources.silicium} glowClass="glow-silicium" colorClass="text-silicium" compact={isTablet} />
+            <ResourceBadge label="Hydrogène" value={resources.hydrogene} glowClass="glow-hydrogene" colorClass="text-hydrogene" compact={isTablet} />
             <ResourceBadge
               label="Énergie"
               value={energyBalance}

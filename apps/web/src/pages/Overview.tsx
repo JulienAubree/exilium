@@ -28,16 +28,16 @@ export default function Overview() {
   const resources = useResourceCounter(
     resourceData
       ? {
-          metal: resourceData.metal,
-          crystal: resourceData.crystal,
-          deuterium: resourceData.deuterium,
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
           resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          metalPerHour: resourceData.rates.metalPerHour,
-          crystalPerHour: resourceData.rates.crystalPerHour,
-          deutPerHour: resourceData.rates.deutPerHour,
-          storageMetalCapacity: resourceData.rates.storageMetalCapacity,
-          storageCrystalCapacity: resourceData.rates.storageCrystalCapacity,
-          storageDeutCapacity: resourceData.rates.storageDeutCapacity,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -237,16 +237,16 @@ export default function Overview() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-metal glow-metal">Métal</span>
-              <span>{resources.metal.toLocaleString('fr-FR')}</span>
+              <span className="text-minerai glow-minerai">Minerai</span>
+              <span>{resources.minerai.toLocaleString('fr-FR')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-crystal glow-crystal">Cristal</span>
-              <span>{resources.crystal.toLocaleString('fr-FR')}</span>
+              <span className="text-silicium glow-silicium">Silicium</span>
+              <span>{resources.silicium.toLocaleString('fr-FR')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-deuterium glow-deuterium">Deutérium</span>
-              <span>{resources.deuterium.toLocaleString('fr-FR')}</span>
+              <span className="text-hydrogene glow-hydrogene">Hydrogène</span>
+              <span>{resources.hydrogene.toLocaleString('fr-FR')}</span>
             </div>
           </CardContent>
         </Card>
@@ -257,16 +257,16 @@ export default function Overview() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Mine de métal</span>
-              <Badge variant="secondary">Niv. {planet.metalMineLevel}</Badge>
+              <span className="text-muted-foreground">Mine de minerai</span>
+              <Badge variant="secondary">Niv. {planet.mineraiMineLevel}</Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Mine de cristal</span>
-              <Badge variant="secondary">Niv. {planet.crystalMineLevel}</Badge>
+              <span className="text-muted-foreground">Mine de silicium</span>
+              <Badge variant="secondary">Niv. {planet.siliciumMineLevel}</Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Synthétiseur de deut.</span>
-              <Badge variant="secondary">Niv. {planet.deutSynthLevel}</Badge>
+              <span className="text-muted-foreground">Synth. H₂</span>
+              <Badge variant="secondary">Niv. {planet.hydrogeneSynthLevel}</Badge>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Centrale solaire</span>

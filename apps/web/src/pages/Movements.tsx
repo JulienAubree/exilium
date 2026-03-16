@@ -91,11 +91,11 @@ export default function Movements() {
                       .map(([k, v]) => `${k}: ${v}`)
                       .join(', ')}
                   </div>
-                  {(Number(event.metalCargo) > 0 || Number(event.crystalCargo) > 0 || Number(event.deuteriumCargo) > 0) && (
+                  {(Number(event.mineraiCargo) > 0 || Number(event.siliciumCargo) > 0 || Number(event.hydrogeneCargo) > 0) && (
                     <div className="text-xs text-muted-foreground">
-                      Cargo : <span className="text-metal">M:{Number(event.metalCargo).toLocaleString('fr-FR')}</span>{' '}
-                      <span className="text-crystal">C:{Number(event.crystalCargo).toLocaleString('fr-FR')}</span>{' '}
-                      <span className="text-deuterium">D:{Number(event.deuteriumCargo).toLocaleString('fr-FR')}</span>
+                      Cargo : <span className="text-minerai">M:{Number(event.mineraiCargo).toLocaleString('fr-FR')}</span>{' '}
+                      <span className="text-silicium">S:{Number(event.siliciumCargo).toLocaleString('fr-FR')}</span>{' '}
+                      <span className="text-hydrogene">H:{Number(event.hydrogeneCargo).toLocaleString('fr-FR')}</span>
                     </div>
                   )}
 

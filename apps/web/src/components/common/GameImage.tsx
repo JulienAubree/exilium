@@ -13,9 +13,9 @@ interface GameImageProps {
 
 const FALLBACK_COLORS = [
   'bg-primary/20 text-primary',
-  'bg-metal/20 text-metal',
-  'bg-crystal/20 text-crystal',
-  'bg-deuterium/20 text-deuterium',
+  'bg-minerai/20 text-minerai',
+  'bg-silicium/20 text-silicium',
+  'bg-hydrogene/20 text-hydrogene',
   'bg-energy/20 text-energy',
 ];
 

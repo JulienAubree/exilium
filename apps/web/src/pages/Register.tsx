@@ -49,7 +49,7 @@ export default function Register() {
     <div className="flex min-h-screen items-center justify-center bg-background bg-stars">
       <Card className="w-full max-w-md glass-card animate-slide-up">
         <CardHeader>
-          <CardTitle className="text-center text-2xl glow-crystal">Créer un compte</CardTitle>
+          <CardTitle className="text-center text-2xl glow-silicium">Créer un compte</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

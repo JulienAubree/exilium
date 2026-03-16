@@ -8,9 +8,9 @@ import { Pencil, ChevronDown, ChevronRight } from 'lucide-react';
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
   { key: 'description', label: 'Description', type: 'textarea' as const },
-  { key: 'baseCostMetal', label: 'Cout Metal (base)', type: 'number' as const },
-  { key: 'baseCostCrystal', label: 'Cout Cristal (base)', type: 'number' as const },
-  { key: 'baseCostDeuterium', label: 'Cout Deuterium (base)', type: 'number' as const },
+  { key: 'baseCostMinerai', label: 'Coût Minerai (base)', type: 'number' as const },
+  { key: 'baseCostSilicium', label: 'Coût Silicium (base)', type: 'number' as const },
+  { key: 'baseCostHydrogene', label: 'Coût Hydrogène (base)', type: 'number' as const },
   { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
   { key: 'baseTime', label: 'Temps de base (s)', type: 'number' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
@@ -20,13 +20,13 @@ const MAX_LEVEL = 25;
 
 // Production-related building IDs mapped to their production config ID
 const PRODUCTION_MAP: Record<string, string> = {
-  metalMine: 'metalMine',
-  crystalMine: 'crystalMine',
-  deutSynth: 'deutSynth',
+  mineraiMine: 'mineraiMine',
+  siliciumMine: 'siliciumMine',
+  hydrogeneSynth: 'hydrogeneSynth',
   solarPlant: 'solarPlant',
 };
 
-const STORAGE_IDS = ['storageMetal', 'storageCrystal', 'storageDeut'];
+const STORAGE_IDS = ['storageMinerai', 'storageSilicium', 'storageHydrogene'];
 
 function formatNumber(n: number): string {
   return n.toLocaleString('fr-FR');
@@ -42,9 +42,9 @@ function formatTime(seconds: number): string {
 
 interface LevelRow {
   level: number;
-  costMetal: number;
-  costCrystal: number;
-  costDeuterium: number;
+  costMinerai: number;
+  costSilicium: number;
+  costHydrogene: number;
   buildTime: number;
   production?: number;
   energy?: number;
@@ -52,19 +52,19 @@ interface LevelRow {
 }
 
 function computeLevelRows(
-  building: { baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number },
+  building: { baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number },
   productionConf: { baseProduction: number; exponentBase: number; energyConsumption: number | null; storageBase: number | null } | null,
   isStorage: boolean,
 ): LevelRow[] {
   const rows: LevelRow[] = [];
   for (let level = 1; level <= MAX_LEVEL; level++) {
     const factor = Math.pow(building.costFactor, level - 1);
-    const costMetal = Math.floor(building.baseCost.metal * factor);
-    const costCrystal = Math.floor(building.baseCost.crystal * factor);
-    const costDeuterium = Math.floor(building.baseCost.deuterium * factor);
-    const buildTime = Math.max(1, Math.floor(((costMetal + costCrystal) / 2500) * 3600));
+    const costMinerai = Math.floor(building.baseCost.minerai * factor);
+    const costSilicium = Math.floor(building.baseCost.silicium * factor);
+    const costHydrogene = Math.floor(building.baseCost.hydrogene * factor);
+    const buildTime = Math.max(1, Math.floor(((costMinerai + costSilicium) / 2500) * 3600));
 
-    const row: LevelRow = { level, costMetal, costCrystal, costDeuterium, buildTime };
+    const row: LevelRow = { level, costMinerai, costSilicium, costHydrogene, buildTime };
 
     if (isStorage && productionConf?.storageBase) {
       row.storageCapacity = productionConf.storageBase * Math.floor(2.5 * Math.exp((20 * level) / 33));
@@ -109,9 +109,9 @@ export default function Buildings() {
               <th className="w-8"></th>
               <th>ID</th>
               <th>Nom</th>
-              <th>Metal</th>
-              <th>Cristal</th>
-              <th>Deut</th>
+              <th>Minerai</th>
+              <th>Silicium</th>
+              <th>H₂</th>
               <th>Facteur</th>
               <th>Temps</th>
               <th>Prerequis</th>
@@ -152,9 +152,9 @@ export default function Buildings() {
                     </td>
                     <td className="font-mono text-xs text-gray-500">{b.id}</td>
                     <td className="font-medium">{b.name}</td>
-                    <td className="font-mono text-sm">{b.baseCost.metal}</td>
-                    <td className="font-mono text-sm">{b.baseCost.crystal}</td>
-                    <td className="font-mono text-sm">{b.baseCost.deuterium}</td>
+                    <td className="font-mono text-sm">{b.baseCost.minerai}</td>
+                    <td className="font-mono text-sm">{b.baseCost.silicium}</td>
+                    <td className="font-mono text-sm">{b.baseCost.hydrogene}</td>
                     <td className="font-mono text-sm">{b.costFactor}</td>
                     <td className="font-mono text-sm">{b.baseTime}s</td>
                     <td className="text-xs text-gray-500">
@@ -185,9 +185,9 @@ export default function Buildings() {
                               <thead className="sticky top-0 bg-panel z-10">
                                 <tr className="text-gray-500 uppercase tracking-wider">
                                   <th className="px-3 py-2 text-left font-medium">Niv.</th>
-                                  <th className="px-3 py-2 text-right font-medium">Metal</th>
-                                  <th className="px-3 py-2 text-right font-medium">Cristal</th>
-                                  <th className="px-3 py-2 text-right font-medium">Deut</th>
+                                  <th className="px-3 py-2 text-right font-medium">Minerai</th>
+                                  <th className="px-3 py-2 text-right font-medium">Silicium</th>
+                                  <th className="px-3 py-2 text-right font-medium">H₂</th>
                                   <th className="px-3 py-2 text-right font-medium">Temps</th>
                                   {showProduction && (
                                     <th className="px-3 py-2 text-right font-medium">
@@ -206,9 +206,9 @@ export default function Buildings() {
                                 {levelRows.map((r) => (
                                   <tr key={r.level} className="border-t border-panel-border/30 hover:bg-panel-hover/50">
                                     <td className="px-3 py-1.5 font-mono font-medium text-hull-300">{r.level}</td>
-                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costMetal)}</td>
-                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costCrystal)}</td>
-                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costDeuterium)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costMinerai)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costSilicium)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costHydrogene)}</td>
                                     <td className="px-3 py-1.5 font-mono text-right text-gray-400">{formatTime(r.buildTime)}</td>
                                     {showProduction && (
                                       <td className="px-3 py-1.5 font-mono text-right text-emerald-400">
@@ -249,9 +249,9 @@ export default function Buildings() {
           values={{
             name: editingBuilding.name,
             description: editingBuilding.description,
-            baseCostMetal: editingBuilding.baseCost.metal,
-            baseCostCrystal: editingBuilding.baseCost.crystal,
-            baseCostDeuterium: editingBuilding.baseCost.deuterium,
+            baseCostMinerai: editingBuilding.baseCost.minerai,
+            baseCostSilicium: editingBuilding.baseCost.silicium,
+            baseCostHydrogene: editingBuilding.baseCost.hydrogene,
             costFactor: editingBuilding.costFactor,
             baseTime: editingBuilding.baseTime,
             sortOrder: editingBuilding.sortOrder,
@@ -262,9 +262,9 @@ export default function Buildings() {
               data: {
                 name: values.name as string,
                 description: values.description as string,
-                baseCostMetal: values.baseCostMetal as number,
-                baseCostCrystal: values.baseCostCrystal as number,
-                baseCostDeuterium: values.baseCostDeuterium as number,
+                baseCostMinerai: values.baseCostMinerai as number,
+                baseCostSilicium: values.baseCostSilicium as number,
+                baseCostHydrogene: values.baseCostHydrogene as number,
                 costFactor: values.costFactor as number,
                 baseTime: values.baseTime as number,
                 sortOrder: values.sortOrder as number,

@@ -19,16 +19,16 @@ export default function Resources() {
   const resources = useResourceCounter(
     data
       ? {
-          metal: data.metal,
-          crystal: data.crystal,
-          deuterium: data.deuterium,
+          minerai: data.minerai,
+          silicium: data.silicium,
+          hydrogene: data.hydrogene,
           resourcesUpdatedAt: data.resourcesUpdatedAt,
-          metalPerHour: data.rates.metalPerHour,
-          crystalPerHour: data.rates.crystalPerHour,
-          deutPerHour: data.rates.deutPerHour,
-          storageMetalCapacity: data.rates.storageMetalCapacity,
-          storageCrystalCapacity: data.rates.storageCrystalCapacity,
-          storageDeutCapacity: data.rates.storageDeutCapacity,
+          mineraiPerHour: data.rates.mineraiPerHour,
+          siliciumPerHour: data.rates.siliciumPerHour,
+          hydrogenePerHour: data.rates.hydrogenePerHour,
+          storageMineraiCapacity: data.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: data.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: data.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -40,7 +40,7 @@ export default function Resources() {
   });
 
   const handlePercentChange = useCallback(
-    (field: 'metalMinePercent' | 'crystalMinePercent' | 'deutSynthPercent', value: number) => {
+    (field: 'mineraiMinePercent' | 'siliciumMinePercent' | 'hydrogeneSynthPercent', value: number) => {
       setPercentMutation.mutate({ planetId: planetId!, [field]: value });
     },
     [planetId, setPercentMutation],
@@ -57,58 +57,58 @@ export default function Resources() {
 
   const resourceRows = [
     {
-      name: 'Metal',
-      color: 'text-metal',
-      glowClass: 'glow-metal',
-      current: resources.metal,
-      perHour: data.rates.metalPerHour,
-      capacity: data.rates.storageMetalCapacity,
+      name: 'Minerai',
+      color: 'text-minerai',
+      glowClass: 'glow-minerai',
+      current: resources.minerai,
+      perHour: data.rates.mineraiPerHour,
+      capacity: data.rates.storageMineraiCapacity,
     },
     {
-      name: 'Cristal',
-      color: 'text-crystal',
-      glowClass: 'glow-crystal',
-      current: resources.crystal,
-      perHour: data.rates.crystalPerHour,
-      capacity: data.rates.storageCrystalCapacity,
+      name: 'Silicium',
+      color: 'text-silicium',
+      glowClass: 'glow-silicium',
+      current: resources.silicium,
+      perHour: data.rates.siliciumPerHour,
+      capacity: data.rates.storageSiliciumCapacity,
     },
     {
-      name: 'Deuterium',
-      color: 'text-deuterium',
-      glowClass: 'glow-deuterium',
-      current: resources.deuterium,
-      perHour: data.rates.deutPerHour,
-      capacity: data.rates.storageDeutCapacity,
+      name: 'Hydrogène',
+      color: 'text-hydrogene',
+      glowClass: 'glow-hydrogene',
+      current: resources.hydrogene,
+      perHour: data.rates.hydrogenePerHour,
+      capacity: data.rates.storageHydrogeneCapacity,
     },
   ];
 
   const energyGenerators = [
     {
-      name: 'Mine de metal',
-      level: data.levels.metalMineLevel,
-      perHour: data.rates.metalPerHour,
-      energy: data.rates.metalMineEnergyConsumption,
-      percent: data.rates.metalMinePercent,
-      field: 'metalMinePercent' as const,
-      color: 'text-metal',
+      name: 'Mine de minerai',
+      level: data.levels.mineraiMineLevel,
+      perHour: data.rates.mineraiPerHour,
+      energy: data.rates.mineraiMineEnergyConsumption,
+      percent: data.rates.mineraiMinePercent,
+      field: 'mineraiMinePercent' as const,
+      color: 'text-minerai',
     },
     {
-      name: 'Mine de cristal',
-      level: data.levels.crystalMineLevel,
-      perHour: data.rates.crystalPerHour,
-      energy: data.rates.crystalMineEnergyConsumption,
-      percent: data.rates.crystalMinePercent,
-      field: 'crystalMinePercent' as const,
-      color: 'text-crystal',
+      name: 'Mine de silicium',
+      level: data.levels.siliciumMineLevel,
+      perHour: data.rates.siliciumPerHour,
+      energy: data.rates.siliciumMineEnergyConsumption,
+      percent: data.rates.siliciumMinePercent,
+      field: 'siliciumMinePercent' as const,
+      color: 'text-silicium',
     },
     {
-      name: 'Synth. deuterium',
-      level: data.levels.deutSynthLevel,
-      perHour: data.rates.deutPerHour,
-      energy: data.rates.deutSynthEnergyConsumption,
-      percent: data.rates.deutSynthPercent,
-      field: 'deutSynthPercent' as const,
-      color: 'text-deuterium',
+      name: 'Synth. H\u2082',
+      level: data.levels.hydrogeneSynthLevel,
+      perHour: data.rates.hydrogenePerHour,
+      energy: data.rates.hydrogeneSynthEnergyConsumption,
+      percent: data.rates.hydrogeneSynthPercent,
+      field: 'hydrogeneSynthPercent' as const,
+      color: 'text-hydrogene',
     },
   ];
 

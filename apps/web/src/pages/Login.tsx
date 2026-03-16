@@ -35,7 +35,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background bg-stars">
       <Card className="w-full max-w-md glass-card animate-slide-up">
         <CardHeader>
-          <CardTitle className="text-center text-2xl glow-crystal">Stellar Empires</CardTitle>
+          <CardTitle className="text-center text-2xl glow-silicium">Exilium</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -75,7 +75,7 @@ export function Sidebar() {
       )}
     >
       <div className="flex h-14 items-center border-b border-border/50 px-4">
-        <span className="text-lg font-bold text-primary glow-crystal">Stellar Empires</span>
+        <span className="text-lg font-bold text-primary glow-silicium">Exilium</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-2">
         {sections.map((section, idx) => (

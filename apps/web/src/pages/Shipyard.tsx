@@ -36,16 +36,16 @@ export default function Shipyard() {
   const resources = useResourceCounter(
     resourceData
       ? {
-          metal: resourceData.metal,
-          crystal: resourceData.crystal,
-          deuterium: resourceData.deuterium,
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
           resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          metalPerHour: resourceData.rates.metalPerHour,
-          crystalPerHour: resourceData.rates.crystalPerHour,
-          deutPerHour: resourceData.rates.deutPerHour,
-          storageMetalCapacity: resourceData.rates.storageMetalCapacity,
-          storageCrystalCapacity: resourceData.rates.storageCrystalCapacity,
-          storageDeutCapacity: resourceData.rates.storageDeutCapacity,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -107,14 +107,14 @@ export default function Shipyard() {
         {ships.map((ship) => {
           const qty = quantities[ship.id] || 1;
           const totalCost = {
-            metal: ship.cost.metal * qty,
-            crystal: ship.cost.crystal * qty,
-            deuterium: ship.cost.deuterium * qty,
+            minerai: ship.cost.minerai * qty,
+            silicium: ship.cost.silicium * qty,
+            hydrogene: ship.cost.hydrogene * qty,
           };
           const canAfford =
-            resources.metal >= totalCost.metal &&
-            resources.crystal >= totalCost.crystal &&
-            resources.deuterium >= totalCost.deuterium;
+            resources.minerai >= totalCost.minerai &&
+            resources.silicium >= totalCost.silicium &&
+            resources.hydrogene >= totalCost.hydrogene;
 
           return (
             <Card key={ship.id} className={`relative ${!ship.prerequisitesMet ? 'opacity-50' : ''}`}>
@@ -140,9 +140,9 @@ export default function Shipyard() {
                 <div className="space-y-1">
                   <div className="text-xs text-muted-foreground">Coût par unité :</div>
                   <ResourceCost
-                    metal={ship.cost.metal}
-                    crystal={ship.cost.crystal}
-                    deuterium={ship.cost.deuterium}
+                    minerai={ship.cost.minerai}
+                    silicium={ship.cost.silicium}
+                    hydrogene={ship.cost.hydrogene}
                   />
                   <div className="text-xs text-muted-foreground">
                     Durée par unité : {formatDuration(ship.timePerUnit)}

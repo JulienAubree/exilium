@@ -4,17 +4,17 @@ import {
   SHIPS, type ShipId, type ShipDefinition,
   DEFENSES, type DefenseId, type DefenseDefinition,
   COMBAT_STATS, RAPID_FIRE, SHIP_STATS,
-  metalProduction, crystalProduction, deuteriumProduction,
-  solarPlantEnergy, metalMineEnergy, crystalMineEnergy, deutSynthEnergy,
+  mineraiProduction, siliciumProduction, hydrogeneProduction,
+  solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
 } from '@ogame-clone/game-engine';
 
 // GameConfig shape from the API
 interface GameConfigData {
-  buildings: Record<string, { id: string; name: string; description: string; baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number; prerequisites: { buildingId: string; level: number }[] }>;
-  research: Record<string, { id: string; name: string; description: string; baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
-  ships: Record<string, { id: string; name: string; description: string; cost: { metal: number; crystal: number; deuterium: number }; baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string; weapons: number; shield: number; armor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
-  defenses: Record<string, { id: string; name: string; description: string; cost: { metal: number; crystal: number; deuterium: number }; weapons: number; shield: number; armor: number; maxPerPlanet: number | null; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  buildings: Record<string, { id: string; name: string; description: string; baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; prerequisites: { buildingId: string; level: number }[] }>;
+  research: Record<string, { id: string; name: string; description: string; baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  ships: Record<string, { id: string; name: string; description: string; cost: { minerai: number; silicium: number; hydrogene: number }; baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string; weapons: number; shield: number; armor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  defenses: Record<string, { id: string; name: string; description: string; cost: { minerai: number; silicium: number; hydrogene: number }; weapons: number; shield: number; armor: number; maxPerPlanet: number | null; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
   rapidFire: Record<string, Record<string, number>>;
 }
 
@@ -23,16 +23,16 @@ interface GameConfigData {
 // ---------------------------------------------------------------------------
 
 const BUILDING_FLAVOR: Record<BuildingId, string> = {
-  metalMine: "Creusant profondement dans la croute planetaire, les foreuses extractrices de metal constituent la colonne vertebrale de toute economie spatiale.",
-  crystalMine: "Les gisements de cristal, formes sous des pressions immenses, alimentent l'ensemble des technologies avancees de la galaxie.",
-  deutSynth: "Le deuterium, isotope lourd de l'hydrogene, est extrait des oceans planetaires par un processus de filtration moleculaire.",
+  mineraiMine: "Creusant profondement dans la croute planetaire, les foreuses extractrices de minerai constituent la colonne vertebrale de toute economie spatiale.",
+  siliciumMine: "Les gisements de silicium, formes sous des pressions immenses, alimentent l'ensemble des technologies avancees de la galaxie.",
+  hydrogeneSynth: "L'hydrogene, element fondamental de l'univers, est extrait des oceans planetaires par un processus de filtration moleculaire.",
   solarPlant: "D'immenses panneaux photovoltaiques captent l'energie de l'etoile la plus proche pour alimenter l'ensemble des infrastructures planetaires.",
   robotics: "Les chaines de montage automatisees accelerent la construction de tous les batiments et infrastructures.",
   shipyard: "Cet immense complexe orbital permet l'assemblage de vaisseaux spatiaux et de systemes de defense planetaire.",
   researchLab: "Au coeur de ce laboratoire, les meilleurs scientifiques de l'empire repoussent les frontieres de la connaissance.",
-  storageMetal: "De vastes hangars blindes permettent de stocker des quantites croissantes de metal en toute securite.",
-  storageCrystal: "Ces chambres a environnement controle preservent les cristaux dans des conditions optimales.",
-  storageDeut: "Des reservoirs cryogeniques haute pression maintiennent le deuterium a l'etat liquide pour un stockage maximal.",
+  storageMinerai: "De vastes entrepots blindes permettent de stocker des quantites croissantes de minerai en toute securite.",
+  storageSilicium: "Ces chambres a environnement controle preservent le silicium dans des conditions optimales.",
+  storageHydrogene: "Des reservoirs cryogeniques haute pression maintiennent l'hydrogene a l'etat liquide pour un stockage maximal.",
 };
 
 const RESEARCH_FLAVOR: Record<ResearchId, string> = {
@@ -53,7 +53,7 @@ const SHIP_FLAVOR: Record<ShipId, string> = {
   lightFighter: "Le chasseur leger, pilier des premieres flottes, compense sa fragilite par son faible cout de production.",
   heavyFighter: "Blindage renforce et armement superieur font du chasseur lourd un adversaire redoutable en combat rapproche.",
   cruiser: "Polyvalent et puissamment arme, le croiseur domine les escarmouches grace a son tir rapide devastateur.",
-  battleship: "Le vaisseau de bataille, colosse de metal et de feu, est la piece maitresse de toute flotte d'invasion.",
+  battleship: "Le vaisseau de bataille, colosse d'acier et de feu, est la piece maitresse de toute flotte d'invasion.",
   espionageProbe: "Quasiment indetectable, la sonde d'espionnage collecte des renseignements precieux sur les planetes adverses.",
   colonyShip: "Ce vaisseau transporte tout le necessaire pour etablir une nouvelle colonie sur une planete inhabite.",
   recycler: "Equipe de puissants aimants et de bras mecaniques, le recycleur collecte les debris des batailles spatiales.",
@@ -95,7 +95,7 @@ export interface BuildingDetails {
   name: string;
   description: string;
   flavorText: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   prerequisites: { buildingId: string; level: number }[];
   productionTable?: { level: number; value: number }[];
@@ -112,7 +112,7 @@ export interface ResearchDetails {
   description: string;
   flavorText: string;
   effect: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
 }
@@ -129,7 +129,7 @@ export interface ShipDetails {
   name: string;
   description: string;
   flavorText: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
   prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
   combat: { weapons: number; shield: number; armor: number };
   stats: { baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string };
@@ -143,7 +143,7 @@ export interface DefenseDetails {
   name: string;
   description: string;
   flavorText: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
   prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
   combat: { weapons: number; shield: number; armor: number };
   rapidFireFrom: RapidFireEntry[];
@@ -228,37 +228,37 @@ export function getBuildingDetails(id: string, config?: GameConfigData, planet?:
     name: cfgDef?.name ?? def?.name ?? id,
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: BUILDING_FLAVOR[id as BuildingId] ?? '',
-    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
     costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
     prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? [],
   };
 
   switch (id) {
-    case 'metalMine':
-      details.productionTable = buildTable((lvl) => metalProduction(lvl, pf));
-      details.productionLabel = pf < 1 ? `Production metal/h (energie: ${Math.round(pf * 100)}%)` : 'Production metal/h';
-      details.energyTable = buildTable(metalMineEnergy);
+    case 'mineraiMine':
+      details.productionTable = buildTable((lvl) => mineraiProduction(lvl, pf));
+      details.productionLabel = pf < 1 ? `Production minerai/h (energie: ${Math.round(pf * 100)}%)` : 'Production minerai/h';
+      details.energyTable = buildTable(mineraiMineEnergy);
       details.energyLabel = 'Consommation energie';
       break;
-    case 'crystalMine':
-      details.productionTable = buildTable((lvl) => crystalProduction(lvl, pf));
-      details.productionLabel = pf < 1 ? `Production cristal/h (energie: ${Math.round(pf * 100)}%)` : 'Production cristal/h';
-      details.energyTable = buildTable(crystalMineEnergy);
+    case 'siliciumMine':
+      details.productionTable = buildTable((lvl) => siliciumProduction(lvl, pf));
+      details.productionLabel = pf < 1 ? `Production silicium/h (energie: ${Math.round(pf * 100)}%)` : 'Production silicium/h';
+      details.energyTable = buildTable(siliciumMineEnergy);
       details.energyLabel = 'Consommation energie';
       break;
-    case 'deutSynth':
-      details.productionTable = buildTable((lvl) => deuteriumProduction(lvl, maxTemp, pf));
-      details.productionLabel = `Production deut/h (temp. ${maxTemp}${pf < 1 ? `, energie: ${Math.round(pf * 100)}%` : ''})`;
-      details.energyTable = buildTable(deutSynthEnergy);
+    case 'hydrogeneSynth':
+      details.productionTable = buildTable((lvl) => hydrogeneProduction(lvl, maxTemp, pf));
+      details.productionLabel = `Production H\u2082/h (temp. ${maxTemp}${pf < 1 ? `, energie: ${Math.round(pf * 100)}%` : ''})`;
+      details.energyTable = buildTable(hydrogeneSynthEnergy);
       details.energyLabel = 'Consommation energie';
       break;
     case 'solarPlant':
       details.energyTable = buildTable(solarPlantEnergy);
       details.energyLabel = 'Production energie';
       break;
-    case 'storageMetal':
-    case 'storageCrystal':
-    case 'storageDeut':
+    case 'storageMinerai':
+    case 'storageSilicium':
+    case 'storageHydrogene':
       details.storageTable = buildTable(storageCapacity, 10);
       break;
   }
@@ -276,7 +276,7 @@ export function getResearchDetails(id: string, config?: GameConfigData): Researc
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: RESEARCH_FLAVOR[id as ResearchId] ?? '',
     effect: RESEARCH_EFFECTS[id as ResearchId] ?? '',
-    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
     costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
     prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
   };
@@ -297,7 +297,7 @@ export function getShipDetails(id: string, config?: GameConfigData): ShipDetails
     name: cfgDef?.name ?? def?.name ?? id,
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: SHIP_FLAVOR[id as ShipId] ?? '',
-    cost: cfgDef?.cost ?? def?.cost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
     prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
     combat,
     stats,
@@ -318,7 +318,7 @@ export function getDefenseDetails(id: string, config?: GameConfigData): DefenseD
     name: cfgDef?.name ?? def?.name ?? id,
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: DEFENSE_FLAVOR[id as DefenseId] ?? '',
-    cost: cfgDef?.cost ?? def?.cost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
     prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
     combat,
     rapidFireFrom: getRapidFireFrom(id, config),

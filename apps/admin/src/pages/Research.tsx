@@ -8,9 +8,9 @@ import { Pencil } from 'lucide-react';
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
   { key: 'description', label: 'Description', type: 'textarea' as const },
-  { key: 'baseCostMetal', label: 'Cout Metal (base)', type: 'number' as const },
-  { key: 'baseCostCrystal', label: 'Cout Cristal (base)', type: 'number' as const },
-  { key: 'baseCostDeuterium', label: 'Cout Deuterium (base)', type: 'number' as const },
+  { key: 'baseCostMinerai', label: 'Coût Minerai (base)', type: 'number' as const },
+  { key: 'baseCostSilicium', label: 'Coût Silicium (base)', type: 'number' as const },
+  { key: 'baseCostHydrogene', label: 'Coût Hydrogène (base)', type: 'number' as const },
   { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
@@ -42,9 +42,9 @@ export default function Research() {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Metal</th>
-              <th>Cristal</th>
-              <th>Deut</th>
+              <th>Minerai</th>
+              <th>Silicium</th>
+              <th>H₂</th>
               <th>Facteur</th>
               <th>Prerequis</th>
               <th></th>
@@ -55,9 +55,9 @@ export default function Research() {
               <tr key={r.id}>
                 <td className="font-mono text-xs text-gray-500">{r.id}</td>
                 <td className="font-medium">{r.name}</td>
-                <td className="font-mono text-sm">{r.baseCost.metal}</td>
-                <td className="font-mono text-sm">{r.baseCost.crystal}</td>
-                <td className="font-mono text-sm">{r.baseCost.deuterium}</td>
+                <td className="font-mono text-sm">{r.baseCost.minerai}</td>
+                <td className="font-mono text-sm">{r.baseCost.silicium}</td>
+                <td className="font-mono text-sm">{r.baseCost.hydrogene}</td>
                 <td className="font-mono text-sm">{r.costFactor}</td>
                 <td className="text-xs text-gray-500">
                   {[
@@ -87,9 +87,9 @@ export default function Research() {
           values={{
             name: editingResearch.name,
             description: editingResearch.description,
-            baseCostMetal: editingResearch.baseCost.metal,
-            baseCostCrystal: editingResearch.baseCost.crystal,
-            baseCostDeuterium: editingResearch.baseCost.deuterium,
+            baseCostMinerai: editingResearch.baseCost.minerai,
+            baseCostSilicium: editingResearch.baseCost.silicium,
+            baseCostHydrogene: editingResearch.baseCost.hydrogene,
             costFactor: editingResearch.costFactor,
             sortOrder: editingResearch.sortOrder,
           }}
@@ -99,9 +99,9 @@ export default function Research() {
               data: {
                 name: values.name as string,
                 description: values.description as string,
-                baseCostMetal: values.baseCostMetal as number,
-                baseCostCrystal: values.baseCostCrystal as number,
-                baseCostDeuterium: values.baseCostDeuterium as number,
+                baseCostMinerai: values.baseCostMinerai as number,
+                baseCostSilicium: values.baseCostSilicium as number,
+                baseCostHydrogene: values.baseCostHydrogene as number,
                 costFactor: values.costFactor as number,
                 sortOrder: values.sortOrder as number,
               },

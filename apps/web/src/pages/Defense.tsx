@@ -35,16 +35,16 @@ export default function Defense() {
   const resources = useResourceCounter(
     resourceData
       ? {
-          metal: resourceData.metal,
-          crystal: resourceData.crystal,
-          deuterium: resourceData.deuterium,
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
           resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          metalPerHour: resourceData.rates.metalPerHour,
-          crystalPerHour: resourceData.rates.crystalPerHour,
-          deutPerHour: resourceData.rates.deutPerHour,
-          storageMetalCapacity: resourceData.rates.storageMetalCapacity,
-          storageCrystalCapacity: resourceData.rates.storageCrystalCapacity,
-          storageDeutCapacity: resourceData.rates.storageDeutCapacity,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
         }
       : undefined,
   );
@@ -78,14 +78,14 @@ export default function Defense() {
             : 9999;
           const effectiveQty = Math.min(qty, maxQty);
           const totalCost = {
-            metal: defense.cost.metal * effectiveQty,
-            crystal: defense.cost.crystal * effectiveQty,
-            deuterium: defense.cost.deuterium * effectiveQty,
+            minerai: defense.cost.minerai * effectiveQty,
+            silicium: defense.cost.silicium * effectiveQty,
+            hydrogene: defense.cost.hydrogene * effectiveQty,
           };
           const canAfford =
-            resources.metal >= totalCost.metal &&
-            resources.crystal >= totalCost.crystal &&
-            resources.deuterium >= totalCost.deuterium;
+            resources.minerai >= totalCost.minerai &&
+            resources.silicium >= totalCost.silicium &&
+            resources.hydrogene >= totalCost.hydrogene;
 
           return (
             <Card key={defense.id} className={`relative ${!defense.prerequisitesMet ? 'opacity-50' : ''}`}>
@@ -114,9 +114,9 @@ export default function Defense() {
                 <div className="space-y-1">
                   <div className="text-xs text-muted-foreground">Coût par unité :</div>
                   <ResourceCost
-                    metal={defense.cost.metal}
-                    crystal={defense.cost.crystal}
-                    deuterium={defense.cost.deuterium}
+                    minerai={defense.cost.minerai}
+                    silicium={defense.cost.silicium}
+                    hydrogene={defense.cost.hydrogene}
                   />
                   <div className="text-xs text-muted-foreground">
                     Durée par unité : {formatDuration(defense.timePerUnit)}
