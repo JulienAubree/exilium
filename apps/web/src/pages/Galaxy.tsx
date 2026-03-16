@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Link } from 'react-router';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,21 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 
 export default function Galaxy() {
-  const [galaxy, setGalaxy] = useState(1);
-  const [system, setSystem] = useState(1);
+  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { data: planets } = trpc.planet.list.useQuery();
+  const activePlanet = planets?.find((p) => p.id === planetId);
+
+  const [galaxy, setGalaxy] = useState(activePlanet?.galaxy ?? 1);
+  const [system, setSystem] = useState(activePlanet?.system ?? 1);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!initialized && activePlanet) {
+      setGalaxy(activePlanet.galaxy);
+      setSystem(activePlanet.system);
+      setInitialized(true);
+    }
+  }, [activePlanet, initialized]);
 
   const { data, isLoading } = trpc.galaxy.system.useQuery(
     { galaxy, system },
