@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { trpc } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
+import { formatApiError } from '@/lib/error';
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -35,7 +36,7 @@ export default function Register() {
       setAuth(data.accessToken, data.refreshToken, data.user);
       navigate('/');
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => setError(formatApiError(err.message)),
   });
 
   const handleSubmit = (e: React.FormEvent) => {

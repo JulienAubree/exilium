@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { trpc, resetRefreshState } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
+import { formatApiError } from '@/lib/error';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -21,7 +22,7 @@ export default function Login() {
       setAuth(data.accessToken, data.refreshToken, data.user);
       navigate('/');
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => setError(formatApiError(err.message)),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
