@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router';
 import { trpc } from '@/trpc';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/common/Skeleton';
@@ -15,14 +14,29 @@ export default function Galaxy() {
     { galaxy, system },
   );
 
+  // Touch swipe for system navigation
+  const touchStart = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStart.current;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) setSystem(Math.max(1, system - 1));
+      else setSystem(Math.min(499, system + 1));
+    }
+    touchStart.current = null;
+  };
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Galaxie" />
 
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">Galaxie</label>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-1 sm:flex-initial">
             <Button
               variant="outline"
               size="sm"
@@ -52,7 +66,7 @@ export default function Galaxy() {
 
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">Système</label>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-1 sm:flex-initial">
             <Button
               variant="outline"
               size="sm"
@@ -81,23 +95,64 @@ export default function Galaxy() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Système solaire [{galaxy}:{system}]
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 15 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
+      <div className="glass-card p-4">
+        <h2 className="text-base font-semibold mb-4">
+          Système solaire [{galaxy}:{system}]
+        </h2>
+
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 15 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Mobile list */}
+            <div
+              className="space-y-1 lg:hidden"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              {data?.slots.map((slot, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 rounded-lg p-2 ${!slot ? 'opacity-40' : 'hover:bg-accent/50'}`}
+                >
+                  <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
+                  {slot ? (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium">{slot.planetName}</span>
+                        <div className="text-xs text-muted-foreground">
+                          {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
+                          {slot.username}
+                        </div>
+                      </div>
+                      {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
+                        <Link
+                          to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                          className="text-xs text-orange-400 hover:underline cursor-pointer"
+                          title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
+                        >
+                          DF
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-muted" />
+                      <span className="text-sm text-muted-foreground">Vide</span>
+                    </>
+                  )}
+                </div>
               ))}
             </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <table className="hidden sm:table w-full text-sm">
+
+            {/* Desktop table */}
+            <div className="hidden lg:block">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="px-2 py-1 w-12">Pos</th>
@@ -141,43 +196,10 @@ export default function Galaxy() {
                   ))}
                 </tbody>
               </table>
-
-              {/* Mobile cards */}
-              <div className="sm:hidden space-y-2">
-                {data?.slots.map((slot, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-md border border-border/50 p-3 text-sm ${!slot ? 'opacity-40' : ''}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-mono">{i + 1}</span>
-                      {slot ? (
-                        <span className="font-medium">{slot.planetName}</span>
-                      ) : (
-                        <span className="text-muted-foreground">Vide</span>
-                      )}
-                    </div>
-                    {slot && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
-                        {slot.username}
-                        {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
-                          <Link
-                            to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
-                            className="text-orange-400 ml-2 hover:underline"
-                          >
-                            DF
-                          </Link>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
