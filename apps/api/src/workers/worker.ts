@@ -8,6 +8,7 @@ import { startFleetReturnWorker } from './fleet-return.worker.js';
 import { eventCatchup } from '../cron/event-catchup.js';
 import { resourceTick } from '../cron/resource-tick.js';
 import { rankingUpdate } from '../cron/ranking-update.js';
+import { eventCleanup } from '../cron/event-cleanup.js';
 
 const db = createDb(env.DATABASE_URL);
 
@@ -49,6 +50,15 @@ setInterval(async () => {
   }
 }, 30 * 60_000);
 console.log('[worker] Ranking update cron started (30min)');
+
+setInterval(async () => {
+  try {
+    await eventCleanup(db);
+  } catch (err) {
+    console.error('[event-cleanup] Error:', err);
+  }
+}, 24 * 60 * 60_000);
+console.log('[worker] Event cleanup cron started (24h)');
 
 process.on('SIGTERM', () => {
   console.log('[worker] Shutting down...');
