@@ -3,7 +3,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil } from 'lucide-react';
+import { Pencil, ChevronDown, ChevronRight } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -16,9 +16,74 @@ const FIELDS = [
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 
+const MAX_LEVEL = 25;
+
+// Production-related building IDs mapped to their production config ID
+const PRODUCTION_MAP: Record<string, string> = {
+  metalMine: 'metalMine',
+  crystalMine: 'crystalMine',
+  deutSynth: 'deutSynth',
+  solarPlant: 'solarPlant',
+};
+
+const STORAGE_IDS = ['storageMetal', 'storageCrystal', 'storageDeut'];
+
+function formatNumber(n: number): string {
+  return n.toLocaleString('fr-FR');
+}
+
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+
+interface LevelRow {
+  level: number;
+  costMetal: number;
+  costCrystal: number;
+  costDeuterium: number;
+  buildTime: number;
+  production?: number;
+  energy?: number;
+  storageCapacity?: number;
+}
+
+function computeLevelRows(
+  building: { baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number },
+  productionConf: { baseProduction: number; exponentBase: number; energyConsumption: number | null; storageBase: number | null } | null,
+  isStorage: boolean,
+): LevelRow[] {
+  const rows: LevelRow[] = [];
+  for (let level = 1; level <= MAX_LEVEL; level++) {
+    const factor = Math.pow(building.costFactor, level - 1);
+    const costMetal = Math.floor(building.baseCost.metal * factor);
+    const costCrystal = Math.floor(building.baseCost.crystal * factor);
+    const costDeuterium = Math.floor(building.baseCost.deuterium * factor);
+    const buildTime = Math.max(1, Math.floor(((costMetal + costCrystal) / 2500) * 3600));
+
+    const row: LevelRow = { level, costMetal, costCrystal, costDeuterium, buildTime };
+
+    if (isStorage && productionConf?.storageBase) {
+      row.storageCapacity = productionConf.storageBase * Math.floor(2.5 * Math.exp((20 * level) / 33));
+    } else if (productionConf && !isStorage) {
+      row.production = Math.floor(productionConf.baseProduction * level * Math.pow(productionConf.exponentBase, level));
+      if (productionConf.energyConsumption != null) {
+        row.energy = Math.floor(productionConf.energyConsumption * level * Math.pow(productionConf.exponentBase, level));
+      }
+    }
+
+    rows.push(row);
+  }
+  return rows;
+}
+
 export default function Buildings() {
   const { data, isLoading, refetch } = useGameConfig();
   const [editing, setEditing] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateBuilding.useMutation({
     onSuccess: () => {
@@ -41,6 +106,7 @@ export default function Buildings() {
         <table className="admin-table">
           <thead>
             <tr>
+              <th className="w-8"></th>
               <th>ID</th>
               <th>Nom</th>
               <th>Metal</th>
@@ -53,31 +119,124 @@ export default function Buildings() {
             </tr>
           </thead>
           <tbody>
-            {buildings.map((b) => (
-              <tr key={b.id}>
-                <td className="font-mono text-xs text-gray-500">{b.id}</td>
-                <td className="font-medium">{b.name}</td>
-                <td className="font-mono text-sm">{b.baseCost.metal}</td>
-                <td className="font-mono text-sm">{b.baseCost.crystal}</td>
-                <td className="font-mono text-sm">{b.baseCost.deuterium}</td>
-                <td className="font-mono text-sm">{b.costFactor}</td>
-                <td className="font-mono text-sm">{b.baseTime}s</td>
-                <td className="text-xs text-gray-500">
-                  {b.prerequisites.length > 0
-                    ? b.prerequisites.map((p) => `${p.buildingId} ${p.level}`).join(', ')
-                    : '-'}
-                </td>
-                <td>
-                  <button
-                    onClick={() => setEditing(b.id)}
-                    className="admin-btn-ghost p-1.5"
-                    title="Modifier"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {buildings.map((b) => {
+              const isExpanded = expanded === b.id;
+              const prodConfId = PRODUCTION_MAP[b.id];
+              const prodConf = prodConfId ? data.production[prodConfId] : null;
+              const isStorage = STORAGE_IDS.includes(b.id);
+              const storageConf = isStorage ? data.production['storage'] : null;
+              const effectiveConf = isStorage ? storageConf : prodConf;
+              const hasProgression = !!effectiveConf || (!prodConf && !isStorage);
+              const levelRows = isExpanded ? computeLevelRows(b, effectiveConf ?? null, isStorage) : [];
+
+              // Determine which extra columns to show
+              const showProduction = !!effectiveConf && !isStorage;
+              const showEnergy = !!effectiveConf && effectiveConf.energyConsumption != null && !isStorage;
+              const showStorage = isStorage && !!effectiveConf;
+              const isSolar = b.id === 'solarPlant';
+
+              return (
+                <>
+                  <tr key={b.id} className={isExpanded ? '[&>td]:border-b-0' : ''}>
+                    <td className="!px-2">
+                      {hasProgression && (
+                        <button
+                          onClick={() => setExpanded(isExpanded ? null : b.id)}
+                          className="admin-btn-ghost p-1"
+                        >
+                          {isExpanded
+                            ? <ChevronDown className="w-4 h-4 text-hull-400" />
+                            : <ChevronRight className="w-4 h-4" />}
+                        </button>
+                      )}
+                    </td>
+                    <td className="font-mono text-xs text-gray-500">{b.id}</td>
+                    <td className="font-medium">{b.name}</td>
+                    <td className="font-mono text-sm">{b.baseCost.metal}</td>
+                    <td className="font-mono text-sm">{b.baseCost.crystal}</td>
+                    <td className="font-mono text-sm">{b.baseCost.deuterium}</td>
+                    <td className="font-mono text-sm">{b.costFactor}</td>
+                    <td className="font-mono text-sm">{b.baseTime}s</td>
+                    <td className="text-xs text-gray-500">
+                      {b.prerequisites.length > 0
+                        ? b.prerequisites.map((p) => `${p.buildingId} ${p.level}`).join(', ')
+                        : '-'}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => setEditing(b.id)}
+                        className="admin-btn-ghost p-1.5"
+                        title="Modifier"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr key={`${b.id}-levels`}>
+                      <td colSpan={10} className="!p-0 !bg-panel/60">
+                        <div className="px-6 py-3">
+                          <div className="text-xs font-medium text-hull-400 mb-2 uppercase tracking-wider">
+                            Progression niveaux 1–{MAX_LEVEL}
+                            <span className="text-gray-500 normal-case tracking-normal ml-2">(temps sans usine de robots)</span>
+                          </div>
+                          <div className="max-h-[400px] overflow-y-auto rounded border border-panel-border/50">
+                            <table className="w-full text-xs">
+                              <thead className="sticky top-0 bg-panel z-10">
+                                <tr className="text-gray-500 uppercase tracking-wider">
+                                  <th className="px-3 py-2 text-left font-medium">Niv.</th>
+                                  <th className="px-3 py-2 text-right font-medium">Metal</th>
+                                  <th className="px-3 py-2 text-right font-medium">Cristal</th>
+                                  <th className="px-3 py-2 text-right font-medium">Deut</th>
+                                  <th className="px-3 py-2 text-right font-medium">Temps</th>
+                                  {showProduction && (
+                                    <th className="px-3 py-2 text-right font-medium">
+                                      {isSolar ? 'Energie produite' : 'Production/h'}
+                                    </th>
+                                  )}
+                                  {showEnergy && !isSolar && (
+                                    <th className="px-3 py-2 text-right font-medium">Energie conso</th>
+                                  )}
+                                  {showStorage && (
+                                    <th className="px-3 py-2 text-right font-medium">Capacite</th>
+                                  )}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {levelRows.map((r) => (
+                                  <tr key={r.level} className="border-t border-panel-border/30 hover:bg-panel-hover/50">
+                                    <td className="px-3 py-1.5 font-mono font-medium text-hull-300">{r.level}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costMetal)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costCrystal)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right">{formatNumber(r.costDeuterium)}</td>
+                                    <td className="px-3 py-1.5 font-mono text-right text-gray-400">{formatTime(r.buildTime)}</td>
+                                    {showProduction && (
+                                      <td className="px-3 py-1.5 font-mono text-right text-emerald-400">
+                                        {formatNumber(r.production!)}
+                                      </td>
+                                    )}
+                                    {showEnergy && !isSolar && (
+                                      <td className="px-3 py-1.5 font-mono text-right text-amber-400">
+                                        -{formatNumber(r.energy!)}
+                                      </td>
+                                    )}
+                                    {showStorage && (
+                                      <td className="px-3 py-1.5 font-mono text-right text-sky-400">
+                                        {formatNumber(r.storageCapacity!)}
+                                      </td>
+                                    )}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
           </tbody>
         </table>
       </div>
