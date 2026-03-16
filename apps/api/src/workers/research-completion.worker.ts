@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import Redis from 'ioredis';
-import { createDb, buildQueue } from '@ogame-clone/db';
+import { createDb, buildQueue, gameEvents, planets } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createResearchService } from '../modules/research/research.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
@@ -22,7 +22,7 @@ export function startResearchCompletionWorker(db: ReturnType<typeof createDb>) {
       console.log(`[research-completion] Processing job ${job.id}`);
 
       const [entry] = await db
-        .select({ userId: buildQueue.userId })
+        .select({ userId: buildQueue.userId, planetId: buildQueue.planetId })
         .from(buildQueue)
         .where(eq(buildQueue.id, buildQueueId))
         .limit(1);
@@ -34,6 +34,19 @@ export function startResearchCompletionWorker(db: ReturnType<typeof createDb>) {
           publishNotification(redis, entry.userId, {
             type: 'research-done',
             payload: { techId: result.researchId, level: result.newLevel },
+          });
+
+          const [planet] = await db
+            .select({ name: planets.name })
+            .from(planets)
+            .where(eq(planets.id, entry.planetId))
+            .limit(1);
+
+          await db.insert(gameEvents).values({
+            userId: entry.userId,
+            planetId: entry.planetId,
+            type: 'research-done',
+            payload: { techId: result.researchId, level: result.newLevel, planetName: planet?.name ?? 'Planète' },
           });
         }
       }

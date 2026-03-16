@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import Redis from 'ioredis';
-import { createDb, buildQueue } from '@ogame-clone/db';
+import { createDb, buildQueue, gameEvents, planets } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
@@ -36,6 +36,19 @@ export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
           publishNotification(redis, entry.userId, {
             type: 'building-done',
             payload: { planetId: entry.planetId, buildingId: result.buildingId, level: result.newLevel },
+          });
+
+          const [planet] = await db
+            .select({ name: planets.name })
+            .from(planets)
+            .where(eq(planets.id, entry.planetId))
+            .limit(1);
+
+          await db.insert(gameEvents).values({
+            userId: entry.userId,
+            planetId: entry.planetId,
+            type: 'building-done',
+            payload: { buildingId: result.buildingId, level: result.newLevel, planetName: planet?.name ?? 'Planète' },
           });
         }
       } else {
