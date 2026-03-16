@@ -26,13 +26,13 @@ export function EntityDetailOverlay({ open, onClose, title, children }: EntityDe
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center">
       <div className="fixed inset-0 bg-black/60 animate-fade-in" onClick={onClose} />
       <div
         className={cn(
-          'relative z-50 w-full border border-border bg-card shadow-lg animate-slide-up overflow-y-auto',
-          'max-sm:inset-0 max-sm:fixed max-sm:rounded-none max-sm:max-h-full',
-          'sm:max-w-2xl sm:max-h-[85vh] sm:rounded-lg sm:mx-4',
+          'relative z-50 w-full overflow-y-auto shadow-lg',
+          'max-h-[85vh] rounded-t-2xl animate-slide-up-sheet bg-card/95 backdrop-blur-lg border-t border-white/10',
+          'lg:max-w-2xl lg:max-h-[85vh] lg:rounded-lg lg:mx-4 lg:border lg:border-border lg:bg-card lg:backdrop-blur-none lg:animate-slide-up',
         )}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4">
