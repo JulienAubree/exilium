@@ -4,7 +4,8 @@ import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { PrerequisitesEditor, type MixedPrereq } from '@/components/ui/PrerequisitesEditor';
+import { Pencil, Plus, Trash2, Link } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -28,6 +29,7 @@ export default function Research() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingPrereqs, setEditingPrereqs] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateResearch.useMutation({
     onSuccess: () => {
@@ -40,6 +42,13 @@ export default function Research() {
     onSuccess: () => {
       refetch();
       setCreating(false);
+    },
+  });
+
+  const prereqsMutation = trpc.gameConfig.admin.updateResearchPrerequisites.useMutation({
+    onSuccess: () => {
+      refetch();
+      setEditingPrereqs(null);
     },
   });
 
@@ -101,10 +110,17 @@ export default function Research() {
                 <td className="font-mono text-sm">{r.baseCost.hydrogene}</td>
                 <td className="font-mono text-sm">{r.costFactor}</td>
                 <td className="text-xs text-gray-500">
-                  {[
-                    ...r.prerequisites.buildings.map((p) => `${p.buildingId} ${p.level}`),
-                    ...r.prerequisites.research.map((p) => `${p.researchId} ${p.level}`),
-                  ].join(', ') || '-'}
+                  <button
+                    onClick={() => setEditingPrereqs(r.id)}
+                    className="admin-btn-ghost p-1 inline-flex items-center gap-1 hover:text-hull-400"
+                    title="Modifier les prérequis"
+                  >
+                    <Link className="w-3 h-3" />
+                    {[
+                      ...r.prerequisites.buildings.map((p) => `${p.buildingId} ${p.level}`),
+                      ...r.prerequisites.research.map((p) => `${p.researchId} ${p.level}`),
+                    ].join(', ') || '-'}
+                  </button>
                 </td>
                 <td>
                   <div className="flex items-center gap-1">
@@ -194,6 +210,38 @@ export default function Research() {
           }}
           onClose={() => setCreating(false)}
           saving={createMutation.isPending}
+        />
+      )}
+
+      {editingPrereqs && data.research[editingPrereqs] && (
+        <PrerequisitesEditor
+          open={!!editingPrereqs}
+          title={`Prérequis: ${data.research[editingPrereqs].name}`}
+          mode="mixed"
+          mixedPrereqs={[
+            ...data.research[editingPrereqs].prerequisites.buildings.map((p) => ({
+              requiredBuildingId: p.buildingId,
+              requiredLevel: p.level,
+            })),
+            ...data.research[editingPrereqs].prerequisites.research.map((p) => ({
+              requiredResearchId: p.researchId,
+              requiredLevel: p.level,
+            })),
+          ]}
+          buildings={Object.values(data.buildings).map((b) => ({ id: b.id, name: b.name }))}
+          research={research.map((r) => ({ id: r.id, name: r.name }))}
+          onSave={(prereqs) => {
+            prereqsMutation.mutate({
+              researchId: editingPrereqs,
+              prerequisites: (prereqs as MixedPrereq[]).map((p) => ({
+                requiredBuildingId: p.requiredBuildingId,
+                requiredResearchId: p.requiredResearchId,
+                requiredLevel: p.requiredLevel,
+              })),
+            });
+          }}
+          onClose={() => setEditingPrereqs(null)}
+          saving={prereqsMutation.isPending}
         />
       )}
 

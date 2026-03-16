@@ -4,7 +4,8 @@ import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { PrerequisitesEditor, type BuildingPrereq } from '@/components/ui/PrerequisitesEditor';
+import { Pencil, ChevronDown, ChevronRight, Plus, Trash2, Link } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -94,6 +95,7 @@ export default function Buildings() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingPrereqs, setEditingPrereqs] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateBuilding.useMutation({
     onSuccess: () => {
@@ -106,6 +108,13 @@ export default function Buildings() {
     onSuccess: () => {
       refetch();
       setCreating(false);
+    },
+  });
+
+  const prereqsMutation = trpc.gameConfig.admin.updateBuildingPrerequisites.useMutation({
+    onSuccess: () => {
+      refetch();
+      setEditingPrereqs(null);
     },
   });
 
@@ -199,9 +208,16 @@ export default function Buildings() {
                     <td className="font-mono text-sm">{b.costFactor}</td>
                     <td className="font-mono text-sm">{b.baseTime}s</td>
                     <td className="text-xs text-gray-500">
-                      {b.prerequisites.length > 0
-                        ? b.prerequisites.map((p) => `${p.buildingId} ${p.level}`).join(', ')
-                        : '-'}
+                      <button
+                        onClick={() => setEditingPrereqs(b.id)}
+                        className="admin-btn-ghost p-1 inline-flex items-center gap-1 hover:text-hull-400"
+                        title="Modifier les prérequis"
+                      >
+                        <Link className="w-3 h-3" />
+                        {b.prerequisites.length > 0
+                          ? b.prerequisites.map((p) => `${p.buildingId} ${p.level}`).join(', ')
+                          : '-'}
+                      </button>
                     </td>
                     <td>
                       <div className="flex items-center gap-1">
@@ -359,6 +375,30 @@ export default function Buildings() {
           }}
           onClose={() => setCreating(false)}
           saving={createMutation.isPending}
+        />
+      )}
+
+      {editingPrereqs && data.buildings[editingPrereqs] && (
+        <PrerequisitesEditor
+          open={!!editingPrereqs}
+          title={`Prérequis: ${data.buildings[editingPrereqs].name}`}
+          mode="building"
+          buildingPrereqs={data.buildings[editingPrereqs].prerequisites.map((p) => ({
+            requiredBuildingId: p.buildingId,
+            requiredLevel: p.level,
+          }))}
+          buildings={buildings.map((b) => ({ id: b.id, name: b.name }))}
+          onSave={(prereqs) => {
+            prereqsMutation.mutate({
+              buildingId: editingPrereqs,
+              prerequisites: (prereqs as BuildingPrereq[]).map((p) => ({
+                requiredBuildingId: p.requiredBuildingId,
+                requiredLevel: p.requiredLevel,
+              })),
+            });
+          }}
+          onClose={() => setEditingPrereqs(null)}
+          saving={prereqsMutation.isPending}
         />
       )}
 

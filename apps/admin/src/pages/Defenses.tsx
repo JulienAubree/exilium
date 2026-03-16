@@ -4,7 +4,8 @@ import { trpc } from '@/trpc';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { PrerequisitesEditor, type MixedPrereq } from '@/components/ui/PrerequisitesEditor';
+import { Pencil, Plus, Trash2, Link } from 'lucide-react';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -31,6 +32,7 @@ export default function Defenses() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingPrereqs, setEditingPrereqs] = useState<string | null>(null);
 
   const updateMutation = trpc.gameConfig.admin.updateDefense.useMutation({
     onSuccess: () => {
@@ -43,6 +45,13 @@ export default function Defenses() {
     onSuccess: () => {
       refetch();
       setCreating(false);
+    },
+  });
+
+  const prereqsMutation = trpc.gameConfig.admin.updateDefensePrerequisites.useMutation({
+    onSuccess: () => {
+      refetch();
+      setEditingPrereqs(null);
     },
   });
 
@@ -93,6 +102,7 @@ export default function Defenses() {
               <th>Bouclier</th>
               <th>Coque</th>
               <th>Max</th>
+              <th>Prerequis</th>
               <th></th>
             </tr>
           </thead>
@@ -108,6 +118,19 @@ export default function Defenses() {
                 <td className="font-mono text-sm text-blue-400">{d.shield}</td>
                 <td className="font-mono text-sm text-yellow-400">{d.armor}</td>
                 <td className="font-mono text-sm">{d.maxPerPlanet ?? '-'}</td>
+                <td className="text-xs text-gray-500">
+                  <button
+                    onClick={() => setEditingPrereqs(d.id)}
+                    className="admin-btn-ghost p-1 inline-flex items-center gap-1 hover:text-hull-400"
+                    title="Modifier les prérequis"
+                  >
+                    <Link className="w-3 h-3" />
+                    {[
+                      ...d.prerequisites.buildings.map((p) => `${p.buildingId} ${p.level}`),
+                      ...d.prerequisites.research.map((p) => `${p.researchId} ${p.level}`),
+                    ].join(', ') || '-'}
+                  </button>
+                </td>
                 <td>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setEditing(d.id)} className="admin-btn-ghost p-1.5" title="Modifier">
@@ -204,6 +227,38 @@ export default function Defenses() {
           }}
           onClose={() => setCreating(false)}
           saving={createMutation.isPending}
+        />
+      )}
+
+      {editingPrereqs && data.defenses[editingPrereqs] && (
+        <PrerequisitesEditor
+          open={!!editingPrereqs}
+          title={`Prérequis: ${data.defenses[editingPrereqs].name}`}
+          mode="mixed"
+          mixedPrereqs={[
+            ...data.defenses[editingPrereqs].prerequisites.buildings.map((p) => ({
+              requiredBuildingId: p.buildingId,
+              requiredLevel: p.level,
+            })),
+            ...data.defenses[editingPrereqs].prerequisites.research.map((p) => ({
+              requiredResearchId: p.researchId,
+              requiredLevel: p.level,
+            })),
+          ]}
+          buildings={Object.values(data.buildings).map((b) => ({ id: b.id, name: b.name }))}
+          research={Object.values(data.research).map((r) => ({ id: r.id, name: r.name }))}
+          onSave={(prereqs) => {
+            prereqsMutation.mutate({
+              defenseId: editingPrereqs,
+              prerequisites: (prereqs as MixedPrereq[]).map((p) => ({
+                requiredBuildingId: p.requiredBuildingId,
+                requiredResearchId: p.requiredResearchId,
+                requiredLevel: p.requiredLevel,
+              })),
+            });
+          }}
+          onClose={() => setEditingPrereqs(null)}
+          saving={prereqsMutation.isPending}
         />
       )}
 
