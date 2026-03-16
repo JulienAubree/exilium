@@ -6,7 +6,7 @@ import { usePlanetStore } from '@/stores/planet.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 
 interface Planet {
   id: string;
@@ -137,6 +137,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
             value={energyBalance}
             glowClass={energyBalance >= 0 ? 'glow-energy' : ''}
             colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
+            icon={<EnergieIcon size={14} />}
           />
         </div>
       </div>
