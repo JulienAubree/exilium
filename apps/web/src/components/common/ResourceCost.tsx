@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from './ResourceIcons';
 
 interface ResourceCostProps {
   minerai: number;
@@ -8,20 +9,6 @@ interface ResourceCostProps {
   currentSilicium?: number;
   currentHydrogene?: number;
 }
-
-function ResourceIcon({ color }: { color: string }) {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" className="inline-block">
-      <circle cx="5" cy="5" r="4" fill={color} opacity="0.8" />
-    </svg>
-  );
-}
-
-const RESOURCE_COLORS = {
-  minerai: '#8b9dc3',
-  silicium: '#6ecfef',
-  hydrogene: '#4db8a4',
-};
 
 export function ResourceCost({
   minerai,
@@ -35,9 +22,9 @@ export function ResourceCost({
     current === undefined || current >= cost;
 
   const items = [
-    { name: 'Minerai', value: minerai, current: currentMinerai, color: RESOURCE_COLORS.minerai, textClass: 'text-minerai' },
-    { name: 'Silicium', value: silicium, current: currentSilicium, color: RESOURCE_COLORS.silicium, textClass: 'text-silicium' },
-    { name: 'H\u2082', value: hydrogene, current: currentHydrogene, color: RESOURCE_COLORS.hydrogene, textClass: 'text-hydrogene' },
+    { name: 'Minerai', value: minerai, current: currentMinerai, icon: <MineraiIcon size={12} />, textClass: 'text-minerai' },
+    { name: 'Silicium', value: silicium, current: currentSilicium, icon: <SiliciumIcon size={12} />, textClass: 'text-silicium' },
+    { name: 'H\u2082', value: hydrogene, current: currentHydrogene, icon: <HydrogeneIcon size={12} />, textClass: 'text-hydrogene' },
   ];
 
   return (
@@ -56,7 +43,7 @@ export function ResourceCost({
                 : undefined
             }
           >
-            <ResourceIcon color={item.color} />
+            {item.icon}
             {item.value.toLocaleString('fr-FR')}
           </span>
         ) : null,

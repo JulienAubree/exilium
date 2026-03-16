@@ -20,14 +20,14 @@ export function createResourceRouter(
         return {
           rates,
           resourcesUpdatedAt: planet.resourcesUpdatedAt.toISOString(),
-          metal: Number(planet.metal),
-          crystal: Number(planet.crystal),
-          deuterium: Number(planet.deuterium),
+          minerai: Number(planet.minerai),
+          silicium: Number(planet.silicium),
+          hydrogene: Number(planet.hydrogene),
           maxTemp: planet.maxTemp,
           levels: {
-            metalMineLevel: planet.metalMineLevel,
-            crystalMineLevel: planet.crystalMineLevel,
-            deutSynthLevel: planet.deutSynthLevel,
+            mineraiMineLevel: planet.mineraiMineLevel,
+            siliciumMineLevel: planet.siliciumMineLevel,
+            hydrogeneSynthLevel: planet.hydrogeneSynthLevel,
             solarPlantLevel: planet.solarPlantLevel,
           },
         };
@@ -37,16 +37,16 @@ export function createResourceRouter(
       .input(
         z.object({
           planetId: z.string().uuid(),
-          metalMinePercent: percentSchema.optional(),
-          crystalMinePercent: percentSchema.optional(),
-          deutSynthPercent: percentSchema.optional(),
+          mineraiMinePercent: percentSchema.optional(),
+          siliciumMinePercent: percentSchema.optional(),
+          hydrogeneSynthPercent: percentSchema.optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
         await resourceService.setProductionPercent(input.planetId, ctx.userId!, {
-          metalMinePercent: input.metalMinePercent,
-          crystalMinePercent: input.crystalMinePercent,
-          deutSynthPercent: input.deutSynthPercent,
+          mineraiMinePercent: input.mineraiMinePercent,
+          siliciumMinePercent: input.siliciumMinePercent,
+          hydrogeneSynthPercent: input.hydrogeneSynthPercent,
         });
       }),
   });

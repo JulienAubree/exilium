@@ -30,9 +30,9 @@ interface SendFleetInput {
   targetPosition: number;
   mission: 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
   ships: Record<string, number>;
-  metalCargo?: number;
-  crystalCargo?: number;
-  deuteriumCargo?: number;
+  mineraiCargo?: number;
+  siliciumCargo?: number;
+  hydrogeneCargo?: number;
 }
 
 function buildShipStatsMap(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): Record<string, ShipStats> {
@@ -60,9 +60,9 @@ function buildCombatStats(config: Awaited<ReturnType<GameConfigService['getFullC
 }
 
 function buildShipCosts(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>) {
-  const costs: Record<string, { metal: number; crystal: number }> = {};
+  const costs: Record<string, { minerai: number; silicium: number }> = {};
   for (const [id, ship] of Object.entries(config.ships)) {
-    costs[id] = { metal: ship.cost.metal, crystal: ship.cost.crystal };
+    costs[id] = { minerai: ship.cost.minerai, silicium: ship.cost.silicium };
   }
   return costs;
 }
@@ -110,10 +110,10 @@ export function createFleetService(
 
       // Validate cargo doesn't exceed capacity
       const cargo = totalCargoCapacity(input.ships, shipStatsMap);
-      const metalCargo = input.metalCargo ?? 0;
-      const crystalCargo = input.crystalCargo ?? 0;
-      const deuteriumCargo = input.deuteriumCargo ?? 0;
-      const totalCargo = metalCargo + crystalCargo + deuteriumCargo;
+      const mineraiCargo = input.mineraiCargo ?? 0;
+      const siliciumCargo = input.siliciumCargo ?? 0;
+      const hydrogeneCargo = input.hydrogeneCargo ?? 0;
+      const totalCargo = mineraiCargo + siliciumCargo + hydrogeneCargo;
       if (totalCargo > cargo) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Capacité de fret dépassée' });
       }
@@ -159,11 +159,11 @@ export function createFleetService(
         .limit(1);
 
       // Spend resources (cargo + fuel)
-      const totalDeutCost = deuteriumCargo + fuel;
+      const totalHydrogeneCost = hydrogeneCargo + fuel;
       await resourceService.spendResources(input.originPlanetId, userId, {
-        metal: metalCargo,
-        crystal: crystalCargo,
-        deuterium: totalDeutCost,
+        minerai: mineraiCargo,
+        silicium: siliciumCargo,
+        hydrogene: totalHydrogeneCost,
       });
 
       // Deduct ships from planet
@@ -197,9 +197,9 @@ export function createFleetService(
           status: 'active',
           departureTime: now,
           arrivalTime,
-          metalCargo: String(metalCargo),
-          crystalCargo: String(crystalCargo),
-          deuteriumCargo: String(deuteriumCargo),
+          mineraiCargo: String(mineraiCargo),
+          siliciumCargo: String(siliciumCargo),
+          hydrogeneCargo: String(hydrogeneCargo),
           ships: input.ships,
         })
         .returning();
@@ -283,9 +283,9 @@ export function createFleetService(
       if (!event) return null;
 
       const ships = event.ships as Record<string, number>;
-      const metalCargo = Number(event.metalCargo);
-      const crystalCargo = Number(event.crystalCargo);
-      const deuteriumCargo = Number(event.deuteriumCargo);
+      const mineraiCargo = Number(event.mineraiCargo);
+      const siliciumCargo = Number(event.siliciumCargo);
+      const hydrogeneCargo = Number(event.hydrogeneCargo);
 
       if (event.mission === 'transport') {
         if (event.targetPlanetId) {
@@ -299,9 +299,9 @@ export function createFleetService(
             await db
               .update(planets)
               .set({
-                metal: String(Number(targetPlanet.metal) + metalCargo),
-                crystal: String(Number(targetPlanet.crystal) + crystalCargo),
-                deuterium: String(Number(targetPlanet.deuterium) + deuteriumCargo),
+                minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
+                silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
+                hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
               })
               .where(eq(planets.id, event.targetPlanetId));
           }
@@ -328,9 +328,9 @@ export function createFleetService(
             await db
               .update(planets)
               .set({
-                metal: String(Number(targetPlanet.metal) + metalCargo),
-                crystal: String(Number(targetPlanet.crystal) + crystalCargo),
-                deuterium: String(Number(targetPlanet.deuterium) + deuteriumCargo),
+                minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
+                silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
+                hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
               })
               .where(eq(planets.id, event.targetPlanetId));
 
@@ -358,7 +358,7 @@ export function createFleetService(
       }
 
       if (event.mission === 'colonize') {
-        return this.processColonize(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+        return this.processColonize(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo);
       }
 
       if (event.mission === 'spy') {
@@ -366,18 +366,18 @@ export function createFleetService(
       }
 
       if (event.mission === 'attack') {
-        return this.processAttack(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+        return this.processAttack(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo);
       }
 
       if (event.mission === 'recycle') {
-        return this.processRecycle(event, ships, metalCargo, crystalCargo, deuteriumCargo);
+        return this.processRecycle(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo);
       }
 
       // Unknown mission — return fleet
       await this.scheduleReturn(
         event.id, event.originPlanetId,
         { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-        ships, metalCargo, crystalCargo, deuteriumCargo,
+        ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
       );
 
       return { mission: event.mission, placeholder: true };
@@ -413,11 +413,11 @@ export function createFleetService(
         .set(shipUpdates)
         .where(eq(planetShips.planetId, event.originPlanetId));
 
-      const metalCargo = Number(event.metalCargo);
-      const crystalCargo = Number(event.crystalCargo);
-      const deuteriumCargo = Number(event.deuteriumCargo);
+      const mineraiCargo = Number(event.mineraiCargo);
+      const siliciumCargo = Number(event.siliciumCargo);
+      const hydrogeneCargo = Number(event.hydrogeneCargo);
 
-      if (metalCargo > 0 || crystalCargo > 0 || deuteriumCargo > 0) {
+      if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
         const [originPlanet] = await db
           .select()
           .from(planets)
@@ -428,9 +428,9 @@ export function createFleetService(
           await db
             .update(planets)
             .set({
-              metal: String(Number(originPlanet.metal) + metalCargo),
-              crystal: String(Number(originPlanet.crystal) + crystalCargo),
-              deuterium: String(Number(originPlanet.deuterium) + deuteriumCargo),
+              minerai: String(Number(originPlanet.minerai) + mineraiCargo),
+              silicium: String(Number(originPlanet.silicium) + siliciumCargo),
+              hydrogene: String(Number(originPlanet.hydrogene) + hydrogeneCargo),
             })
             .where(eq(planets.id, event.originPlanetId));
         }
@@ -449,9 +449,9 @@ export function createFleetService(
       originPlanetId: string,
       targetCoords: { galaxy: number; system: number; position: number },
       ships: Record<string, number>,
-      metalCargo: number,
-      crystalCargo: number,
-      deuteriumCargo: number,
+      mineraiCargo: number,
+      siliciumCargo: number,
+      hydrogeneCargo: number,
     ) {
       const [originPlanet] = await db
         .select()
@@ -477,9 +477,9 @@ export function createFleetService(
           phase: 'return',
           departureTime: now,
           arrivalTime: returnTime,
-          metalCargo: String(metalCargo),
-          crystalCargo: String(crystalCargo),
-          deuteriumCargo: String(deuteriumCargo),
+          mineraiCargo: String(mineraiCargo),
+          siliciumCargo: String(siliciumCargo),
+          hydrogeneCargo: String(hydrogeneCargo),
           ships,
         })
         .where(eq(fleetEvents.id, fleetEventId));
@@ -494,9 +494,9 @@ export function createFleetService(
     async processColonize(
       event: typeof fleetEvents.$inferSelect,
       ships: Record<string, number>,
-      metalCargo: number,
-      crystalCargo: number,
-      deuteriumCargo: number,
+      mineraiCargo: number,
+      siliciumCargo: number,
+      hydrogeneCargo: number,
     ) {
       const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
 
@@ -525,7 +525,7 @@ export function createFleetService(
         await this.scheduleReturn(
           event.id, event.originPlanetId,
           { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, metalCargo, crystalCargo, deuteriumCargo,
+          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
         );
         return { mission: 'colonize', success: false, reason: 'occupied' };
       }
@@ -548,7 +548,7 @@ export function createFleetService(
         await this.scheduleReturn(
           event.id, event.originPlanetId,
           { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, metalCargo, crystalCargo, deuteriumCargo,
+          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
         );
         return { mission: 'colonize', success: false, reason: 'max_planets' };
       }
@@ -626,9 +626,9 @@ export function createFleetService(
               status: 'active',
               departureTime: now,
               arrivalTime: returnTime,
-              metalCargo: String(metalCargo),
-              crystalCargo: String(crystalCargo),
-              deuteriumCargo: String(deuteriumCargo),
+              mineraiCargo: String(mineraiCargo),
+              siliciumCargo: String(siliciumCargo),
+              hydrogeneCargo: String(hydrogeneCargo),
               ships: remainingShips,
             })
             .returning();
@@ -727,7 +727,7 @@ export function createFleetService(
       if (visibility.resources) {
         await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
         const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
-        body += `Ressources :\nMétal : ${Math.floor(Number(planet.metal))}\nCristal : ${Math.floor(Number(planet.crystal))}\nDeutérium : ${Math.floor(Number(planet.deuterium))}\n\n`;
+        body += `Ressources :\nMinerai : ${Math.floor(Number(planet.minerai))}\nSilicium : ${Math.floor(Number(planet.silicium))}\nHydrogène : ${Math.floor(Number(planet.hydrogene))}\n\n`;
       }
 
       if (visibility.fleet) {
@@ -757,7 +757,7 @@ export function createFleetService(
       if (visibility.buildings) {
         const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
         body += `Bâtiments :\n`;
-        const buildingCols = ['metalMineLevel', 'crystalMineLevel', 'deutSynthLevel', 'solarPlantLevel', 'roboticsLevel', 'shipyardLevel', 'researchLabLevel'] as const;
+        const buildingCols = ['mineraiMineLevel', 'siliciumMineLevel', 'hydrogeneSynthLevel', 'solarPlantLevel', 'roboticsLevel', 'shipyardLevel', 'researchLabLevel'] as const;
         for (const col of buildingCols) {
           if (planet[col] > 0) body += `${col}: ${planet[col]}\n`;
         }
@@ -817,9 +817,9 @@ export function createFleetService(
     async processRecycle(
       event: typeof fleetEvents.$inferSelect,
       ships: Record<string, number>,
-      metalCargo: number,
-      crystalCargo: number,
-      deuteriumCargo: number,
+      mineraiCargo: number,
+      siliciumCargo: number,
+      hydrogeneCargo: number,
     ) {
       const [debris] = await db
         .select()
@@ -833,13 +833,13 @@ export function createFleetService(
         )
         .limit(1);
 
-      if (!debris || (Number(debris.metal) <= 0 && Number(debris.crystal) <= 0)) {
+      if (!debris || (Number(debris.minerai) <= 0 && Number(debris.silicium) <= 0)) {
         await this.scheduleReturn(
           event.id, event.originPlanetId,
           { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, metalCargo, crystalCargo, deuteriumCargo,
+          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
         );
-        return { mission: 'recycle', collected: { metal: 0, crystal: 0 } };
+        return { mission: 'recycle', collected: { minerai: 0, silicium: 0 } };
       }
 
       const config = await gameConfigService.getFullConfig();
@@ -849,24 +849,24 @@ export function createFleetService(
       const totalCargoCapacityValue = recyclerCount * cargoPerRecycler;
 
       let remainingCargo = totalCargoCapacityValue;
-      const availableMetal = Number(debris.metal);
-      const availableCrystal = Number(debris.crystal);
+      const availableMinerai = Number(debris.minerai);
+      const availableSilicium = Number(debris.silicium);
 
-      const collectedMetal = Math.min(availableMetal, remainingCargo);
-      remainingCargo -= collectedMetal;
-      const collectedCrystal = Math.min(availableCrystal, remainingCargo);
+      const collectedMinerai = Math.min(availableMinerai, remainingCargo);
+      remainingCargo -= collectedMinerai;
+      const collectedSilicium = Math.min(availableSilicium, remainingCargo);
 
-      const newMetal = availableMetal - collectedMetal;
-      const newCrystal = availableCrystal - collectedCrystal;
+      const newMinerai = availableMinerai - collectedMinerai;
+      const newSilicium = availableSilicium - collectedSilicium;
 
-      if (newMetal <= 0 && newCrystal <= 0) {
+      if (newMinerai <= 0 && newSilicium <= 0) {
         await db.delete(debrisFields).where(eq(debrisFields.id, debris.id));
       } else {
         await db
           .update(debrisFields)
           .set({
-            metal: String(newMetal),
-            crystal: String(newCrystal),
+            minerai: String(newMinerai),
+            silicium: String(newSilicium),
             updatedAt: new Date(),
           })
           .where(eq(debrisFields.id, debris.id));
@@ -876,20 +876,20 @@ export function createFleetService(
         event.id, event.originPlanetId,
         { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
         ships,
-        metalCargo + collectedMetal,
-        crystalCargo + collectedCrystal,
-        deuteriumCargo,
+        mineraiCargo + collectedMinerai,
+        siliciumCargo + collectedSilicium,
+        hydrogeneCargo,
       );
 
-      return { mission: 'recycle', collected: { metal: collectedMetal, crystal: collectedCrystal } };
+      return { mission: 'recycle', collected: { minerai: collectedMinerai, silicium: collectedSilicium } };
     },
 
     async processAttack(
       event: typeof fleetEvents.$inferSelect,
       ships: Record<string, number>,
-      metalCargo: number,
-      crystalCargo: number,
-      deuteriumCargo: number,
+      mineraiCargo: number,
+      siliciumCargo: number,
+      hydrogeneCargo: number,
     ) {
       const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
       const config = await gameConfigService.getFullConfig();
@@ -924,7 +924,7 @@ export function createFleetService(
         await this.scheduleReturn(
           event.id, event.originPlanetId,
           { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, metalCargo, crystalCargo, deuteriumCargo,
+          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
         );
         return { mission: 'attack', success: false, reason: 'no_planet' };
       }
@@ -960,7 +960,7 @@ export function createFleetService(
       let outcome: 'attacker' | 'defender' | 'draw';
       let attackerLosses: Record<string, number> = {};
       let defenderLosses: Record<string, number> = {};
-      let debris = { metal: 0, crystal: 0 };
+      let debris = { minerai: 0, silicium: 0 };
       let repairedDefenses: Record<string, number> = {};
       let roundCount = 0;
 
@@ -1014,7 +1014,7 @@ export function createFleetService(
       }
 
       // Create/accumulate debris field
-      if (debris.metal > 0 || debris.crystal > 0) {
+      if (debris.minerai > 0 || debris.silicium > 0) {
         const [existingDebris] = await db
           .select()
           .from(debrisFields)
@@ -1031,8 +1031,8 @@ export function createFleetService(
           await db
             .update(debrisFields)
             .set({
-              metal: String(Number(existingDebris.metal) + debris.metal),
-              crystal: String(Number(existingDebris.crystal) + debris.crystal),
+              minerai: String(Number(existingDebris.minerai) + debris.minerai),
+              silicium: String(Number(existingDebris.silicium) + debris.silicium),
               updatedAt: new Date(),
             })
             .where(eq(debrisFields.id, existingDebris.id));
@@ -1041,58 +1041,58 @@ export function createFleetService(
             galaxy: event.targetGalaxy,
             system: event.targetSystem,
             position: event.targetPosition,
-            metal: String(debris.metal),
-            crystal: String(debris.crystal),
+            minerai: String(debris.minerai),
+            silicium: String(debris.silicium),
           });
         }
       }
 
       // Pillage resources if attacker wins
-      let pillagedMetal = 0;
-      let pillagedCrystal = 0;
-      let pillagedDeuterium = 0;
+      let pillagedMinerai = 0;
+      let pillagedSilicium = 0;
+      let pillagedHydrogene = 0;
 
       if (outcome === 'attacker') {
         const remainingCargoCapacity = totalCargoCapacity(survivingShips, shipStatsMap);
-        const availableCargo = remainingCargoCapacity - metalCargo - crystalCargo - deuteriumCargo;
+        const availableCargo = remainingCargoCapacity - mineraiCargo - siliciumCargo - hydrogeneCargo;
 
         if (availableCargo > 0) {
           await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
           const [updatedPlanet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
 
-          const availMetal = Math.floor(Number(updatedPlanet.metal));
-          const availCrystal = Math.floor(Number(updatedPlanet.crystal));
-          const availDeut = Math.floor(Number(updatedPlanet.deuterium));
+          const availMinerai = Math.floor(Number(updatedPlanet.minerai));
+          const availSilicium = Math.floor(Number(updatedPlanet.silicium));
+          const availHydrogene = Math.floor(Number(updatedPlanet.hydrogene));
 
           const thirdCargo = Math.floor(availableCargo / 3);
 
-          pillagedMetal = Math.min(availMetal, thirdCargo);
-          pillagedCrystal = Math.min(availCrystal, thirdCargo);
-          pillagedDeuterium = Math.min(availDeut, thirdCargo);
+          pillagedMinerai = Math.min(availMinerai, thirdCargo);
+          pillagedSilicium = Math.min(availSilicium, thirdCargo);
+          pillagedHydrogene = Math.min(availHydrogene, thirdCargo);
 
-          let remaining = availableCargo - pillagedMetal - pillagedCrystal - pillagedDeuterium;
+          let remaining = availableCargo - pillagedMinerai - pillagedSilicium - pillagedHydrogene;
 
           if (remaining > 0) {
-            const extraMetal = Math.min(availMetal - pillagedMetal, remaining);
-            pillagedMetal += extraMetal;
-            remaining -= extraMetal;
+            const extraMinerai = Math.min(availMinerai - pillagedMinerai, remaining);
+            pillagedMinerai += extraMinerai;
+            remaining -= extraMinerai;
           }
           if (remaining > 0) {
-            const extraCrystal = Math.min(availCrystal - pillagedCrystal, remaining);
-            pillagedCrystal += extraCrystal;
-            remaining -= extraCrystal;
+            const extraSilicium = Math.min(availSilicium - pillagedSilicium, remaining);
+            pillagedSilicium += extraSilicium;
+            remaining -= extraSilicium;
           }
           if (remaining > 0) {
-            const extraDeut = Math.min(availDeut - pillagedDeuterium, remaining);
-            pillagedDeuterium += extraDeut;
+            const extraHydrogene = Math.min(availHydrogene - pillagedHydrogene, remaining);
+            pillagedHydrogene += extraHydrogene;
           }
 
           await db
             .update(planets)
             .set({
-              metal: sql`${planets.metal} - ${pillagedMetal}`,
-              crystal: sql`${planets.crystal} - ${pillagedCrystal}`,
-              deuterium: sql`${planets.deuterium} - ${pillagedDeuterium}`,
+              minerai: sql`${planets.minerai} - ${pillagedMinerai}`,
+              silicium: sql`${planets.silicium} - ${pillagedSilicium}`,
+              hydrogene: sql`${planets.hydrogene} - ${pillagedHydrogene}`,
             })
             .where(eq(planets.id, targetPlanet.id));
         }
@@ -1107,9 +1107,9 @@ export function createFleetService(
         `Pertes attaquant : ${JSON.stringify(attackerLosses)}\n` +
         `Pertes défenseur : ${JSON.stringify(defenderLosses)}\n` +
         `Défenses réparées : ${JSON.stringify(repairedDefenses)}\n` +
-        `Débris : ${debris.metal} métal, ${debris.crystal} cristal\n` +
+        `Débris : ${debris.minerai} minerai, ${debris.silicium} silicium\n` +
         (outcome === 'attacker' ?
-          `Pillage : ${pillagedMetal} métal, ${pillagedCrystal} cristal, ${pillagedDeuterium} deutérium\n` : '');
+          `Pillage : ${pillagedMinerai} minerai, ${pillagedSilicium} silicium, ${pillagedHydrogene} hydrogène\n` : '');
 
       if (messageService) {
         await messageService.createSystemMessage(
@@ -1133,9 +1133,9 @@ export function createFleetService(
           event.id, event.originPlanetId,
           { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
           survivingShips,
-          metalCargo + pillagedMetal,
-          crystalCargo + pillagedCrystal,
-          deuteriumCargo + pillagedDeuterium,
+          mineraiCargo + pillagedMinerai,
+          siliciumCargo + pillagedSilicium,
+          hydrogeneCargo + pillagedHydrogene,
         );
       } else {
         await db

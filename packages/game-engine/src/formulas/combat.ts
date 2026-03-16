@@ -31,7 +31,7 @@ export interface CombatResult {
   outcome: 'attacker' | 'defender' | 'draw';
   attackerLosses: Record<string, number>;
   defenderLosses: Record<string, number>;
-  debris: { metal: number; crystal: number };
+  debris: { minerai: number; silicium: number };
   repairedDefenses: Record<string, number>;
 }
 
@@ -157,19 +157,19 @@ export function calculateDebris(
   attackerLosses: Record<string, number>,
   defenderLosses: Record<string, number>,
   shipIds: Set<string>,
-  shipCosts: Record<string, { metal: number; crystal: number }>,
+  shipCosts: Record<string, { minerai: number; silicium: number }>,
   debrisRatio = 0.3,
-): { metal: number; crystal: number } {
-  let metal = 0;
-  let crystal = 0;
+): { minerai: number; silicium: number } {
+  let minerai = 0;
+  let silicium = 0;
 
   // Only ships contribute to debris, not defenses
   for (const [type, count] of Object.entries(attackerLosses)) {
     if (shipIds.has(type)) {
       const cost = shipCosts[type];
       if (cost) {
-        metal += cost.metal * count;
-        crystal += cost.crystal * count;
+        minerai += cost.minerai * count;
+        silicium += cost.silicium * count;
       }
     }
   }
@@ -178,15 +178,15 @@ export function calculateDebris(
     if (shipIds.has(type)) {
       const cost = shipCosts[type];
       if (cost) {
-        metal += cost.metal * count;
-        crystal += cost.crystal * count;
+        minerai += cost.minerai * count;
+        silicium += cost.silicium * count;
       }
     }
   }
 
   return {
-    metal: Math.floor(metal * debrisRatio),
-    crystal: Math.floor(crystal * debrisRatio),
+    minerai: Math.floor(minerai * debrisRatio),
+    silicium: Math.floor(silicium * debrisRatio),
   };
 }
 
@@ -221,7 +221,7 @@ export function simulateCombat(
   combatStats: Record<string, UnitCombatStats>,
   rapidFireMap: Record<string, Record<string, number>>,
   shipIds: Set<string>,
-  shipCosts: Record<string, { metal: number; crystal: number }>,
+  shipCosts: Record<string, { minerai: number; silicium: number }>,
   defenseIds: Set<string>,
   debrisRatio = 0.3,
 ): CombatResult {

@@ -28,7 +28,7 @@ export interface BuildingConfig {
   id: string;
   name: string;
   description: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   baseTime: number;
   levelColumn: string;
@@ -40,7 +40,7 @@ export interface ResearchConfig {
   id: string;
   name: string;
   description: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   levelColumn: string;
   sortOrder: number;
@@ -54,7 +54,7 @@ export interface ShipConfig {
   id: string;
   name: string;
   description: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
   countColumn: string;
   baseSpeed: number;
   fuelConsumption: number;
@@ -74,7 +74,7 @@ export interface DefenseConfig {
   id: string;
   name: string;
   description: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
   countColumn: string;
   weapons: number;
   shield: number;
@@ -139,7 +139,7 @@ export function createGameConfigService(db: Database) {
         id: b.id,
         name: b.name,
         description: b.description,
-        baseCost: { metal: b.baseCostMetal, crystal: b.baseCostCrystal, deuterium: b.baseCostDeuterium },
+        baseCost: { minerai: b.baseCostMinerai, silicium: b.baseCostSilicium, hydrogene: b.baseCostHydrogene },
         costFactor: b.costFactor,
         baseTime: b.baseTime,
         levelColumn: b.levelColumn,
@@ -158,7 +158,7 @@ export function createGameConfigService(db: Database) {
         id: r.id,
         name: r.name,
         description: r.description,
-        baseCost: { metal: r.baseCostMetal, crystal: r.baseCostCrystal, deuterium: r.baseCostDeuterium },
+        baseCost: { minerai: r.baseCostMinerai, silicium: r.baseCostSilicium, hydrogene: r.baseCostHydrogene },
         costFactor: r.costFactor,
         levelColumn: r.levelColumn,
         sortOrder: r.sortOrder,
@@ -177,7 +177,7 @@ export function createGameConfigService(db: Database) {
         id: s.id,
         name: s.name,
         description: s.description,
-        cost: { metal: s.costMetal, crystal: s.costCrystal, deuterium: s.costDeuterium },
+        cost: { minerai: s.costMinerai, silicium: s.costSilicium, hydrogene: s.costHydrogene },
         countColumn: s.countColumn,
         baseSpeed: s.baseSpeed,
         fuelConsumption: s.fuelConsumption,
@@ -202,7 +202,7 @@ export function createGameConfigService(db: Database) {
         id: d.id,
         name: d.name,
         description: d.description,
-        cost: { metal: d.costMetal, crystal: d.costCrystal, deuterium: d.costDeuterium },
+        cost: { minerai: d.costMinerai, silicium: d.costSilicium, hydrogene: d.costHydrogene },
         countColumn: d.countColumn,
         weapons: d.weapons,
         shield: d.shield,
@@ -252,9 +252,9 @@ export function createGameConfigService(db: Database) {
     async updateBuilding(id: string, data: Partial<{
       name: string;
       description: string;
-      baseCostMetal: number;
-      baseCostCrystal: number;
-      baseCostDeuterium: number;
+      baseCostMinerai: number;
+      baseCostSilicium: number;
+      baseCostHydrogene: number;
       costFactor: number;
       baseTime: number;
       sortOrder: number;
@@ -274,9 +274,9 @@ export function createGameConfigService(db: Database) {
     async updateResearch(id: string, data: Partial<{
       name: string;
       description: string;
-      baseCostMetal: number;
-      baseCostCrystal: number;
-      baseCostDeuterium: number;
+      baseCostMinerai: number;
+      baseCostSilicium: number;
+      baseCostHydrogene: number;
       costFactor: number;
       sortOrder: number;
     }>) {
@@ -300,9 +300,9 @@ export function createGameConfigService(db: Database) {
     async updateShip(id: string, data: Partial<{
       name: string;
       description: string;
-      costMetal: number;
-      costCrystal: number;
-      costDeuterium: number;
+      costMinerai: number;
+      costSilicium: number;
+      costHydrogene: number;
       baseSpeed: number;
       fuelConsumption: number;
       cargoCapacity: number;
@@ -332,9 +332,9 @@ export function createGameConfigService(db: Database) {
     async updateDefense(id: string, data: Partial<{
       name: string;
       description: string;
-      costMetal: number;
-      costCrystal: number;
-      costDeuterium: number;
+      costMinerai: number;
+      costSilicium: number;
+      costHydrogene: number;
       weapons: number;
       shield: number;
       armor: number;

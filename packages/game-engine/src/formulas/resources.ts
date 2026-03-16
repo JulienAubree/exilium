@@ -1,84 +1,84 @@
 import {
-  metalProduction,
-  crystalProduction,
-  deuteriumProduction,
+  mineraiProduction,
+  siliciumProduction,
+  hydrogeneProduction,
   solarPlantEnergy,
-  metalMineEnergy,
-  crystalMineEnergy,
-  deutSynthEnergy,
+  mineraiMineEnergy,
+  siliciumMineEnergy,
+  hydrogeneSynthEnergy,
   storageCapacity,
   calculateProductionFactor,
 } from './production.js';
 
 export interface PlanetLevels {
-  metalMineLevel: number;
-  crystalMineLevel: number;
-  deutSynthLevel: number;
+  mineraiMineLevel: number;
+  siliciumMineLevel: number;
+  hydrogeneSynthLevel: number;
   solarPlantLevel: number;
-  storageMetalLevel: number;
-  storageCrystalLevel: number;
-  storageDeutLevel: number;
+  storageMineraiLevel: number;
+  storageSiliciumLevel: number;
+  storageHydrogeneLevel: number;
   maxTemp: number;
-  metalMinePercent?: number;
-  crystalMinePercent?: number;
-  deutSynthPercent?: number;
+  mineraiMinePercent?: number;
+  siliciumMinePercent?: number;
+  hydrogeneSynthPercent?: number;
 }
 
 export interface ProductionRates {
-  metalPerHour: number;
-  crystalPerHour: number;
-  deutPerHour: number;
+  mineraiPerHour: number;
+  siliciumPerHour: number;
+  hydrogenePerHour: number;
   productionFactor: number;
   energyProduced: number;
   energyConsumed: number;
-  metalMineEnergyConsumption: number;
-  crystalMineEnergyConsumption: number;
-  deutSynthEnergyConsumption: number;
-  metalMinePercent: number;
-  crystalMinePercent: number;
-  deutSynthPercent: number;
-  storageMetalCapacity: number;
-  storageCrystalCapacity: number;
-  storageDeutCapacity: number;
+  mineraiMineEnergyConsumption: number;
+  siliciumMineEnergyConsumption: number;
+  hydrogeneSynthEnergyConsumption: number;
+  mineraiMinePercent: number;
+  siliciumMinePercent: number;
+  hydrogeneSynthPercent: number;
+  storageMineraiCapacity: number;
+  storageSiliciumCapacity: number;
+  storageHydrogeneCapacity: number;
 }
 
 export function calculateProductionRates(planet: PlanetLevels): ProductionRates {
-  const metalPct = (planet.metalMinePercent ?? 100) / 100;
-  const crystalPct = (planet.crystalMinePercent ?? 100) / 100;
-  const deutPct = (planet.deutSynthPercent ?? 100) / 100;
+  const mineraiPct = (planet.mineraiMinePercent ?? 100) / 100;
+  const siliciumPct = (planet.siliciumMinePercent ?? 100) / 100;
+  const hydrogenePct = (planet.hydrogeneSynthPercent ?? 100) / 100;
 
   const energyProduced = solarPlantEnergy(planet.solarPlantLevel);
 
-  const metalEnergy = Math.floor(metalMineEnergy(planet.metalMineLevel) * metalPct);
-  const crystalEnergy = Math.floor(crystalMineEnergy(planet.crystalMineLevel) * crystalPct);
-  const deutEnergy = Math.floor(deutSynthEnergy(planet.deutSynthLevel) * deutPct);
-  const energyConsumed = metalEnergy + crystalEnergy + deutEnergy;
+  const mineraiEnergy = Math.floor(mineraiMineEnergy(planet.mineraiMineLevel) * mineraiPct);
+  const siliciumEnergy = Math.floor(siliciumMineEnergy(planet.siliciumMineLevel) * siliciumPct);
+  const hydrogeneEnergy = Math.floor(hydrogeneSynthEnergy(planet.hydrogeneSynthLevel) * hydrogenePct);
+  const energyConsumed = mineraiEnergy + siliciumEnergy + hydrogeneEnergy;
 
   const factor = calculateProductionFactor(energyProduced, energyConsumed);
 
   return {
-    metalPerHour: metalProduction(planet.metalMineLevel, metalPct * factor),
-    crystalPerHour: crystalProduction(planet.crystalMineLevel, crystalPct * factor),
-    deutPerHour: deuteriumProduction(planet.deutSynthLevel, planet.maxTemp, deutPct * factor),
+    mineraiPerHour: mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor),
+    siliciumPerHour: siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor),
+    hydrogenePerHour: hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor),
     productionFactor: factor,
     energyProduced,
     energyConsumed,
-    metalMineEnergyConsumption: metalEnergy,
-    crystalMineEnergyConsumption: crystalEnergy,
-    deutSynthEnergyConsumption: deutEnergy,
-    metalMinePercent: planet.metalMinePercent ?? 100,
-    crystalMinePercent: planet.crystalMinePercent ?? 100,
-    deutSynthPercent: planet.deutSynthPercent ?? 100,
-    storageMetalCapacity: storageCapacity(planet.storageMetalLevel),
-    storageCrystalCapacity: storageCapacity(planet.storageCrystalLevel),
-    storageDeutCapacity: storageCapacity(planet.storageDeutLevel),
+    mineraiMineEnergyConsumption: mineraiEnergy,
+    siliciumMineEnergyConsumption: siliciumEnergy,
+    hydrogeneSynthEnergyConsumption: hydrogeneEnergy,
+    mineraiMinePercent: planet.mineraiMinePercent ?? 100,
+    siliciumMinePercent: planet.siliciumMinePercent ?? 100,
+    hydrogeneSynthPercent: planet.hydrogeneSynthPercent ?? 100,
+    storageMineraiCapacity: storageCapacity(planet.storageMineraiLevel),
+    storageSiliciumCapacity: storageCapacity(planet.storageSiliciumLevel),
+    storageHydrogeneCapacity: storageCapacity(planet.storageHydrogeneLevel),
   };
 }
 
 export interface PlanetResources extends PlanetLevels {
-  metal: number;
-  crystal: number;
-  deuterium: number;
+  minerai: number;
+  silicium: number;
+  hydrogene: number;
 }
 
 /**
@@ -89,22 +89,22 @@ export function calculateResources(
   planet: PlanetResources,
   resourcesUpdatedAt: Date,
   now: Date,
-): { metal: number; crystal: number; deuterium: number } {
+): { minerai: number; silicium: number; hydrogene: number } {
   const rates = calculateProductionRates(planet);
   const elapsedHours = Math.max(0, (now.getTime() - resourcesUpdatedAt.getTime()) / (3600 * 1000));
 
-  const metal = Math.min(
-    planet.metal + Math.floor(rates.metalPerHour * elapsedHours),
-    rates.storageMetalCapacity,
+  const minerai = Math.min(
+    planet.minerai + Math.floor(rates.mineraiPerHour * elapsedHours),
+    rates.storageMineraiCapacity,
   );
-  const crystal = Math.min(
-    planet.crystal + Math.floor(rates.crystalPerHour * elapsedHours),
-    rates.storageCrystalCapacity,
+  const silicium = Math.min(
+    planet.silicium + Math.floor(rates.siliciumPerHour * elapsedHours),
+    rates.storageSiliciumCapacity,
   );
-  const deuterium = Math.min(
-    planet.deuterium + Math.floor(rates.deutPerHour * elapsedHours),
-    rates.storageDeutCapacity,
+  const hydrogene = Math.min(
+    planet.hydrogene + Math.floor(rates.hydrogenePerHour * elapsedHours),
+    rates.storageHydrogeneCapacity,
   );
 
-  return { metal, crystal, deuterium };
+  return { minerai, silicium, hydrogene };
 }

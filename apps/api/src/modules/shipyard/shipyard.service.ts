@@ -108,9 +108,9 @@ export function createShipyardService(
       const unitCost = type === 'ship' ? shipCost(def) : defenseCost(def);
 
       const totalCost = {
-        metal: unitCost.metal * quantity,
-        crystal: unitCost.crystal * quantity,
-        deuterium: unitCost.deuterium * quantity,
+        minerai: unitCost.minerai * quantity,
+        silicium: unitCost.silicium * quantity,
+        hydrogene: unitCost.hydrogene * quantity,
       };
 
       if (type === 'defense') {
@@ -296,12 +296,12 @@ export function createShipyardService(
 
       const config = await gameConfigService.getFullConfig();
       const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
-      const unitCost = def ? (entry.type === 'ship' ? shipCost(def) : defenseCost(def)) : { metal: 0, crystal: 0, deuterium: 0 };
+      const unitCost = def ? (entry.type === 'ship' ? shipCost(def) : defenseCost(def)) : { minerai: 0, silicium: 0, hydrogene: 0 };
       const remaining = entry.quantity - entry.completedCount;
       const refund = {
-        metal: unitCost.metal * remaining,
-        crystal: unitCost.crystal * remaining,
-        deuterium: unitCost.deuterium * remaining,
+        minerai: unitCost.minerai * remaining,
+        silicium: unitCost.silicium * remaining,
+        hydrogene: unitCost.hydrogene * remaining,
       };
 
       const [planet] = await db.select().from(planets).where(eq(planets.id, planetId)).limit(1);
@@ -309,9 +309,9 @@ export function createShipyardService(
         await db
           .update(planets)
           .set({
-            metal: String(Number(planet.metal) + refund.metal),
-            crystal: String(Number(planet.crystal) + refund.crystal),
-            deuterium: String(Number(planet.deuterium) + refund.deuterium),
+            minerai: String(Number(planet.minerai) + refund.minerai),
+            silicium: String(Number(planet.silicium) + refund.silicium),
+            hydrogene: String(Number(planet.hydrogene) + refund.hydrogene),
           })
           .where(eq(planets.id, planetId));
       }

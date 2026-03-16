@@ -23,16 +23,16 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
         let buildingPoints = 0;
         for (const planet of userPlanets) {
           buildingPoints += calculateBuildingPoints({
-            metalMineLevel: planet.metalMineLevel,
-            crystalMineLevel: planet.crystalMineLevel,
-            deutSynthLevel: planet.deutSynthLevel,
+            mineraiMineLevel: planet.mineraiMineLevel,
+            siliciumMineLevel: planet.siliciumMineLevel,
+            hydrogeneSynthLevel: planet.hydrogeneSynthLevel,
             solarPlantLevel: planet.solarPlantLevel,
             roboticsLevel: planet.roboticsLevel,
             shipyardLevel: planet.shipyardLevel,
             researchLabLevel: planet.researchLabLevel,
-            storageMetalLevel: planet.storageMetalLevel,
-            storageCrystalLevel: planet.storageCrystalLevel,
-            storageDeutLevel: planet.storageDeutLevel,
+            storageMineraiLevel: planet.storageMineraiLevel,
+            storageSiliciumLevel: planet.storageSiliciumLevel,
+            storageHydrogeneLevel: planet.storageHydrogeneLevel,
           }, config.buildings);
         }
 

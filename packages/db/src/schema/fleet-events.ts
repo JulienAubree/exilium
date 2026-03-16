@@ -29,9 +29,9 @@ export const fleetEvents = pgTable('fleet_events', {
   status: fleetStatusEnum('status').notNull().default('active'),
   departureTime: timestamp('departure_time', { withTimezone: true }).notNull(),
   arrivalTime: timestamp('arrival_time', { withTimezone: true }).notNull(),
-  metalCargo: numeric('metal_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
-  crystalCargo: numeric('crystal_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
-  deuteriumCargo: numeric('deuterium_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
+  mineraiCargo: numeric('minerai_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
+  siliciumCargo: numeric('silicium_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
+  hydrogeneCargo: numeric('hydrogene_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
   ships: jsonb('ships').notNull().default('{}'),
 }, (table) => [
   index('fleet_events_arrival_idx').on(table.arrivalTime).where(sql`status = 'active'`),

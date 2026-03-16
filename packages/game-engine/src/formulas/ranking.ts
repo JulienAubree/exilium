@@ -1,18 +1,18 @@
 export interface BuildingDef {
   levelColumn: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
 }
 
 export interface ResearchDef {
   levelColumn: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
 }
 
 export interface UnitDef {
   countColumn: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
 }
 
 export function calculateBuildingPoints(
@@ -25,9 +25,9 @@ export function calculateBuildingPoints(
     const level = levels[def.levelColumn] ?? 0;
     for (let l = 1; l <= level; l++) {
       const factor = Math.pow(def.costFactor, l - 1);
-      totalResources += Math.floor(def.baseCost.metal * factor)
-        + Math.floor(def.baseCost.crystal * factor)
-        + Math.floor(def.baseCost.deuterium * factor);
+      totalResources += Math.floor(def.baseCost.minerai * factor)
+        + Math.floor(def.baseCost.silicium * factor)
+        + Math.floor(def.baseCost.hydrogene * factor);
     }
   }
 
@@ -44,9 +44,9 @@ export function calculateResearchPoints(
     const level = levels[def.levelColumn] ?? 0;
     for (let l = 1; l <= level; l++) {
       const factor = Math.pow(def.costFactor, l - 1);
-      totalResources += Math.floor(def.baseCost.metal * factor)
-        + Math.floor(def.baseCost.crystal * factor)
-        + Math.floor(def.baseCost.deuterium * factor);
+      totalResources += Math.floor(def.baseCost.minerai * factor)
+        + Math.floor(def.baseCost.silicium * factor)
+        + Math.floor(def.baseCost.hydrogene * factor);
     }
   }
 
@@ -62,7 +62,7 @@ export function calculateFleetPoints(
   for (const [shipId, def] of Object.entries(shipDefs)) {
     const count = counts[def.countColumn] ?? counts[shipId] ?? 0;
     if (count > 0) {
-      totalResources += count * (def.cost.metal + def.cost.crystal + def.cost.deuterium);
+      totalResources += count * (def.cost.minerai + def.cost.silicium + def.cost.hydrogene);
     }
   }
 
@@ -78,7 +78,7 @@ export function calculateDefensePoints(
   for (const [defenseId, def] of Object.entries(defenseDefs)) {
     const count = counts[def.countColumn] ?? counts[defenseId] ?? 0;
     if (count > 0) {
-      totalResources += count * (def.cost.metal + def.cost.crystal + def.cost.deuterium);
+      totalResources += count * (def.cost.minerai + def.cost.silicium + def.cost.hydrogene);
     }
   }
 

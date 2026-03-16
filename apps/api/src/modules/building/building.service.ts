@@ -92,16 +92,16 @@ export function createBuildingService(
 
       // Check building slots
       const totalLevels =
-        planet.metalMineLevel +
-        planet.crystalMineLevel +
-        planet.deutSynthLevel +
+        planet.mineraiMineLevel +
+        planet.siliciumMineLevel +
+        planet.hydrogeneSynthLevel +
         planet.solarPlantLevel +
         planet.roboticsLevel +
         planet.shipyardLevel +
         planet.researchLabLevel +
-        planet.storageMetalLevel +
-        planet.storageCrystalLevel +
-        planet.storageDeutLevel;
+        planet.storageMineraiLevel +
+        planet.storageSiliciumLevel +
+        planet.storageHydrogeneLevel;
 
       if (totalLevels >= planet.maxFields) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plus de champs disponibles' });
@@ -166,15 +166,15 @@ export function createBuildingService(
       const currentLevel = def
         ? (planet[def.levelColumn as keyof typeof planet] ?? 0) as number
         : 0;
-      const cost = def ? buildingCost(def, currentLevel + 1) : { metal: 0, crystal: 0, deuterium: 0 };
+      const cost = def ? buildingCost(def, currentLevel + 1) : { minerai: 0, silicium: 0, hydrogene: 0 };
 
       // Refund resources
       await db
         .update(planets)
         .set({
-          metal: String(Number(planet.metal) + cost.metal),
-          crystal: String(Number(planet.crystal) + cost.crystal),
-          deuterium: String(Number(planet.deuterium) + cost.deuterium),
+          minerai: String(Number(planet.minerai) + cost.minerai),
+          silicium: String(Number(planet.silicium) + cost.silicium),
+          hydrogene: String(Number(planet.hydrogene) + cost.hydrogene),
         })
         .where(eq(planets.id, planetId));
 

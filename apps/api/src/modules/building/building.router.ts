@@ -4,16 +4,16 @@ import type { createBuildingService } from './building.service.js';
 import type { BuildingId } from '@ogame-clone/game-engine';
 
 const buildingIds = [
-  'metalMine',
-  'crystalMine',
-  'deutSynth',
+  'mineraiMine',
+  'siliciumMine',
+  'hydrogeneSynth',
   'solarPlant',
   'robotics',
   'shipyard',
   'researchLab',
-  'storageMetal',
-  'storageCrystal',
-  'storageDeut',
+  'storageMinerai',
+  'storageSilicium',
+  'storageHydrogene',
 ] as const;
 
 export function createBuildingRouter(buildingService: ReturnType<typeof createBuildingService>) {

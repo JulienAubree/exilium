@@ -19,9 +19,9 @@ export function createFleetRouter(fleetService: ReturnType<typeof createFleetSer
         targetPosition: z.number().int().min(1).max(15),
         mission: z.enum(missionTypes),
         ships: z.record(z.enum(shipIds), z.number().int().min(0).max(999999)),
-        metalCargo: z.number().min(0).default(0),
-        crystalCargo: z.number().min(0).default(0),
-        deuteriumCargo: z.number().min(0).default(0),
+        mineraiCargo: z.number().min(0).default(0),
+        siliciumCargo: z.number().min(0).default(0),
+        hydrogeneCargo: z.number().min(0).default(0),
       }))
       .mutation(async ({ ctx, input }) => {
         return fleetService.sendFleet(ctx.userId!, input);

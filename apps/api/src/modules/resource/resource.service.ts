@@ -24,20 +24,20 @@ export function createResourceService(db: Database) {
       const now = new Date();
       const resources = calculateResources(
         {
-          metal: Number(planet.metal),
-          crystal: Number(planet.crystal),
-          deuterium: Number(planet.deuterium),
-          metalMineLevel: planet.metalMineLevel,
-          crystalMineLevel: planet.crystalMineLevel,
-          deutSynthLevel: planet.deutSynthLevel,
+          minerai: Number(planet.minerai),
+          silicium: Number(planet.silicium),
+          hydrogene: Number(planet.hydrogene),
+          mineraiMineLevel: planet.mineraiMineLevel,
+          siliciumMineLevel: planet.siliciumMineLevel,
+          hydrogeneSynthLevel: planet.hydrogeneSynthLevel,
           solarPlantLevel: planet.solarPlantLevel,
-          storageMetalLevel: planet.storageMetalLevel,
-          storageCrystalLevel: planet.storageCrystalLevel,
-          storageDeutLevel: planet.storageDeutLevel,
+          storageMineraiLevel: planet.storageMineraiLevel,
+          storageSiliciumLevel: planet.storageSiliciumLevel,
+          storageHydrogeneLevel: planet.storageHydrogeneLevel,
           maxTemp: planet.maxTemp,
-          metalMinePercent: planet.metalMinePercent,
-          crystalMinePercent: planet.crystalMinePercent,
-          deutSynthPercent: planet.deutSynthPercent,
+          mineraiMinePercent: planet.mineraiMinePercent,
+          siliciumMinePercent: planet.siliciumMinePercent,
+          hydrogeneSynthPercent: planet.hydrogeneSynthPercent,
         },
         planet.resourcesUpdatedAt,
         now,
@@ -46,9 +46,9 @@ export function createResourceService(db: Database) {
       const [updated] = await db
         .update(planets)
         .set({
-          metal: String(resources.metal),
-          crystal: String(resources.crystal),
-          deuterium: String(resources.deuterium),
+          minerai: String(resources.minerai),
+          silicium: String(resources.silicium),
+          hydrogene: String(resources.hydrogene),
           resourcesUpdatedAt: now,
         })
         .where(eq(planets.id, planetId))
@@ -71,35 +71,35 @@ export function createResourceService(db: Database) {
       const now = new Date();
       const produced = calculateResources(
         {
-          metal: Number(planet.metal),
-          crystal: Number(planet.crystal),
-          deuterium: Number(planet.deuterium),
-          metalMineLevel: planet.metalMineLevel,
-          crystalMineLevel: planet.crystalMineLevel,
-          deutSynthLevel: planet.deutSynthLevel,
+          minerai: Number(planet.minerai),
+          silicium: Number(planet.silicium),
+          hydrogene: Number(planet.hydrogene),
+          mineraiMineLevel: planet.mineraiMineLevel,
+          siliciumMineLevel: planet.siliciumMineLevel,
+          hydrogeneSynthLevel: planet.hydrogeneSynthLevel,
           solarPlantLevel: planet.solarPlantLevel,
-          storageMetalLevel: planet.storageMetalLevel,
-          storageCrystalLevel: planet.storageCrystalLevel,
-          storageDeutLevel: planet.storageDeutLevel,
+          storageMineraiLevel: planet.storageMineraiLevel,
+          storageSiliciumLevel: planet.storageSiliciumLevel,
+          storageHydrogeneLevel: planet.storageHydrogeneLevel,
           maxTemp: planet.maxTemp,
-          metalMinePercent: planet.metalMinePercent,
-          crystalMinePercent: planet.crystalMinePercent,
-          deutSynthPercent: planet.deutSynthPercent,
+          mineraiMinePercent: planet.mineraiMinePercent,
+          siliciumMinePercent: planet.siliciumMinePercent,
+          hydrogeneSynthPercent: planet.hydrogeneSynthPercent,
         },
         planet.resourcesUpdatedAt,
         now,
       );
 
-      if (produced.metal < cost.metal || produced.crystal < cost.crystal || produced.deuterium < cost.deuterium) {
+      if (produced.minerai < cost.minerai || produced.silicium < cost.silicium || produced.hydrogene < cost.hydrogene) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ressources insuffisantes' });
       }
 
       const [result] = await db
         .update(planets)
         .set({
-          metal: String(produced.metal - cost.metal),
-          crystal: String(produced.crystal - cost.crystal),
-          deuterium: String(produced.deuterium - cost.deuterium),
+          minerai: String(produced.minerai - cost.minerai),
+          silicium: String(produced.silicium - cost.silicium),
+          hydrogene: String(produced.hydrogene - cost.hydrogene),
           resourcesUpdatedAt: now,
         })
         .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
@@ -115,15 +115,15 @@ export function createResourceService(db: Database) {
     async setProductionPercent(
       planetId: string,
       userId: string,
-      percents: { metalMinePercent?: number; crystalMinePercent?: number; deutSynthPercent?: number },
+      percents: { mineraiMinePercent?: number; siliciumMinePercent?: number; hydrogeneSynthPercent?: number },
     ) {
       // Materialize resources first so accumulated production with old % isn't lost
       await this.materializeResources(planetId, userId);
 
-      const updates: Partial<{ metalMinePercent: number; crystalMinePercent: number; deutSynthPercent: number }> = {};
-      if (percents.metalMinePercent !== undefined) updates.metalMinePercent = percents.metalMinePercent;
-      if (percents.crystalMinePercent !== undefined) updates.crystalMinePercent = percents.crystalMinePercent;
-      if (percents.deutSynthPercent !== undefined) updates.deutSynthPercent = percents.deutSynthPercent;
+      const updates: Partial<{ mineraiMinePercent: number; siliciumMinePercent: number; hydrogeneSynthPercent: number }> = {};
+      if (percents.mineraiMinePercent !== undefined) updates.mineraiMinePercent = percents.mineraiMinePercent;
+      if (percents.siliciumMinePercent !== undefined) updates.siliciumMinePercent = percents.siliciumMinePercent;
+      if (percents.hydrogeneSynthPercent !== undefined) updates.hydrogeneSynthPercent = percents.hydrogeneSynthPercent;
 
       if (Object.keys(updates).length === 0) return;
 
@@ -134,17 +134,17 @@ export function createResourceService(db: Database) {
     },
 
     getProductionRates(planet: {
-      metalMineLevel: number;
-      crystalMineLevel: number;
-      deutSynthLevel: number;
+      mineraiMineLevel: number;
+      siliciumMineLevel: number;
+      hydrogeneSynthLevel: number;
       solarPlantLevel: number;
-      storageMetalLevel: number;
-      storageCrystalLevel: number;
-      storageDeutLevel: number;
+      storageMineraiLevel: number;
+      storageSiliciumLevel: number;
+      storageHydrogeneLevel: number;
       maxTemp: number;
-      metalMinePercent: number;
-      crystalMinePercent: number;
-      deutSynthPercent: number;
+      mineraiMinePercent: number;
+      siliciumMinePercent: number;
+      hydrogeneSynthPercent: number;
     }) {
       return calculateProductionRates(planet);
     },

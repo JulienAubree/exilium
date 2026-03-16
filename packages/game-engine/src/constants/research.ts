@@ -13,7 +13,7 @@ export interface ResearchDefinition {
   id: ResearchId;
   name: string;
   description: string;
-  baseCost: { metal: number; crystal: number; deuterium: number };
+  baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   levelColumn: string;
   prerequisites: {
@@ -27,7 +27,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'espionageTech',
     name: 'Technologie Espionnage',
     description: 'Améliore les sondes d\'espionnage.',
-    baseCost: { metal: 200, crystal: 1000, deuterium: 200 },
+    baseCost: { minerai: 200, silicium: 1000, hydrogene: 200 },
     costFactor: 2,
     levelColumn: 'espionageTech',
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 3 }] },
@@ -36,7 +36,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'computerTech',
     name: 'Technologie Ordinateur',
     description: 'Augmente le nombre de flottes simultanées.',
-    baseCost: { metal: 0, crystal: 400, deuterium: 600 },
+    baseCost: { minerai: 0, silicium: 400, hydrogene: 600 },
     costFactor: 2,
     levelColumn: 'computerTech',
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 1 }] },
@@ -45,7 +45,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'energyTech',
     name: 'Technologie Énergie',
     description: 'Recherche fondamentale en énergie.',
-    baseCost: { metal: 0, crystal: 800, deuterium: 400 },
+    baseCost: { minerai: 0, silicium: 800, hydrogene: 400 },
     costFactor: 2,
     levelColumn: 'energyTech',
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 1 }] },
@@ -54,7 +54,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'combustion',
     name: 'Réacteur à combustion',
     description: 'Propulsion de base pour les vaisseaux.',
-    baseCost: { metal: 400, crystal: 0, deuterium: 600 },
+    baseCost: { minerai: 400, silicium: 0, hydrogene: 600 },
     costFactor: 2,
     levelColumn: 'combustion',
     prerequisites: {
@@ -66,7 +66,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'impulse',
     name: 'Réacteur à impulsion',
     description: 'Propulsion avancée.',
-    baseCost: { metal: 2000, crystal: 4000, deuterium: 600 },
+    baseCost: { minerai: 2000, silicium: 4000, hydrogene: 600 },
     costFactor: 2,
     levelColumn: 'impulse',
     prerequisites: {
@@ -78,7 +78,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'hyperspaceDrive',
     name: 'Propulsion hyperespace',
     description: 'Propulsion la plus rapide.',
-    baseCost: { metal: 10000, crystal: 20000, deuterium: 6000 },
+    baseCost: { minerai: 10000, silicium: 20000, hydrogene: 6000 },
     costFactor: 2,
     levelColumn: 'hyperspaceDrive',
     prerequisites: {
@@ -93,7 +93,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'weapons',
     name: 'Technologie Armes',
     description: 'Augmente les dégâts de 10% par niveau.',
-    baseCost: { metal: 800, crystal: 200, deuterium: 0 },
+    baseCost: { minerai: 800, silicium: 200, hydrogene: 0 },
     costFactor: 2,
     levelColumn: 'weapons',
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 4 }] },
@@ -102,7 +102,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'shielding',
     name: 'Technologie Bouclier',
     description: 'Augmente les boucliers de 10% par niveau.',
-    baseCost: { metal: 200, crystal: 600, deuterium: 0 },
+    baseCost: { minerai: 200, silicium: 600, hydrogene: 0 },
     costFactor: 2,
     levelColumn: 'shielding',
     prerequisites: {
@@ -114,7 +114,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     id: 'armor',
     name: 'Technologie Protection',
     description: 'Augmente la coque de 10% par niveau.',
-    baseCost: { metal: 1000, crystal: 0, deuterium: 0 },
+    baseCost: { minerai: 1000, silicium: 0, hydrogene: 0 },
     costFactor: 2,
     levelColumn: 'armor',
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 2 }] },

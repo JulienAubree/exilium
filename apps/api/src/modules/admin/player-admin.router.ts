@@ -26,9 +26,9 @@ export function createPlayerAdminRouter(
     updateResources: adminProcedure
       .input(z.object({
         planetId: z.string().uuid(),
-        metal: z.string().optional(),
-        crystal: z.string().optional(),
-        deuterium: z.string().optional(),
+        minerai: z.string().optional(),
+        silicium: z.string().optional(),
+        hydrogene: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const { planetId, ...resources } = input;

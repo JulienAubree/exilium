@@ -11,7 +11,7 @@ export interface DefenseDefinition {
   id: DefenseId;
   name: string;
   description: string;
-  cost: { metal: number; crystal: number; deuterium: number };
+  cost: { minerai: number; silicium: number; hydrogene: number };
   countColumn: string;
   maxPerPlanet?: number;
   prerequisites: {
@@ -25,7 +25,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'rocketLauncher',
     name: 'Lanceur de missiles',
     description: 'Défense de base, peu coûteuse.',
-    cost: { metal: 2000, crystal: 0, deuterium: 0 },
+    cost: { minerai: 2000, silicium: 0, hydrogene: 0 },
     countColumn: 'rocketLauncher',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 1 }],
@@ -35,7 +35,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'lightLaser',
     name: 'Artillerie laser légère',
     description: 'Défense laser de base.',
-    cost: { metal: 1500, crystal: 500, deuterium: 0 },
+    cost: { minerai: 1500, silicium: 500, hydrogene: 0 },
     countColumn: 'lightLaser',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 2 }],
@@ -46,7 +46,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'heavyLaser',
     name: 'Artillerie laser lourde',
     description: 'Défense laser puissante.',
-    cost: { metal: 6000, crystal: 2000, deuterium: 0 },
+    cost: { minerai: 6000, silicium: 2000, hydrogene: 0 },
     countColumn: 'heavyLaser',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 4 }],
@@ -60,7 +60,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'gaussCannon',
     name: 'Canon de Gauss',
     description: 'Défense balistique puissante.',
-    cost: { metal: 20000, crystal: 15000, deuterium: 2000 },
+    cost: { minerai: 20000, silicium: 15000, hydrogene: 2000 },
     countColumn: 'gaussCannon',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 6 }],
@@ -75,7 +75,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'plasmaTurret',
     name: 'Artillerie à ions',
     description: 'Défense plasma dévastatrice.',
-    cost: { metal: 50000, crystal: 50000, deuterium: 30000 },
+    cost: { minerai: 50000, silicium: 50000, hydrogene: 30000 },
     countColumn: 'plasmaTurret',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 8 }],
@@ -89,7 +89,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'smallShield',
     name: 'Petit bouclier',
     description: 'Bouclier planétaire de base.',
-    cost: { metal: 10000, crystal: 10000, deuterium: 0 },
+    cost: { minerai: 10000, silicium: 10000, hydrogene: 0 },
     countColumn: 'smallShield',
     maxPerPlanet: 1,
     prerequisites: {
@@ -101,7 +101,7 @@ export const DEFENSES: Record<DefenseId, DefenseDefinition> = {
     id: 'largeShield',
     name: 'Grand bouclier',
     description: 'Bouclier planétaire avancé.',
-    cost: { metal: 50000, crystal: 50000, deuterium: 0 },
+    cost: { minerai: 50000, silicium: 50000, hydrogene: 0 },
     countColumn: 'largeShield',
     maxPerPlanet: 1,
     prerequisites: {

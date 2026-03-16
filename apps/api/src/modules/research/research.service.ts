@@ -155,7 +155,7 @@ export function createResearchService(
       const currentLevel = def
         ? (research[def.levelColumn as keyof typeof research] ?? 0) as number
         : 0;
-      const cost = def ? researchCost(def, currentLevel + 1) : { metal: 0, crystal: 0, deuterium: 0 };
+      const cost = def ? researchCost(def, currentLevel + 1) : { minerai: 0, silicium: 0, hydrogene: 0 };
 
       const [planet] = await db
         .select()
@@ -167,9 +167,9 @@ export function createResearchService(
         await db
           .update(planets)
           .set({
-            metal: String(Number(planet.metal) + cost.metal),
-            crystal: String(Number(planet.crystal) + cost.crystal),
-            deuterium: String(Number(planet.deuterium) + cost.deuterium),
+            minerai: String(Number(planet.minerai) + cost.minerai),
+            silicium: String(Number(planet.silicium) + cost.silicium),
+            hydrogene: String(Number(planet.hydrogene) + cost.hydrogene),
           })
           .where(eq(planets.id, planet.id));
       }

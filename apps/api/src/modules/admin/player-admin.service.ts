@@ -71,7 +71,7 @@ export function createPlayerAdminService(db: Database) {
       };
     },
 
-    async updatePlayerResources(planetId: string, resources: { metal?: string; crystal?: string; deuterium?: string }) {
+    async updatePlayerResources(planetId: string, resources: { minerai?: string; silicium?: string; hydrogene?: string }) {
       await db.update(planets).set(resources).where(eq(planets.id, planetId));
     },
 

@@ -39,7 +39,7 @@ export function createGalaxyService(db: Database) {
       for (const d of debris) {
         const slot = slots[d.position - 1];
         if (slot) {
-          (slot as any).debris = { metal: Number(d.metal), crystal: Number(d.crystal) };
+          (slot as any).debris = { minerai: Number(d.minerai), silicium: Number(d.silicium) };
         }
       }
 

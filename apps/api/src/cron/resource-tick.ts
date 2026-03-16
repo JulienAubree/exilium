@@ -11,20 +11,20 @@ export async function resourceTick(db: Database) {
   for (const planet of allPlanets) {
     const resources = calculateResources(
       {
-        metal: Number(planet.metal),
-        crystal: Number(planet.crystal),
-        deuterium: Number(planet.deuterium),
-        metalMineLevel: planet.metalMineLevel,
-        crystalMineLevel: planet.crystalMineLevel,
-        deutSynthLevel: planet.deutSynthLevel,
+        minerai: Number(planet.minerai),
+        silicium: Number(planet.silicium),
+        hydrogene: Number(planet.hydrogene),
+        mineraiMineLevel: planet.mineraiMineLevel,
+        siliciumMineLevel: planet.siliciumMineLevel,
+        hydrogeneSynthLevel: planet.hydrogeneSynthLevel,
         solarPlantLevel: planet.solarPlantLevel,
-        storageMetalLevel: planet.storageMetalLevel,
-        storageCrystalLevel: planet.storageCrystalLevel,
-        storageDeutLevel: planet.storageDeutLevel,
+        storageMineraiLevel: planet.storageMineraiLevel,
+        storageSiliciumLevel: planet.storageSiliciumLevel,
+        storageHydrogeneLevel: planet.storageHydrogeneLevel,
         maxTemp: planet.maxTemp,
-        metalMinePercent: planet.metalMinePercent,
-        crystalMinePercent: planet.crystalMinePercent,
-        deutSynthPercent: planet.deutSynthPercent,
+        mineraiMinePercent: planet.mineraiMinePercent,
+        siliciumMinePercent: planet.siliciumMinePercent,
+        hydrogeneSynthPercent: planet.hydrogeneSynthPercent,
       },
       planet.resourcesUpdatedAt,
       now,
@@ -33,9 +33,9 @@ export async function resourceTick(db: Database) {
     await db
       .update(planets)
       .set({
-        metal: String(resources.metal),
-        crystal: String(resources.crystal),
-        deuterium: String(resources.deuterium),
+        minerai: String(resources.minerai),
+        silicium: String(resources.silicium),
+        hydrogene: String(resources.hydrogene),
         resourcesUpdatedAt: now,
       })
       .where(eq(planets.id, planet.id));

@@ -18,27 +18,27 @@ export const planets = pgTable('planets', {
   maxTemp: smallint('max_temp').notNull(),
 
   // Resources
-  metal: numeric('metal', { precision: 20, scale: 2 }).notNull().default('500'),
-  crystal: numeric('crystal', { precision: 20, scale: 2 }).notNull().default('500'),
-  deuterium: numeric('deuterium', { precision: 20, scale: 2 }).notNull().default('0'),
+  minerai: numeric('minerai', { precision: 20, scale: 2 }).notNull().default('500'),
+  silicium: numeric('silicium', { precision: 20, scale: 2 }).notNull().default('500'),
+  hydrogene: numeric('hydrogene', { precision: 20, scale: 2 }).notNull().default('0'),
   resourcesUpdatedAt: timestamp('resources_updated_at', { withTimezone: true }).notNull().defaultNow(),
 
   // Building levels (inline)
-  metalMineLevel: smallint('metal_mine_level').notNull().default(0),
-  crystalMineLevel: smallint('crystal_mine_level').notNull().default(0),
-  deutSynthLevel: smallint('deut_synth_level').notNull().default(0),
+  mineraiMineLevel: smallint('minerai_mine_level').notNull().default(0),
+  siliciumMineLevel: smallint('silicium_mine_level').notNull().default(0),
+  hydrogeneSynthLevel: smallint('hydrogene_synth_level').notNull().default(0),
   solarPlantLevel: smallint('solar_plant_level').notNull().default(0),
   roboticsLevel: smallint('robotics_level').notNull().default(0),
   shipyardLevel: smallint('shipyard_level').notNull().default(0),
   researchLabLevel: smallint('research_lab_level').notNull().default(0),
-  storageMetalLevel: smallint('storage_metal_level').notNull().default(0),
-  storageCrystalLevel: smallint('storage_crystal_level').notNull().default(0),
-  storageDeutLevel: smallint('storage_deut_level').notNull().default(0),
+  storageMineraiLevel: smallint('storage_minerai_level').notNull().default(0),
+  storageSiliciumLevel: smallint('storage_silicium_level').notNull().default(0),
+  storageHydrogeneLevel: smallint('storage_hydrogene_level').notNull().default(0),
 
   // Production percentages (0-100, step 10)
-  metalMinePercent: smallint('metal_mine_percent').notNull().default(100),
-  crystalMinePercent: smallint('crystal_mine_percent').notNull().default(100),
-  deutSynthPercent: smallint('deut_synth_percent').notNull().default(100),
+  mineraiMinePercent: smallint('minerai_mine_percent').notNull().default(100),
+  siliciumMinePercent: smallint('silicium_mine_percent').notNull().default(100),
+  hydrogeneSynthPercent: smallint('hydrogene_synth_percent').notNull().default(100),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

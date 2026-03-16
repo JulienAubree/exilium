@@ -8,6 +8,7 @@ import { useUIStore } from '@/stores/ui.store';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 
 interface Planet {
   id: string;
@@ -23,12 +24,14 @@ interface ResourceBadgeProps {
   glowClass: string;
   colorClass: string;
   compact?: boolean;
+  icon?: React.ReactNode;
 }
 
-function ResourceBadge({ label, value, glowClass, colorClass, compact }: ResourceBadgeProps) {
+function ResourceBadge({ label, value, glowClass, colorClass, compact, icon }: ResourceBadgeProps) {
   if (compact) {
     return (
       <div className="flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1">
+        {icon && <span className={colorClass}>{icon}</span>}
         <span className={cn('text-xs font-semibold', colorClass, glowClass)}>
           {value.toLocaleString('fr-FR')}
         </span>
@@ -37,6 +40,7 @@ function ResourceBadge({ label, value, glowClass, colorClass, compact }: Resourc
   }
   return (
     <div className="flex items-center gap-2">
+      {icon && <span className={colorClass}>{icon}</span>}
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className={cn('text-sm font-semibold', colorClass, glowClass)}>
         {value.toLocaleString('fr-FR')}
@@ -160,9 +164,9 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         {/* Resources — hidden on mobile */}
         {!isMobile && (
           <div className="flex items-center gap-4">
-            <ResourceBadge label="Minerai" value={resources.minerai} glowClass="glow-minerai" colorClass="text-minerai" compact={isTablet} />
-            <ResourceBadge label="Silicium" value={resources.silicium} glowClass="glow-silicium" colorClass="text-silicium" compact={isTablet} />
-            <ResourceBadge label="Hydrogène" value={resources.hydrogene} glowClass="glow-hydrogene" colorClass="text-hydrogene" compact={isTablet} />
+            <ResourceBadge label="Minerai" value={resources.minerai} glowClass="glow-minerai" colorClass="text-minerai" compact={isTablet} icon={<MineraiIcon size={14} />} />
+            <ResourceBadge label="Silicium" value={resources.silicium} glowClass="glow-silicium" colorClass="text-silicium" compact={isTablet} icon={<SiliciumIcon size={14} />} />
+            <ResourceBadge label="Hydrogène" value={resources.hydrogene} glowClass="glow-hydrogene" colorClass="text-hydrogene" compact={isTablet} icon={<HydrogeneIcon size={14} />} />
             <ResourceBadge
               label="Énergie"
               value={energyBalance}
