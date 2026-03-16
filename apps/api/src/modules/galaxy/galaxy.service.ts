@@ -4,7 +4,7 @@ import type { Database } from '@ogame-clone/db';
 
 export function createGalaxyService(db: Database) {
   return {
-    async getSystem(galaxy: number, system: number) {
+    async getSystem(galaxy: number, system: number, currentUserId?: string) {
       const systemPlanets = await db
         .select({
           position: planets.position,
@@ -14,6 +14,7 @@ export function createGalaxyService(db: Database) {
           userId: planets.userId,
           username: users.username,
           allianceTag: alliances.tag,
+          planetClassId: planets.planetClassId,
         })
         .from(planets)
         .leftJoin(users, eq(users.id, planets.userId))
@@ -23,6 +24,10 @@ export function createGalaxyService(db: Database) {
 
       const slots: (typeof systemPlanets[number] | null)[] = Array(15).fill(null);
       for (const planet of systemPlanets) {
+        // Only show planetClassId for the current user's own planets
+        if (planet.userId !== currentUserId) {
+          planet.planetClassId = null;
+        }
         slots[planet.position - 1] = planet;
       }
 

@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { eq, isNull, sql } from 'drizzle-orm';
 import {
   entityCategories,
   buildingDefinitions,
@@ -13,7 +14,9 @@ import {
   rapidFire,
   productionConfig,
   universeConfig,
+  planetTypes,
 } from './schema/game-config.js';
+import { planets } from './schema/planets.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://ogame:ogame@localhost:5432/ogame';
 const client = postgres(DATABASE_URL);
@@ -122,6 +125,17 @@ const PRODUCTION_CONFIG = [
   { id: 'hydrogeneSynth', baseProduction: 10, exponentBase: 1.1, energyConsumption: 20, storageBase: null },
   { id: 'solarPlant', baseProduction: 20, exponentBase: 1.1, energyConsumption: null, storageBase: null },
   { id: 'storage', baseProduction: 5000, exponentBase: 1.1, energyConsumption: null, storageBase: 5000 },
+];
+
+// ── Planet types data ──
+
+const PLANET_TYPES = [
+  { id: 'volcanic', name: 'Volcanique', description: 'Planète volcanique aux sols riches en silicium.', positions: [1, 2, 3], mineraiBonus: 1.0, siliciumBonus: 1.2, hydrogeneBonus: 0.7, diameterMin: 5800, diameterMax: 9800, fieldsBonus: 1.1, sortOrder: 0 },
+  { id: 'arid', name: 'Aride', description: 'Planète aride riche en minerai.', positions: [4, 5, 6], mineraiBonus: 1.2, siliciumBonus: 1.1, hydrogeneBonus: 0.8, diameterMin: 9000, diameterMax: 13000, fieldsBonus: 0.9, sortOrder: 1 },
+  { id: 'temperate', name: 'Tempérée', description: 'Planète équilibrée sans bonus ni malus.', positions: [7, 8, 9], mineraiBonus: 1.0, siliciumBonus: 1.0, hydrogeneBonus: 1.0, diameterMin: 10000, diameterMax: 15600, fieldsBonus: 1.0, sortOrder: 2 },
+  { id: 'glacial', name: 'Glaciale', description: "Planète glaciale propice à la synthèse d'hydrogène.", positions: [10, 11, 12], mineraiBonus: 0.8, siliciumBonus: 1.0, hydrogeneBonus: 1.3, diameterMin: 7500, diameterMax: 12200, fieldsBonus: 0.9, sortOrder: 3 },
+  { id: 'gaseous', name: 'Gazeuse', description: "Géante gazeuse avec d'abondantes ressources en hydrogène.", positions: [13, 14, 15], mineraiBonus: 0.9, siliciumBonus: 0.9, hydrogeneBonus: 1.1, diameterMin: 8000, diameterMax: 14000, fieldsBonus: 1.1, sortOrder: 4 },
+  { id: 'homeworld', name: 'Planète mère', description: 'Planète de départ neutre.', positions: [], mineraiBonus: 1.0, siliciumBonus: 1.0, hydrogeneBonus: 1.0, diameterMin: 12000, diameterMax: 12000, fieldsBonus: 1.0, sortOrder: 5 },
 ];
 
 // ── Universe config data ──
@@ -255,12 +269,31 @@ async function seed() {
   }
   console.log(`  ✓ ${PRODUCTION_CONFIG.length} production configs`);
 
-  // 11. Universe config
+  // 11. Planet types
+  for (const pt of PLANET_TYPES) {
+    await db.insert(planetTypes).values(pt)
+      .onConflictDoUpdate({ target: planetTypes.id, set: { ...pt } });
+  }
+  console.log(`  ✓ ${PLANET_TYPES.length} planet types`);
+
+  // 12. Universe config
   for (const u of UNIVERSE_CONFIG) {
     await db.insert(universeConfig).values(u)
       .onConflictDoUpdate({ target: universeConfig.key, set: { value: u.value } });
   }
   console.log(`  ✓ ${UNIVERSE_CONFIG.length} universe config entries`);
+
+  // 13. Migrate existing planets: set homeworld type on first planet of each user
+  const homePlanets = await db.execute(sql`
+    UPDATE planets SET planet_class_id = 'homeworld'
+    WHERE planet_class_id IS NULL
+    AND id IN (
+      SELECT DISTINCT ON (user_id) id
+      FROM planets
+      ORDER BY user_id, created_at ASC
+    )
+  `);
+  console.log(`  ✓ Migrated home planets to homeworld type`);
 
   console.log('Seed complete!');
   await client.end();

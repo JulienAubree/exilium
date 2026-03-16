@@ -10,6 +10,12 @@ import {
   calculateProductionFactor,
 } from './production.js';
 
+export interface PlanetTypeBonus {
+  mineraiBonus?: number;
+  siliciumBonus?: number;
+  hydrogeneBonus?: number;
+}
+
 export interface PlanetLevels {
   mineraiMineLevel: number;
   siliciumMineLevel: number;
@@ -42,10 +48,14 @@ export interface ProductionRates {
   storageHydrogeneCapacity: number;
 }
 
-export function calculateProductionRates(planet: PlanetLevels): ProductionRates {
+export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTypeBonus): ProductionRates {
   const mineraiPct = (planet.mineraiMinePercent ?? 100) / 100;
   const siliciumPct = (planet.siliciumMinePercent ?? 100) / 100;
   const hydrogenePct = (planet.hydrogeneSynthPercent ?? 100) / 100;
+
+  const mBonus = bonus?.mineraiBonus ?? 1;
+  const sBonus = bonus?.siliciumBonus ?? 1;
+  const hBonus = bonus?.hydrogeneBonus ?? 1;
 
   const energyProduced = solarPlantEnergy(planet.solarPlantLevel);
 
@@ -57,9 +67,9 @@ export function calculateProductionRates(planet: PlanetLevels): ProductionRates 
   const factor = calculateProductionFactor(energyProduced, energyConsumed);
 
   return {
-    mineraiPerHour: mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor),
-    siliciumPerHour: siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor),
-    hydrogenePerHour: hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor),
+    mineraiPerHour: Math.floor(mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor) * mBonus),
+    siliciumPerHour: Math.floor(siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor) * sBonus),
+    hydrogenePerHour: Math.floor(hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor) * hBonus),
     productionFactor: factor,
     energyProduced,
     energyConsumed,
@@ -89,8 +99,9 @@ export function calculateResources(
   planet: PlanetResources,
   resourcesUpdatedAt: Date,
   now: Date,
+  bonus?: PlanetTypeBonus,
 ): { minerai: number; silicium: number; hydrogene: number } {
-  const rates = calculateProductionRates(planet);
+  const rates = calculateProductionRates(planet, bonus);
   const elapsedHours = Math.max(0, (now.getTime() - resourcesUpdatedAt.getTime()) / (3600 * 1000));
 
   const minerai = Math.min(

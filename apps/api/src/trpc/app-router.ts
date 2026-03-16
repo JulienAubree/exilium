@@ -49,7 +49,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
-  const resourceRouter = createResourceRouter(resourceService, planetService);
+  const resourceRouter = createResourceRouter(resourceService, planetService, db);
   const buildingRouter = createBuildingRouter(buildingService);
   const researchRouter = createResearchRouter(researchService);
   const shipyardRouter = createShipyardRouter(shipyardService);

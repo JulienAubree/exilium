@@ -131,6 +131,22 @@ export const productionConfig = pgTable('production_config', {
   storageBase: real('storage_base'),
 });
 
+// ── Planet Types ──
+
+export const planetTypes = pgTable('planet_types', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  positions: jsonb('positions').notNull(),
+  mineraiBonus: real('minerai_bonus').notNull().default(1.0),
+  siliciumBonus: real('silicium_bonus').notNull().default(1.0),
+  hydrogeneBonus: real('hydrogene_bonus').notNull().default(1.0),
+  diameterMin: integer('diameter_min').notNull(),
+  diameterMax: integer('diameter_max').notNull(),
+  fieldsBonus: real('fields_bonus').notNull().default(1.0),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
 // ── Universe Config ──
 
 export const universeConfig = pgTable('universe_config', {

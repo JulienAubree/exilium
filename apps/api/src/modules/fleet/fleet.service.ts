@@ -553,12 +553,26 @@ export function createFleetService(
         return { mission: 'colonize', success: false, reason: 'max_planets' };
       }
 
-      // Success: create new planet
+      // Success: create new planet — determine type from position
+      const config = await gameConfigService.getFullConfig();
+      const planetTypeForPos = config.planetTypes.find(
+        (pt) => pt.id !== 'homeworld' && (pt.positions as number[]).includes(event.targetPosition),
+      );
+
       const randomOffset = Math.floor(Math.random() * 41) - 20;
       const maxTemp = calculateMaxTemp(event.targetPosition, randomOffset);
       const minTemp = calculateMinTemp(maxTemp);
-      const diameter = calculateDiameter(event.targetPosition, Math.random());
-      const maxFields = calculateMaxFields(diameter);
+
+      let diameter: number;
+      let fieldsBonus = 1;
+      if (planetTypeForPos) {
+        const { diameterMin, diameterMax } = planetTypeForPos;
+        diameter = Math.floor(diameterMin + (diameterMax - diameterMin) * Math.random());
+        fieldsBonus = planetTypeForPos.fieldsBonus;
+      } else {
+        diameter = calculateDiameter(event.targetPosition, Math.random());
+      }
+      const maxFields = calculateMaxFields(diameter, fieldsBonus);
 
       const [newPlanet] = await db
         .insert(planets)
@@ -569,6 +583,7 @@ export function createFleetService(
           system: event.targetSystem,
           position: event.targetPosition,
           planetType: 'planet',
+          planetClassId: planetTypeForPos?.id ?? null,
           diameter,
           maxFields,
           minTemp,

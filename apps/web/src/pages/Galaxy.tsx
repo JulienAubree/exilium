@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/common/Skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 export default function Galaxy() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -26,6 +27,7 @@ export default function Galaxy() {
   const { data, isLoading } = trpc.galaxy.system.useQuery(
     { galaxy, system },
   );
+  const { data: gameConfig } = useGameConfig();
 
   // Touch swipe for system navigation
   const touchStart = useRef<number | null>(null);
@@ -139,6 +141,11 @@ export default function Galaxy() {
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium">{slot.planetName}</span>
                         <div className="text-xs text-muted-foreground">
+                          {(slot as any).planetClassId && (
+                            <span className="text-primary/70 mr-1">
+                              {gameConfig?.planetTypes?.find((t) => t.id === (slot as any).planetClassId)?.name ?? ''}
+                            </span>
+                          )}
                           {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
                           {slot.username}
                         </div>
@@ -170,6 +177,7 @@ export default function Galaxy() {
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="px-2 py-1 w-12">Pos</th>
                     <th className="px-2 py-1">Planète</th>
+                    <th className="px-2 py-1">Type</th>
                     <th className="px-2 py-1">Joueur</th>
                     <th className="px-2 py-1 w-20">Actions</th>
                   </tr>
@@ -181,6 +189,11 @@ export default function Galaxy() {
                       {slot ? (
                         <>
                           <td className="px-2 py-1">{slot.planetName}</td>
+                          <td className="px-2 py-1 text-xs text-muted-foreground">
+                            {(slot as any).planetClassId
+                              ? gameConfig?.planetTypes?.find((t) => t.id === (slot as any).planetClassId)?.name ?? ''
+                              : ''}
+                          </td>
                           <td className="px-2 py-1">
                             {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
                             {slot.username}
@@ -200,6 +213,7 @@ export default function Galaxy() {
                         </>
                       ) : (
                         <>
+                          <td className="px-2 py-1 text-muted-foreground">-</td>
                           <td className="px-2 py-1 text-muted-foreground">-</td>
                           <td className="px-2 py-1 text-muted-foreground">-</td>
                           <td className="px-2 py-1">-</td>

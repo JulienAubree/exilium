@@ -325,6 +325,53 @@ export function createGameConfigRouter(
         await gameConfigService.updateUniverseConfig(input.key, input.value);
         return { success: true };
       }),
+
+    createPlanetType: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        positions: z.array(z.number().int()),
+        mineraiBonus: z.number().optional(),
+        siliciumBonus: z.number().optional(),
+        hydrogeneBonus: z.number().optional(),
+        diameterMin: z.number().int(),
+        diameterMax: z.number().int(),
+        fieldsBonus: z.number().optional(),
+        sortOrder: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createPlanetType(input);
+        return { success: true };
+      }),
+
+    updatePlanetType: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          name: z.string().optional(),
+          description: z.string().optional(),
+          positions: z.array(z.number().int()).optional(),
+          mineraiBonus: z.number().optional(),
+          siliciumBonus: z.number().optional(),
+          hydrogeneBonus: z.number().optional(),
+          diameterMin: z.number().int().optional(),
+          diameterMax: z.number().int().optional(),
+          fieldsBonus: z.number().optional(),
+          sortOrder: z.number().int().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updatePlanetType(input.id, input.data);
+        return { success: true };
+      }),
+
+    deletePlanetType: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deletePlanetType(input.id);
+        return { success: true };
+      }),
   });
 
   return router({

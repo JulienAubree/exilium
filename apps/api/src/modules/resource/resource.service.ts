@@ -1,12 +1,23 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets } from '@ogame-clone/db';
+import { planets, planetTypes } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import {
   calculateResources,
   calculateProductionRates,
   type ResourceCost,
+  type PlanetTypeBonus,
 } from '@ogame-clone/game-engine';
+
+async function loadPlanetTypeBonus(db: Database, planetClassId: string | null): Promise<PlanetTypeBonus | undefined> {
+  if (!planetClassId) return undefined;
+  const [pt] = await db.select({
+    mineraiBonus: planetTypes.mineraiBonus,
+    siliciumBonus: planetTypes.siliciumBonus,
+    hydrogeneBonus: planetTypes.hydrogeneBonus,
+  }).from(planetTypes).where(eq(planetTypes.id, planetClassId)).limit(1);
+  return pt ?? undefined;
+}
 
 export function createResourceService(db: Database) {
   return {
@@ -20,6 +31,8 @@ export function createResourceService(db: Database) {
       if (!planet) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
+
+      const bonus = await loadPlanetTypeBonus(db, planet.planetClassId);
 
       const now = new Date();
       const resources = calculateResources(
@@ -41,6 +54,7 @@ export function createResourceService(db: Database) {
         },
         planet.resourcesUpdatedAt,
         now,
+        bonus,
       );
 
       const [updated] = await db
@@ -68,6 +82,8 @@ export function createResourceService(db: Database) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
 
+      const bonus = await loadPlanetTypeBonus(db, planet.planetClassId);
+
       const now = new Date();
       const produced = calculateResources(
         {
@@ -88,6 +104,7 @@ export function createResourceService(db: Database) {
         },
         planet.resourcesUpdatedAt,
         now,
+        bonus,
       );
 
       if (produced.minerai < cost.minerai || produced.silicium < cost.silicium || produced.hydrogene < cost.hydrogene) {
@@ -145,8 +162,8 @@ export function createResourceService(db: Database) {
       mineraiMinePercent: number;
       siliciumMinePercent: number;
       hydrogeneSynthPercent: number;
-    }) {
-      return calculateProductionRates(planet);
+    }, bonus?: PlanetTypeBonus) {
+      return calculateProductionRates(planet, bonus);
     },
   };
 }

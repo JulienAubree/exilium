@@ -31,6 +31,7 @@ export const router = createBrowserRouter([
       { path: 'rapid-fire', lazy: () => import('./pages/RapidFire').then((m) => ({ Component: m.default })) },
       { path: 'production', lazy: () => import('./pages/Production').then((m) => ({ Component: m.default })) },
       { path: 'universe', lazy: () => import('./pages/Universe').then((m) => ({ Component: m.default })) },
+      { path: 'planet-types', lazy: () => import('./pages/PlanetTypes').then((m) => ({ Component: m.default })) },
       { path: 'players', lazy: () => import('./pages/Players').then((m) => ({ Component: m.default })) },
       { path: 'players/:id', lazy: () => import('./pages/PlayerDetail').then((m) => ({ Component: m.default })) },
     ],

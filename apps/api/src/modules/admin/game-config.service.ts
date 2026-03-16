@@ -12,6 +12,8 @@ import {
   rapidFire,
   productionConfig,
   universeConfig,
+  planetTypes,
+  planets,
 } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { TRPCError } from '@trpc/server';
@@ -32,6 +34,7 @@ export interface GameConfig {
   rapidFire: Record<string, Record<string, number>>;
   production: Record<string, ProductionConfigEntry>;
   universe: Record<string, unknown>;
+  planetTypes: PlanetTypeConfig[];
 }
 
 export interface BuildingConfig {
@@ -101,6 +104,20 @@ export interface DefenseConfig {
   };
 }
 
+export interface PlanetTypeConfig {
+  id: string;
+  name: string;
+  description: string;
+  positions: number[];
+  mineraiBonus: number;
+  siliciumBonus: number;
+  hydrogeneBonus: number;
+  diameterMin: number;
+  diameterMax: number;
+  fieldsBonus: number;
+  sortOrder: number;
+}
+
 export interface ProductionConfigEntry {
   id: string;
   baseProduction: number;
@@ -133,6 +150,7 @@ export function createGameConfigService(db: Database) {
       rapidFireRows,
       productionRows,
       universeRows,
+      planetTypeRows,
     ] = await Promise.all([
       db.select().from(entityCategories),
       db.select().from(buildingDefinitions),
@@ -146,6 +164,7 @@ export function createGameConfigService(db: Database) {
       db.select().from(rapidFire),
       db.select().from(productionConfig),
       db.select().from(universeConfig),
+      db.select().from(planetTypes),
     ]);
 
     // Categories
@@ -269,7 +288,22 @@ export function createGameConfigService(db: Database) {
       universe[u.key] = u.value;
     }
 
-    cache = { categories, buildings, research, ships, defenses, rapidFire: rf, production, universe };
+    // Planet types
+    const ptConfigs: PlanetTypeConfig[] = planetTypeRows.map(pt => ({
+      id: pt.id,
+      name: pt.name,
+      description: pt.description,
+      positions: pt.positions as number[],
+      mineraiBonus: pt.mineraiBonus,
+      siliciumBonus: pt.siliciumBonus,
+      hydrogeneBonus: pt.hydrogeneBonus,
+      diameterMin: pt.diameterMin,
+      diameterMax: pt.diameterMax,
+      fieldsBonus: pt.fieldsBonus,
+      sortOrder: pt.sortOrder,
+    }));
+
+    cache = { categories, buildings, research, ships, defenses, rapidFire: rf, production, universe, planetTypes: ptConfigs };
     return cache;
   }
 
@@ -670,6 +704,64 @@ export function createGameConfigService(db: Database) {
     async updateUniverseConfig(key: string, value: unknown) {
       await db.insert(universeConfig).values({ key, value })
         .onConflictDoUpdate({ target: universeConfig.key, set: { value } });
+      invalidateCache();
+    },
+
+    async createPlanetType(data: {
+      id: string;
+      name: string;
+      description?: string;
+      positions: number[];
+      mineraiBonus?: number;
+      siliciumBonus?: number;
+      hydrogeneBonus?: number;
+      diameterMin: number;
+      diameterMax: number;
+      fieldsBonus?: number;
+      sortOrder?: number;
+    }) {
+      await db.insert(planetTypes).values({
+        id: data.id,
+        name: data.name,
+        description: data.description ?? '',
+        positions: data.positions,
+        mineraiBonus: data.mineraiBonus ?? 1.0,
+        siliciumBonus: data.siliciumBonus ?? 1.0,
+        hydrogeneBonus: data.hydrogeneBonus ?? 1.0,
+        diameterMin: data.diameterMin,
+        diameterMax: data.diameterMax,
+        fieldsBonus: data.fieldsBonus ?? 1.0,
+        sortOrder: data.sortOrder ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async updatePlanetType(id: string, data: Partial<{
+      name: string;
+      description: string;
+      positions: number[];
+      mineraiBonus: number;
+      siliciumBonus: number;
+      hydrogeneBonus: number;
+      diameterMin: number;
+      diameterMax: number;
+      fieldsBonus: number;
+      sortOrder: number;
+    }>) {
+      await db.update(planetTypes).set(data).where(eq(planetTypes.id, id));
+      invalidateCache();
+    },
+
+    async deletePlanetType(id: string) {
+      const refs = await db.select({ id: planets.id }).from(planets)
+        .where(eq(planets.planetClassId, id)).limit(1);
+      if (refs.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Ce type de planète est utilisé par des planètes existantes. Impossible de le supprimer.`,
+        });
+      }
+      await db.delete(planetTypes).where(eq(planetTypes.id, id));
       invalidateCache();
     },
   };

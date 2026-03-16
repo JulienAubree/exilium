@@ -1,5 +1,8 @@
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { protectedProcedure, router } from '../../trpc/router.js';
+import { planetTypes } from '@ogame-clone/db';
+import type { Database } from '@ogame-clone/db';
 import type { createResourceService } from './resource.service.js';
 import type { createPlanetService } from '../planet/planet.service.js';
 
@@ -10,13 +13,25 @@ const percentSchema = z.number().int().min(0).max(100).refine((v) => v % 10 === 
 export function createResourceRouter(
   resourceService: ReturnType<typeof createResourceService>,
   planetService: ReturnType<typeof createPlanetService>,
+  db: Database,
 ) {
   return router({
     production: protectedProcedure
       .input(z.object({ planetId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
         const planet = await planetService.getPlanet(ctx.userId!, input.planetId);
-        const rates = resourceService.getProductionRates(planet);
+
+        let bonus: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number } | undefined;
+        if (planet.planetClassId) {
+          const [pt] = await db.select({
+            mineraiBonus: planetTypes.mineraiBonus,
+            siliciumBonus: planetTypes.siliciumBonus,
+            hydrogeneBonus: planetTypes.hydrogeneBonus,
+          }).from(planetTypes).where(eq(planetTypes.id, planet.planetClassId)).limit(1);
+          bonus = pt ?? undefined;
+        }
+
+        const rates = resourceService.getProductionRates(planet, bonus);
         return {
           rates,
           resourcesUpdatedAt: planet.resourcesUpdatedAt.toISOString(),
@@ -24,6 +39,7 @@ export function createResourceRouter(
           silicium: Number(planet.silicium),
           hydrogene: Number(planet.hydrogene),
           maxTemp: planet.maxTemp,
+          planetClassId: planet.planetClassId,
           levels: {
             mineraiMineLevel: planet.mineraiMineLevel,
             siliciumMineLevel: planet.siliciumMineLevel,

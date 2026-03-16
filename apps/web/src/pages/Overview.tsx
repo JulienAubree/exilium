@@ -9,6 +9,7 @@ import { Timer } from '@/components/common/Timer';
 import { OverviewSkeleton } from '@/components/common/PageSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageHeader } from '@/components/common/PageHeader';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 const MISSION_LABELS: Record<string, string> = {
   transport: 'Transport',
@@ -66,6 +67,7 @@ export default function Overview() {
   );
 
   const { data: allMovements } = trpc.fleet.movements.useQuery();
+  const { data: gameConfig } = useGameConfig();
 
   const renameMutation = trpc.planet.rename.useMutation({
     onSuccess: () => {
@@ -271,20 +273,56 @@ export default function Overview() {
       {/* Planet info */}
       <section className="glass-card p-4">
         <h2 className="text-sm font-semibold text-foreground mb-3">Informations planete</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Champs</span>
-            <span>0 / {planet.maxFields}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Temperature</span>
-            <span>{planet.minTemp}&deg;C a {planet.maxTemp}&deg;C</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Diametre</span>
-            <span>{planet.diameter.toLocaleString('fr-FR')} km</span>
-          </div>
-        </div>
+        {(() => {
+          const ptId = planet.planetClassId;
+          const planetType = ptId ? gameConfig?.planetTypes?.find((t) => t.id === ptId) : null;
+          return (
+            <div className="space-y-2 text-sm">
+              {planetType && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type</span>
+                    <span className="font-medium">{planetType.name}</span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap text-xs">
+                    {planetType.mineraiBonus !== 1 && (
+                      <span className={planetType.mineraiBonus > 1 ? 'text-emerald-400' : 'text-red-400'}>
+                        Minerai x{planetType.mineraiBonus}
+                      </span>
+                    )}
+                    {planetType.siliciumBonus !== 1 && (
+                      <span className={planetType.siliciumBonus > 1 ? 'text-emerald-400' : 'text-red-400'}>
+                        Silicium x{planetType.siliciumBonus}
+                      </span>
+                    )}
+                    {planetType.hydrogeneBonus !== 1 && (
+                      <span className={planetType.hydrogeneBonus > 1 ? 'text-emerald-400' : 'text-red-400'}>
+                        Hydrogene x{planetType.hydrogeneBonus}
+                      </span>
+                    )}
+                    {planetType.fieldsBonus !== 1 && (
+                      <span className={planetType.fieldsBonus > 1 ? 'text-emerald-400' : 'text-red-400'}>
+                        Cases x{planetType.fieldsBonus}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Champs</span>
+                <span>0 / {planet.maxFields}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Temperature</span>
+                <span>{planet.minTemp}&deg;C a {planet.maxTemp}&deg;C</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Diametre</span>
+                <span>{planet.diameter.toLocaleString('fr-FR')} km</span>
+              </div>
+            </div>
+          );
+        })()}
       </section>
     </div>
   );

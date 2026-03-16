@@ -1,5 +1,6 @@
 import { pgTable, uuid, varchar, smallint, integer, numeric, timestamp, uniqueIndex, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
+import { planetTypes } from './game-config.js';
 
 export const planetTypeEnum = pgEnum('planet_type', ['planet', 'moon']);
 
@@ -12,6 +13,7 @@ export const planets = pgTable('planets', {
   system: smallint('system').notNull(),
   position: smallint('position').notNull(),
   planetType: planetTypeEnum('planet_type').notNull().default('planet'),
+  planetClassId: varchar('planet_class_id', { length: 64 }).references(() => planetTypes.id, { onDelete: 'set null' }),
   diameter: integer('diameter').notNull(),
   maxFields: integer('max_fields').notNull(),
   minTemp: smallint('min_temp').notNull(),

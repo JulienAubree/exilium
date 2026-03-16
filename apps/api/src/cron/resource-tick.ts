@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { planets } from '@ogame-clone/db';
+import { planets, planetTypes } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { calculateResources } from '@ogame-clone/game-engine';
 
@@ -7,8 +7,13 @@ export async function resourceTick(db: Database) {
   const now = new Date();
   const allPlanets = await db.select().from(planets);
 
+  // Pre-load all planet types for bonus lookup
+  const ptRows = await db.select().from(planetTypes);
+  const ptMap = new Map(ptRows.map(pt => [pt.id, { mineraiBonus: pt.mineraiBonus, siliciumBonus: pt.siliciumBonus, hydrogeneBonus: pt.hydrogeneBonus }]));
+
   let updated = 0;
   for (const planet of allPlanets) {
+    const bonus = planet.planetClassId ? ptMap.get(planet.planetClassId) : undefined;
     const resources = calculateResources(
       {
         minerai: Number(planet.minerai),
@@ -28,6 +33,7 @@ export async function resourceTick(db: Database) {
       },
       planet.resourcesUpdatedAt,
       now,
+      bonus,
     );
 
     await db

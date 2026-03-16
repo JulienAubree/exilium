@@ -9,8 +9,8 @@ export function createGalaxyRouter(galaxyService: ReturnType<typeof createGalaxy
         galaxy: z.number().int().min(1).max(9),
         system: z.number().int().min(1).max(499),
       }))
-      .query(async ({ input }) => {
-        return galaxyService.getSystem(input.galaxy, input.system);
+      .query(async ({ ctx, input }) => {
+        return galaxyService.getSystem(input.galaxy, input.system, ctx.userId);
       }),
   });
 }

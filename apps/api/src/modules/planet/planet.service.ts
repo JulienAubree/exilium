@@ -24,7 +24,7 @@ export function createPlanetService(db: Database) {
       const randomOffset = randomInt(-20, 20);
       const maxTemp = calculateMaxTemp(position, randomOffset);
       const minTemp = calculateMinTemp(maxTemp);
-      const diameter = calculateDiameter(position, Math.random());
+      const diameter = 12000;
       const maxFields = calculateMaxFields(diameter);
 
       const [planet] = await db
@@ -36,6 +36,7 @@ export function createPlanetService(db: Database) {
           system,
           position,
           planetType: 'planet',
+          planetClassId: 'homeworld',
           diameter,
           maxFields,
           minTemp,
