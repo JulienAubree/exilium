@@ -1,6 +1,8 @@
-import { COMBAT_STATS, RAPID_FIRE } from '../constants/combat-stats.js';
-import { SHIPS, type ShipId } from '../constants/ships.js';
-import { DEFENSES, type DefenseId } from '../constants/defenses.js';
+export interface UnitCombatStats {
+  weapons: number;
+  shield: number;
+  armor: number;
+}
 
 export interface CombatTechs {
   weapons: number;
@@ -33,21 +35,14 @@ export interface CombatResult {
   repairedDefenses: Record<string, number>;
 }
 
-function isShipId(id: string): id is ShipId {
-  return id in SHIPS;
-}
-
-function isDefenseId(id: string): id is DefenseId {
-  return id in DEFENSES;
-}
-
 function createUnits(
   fleet: Record<string, number>,
   techs: CombatTechs,
+  combatStats: Record<string, UnitCombatStats>,
 ): CombatUnit[] {
   const units: CombatUnit[] = [];
   for (const [type, count] of Object.entries(fleet)) {
-    const base = COMBAT_STATS[type];
+    const base = combatStats[type];
     if (!base) continue;
     for (let i = 0; i < count; i++) {
       const weapons = base.weapons * (1 + 0.1 * techs.weapons);
@@ -94,6 +89,7 @@ function fireAtTarget(attacker: CombatUnit, target: CombatUnit): void {
 function executeRound(
   attackers: CombatUnit[],
   defenders: CombatUnit[],
+  rapidFireMap: Record<string, Record<string, number>>,
 ): void {
   const aliveAttackers = attackers.filter((u) => !u.destroyed);
   const aliveDefenders = defenders.filter((u) => !u.destroyed);
@@ -105,7 +101,7 @@ function executeRound(
     fireAtTarget(attacker, target);
 
     // Rapid fire
-    const rf = RAPID_FIRE[attacker.type];
+    const rf = rapidFireMap[attacker.type];
     if (rf) {
       let keepFiring = true;
       while (keepFiring) {
@@ -131,7 +127,7 @@ function executeRound(
     fireAtTarget(defender, target);
 
     // Rapid fire for defenders
-    const rf = RAPID_FIRE[defender.type];
+    const rf = rapidFireMap[defender.type];
     if (rf) {
       let keepFiring = true;
       let currentTarget = target;
@@ -160,40 +156,48 @@ function executeRound(
 export function calculateDebris(
   attackerLosses: Record<string, number>,
   defenderLosses: Record<string, number>,
+  shipIds: Set<string>,
+  shipCosts: Record<string, { metal: number; crystal: number }>,
+  debrisRatio = 0.3,
 ): { metal: number; crystal: number } {
   let metal = 0;
   let crystal = 0;
 
   // Only ships contribute to debris, not defenses
   for (const [type, count] of Object.entries(attackerLosses)) {
-    if (isShipId(type)) {
-      const cost = SHIPS[type].cost;
-      metal += cost.metal * count;
-      crystal += cost.crystal * count;
+    if (shipIds.has(type)) {
+      const cost = shipCosts[type];
+      if (cost) {
+        metal += cost.metal * count;
+        crystal += cost.crystal * count;
+      }
     }
   }
 
   for (const [type, count] of Object.entries(defenderLosses)) {
-    if (isShipId(type)) {
-      const cost = SHIPS[type].cost;
-      metal += cost.metal * count;
-      crystal += cost.crystal * count;
+    if (shipIds.has(type)) {
+      const cost = shipCosts[type];
+      if (cost) {
+        metal += cost.metal * count;
+        crystal += cost.crystal * count;
+      }
     }
   }
 
   return {
-    metal: Math.floor(metal * 0.3),
-    crystal: Math.floor(crystal * 0.3),
+    metal: Math.floor(metal * debrisRatio),
+    crystal: Math.floor(crystal * debrisRatio),
   };
 }
 
 export function repairDefenses(
   defenderLosses: Record<string, number>,
+  defenseIds: Set<string>,
 ): Record<string, number> {
   const repaired: Record<string, number> = {};
 
   for (const [type, count] of Object.entries(defenderLosses)) {
-    if (isDefenseId(type)) {
+    if (defenseIds.has(type)) {
       let repairedCount = 0;
       for (let i = 0; i < count; i++) {
         if (Math.random() < 0.7) {
@@ -214,15 +218,21 @@ export function simulateCombat(
   defenderFleet: Record<string, number>,
   attackerTechs: CombatTechs,
   defenderTechs: CombatTechs,
+  combatStats: Record<string, UnitCombatStats>,
+  rapidFireMap: Record<string, Record<string, number>>,
+  shipIds: Set<string>,
+  shipCosts: Record<string, { metal: number; crystal: number }>,
+  defenseIds: Set<string>,
+  debrisRatio = 0.3,
 ): CombatResult {
-  const attackers = createUnits(attackerFleet, attackerTechs);
-  const defenders = createUnits(defenderFleet, defenderTechs);
+  const attackers = createUnits(attackerFleet, attackerTechs, combatStats);
+  const defenders = createUnits(defenderFleet, defenderTechs, combatStats);
 
   const rounds: RoundResult[] = [];
   const maxRounds = 6;
 
   for (let round = 1; round <= maxRounds; round++) {
-    executeRound(attackers, defenders);
+    executeRound(attackers, defenders, rapidFireMap);
 
     const attackersRemaining = attackers.filter((u) => !u.destroyed).length;
     const defendersRemaining = defenders.filter((u) => !u.destroyed).length;
@@ -257,8 +267,8 @@ export function simulateCombat(
     }
   }
 
-  const debris = calculateDebris(attackerLosses, defenderLosses);
-  const repairedDefenses = repairDefenses(defenderLosses);
+  const debris = calculateDebris(attackerLosses, defenderLosses, shipIds, shipCosts, debrisRatio);
+  const repairedDefenses = repairDefenses(defenderLosses, defenseIds);
 
   return {
     rounds,

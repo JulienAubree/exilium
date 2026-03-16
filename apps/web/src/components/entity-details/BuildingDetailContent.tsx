@@ -1,10 +1,9 @@
 import { getBuildingDetails, resolveBuildingName, type BuildingDetails } from '@/lib/entity-details';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { DetailSection, StatRow, DataTable } from '@/components/common/EntityDetailOverlay';
-import type { BuildingId } from '@ogame-clone/game-engine';
 
 export function BuildingDetailContent({ buildingId }: { buildingId: string }) {
-  const details: BuildingDetails = getBuildingDetails(buildingId as BuildingId);
+  const details: BuildingDetails = getBuildingDetails(buildingId);
 
   return (
     <>

@@ -8,11 +8,13 @@ import {
   calculateDefensePoints,
   calculateTotalPoints,
 } from '@ogame-clone/game-engine';
+import type { GameConfigService } from '../admin/game-config.service.js';
 
-export function createRankingService(db: Database) {
+export function createRankingService(db: Database, gameConfigService: GameConfigService) {
   return {
     async recalculateAll() {
       const allUsers = await db.select({ id: users.id }).from(users);
+      const config = await gameConfigService.getFullConfig();
 
       const pointsPerUser: { userId: string; totalPoints: number }[] = [];
 
@@ -31,7 +33,7 @@ export function createRankingService(db: Database) {
             storageMetalLevel: planet.storageMetalLevel,
             storageCrystalLevel: planet.storageCrystalLevel,
             storageDeutLevel: planet.storageDeutLevel,
-          });
+          }, config.buildings);
         }
 
         const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, user.id)).limit(1);
@@ -46,7 +48,7 @@ export function createRankingService(db: Database) {
               weapons: research.weapons,
               shielding: research.shielding,
               armor: research.armor,
-            })
+            }, config.research)
           : 0;
 
         let fleetPoints = 0;
@@ -63,7 +65,7 @@ export function createRankingService(db: Database) {
               espionageProbe: ships.espionageProbe,
               colonyShip: ships.colonyShip,
               recycler: ships.recycler,
-            });
+            }, config.ships);
           }
         }
 
@@ -79,7 +81,7 @@ export function createRankingService(db: Database) {
               plasmaTurret: defenses.plasmaTurret,
               smallShield: defenses.smallShield,
               largeShield: defenses.largeShield,
-            });
+            }, config.defenses);
           }
         }
 

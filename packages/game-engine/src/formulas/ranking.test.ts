@@ -6,6 +6,54 @@ import {
   calculateDefensePoints,
   calculateTotalPoints,
 } from './ranking.js';
+import type { BuildingDef, ResearchDef, UnitDef } from './ranking.js';
+
+const BUILDING_DEFS: Record<string, BuildingDef> = {
+  metalMine:      { levelColumn: 'metalMineLevel',      baseCost: { metal: 60,   crystal: 15,   deuterium: 0 },   costFactor: 1.5 },
+  crystalMine:    { levelColumn: 'crystalMineLevel',    baseCost: { metal: 48,   crystal: 24,   deuterium: 0 },   costFactor: 1.6 },
+  deutSynth:      { levelColumn: 'deutSynthLevel',      baseCost: { metal: 225,  crystal: 75,   deuterium: 0 },   costFactor: 1.5 },
+  solarPlant:     { levelColumn: 'solarPlantLevel',     baseCost: { metal: 75,   crystal: 30,   deuterium: 0 },   costFactor: 1.5 },
+  robotics:       { levelColumn: 'roboticsLevel',       baseCost: { metal: 400,  crystal: 120,  deuterium: 200 }, costFactor: 2 },
+  shipyard:       { levelColumn: 'shipyardLevel',       baseCost: { metal: 400,  crystal: 200,  deuterium: 100 }, costFactor: 2 },
+  researchLab:    { levelColumn: 'researchLabLevel',    baseCost: { metal: 200,  crystal: 400,  deuterium: 200 }, costFactor: 2 },
+  storageMetal:   { levelColumn: 'storageMetalLevel',   baseCost: { metal: 1000, crystal: 0,    deuterium: 0 },   costFactor: 2 },
+  storageCrystal: { levelColumn: 'storageCrystalLevel', baseCost: { metal: 1000, crystal: 500,  deuterium: 0 },   costFactor: 2 },
+  storageDeut:    { levelColumn: 'storageDeutLevel',    baseCost: { metal: 1000, crystal: 1000, deuterium: 0 },   costFactor: 2 },
+};
+
+const RESEARCH_DEFS: Record<string, ResearchDef> = {
+  espionageTech:  { levelColumn: 'espionageTech',  baseCost: { metal: 200,   crystal: 1000,  deuterium: 200 },  costFactor: 2 },
+  computerTech:   { levelColumn: 'computerTech',   baseCost: { metal: 0,     crystal: 400,   deuterium: 600 },  costFactor: 2 },
+  energyTech:     { levelColumn: 'energyTech',     baseCost: { metal: 0,     crystal: 800,   deuterium: 400 },  costFactor: 2 },
+  combustion:     { levelColumn: 'combustion',     baseCost: { metal: 400,   crystal: 0,     deuterium: 600 },  costFactor: 2 },
+  impulse:        { levelColumn: 'impulse',        baseCost: { metal: 2000,  crystal: 4000,  deuterium: 600 },  costFactor: 2 },
+  hyperspaceDrive:{ levelColumn: 'hyperspaceDrive', baseCost: { metal: 10000, crystal: 20000, deuterium: 6000 }, costFactor: 2 },
+  weapons:        { levelColumn: 'weapons',        baseCost: { metal: 800,   crystal: 200,   deuterium: 0 },    costFactor: 2 },
+  shielding:      { levelColumn: 'shielding',      baseCost: { metal: 200,   crystal: 600,   deuterium: 0 },    costFactor: 2 },
+  armor:          { levelColumn: 'armor',          baseCost: { metal: 1000,  crystal: 0,     deuterium: 0 },    costFactor: 2 },
+};
+
+const SHIP_DEFS: Record<string, UnitDef> = {
+  smallCargo:     { countColumn: 'smallCargo',     cost: { metal: 2000,  crystal: 2000,  deuterium: 0 } },
+  largeCargo:     { countColumn: 'largeCargo',     cost: { metal: 6000,  crystal: 6000,  deuterium: 0 } },
+  lightFighter:   { countColumn: 'lightFighter',   cost: { metal: 3000,  crystal: 1000,  deuterium: 0 } },
+  heavyFighter:   { countColumn: 'heavyFighter',   cost: { metal: 6000,  crystal: 4000,  deuterium: 0 } },
+  cruiser:        { countColumn: 'cruiser',        cost: { metal: 20000, crystal: 7000,  deuterium: 2000 } },
+  battleship:     { countColumn: 'battleship',     cost: { metal: 45000, crystal: 15000, deuterium: 0 } },
+  espionageProbe: { countColumn: 'espionageProbe', cost: { metal: 0,     crystal: 1000,  deuterium: 0 } },
+  colonyShip:     { countColumn: 'colonyShip',     cost: { metal: 10000, crystal: 20000, deuterium: 10000 } },
+  recycler:       { countColumn: 'recycler',       cost: { metal: 10000, crystal: 6000,  deuterium: 2000 } },
+};
+
+const DEFENSE_DEFS: Record<string, UnitDef> = {
+  rocketLauncher: { countColumn: 'rocketLauncher', cost: { metal: 2000,  crystal: 0,     deuterium: 0 } },
+  lightLaser:     { countColumn: 'lightLaser',     cost: { metal: 1500,  crystal: 500,   deuterium: 0 } },
+  heavyLaser:     { countColumn: 'heavyLaser',     cost: { metal: 6000,  crystal: 2000,  deuterium: 0 } },
+  gaussCannon:    { countColumn: 'gaussCannon',    cost: { metal: 20000, crystal: 15000, deuterium: 2000 } },
+  plasmaTurret:   { countColumn: 'plasmaTurret',   cost: { metal: 50000, crystal: 50000, deuterium: 30000 } },
+  smallShield:    { countColumn: 'smallShield',    cost: { metal: 10000, crystal: 10000, deuterium: 0 } },
+  largeShield:    { countColumn: 'largeShield',    cost: { metal: 50000, crystal: 50000, deuterium: 0 } },
+};
 
 describe('calculateBuildingPoints', () => {
   it('all level 0 = 0 points', () => {
@@ -15,7 +63,7 @@ describe('calculateBuildingPoints', () => {
       researchLabLevel: 0, storageMetalLevel: 0, storageCrystalLevel: 0,
       storageDeutLevel: 0,
     };
-    expect(calculateBuildingPoints(levels)).toBe(0);
+    expect(calculateBuildingPoints(levels, BUILDING_DEFS)).toBe(0);
   });
 
   it('metal mine level 1 = floor((60+15) / 1000) = 0', () => {
@@ -25,7 +73,7 @@ describe('calculateBuildingPoints', () => {
       researchLabLevel: 0, storageMetalLevel: 0, storageCrystalLevel: 0,
       storageDeutLevel: 0,
     };
-    expect(calculateBuildingPoints(levels)).toBe(0);
+    expect(calculateBuildingPoints(levels, BUILDING_DEFS)).toBe(0);
   });
 
   it('multiple buildings have cumulative points', () => {
@@ -35,7 +83,7 @@ describe('calculateBuildingPoints', () => {
       researchLabLevel: 5, storageMetalLevel: 3, storageCrystalLevel: 3,
       storageDeutLevel: 3,
     };
-    expect(calculateBuildingPoints(levels)).toBeGreaterThan(0);
+    expect(calculateBuildingPoints(levels, BUILDING_DEFS)).toBeGreaterThan(0);
   });
 });
 
@@ -46,7 +94,7 @@ describe('calculateResearchPoints', () => {
       combustion: 0, impulse: 0, hyperspaceDrive: 0,
       weapons: 0, shielding: 0, armor: 0,
     };
-    expect(calculateResearchPoints(levels)).toBe(0);
+    expect(calculateResearchPoints(levels, RESEARCH_DEFS)).toBe(0);
   });
 
   it('weapons level 3 = 7 points', () => {
@@ -55,9 +103,7 @@ describe('calculateResearchPoints', () => {
       combustion: 0, impulse: 0, hyperspaceDrive: 0,
       weapons: 3, shielding: 0, armor: 0,
     };
-    // weapons baseCost: 800+200+0=1000, factor 2
-    // level 1: 1000, level 2: 2000, level 3: 4000 → sum = 7000 → 7 points
-    expect(calculateResearchPoints(levels)).toBe(7);
+    expect(calculateResearchPoints(levels, RESEARCH_DEFS)).toBe(7);
   });
 });
 
@@ -66,15 +112,14 @@ describe('calculateFleetPoints', () => {
     expect(calculateFleetPoints({
       smallCargo: 0, largeCargo: 0, lightFighter: 0, heavyFighter: 0,
       cruiser: 0, battleship: 0, espionageProbe: 0, colonyShip: 0, recycler: 0,
-    })).toBe(0);
+    }, SHIP_DEFS)).toBe(0);
   });
 
   it('10 small cargos = 40 points', () => {
-    // cost per unit: 2000+2000+0=4000 → 10*4000=40000 → 40 points
     expect(calculateFleetPoints({
       smallCargo: 10, largeCargo: 0, lightFighter: 0, heavyFighter: 0,
       cruiser: 0, battleship: 0, espionageProbe: 0, colonyShip: 0, recycler: 0,
-    })).toBe(40);
+    }, SHIP_DEFS)).toBe(40);
   });
 });
 
@@ -83,15 +128,14 @@ describe('calculateDefensePoints', () => {
     expect(calculateDefensePoints({
       rocketLauncher: 0, lightLaser: 0, heavyLaser: 0,
       gaussCannon: 0, plasmaTurret: 0, smallShield: 0, largeShield: 0,
-    })).toBe(0);
+    }, DEFENSE_DEFS)).toBe(0);
   });
 
   it('5 rocket launchers = 10 points', () => {
-    // cost per unit: 2000+0+0=2000 → 5*2000=10000 → 10 points
     expect(calculateDefensePoints({
       rocketLauncher: 5, lightLaser: 0, heavyLaser: 0,
       gaussCannon: 0, plasmaTurret: 0, smallShield: 0, largeShield: 0,
-    })).toBe(10);
+    }, DEFENSE_DEFS)).toBe(10);
   });
 });
 

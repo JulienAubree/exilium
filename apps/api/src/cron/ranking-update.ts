@@ -1,7 +1,9 @@
 import type { Database } from '@ogame-clone/db';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
+import { createGameConfigService } from '../modules/admin/game-config.service.js';
 
 export async function rankingUpdate(db: Database) {
-  const rankingService = createRankingService(db);
+  const gameConfigService = createGameConfigService(db);
+  const rankingService = createRankingService(db, gameConfigService);
   await rankingService.recalculateAll();
 }

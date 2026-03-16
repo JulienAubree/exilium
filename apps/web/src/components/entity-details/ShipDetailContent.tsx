@@ -1,7 +1,6 @@
 import { getShipDetails, resolveBuildingName, resolveResearchName, type ShipDetails } from '@/lib/entity-details';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { DetailSection, StatRow } from '@/components/common/EntityDetailOverlay';
-import type { ShipId } from '@ogame-clone/game-engine';
 
 const DRIVE_LABELS: Record<string, string> = {
   combustion: 'Combustion',
@@ -10,7 +9,7 @@ const DRIVE_LABELS: Record<string, string> = {
 };
 
 export function ShipDetailContent({ shipId }: { shipId: string }) {
-  const details: ShipDetails = getShipDetails(shipId as ShipId);
+  const details: ShipDetails = getShipDetails(shipId);
 
   const hasBuildingPrereqs = details.prerequisites.buildings && details.prerequisites.buildings.length > 0;
   const hasResearchPrereqs = details.prerequisites.research && details.prerequisites.research.length > 0;

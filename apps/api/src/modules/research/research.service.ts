@@ -2,37 +2,22 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, userResearch, buildQueue } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import {
-  RESEARCH,
-  researchCost,
-  researchTime,
-  checkResearchPrerequisites,
-  type ResearchId,
-} from '@ogame-clone/game-engine';
+import { researchCost, researchTime, checkResearchPrerequisites } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
+import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
-
-const RESEARCH_LEVEL_COLUMNS: Record<ResearchId, keyof typeof userResearch.$inferSelect> = {
-  espionageTech: 'espionageTech',
-  computerTech: 'computerTech',
-  energyTech: 'energyTech',
-  combustion: 'combustion',
-  impulse: 'impulse',
-  hyperspaceDrive: 'hyperspaceDrive',
-  weapons: 'weapons',
-  shielding: 'shielding',
-  armor: 'armor',
-};
 
 export function createResearchService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
   researchQueue: Queue,
+  gameConfigService: GameConfigService,
 ) {
   return {
     async listResearch(userId: string, planetId: string) {
       const planet = await this.getOwnedPlanet(userId, planetId);
       const research = await this.getOrCreateResearch(userId);
+      const config = await gameConfigService.getFullConfig();
 
       const [activeResearch] = await db
         .select()
@@ -46,40 +31,45 @@ export function createResearchService(
         )
         .limit(1);
 
-      return Object.values(RESEARCH).map((def) => {
-        const currentLevel = (research[RESEARCH_LEVEL_COLUMNS[def.id]] ?? 0) as number;
-        const nextLevel = currentLevel + 1;
-        const cost = researchCost(def.id, nextLevel);
-        const time = researchTime(def.id, nextLevel, planet.researchLabLevel);
+      return Object.values(config.research)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((def) => {
+          const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
+          const nextLevel = currentLevel + 1;
+          const cost = researchCost(def, nextLevel);
+          const time = researchTime(def, nextLevel, planet.researchLabLevel);
 
-        const buildingLevels: Record<string, number> = {
-          researchLabLevel: planet.researchLabLevel,
-          shipyardLevel: planet.shipyardLevel,
-        };
-        const researchLevels: Record<string, number> = {};
-        for (const [key, col] of Object.entries(RESEARCH_LEVEL_COLUMNS)) {
-          researchLevels[key] = (research[col] ?? 0) as number;
-        }
-        const prereqCheck = checkResearchPrerequisites(def.id, buildingLevels, researchLevels);
+          const buildingLevels: Record<string, number> = {
+            researchLabLevel: planet.researchLabLevel,
+            shipyardLevel: planet.shipyardLevel,
+          };
+          const researchLevels: Record<string, number> = {};
+          for (const [key, rDef] of Object.entries(config.research)) {
+            researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ?? 0) as number;
+          }
+          const prereqCheck = checkResearchPrerequisites(def.prerequisites, buildingLevels, researchLevels);
 
-        return {
-          id: def.id,
-          name: def.name,
-          description: def.description,
-          currentLevel,
-          nextLevelCost: cost,
-          nextLevelTime: time,
-          prerequisitesMet: prereqCheck.met,
-          missingPrerequisites: prereqCheck.missing,
-          isResearching: activeResearch?.itemId === def.id,
-          researchEndTime: activeResearch?.itemId === def.id ? activeResearch.endTime.toISOString() : null,
-        };
-      });
+          return {
+            id: def.id,
+            name: def.name,
+            description: def.description,
+            currentLevel,
+            nextLevelCost: cost,
+            nextLevelTime: time,
+            prerequisitesMet: prereqCheck.met,
+            missingPrerequisites: prereqCheck.missing,
+            isResearching: activeResearch?.itemId === def.id,
+            researchEndTime: activeResearch?.itemId === def.id ? activeResearch.endTime.toISOString() : null,
+          };
+        });
     },
 
-    async startResearch(userId: string, planetId: string, researchId: ResearchId) {
+    async startResearch(userId: string, planetId: string, researchId: string) {
       const planet = await this.getOwnedPlanet(userId, planetId);
       const research = await this.getOrCreateResearch(userId);
+      const config = await gameConfigService.getFullConfig();
+      const def = config.research[researchId];
+      if (!def) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Recherche invalide' });
 
       const [activeResearch] = await db
         .select()
@@ -102,18 +92,18 @@ export function createResearchService(
         shipyardLevel: planet.shipyardLevel,
       };
       const researchLevels: Record<string, number> = {};
-      for (const [key, col] of Object.entries(RESEARCH_LEVEL_COLUMNS)) {
-        researchLevels[key] = (research[col] ?? 0) as number;
+      for (const [key, rDef] of Object.entries(config.research)) {
+        researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ?? 0) as number;
       }
-      const prereqCheck = checkResearchPrerequisites(researchId, buildingLevels, researchLevels);
+      const prereqCheck = checkResearchPrerequisites(def.prerequisites, buildingLevels, researchLevels);
       if (!prereqCheck.met) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: `Prérequis non remplis: ${prereqCheck.missing.join(', ')}` });
       }
 
-      const currentLevel = (research[RESEARCH_LEVEL_COLUMNS[researchId]] ?? 0) as number;
+      const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
       const nextLevel = currentLevel + 1;
-      const cost = researchCost(researchId, nextLevel);
-      const time = researchTime(researchId, nextLevel, planet.researchLabLevel);
+      const cost = researchCost(def, nextLevel);
+      const time = researchTime(def, nextLevel, planet.researchLabLevel);
 
       await resourceService.spendResources(planetId, userId, cost);
 
@@ -159,10 +149,13 @@ export function createResearchService(
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune recherche en cours' });
       }
 
+      const config = await gameConfigService.getFullConfig();
+      const def = config.research[activeResearch.itemId];
       const research = await this.getOrCreateResearch(userId);
-      const researchId = activeResearch.itemId as ResearchId;
-      const currentLevel = (research[RESEARCH_LEVEL_COLUMNS[researchId]] ?? 0) as number;
-      const cost = researchCost(researchId, currentLevel + 1);
+      const currentLevel = def
+        ? (research[def.levelColumn as keyof typeof research] ?? 0) as number
+        : 0;
+      const cost = def ? researchCost(def, currentLevel + 1) : { metal: 0, crystal: 0, deuterium: 0 };
 
       const [planet] = await db
         .select()
@@ -196,10 +189,13 @@ export function createResearchService(
 
       if (!entry) return null;
 
-      const researchId = entry.itemId as ResearchId;
-      const columnKey = RESEARCH_LEVEL_COLUMNS[researchId];
+      const config = await gameConfigService.getFullConfig();
+      const def = config.research[entry.itemId];
+      if (!def) return null;
+
+      const columnKey = def.levelColumn;
       const research = await this.getOrCreateResearch(entry.userId);
-      const newLevel = ((research[columnKey] ?? 0) as number) + 1;
+      const newLevel = ((research[columnKey as keyof typeof research] ?? 0) as number) + 1;
 
       await db
         .update(userResearch)
@@ -211,7 +207,7 @@ export function createResearchService(
         .set({ status: 'completed' })
         .where(eq(buildQueue.id, buildQueueId));
 
-      return { researchId, newLevel };
+      return { researchId: entry.itemId, newLevel };
     },
 
     async getOrCreateResearch(userId: string) {

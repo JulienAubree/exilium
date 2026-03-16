@@ -14,13 +14,14 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
-import { BUILDINGS, type BuildingId } from '@ogame-clone/game-engine';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 export default function Buildings() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { data: gameConfig } = useGameConfig();
 
   const { data: buildings, isLoading } = trpc.building.list.useQuery(
     { planetId: planetId! },
@@ -169,7 +170,7 @@ export default function Buildings() {
                     onClick={() =>
                       upgradeMutation.mutate({
                         planetId: planetId!,
-                        buildingId: building.id,
+                        buildingId: building.id as any,
                       })
                     }
                     disabled={!canAfford || !prereqsMet || isAnyUpgrading || upgradeMutation.isPending}
@@ -186,7 +187,7 @@ export default function Buildings() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? BUILDINGS[detailId as BuildingId]?.name ?? '' : ''}
+        title={detailId ? gameConfig?.buildings[detailId]?.name ?? '' : ''}
       >
         {detailId && <BuildingDetailContent buildingId={detailId} />}
       </EntityDetailOverlay>

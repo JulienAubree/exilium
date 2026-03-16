@@ -19,3 +19,15 @@ exilium-game.com, www.exilium-game.com {
 		file_server
 	}
 }
+
+admin.exilium-game.com {
+	handle /trpc/* {
+		reverse_proxy localhost:3000
+	}
+
+	handle {
+		root * /opt/ogame-clone/apps/admin/dist
+		try_files {path} /index.html
+		file_server
+	}
+}

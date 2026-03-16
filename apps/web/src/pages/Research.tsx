@@ -14,7 +14,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { ResearchDetailContent } from '@/components/entity-details/ResearchDetailContent';
-import { RESEARCH, type ResearchId } from '@ogame-clone/game-engine';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 export default function Research() {
@@ -22,6 +22,7 @@ export default function Research() {
   const utils = trpc.useUtils();
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { data: gameConfig } = useGameConfig();
 
   const { data: techs, isLoading } = trpc.research.list.useQuery(
     { planetId: planetId! },
@@ -127,7 +128,7 @@ export default function Research() {
 
                 {!tech.prerequisitesMet && tech.missingPrerequisites.length > 0 && (
                   <p className="text-xs text-destructive">
-                    Prérequis : {tech.missingPrerequisites.map(formatMissingPrerequisite).join(', ')}
+                    Prérequis : {tech.missingPrerequisites.map((p) => formatMissingPrerequisite(p, gameConfig)).join(', ')}
                   </p>
                 )}
 
@@ -158,7 +159,7 @@ export default function Research() {
                   <Button
                     size="sm"
                     onClick={() =>
-                      startMutation.mutate({ planetId: planetId!, researchId: tech.id })
+                      startMutation.mutate({ planetId: planetId!, researchId: tech.id as any })
                     }
                     disabled={!canAfford || !tech.prerequisitesMet || isAnyResearching || startMutation.isPending}
                   >
@@ -174,7 +175,7 @@ export default function Research() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? RESEARCH[detailId as ResearchId]?.name ?? '' : ''}
+        title={detailId ? gameConfig?.research[detailId]?.name ?? '' : ''}
       >
         {detailId && <ResearchDetailContent researchId={detailId} />}
       </EntityDetailOverlay>

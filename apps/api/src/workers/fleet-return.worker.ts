@@ -2,13 +2,15 @@ import { Worker } from 'bullmq';
 import { createDb } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
+import { createGameConfigService } from '../modules/admin/game-config.service.js';
 import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
 import { env } from '../config/env.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 
 export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
   const resourceService = createResourceService(db);
-  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed);
+  const gameConfigService = createGameConfigService(db);
+  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, undefined, gameConfigService);
 
   const worker = new Worker(
     'fleet-return',

@@ -4,13 +4,15 @@ import Redis from 'ioredis';
 import { createDb, buildQueue } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';
+import { createGameConfigService } from '../modules/admin/game-config.service.js';
 import { buildingCompletionQueue } from '../queues/queue.js';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 
 export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
   const resourceService = createResourceService(db);
-  const buildingService = createBuildingService(db, resourceService, buildingCompletionQueue);
+  const gameConfigService = createGameConfigService(db);
+  const buildingService = createBuildingService(db, resourceService, buildingCompletionQueue, gameConfigService);
   const redis = new Redis(env.REDIS_URL);
 
   const worker = new Worker(

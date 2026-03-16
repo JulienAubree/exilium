@@ -9,6 +9,15 @@ import {
   storageCapacity,
 } from '@ogame-clone/game-engine';
 
+// GameConfig shape from the API
+interface GameConfigData {
+  buildings: Record<string, { id: string; name: string; description: string; baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number; prerequisites: { buildingId: string; level: number }[] }>;
+  research: Record<string, { id: string; name: string; description: string; baseCost: { metal: number; crystal: number; deuterium: number }; costFactor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  ships: Record<string, { id: string; name: string; description: string; cost: { metal: number; crystal: number; deuterium: number }; baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string; weapons: number; shield: number; armor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  defenses: Record<string, { id: string; name: string; description: string; cost: { metal: number; crystal: number; deuterium: number }; weapons: number; shield: number; armor: number; maxPerPlanet: number | null; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  rapidFire: Record<string, Record<string, number>>;
+}
+
 // ---------------------------------------------------------------------------
 // Flavor texts
 // ---------------------------------------------------------------------------
@@ -82,13 +91,13 @@ const RESEARCH_EFFECTS: Record<ResearchId, string> = {
 
 export interface BuildingDetails {
   type: 'building';
-  id: BuildingId;
+  id: string;
   name: string;
   description: string;
   flavorText: string;
   baseCost: { metal: number; crystal: number; deuterium: number };
   costFactor: number;
-  prerequisites: BuildingDefinition['prerequisites'];
+  prerequisites: { buildingId: string; level: number }[];
   productionTable?: { level: number; value: number }[];
   productionLabel?: string;
   energyTable?: { level: number; value: number }[];
@@ -98,14 +107,14 @@ export interface BuildingDetails {
 
 export interface ResearchDetails {
   type: 'research';
-  id: ResearchId;
+  id: string;
   name: string;
   description: string;
   flavorText: string;
   effect: string;
   baseCost: { metal: number; crystal: number; deuterium: number };
   costFactor: number;
-  prerequisites: ResearchDefinition['prerequisites'];
+  prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
 }
 
 export interface RapidFireEntry {
@@ -116,12 +125,12 @@ export interface RapidFireEntry {
 
 export interface ShipDetails {
   type: 'ship';
-  id: ShipId;
+  id: string;
   name: string;
   description: string;
   flavorText: string;
   cost: { metal: number; crystal: number; deuterium: number };
-  prerequisites: ShipDefinition['prerequisites'];
+  prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
   combat: { weapons: number; shield: number; armor: number };
   stats: { baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string };
   rapidFireAgainst: RapidFireEntry[];
@@ -130,36 +139,36 @@ export interface ShipDetails {
 
 export interface DefenseDetails {
   type: 'defense';
-  id: DefenseId;
+  id: string;
   name: string;
   description: string;
   flavorText: string;
   cost: { metal: number; crystal: number; deuterium: number };
-  prerequisites: DefenseDefinition['prerequisites'];
+  prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
   combat: { weapons: number; shield: number; armor: number };
   rapidFireFrom: RapidFireEntry[];
   maxPerPlanet?: number;
 }
 
 // ---------------------------------------------------------------------------
-// Name resolvers
+// Name resolvers (use config if available, fall back to constants)
 // ---------------------------------------------------------------------------
 
-const ALL_UNIT_NAMES: Record<string, string> = {
-  ...Object.fromEntries(Object.values(SHIPS).map((s) => [s.id, s.name])),
-  ...Object.fromEntries(Object.values(DEFENSES).map((d) => [d.id, d.name])),
-};
-
-export function resolveBuildingName(id: string): string {
+export function resolveBuildingName(id: string, config?: GameConfigData): string {
+  if (config) return config.buildings[id]?.name ?? id;
   return BUILDINGS[id as BuildingId]?.name ?? id;
 }
 
-export function resolveResearchName(id: string): string {
+export function resolveResearchName(id: string, config?: GameConfigData): string {
+  if (config) return config.research[id]?.name ?? id;
   return RESEARCH[id as ResearchId]?.name ?? id;
 }
 
-function resolveUnitName(id: string): string {
-  return ALL_UNIT_NAMES[id] ?? id;
+function resolveUnitName(id: string, config?: GameConfigData): string {
+  if (config) {
+    return config.ships[id]?.name ?? config.defenses[id]?.name ?? id;
+  }
+  return SHIPS[id as ShipId]?.name ?? DEFENSES[id as DefenseId]?.name ?? id;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,23 +182,25 @@ function buildTable(fn: (level: number) => number, levels = 15): { level: number
   }));
 }
 
-function getRapidFireAgainst(unitId: string): RapidFireEntry[] {
-  const targets = RAPID_FIRE[unitId];
+function getRapidFireAgainst(unitId: string, config?: GameConfigData): RapidFireEntry[] {
+  const rf = config?.rapidFire ?? RAPID_FIRE;
+  const targets = rf[unitId];
   if (!targets) return [];
   return Object.entries(targets).map(([targetId, value]) => ({
     unitId: targetId,
-    unitName: resolveUnitName(targetId),
+    unitName: resolveUnitName(targetId, config),
     value,
   }));
 }
 
-function getRapidFireFrom(unitId: string): RapidFireEntry[] {
+function getRapidFireFrom(unitId: string, config?: GameConfigData): RapidFireEntry[] {
+  const rf = config?.rapidFire ?? RAPID_FIRE;
   const entries: RapidFireEntry[] = [];
-  for (const [attackerId, targets] of Object.entries(RAPID_FIRE)) {
+  for (const [attackerId, targets] of Object.entries(rf)) {
     if (targets[unitId]) {
       entries.push({
         unitId: attackerId,
-        unitName: resolveUnitName(attackerId),
+        unitName: resolveUnitName(attackerId, config),
         value: targets[unitId],
       });
     }
@@ -201,17 +212,18 @@ function getRapidFireFrom(unitId: string): RapidFireEntry[] {
 // Public API
 // ---------------------------------------------------------------------------
 
-export function getBuildingDetails(id: BuildingId): BuildingDetails {
-  const def = BUILDINGS[id];
+export function getBuildingDetails(id: string, config?: GameConfigData): BuildingDetails {
+  const cfgDef = config?.buildings[id];
+  const def = BUILDINGS[id as BuildingId];
   const details: BuildingDetails = {
     type: 'building',
     id,
-    name: def.name,
-    description: def.description,
-    flavorText: BUILDING_FLAVOR[id],
-    baseCost: def.baseCost,
-    costFactor: def.costFactor,
-    prerequisites: def.prerequisites,
+    name: cfgDef?.name ?? def?.name ?? id,
+    description: cfgDef?.description ?? def?.description ?? '',
+    flavorText: BUILDING_FLAVOR[id as BuildingId] ?? '',
+    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
+    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? [],
   };
 
   switch (id) {
@@ -247,53 +259,62 @@ export function getBuildingDetails(id: BuildingId): BuildingDetails {
   return details;
 }
 
-export function getResearchDetails(id: ResearchId): ResearchDetails {
-  const def = RESEARCH[id];
+export function getResearchDetails(id: string, config?: GameConfigData): ResearchDetails {
+  const cfgDef = config?.research[id];
+  const def = RESEARCH[id as ResearchId];
   return {
     type: 'research',
     id,
-    name: def.name,
-    description: def.description,
-    flavorText: RESEARCH_FLAVOR[id],
-    effect: RESEARCH_EFFECTS[id],
-    baseCost: def.baseCost,
-    costFactor: def.costFactor,
-    prerequisites: def.prerequisites,
+    name: cfgDef?.name ?? def?.name ?? id,
+    description: cfgDef?.description ?? def?.description ?? '',
+    flavorText: RESEARCH_FLAVOR[id as ResearchId] ?? '',
+    effect: RESEARCH_EFFECTS[id as ResearchId] ?? '',
+    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
+    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
   };
 }
 
-export function getShipDetails(id: ShipId): ShipDetails {
-  const def = SHIPS[id];
-  const combat = COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
-  const stats = SHIP_STATS[id];
+export function getShipDetails(id: string, config?: GameConfigData): ShipDetails {
+  const cfgDef = config?.ships[id];
+  const def = SHIPS[id as ShipId];
+  const combat = cfgDef
+    ? { weapons: cfgDef.weapons, shield: cfgDef.shield, armor: cfgDef.armor }
+    : COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
+  const stats = cfgDef
+    ? { baseSpeed: cfgDef.baseSpeed, fuelConsumption: cfgDef.fuelConsumption, cargoCapacity: cfgDef.cargoCapacity, driveType: cfgDef.driveType }
+    : SHIP_STATS[id as ShipId] ?? { baseSpeed: 0, fuelConsumption: 0, cargoCapacity: 0, driveType: 'combustion' };
   return {
     type: 'ship',
     id,
-    name: def.name,
-    description: def.description,
-    flavorText: SHIP_FLAVOR[id],
-    cost: def.cost,
-    prerequisites: def.prerequisites,
+    name: cfgDef?.name ?? def?.name ?? id,
+    description: cfgDef?.description ?? def?.description ?? '',
+    flavorText: SHIP_FLAVOR[id as ShipId] ?? '',
+    cost: cfgDef?.cost ?? def?.cost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
     combat,
     stats,
-    rapidFireAgainst: getRapidFireAgainst(id),
-    rapidFireFrom: getRapidFireFrom(id),
+    rapidFireAgainst: getRapidFireAgainst(id, config),
+    rapidFireFrom: getRapidFireFrom(id, config),
   };
 }
 
-export function getDefenseDetails(id: DefenseId): DefenseDetails {
-  const def = DEFENSES[id];
-  const combat = COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
+export function getDefenseDetails(id: string, config?: GameConfigData): DefenseDetails {
+  const cfgDef = config?.defenses[id];
+  const def = DEFENSES[id as DefenseId];
+  const combat = cfgDef
+    ? { weapons: cfgDef.weapons, shield: cfgDef.shield, armor: cfgDef.armor }
+    : COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
   return {
     type: 'defense',
     id,
-    name: def.name,
-    description: def.description,
-    flavorText: DEFENSE_FLAVOR[id],
-    cost: def.cost,
-    prerequisites: def.prerequisites,
+    name: cfgDef?.name ?? def?.name ?? id,
+    description: cfgDef?.description ?? def?.description ?? '',
+    flavorText: DEFENSE_FLAVOR[id as DefenseId] ?? '',
+    cost: cfgDef?.cost ?? def?.cost ?? { metal: 0, crystal: 0, deuterium: 0 },
+    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
     combat,
-    rapidFireFrom: getRapidFireFrom(id),
-    maxPerPlanet: def.maxPerPlanet,
+    rapidFireFrom: getRapidFireFrom(id, config),
+    maxPerPlanet: cfgDef?.maxPerPlanet ?? def?.maxPerPlanet,
   };
 }

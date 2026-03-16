@@ -9,3 +9,4 @@ export * from './messages.js';
 export * from './rankings.js';
 export * from './debris-fields.js';
 export * from './alliances.js';
+export * from './game-config.js';

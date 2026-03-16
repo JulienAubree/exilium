@@ -1,25 +1,23 @@
-import { SHIPS } from '../constants/ships.js';
-import { DEFENSES } from '../constants/defenses.js';
-import type { ShipId } from '../constants/ships.js';
-import type { DefenseId } from '../constants/defenses.js';
 import type { ResourceCost } from './building-cost.js';
 
-export function shipCost(shipId: ShipId): ResourceCost {
-  return { ...SHIPS[shipId].cost };
+export interface UnitCostDef {
+  cost: { metal: number; crystal: number; deuterium: number };
 }
 
-export function shipTime(shipId: ShipId, shipyardLevel: number): number {
-  const cost = SHIPS[shipId].cost;
-  const seconds = Math.floor(((cost.metal + cost.crystal) / (2500 * (1 + shipyardLevel))) * 3600);
+export function shipCost(def: UnitCostDef): ResourceCost {
+  return { ...def.cost };
+}
+
+export function shipTime(def: UnitCostDef, shipyardLevel: number): number {
+  const seconds = Math.floor(((def.cost.metal + def.cost.crystal) / (2500 * (1 + shipyardLevel))) * 3600);
   return Math.max(1, seconds);
 }
 
-export function defenseCost(defenseId: DefenseId): ResourceCost {
-  return { ...DEFENSES[defenseId].cost };
+export function defenseCost(def: UnitCostDef): ResourceCost {
+  return { ...def.cost };
 }
 
-export function defenseTime(defenseId: DefenseId, shipyardLevel: number): number {
-  const cost = DEFENSES[defenseId].cost;
-  const seconds = Math.floor(((cost.metal + cost.crystal) / (2500 * (1 + shipyardLevel))) * 3600);
+export function defenseTime(def: UnitCostDef, shipyardLevel: number): number {
+  const seconds = Math.floor(((def.cost.metal + def.cost.crystal) / (2500 * (1 + shipyardLevel))) * 3600);
   return Math.max(1, seconds);
 }

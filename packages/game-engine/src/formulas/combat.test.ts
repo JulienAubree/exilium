@@ -1,25 +1,75 @@
 import { describe, it, expect } from 'vitest';
 import { simulateCombat, calculateDebris, repairDefenses } from './combat.js';
+import type { UnitCombatStats } from './combat.js';
+
+const COMBAT_STATS: Record<string, UnitCombatStats> = {
+  smallCargo:     { weapons: 5,    shield: 10,    armor: 4000 },
+  largeCargo:     { weapons: 5,    shield: 25,    armor: 12000 },
+  lightFighter:   { weapons: 50,   shield: 10,    armor: 4000 },
+  heavyFighter:   { weapons: 150,  shield: 25,    armor: 10000 },
+  cruiser:        { weapons: 400,  shield: 50,    armor: 27000 },
+  battleship:     { weapons: 1000, shield: 200,   armor: 60000 },
+  espionageProbe: { weapons: 0,    shield: 0,     armor: 1000 },
+  colonyShip:     { weapons: 50,   shield: 100,   armor: 30000 },
+  recycler:       { weapons: 1,    shield: 10,    armor: 16000 },
+  rocketLauncher: { weapons: 80,   shield: 20,    armor: 2000 },
+  lightLaser:     { weapons: 100,  shield: 25,    armor: 2000 },
+  heavyLaser:     { weapons: 250,  shield: 100,   armor: 8000 },
+  gaussCannon:    { weapons: 1100, shield: 200,   armor: 35000 },
+  plasmaTurret:   { weapons: 3000, shield: 300,   armor: 100000 },
+  smallShield:    { weapons: 1,    shield: 2000,  armor: 2000 },
+  largeShield:    { weapons: 1,    shield: 10000, armor: 10000 },
+};
+
+const RAPID_FIRE: Record<string, Record<string, number>> = {
+  smallCargo:   { espionageProbe: 5 },
+  largeCargo:   { espionageProbe: 5 },
+  lightFighter: { espionageProbe: 5 },
+  heavyFighter: { espionageProbe: 5, smallCargo: 3 },
+  cruiser:      { espionageProbe: 5, lightFighter: 6, smallCargo: 3, rocketLauncher: 10 },
+  battleship:   { espionageProbe: 5, lightFighter: 4, smallCargo: 4, largeCargo: 4 },
+  colonyShip:   { espionageProbe: 5 },
+};
+
+const SHIP_IDS = new Set([
+  'smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter',
+  'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler',
+]);
+
+const DEFENSE_IDS = new Set([
+  'rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon',
+  'plasmaTurret', 'smallShield', 'largeShield',
+]);
+
+const SHIP_COSTS: Record<string, { metal: number; crystal: number }> = {
+  smallCargo:     { metal: 2000,  crystal: 2000 },
+  largeCargo:     { metal: 6000,  crystal: 6000 },
+  lightFighter:   { metal: 3000,  crystal: 1000 },
+  heavyFighter:   { metal: 6000,  crystal: 4000 },
+  cruiser:        { metal: 20000, crystal: 7000 },
+  battleship:     { metal: 45000, crystal: 15000 },
+  espionageProbe: { metal: 0,     crystal: 1000 },
+  colonyShip:     { metal: 10000, crystal: 20000 },
+  recycler:       { metal: 10000, crystal: 6000 },
+};
 
 const zeroTechs = { weapons: 0, shielding: 0, armor: 0 };
 
 describe('calculateDebris', () => {
   it('returns 30% metal/crystal from destroyed ships', () => {
-    // lightFighter costs { metal: 3000, crystal: 1000 }
-    const debris = calculateDebris({ lightFighter: 10 }, {});
+    const debris = calculateDebris({ lightFighter: 10 }, {}, SHIP_IDS, SHIP_COSTS);
     expect(debris.metal).toBe(Math.floor(3000 * 10 * 0.3));
     expect(debris.crystal).toBe(Math.floor(1000 * 10 * 0.3));
   });
 
   it('ignores defenses in debris calculation', () => {
-    const debris = calculateDebris({}, { rocketLauncher: 100 });
+    const debris = calculateDebris({}, { rocketLauncher: 100 }, SHIP_IDS, SHIP_COSTS);
     expect(debris.metal).toBe(0);
     expect(debris.crystal).toBe(0);
   });
 
   it('floors the result', () => {
-    // espionageProbe costs { metal: 0, crystal: 1000 }
-    const debris = calculateDebris({ espionageProbe: 1 }, {});
+    const debris = calculateDebris({ espionageProbe: 1 }, {}, SHIP_IDS, SHIP_COSTS);
     expect(debris.metal).toBe(0);
     expect(debris.crystal).toBe(Math.floor(1000 * 0.3));
   });
@@ -28,6 +78,8 @@ describe('calculateDebris', () => {
     const debris = calculateDebris(
       { lightFighter: 5 },
       { lightFighter: 3 },
+      SHIP_IDS,
+      SHIP_COSTS,
     );
     expect(debris.metal).toBe(Math.floor(3000 * 8 * 0.3));
     expect(debris.crystal).toBe(Math.floor(1000 * 8 * 0.3));
@@ -41,6 +93,11 @@ describe('simulateCombat', () => {
       { lightFighter: 10 },
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
     expect(result.outcome).toBe('attacker');
     expect(result.rounds.length).toBeGreaterThanOrEqual(1);
@@ -53,6 +110,11 @@ describe('simulateCombat', () => {
       {},
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
     expect(result.outcome).toBe('attacker');
     expect(result.rounds.length).toBe(1);
@@ -65,43 +127,44 @@ describe('simulateCombat', () => {
       { lightFighter: 1 },
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
     expect(result.rounds.length).toBeLessThanOrEqual(6);
   });
 
   it('probes bounce off battleship shields (damage < 1% shield)', () => {
-    // espionageProbe: weapons=0, battleship: shield=200
-    // 0 < 0.01 * 200 = 2, so bounce — probes deal no damage
     const result = simulateCombat(
       { espionageProbe: 5 },
       { battleship: 1 },
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
-    // Battleship should survive unscathed (probes bounce)
     expect(result.outcome).toBe('defender');
-    // All probes should be destroyed
     expect(result.attackerLosses.espionageProbe).toBe(5);
   });
 
   it('techs increase effective stats by 10% per level', () => {
-    // Verify through a very asymmetric scenario:
-    // With weapons tech 10, a lightFighter deals 50 * (1 + 0.1*10) = 100 damage
-    // Without tech, it deals 50 damage
-    // 1 battleship with tech=0: armor=60000, needs 70% damage = 42000 to trigger destruction
-    // A large fleet with high weapons tech should destroy it faster
     const highWeaponsTech = { weapons: 20, shielding: 0, armor: 0 };
-    // lightFighter weapons = 50 * (1 + 0.1*20) = 150 per fighter
-    // vs battleship armor 60000, shield 200
-    // 100 fighters * 150 = 15000 damage per round vs shield+armor
-    // This should destroy the battleship
     const result = simulateCombat(
       { lightFighter: 100 },
       { battleship: 1 },
       highWeaponsTech,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
-    // With 100 lightFighters at 150 weapons each, should destroy 1 battleship
     expect(result.defenderLosses.battleship ?? 0).toBe(1);
   });
 
@@ -111,14 +174,17 @@ describe('simulateCombat', () => {
       { lightFighter: 100 },
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
-    // Should have some debris from destroyed lightFighters
     expect(result.debris.metal).toBeGreaterThan(0);
     expect(result.debris.crystal).toBeGreaterThan(0);
   });
 
   it('repairs approximately 70% of destroyed defenses', () => {
-    // Run multiple times for statistical validity
     let totalDestroyed = 0;
     let totalRepaired = 0;
     const iterations = 100;
@@ -129,6 +195,11 @@ describe('simulateCombat', () => {
         { rocketLauncher: 50 },
         zeroTechs,
         zeroTechs,
+        COMBAT_STATS,
+        RAPID_FIRE,
+        SHIP_IDS,
+        SHIP_COSTS,
+        DEFENSE_IDS,
       );
       const destroyed = result.defenderLosses.rocketLauncher ?? 0;
       const repaired = result.repairedDefenses.rocketLauncher ?? 0;
@@ -138,29 +209,31 @@ describe('simulateCombat', () => {
 
     if (totalDestroyed > 0) {
       const ratio = totalRepaired / totalDestroyed;
-      // Should be approximately 0.7, allow ±0.15 margin
       expect(ratio).toBeGreaterThan(0.55);
       expect(ratio).toBeLessThan(0.85);
     }
   });
 
   it('rapid fire: cruisers decimate rocket launchers', () => {
-    // Cruisers have rapid fire 10 against rocketLauncher
     const result = simulateCombat(
       { cruiser: 10 },
       { rocketLauncher: 50 },
       zeroTechs,
       zeroTechs,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
     );
     expect(result.outcome).toBe('attacker');
-    // Should finish relatively quickly due to rapid fire
     expect(result.rounds.length).toBeLessThanOrEqual(6);
   });
 });
 
 describe('repairDefenses', () => {
   it('only repairs defense types, not ships', () => {
-    const repaired = repairDefenses({ lightFighter: 10 });
+    const repaired = repairDefenses({ lightFighter: 10 }, DEFENSE_IDS);
     expect(repaired.lightFighter).toBeUndefined();
   });
 
@@ -170,7 +243,7 @@ describe('repairDefenses', () => {
     const destroyed = 1000;
 
     for (let i = 0; i < count; i++) {
-      const repaired = repairDefenses({ rocketLauncher: destroyed });
+      const repaired = repairDefenses({ rocketLauncher: destroyed }, DEFENSE_IDS);
       totalRepaired += repaired.rocketLauncher ?? 0;
     }
 

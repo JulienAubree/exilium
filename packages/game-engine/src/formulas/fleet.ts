@@ -1,5 +1,9 @@
-import { SHIP_STATS } from '../constants/ship-stats.js';
-import type { ShipId } from '../constants/ships.js';
+export interface ShipStats {
+  baseSpeed: number;
+  fuelConsumption: number;
+  cargoCapacity: number;
+  driveType: 'combustion' | 'impulse' | 'hyperspaceDrive';
+}
 
 interface DriveTechs {
   combustion: number;
@@ -19,18 +23,23 @@ const DRIVE_BONUS: Record<string, number> = {
   hyperspaceDrive: 0.3,
 };
 
-export function shipSpeed(shipId: ShipId, techs: DriveTechs): number {
-  const stats = SHIP_STATS[shipId];
+export function shipSpeed(stats: ShipStats, techs: DriveTechs): number {
   const techLevel = techs[stats.driveType];
   const bonus = DRIVE_BONUS[stats.driveType];
   return Math.floor(stats.baseSpeed * (1 + bonus * techLevel));
 }
 
-export function fleetSpeed(ships: Record<string, number>, techs: DriveTechs): number {
+export function fleetSpeed(
+  ships: Record<string, number>,
+  techs: DriveTechs,
+  shipStatsMap: Record<string, ShipStats>,
+): number {
   let minSpeed = Infinity;
   for (const [shipId, count] of Object.entries(ships)) {
     if (count > 0) {
-      const speed = shipSpeed(shipId as ShipId, techs);
+      const stats = shipStatsMap[shipId];
+      if (!stats) continue;
+      const speed = shipSpeed(stats, techs);
       if (speed < minSpeed) minSpeed = speed;
     }
   }
@@ -64,11 +73,12 @@ export function fuelConsumption(
   ships: Record<string, number>,
   dist: number,
   duration: number,
+  shipStatsMap: Record<string, ShipStats>,
 ): number {
   let total = 0;
   for (const [shipId, count] of Object.entries(ships)) {
     if (count > 0) {
-      const stats = SHIP_STATS[shipId as ShipId];
+      const stats = shipStatsMap[shipId];
       if (!stats) continue;
       const consumption = stats.fuelConsumption * count * (dist / 35000) * ((duration + 10) / (duration - 10));
       total += Math.max(1, Math.round(consumption));
@@ -77,11 +87,14 @@ export function fuelConsumption(
   return Math.max(1, Math.ceil(total));
 }
 
-export function totalCargoCapacity(ships: Record<string, number>): number {
+export function totalCargoCapacity(
+  ships: Record<string, number>,
+  shipStatsMap: Record<string, ShipStats>,
+): number {
   let total = 0;
   for (const [shipId, count] of Object.entries(ships)) {
     if (count > 0) {
-      const stats = SHIP_STATS[shipId as ShipId];
+      const stats = shipStatsMap[shipId];
       if (stats) total += stats.cargoCapacity * count;
     }
   }

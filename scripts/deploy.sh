@@ -21,6 +21,8 @@ echo "==> Pushing database schema..."
 export $(grep -v '^#' .env | xargs)
 cd packages/db
 pnpm db:push
+echo "==> Seeding game config..."
+pnpm db:seed
 cd ../..
 
 echo "==> Reloading PM2 processes..."

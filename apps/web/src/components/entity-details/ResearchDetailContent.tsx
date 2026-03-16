@@ -1,10 +1,9 @@
 import { getResearchDetails, resolveBuildingName, resolveResearchName, type ResearchDetails } from '@/lib/entity-details';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { DetailSection } from '@/components/common/EntityDetailOverlay';
-import type { ResearchId } from '@ogame-clone/game-engine';
 
 export function ResearchDetailContent({ researchId }: { researchId: string }) {
-  const details: ResearchDetails = getResearchDetails(researchId as ResearchId);
+  const details: ResearchDetails = getResearchDetails(researchId);
 
   const hasBuildingPrereqs = details.prerequisites.buildings && details.prerequisites.buildings.length > 0;
   const hasResearchPrereqs = details.prerequisites.research && details.prerequisites.research.length > 0;

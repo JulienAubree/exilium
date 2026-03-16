@@ -1,10 +1,9 @@
 import { getDefenseDetails, resolveBuildingName, resolveResearchName, type DefenseDetails } from '@/lib/entity-details';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { DetailSection, StatRow } from '@/components/common/EntityDetailOverlay';
-import type { DefenseId } from '@ogame-clone/game-engine';
 
 export function DefenseDetailContent({ defenseId }: { defenseId: string }) {
-  const details: DefenseDetails = getDefenseDetails(defenseId as DefenseId);
+  const details: DefenseDetails = getDefenseDetails(defenseId);
 
   const hasBuildingPrereqs = details.prerequisites.buildings && details.prerequisites.buildings.length > 0;
   const hasResearchPrereqs = details.prerequisites.research && details.prerequisites.research.length > 0;

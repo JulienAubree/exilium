@@ -15,11 +15,12 @@ import {
   calculateSpyReport,
   calculateDetectionChance,
   simulateCombat,
-  SHIP_STATS,
   type CombatTechs,
+  type ShipStats,
 } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
+import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
 
 interface SendFleetInput {
@@ -34,17 +35,52 @@ interface SendFleetInput {
   deuteriumCargo?: number;
 }
 
+function buildShipStatsMap(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): Record<string, ShipStats> {
+  const map: Record<string, ShipStats> = {};
+  for (const [id, ship] of Object.entries(config.ships)) {
+    map[id] = {
+      baseSpeed: ship.baseSpeed,
+      fuelConsumption: ship.fuelConsumption,
+      cargoCapacity: ship.cargoCapacity,
+      driveType: ship.driveType as ShipStats['driveType'],
+    };
+  }
+  return map;
+}
+
+function buildCombatStats(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>) {
+  const stats: Record<string, { weapons: number; shield: number; armor: number }> = {};
+  for (const [id, ship] of Object.entries(config.ships)) {
+    stats[id] = { weapons: ship.weapons, shield: ship.shield, armor: ship.armor };
+  }
+  for (const [id, def] of Object.entries(config.defenses)) {
+    stats[id] = { weapons: def.weapons, shield: def.shield, armor: def.armor };
+  }
+  return stats;
+}
+
+function buildShipCosts(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>) {
+  const costs: Record<string, { metal: number; crystal: number }> = {};
+  for (const [id, ship] of Object.entries(config.ships)) {
+    costs[id] = { metal: ship.cost.metal, crystal: ship.cost.crystal };
+  }
+  return costs;
+}
+
 export function createFleetService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
   fleetArrivalQueue: Queue,
   fleetReturnQueue: Queue,
   universeSpeed: number,
-  messageService?: ReturnType<typeof createMessageService>,
+  messageService: ReturnType<typeof createMessageService> | undefined,
+  gameConfigService: GameConfigService,
 ) {
   return {
     async sendFleet(userId: string, input: SendFleetInput) {
       const planet = await this.getOwnedPlanet(userId, input.originPlanetId);
+      const config = await gameConfigService.getFullConfig();
+      const shipStatsMap = buildShipStatsMap(config);
 
       // Validate ships are available
       const planetShipRow = await this.getOrCreateShips(input.originPlanetId);
@@ -61,7 +97,7 @@ export function createFleetService(
 
       // Get research levels for speed calculation
       const driveTechs = await this.getDriveTechs(userId);
-      const speed = fleetSpeed(input.ships, driveTechs);
+      const speed = fleetSpeed(input.ships, driveTechs, shipStatsMap);
       if (speed === 0) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun vaisseau sélectionné' });
       }
@@ -70,10 +106,10 @@ export function createFleetService(
       const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
       const dist = distance(origin, target);
       const duration = travelTime(origin, target, speed, universeSpeed);
-      const fuel = fuelConsumption(input.ships, dist, duration);
+      const fuel = fuelConsumption(input.ships, dist, duration, shipStatsMap);
 
       // Validate cargo doesn't exceed capacity
-      const cargo = totalCargoCapacity(input.ships);
+      const cargo = totalCargoCapacity(input.ships, shipStatsMap);
       const metalCargo = input.metalCargo ?? 0;
       const crystalCargo = input.crystalCargo ?? 0;
       const deuteriumCargo = input.deuteriumCargo ?? 0;
@@ -425,8 +461,10 @@ export function createFleetService(
 
       if (!originPlanet) return;
 
+      const config = await gameConfigService.getFullConfig();
+      const shipStatsMap = buildShipStatsMap(config);
       const driveTechs = await this.getDriveTechsByEvent(fleetEventId);
-      const speed = fleetSpeed(ships, driveTechs);
+      const speed = fleetSpeed(ships, driveTechs, shipStatsMap);
       const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
       const duration = travelTime(targetCoords, origin, speed, universeSpeed);
 
@@ -557,8 +595,10 @@ export function createFleetService(
       // Return remaining ships (if any) with cargo
       const hasRemainingShips = Object.values(remainingShips).some(v => v > 0);
       if (hasRemainingShips) {
+        const config = await gameConfigService.getFullConfig();
+        const shipStatsMap = buildShipStatsMap(config);
         const driveTechs = await this.getDriveTechs(event.userId);
-        const speed = fleetSpeed(remainingShips, driveTechs);
+        const speed = fleetSpeed(remainingShips, driveTechs, shipStatsMap);
         const [originPlanet] = await db
           .select()
           .from(planets)
@@ -802,11 +842,13 @@ export function createFleetService(
         return { mission: 'recycle', collected: { metal: 0, crystal: 0 } };
       }
 
+      const config = await gameConfigService.getFullConfig();
+      const recyclerDef = config.ships['recycler'];
       const recyclerCount = ships.recycler ?? 0;
-      const cargoPerRecycler = SHIP_STATS.recycler.cargoCapacity;
-      const totalCargo = recyclerCount * cargoPerRecycler;
+      const cargoPerRecycler = recyclerDef?.cargoCapacity ?? 20000;
+      const totalCargoCapacityValue = recyclerCount * cargoPerRecycler;
 
-      let remainingCargo = totalCargo;
+      let remainingCargo = totalCargoCapacityValue;
       const availableMetal = Number(debris.metal);
       const availableCrystal = Number(debris.crystal);
 
@@ -850,6 +892,13 @@ export function createFleetService(
       deuteriumCargo: number,
     ) {
       const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+      const config = await gameConfigService.getFullConfig();
+      const shipStatsMap = buildShipStatsMap(config);
+      const combatStatsMap = buildCombatStats(config);
+      const shipCostsMap = buildShipCosts(config);
+      const shipIdSet = new Set(Object.keys(config.ships));
+      const defenseIdSet = new Set(Object.keys(config.defenses));
+      const debrisRatio = (config.universe['debrisRatio'] as number) ?? 0.3;
 
       const [targetPlanet] = await db
         .select()
@@ -918,7 +967,11 @@ export function createFleetService(
       if (!hasDefenders) {
         outcome = 'attacker';
       } else {
-        const result = simulateCombat(ships, defenderCombined, attackerTechs, defenderTechs);
+        const result = simulateCombat(
+          ships, defenderCombined, attackerTechs, defenderTechs,
+          combatStatsMap, config.rapidFire,
+          shipIdSet, shipCostsMap, defenseIdSet, debrisRatio,
+        );
         outcome = result.outcome;
         attackerLosses = result.attackerLosses;
         defenderLosses = result.defenderLosses;
@@ -962,7 +1015,7 @@ export function createFleetService(
 
       // Create/accumulate debris field
       if (debris.metal > 0 || debris.crystal > 0) {
-        const [existing] = await db
+        const [existingDebris] = await db
           .select()
           .from(debrisFields)
           .where(
@@ -974,15 +1027,15 @@ export function createFleetService(
           )
           .limit(1);
 
-        if (existing) {
+        if (existingDebris) {
           await db
             .update(debrisFields)
             .set({
-              metal: String(Number(existing.metal) + debris.metal),
-              crystal: String(Number(existing.crystal) + debris.crystal),
+              metal: String(Number(existingDebris.metal) + debris.metal),
+              crystal: String(Number(existingDebris.crystal) + debris.crystal),
               updatedAt: new Date(),
             })
-            .where(eq(debrisFields.id, existing.id));
+            .where(eq(debrisFields.id, existingDebris.id));
         } else {
           await db.insert(debrisFields).values({
             galaxy: event.targetGalaxy,
@@ -1000,7 +1053,7 @@ export function createFleetService(
       let pillagedDeuterium = 0;
 
       if (outcome === 'attacker') {
-        const remainingCargoCapacity = totalCargoCapacity(survivingShips);
+        const remainingCargoCapacity = totalCargoCapacity(survivingShips, shipStatsMap);
         const availableCargo = remainingCargoCapacity - metalCargo - crystalCargo - deuteriumCargo;
 
         if (availableCargo > 0) {

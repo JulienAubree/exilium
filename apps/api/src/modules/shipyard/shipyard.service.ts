@@ -2,84 +2,81 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, buildQueue, userResearch } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import {
-  SHIPS,
-  DEFENSES,
-  shipCost,
-  shipTime,
-  defenseCost,
-  defenseTime,
-  checkShipPrerequisites,
-  checkDefensePrerequisites,
-  type ShipId,
-  type DefenseId,
-} from '@ogame-clone/game-engine';
+import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
+import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
 
 export function createShipyardService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
   shipyardQueue: Queue,
+  gameConfigService: GameConfigService,
 ) {
   return {
     async listShips(userId: string, planetId: string) {
       const planet = await this.getOwnedPlanet(userId, planetId);
       const ships = await this.getOrCreateShips(planetId);
       const research = await this.getResearchLevels(userId);
+      const config = await gameConfigService.getFullConfig();
 
       const buildingLevels: Record<string, number> = {
         shipyardLevel: planet.shipyardLevel,
         roboticsLevel: planet.roboticsLevel,
       };
 
-      return Object.values(SHIPS).map((def) => {
-        const count = (ships[def.countColumn as keyof typeof ships] ?? 0) as number;
-        const prereqCheck = checkShipPrerequisites(def.id, buildingLevels, research);
-        const cost = shipCost(def.id);
-        const time = shipTime(def.id, planet.shipyardLevel);
+      return Object.values(config.ships)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((def) => {
+          const count = (ships[def.countColumn as keyof typeof ships] ?? 0) as number;
+          const prereqCheck = checkShipPrerequisites(def.prerequisites, buildingLevels, research);
+          const cost = shipCost(def);
+          const time = shipTime(def, planet.shipyardLevel);
 
-        return {
-          id: def.id,
-          name: def.name,
-          description: def.description,
-          count,
-          cost,
-          timePerUnit: time,
-          prerequisitesMet: prereqCheck.met,
-          missingPrerequisites: prereqCheck.missing,
-        };
-      });
+          return {
+            id: def.id,
+            name: def.name,
+            description: def.description,
+            count,
+            cost,
+            timePerUnit: time,
+            prerequisitesMet: prereqCheck.met,
+            missingPrerequisites: prereqCheck.missing,
+          };
+        });
     },
 
     async listDefenses(userId: string, planetId: string) {
       const planet = await this.getOwnedPlanet(userId, planetId);
       const defenses = await this.getOrCreateDefenses(planetId);
       const research = await this.getResearchLevels(userId);
+      const config = await gameConfigService.getFullConfig();
 
       const buildingLevels: Record<string, number> = {
         shipyardLevel: planet.shipyardLevel,
         roboticsLevel: planet.roboticsLevel,
       };
 
-      return Object.values(DEFENSES).map((def) => {
-        const count = (defenses[def.countColumn as keyof typeof defenses] ?? 0) as number;
-        const prereqCheck = checkDefensePrerequisites(def.id, buildingLevels, research);
-        const cost = defenseCost(def.id);
-        const time = defenseTime(def.id, planet.shipyardLevel);
+      return Object.values(config.defenses)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((def) => {
+          const count = (defenses[def.countColumn as keyof typeof defenses] ?? 0) as number;
+          const prereqCheck = checkDefensePrerequisites(def.prerequisites, buildingLevels, research);
+          const cost = defenseCost(def);
+          const time = defenseTime(def, planet.shipyardLevel);
 
-        return {
-          id: def.id,
-          name: def.name,
-          description: def.description,
-          count,
-          cost,
-          timePerUnit: time,
-          maxPerPlanet: def.maxPerPlanet,
-          prerequisitesMet: prereqCheck.met,
-          missingPrerequisites: prereqCheck.missing,
-        };
-      });
+          return {
+            id: def.id,
+            name: def.name,
+            description: def.description,
+            count,
+            cost,
+            timePerUnit: time,
+            maxPerPlanet: def.maxPerPlanet,
+            prerequisitesMet: prereqCheck.met,
+            missingPrerequisites: prereqCheck.missing,
+          };
+        });
     },
 
     async getShipyardQueue(planetId: string) {
@@ -103,10 +100,12 @@ export function createShipyardService(
       quantity: number,
     ) {
       const planet = await this.getOwnedPlanet(userId, planetId);
+      const config = await gameConfigService.getFullConfig();
 
-      const unitCost = type === 'ship'
-        ? shipCost(itemId as ShipId)
-        : defenseCost(itemId as DefenseId);
+      const def = type === 'ship' ? config.ships[itemId] : config.defenses[itemId];
+      if (!def) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unité invalide' });
+
+      const unitCost = type === 'ship' ? shipCost(def) : defenseCost(def);
 
       const totalCost = {
         metal: unitCost.metal * quantity,
@@ -115,14 +114,14 @@ export function createShipyardService(
       };
 
       if (type === 'defense') {
-        const def = DEFENSES[itemId as DefenseId];
-        if (def.maxPerPlanet) {
+        const defenseDef = config.defenses[itemId];
+        if (defenseDef?.maxPerPlanet) {
           const defenses = await this.getOrCreateDefenses(planetId);
-          const current = (defenses[def.countColumn as keyof typeof defenses] ?? 0) as number;
-          if (current + quantity > def.maxPerPlanet) {
+          const current = (defenses[defenseDef.countColumn as keyof typeof defenses] ?? 0) as number;
+          if (current + quantity > defenseDef.maxPerPlanet) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
-              message: `Maximum ${def.maxPerPlanet} ${def.name} par planète`,
+              message: `Maximum ${defenseDef.maxPerPlanet} ${defenseDef.name} par planète`,
             });
           }
         }
@@ -134,8 +133,8 @@ export function createShipyardService(
       const hasActive = existingActive.some((e) => e.status === 'active');
 
       const unitTime = type === 'ship'
-        ? shipTime(itemId as ShipId, planet.shipyardLevel)
-        : defenseTime(itemId as DefenseId, planet.shipyardLevel);
+        ? shipTime(def, planet.shipyardLevel)
+        : defenseTime(def, planet.shipyardLevel);
 
       const now = new Date();
       const status = hasActive ? 'queued' : 'active';
@@ -177,24 +176,31 @@ export function createShipyardService(
 
       if (!entry) return null;
 
+      const config = await gameConfigService.getFullConfig();
       const newCompletedCount = entry.completedCount + 1;
 
       if (entry.type === 'ship') {
-        const ships = await this.getOrCreateShips(entry.planetId);
-        const col = SHIPS[entry.itemId as ShipId].countColumn;
-        const current = (ships[col as keyof typeof ships] ?? 0) as number;
-        await db
-          .update(planetShips)
-          .set({ [col]: current + 1 })
-          .where(eq(planetShips.planetId, entry.planetId));
+        const shipDef = config.ships[entry.itemId];
+        if (shipDef) {
+          const ships = await this.getOrCreateShips(entry.planetId);
+          const col = shipDef.countColumn;
+          const current = (ships[col as keyof typeof ships] ?? 0) as number;
+          await db
+            .update(planetShips)
+            .set({ [col]: current + 1 })
+            .where(eq(planetShips.planetId, entry.planetId));
+        }
       } else {
-        const defenses = await this.getOrCreateDefenses(entry.planetId);
-        const col = DEFENSES[entry.itemId as DefenseId].countColumn;
-        const current = (defenses[col as keyof typeof defenses] ?? 0) as number;
-        await db
-          .update(planetDefenses)
-          .set({ [col]: current + 1 })
-          .where(eq(planetDefenses.planetId, entry.planetId));
+        const defenseDef = config.defenses[entry.itemId];
+        if (defenseDef) {
+          const defenses = await this.getOrCreateDefenses(entry.planetId);
+          const col = defenseDef.countColumn;
+          const current = (defenses[col as keyof typeof defenses] ?? 0) as number;
+          await db
+            .update(planetDefenses)
+            .set({ [col]: current + 1 })
+            .where(eq(planetDefenses.planetId, entry.planetId));
+        }
       }
 
       if (newCompletedCount >= entry.quantity) {
@@ -210,9 +216,10 @@ export function createShipyardService(
 
       const now = new Date();
       const [planet] = await db.select().from(planets).where(eq(planets.id, entry.planetId)).limit(1);
-      const unitTime = entry.type === 'ship'
-        ? shipTime(entry.itemId as ShipId, planet?.shipyardLevel ?? 0)
-        : defenseTime(entry.itemId as DefenseId, planet?.shipyardLevel ?? 0);
+      const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
+      const unitTime = def
+        ? (entry.type === 'ship' ? shipTime(def, planet?.shipyardLevel ?? 0) : defenseTime(def, planet?.shipyardLevel ?? 0))
+        : 60;
 
       await db
         .update(buildQueue)
@@ -245,10 +252,12 @@ export function createShipyardService(
 
       if (!nextBatch) return;
 
+      const config = await gameConfigService.getFullConfig();
       const [planet] = await db.select().from(planets).where(eq(planets.id, planetId)).limit(1);
-      const unitTime = nextBatch.type === 'ship'
-        ? shipTime(nextBatch.itemId as ShipId, planet?.shipyardLevel ?? 0)
-        : defenseTime(nextBatch.itemId as DefenseId, planet?.shipyardLevel ?? 0);
+      const def = nextBatch.type === 'ship' ? config.ships[nextBatch.itemId] : config.defenses[nextBatch.itemId];
+      const unitTime = def
+        ? (nextBatch.type === 'ship' ? shipTime(def, planet?.shipyardLevel ?? 0) : defenseTime(def, planet?.shipyardLevel ?? 0))
+        : 60;
 
       const now = new Date();
       await db
@@ -285,9 +294,9 @@ export function createShipyardService(
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Batch non trouvé ou non annulable (en cours)' });
       }
 
-      const unitCost = entry.type === 'ship'
-        ? shipCost(entry.itemId as ShipId)
-        : defenseCost(entry.itemId as DefenseId);
+      const config = await gameConfigService.getFullConfig();
+      const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
+      const unitCost = def ? (entry.type === 'ship' ? shipCost(def) : defenseCost(def)) : { metal: 0, crystal: 0, deuterium: 0 };
       const remaining = entry.quantity - entry.completedCount;
       const refund = {
         metal: unitCost.metal * remaining,

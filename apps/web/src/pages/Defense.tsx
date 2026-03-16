@@ -12,7 +12,7 @@ import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { DefenseDetailContent } from '@/components/entity-details/DefenseDetailContent';
-import { DEFENSES, type DefenseId } from '@ogame-clone/game-engine';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 export default function Defense() {
@@ -20,6 +20,7 @@ export default function Defense() {
   const utils = trpc.useUtils();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { data: gameConfig } = useGameConfig();
 
   const { data: defenses, isLoading } = trpc.shipyard.defenses.useQuery(
     { planetId: planetId! },
@@ -124,7 +125,7 @@ export default function Defense() {
 
                 {!defense.prerequisitesMet && defense.missingPrerequisites.length > 0 && (
                   <p className="text-xs text-destructive">
-                    Prérequis : {defense.missingPrerequisites.map(formatMissingPrerequisite).join(', ')}
+                    Prérequis : {defense.missingPrerequisites.map((p) => formatMissingPrerequisite(p, gameConfig)).join(', ')}
                   </p>
                 )}
 
@@ -148,7 +149,7 @@ export default function Defense() {
                       onClick={() =>
                         buildMutation.mutate({
                           planetId: planetId!,
-                          defenseId: defense.id,
+                          defenseId: defense.id as any,
                           quantity: effectiveQty,
                         })
                       }
@@ -170,7 +171,7 @@ export default function Defense() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? DEFENSES[detailId as DefenseId]?.name ?? '' : ''}
+        title={detailId ? gameConfig?.defenses[detailId]?.name ?? '' : ''}
       >
         {detailId && <DefenseDetailContent defenseId={detailId} />}
       </EntityDetailOverlay>

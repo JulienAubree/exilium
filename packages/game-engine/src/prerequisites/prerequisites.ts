@@ -1,10 +1,3 @@
-import { RESEARCH } from '../constants/research.js';
-import { SHIPS } from '../constants/ships.js';
-import { DEFENSES } from '../constants/defenses.js';
-import type { ResearchId } from '../constants/research.js';
-import type { ShipId } from '../constants/ships.js';
-import type { DefenseId } from '../constants/defenses.js';
-
 export interface PrerequisiteResult {
   met: boolean;
   missing: string[];
@@ -18,8 +11,13 @@ interface ResearchLevels {
   [key: string]: number;
 }
 
+export interface PrerequisiteDef {
+  buildings?: { buildingId: string; level: number }[];
+  research?: { researchId: string; level: number }[];
+}
+
 function checkPrereqs(
-  prereqs: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] },
+  prereqs: PrerequisiteDef,
   buildingLevels: BuildingLevels,
   researchLevels: ResearchLevels,
 ): PrerequisiteResult {
@@ -48,25 +46,25 @@ function checkPrereqs(
 }
 
 export function checkResearchPrerequisites(
-  researchId: ResearchId,
+  prereqs: PrerequisiteDef,
   buildingLevels: BuildingLevels,
   researchLevels: ResearchLevels,
 ): PrerequisiteResult {
-  return checkPrereqs(RESEARCH[researchId].prerequisites, buildingLevels, researchLevels);
+  return checkPrereqs(prereqs, buildingLevels, researchLevels);
 }
 
 export function checkShipPrerequisites(
-  shipId: ShipId,
+  prereqs: PrerequisiteDef,
   buildingLevels: BuildingLevels,
   researchLevels: ResearchLevels,
 ): PrerequisiteResult {
-  return checkPrereqs(SHIPS[shipId].prerequisites, buildingLevels, researchLevels);
+  return checkPrereqs(prereqs, buildingLevels, researchLevels);
 }
 
 export function checkDefensePrerequisites(
-  defenseId: DefenseId,
+  prereqs: PrerequisiteDef,
   buildingLevels: BuildingLevels,
   researchLevels: ResearchLevels,
 ): PrerequisiteResult {
-  return checkPrereqs(DEFENSES[defenseId].prerequisites, buildingLevels, researchLevels);
+  return checkPrereqs(prereqs, buildingLevels, researchLevels);
 }

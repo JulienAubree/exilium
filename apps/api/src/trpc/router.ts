@@ -1,7 +1,10 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { jwtVerify } from 'jose';
+import { eq } from 'drizzle-orm';
 import type { Context } from './context.js';
 import { env } from '../config/env.js';
+import { users } from '@ogame-clone/db';
+import type { Database } from '@ogame-clone/db';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 
@@ -26,3 +29,17 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
 });
+
+export function createAdminProcedure(db: Database) {
+  return protectedProcedure.use(async ({ ctx, next }) => {
+    const [user] = await db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, ctx.userId!))
+      .limit(1);
+    if (!user?.isAdmin) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
+    }
+    return next({ ctx });
+  });
+}

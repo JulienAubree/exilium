@@ -1,4 +1,4 @@
-import { router, publicProcedure } from './router.js';
+import { router, publicProcedure, createAdminProcedure } from './router.js';
 import { createAuthRouter } from '../modules/auth/auth.router.js';
 import { createAuthService } from '../modules/auth/auth.service.js';
 import { createPlanetService } from '../modules/planet/planet.service.js';
@@ -22,22 +22,30 @@ import { createRankingService } from '../modules/ranking/ranking.service.js';
 import { createRankingRouter } from '../modules/ranking/ranking.router.js';
 import { createAllianceService } from '../modules/alliance/alliance.service.js';
 import { createAllianceRouter } from '../modules/alliance/alliance.router.js';
+import { createGameConfigService } from '../modules/admin/game-config.service.js';
+import { createGameConfigRouter } from '../modules/admin/game-config.router.js';
+import { createPlayerAdminService } from '../modules/admin/player-admin.service.js';
+import { createPlayerAdminRouter } from '../modules/admin/player-admin.router.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 import type Redis from 'ioredis';
 
 export function buildAppRouter(db: Database, redis: Redis) {
+  const adminProcedure = createAdminProcedure(db);
+
+  const gameConfigService = createGameConfigService(db);
   const authService = createAuthService(db);
   const planetService = createPlanetService(db);
   const resourceService = createResourceService(db);
-  const buildingService = createBuildingService(db, resourceService, buildingCompletionQueue);
-  const researchService = createResearchService(db, resourceService, researchCompletionQueue);
-  const shipyardService = createShipyardService(db, resourceService, shipyardCompletionQueue);
+  const buildingService = createBuildingService(db, resourceService, buildingCompletionQueue, gameConfigService);
+  const researchService = createResearchService(db, resourceService, researchCompletionQueue, gameConfigService);
+  const shipyardService = createShipyardService(db, resourceService, shipyardCompletionQueue, gameConfigService);
   const galaxyService = createGalaxyService(db);
   const messageService = createMessageService(db, redis);
-  const rankingService = createRankingService(db);
-  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService);
+  const rankingService = createRankingService(db, gameConfigService);
+  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService);
   const allianceService = createAllianceService(db, messageService);
+  const playerAdminService = createPlayerAdminService(db);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
@@ -50,6 +58,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const messageRouter = createMessageRouter(messageService);
   const rankingRouter = createRankingRouter(rankingService);
   const allianceRouter = createAllianceRouter(allianceService);
+  const gameConfigRouter = createGameConfigRouter(gameConfigService, adminProcedure);
+  const playerAdminRouter = createPlayerAdminRouter(playerAdminService, adminProcedure);
 
   return router({
     health: publicProcedure.query(() => ({
@@ -67,6 +77,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
     message: messageRouter,
     ranking: rankingRouter,
     alliance: allianceRouter,
+    gameConfig: gameConfigRouter,
+    playerAdmin: playerAdminRouter,
   });
 }
 

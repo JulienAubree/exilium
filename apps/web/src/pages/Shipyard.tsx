@@ -13,7 +13,7 @@ import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
-import { SHIPS, type ShipId } from '@ogame-clone/game-engine';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 export default function Shipyard() {
@@ -21,6 +21,7 @@ export default function Shipyard() {
   const utils = trpc.useUtils();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { data: gameConfig } = useGameConfig();
 
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -150,7 +151,7 @@ export default function Shipyard() {
 
                 {!ship.prerequisitesMet && ship.missingPrerequisites.length > 0 && (
                   <p className="text-xs text-destructive">
-                    Prérequis : {ship.missingPrerequisites.map(formatMissingPrerequisite).join(', ')}
+                    Prérequis : {ship.missingPrerequisites.map((p) => formatMissingPrerequisite(p, gameConfig)).join(', ')}
                   </p>
                 )}
 
@@ -169,7 +170,7 @@ export default function Shipyard() {
                     <Button
                       size="sm"
                       onClick={() =>
-                        buildMutation.mutate({ planetId: planetId!, shipId: ship.id, quantity: qty })
+                        buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty })
                       }
                       disabled={!canAfford || buildMutation.isPending}
                     >
@@ -185,7 +186,7 @@ export default function Shipyard() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? SHIPS[detailId as ShipId]?.name ?? '' : ''}
+        title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
       >
         {detailId && <ShipDetailContent shipId={detailId} />}
       </EntityDetailOverlay>

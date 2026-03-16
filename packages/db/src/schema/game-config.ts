@@ -1,0 +1,126 @@
+import { pgTable, varchar, text, integer, real, jsonb, primaryKey } from 'drizzle-orm/pg-core';
+
+// ── Building Definitions ──
+
+export const buildingDefinitions = pgTable('building_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  baseCostMetal: integer('base_cost_metal').notNull().default(0),
+  baseCostCrystal: integer('base_cost_crystal').notNull().default(0),
+  baseCostDeuterium: integer('base_cost_deuterium').notNull().default(0),
+  costFactor: real('cost_factor').notNull().default(1.5),
+  baseTime: integer('base_time').notNull().default(60),
+  levelColumn: varchar('level_column', { length: 64 }).notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const buildingPrerequisites = pgTable('building_prerequisites', {
+  buildingId: varchar('building_id', { length: 64 }).notNull().references(() => buildingDefinitions.id, { onDelete: 'cascade' }),
+  requiredBuildingId: varchar('required_building_id', { length: 64 }).notNull().references(() => buildingDefinitions.id, { onDelete: 'cascade' }),
+  requiredLevel: integer('required_level').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.buildingId, t.requiredBuildingId] }),
+]);
+
+// ── Research Definitions ──
+
+export const researchDefinitions = pgTable('research_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  baseCostMetal: integer('base_cost_metal').notNull().default(0),
+  baseCostCrystal: integer('base_cost_crystal').notNull().default(0),
+  baseCostDeuterium: integer('base_cost_deuterium').notNull().default(0),
+  costFactor: real('cost_factor').notNull().default(2),
+  levelColumn: varchar('level_column', { length: 64 }).notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const researchPrerequisites = pgTable('research_prerequisites', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  researchId: varchar('research_id', { length: 64 }).notNull().references(() => researchDefinitions.id, { onDelete: 'cascade' }),
+  requiredBuildingId: varchar('required_building_id', { length: 64 }).references(() => buildingDefinitions.id, { onDelete: 'cascade' }),
+  requiredResearchId: varchar('required_research_id', { length: 64 }).references(() => researchDefinitions.id, { onDelete: 'cascade' }),
+  requiredLevel: integer('required_level').notNull(),
+});
+
+// ── Ship Definitions (merged ships + combat-stats + ship-stats) ──
+
+export const shipDefinitions = pgTable('ship_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  costMetal: integer('cost_metal').notNull().default(0),
+  costCrystal: integer('cost_crystal').notNull().default(0),
+  costDeuterium: integer('cost_deuterium').notNull().default(0),
+  countColumn: varchar('count_column', { length: 64 }).notNull(),
+  baseSpeed: integer('base_speed').notNull().default(0),
+  fuelConsumption: integer('fuel_consumption').notNull().default(0),
+  cargoCapacity: integer('cargo_capacity').notNull().default(0),
+  driveType: varchar('drive_type', { length: 32 }).notNull().default('combustion'),
+  weapons: integer('weapons').notNull().default(0),
+  shield: integer('shield').notNull().default(0),
+  armor: integer('armor').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const shipPrerequisites = pgTable('ship_prerequisites', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  shipId: varchar('ship_id', { length: 64 }).notNull().references(() => shipDefinitions.id, { onDelete: 'cascade' }),
+  requiredBuildingId: varchar('required_building_id', { length: 64 }).references(() => buildingDefinitions.id, { onDelete: 'cascade' }),
+  requiredResearchId: varchar('required_research_id', { length: 64 }).references(() => researchDefinitions.id, { onDelete: 'cascade' }),
+  requiredLevel: integer('required_level').notNull(),
+});
+
+// ── Defense Definitions (merged defenses + combat-stats) ──
+
+export const defenseDefinitions = pgTable('defense_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  costMetal: integer('cost_metal').notNull().default(0),
+  costCrystal: integer('cost_crystal').notNull().default(0),
+  costDeuterium: integer('cost_deuterium').notNull().default(0),
+  countColumn: varchar('count_column', { length: 64 }).notNull(),
+  weapons: integer('weapons').notNull().default(0),
+  shield: integer('shield').notNull().default(0),
+  armor: integer('armor').notNull().default(0),
+  maxPerPlanet: integer('max_per_planet'),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const defensePrerequisites = pgTable('defense_prerequisites', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  defenseId: varchar('defense_id', { length: 64 }).notNull().references(() => defenseDefinitions.id, { onDelete: 'cascade' }),
+  requiredBuildingId: varchar('required_building_id', { length: 64 }).references(() => buildingDefinitions.id, { onDelete: 'cascade' }),
+  requiredResearchId: varchar('required_research_id', { length: 64 }).references(() => researchDefinitions.id, { onDelete: 'cascade' }),
+  requiredLevel: integer('required_level').notNull(),
+});
+
+// ── Rapid Fire ──
+
+export const rapidFire = pgTable('rapid_fire', {
+  attackerId: varchar('attacker_id', { length: 64 }).notNull(),
+  targetId: varchar('target_id', { length: 64 }).notNull(),
+  value: integer('value').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.attackerId, t.targetId] }),
+]);
+
+// ── Production Config ──
+
+export const productionConfig = pgTable('production_config', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  baseProduction: real('base_production').notNull(),
+  exponentBase: real('exponent_base').notNull().default(1.1),
+  energyConsumption: real('energy_consumption'),
+  storageBase: real('storage_base'),
+});
+
+// ── Universe Config ──
+
+export const universeConfig = pgTable('universe_config', {
+  key: varchar('key', { length: 64 }).primaryKey(),
+  value: jsonb('value').notNull(),
+});

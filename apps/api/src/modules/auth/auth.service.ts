@@ -47,7 +47,11 @@ export function createAuthService(db: Database) {
       const valid = await verify(user.passwordHash, password);
       if (!valid) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
 
-      const accessToken = await new SignJWT({ userId: user.id })
+      if (user.bannedAt) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Account banned' });
+      }
+
+      const accessToken = await new SignJWT({ userId: user.id, isAdmin: user.isAdmin })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime(env.JWT_EXPIRES_IN)
         .sign(JWT_SECRET);
@@ -65,7 +69,7 @@ export function createAuthService(db: Database) {
       return {
         accessToken,
         refreshToken: rawRefresh,
-        user: { id: user.id, email: user.email, username: user.username },
+        user: { id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin },
       };
     },
 
