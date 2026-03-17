@@ -164,6 +164,19 @@ export function AllianceRankingIcon(props: IconProps) {
   );
 }
 
+export function MissionsIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h12" />
+      <circle cx="2" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="2" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="2" cy="18" r="1" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}
+
 // --- Navigation ---
 
 export function HistoryIcon(props: IconProps) {

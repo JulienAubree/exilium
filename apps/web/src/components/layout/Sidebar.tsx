@@ -10,6 +10,7 @@ import {
   FleetIcon,
   GalaxyIcon,
   MovementsIcon,
+  MissionsIcon,
   MessagesIcon,
   RankingIcon,
   AllianceIcon,
@@ -46,6 +47,7 @@ const sections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
       { label: 'Flotte', path: '/fleet', icon: FleetIcon },
+      { label: 'Missions', path: '/missions', icon: MissionsIcon },
       { label: 'Mouvements', path: '/movements', icon: MovementsIcon },
     ],
   },
