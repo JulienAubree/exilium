@@ -14,6 +14,8 @@ const MISSION_LABELS: Record<string, string> = {
   spy: 'Espionnage',
   attack: 'Attaque',
   colonize: 'Colonisation',
+  mine: 'Extraction',
+  pirate: 'Pirate',
 };
 
 const MISSION_BORDER_COLORS: Record<string, string> = {
@@ -22,6 +24,8 @@ const MISSION_BORDER_COLORS: Record<string, string> = {
   spy: 'border-l-violet-500',
   attack: 'border-l-destructive',
   colonize: 'border-l-orange-500',
+  mine: 'border-l-amber-500',
+  pirate: 'border-l-red-500',
 };
 
 export default function Movements() {
@@ -61,13 +65,16 @@ export default function Movements() {
             const ships = event.ships as Record<string, number>;
             const isOutbound = event.phase === 'outbound';
             const borderColor = MISSION_BORDER_COLORS[event.mission] || 'border-l-muted';
+            const isExtracting = event.mission === 'mine' && event.phase === 'return' && new Date(event.departureTime) > new Date();
 
             return (
               <div key={event.id} className={cn('glass-card border-l-4 p-4 space-y-2', borderColor)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-medium">{MISSION_LABELS[event.mission] ?? event.mission}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{isOutbound ? 'Aller' : 'Retour'}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {isExtracting ? 'Extraction en cours...' : isOutbound ? 'Aller' : 'Retour'}
+                    </span>
                   </div>
                   <Timer
                     endTime={new Date(event.arrivalTime)}
