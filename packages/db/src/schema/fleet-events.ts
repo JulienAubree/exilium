@@ -10,6 +10,8 @@ export const fleetMissionEnum = pgEnum('fleet_mission', [
   'attack',
   'colonize',
   'recycle',
+  'mine',
+  'pirate',
 ]);
 
 export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'return']);
@@ -33,6 +35,8 @@ export const fleetEvents = pgTable('fleet_events', {
   siliciumCargo: numeric('silicium_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
   hydrogeneCargo: numeric('hydrogene_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
   ships: jsonb('ships').notNull().default('{}'),
+  metadata: jsonb('metadata'),
+  pveMissionId: uuid('pve_mission_id'),
 }, (table) => [
   index('fleet_events_arrival_idx').on(table.arrivalTime).where(sql`status = 'active'`),
   index('fleet_events_user_idx').on(table.userId),
