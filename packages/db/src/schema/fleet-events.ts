@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { pgTable, uuid, smallint, timestamp, numeric, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { planets } from './planets.js';
+import { pveMissions } from './pve-missions.js';
 
 export const fleetMissionEnum = pgEnum('fleet_mission', [
   'transport',
@@ -36,7 +37,7 @@ export const fleetEvents = pgTable('fleet_events', {
   hydrogeneCargo: numeric('hydrogene_cargo', { precision: 20, scale: 2 }).notNull().default('0'),
   ships: jsonb('ships').notNull().default('{}'),
   metadata: jsonb('metadata'),
-  pveMissionId: uuid('pve_mission_id'),
+  pveMissionId: uuid('pve_mission_id').references(() => pveMissions.id, { onDelete: 'set null' }),
 }, (table) => [
   index('fleet_events_arrival_idx').on(table.arrivalTime).where(sql`status = 'active'`),
   index('fleet_events_user_idx').on(table.userId),

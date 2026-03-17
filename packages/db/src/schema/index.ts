@@ -12,3 +12,5 @@ export * from './alliances.js';
 export * from './game-config.js';
 export * from './game-events.js';
 export * from './planet-buildings.js';
+export * from './asteroid-belts.js';
+export * from './pve-missions.js';
