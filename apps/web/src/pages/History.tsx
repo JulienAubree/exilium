@@ -26,14 +26,12 @@ export default function History() {
     { placeholderData: (prev: any) => prev },
   );
 
-  // Accumulate events from all pages
+  // Accumulate events from all pages (updated during render, not in effect,
+  // so allEvents sees the latest data in the same render cycle)
   const pages = useRef<Map<string | undefined, any[]>>(new Map());
-
-  useEffect(() => {
-    if (data && data.events.length > 0) {
-      pages.current.set(currentCursor, data.events);
-    }
-  }, [data, currentCursor]);
+  if (data && data.events.length > 0) {
+    pages.current.set(currentCursor, data.events);
+  }
 
   // Reset on filter change
   const handleFilterChange = (type: GameEventType) => {
