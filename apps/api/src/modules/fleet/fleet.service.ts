@@ -1,6 +1,6 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, fleetEvents, userResearch, debrisFields, users, planetBuildings } from '@ogame-clone/db';
+import { planets, planetShips, planetDefenses, fleetEvents, userResearch, debrisFields, users, planetBuildings, pveMissions, asteroidDeposits } from '@ogame-clone/db';
 import { BELT_POSITIONS } from '../universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 import {
@@ -16,6 +16,8 @@ import {
   calculateSpyReport,
   calculateDetectionChance,
   simulateCombat,
+  totalExtracted,
+  extractionDuration,
   type CombatTechs,
   type ShipStats,
 } from '@ogame-clone/game-engine';
@@ -23,6 +25,9 @@ import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
+import type { createPveService } from '../pve/pve.service.js';
+import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
+import type { createPirateService } from '../pve/pirate.service.js';
 
 interface SendFleetInput {
   originPlanetId: string;
@@ -77,6 +82,9 @@ export function createFleetService(
   universeSpeed: number,
   messageService: ReturnType<typeof createMessageService> | undefined,
   gameConfigService: GameConfigService,
+  pveService?: ReturnType<typeof createPveService>,
+  asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>,
+  pirateService?: ReturnType<typeof createPirateService>,
 ) {
   return {
     async sendFleet(userId: string, input: SendFleetInput) {
@@ -147,18 +155,30 @@ export function createFleetService(
         }
       }
 
-      // Find target planet (may not exist for colonization)
-      const [targetPlanet] = await db
-        .select()
-        .from(planets)
-        .where(
-          and(
-            eq(planets.galaxy, input.targetGalaxy),
-            eq(planets.system, input.targetSystem),
-            eq(planets.position, input.targetPosition),
-          ),
-        )
-        .limit(1);
+      // Validate: mine requires at least 1 prospector
+      if (input.mission === 'mine') {
+        const prospectorCount = input.ships['prospector'] ?? 0;
+        if (prospectorCount === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Mining requires at least 1 prospector' });
+        }
+      }
+
+      // Find target planet (may not exist for colonization or PvE missions)
+      let targetPlanet: typeof planets.$inferSelect | undefined;
+      if (input.mission !== 'mine' && input.mission !== 'pirate') {
+        const [found] = await db
+          .select()
+          .from(planets)
+          .where(
+            and(
+              eq(planets.galaxy, input.targetGalaxy),
+              eq(planets.system, input.targetSystem),
+              eq(planets.position, input.targetPosition),
+            ),
+          )
+          .limit(1);
+        targetPlanet = found;
+      }
 
       // Spend resources (cargo + fuel)
       const totalHydrogeneCost = hydrogeneCargo + fuel;
@@ -203,8 +223,14 @@ export function createFleetService(
           siliciumCargo: String(siliciumCargo),
           hydrogeneCargo: String(hydrogeneCargo),
           ships: input.ships,
+          pveMissionId: input.pveMissionId ?? null,
         })
         .returning();
+
+      // Mark PvE mission as in_progress
+      if (input.pveMissionId && pveService) {
+        await pveService.startMission(input.pveMissionId);
+      }
 
       // Schedule arrival job
       await fleetArrivalQueue.add(
@@ -244,6 +270,11 @@ export function createFleetService(
       const returnTime = new Date(now.getTime() + elapsed);
 
       await fleetArrivalQueue.remove(`fleet-arrive-${event.id}`);
+
+      // Release PvE mission back to available if recalling
+      if (event.pveMissionId && pveService) {
+        await pveService.releaseMission(event.pveMissionId);
+      }
 
       await db
         .update(fleetEvents)
@@ -390,6 +421,100 @@ export function createFleetService(
         return { ...eventMeta, ...(await this.processRecycle(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo)) };
       }
 
+      if (event.mission === 'mine') {
+        const pveMissionId = event.pveMissionId;
+        const mission = pveMissionId
+          ? await db.select().from(pveMissions).where(eq(pveMissions.id, pveMissionId)).limit(1).then(r => r[0])
+          : null;
+
+        const targetCoords = { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition };
+
+        if (!mission || !pveService || !asteroidBeltService) {
+          await this.scheduleReturn(event.id, event.originPlanetId, targetCoords, ships, 0, 0, 0);
+          return { ...eventMeta, mission: 'mine', extracted: 0 };
+        }
+
+        const params = mission.parameters as { depositId: string; resourceType: string };
+        const centerLevel = await pveService.getMissionCenterLevel(event.userId);
+        const prospectorCount = ships['prospector'] ?? 0;
+        const config = await gameConfigService.getFullConfig();
+        const shipStatsMap = buildShipStatsMap(config);
+        const cargoCapacity = totalCargoCapacity(ships, shipStatsMap);
+
+        const [deposit] = await db.select().from(asteroidDeposits)
+          .where(eq(asteroidDeposits.id, params.depositId)).limit(1);
+        const depositRemaining = deposit ? Number(deposit.remainingQuantity) : 0;
+        const extractAmount = totalExtracted(centerLevel, prospectorCount, cargoCapacity, depositRemaining);
+
+        const extracted = await asteroidBeltService.extractFromDeposit(params.depositId, extractAmount);
+
+        const cargo = { minerai: 0, silicium: 0, hydrogene: 0 };
+        if (extracted > 0) {
+          cargo[params.resourceType as keyof typeof cargo] = extracted;
+        }
+
+        await db.update(fleetEvents).set({
+          mineraiCargo: String(cargo.minerai),
+          siliciumCargo: String(cargo.silicium),
+          hydrogeneCargo: String(cargo.hydrogene),
+        }).where(eq(fleetEvents.id, event.id));
+
+        const extractionMins = extractionDuration(centerLevel);
+        const extractionMs = extractionMins * 60 * 1000;
+        await this.scheduleReturnWithDelay(
+          event.id, event.originPlanetId, targetCoords, ships,
+          cargo.minerai, cargo.silicium, cargo.hydrogene,
+          extractionMs,
+        );
+
+        await pveService.completeMission(mission.id);
+        return { ...eventMeta, mission: 'mine', extracted };
+      }
+
+      if (event.mission === 'pirate') {
+        const pveMissionId = event.pveMissionId;
+        const mission = pveMissionId
+          ? await db.select().from(pveMissions).where(eq(pveMissions.id, pveMissionId)).limit(1).then(r => r[0])
+          : null;
+
+        const targetCoords = { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition };
+
+        if (!mission || !pveService || !pirateService) {
+          await this.scheduleReturn(event.id, event.originPlanetId, targetCoords, ships, 0, 0, 0);
+          return { ...eventMeta, mission: 'pirate', outcome: 'error' };
+        }
+
+        const params = mission.parameters as { templateId: string };
+
+        const playerTechs = await this.getCombatTechs(event.userId);
+
+        const config = await gameConfigService.getFullConfig();
+        const shipStatsMap = buildShipStatsMap(config);
+        const cargoCapacity = totalCargoCapacity(ships, shipStatsMap);
+        const result = await pirateService.processPirateArrival(
+          ships, playerTechs, params.templateId, cargoCapacity,
+        );
+
+        await db.update(fleetEvents).set({
+          ships: result.survivingShips,
+          mineraiCargo: String(result.loot.minerai),
+          siliciumCargo: String(result.loot.silicium),
+          hydrogeneCargo: String(result.loot.hydrogene),
+          metadata: Object.keys(result.bonusShips).length > 0
+            ? { bonusShips: result.bonusShips }
+            : null,
+        }).where(eq(fleetEvents.id, event.id));
+
+        await this.scheduleReturn(
+          event.id, event.originPlanetId, targetCoords,
+          result.survivingShips,
+          result.loot.minerai, result.loot.silicium, result.loot.hydrogene,
+        );
+        await pveService.completeMission(mission.id);
+
+        return { ...eventMeta, mission: 'pirate', outcome: result.outcome, loot: result.loot, bonusShips: result.bonusShips, losses: result.attackerLosses };
+      }
+
       // Unknown mission — return fleet
       await this.scheduleReturn(
         event.id, event.originPlanetId,
@@ -435,6 +560,21 @@ export function createFleetService(
         .update(planetShips)
         .set(shipUpdates)
         .where(eq(planetShips.planetId, event.originPlanetId));
+
+      // Credit PvE bonus ships from metadata
+      const meta = event.metadata as { bonusShips?: Record<string, number> } | null;
+      if (meta?.bonusShips) {
+        const currentShips = await this.getOrCreateShips(event.originPlanetId);
+        const bonusUpdates: Record<string, number> = {};
+        for (const [shipId, count] of Object.entries(meta.bonusShips)) {
+          const current = (currentShips[shipId as keyof typeof currentShips] ?? 0) as number;
+          bonusUpdates[shipId] = current + count;
+        }
+        if (Object.keys(bonusUpdates).length > 0) {
+          await db.update(planetShips).set(bonusUpdates)
+            .where(eq(planetShips.planetId, event.originPlanetId));
+        }
+      }
 
       const mineraiCargo = Number(event.mineraiCargo);
       const siliciumCargo = Number(event.siliciumCargo);
@@ -524,6 +664,55 @@ export function createFleetService(
         'return',
         { fleetEventId },
         { delay: duration * 1000, jobId: `fleet-return-${fleetEventId}` },
+      );
+    },
+
+    async scheduleReturnWithDelay(
+      fleetEventId: string,
+      originPlanetId: string,
+      targetCoords: { galaxy: number; system: number; position: number },
+      ships: Record<string, number>,
+      mineraiCargo: number,
+      siliciumCargo: number,
+      hydrogeneCargo: number,
+      delayMs: number,
+    ) {
+      const [originPlanet] = await db
+        .select()
+        .from(planets)
+        .where(eq(planets.id, originPlanetId))
+        .limit(1);
+
+      if (!originPlanet) return;
+
+      const config = await gameConfigService.getFullConfig();
+      const shipStatsMap = buildShipStatsMap(config);
+      const driveTechs = await this.getDriveTechsByEvent(fleetEventId);
+      const speed = fleetSpeed(ships, driveTechs, shipStatsMap);
+      const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
+      const duration = travelTime(targetCoords, origin, speed, universeSpeed);
+
+      const now = new Date();
+      const departureTime = new Date(now.getTime() + delayMs);
+      const returnTime = new Date(departureTime.getTime() + duration * 1000);
+
+      await db
+        .update(fleetEvents)
+        .set({
+          phase: 'return',
+          departureTime,
+          arrivalTime: returnTime,
+          mineraiCargo: String(mineraiCargo),
+          siliciumCargo: String(siliciumCargo),
+          hydrogeneCargo: String(hydrogeneCargo),
+          ships,
+        })
+        .where(eq(fleetEvents.id, fleetEventId));
+
+      await fleetReturnQueue.add(
+        'return',
+        { fleetEventId },
+        { delay: delayMs + duration * 1000, jobId: `fleet-return-${fleetEventId}` },
       );
     },
 
