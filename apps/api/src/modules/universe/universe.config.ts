@@ -3,7 +3,7 @@ export const UNIVERSE_CONFIG = {
   speed: 1,
   galaxies: 9,
   systems: 499,
-  positions: 15,
+  positions: 16,
   maxPlanetsPerPlayer: 9,
   debrisRatio: 0.3,
   lootRatio: 0.5,

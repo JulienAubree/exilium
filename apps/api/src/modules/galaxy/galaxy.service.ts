@@ -22,7 +22,14 @@ export function createGalaxyService(db: Database) {
         .leftJoin(alliances, eq(alliances.id, allianceMembers.allianceId))
         .where(and(eq(planets.galaxy, galaxy), eq(planets.system, system)));
 
-      const slots: (typeof systemPlanets[number] | null)[] = Array(15).fill(null);
+      const BELT_POSITIONS = [8, 16];
+      const slots: (typeof systemPlanets[number] | { type: 'belt'; position: number } | null)[] = Array(16).fill(null);
+
+      // Mark belt positions
+      for (const pos of BELT_POSITIONS) {
+        slots[pos - 1] = { type: 'belt', position: pos };
+      }
+
       for (const planet of systemPlanets) {
         // Only show planetClassId for the current user's own planets
         if (planet.userId !== currentUserId) {

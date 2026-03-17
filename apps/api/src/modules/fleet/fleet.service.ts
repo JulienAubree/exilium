@@ -28,11 +28,12 @@ interface SendFleetInput {
   targetGalaxy: number;
   targetSystem: number;
   targetPosition: number;
-  mission: 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
+  mission: 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle' | 'mine' | 'pirate';
   ships: Record<string, number>;
   mineraiCargo?: number;
   siliciumCargo?: number;
   hydrogeneCargo?: number;
+  pveMissionId?: string;
 }
 
 function buildShipStatsMap(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): Record<string, ShipStats> {
@@ -533,6 +534,25 @@ export function createFleetService(
       hydrogeneCargo: number,
     ) {
       const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+
+      // Check if position is an asteroid belt (cannot be colonized)
+      const BELT_POSITIONS = [8, 16];
+      if (BELT_POSITIONS.includes(event.targetPosition)) {
+        if (messageService) {
+          await messageService.createSystemMessage(
+            event.userId,
+            'colonization',
+            `Colonisation échouée ${coords}`,
+            `La position ${coords} est une ceinture d'astéroïdes et ne peut pas être colonisée. Votre flotte fait demi-tour.`,
+          );
+        }
+        await this.scheduleReturn(
+          event.id, event.originPlanetId,
+          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
+        );
+        return { mission: 'colonize', success: false, reason: 'belt_position' };
+      }
 
       // Check if position is free
       const [existing] = await db
