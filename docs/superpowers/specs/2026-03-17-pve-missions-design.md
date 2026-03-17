@@ -111,16 +111,14 @@ The fleet system has two phases (outbound/return). Rather than adding a third "e
 Extraction duration: `max(5, 15 - centerLevel) minutes`.
 
 ### Deposit Concurrency
-Shared deposits require atomic extraction. Use an atomic SQL update:
+Shared deposits require atomic extraction. Use an atomic SQL update on the normalized `asteroid_deposits` table:
 ```sql
-UPDATE asteroid_belts SET deposits = jsonb_set(
-  deposits, '{<index>,remainingQuantity}',
-  to_jsonb(GREATEST(0, (deposits-><index>->>'remainingQuantity')::numeric - <extracted>))
-) WHERE galaxy = $1 AND system = $2 AND position = $3
-  AND (deposits-><index>->>'remainingQuantity')::numeric >= <extracted>
-RETURNING deposits-><index>->>'remainingQuantity' as new_remaining
+UPDATE asteroid_deposits
+SET remaining_quantity = GREATEST(0, remaining_quantity - $1)
+WHERE id = $2 AND remaining_quantity >= $1
+RETURNING remaining_quantity
 ```
-If the WHERE clause fails (deposit already depleted), the fleet returns empty. This is a simple, race-condition-free approach.
+If the WHERE clause fails (deposit already depleted or insufficient remaining), the fleet returns empty. This is a simple, race-condition-free approach.
 
 ### Prospector Ship
 Already implemented in codebase. Actual stats from code:
@@ -200,6 +198,18 @@ If the player wins but has insufficient cargo capacity for all loot, loot is **c
 - Research Lab level 1
 
 Intentionally low — PvE should be accessible early to serve as a fleet tutorial for casuals.
+
+### Cost & Construction
+
+| Stat | Value |
+|------|-------|
+| baseCostMinerai | 5,000 |
+| baseCostSilicium | 3,000 |
+| baseCostHydrogene | 1,000 |
+| costFactor | 1.8 |
+| baseTime | 300 (seconds) |
+
+Cost factor 1.8 makes early levels cheap (accessible right after shipyard 3) but later levels increasingly expensive — consistent with the principle that the building is attractive but not mandatory. Level 1 costs 5k/3k/1k, level 5 costs ~52k/32k/10k, level 7 costs ~170k/102k/34k.
 
 ### Tutorial Disguise
 - Lv 1-2: player learns mining (no risk, simple send-fleet-to-belt mechanic).
@@ -344,13 +354,23 @@ Enemy composition visible before dispatch transforms risk into **calculation, no
 
 **`fleet_events` table:** add optional `pveMissionId` (uuid, FK to `pve_missions`, nullable) for linking fleet events to PvE missions.
 
-**`building_definitions` seed:** add `missionCenter` building with prerequisites (shipyard 3, researchLab 1).
+**`building_definitions` seed:** add `missionCenter` building with cost/time values and prerequisites (shipyard 3, researchLab 1).
+
+**`building.router.ts`:** add `'missionCenter'` to the `buildingIds` validation array.
+
+**`game-engine/constants/buildings.ts`:** add `'missionCenter'` to `BuildingId` type union and `BUILDINGS` record with full `BuildingDefinition` (baseCost, costFactor, baseTime, prerequisites).
 
 **`ship_prerequisites` seed:** update `prospector` prerequisites to require missionCenter lv1, shipyard lv2.
 
-**`game-engine` constants:**
-- `SHIPS.prospector.prerequisites`: add `missionCenter` level 1, update shipyard to level 2
-- `BuildingId` type (if used): add `'missionCenter'`
+**`game-engine/constants/ships.ts`:** update `SHIPS.prospector.prerequisites` to add `missionCenter` level 1, change shipyard to level 2.
+
+**Planet type seeds** (`seed-game-config.ts`): update `temperate` planet type positions from `[7, 8, 9]` to `[7, 9]` (position 8 is now a belt).
+
+**Colonization guard:** add explicit check in `processColonize` (fleet.service.ts) to reject positions 8 and 16 with error "Cannot colonize asteroid belt positions."
+
+**`fleet_events` table:** add nullable `metadata` column (JSONB, default null) for storing PvE-specific data (bonus ships on combat victory). Also add optional `pveMissionId` (uuid, FK to `pve_missions`, nullable).
+
+**`fleet_mission` enum migration:** `ALTER TYPE fleet_mission ADD VALUE 'mine'; ALTER TYPE fleet_mission ADD VALUE 'pirate';` — this must be a separate, non-transactional migration executed before the table creation migrations (Postgres enum additions cannot be rolled back inside a transaction).
 
 ### New Backend Components
 
