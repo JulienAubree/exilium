@@ -421,8 +421,9 @@ async function seed() {
 
   // 13. Pirate templates
   for (const pt of PIRATE_TEMPLATES) {
+    const { id, ...ptData } = pt;
     await db.insert(pirateTemplates).values(pt)
-      .onConflictDoUpdate({ target: pirateTemplates.id, set: { ...pt } });
+      .onConflictDoUpdate({ target: pirateTemplates.id, set: ptData });
   }
   console.log(`  ✓ ${PIRATE_TEMPLATES.length} pirate templates`);
 

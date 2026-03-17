@@ -155,11 +155,14 @@ export function createFleetService(
         }
       }
 
-      // Validate: mine requires at least 1 prospector
+      // Validate: mine requires at least 1 prospector and must target belt position
       if (input.mission === 'mine') {
         const prospectorCount = input.ships['prospector'] ?? 0;
         if (prospectorCount === 0) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Mining requires at least 1 prospector' });
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 prospecteur' });
+        }
+        if (!BELT_POSITIONS.includes(input.targetPosition as 8 | 16)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Les missions de minage ciblent uniquement les ceintures d\'astéroïdes (positions 8 ou 16)' });
         }
       }
 
@@ -227,8 +230,17 @@ export function createFleetService(
         })
         .returning();
 
-      // Mark PvE mission as in_progress
+      // Mark PvE mission as in_progress (with ownership check)
       if (input.pveMissionId && pveService) {
+        const [pveMission] = await db.select().from(pveMissions)
+          .where(and(eq(pveMissions.id, input.pveMissionId), eq(pveMissions.userId, userId)))
+          .limit(1);
+        if (!pveMission) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Mission non trouvée ou non autorisée' });
+        }
+        if (pveMission.status !== 'available') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Mission déjà en cours ou terminée' });
+        }
         await pveService.startMission(input.pveMissionId);
       }
 
@@ -490,10 +502,22 @@ export function createFleetService(
 
         const config = await gameConfigService.getFullConfig();
         const shipStatsMap = buildShipStatsMap(config);
-        const cargoCapacity = totalCargoCapacity(ships, shipStatsMap);
+        // Pass pre-combat cargo, then re-cap loot based on surviving fleet
+        const preCargoCapacity = totalCargoCapacity(ships, shipStatsMap);
         const result = await pirateService.processPirateArrival(
-          ships, playerTechs, params.templateId, cargoCapacity,
+          ships, playerTechs, params.templateId, preCargoCapacity,
         );
+        // Re-cap loot to surviving fleet's actual cargo capacity
+        if (result.outcome === 'attacker') {
+          const survivingCargo = totalCargoCapacity(result.survivingShips, shipStatsMap);
+          const totalLoot = result.loot.minerai + result.loot.silicium + result.loot.hydrogene;
+          if (totalLoot > survivingCargo) {
+            const ratio = survivingCargo / totalLoot;
+            result.loot.minerai = Math.floor(result.loot.minerai * ratio);
+            result.loot.silicium = Math.floor(result.loot.silicium * ratio);
+            result.loot.hydrogene = Math.floor(result.loot.hydrogene * ratio);
+          }
+        }
 
         await db.update(fleetEvents).set({
           ships: result.survivingShips,
@@ -548,6 +572,8 @@ export function createFleetService(
         .where(eq(planets.id, event.originPlanetId))
         .limit(1);
 
+      // Merge returning ships + PvE bonus ships into a single atomic update
+      const meta = event.metadata as { bonusShips?: Record<string, number> } | null;
       const originShips = await this.getOrCreateShips(event.originPlanetId);
       const shipUpdates: Record<string, number> = {};
       for (const [shipId, count] of Object.entries(ships)) {
@@ -556,25 +582,15 @@ export function createFleetService(
           shipUpdates[shipId] = current + count;
         }
       }
+      if (meta?.bonusShips) {
+        for (const [shipId, count] of Object.entries(meta.bonusShips)) {
+          shipUpdates[shipId] = (shipUpdates[shipId] ?? (originShips[shipId as keyof typeof originShips] ?? 0) as number) + count;
+        }
+      }
       await db
         .update(planetShips)
         .set(shipUpdates)
         .where(eq(planetShips.planetId, event.originPlanetId));
-
-      // Credit PvE bonus ships from metadata
-      const meta = event.metadata as { bonusShips?: Record<string, number> } | null;
-      if (meta?.bonusShips) {
-        const currentShips = await this.getOrCreateShips(event.originPlanetId);
-        const bonusUpdates: Record<string, number> = {};
-        for (const [shipId, count] of Object.entries(meta.bonusShips)) {
-          const current = (currentShips[shipId as keyof typeof currentShips] ?? 0) as number;
-          bonusUpdates[shipId] = current + count;
-        }
-        if (Object.keys(bonusUpdates).length > 0) {
-          await db.update(planetShips).set(bonusUpdates)
-            .where(eq(planetShips.planetId, event.originPlanetId));
-        }
-      }
 
       const mineraiCargo = Number(event.mineraiCargo);
       const siliciumCargo = Number(event.siliciumCargo);

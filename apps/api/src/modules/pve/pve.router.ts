@@ -19,7 +19,9 @@ export function createPveRouter(
         galaxy: z.number().int().min(1).max(9),
         system: z.number().int().min(1).max(499),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        const centerLevel = await pveService.getMissionCenterLevel(ctx.userId!);
+        if (centerLevel === 0) return {};
         return asteroidBeltService.getSystemDeposits(input.galaxy, input.system);
       }),
   });
