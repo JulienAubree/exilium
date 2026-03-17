@@ -35,6 +35,7 @@ const BUILDING_FLAVOR: Record<BuildingId, string> = {
   storageMinerai: "De vastes entrepots blindes permettent de stocker des quantites croissantes de minerai en toute securite.",
   storageSilicium: "Ces chambres a environnement controle preservent le silicium dans des conditions optimales.",
   storageHydrogene: "Des reservoirs cryogeniques haute pression maintiennent l'hydrogene a l'etat liquide pour un stockage maximal.",
+  missionCenter: "Le centre de missions coordonne les operations PvE, deverrouillant l'acces aux missions d'extraction et de combat contre les pirates.",
 };
 
 const RESEARCH_FLAVOR: Record<ResearchId, string> = {
