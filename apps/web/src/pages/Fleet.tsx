@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { cn } from '@/lib/utils';
 
-type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle';
+type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle' | 'mine' | 'pirate';
 
 const MISSION_LABELS: Record<Mission, string> = {
   transport: 'Transporter',
@@ -16,6 +16,8 @@ const MISSION_LABELS: Record<Mission, string> = {
   attack: 'Attaquer',
   colonize: 'Coloniser',
   recycle: 'Recycler',
+  mine: 'Miner',
+  pirate: 'Pirate',
 };
 
 const MISSION_ICONS: Record<Mission, string> = {
@@ -25,11 +27,13 @@ const MISSION_ICONS: Record<Mission, string> = {
   attack: 'A',
   colonize: 'C',
   recycle: 'R',
+  mine: 'M',
+  pirate: 'P',
 };
 
 const COMBAT_SHIPS = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'];
 
-const DANGEROUS_MISSIONS: Mission[] = ['attack', 'colonize'];
+const DANGEROUS_MISSIONS: Mission[] = ['attack', 'colonize', 'pirate'];
 
 function getMissionValidationError(mission: Mission, selectedShips: Record<string, number>): string | null {
   const hasShip = (id: string) => (selectedShips[id] ?? 0) > 0;
@@ -49,6 +53,9 @@ function getMissionValidationError(mission: Mission, selectedShips: Record<strin
     }
     case 'colonize':
       if (!hasShip('colonyShip')) return 'La mission Coloniser nécessite au moins 1 vaisseau de colonisation.';
+      return null;
+    case 'mine':
+      if (!hasShip('prospector')) return 'La mission Miner nécessite au moins 1 prospecteur.';
       return null;
     default:
       return null;
@@ -96,6 +103,7 @@ export default function Fleet() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [prefillWarning, setPrefillWarning] = useState<string | null>(null);
   const [confirmSend, setConfirmSend] = useState(false);
+  const [pveMissionId, setPveMissionId] = useState<string | null>(null);
 
   const { data: ships } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -114,6 +122,9 @@ export default function Fleet() {
       system: Number(searchParams.get('system')) || 1,
       position: Number(searchParams.get('position')) || 1,
     };
+
+    const paramPveMissionId = searchParams.get('pveMissionId');
+    if (paramPveMissionId) setPveMissionId(paramPveMissionId);
 
     prefillRef.current = data;
     setTarget({ galaxy: data.galaxy, system: data.system, position: data.position });
@@ -134,6 +145,16 @@ export default function Fleet() {
       setSelectedShips({ recycler: recyclerData.count });
     }
 
+    if (prefillRef.current.mission === 'mine') {
+      const prospectorData = ships.find((s) => s.id === 'prospector');
+      if (!prospectorData || prospectorData.count === 0) {
+        setPrefillWarning('Aucun prospecteur disponible sur cette planète.');
+        prefillRef.current = null;
+        return;
+      }
+      setSelectedShips({ prospector: prospectorData.count });
+    }
+
     setStep(2);
     prefillRef.current = null;
   }, [ships]);
@@ -146,6 +167,7 @@ export default function Fleet() {
       setSelectedShips({});
       setCargo({ minerai: 0, silicium: 0, hydrogene: 0 });
       setConfirmSend(false);
+      setPveMissionId(null);
     },
   });
 
@@ -162,6 +184,7 @@ export default function Fleet() {
       mineraiCargo: cargo.minerai,
       siliciumCargo: cargo.silicium,
       hydrogeneCargo: cargo.hydrogene,
+      ...(pveMissionId ? { pveMissionId } : {}),
     });
   };
 
@@ -249,7 +272,7 @@ export default function Fleet() {
               <Input
                 type="number"
                 min={1}
-                max={15}
+                max={16}
                 value={target.position}
                 onChange={(e) => setTarget({ ...target, position: Number(e.target.value) || 1 })}
                 className="h-8 text-xs"
