@@ -28,6 +28,10 @@ import { createPlayerAdminService } from '../modules/admin/player-admin.service.
 import { createPlayerAdminRouter } from '../modules/admin/player-admin.router.js';
 import { createGameEventService } from '../modules/game-event/game-event.service.js';
 import { createGameEventRouter } from '../modules/game-event/game-event.router.js';
+import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
+import { createPirateService } from '../modules/pve/pirate.service.js';
+import { createPveService } from '../modules/pve/pve.service.js';
+import { createPveRouter } from '../modules/pve/pve.router.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 import type Redis from 'ioredis';
@@ -45,7 +49,10 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const galaxyService = createGalaxyService(db);
   const messageService = createMessageService(db, redis);
   const rankingService = createRankingService(db, gameConfigService);
-  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService);
+  const asteroidBeltService = createAsteroidBeltService(db);
+  const pirateService = createPirateService(db, gameConfigService);
+  const pveService = createPveService(db, asteroidBeltService, pirateService);
+  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService, pveService, asteroidBeltService, pirateService);
   const allianceService = createAllianceService(db, messageService);
   const playerAdminService = createPlayerAdminService(db);
   const gameEventService = createGameEventService(db);
@@ -64,6 +71,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const gameConfigRouter = createGameConfigRouter(gameConfigService, adminProcedure);
   const playerAdminRouter = createPlayerAdminRouter(playerAdminService, adminProcedure);
   const gameEventRouter = createGameEventRouter(gameEventService);
+  const pveRouter = createPveRouter(pveService, asteroidBeltService);
 
   return router({
     health: publicProcedure.query(() => ({
@@ -84,6 +92,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     gameConfig: gameConfigRouter,
     playerAdmin: playerAdminRouter,
     gameEvent: gameEventRouter,
+    pve: pveRouter,
   });
 }
 
