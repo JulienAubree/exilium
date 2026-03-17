@@ -12,6 +12,10 @@ async function migrate() {
   await db.execute(sql`BEGIN`);
 
   try {
+    // Step 0: Drop level_column from building_definitions (still exists on VPS)
+    console.log('  Step 0: Dropping level_column from building_definitions...');
+    await db.execute(sql`ALTER TABLE building_definitions DROP COLUMN IF EXISTS level_column`);
+
     // Step 1: Replace shipyard with commandCenter (insert new, migrate refs, delete old)
     console.log('  Step 1: Replacing shipyard → commandCenter...');
 
@@ -67,9 +71,7 @@ async function migrate() {
       `));
     }
 
-    // Step 3b: Remove levelColumn from buildingDefinitions
-    console.log('  Step 3b: Removing level_column from building_definitions...');
-    await db.execute(sql`ALTER TABLE building_definitions DROP COLUMN IF EXISTS level_column`);
+    // Step 3b: (level_column already dropped in Step 0)
 
     // Step 3c: Add new columns to buildingDefinitions
     console.log('  Step 3c: Adding new columns to building_definitions...');
