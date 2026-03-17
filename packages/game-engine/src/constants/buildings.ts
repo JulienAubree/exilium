@@ -29,7 +29,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDefinition> = {
     description: 'Produit du minerai, ressource de base.',
     baseCost: { minerai: 60, silicium: 15, hydrogene: 0 },
     costFactor: 1.5,
-    baseTime: 60,
+    baseTime: 45,
     prerequisites: [],
   },
   siliciumMine: {
@@ -38,7 +38,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDefinition> = {
     description: 'Produit du silicium.',
     baseCost: { minerai: 48, silicium: 24, hydrogene: 0 },
     costFactor: 1.6,
-    baseTime: 60,
+    baseTime: 45,
     prerequisites: [],
   },
   hydrogeneSynth: {
@@ -47,7 +47,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDefinition> = {
     description: "Produit de l'hydrogène.",
     baseCost: { minerai: 225, silicium: 75, hydrogene: 0 },
     costFactor: 1.5,
-    baseTime: 60,
+    baseTime: 45,
     prerequisites: [],
   },
   solarPlant: {
@@ -56,7 +56,7 @@ export const BUILDINGS: Record<BuildingId, BuildingDefinition> = {
     description: "Produit de l'énergie.",
     baseCost: { minerai: 75, silicium: 30, hydrogene: 0 },
     costFactor: 1.5,
-    baseTime: 60,
+    baseTime: 45,
     prerequisites: [],
   },
   robotics: {

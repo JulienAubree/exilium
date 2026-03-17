@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { buildingCost, buildingTime } from './building-cost.js';
 
-const mineraiMineDef = { baseCost: { minerai: 60, silicium: 15, hydrogene: 0 }, costFactor: 1.5 };
-const siliciumMineDef = { baseCost: { minerai: 48, silicium: 24, hydrogene: 0 }, costFactor: 1.6 };
-const roboticsDef = { baseCost: { minerai: 400, silicium: 120, hydrogene: 200 }, costFactor: 2 };
-const hydrogeneSynthDef = { baseCost: { minerai: 225, silicium: 75, hydrogene: 0 }, costFactor: 1.5 };
+const mineraiMineDef = { baseCost: { minerai: 60, silicium: 15, hydrogene: 0 }, costFactor: 1.5, baseTime: 45 };
+const siliciumMineDef = { baseCost: { minerai: 48, silicium: 24, hydrogene: 0 }, costFactor: 1.6, baseTime: 45 };
+const roboticsDef = { baseCost: { minerai: 400, silicium: 120, hydrogene: 200 }, costFactor: 2, baseTime: 60 };
+const hydrogeneSynthDef = { baseCost: { minerai: 225, silicium: 75, hydrogene: 0 }, costFactor: 1.5, baseTime: 45 };
 
 describe('buildingCost', () => {
   it('minerai mine level 1 costs 60/15/0', () => {
@@ -44,28 +44,28 @@ describe('buildingCost', () => {
 });
 
 describe('buildingTime', () => {
-  it('minerai mine level 1, robotics 0 = 108s', () => {
+  it('minerai mine level 1, robotics 0 = 45s', () => {
     const time = buildingTime(mineraiMineDef, 1, 0);
-    expect(time).toBe(108);
+    expect(time).toBe(45);
   });
 
-  it('minerai mine level 1, robotics 5 = 18s', () => {
+  it('minerai mine level 1, robotics 5 = 7s', () => {
     const time = buildingTime(mineraiMineDef, 1, 5);
-    expect(time).toBe(18);
+    expect(time).toBe(7);
   });
 
   it('minerai mine level 10, robotics 0', () => {
     const time = buildingTime(mineraiMineDef, 10, 0);
-    expect(time).toBe(4150);
+    expect(time).toBe(1729);
   });
 
-  it('robotics level 3, robotics 2', () => {
+  it('robotics level 3, robotics 2 = 80s', () => {
     const time = buildingTime(roboticsDef, 3, 2);
-    expect(time).toBe(998);
+    expect(time).toBe(80);
   });
 
   it('minimum time is 1 second', () => {
     const time = buildingTime(mineraiMineDef, 1, 1000);
-    expect(time).toBeGreaterThanOrEqual(1);
+    expect(time).toBe(1);
   });
 });

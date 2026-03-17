@@ -65,7 +65,7 @@ interface LevelRow {
 }
 
 function computeLevelRows(
-  building: { baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number },
+  building: { baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; baseTime: number },
   productionConf: { baseProduction: number; exponentBase: number; energyConsumption: number | null; storageBase: number | null } | null,
   isStorage: boolean,
 ): LevelRow[] {
@@ -75,7 +75,7 @@ function computeLevelRows(
     const costMinerai = Math.floor(building.baseCost.minerai * factor);
     const costSilicium = Math.floor(building.baseCost.silicium * factor);
     const costHydrogene = Math.floor(building.baseCost.hydrogene * factor);
-    const buildTime = Math.max(1, Math.floor(((costMinerai + costSilicium) / 2500) * 3600));
+    const buildTime = Math.max(1, Math.floor(building.baseTime * Math.pow(building.costFactor, level - 1)));
 
     const row: LevelRow = { level, costMinerai, costSilicium, costHydrogene, buildTime };
 

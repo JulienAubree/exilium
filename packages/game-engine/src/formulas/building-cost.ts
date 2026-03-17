@@ -7,6 +7,7 @@ export interface ResourceCost {
 export interface BuildingCostDef {
   baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
+  baseTime: number;
 }
 
 /**
@@ -24,11 +25,10 @@ export function buildingCost(def: BuildingCostDef, level: number): ResourceCost 
 
 /**
  * Construction time in seconds.
- * Formula: (mineraiCost + siliciumCost) / (2500 * (1 + roboticsLevel)) * 3600
+ * Formula: baseTime * costFactor^(level-1) / (1 + roboticsLevel)
  * Minimum 1 second.
  */
 export function buildingTime(def: BuildingCostDef, level: number, roboticsLevel: number): number {
-  const cost = buildingCost(def, level);
-  const seconds = Math.floor(((cost.minerai + cost.silicium) / (2500 * (1 + roboticsLevel))) * 3600);
+  const seconds = Math.floor(def.baseTime * Math.pow(def.costFactor, level - 1) / (1 + roboticsLevel));
   return Math.max(1, seconds);
 }
