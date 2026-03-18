@@ -39,9 +39,12 @@ function getMissionValidationError(mission: Mission, selectedShips: Record<strin
   const hasShip = (id: string) => (selectedShips[id] ?? 0) > 0;
 
   switch (mission) {
-    case 'spy':
+    case 'spy': {
+      const hasNonProbe = Object.entries(selectedShips).some(([id, count]) => count > 0 && id !== 'espionageProbe');
       if (!hasShip('espionageProbe')) return 'La mission Espionner nécessite au moins 1 sonde d\'espionnage.';
+      if (hasNonProbe) return 'La mission Espionner n\'autorise que les sondes d\'espionnage.';
       return null;
+    }
     case 'attack':
       if (!COMBAT_SHIPS.some(hasShip)) return 'La mission Attaquer nécessite au moins 1 vaisseau de combat.';
       return null;
@@ -51,9 +54,12 @@ function getMissionValidationError(mission: Mission, selectedShips: Record<strin
       if (hasNonRecycler) return 'La mission Recycler n\'autorise que les recycleurs.';
       return null;
     }
-    case 'colonize':
+    case 'colonize': {
+      const hasNonColonyShip = Object.entries(selectedShips).some(([id, count]) => count > 0 && id !== 'colonyShip');
       if (!hasShip('colonyShip')) return 'La mission Coloniser nécessite au moins 1 vaisseau de colonisation.';
+      if (hasNonColonyShip) return 'La mission Coloniser n\'autorise que les vaisseaux de colonisation.';
       return null;
+    }
     case 'mine':
       if (!hasShip('prospector')) return 'La mission Miner nécessite au moins 1 prospecteur.';
       return null;

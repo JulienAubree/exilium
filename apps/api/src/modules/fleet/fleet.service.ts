@@ -155,6 +155,24 @@ export function createFleetService(
         }
       }
 
+      // Validate: spy mission requires only espionage probes
+      if (input.mission === 'spy') {
+        for (const [shipType, count] of Object.entries(input.ships)) {
+          if (count > 0 && shipType !== 'espionageProbe') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seules les sondes d\'espionnage peuvent être envoyées en mission espionnage' });
+          }
+        }
+      }
+
+      // Validate: colonize mission requires only colony ships
+      if (input.mission === 'colonize') {
+        for (const [shipType, count] of Object.entries(input.ships)) {
+          if (count > 0 && shipType !== 'colonyShip') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seuls les vaisseaux de colonisation peuvent être envoyés en mission colonisation' });
+          }
+        }
+      }
+
       // Validate: mine requires at least 1 prospector and must target belt position
       if (input.mission === 'mine') {
         const prospectorCount = input.ships['prospector'] ?? 0;
