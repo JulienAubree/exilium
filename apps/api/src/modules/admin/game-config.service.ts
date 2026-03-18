@@ -50,6 +50,7 @@ export interface BuildingConfig {
   baseTime: number;
   buildTimeReductionFactor: number | null;
   reducesTimeForCategory: string | null;
+  flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
   prerequisites: { buildingId: string; level: number }[];
@@ -61,6 +62,8 @@ export interface ResearchConfig {
   description: string;
   baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
+  flavorText: string | null;
+  effectDescription: string | null;
   levelColumn: string;
   categoryId: string | null;
   sortOrder: number;
@@ -83,6 +86,7 @@ export interface ShipConfig {
   weapons: number;
   shield: number;
   armor: number;
+  flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
   prerequisites: {
@@ -101,6 +105,7 @@ export interface DefenseConfig {
   shield: number;
   armor: number;
   maxPerPlanet: number | null;
+  flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
   prerequisites: {
@@ -220,6 +225,7 @@ export function createGameConfigService(db: Database) {
         baseTime: b.baseTime,
         buildTimeReductionFactor: b.buildTimeReductionFactor,
         reducesTimeForCategory: b.reducesTimeForCategory,
+        flavorText: b.flavorText ?? null,
         categoryId: b.categoryId,
         sortOrder: b.sortOrder,
         prerequisites: buildingPrereqRows
@@ -238,6 +244,8 @@ export function createGameConfigService(db: Database) {
         description: r.description,
         baseCost: { minerai: r.baseCostMinerai, silicium: r.baseCostSilicium, hydrogene: r.baseCostHydrogene },
         costFactor: r.costFactor,
+        flavorText: r.flavorText ?? null,
+        effectDescription: r.effectDescription ?? null,
         levelColumn: r.levelColumn,
         categoryId: r.categoryId,
         sortOrder: r.sortOrder,
@@ -265,6 +273,7 @@ export function createGameConfigService(db: Database) {
         weapons: s.weapons,
         shield: s.shield,
         armor: s.armor,
+        flavorText: s.flavorText ?? null,
         categoryId: s.categoryId,
         sortOrder: s.sortOrder,
         prerequisites: {
@@ -288,6 +297,7 @@ export function createGameConfigService(db: Database) {
         shield: d.shield,
         armor: d.armor,
         maxPerPlanet: d.maxPerPlanet,
+        flavorText: d.flavorText ?? null,
         categoryId: d.categoryId,
         sortOrder: d.sortOrder,
         prerequisites: {
@@ -397,6 +407,7 @@ export function createGameConfigService(db: Database) {
       baseTime?: number;
       buildTimeReductionFactor?: number | null;
       reducesTimeForCategory?: string | null;
+      flavorText?: string | null;
       categoryId?: string | null;
       sortOrder?: number;
     }) {
@@ -411,6 +422,7 @@ export function createGameConfigService(db: Database) {
         baseTime: data.baseTime ?? 60,
         buildTimeReductionFactor: data.buildTimeReductionFactor ?? null,
         reducesTimeForCategory: data.reducesTimeForCategory ?? null,
+        flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
       });
@@ -472,6 +484,7 @@ export function createGameConfigService(db: Database) {
       baseTime: number;
       buildTimeReductionFactor: number | null;
       reducesTimeForCategory: string | null;
+      flavorText: string | null;
       categoryId: string | null;
       sortOrder: number;
     }>) {
@@ -495,6 +508,8 @@ export function createGameConfigService(db: Database) {
       baseCostSilicium?: number;
       baseCostHydrogene?: number;
       costFactor?: number;
+      flavorText?: string | null;
+      effectDescription?: string | null;
       levelColumn: string;
       categoryId?: string | null;
       sortOrder?: number;
@@ -507,6 +522,8 @@ export function createGameConfigService(db: Database) {
         baseCostSilicium: data.baseCostSilicium ?? 0,
         baseCostHydrogene: data.baseCostHydrogene ?? 0,
         costFactor: data.costFactor ?? 2,
+        flavorText: data.flavorText ?? null,
+        effectDescription: data.effectDescription ?? null,
         levelColumn: data.levelColumn,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
@@ -556,6 +573,8 @@ export function createGameConfigService(db: Database) {
       baseCostSilicium: number;
       baseCostHydrogene: number;
       costFactor: number;
+      flavorText: string | null;
+      effectDescription: string | null;
       categoryId: string | null;
       sortOrder: number;
     }>) {
@@ -591,6 +610,7 @@ export function createGameConfigService(db: Database) {
       weapons?: number;
       shield?: number;
       armor?: number;
+      flavorText?: string | null;
       categoryId?: string | null;
       sortOrder?: number;
     }) {
@@ -609,6 +629,7 @@ export function createGameConfigService(db: Database) {
         weapons: data.weapons ?? 0,
         shield: data.shield ?? 0,
         armor: data.armor ?? 0,
+        flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
       });
@@ -642,6 +663,7 @@ export function createGameConfigService(db: Database) {
       weapons: number;
       shield: number;
       armor: number;
+      flavorText: string | null;
       categoryId: string | null;
       sortOrder: number;
     }>) {
@@ -674,6 +696,7 @@ export function createGameConfigService(db: Database) {
       shield?: number;
       armor?: number;
       maxPerPlanet?: number | null;
+      flavorText?: string | null;
       categoryId?: string | null;
       sortOrder?: number;
     }) {
@@ -689,6 +712,7 @@ export function createGameConfigService(db: Database) {
         shield: data.shield ?? 0,
         armor: data.armor ?? 0,
         maxPerPlanet: data.maxPerPlanet ?? null,
+        flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
       });
@@ -719,6 +743,7 @@ export function createGameConfigService(db: Database) {
       shield: number;
       armor: number;
       maxPerPlanet: number | null;
+      flavorText: string | null;
       categoryId: string | null;
       sortOrder: number;
     }>) {
