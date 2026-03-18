@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const envSchema = z.object({
   DATABASE_URL: z.string().default('postgresql://ogame:ogame@localhost:5432/ogame'),
@@ -8,6 +13,7 @@ const envSchema = z.object({
   REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
   API_PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  ASSETS_DIR: z.string().default(path.resolve(__dirname, '../../../../apps/web/public/assets')),
 });
 
 export const env = envSchema.parse(process.env);
