@@ -149,7 +149,7 @@ export const SHIPS: Record<ShipId, ShipDefinition> = {
     id: 'explorer',
     name: 'Explorateur',
     description: 'Vaisseau d\'exploration pour découvrir de nouveaux systèmes.',
-    cost: { minerai: 5000, silicium: 2500, hydrogene: 500 },
+    cost: { minerai: 1000, silicium: 250, hydrogene: 0 },
     countColumn: 'explorer',
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 1 }],
