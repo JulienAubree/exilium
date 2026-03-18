@@ -4,7 +4,7 @@ export interface TutorialQuest {
   title: string;
   narrativeText: string;
   condition: {
-    type: 'building_level' | 'ship_count' | 'mission_complete';
+    type: 'building_level' | 'ship_count' | 'mission_complete' | 'research_level' | 'fleet_return';
     targetId: string;
     targetValue: number;
   };
@@ -63,49 +63,81 @@ export const TUTORIAL_QUESTS: TutorialQuest[] = [
   {
     id: 'quest_7',
     order: 7,
+    title: 'La science avant tout',
+    narrativeText: 'La recherche est la clé du progrès. Construisez un laboratoire de recherche pour débloquer les technologies avancées.',
+    condition: { type: 'building_level', targetId: 'researchLab', targetValue: 1 },
+    reward: { minerai: 200, silicium: 400, hydrogene: 200 },
+  },
+  {
+    id: 'quest_8',
+    order: 8,
+    title: 'Maîtrise énergétique',
+    narrativeText: 'Avant de concevoir des moteurs, nous devons maîtriser les fondamentaux de l\'énergie. Recherchez la Technologie Énergie.',
+    condition: { type: 'research_level', targetId: 'energyTech', targetValue: 1 },
+    reward: { minerai: 150, silicium: 350, hydrogene: 200 },
+  },
+  {
+    id: 'quest_9',
+    order: 9,
+    title: 'Premiers moteurs',
+    narrativeText: 'Nos scientifiques peuvent désormais concevoir des moteurs à combustion. Cette propulsion sera essentielle pour nos futurs vaisseaux.',
+    condition: { type: 'research_level', targetId: 'combustion', targetValue: 1 },
+    reward: { minerai: 400, silicium: 200, hydrogene: 300 },
+  },
+  {
+    id: 'quest_10',
+    order: 10,
     title: 'Le chantier spatial',
     narrativeText: 'Commandant, il est temps de conquérir les étoiles. Un chantier spatial nous permettra de construire nos premiers vaisseaux.',
     condition: { type: 'building_level', targetId: 'shipyard', targetValue: 1 },
     reward: { minerai: 500, silicium: 300, hydrogene: 150 },
   },
   {
-    id: 'quest_8',
-    order: 8,
+    id: 'quest_11',
+    order: 11,
     title: 'Premier vol',
     narrativeText: 'Le moment est historique. Construisez votre premier Explorateur et ouvrez la voie vers les systèmes voisins.',
     condition: { type: 'ship_count', targetId: 'explorer', targetValue: 1 },
-    reward: { minerai: 750, silicium: 500, hydrogene: 250 },
-  },
-  {
-    id: 'quest_9',
-    order: 9,
-    title: 'Agrandir le chantier',
-    narrativeText: 'Pour construire des vaisseaux plus avancés, nous devons agrandir notre chantier spatial au niveau 2.',
-    condition: { type: 'building_level', targetId: 'shipyard', targetValue: 2 },
-    reward: { minerai: 1200, silicium: 800, hydrogene: 400 },
-  },
-  {
-    id: 'quest_10',
-    order: 10,
-    title: 'Centre de missions',
-    narrativeText: 'Un centre de missions nous permettra de détecter les opportunités dans notre système : gisements de ressources et menaces pirates.',
-    condition: { type: 'building_level', targetId: 'missionCenter', targetValue: 1 },
-    reward: { minerai: 2000, silicium: 1200, hydrogene: 500 },
-  },
-  {
-    id: 'quest_11',
-    order: 11,
-    title: 'Premier Prospecteur',
-    narrativeText: 'Le Prospecteur est un vaisseau minier spécialisé. Construisez-en un pour exploiter les gisements détectés par votre centre de missions.',
-    condition: { type: 'ship_count', targetId: 'prospector', targetValue: 1 },
-    reward: { minerai: 1500, silicium: 1000, hydrogene: 500 },
+    reward: { minerai: 600, silicium: 350, hydrogene: 150 },
   },
   {
     id: 'quest_12',
     order: 12,
+    title: 'Cargaison abandonnée',
+    narrativeText: 'Nos scanners ont détecté un vaisseau de transport abandonné dans la ceinture d\'astéroïdes en [{galaxy}:{system}:8]. Envoyez votre explorateur récupérer la cargaison !',
+    condition: { type: 'fleet_return', targetId: 'any', targetValue: 1 },
+    reward: { minerai: 800, silicium: 450, hydrogene: 200 },
+  },
+  {
+    id: 'quest_13',
+    order: 13,
+    title: 'Agrandir le chantier',
+    narrativeText: 'Pour construire des vaisseaux plus avancés, nous devons agrandir notre chantier spatial au niveau 2.',
+    condition: { type: 'building_level', targetId: 'shipyard', targetValue: 2 },
+    reward: { minerai: 1000, silicium: 500, hydrogene: 200 },
+  },
+  {
+    id: 'quest_14',
+    order: 14,
+    title: 'Premier prospecteur',
+    narrativeText: 'Le Prospecteur est un vaisseau minier spécialisé. Construisez-en un pour exploiter les gisements d\'astéroïdes.',
+    condition: { type: 'ship_count', targetId: 'prospector', targetValue: 1 },
+    reward: { minerai: 1200, silicium: 600, hydrogene: 200 },
+  },
+  {
+    id: 'quest_15',
+    order: 15,
     title: 'Première récolte',
-    narrativeText: 'Tout est en place, Commandant. Envoyez votre Prospecteur en mission de minage et récoltez votre première cargaison de ressources. Votre colonie est prête à prospérer.',
+    narrativeText: 'Un gisement prometteur a été repéré en [{galaxy}:{system}:8]. Envoyez vos prospecteurs pour votre première extraction !',
     condition: { type: 'mission_complete', targetId: 'mine', targetValue: 1 },
-    reward: { minerai: 3500, silicium: 2000, hydrogene: 800 },
+    reward: { minerai: 1500, silicium: 700, hydrogene: 250 },
+  },
+  {
+    id: 'quest_16',
+    order: 16,
+    title: 'Centre de missions',
+    narrativeText: 'Votre colonie est florissante. Un centre de missions vous permettra de détecter de nouvelles opportunités : gisements et menaces pirates.',
+    condition: { type: 'building_level', targetId: 'missionCenter', targetValue: 1 },
+    reward: { minerai: 1800, silicium: 800, hydrogene: 250 },
   },
 ];
