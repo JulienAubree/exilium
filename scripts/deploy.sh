@@ -21,6 +21,19 @@ pnpm exec turbo build
 echo "==> Loading environment variables..."
 export $(grep -v '^#' .env | xargs)
 
+echo "==> Ensuring uploads directory..."
+UPLOADS_DIR="/opt/ogame-clone/uploads/assets"
+mkdir -p "$UPLOADS_DIR"/{buildings,research,ships,defenses}
+
+# One-shot migration: copy existing assets from web public to uploads
+if [ -z "$(ls -A "$UPLOADS_DIR/buildings/" 2>/dev/null)" ] && [ -n "$(ls -A apps/web/public/assets/buildings/ 2>/dev/null)" ]; then
+  echo "    Migrating existing assets to uploads directory..."
+  cp -r apps/web/public/assets/buildings/* "$UPLOADS_DIR/buildings/" 2>/dev/null || true
+  cp -r apps/web/public/assets/research/* "$UPLOADS_DIR/research/" 2>/dev/null || true
+  cp -r apps/web/public/assets/ships/* "$UPLOADS_DIR/ships/" 2>/dev/null || true
+  cp -r apps/web/public/assets/defenses/* "$UPLOADS_DIR/defenses/" 2>/dev/null || true
+fi
+
 echo "==> Pushing database schema..."
 pnpm --filter @ogame-clone/db db:push
 
