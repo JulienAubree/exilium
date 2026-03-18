@@ -300,8 +300,8 @@ const UNIVERSE_CONFIG = [
   { key: 'maxPlanetsPerPlayer', value: 9 },
   { key: 'debrisRatio', value: 0.3 },
   { key: 'lootRatio', value: 0.5 },
-  { key: 'startingMinerai', value: 1200 },
-  { key: 'startingSilicium', value: 750 },
+  { key: 'startingMinerai', value: 500 },
+  { key: 'startingSilicium', value: 300 },
   { key: 'startingHydrogene', value: 100 },
 ];
 

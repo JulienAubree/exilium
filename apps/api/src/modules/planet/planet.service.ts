@@ -34,8 +34,8 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
       const maxFields = calculateMaxFields(diameter);
 
       const startingMinerai = Number(universe.startingMinerai) ?? 500;
-      const startingSilicium = Number(universe.startingSilicium) ?? 500;
-      const startingHydrogene = Number(universe.startingHydrogene) ?? 0;
+      const startingSilicium = Number(universe.startingSilicium) ?? 300;
+      const startingHydrogene = Number(universe.startingHydrogene) ?? 100;
 
       const [planet] = await db
         .insert(planets)
