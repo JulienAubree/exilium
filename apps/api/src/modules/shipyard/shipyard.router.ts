@@ -5,6 +5,7 @@ import type { createShipyardService } from './shipyard.service.js';
 const shipIds = [
   'smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter',
   'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler',
+  'prospector', 'explorer',
 ] as const;
 
 const defenseIds = [
