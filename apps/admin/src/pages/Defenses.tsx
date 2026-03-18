@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { PrerequisitesEditor, type MixedPrereq } from '@/components/ui/PrerequisitesEditor';
 import { Pencil, Plus, Trash2, Link } from 'lucide-react';
+import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -94,6 +95,7 @@ export default function Defenses() {
         <table className="admin-table">
           <thead>
             <tr>
+              <th className="w-12">Image</th>
               <th>ID</th>
               <th>Nom</th>
               <th>Minerai</th>
@@ -110,6 +112,9 @@ export default function Defenses() {
           <tbody>
             {defenses.map((d) => (
               <tr key={d.id}>
+                <td className="!px-2">
+                  <AdminImageUpload category="defenses" entityId={d.id} entityName={d.name} />
+                </td>
                 <td className="font-mono text-xs text-gray-500">{d.id}</td>
                 <td className="font-medium">{d.name}</td>
                 <td className="font-mono text-sm">{d.cost.minerai}</td>

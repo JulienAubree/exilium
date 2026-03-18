@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { PrerequisitesEditor, type BuildingPrereq } from '@/components/ui/PrerequisitesEditor';
 import { Pencil, ChevronDown, ChevronRight, Plus, Trash2, Link } from 'lucide-react';
+import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
 
 function getFields(categoryOptions: { value: string; label: string }[]) {
   return [
@@ -168,6 +169,7 @@ export default function Buildings() {
           <thead>
             <tr>
               <th className="w-8"></th>
+              <th className="w-12">Image</th>
               <th>ID</th>
               <th>Nom</th>
               <th>Minerai</th>
@@ -211,6 +213,9 @@ export default function Buildings() {
                             : <ChevronRight className="w-4 h-4" />}
                         </button>
                       )}
+                    </td>
+                    <td className="!px-2">
+                      <AdminImageUpload category="buildings" entityId={b.id} entityName={b.name} />
                     </td>
                     <td className="font-mono text-xs text-gray-500">{b.id}</td>
                     <td className="font-medium">{b.name}</td>
@@ -259,7 +264,7 @@ export default function Buildings() {
                   </tr>
                   {isExpanded && (
                     <tr key={`${b.id}-levels`}>
-                      <td colSpan={11} className="!p-0 !bg-panel/60">
+                      <td colSpan={12} className="!p-0 !bg-panel/60">
                         <div className="px-6 py-3">
                           <div className="text-xs font-medium text-hull-400 mb-2 uppercase tracking-wider">
                             Progression niveaux 1–{MAX_LEVEL}
