@@ -99,7 +99,7 @@ export default function Shipyard() {
           <h2 className="text-base font-semibold mb-3">File de construction</h2>
           <div className="space-y-3">
             {shipQueue.map((item) => {
-              const name = gameConfig?.ships[item.itemId]?.name ?? item.itemId;
+              const name = gameConfig?.ships[item.itemId]?.name ?? ships?.find(s => s.id === item.itemId)?.name ?? item.itemId;
               const remaining = item.quantity - (item.completedCount ?? 0);
               return (
                 <div key={item.id} className="space-y-1 border-l-4 border-l-orange-500 pl-3">
