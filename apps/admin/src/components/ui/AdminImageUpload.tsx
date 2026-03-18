@@ -35,9 +35,9 @@ export function AdminImageUpload({ category, entityId, entityName }: AdminImageU
     setError(false);
 
     const formData = new FormData();
-    formData.append('file', file);
     formData.append('category', category);
     formData.append('entityId', entityId);
+    formData.append('file', file);
 
     try {
       const res = await fetchWithAuth('/admin/upload-asset', {
