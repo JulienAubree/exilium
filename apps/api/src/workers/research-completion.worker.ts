@@ -5,6 +5,7 @@ import { createDb, buildQueue, gameEvents, planets } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createResearchService } from '../modules/research/research.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
+import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import { researchCompletionQueue } from '../queues/queue.js';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
@@ -13,6 +14,7 @@ export function startResearchCompletionWorker(db: ReturnType<typeof createDb>) {
   const resourceService = createResourceService(db);
   const gameConfigService = createGameConfigService(db);
   const researchService = createResearchService(db, resourceService, researchCompletionQueue, gameConfigService);
+  const tutorialService = createTutorialService(db);
   const redis = new Redis(env.REDIS_URL);
 
   const worker = new Worker(
@@ -51,6 +53,25 @@ export function startResearchCompletionWorker(db: ReturnType<typeof createDb>) {
             type: 'research-done',
             payload: { techId: result.researchId, name: techName, level: result.newLevel, planetName: planet?.name ?? 'Planète' },
           });
+
+          // Tutorial: check research_level quest completion
+          const tutorialResult = await tutorialService.checkAndComplete(entry.userId, {
+            type: 'research_level',
+            targetId: result.researchId,
+            targetValue: result.newLevel,
+          });
+          if (tutorialResult) {
+            publishNotification(redis, entry.userId, {
+              type: 'tutorial-quest-complete',
+              payload: { questId: tutorialResult.completedQuest.id, reward: tutorialResult.reward },
+            });
+            await db.insert(gameEvents).values({
+              userId: entry.userId,
+              planetId: entry.planetId,
+              type: 'tutorial-quest-complete',
+              payload: { questId: tutorialResult.completedQuest.id, questTitle: tutorialResult.completedQuest.title, reward: tutorialResult.reward },
+            });
+          }
         }
       }
     },
