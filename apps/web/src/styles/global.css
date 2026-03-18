@@ -28,9 +28,9 @@
     --ring: 210 80% 55%;
     --radius: 0.5rem;
 
-    --glow-minerai: 0 0 8px rgba(139, 157, 195, 0.3);
-    --glow-silicium: 0 0 8px rgba(110, 207, 239, 0.3);
-    --glow-hydrogene: 0 0 8px rgba(77, 184, 164, 0.3);
+    --glow-minerai: 0 0 8px rgba(251, 146, 60, 0.3);
+    --glow-silicium: 0 0 8px rgba(52, 211, 153, 0.3);
+    --glow-hydrogene: 0 0 8px rgba(96, 165, 250, 0.3);
     --glow-energy: 0 0 8px rgba(240, 192, 64, 0.3);
   }
 
