@@ -14,6 +14,8 @@ const FIELDS = [
   { key: 'baseCostSilicium', label: 'Coût Silicium (base)', type: 'number' as const },
   { key: 'baseCostHydrogene', label: 'Coût Hydrogène (base)', type: 'number' as const },
   { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
+  { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
+  { key: 'effectDescription', label: "Description d'effet", type: 'textarea' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 

@@ -19,6 +19,7 @@ const FIELDS = [
   { key: 'baseSpeed', label: 'Vitesse', type: 'number' as const },
   { key: 'fuelConsumption', label: 'Carburant', type: 'number' as const },
   { key: 'cargoCapacity', label: 'Cargo', type: 'number' as const },
+  { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 

@@ -17,6 +17,7 @@ const FIELDS = [
   { key: 'shield', label: 'Bouclier', type: 'number' as const },
   { key: 'armor', label: 'Coque', type: 'number' as const },
   { key: 'maxPerPlanet', label: 'Max par planete (0 = illimite)', type: 'number' as const },
+  { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
 ];
 

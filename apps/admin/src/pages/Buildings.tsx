@@ -18,6 +18,7 @@ function getFields(categoryOptions: { value: string; label: string }[]) {
     { key: 'baseTime', label: 'Temps de base (s)', type: 'number' as const },
     { key: 'buildTimeReductionFactor', label: 'Facteur réduction temps', type: 'number' as const, step: '0.1' },
     { key: 'reducesTimeForCategory', label: 'Réduit le temps pour', type: 'select' as const, options: categoryOptions, allowEmpty: true },
+    { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
     { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
   ];
 }
