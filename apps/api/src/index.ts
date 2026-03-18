@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import Redis from 'ioredis';
 import { createDb } from '@ogame-clone/db';
@@ -7,10 +8,14 @@ import { buildAppRouter } from './trpc/app-router.js';
 import { createContext } from './trpc/context.js';
 import { env } from './config/env.js';
 import { registerSSE } from './modules/notification/notification.sse.js';
+import { registerAssetUploadRoute } from './modules/admin/asset-upload.route.js';
 
 const server = Fastify({ logger: true, maxParamLength: 500 });
 
 await server.register(cors, { origin: true });
+await server.register(multipart, {
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 server.get('/health', async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
@@ -30,6 +35,7 @@ await server.register(fastifyTRPCPlugin, {
 });
 
 registerSSE(server, env.REDIS_URL, JWT_SECRET);
+registerAssetUploadRoute(server, db);
 
 try {
   await server.listen({ port: env.API_PORT, host: '0.0.0.0' });
