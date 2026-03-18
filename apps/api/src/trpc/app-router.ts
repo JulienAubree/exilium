@@ -58,7 +58,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const allianceService = createAllianceService(db, messageService);
   const playerAdminService = createPlayerAdminService(db);
   const gameEventService = createGameEventService(db);
-  const tutorialService = createTutorialService(db);
+  const tutorialService = createTutorialService(db, pveService);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
