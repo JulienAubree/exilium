@@ -7,7 +7,8 @@ export type ResearchId =
   | 'hyperspaceDrive'
   | 'weapons'
   | 'shielding'
-  | 'armor';
+  | 'armor'
+  | 'rockFracturing';
 
 export interface ResearchDefinition {
   id: ResearchId;
@@ -108,5 +109,16 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
     baseCost: { minerai: 1000, silicium: 0, hydrogene: 0 },
     costFactor: 2,
     prerequisites: { buildings: [{ buildingId: 'researchLab', level: 2 }] },
+  },
+  rockFracturing: {
+    id: 'rockFracturing',
+    name: 'Technologie de fracturation des roches',
+    description: 'Améliore les techniques d\'extraction minière, réduisant le temps de minage.',
+    baseCost: { minerai: 2000, silicium: 4000, hydrogene: 1000 },
+    costFactor: 2,
+    prerequisites: {
+      buildings: [{ buildingId: 'missionCenter', level: 1 }],
+      research: [{ researchId: 'combustion', level: 3 }],
+    },
   },
 };
