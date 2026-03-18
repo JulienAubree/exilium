@@ -10,15 +10,17 @@ Brancher les cartes de detail sur le `gameConfig` (donnees DB via tRPC) et ajout
 
 ## 1. Schema DB — nouveaux champs
 
-Migration SQL ajoutant des colonnes `TEXT` nullable :
+Migration SQL manuelle (`0004_detail_card_texts.sql`) ajoutant des colonnes `TEXT` nullable.
 
-| Table | Colonne | Usage |
-|-------|---------|-------|
-| `buildings` | `flavor_text` | Texte narratif immersif |
-| `research` | `flavor_text` | Texte narratif immersif |
-| `research` | `effect_description` | Description mecanique de l'effet (ex: "+5% degats par niveau") |
-| `ships` | `flavor_text` | Texte narratif immersif |
-| `defenses` | `flavor_text` | Texte narratif immersif |
+Schema Drizzle a modifier : `packages/db/src/schema/game-config.ts` (fichier unique contenant toutes les tables de config).
+
+| Table Drizzle | Colonne | Usage |
+|---------------|---------|-------|
+| `buildingDefinitions` | `flavor_text` | Texte narratif immersif |
+| `researchDefinitions` | `flavor_text` | Texte narratif immersif |
+| `researchDefinitions` | `effect_description` | Description mecanique de l'effet (ex: "+5% degats par niveau") |
+| `shipDefinitions` | `flavor_text` | Texte narratif immersif |
+| `defenseDefinitions` | `flavor_text` | Texte narratif immersif |
 
 Le seed (`seed-game-config.ts`) est mis a jour pour injecter les textes actuellement hardcodes dans `entity-details.ts`.
 
@@ -33,16 +35,23 @@ Etendre les interfaces dans `game-config.service.ts` :
 - `DefenseConfig` : ajouter `flavorText: string | null`
 - `ResearchConfig` : ajouter `flavorText: string | null`, `effectDescription: string | null`
 
-Les requetes `SELECT *` dans `getFullConfig()` retournent deja ces colonnes — seule l'interface TypeScript change.
+### Mapping dans getFullConfig()
+
+Le `getFullConfig()` mappe explicitement chaque champ dans les objets de config (pas de spread). Les nouveaux champs doivent etre ajoutes dans le mapping :
+
+- Section buildings (~ligne 214) : ajouter `flavorText: b.flavorText`
+- Section ships (~ligne 255) : ajouter `flavorText: s.flavorText`
+- Section defenses (~ligne 275) : ajouter `flavorText: d.flavorText`
+- Section research (~ligne 235) : ajouter `flavorText: r.flavorText, effectDescription: r.effectDescription`
 
 ### Mutations admin
 
-Ajouter les champs optionnels dans les schemas Zod des mutations existantes :
+Ajouter les champs optionnels dans les schemas Zod des mutations `create*` ET `update*` :
 
-- `updateBuilding` : `flavorText: z.string().nullable().optional()`
-- `updateShip` : `flavorText: z.string().nullable().optional()`
-- `updateDefense` : `flavorText: z.string().nullable().optional()`
-- `updateResearch` : `flavorText: z.string().nullable().optional()`, `effectDescription: z.string().nullable().optional()`
+- `createBuilding` / `updateBuilding` : `flavorText: z.string().nullable().optional()`
+- `createShip` / `updateShip` : `flavorText: z.string().nullable().optional()`
+- `createDefense` / `updateDefense` : `flavorText: z.string().nullable().optional()`
+- `createResearch` / `updateResearch` : `flavorText: z.string().nullable().optional()`, `effectDescription: z.string().nullable().optional()`
 
 ### Pages admin
 
@@ -52,7 +61,13 @@ Ajouter un champ `textarea` "Texte d'ambiance" dans les `EditModal` des pages Bu
 
 ### Composants de detail
 
-Les 4 composants (`BuildingDetailContent`, `ShipDetailContent`, `DefenseDetailContent`, `ResearchDetailContent`) appellent `useGameConfig()` et passent `data` a `getXxxDetails(id, config)`.
+Les 4 composants (`BuildingDetailContent`, `ShipDetailContent`, `DefenseDetailContent`, `ResearchDetailContent`) appellent chacun `useGameConfig()` directement (cache React Query, pas de requete supplementaire) et passent `data` a `getXxxDetails(id, config)`.
+
+Note : actuellement 3 des 4 composants n'importent meme pas `useGameConfig` — il faut l'ajouter.
+
+### Interface locale GameConfigData
+
+L'interface `GameConfigData` dans `entity-details.ts` (lignes 13-19) doit etre etendue pour inclure les nouveaux champs (`flavorText`, `effectDescription`) sur les types correspondants.
 
 ### entity-details.ts — source de donnees
 
@@ -66,27 +81,29 @@ Les fonctions `getXxxDetails()` lisent prioritairement depuis le config DB :
 - **Rapid fire** : `config.rapidFire` (au lieu de `RAPID_FIRE`)
 - **Tables de production** : fonctions mathematiques du game-engine avec parametres issus de `config.production`
 
-Fallback sur les constantes game-engine si config absent (ne devrait pas arriver en pratique).
+Fallback sur les constantes game-engine si config absent (garde de securite, ne devrait pas arriver en pratique). Les imports game-engine utilises pour le fallback sont conserves mais marques comme fallback uniquement.
 
 ## 4. Nettoyage
 
-- Supprimer les imports `COMBAT_STATS`, `SHIP_STATS`, `RAPID_FIRE`, `BUILDINGS`, `SHIPS`, `DEFENSES`, `RESEARCH` dans `entity-details.ts`
 - Supprimer les dictionnaires de flavor texts et effect descriptions hardcodes dans `entity-details.ts` (lignes 25-91)
-- Les constantes game-engine restent dans le package (utilisees cote serveur) — on supprime uniquement leur usage frontend pour les cartes de detail
+- Conserver les imports `BUILDINGS`, `SHIPS`, `DEFENSES`, `RESEARCH`, `COMBAT_STATS`, `SHIP_STATS` comme fallback si config absent
+- Les constantes game-engine restent dans le package (utilisees cote serveur) — on ne les supprime pas
 - Les fonctions de formules (production, energie, stockage) restent importees du game-engine
+
+## Notes
+
+- **Pas d'effect_description pour les batiments** : les effets des batiments (production, energie, stockage) sont des tables calculees a partir de formules mathematiques parametrees par `config.production`. Seules les recherches ont un texte d'effet editable.
+- **Cache frontend** : `useGameConfig` a un `staleTime` de 5 minutes. Les modifications admin seront visibles par les joueurs au prochain rafraichissement du cache (max 5 min). Comportement acceptable.
 
 ## Fichiers impactes
 
 ### DB / Backend
-- `packages/db/src/schema/buildings.ts` — ajout colonne `flavor_text`
-- `packages/db/src/schema/research.ts` — ajout colonnes `flavor_text`, `effect_description`
-- `packages/db/src/schema/ships.ts` — ajout colonne `flavor_text`
-- `packages/db/src/schema/defenses.ts` — ajout colonne `flavor_text`
-- `packages/db/drizzle/0004_detail_card_texts.sql` — migration
+- `packages/db/src/schema/game-config.ts` — ajout colonnes `flavor_text` sur buildingDefinitions, shipDefinitions, defenseDefinitions ; `flavor_text` + `effect_description` sur researchDefinitions
+- `packages/db/drizzle/0004_detail_card_texts.sql` — migration manuelle
 - `packages/db/drizzle/meta/_journal.json` — nouvelle entree
 - `packages/db/src/seed-game-config.ts` — seeder les flavor texts et effect descriptions
-- `apps/api/src/modules/admin/game-config.service.ts` — etendre interfaces
-- `apps/api/src/modules/admin/game-config.router.ts` — etendre schemas Zod
+- `apps/api/src/modules/admin/game-config.service.ts` — etendre interfaces + mapping getFullConfig()
+- `apps/api/src/modules/admin/game-config.router.ts` — etendre schemas Zod (create + update)
 
 ### Admin
 - `apps/admin/src/pages/Buildings.tsx` — champ textarea flavorText
@@ -95,8 +112,8 @@ Fallback sur les constantes game-engine si config absent (ne devrait pas arriver
 - `apps/admin/src/pages/Research.tsx` — champs textarea flavorText + effectDescription
 
 ### Frontend (cartes de detail)
-- `apps/web/src/lib/entity-details.ts` — refonte source de donnees, suppression hardcode
-- `apps/web/src/components/entity-details/BuildingDetailContent.tsx` — passer gameConfig
-- `apps/web/src/components/entity-details/ShipDetailContent.tsx` — passer gameConfig
-- `apps/web/src/components/entity-details/DefenseDetailContent.tsx` — passer gameConfig
-- `apps/web/src/components/entity-details/ResearchDetailContent.tsx` — passer gameConfig
+- `apps/web/src/lib/entity-details.ts` — refonte source de donnees, suppression dictionnaires hardcodes, extension interface GameConfigData
+- `apps/web/src/components/entity-details/BuildingDetailContent.tsx` — ajouter useGameConfig, passer config
+- `apps/web/src/components/entity-details/ShipDetailContent.tsx` — ajouter useGameConfig, passer config
+- `apps/web/src/components/entity-details/DefenseDetailContent.tsx` — ajouter useGameConfig, passer config
+- `apps/web/src/components/entity-details/ResearchDetailContent.tsx` — ajouter useGameConfig, passer config
