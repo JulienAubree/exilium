@@ -1,17 +1,41 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 
 export function TutorialPanel() {
   const { data, isLoading } = trpc.tutorial.getCurrent.useQuery();
   const [minimized, setMinimized] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading || !data || data.isComplete || !data.quest) return null;
 
   const quest = data.quest;
   const completedCount = (data.completedQuests as { questId: string }[]).length;
-  const totalQuests = 12;
+  const totalQuests = 16;
   const progressPercent = (completedCount / totalQuests) * 100;
+
+  // Interpolate coordinates in narrative text
+  let narrativeText = quest.narrativeText;
+  if (data.playerCoords) {
+    narrativeText = narrativeText
+      .replace(/\{galaxy\}/g, String(data.playerCoords.galaxy))
+      .replace(/\{system\}/g, String(data.playerCoords.system));
+  }
+
+  // Fleet link for quests 12 (transport) and 15 (mine)
+  const getFleetLink = () => {
+    if (!data.playerCoords) return null;
+    const { galaxy, system } = data.playerCoords;
+    if (quest.id === 'quest_12') {
+      return `/fleet?galaxy=${galaxy}&system=${system}&position=8&mission=transport`;
+    }
+    if (quest.id === 'quest_15' && data.tutorialMiningMissionId) {
+      return `/fleet?galaxy=${galaxy}&system=${system}&position=8&mission=mine&pveMissionId=${data.tutorialMiningMissionId}`;
+    }
+    return null;
+  };
+  const fleetLink = getFleetLink();
 
   if (minimized) {
     return (
@@ -62,8 +86,16 @@ export function TutorialPanel() {
           {quest.title}
         </h4>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground italic">
-          "{quest.narrativeText}"
+          "{narrativeText}"
         </p>
+        {fleetLink && (
+          <button
+            onClick={() => navigate(fleetLink)}
+            className="mt-1.5 text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+          >
+            Envoyer la flotte &rarr;
+          </button>
+        )}
 
         {/* Reward preview */}
         <div className="mt-2 flex items-center gap-3 rounded bg-background/50 px-2 py-1.5">
