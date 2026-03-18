@@ -142,7 +142,7 @@ export const SHIPS: Record<ShipId, ShipDefinition> = {
     cost: { minerai: 3000, silicium: 1000, hydrogene: 500 },
     countColumn: 'prospector',
     prerequisites: {
-      buildings: [{ buildingId: 'missionCenter', level: 1 }, { buildingId: 'shipyard', level: 2 }],
+      buildings: [{ buildingId: 'shipyard', level: 2 }],
     },
   },
   explorer: {
