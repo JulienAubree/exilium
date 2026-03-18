@@ -1,8 +1,19 @@
-import { eq, and } from 'drizzle-orm';
-import { tutorialProgress, planets, planetBuildings, planetShips } from '@ogame-clone/db';
+import { eq, and, asc } from 'drizzle-orm';
+import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import { TUTORIAL_QUESTS } from '@ogame-clone/game-engine';
-import type { TutorialQuest } from '@ogame-clone/game-engine';
+
+export interface TutorialQuest {
+  id: string;
+  order: number;
+  title: string;
+  narrativeText: string;
+  condition: {
+    type: 'building_level' | 'ship_count' | 'mission_complete';
+    targetId: string;
+    targetValue: number;
+  };
+  reward: { minerai: number; silicium: number; hydrogene: number };
+}
 
 export interface CompletedQuestEntry {
   questId: string;
@@ -10,6 +21,29 @@ export interface CompletedQuestEntry {
 }
 
 export function createTutorialService(db: Database) {
+  async function loadQuests(): Promise<TutorialQuest[]> {
+    const rows = await db
+      .select()
+      .from(tutorialQuestDefinitions)
+      .orderBy(asc(tutorialQuestDefinitions.order));
+    return rows.map(r => ({
+      id: r.id,
+      order: r.order,
+      title: r.title,
+      narrativeText: r.narrativeText,
+      condition: {
+        type: r.conditionType as 'building_level' | 'ship_count' | 'mission_complete',
+        targetId: r.conditionTargetId,
+        targetValue: r.conditionTargetValue,
+      },
+      reward: {
+        minerai: r.rewardMinerai,
+        silicium: r.rewardSilicium,
+        hydrogene: r.rewardHydrogene,
+      },
+    }));
+  }
+
   return {
     async getOrCreateProgress(userId: string) {
       const [existing] = await db
@@ -34,7 +68,8 @@ export function createTutorialService(db: Database) {
         return { isComplete: true, quest: null, completedQuests: progress.completedQuests as CompletedQuestEntry[] };
       }
 
-      const quest = TUTORIAL_QUESTS.find(q => q.id === progress.currentQuestId);
+      const quests = await loadQuests();
+      const quest = quests.find(q => q.id === progress.currentQuestId);
       return {
         isComplete: false,
         quest: quest ?? null,
@@ -50,7 +85,8 @@ export function createTutorialService(db: Database) {
       const progress = await this.getOrCreateProgress(userId);
       if (progress.isComplete) return null;
 
-      const quest = TUTORIAL_QUESTS.find(q => q.id === progress.currentQuestId);
+      const quests = await loadQuests();
+      const quest = quests.find(q => q.id === progress.currentQuestId);
       if (!quest) return null;
 
       // Check if the event matches the quest condition
@@ -62,7 +98,7 @@ export function createTutorialService(db: Database) {
       const completedQuests = (progress.completedQuests as CompletedQuestEntry[]) || [];
       completedQuests.push({ questId: quest.id, completedAt: new Date().toISOString() });
 
-      const nextQuest = TUTORIAL_QUESTS.find(q => q.order === quest.order + 1);
+      const nextQuest = quests.find(q => q.order === quest.order + 1);
 
       // Award resources to user's first planet
       const [planet] = await db
@@ -105,7 +141,8 @@ export function createTutorialService(db: Database) {
       const progress = await this.getOrCreateProgress(userId);
       if (progress.isComplete) return null;
 
-      const quest = TUTORIAL_QUESTS.find(q => q.id === progress.currentQuestId);
+      const quests = await loadQuests();
+      const quest = quests.find(q => q.id === progress.currentQuestId);
       if (!quest) return null;
 
       // Check if current quest condition is met

@@ -14,6 +14,8 @@ import {
   universeConfig,
   planetTypes,
   planets,
+  pirateTemplates,
+  tutorialQuestDefinitions,
 } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { TRPCError } from '@trpc/server';
@@ -35,6 +37,8 @@ export interface GameConfig {
   production: Record<string, ProductionConfigEntry>;
   universe: Record<string, unknown>;
   planetTypes: PlanetTypeConfig[];
+  pirateTemplates: PirateTemplateConfig[];
+  tutorialQuests: TutorialQuestConfig[];
 }
 
 export interface BuildingConfig {
@@ -127,6 +131,30 @@ export interface ProductionConfigEntry {
   storageBase: number | null;
 }
 
+export interface PirateTemplateConfig {
+  id: string;
+  name: string;
+  tier: string;
+  ships: Record<string, number>;
+  techs: { weapons: number; shielding: number; armor: number };
+  rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
+  centerLevelMin: number;
+  centerLevelMax: number;
+}
+
+export interface TutorialQuestConfig {
+  id: string;
+  order: number;
+  title: string;
+  narrativeText: string;
+  conditionType: string;
+  conditionTargetId: string;
+  conditionTargetValue: number;
+  rewardMinerai: number;
+  rewardSilicium: number;
+  rewardHydrogene: number;
+}
+
 let cache: GameConfig | null = null;
 
 export function createGameConfigService(db: Database) {
@@ -152,6 +180,8 @@ export function createGameConfigService(db: Database) {
       productionRows,
       universeRows,
       planetTypeRows,
+      pirateTemplateRows,
+      tutorialQuestRows,
     ] = await Promise.all([
       db.select().from(entityCategories),
       db.select().from(buildingDefinitions),
@@ -166,6 +196,8 @@ export function createGameConfigService(db: Database) {
       db.select().from(productionConfig),
       db.select().from(universeConfig),
       db.select().from(planetTypes),
+      db.select().from(pirateTemplates),
+      db.select().from(tutorialQuestDefinitions),
     ]);
 
     // Categories
@@ -305,7 +337,33 @@ export function createGameConfigService(db: Database) {
       sortOrder: pt.sortOrder,
     }));
 
-    cache = { categories, buildings, research, ships, defenses, rapidFire: rf, production, universe, planetTypes: ptConfigs };
+    // Pirate templates
+    const ptTemplates: PirateTemplateConfig[] = pirateTemplateRows.map(pt => ({
+      id: pt.id,
+      name: pt.name,
+      tier: pt.tier,
+      ships: pt.ships as Record<string, number>,
+      techs: pt.techs as { weapons: number; shielding: number; armor: number },
+      rewards: pt.rewards as { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] },
+      centerLevelMin: pt.centerLevelMin,
+      centerLevelMax: pt.centerLevelMax,
+    }));
+
+    // Tutorial quests
+    const tqConfigs: TutorialQuestConfig[] = tutorialQuestRows.map(tq => ({
+      id: tq.id,
+      order: tq.order,
+      title: tq.title,
+      narrativeText: tq.narrativeText,
+      conditionType: tq.conditionType,
+      conditionTargetId: tq.conditionTargetId,
+      conditionTargetValue: tq.conditionTargetValue,
+      rewardMinerai: tq.rewardMinerai,
+      rewardSilicium: tq.rewardSilicium,
+      rewardHydrogene: tq.rewardHydrogene,
+    }));
+
+    cache = { categories, buildings, research, ships, defenses, rapidFire: rf, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs };
     return cache;
   }
 
@@ -768,6 +826,89 @@ export function createGameConfigService(db: Database) {
         });
       }
       await db.delete(planetTypes).where(eq(planetTypes.id, id));
+      invalidateCache();
+    },
+
+    // ── Pirate templates ──
+
+    async createPirateTemplate(data: {
+      id: string;
+      name: string;
+      tier: string;
+      ships: Record<string, number>;
+      techs: { weapons: number; shielding: number; armor: number };
+      rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
+      centerLevelMin: number;
+      centerLevelMax: number;
+    }) {
+      await db.insert(pirateTemplates).values(data);
+      invalidateCache();
+    },
+
+    async updatePirateTemplate(id: string, data: Partial<{
+      name: string;
+      tier: string;
+      ships: Record<string, number>;
+      techs: { weapons: number; shielding: number; armor: number };
+      rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
+      centerLevelMin: number;
+      centerLevelMax: number;
+    }>) {
+      await db.update(pirateTemplates).set(data).where(eq(pirateTemplates.id, id));
+      invalidateCache();
+    },
+
+    async deletePirateTemplate(id: string) {
+      await db.delete(pirateTemplates).where(eq(pirateTemplates.id, id));
+      invalidateCache();
+    },
+
+    // ── Tutorial quests ──
+
+    async createTutorialQuest(data: {
+      id: string;
+      order: number;
+      title: string;
+      narrativeText: string;
+      conditionType: string;
+      conditionTargetId: string;
+      conditionTargetValue: number;
+      rewardMinerai?: number;
+      rewardSilicium?: number;
+      rewardHydrogene?: number;
+    }) {
+      await db.insert(tutorialQuestDefinitions).values({
+        id: data.id,
+        order: data.order,
+        title: data.title,
+        narrativeText: data.narrativeText,
+        conditionType: data.conditionType,
+        conditionTargetId: data.conditionTargetId,
+        conditionTargetValue: data.conditionTargetValue,
+        rewardMinerai: data.rewardMinerai ?? 0,
+        rewardSilicium: data.rewardSilicium ?? 0,
+        rewardHydrogene: data.rewardHydrogene ?? 0,
+      });
+      invalidateCache();
+    },
+
+    async updateTutorialQuest(id: string, data: Partial<{
+      order: number;
+      title: string;
+      narrativeText: string;
+      conditionType: string;
+      conditionTargetId: string;
+      conditionTargetValue: number;
+      rewardMinerai: number;
+      rewardSilicium: number;
+      rewardHydrogene: number;
+    }>) {
+      await db.update(tutorialQuestDefinitions).set(data).where(eq(tutorialQuestDefinitions.id, id));
+      invalidateCache();
+    },
+
+    async deleteTutorialQuest(id: string) {
+      await db.delete(tutorialQuestDefinitions).where(eq(tutorialQuestDefinitions.id, id));
       invalidateCache();
     },
   };

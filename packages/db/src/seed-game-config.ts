@@ -18,6 +18,7 @@ import {
 } from './schema/game-config.js';
 import { planets } from './schema/planets.js';
 import { pirateTemplates } from './schema/pve-missions.js';
+import { tutorialQuestDefinitions } from './schema/tutorial-quest-definitions.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://ogame:ogame@localhost:5432/ogame';
 const client = postgres(DATABASE_URL);
@@ -271,6 +272,23 @@ const PIRATE_TEMPLATES = [
   },
 ];
 
+// ── Tutorial quests data ──
+
+const TUTORIAL_QUESTS = [
+  { id: 'quest_1', order: 1, title: 'Premiers pas', narrativeText: "Commandant, bienvenue sur votre nouvelle colonie. Notre priorité est d'établir une extraction de minerai. Construisez votre première mine pour alimenter nos projets.", conditionType: 'building_level', conditionTargetId: 'mineraiMine', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 0, rewardHydrogene: 0 },
+  { id: 'quest_2', order: 2, title: 'Fondations technologiques', narrativeText: "Excellent travail. Le silicium est essentiel pour toute technologie avancée. Lancez l'extraction de silicium sans tarder.", conditionType: 'building_level', conditionTargetId: 'siliciumMine', conditionTargetValue: 1, rewardMinerai: 0, rewardSilicium: 100, rewardHydrogene: 0 },
+  { id: 'quest_3', order: 3, title: 'Alimenter la colonie', narrativeText: "Nos installations ont besoin d'énergie pour fonctionner. Une centrale solaire assurera l'alimentation de vos mines.", conditionType: 'building_level', conditionTargetId: 'solarPlant', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 75, rewardHydrogene: 0 },
+  { id: 'quest_4', order: 4, title: 'Expansion minière', narrativeText: "Bien. Il est temps d'accélérer notre production. Montez votre mine de minerai au niveau 3 pour assurer un flux constant.", conditionType: 'building_level', conditionTargetId: 'mineraiMine', conditionTargetValue: 3, rewardMinerai: 200, rewardSilicium: 100, rewardHydrogene: 0 },
+  { id: 'quest_5', order: 5, title: 'Équilibre énergétique', narrativeText: "La croissance exige de l'énergie. Améliorez votre centrale solaire au niveau 3 pour soutenir l'expansion.", conditionType: 'building_level', conditionTargetId: 'solarPlant', conditionTargetValue: 3, rewardMinerai: 250, rewardSilicium: 150, rewardHydrogene: 50 },
+  { id: 'quest_6', order: 6, title: "L'automatisation", narrativeText: 'Les robots de construction accéléreront tous vos projets futurs. Construisez une usine de robots.', conditionType: 'building_level', conditionTargetId: 'robotics', conditionTargetValue: 1, rewardMinerai: 350, rewardSilicium: 200, rewardHydrogene: 150 },
+  { id: 'quest_7', order: 7, title: 'Le chantier spatial', narrativeText: 'Commandant, il est temps de conquérir les étoiles. Un chantier spatial nous permettra de construire nos premiers vaisseaux.', conditionType: 'building_level', conditionTargetId: 'shipyard', conditionTargetValue: 1, rewardMinerai: 500, rewardSilicium: 300, rewardHydrogene: 150 },
+  { id: 'quest_8', order: 8, title: 'Premier vol', narrativeText: 'Le moment est historique. Construisez votre premier Explorateur et ouvrez la voie vers les systèmes voisins.', conditionType: 'ship_count', conditionTargetId: 'explorer', conditionTargetValue: 1, rewardMinerai: 750, rewardSilicium: 500, rewardHydrogene: 250 },
+  { id: 'quest_9', order: 9, title: 'Agrandir le chantier', narrativeText: 'Pour construire des vaisseaux plus avancés, nous devons agrandir notre chantier spatial au niveau 2.', conditionType: 'building_level', conditionTargetId: 'shipyard', conditionTargetValue: 2, rewardMinerai: 1200, rewardSilicium: 800, rewardHydrogene: 400 },
+  { id: 'quest_10', order: 10, title: 'Centre de missions', narrativeText: 'Un centre de missions nous permettra de détecter les opportunités dans notre système : gisements de ressources et menaces pirates.', conditionType: 'building_level', conditionTargetId: 'missionCenter', conditionTargetValue: 1, rewardMinerai: 2000, rewardSilicium: 1200, rewardHydrogene: 500 },
+  { id: 'quest_11', order: 11, title: 'Premier Prospecteur', narrativeText: 'Le Prospecteur est un vaisseau minier spécialisé. Construisez-en un pour exploiter les gisements détectés par votre centre de missions.', conditionType: 'ship_count', conditionTargetId: 'prospector', conditionTargetValue: 1, rewardMinerai: 1500, rewardSilicium: 1000, rewardHydrogene: 500 },
+  { id: 'quest_12', order: 12, title: 'Première récolte', narrativeText: 'Tout est en place, Commandant. Envoyez votre Prospecteur en mission de minage et récoltez votre première cargaison de ressources. Votre colonie est prête à prospérer.', conditionType: 'mission_complete', conditionTargetId: 'mine', conditionTargetValue: 1, rewardMinerai: 3500, rewardSilicium: 2000, rewardHydrogene: 800 },
+];
+
 // ── Universe config data ──
 
 const UNIVERSE_CONFIG = [
@@ -427,7 +445,15 @@ async function seed() {
   }
   console.log(`  ✓ ${PIRATE_TEMPLATES.length} pirate templates`);
 
-  // 14. Migrate existing planets: set homeworld type on first planet of each user
+  // 14. Tutorial quest definitions
+  for (const tq of TUTORIAL_QUESTS) {
+    const { id, ...tqData } = tq;
+    await db.insert(tutorialQuestDefinitions).values(tq)
+      .onConflictDoUpdate({ target: tutorialQuestDefinitions.id, set: tqData });
+  }
+  console.log(`  ✓ ${TUTORIAL_QUESTS.length} tutorial quest definitions`);
+
+  // 15. Migrate existing planets: set homeworld type on first planet of each user
   const homePlanets = await db.execute(sql`
     UPDATE planets SET planet_class_id = 'homeworld'
     WHERE planet_class_id IS NULL

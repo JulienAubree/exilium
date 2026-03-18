@@ -375,6 +375,122 @@ export function createGameConfigRouter(
         await gameConfigService.deletePlanetType(input.id);
         return { success: true };
       }),
+
+    // ── Pirate templates ──
+
+    createPirateTemplate: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        tier: z.enum(['easy', 'medium', 'hard']),
+        ships: z.record(z.string(), z.number().int()),
+        techs: z.object({
+          weapons: z.number().int(),
+          shielding: z.number().int(),
+          armor: z.number().int(),
+        }),
+        rewards: z.object({
+          minerai: z.number().int(),
+          silicium: z.number().int(),
+          hydrogene: z.number().int(),
+          bonusShips: z.array(z.object({
+            shipId: z.string(),
+            count: z.number().int(),
+            chance: z.number(),
+          })),
+        }),
+        centerLevelMin: z.number().int(),
+        centerLevelMax: z.number().int(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createPirateTemplate(input);
+        return { success: true };
+      }),
+
+    updatePirateTemplate: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          name: z.string().optional(),
+          tier: z.enum(['easy', 'medium', 'hard']).optional(),
+          ships: z.record(z.string(), z.number().int()).optional(),
+          techs: z.object({
+            weapons: z.number().int(),
+            shielding: z.number().int(),
+            armor: z.number().int(),
+          }).optional(),
+          rewards: z.object({
+            minerai: z.number().int(),
+            silicium: z.number().int(),
+            hydrogene: z.number().int(),
+            bonusShips: z.array(z.object({
+              shipId: z.string(),
+              count: z.number().int(),
+              chance: z.number(),
+            })),
+          }).optional(),
+          centerLevelMin: z.number().int().optional(),
+          centerLevelMax: z.number().int().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updatePirateTemplate(input.id, input.data);
+        return { success: true };
+      }),
+
+    deletePirateTemplate: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deletePirateTemplate(input.id);
+        return { success: true };
+      }),
+
+    // ── Tutorial quests ──
+
+    createTutorialQuest: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        order: z.number().int(),
+        title: z.string().min(1),
+        narrativeText: z.string().min(1),
+        conditionType: z.enum(['building_level', 'ship_count', 'mission_complete']),
+        conditionTargetId: z.string().min(1),
+        conditionTargetValue: z.number().int(),
+        rewardMinerai: z.number().int().optional(),
+        rewardSilicium: z.number().int().optional(),
+        rewardHydrogene: z.number().int().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createTutorialQuest(input);
+        return { success: true };
+      }),
+
+    updateTutorialQuest: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          order: z.number().int().optional(),
+          title: z.string().optional(),
+          narrativeText: z.string().optional(),
+          conditionType: z.enum(['building_level', 'ship_count', 'mission_complete']).optional(),
+          conditionTargetId: z.string().optional(),
+          conditionTargetValue: z.number().int().optional(),
+          rewardMinerai: z.number().int().optional(),
+          rewardSilicium: z.number().int().optional(),
+          rewardHydrogene: z.number().int().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updateTutorialQuest(input.id, input.data);
+        return { success: true };
+      }),
+
+    deleteTutorialQuest: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteTutorialQuest(input.id);
+        return { success: true };
+      }),
   });
 
   return router({
