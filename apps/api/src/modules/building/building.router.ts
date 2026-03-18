@@ -10,6 +10,8 @@ const buildingIds = [
   'solarPlant',
   'robotics',
   'shipyard',
+  'arsenal',
+  'commandCenter',
   'researchLab',
   'storageMinerai',
   'storageSilicium',
