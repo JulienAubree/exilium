@@ -9,6 +9,8 @@ const EVENT_TYPE_OPTIONS = [
   { value: 'shipyard-done', label: 'Chantier spatial' },
   { value: 'fleet-arrived', label: 'Flottes arrivées' },
   { value: 'fleet-returned', label: 'Flottes de retour' },
+  { value: 'pve-mission-done', label: 'Missions PvE' },
+  { value: 'tutorial-quest-done', label: 'Tutoriel' },
 ] as const;
 
 type GameEventType = (typeof EVENT_TYPE_OPTIONS)[number]['value'];

@@ -55,6 +55,21 @@ export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
             },
           });
 
+          // PvE mission event (mine or pirate)
+          if (result.mission === 'mine' || result.mission === 'pirate') {
+            await db.insert(gameEvents).values({
+              userId: result.userId,
+              planetId: result.originPlanetId,
+              type: 'pve-mission-done',
+              payload: {
+                missionType: result.mission,
+                targetCoords: result.targetCoords,
+                originName: result.originName,
+                cargo: result.cargo,
+              },
+            });
+          }
+
           // Tutorial quest check (mission_complete for mine missions)
           if (result.mission === 'mine') {
             const tutorialResult = await tutorialService.checkAndComplete(result.userId, {
@@ -70,6 +85,18 @@ export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
                   questTitle: tutorialResult.completedQuest.title,
                   reward: tutorialResult.reward,
                   nextQuest: tutorialResult.nextQuest ? { id: tutorialResult.nextQuest.id, title: tutorialResult.nextQuest.title } : null,
+                  tutorialComplete: tutorialResult.tutorialComplete,
+                },
+              });
+
+              await db.insert(gameEvents).values({
+                userId: result.userId,
+                planetId: result.originPlanetId,
+                type: 'tutorial-quest-done',
+                payload: {
+                  questId: tutorialResult.completedQuest.id,
+                  questTitle: tutorialResult.completedQuest.title,
+                  reward: tutorialResult.reward,
                   tutorialComplete: tutorialResult.tutorialComplete,
                 },
               });

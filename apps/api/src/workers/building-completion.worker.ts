@@ -73,6 +73,18 @@ export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
                 tutorialComplete: tutorialResult.tutorialComplete,
               },
             });
+
+            await db.insert(gameEvents).values({
+              userId: entry.userId,
+              planetId: entry.planetId,
+              type: 'tutorial-quest-done',
+              payload: {
+                questId: tutorialResult.completedQuest.id,
+                questTitle: tutorialResult.completedQuest.title,
+                reward: tutorialResult.reward,
+                tutorialComplete: tutorialResult.tutorialComplete,
+              },
+            });
           }
         }
       } else {

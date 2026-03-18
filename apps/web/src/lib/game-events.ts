@@ -5,6 +5,8 @@ export function eventTypeColor(type: string) {
     case 'shipyard-done': return 'bg-orange-500';
     case 'fleet-arrived': return 'bg-blue-500';
     case 'fleet-returned': return 'bg-emerald-500';
+    case 'pve-mission-done': return 'bg-amber-500';
+    case 'tutorial-quest-done': return 'bg-cyan-500';
     default: return 'bg-muted';
   }
 }
@@ -16,6 +18,8 @@ export function eventTypeLabel(type: string) {
     case 'shipyard-done': return 'Chantier';
     case 'fleet-arrived': return 'Flotte arrivée';
     case 'fleet-returned': return 'Flotte de retour';
+    case 'pve-mission-done': return 'Mission PvE';
+    case 'tutorial-quest-done': return 'Tutoriel';
     default: return 'Événement';
   }
 }
@@ -29,6 +33,16 @@ export function formatEventText(event: { type: string; payload?: unknown }, opti
     case 'shipyard-done': return `${p.count}x ${p.name ?? p.unitId}${planet}`;
     case 'fleet-arrived': return `Mission ${p.mission} arrivée en ${p.targetCoords}`;
     case 'fleet-returned': return `Flotte rentrée sur ${p.originName}`;
+    case 'pve-mission-done': {
+      const mLabel = p.missionType === 'pirate' ? 'Pirate' : 'Minage';
+      const loot = [
+        p.cargo?.minerai ? `${p.cargo.minerai.toLocaleString('fr-FR')} minerai` : '',
+        p.cargo?.silicium ? `${p.cargo.silicium.toLocaleString('fr-FR')} silicium` : '',
+        p.cargo?.hydrogene ? `${p.cargo.hydrogene.toLocaleString('fr-FR')} hydrogène` : '',
+      ].filter(Boolean).join(', ');
+      return `${mLabel} en ${p.targetCoords}${loot ? ` — ${loot}` : ''}`;
+    }
+    case 'tutorial-quest-done': return `Quête "${p.questTitle}" terminée`;
     default: return 'Événement';
   }
 }
@@ -95,6 +109,8 @@ export function eventNavigationTarget(type: string): string {
     case 'shipyard-done': return '/shipyard';
     case 'fleet-arrived':
     case 'fleet-returned': return '/movements';
+    case 'pve-mission-done': return '/missions';
+    case 'tutorial-quest-done': return '/';
     default: return '/';
   }
 }
