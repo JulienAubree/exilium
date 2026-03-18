@@ -15,6 +15,13 @@
       "when": 1773786580132,
       "tag": "0001_amusing_thor_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774060800000,
+      "tag": "0002_tutorial_progress",
+      "breakpoints": true
     }
   ]
 }

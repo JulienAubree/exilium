@@ -7,6 +7,7 @@ import { createGameConfigService } from '../modules/admin/game-config.service.js
 import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
+import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
@@ -19,6 +20,7 @@ export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
   const pirateService = createPirateService(db, gameConfigService);
   const pveService = createPveService(db, asteroidBeltService, pirateService);
   const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, undefined, gameConfigService, pveService, asteroidBeltService, pirateService);
+  const tutorialService = createTutorialService(db);
   const redis = new Redis(env.REDIS_URL);
 
   const worker = new Worker(
@@ -52,6 +54,27 @@ export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
               cargo: result.cargo,
             },
           });
+
+          // Tutorial quest check (mission_complete for mine missions)
+          if (result.mission === 'mine') {
+            const tutorialResult = await tutorialService.checkAndComplete(result.userId, {
+              type: 'mission_complete',
+              targetId: 'mine',
+              targetValue: 1,
+            });
+            if (tutorialResult) {
+              publishNotification(redis, result.userId, {
+                type: 'tutorial-quest-complete',
+                payload: {
+                  questId: tutorialResult.completedQuest.id,
+                  questTitle: tutorialResult.completedQuest.title,
+                  reward: tutorialResult.reward,
+                  nextQuest: tutorialResult.nextQuest ? { id: tutorialResult.nextQuest.id, title: tutorialResult.nextQuest.title } : null,
+                  tutorialComplete: tutorialResult.tutorialComplete,
+                },
+              });
+            }
+          }
         }
       }
     },

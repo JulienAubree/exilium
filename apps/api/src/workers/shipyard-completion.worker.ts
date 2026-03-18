@@ -5,6 +5,7 @@ import { createDb, buildQueue, gameEvents, planets } from '@ogame-clone/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
+import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import { shipyardCompletionQueue } from '../queues/queue.js';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
@@ -13,6 +14,7 @@ export function startShipyardCompletionWorker(db: ReturnType<typeof createDb>) {
   const resourceService = createResourceService(db);
   const gameConfigService = createGameConfigService(db);
   const shipyardService = createShipyardService(db, resourceService, shipyardCompletionQueue, gameConfigService);
+  const tutorialService = createTutorialService(db);
   const redis = new Redis(env.REDIS_URL);
 
   const worker = new Worker(
@@ -51,6 +53,27 @@ export function startShipyardCompletionWorker(db: ReturnType<typeof createDb>) {
             type: 'shipyard-done',
             payload: { unitId: result.itemId, name: unitName, count: result.totalCompleted, planetName: planet?.name ?? 'Planète' },
           });
+
+          // Tutorial quest check (ship_count)
+          if (entry.userId) {
+            const tutorialResult = await tutorialService.checkAndComplete(entry.userId, {
+              type: 'ship_count',
+              targetId: result.itemId,
+              targetValue: result.totalCompleted,
+            });
+            if (tutorialResult) {
+              publishNotification(redis, entry.userId, {
+                type: 'tutorial-quest-complete',
+                payload: {
+                  questId: tutorialResult.completedQuest.id,
+                  questTitle: tutorialResult.completedQuest.title,
+                  reward: tutorialResult.reward,
+                  nextQuest: tutorialResult.nextQuest ? { id: tutorialResult.nextQuest.id, title: tutorialResult.nextQuest.title } : null,
+                  tutorialComplete: tutorialResult.tutorialComplete,
+                },
+              });
+            }
+          }
         }
       }
     },

@@ -1,3 +1,4 @@
+import { getPhaseMultiplier } from '../constants/progression.js';
 import type { ResourceCost, BuildingCostDef } from './building-cost.js';
 
 export interface ResearchCostDef {
@@ -6,7 +7,7 @@ export interface ResearchCostDef {
 }
 
 export function researchCost(def: ResearchCostDef, level: number): ResourceCost {
-  const factor = Math.pow(def.costFactor, level - 1);
+  const factor = Math.pow(def.costFactor, level - 1) * getPhaseMultiplier(level);
   return {
     minerai: Math.floor(def.baseCost.minerai * factor),
     silicium: Math.floor(def.baseCost.silicium * factor),
@@ -16,6 +17,6 @@ export function researchCost(def: ResearchCostDef, level: number): ResourceCost 
 
 export function researchTime(def: ResearchCostDef, level: number, labLevel: number): number {
   const cost = researchCost(def, level);
-  const seconds = Math.floor(((cost.minerai + cost.silicium) / (1000 * (1 + labLevel))) * 3600);
+  const seconds = Math.floor(((cost.minerai + cost.silicium) / (1000 * (1 + labLevel))) * 3600 * getPhaseMultiplier(level));
   return Math.max(1, seconds);
 }

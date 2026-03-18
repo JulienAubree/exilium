@@ -139,6 +139,6 @@ export const BUILDINGS: Record<BuildingId, BuildingDefinition> = {
     baseCost: { minerai: 5000, silicium: 3000, hydrogene: 1000 },
     costFactor: 1.8,
     baseTime: 300,
-    prerequisites: [{ buildingId: 'shipyard', level: 3 }, { buildingId: 'researchLab', level: 1 }],
+    prerequisites: [{ buildingId: 'shipyard', level: 2 }],
   },
 };

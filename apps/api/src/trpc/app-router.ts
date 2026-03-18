@@ -32,6 +32,8 @@ import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
 import { createPveRouter } from '../modules/pve/pve.router.js';
+import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
+import { createTutorialRouter } from '../modules/tutorial/tutorial.router.js';
 import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import type { Database } from '@ogame-clone/db';
 import type Redis from 'ioredis';
@@ -56,6 +58,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const allianceService = createAllianceService(db, messageService);
   const playerAdminService = createPlayerAdminService(db);
   const gameEventService = createGameEventService(db);
+  const tutorialService = createTutorialService(db);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);
@@ -72,6 +75,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const playerAdminRouter = createPlayerAdminRouter(playerAdminService, adminProcedure);
   const gameEventRouter = createGameEventRouter(gameEventService);
   const pveRouter = createPveRouter(pveService, asteroidBeltService);
+  const tutorialRouter = createTutorialRouter(tutorialService);
 
   return router({
     health: publicProcedure.query(() => ({
@@ -93,6 +97,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     playerAdmin: playerAdminRouter,
     gameEvent: gameEventRouter,
     pve: pveRouter,
+    tutorial: tutorialRouter,
   });
 }
 

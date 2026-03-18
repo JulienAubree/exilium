@@ -5,6 +5,7 @@ import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { Toaster } from '@/components/ui/Toaster';
+import { TutorialPanel } from '@/components/tutorial/TutorialPanel';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -47,6 +48,9 @@ export function Layout() {
           </div>
         </main>
       </div>
+
+      {/* Tutorial panel */}
+      <TutorialPanel />
 
       {/* Mobile/tablet bottom navigation */}
       <BottomTabBar />

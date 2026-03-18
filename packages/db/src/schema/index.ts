@@ -14,3 +14,4 @@ export * from './game-events.js';
 export * from './planet-buildings.js';
 export * from './asteroid-belts.js';
 export * from './pve-missions.js';
+export * from './tutorial-progress.js';

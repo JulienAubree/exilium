@@ -1,7 +1,7 @@
 import type Redis from 'ioredis';
 
 export interface NotificationEvent {
-  type: 'new-message' | 'building-done' | 'research-done' | 'shipyard-done' | 'fleet-arrived' | 'fleet-returned';
+  type: 'new-message' | 'building-done' | 'research-done' | 'shipyard-done' | 'fleet-arrived' | 'fleet-returned' | 'tutorial-quest-complete';
   payload: Record<string, unknown>;
 }
 

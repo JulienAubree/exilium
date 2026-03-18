@@ -111,6 +111,12 @@ export function useNotifications() {
         addToast(`Flotte de retour sur ${event.payload.originName}`);
         showBrowserNotification('Flotte de retour', `Flotte rentrée sur ${event.payload.originName}`);
         break;
+      case 'tutorial-quest-complete':
+        utils.tutorial.getCurrent.invalidate();
+        utils.resource.production.invalidate();
+        addToast(`Quête terminée : ${event.payload.questTitle}`);
+        showBrowserNotification('Quête terminée !', String(event.payload.questTitle));
+        break;
     }
   });
 }
