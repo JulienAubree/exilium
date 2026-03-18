@@ -22,11 +22,24 @@ export function totalExtracted(
 }
 
 /**
- * Extraction duration in minutes at the belt.
- * Formula: max(5, 16 - centerLevel)
+ * Prospection duration in minutes.
+ * Formula: 5 + floor(depositTotalQuantity / 10000) * 2
  */
+export function prospectionDuration(depositTotalQuantity: number): number {
+  return 5 + Math.floor(depositTotalQuantity / 10000) * 2;
+}
+
+/**
+ * Mining duration in minutes at the belt.
+ * Formula: max(5, 16 - centerLevel) * max(0.2, 1 - 0.1 * fracturingLevel)
+ */
+export function miningDuration(centerLevel: number, fracturingLevel: number): number {
+  return Math.max(5, 16 - centerLevel) * Math.max(0.2, 1 - 0.1 * fracturingLevel);
+}
+
+/** @deprecated Use miningDuration instead */
 export function extractionDuration(centerLevel: number): number {
-  return Math.max(5, 16 - centerLevel);
+  return miningDuration(centerLevel, 0);
 }
 
 /**

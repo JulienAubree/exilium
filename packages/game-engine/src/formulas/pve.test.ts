@@ -3,6 +3,8 @@ import {
   baseExtraction,
   totalExtracted,
   extractionDuration,
+  prospectionDuration,
+  miningDuration,
   poolSize,
   accumulationCap,
 } from './pve.js';
@@ -49,6 +51,48 @@ describe('extractionDuration', () => {
   });
   it('returns 10 min at level 6', () => {
     expect(extractionDuration(6)).toBe(10);
+  });
+});
+
+describe('prospectionDuration', () => {
+  it('returns 9 min for 20000 deposit', () => {
+    expect(prospectionDuration(20000)).toBe(9);
+  });
+  it('returns 13 min for 40000 deposit', () => {
+    expect(prospectionDuration(40000)).toBe(13);
+  });
+  it('returns 17 min for 60000 deposit', () => {
+    expect(prospectionDuration(60000)).toBe(17);
+  });
+  it('returns 21 min for 80000 deposit', () => {
+    expect(prospectionDuration(80000)).toBe(21);
+  });
+  it('returns 5 min for small deposit (< 10000)', () => {
+    expect(prospectionDuration(5000)).toBe(5);
+  });
+});
+
+describe('miningDuration', () => {
+  it('returns 15 min at center 1, fracturing 0', () => {
+    expect(miningDuration(1, 0)).toBe(15);
+  });
+  it('returns 10.5 min at center 1, fracturing 3', () => {
+    expect(miningDuration(1, 3)).toBe(10.5);
+  });
+  it('returns 7.5 min at center 1, fracturing 5', () => {
+    expect(miningDuration(1, 5)).toBe(7.5);
+  });
+  it('returns 3 min at center 1, fracturing 8', () => {
+    expect(miningDuration(1, 8)).toBeCloseTo(3);
+  });
+  it('returns 5 min at center 11, fracturing 0 (floor)', () => {
+    expect(miningDuration(11, 0)).toBe(5);
+  });
+  it('returns 1 min at center 11, fracturing 8 (floor * min multiplier)', () => {
+    expect(miningDuration(11, 8)).toBeCloseTo(1);
+  });
+  it('floors multiplier at 0.2 (fracturing 10 same as 8)', () => {
+    expect(miningDuration(1, 10)).toBe(miningDuration(1, 8));
   });
 });
 
