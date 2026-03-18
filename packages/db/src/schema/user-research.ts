@@ -12,4 +12,5 @@ export const userResearch = pgTable('user_research', {
   weapons: smallint('weapons').notNull().default(0),
   shielding: smallint('shielding').notNull().default(0),
   armor: smallint('armor').notNull().default(0),
+  rockFracturing: smallint('rock_fracturing').notNull().default(0),
 });

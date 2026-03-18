@@ -10,6 +10,8 @@ export enum MissionType {
 
 export enum FleetPhase {
   Outbound = 'outbound',
+  Prospecting = 'prospecting',
+  Mining = 'mining',
   Return = 'return',
 }
 
