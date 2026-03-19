@@ -59,8 +59,6 @@ export interface BuildingConfig {
   baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   baseTime: number;
-  buildTimeReductionFactor: number | null;
-  reducesTimeForCategory: string | null;
   flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
@@ -236,8 +234,6 @@ export function createGameConfigService(db: Database) {
         baseCost: { minerai: b.baseCostMinerai, silicium: b.baseCostSilicium, hydrogene: b.baseCostHydrogene },
         costFactor: b.costFactor,
         baseTime: b.baseTime,
-        buildTimeReductionFactor: b.buildTimeReductionFactor,
-        reducesTimeForCategory: b.reducesTimeForCategory,
         flavorText: b.flavorText ?? null,
         categoryId: b.categoryId,
         sortOrder: b.sortOrder,
@@ -428,8 +424,6 @@ export function createGameConfigService(db: Database) {
       baseCostHydrogene?: number;
       costFactor?: number;
       baseTime?: number;
-      buildTimeReductionFactor?: number | null;
-      reducesTimeForCategory?: string | null;
       flavorText?: string | null;
       categoryId?: string | null;
       sortOrder?: number;
@@ -443,8 +437,6 @@ export function createGameConfigService(db: Database) {
         baseCostHydrogene: data.baseCostHydrogene ?? 0,
         costFactor: data.costFactor ?? 1.5,
         baseTime: data.baseTime ?? 60,
-        buildTimeReductionFactor: data.buildTimeReductionFactor ?? null,
-        reducesTimeForCategory: data.reducesTimeForCategory ?? null,
         flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
@@ -505,8 +497,6 @@ export function createGameConfigService(db: Database) {
       baseCostHydrogene: number;
       costFactor: number;
       baseTime: number;
-      buildTimeReductionFactor: number | null;
-      reducesTimeForCategory: string | null;
       flavorText: string | null;
       categoryId: string | null;
       sortOrder: number;
