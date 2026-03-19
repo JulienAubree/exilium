@@ -32,6 +32,7 @@ import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js'
 import type { createPirateService } from '../pve/pirate.service.js';
 import { TransportHandler } from './handlers/transport.handler.js';
 import { StationHandler } from './handlers/station.handler.js';
+import { SpyHandler } from './handlers/spy.handler.js';
 import type { MissionHandler, MissionHandlerContext, FleetEvent as HandlerFleetEvent } from './fleet.types.js';
 
 interface SendFleetInput {
@@ -94,6 +95,7 @@ export function createFleetService(
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
     station: new StationHandler(),
+    spy: new SpyHandler(),
   };
 
   const handlerCtx: MissionHandlerContext = {
@@ -151,6 +153,12 @@ export function createFleetService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Capacité de fret dépassée' });
       }
 
+      // Handler-based validation
+      const sendHandler = handlers[input.mission];
+      if (sendHandler) {
+        await sendHandler.validateFleet(input, config, handlerCtx);
+      }
+
       // Validate: cannot attack own planet
       if (input.mission === 'attack') {
         const [targetCheck] = await db
@@ -178,14 +186,7 @@ export function createFleetService(
         }
       }
 
-      // Validate: spy mission requires only espionage probes
-      if (input.mission === 'spy') {
-        for (const [shipType, count] of Object.entries(input.ships)) {
-          if (count > 0 && shipType !== 'espionageProbe') {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seules les sondes d\'espionnage peuvent être envoyées en mission espionnage' });
-          }
-        }
-      }
+      // Spy validation moved to SpyHandler
 
       // Validate: colonize mission requires only colony ships
       if (input.mission === 'colonize') {
@@ -465,9 +466,7 @@ export function createFleetService(
         return { ...eventMeta, ...(await this.processColonize(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo)) };
       }
 
-      if (event.mission === 'spy') {
-        return { ...eventMeta, ...(await this.processSpy(event, ships)) };
-      }
+      // Spy handled by handler dispatch above
 
       if (event.mission === 'attack') {
         return { ...eventMeta, ...(await this.processAttack(event, ships, mineraiCargo, siliciumCargo, hydrogeneCargo)) };
@@ -1078,149 +1077,6 @@ export function createFleetService(
         shielding: research?.shielding ?? 0,
         armor: research?.armor ?? 0,
       };
-    },
-
-    async getEspionageTech(userId: string): Promise<number> {
-      const [research] = await db
-        .select({ espionageTech: userResearch.espionageTech })
-        .from(userResearch)
-        .where(eq(userResearch.userId, userId))
-        .limit(1);
-
-      return research?.espionageTech ?? 0;
-    },
-
-    async processSpy(
-      event: typeof fleetEvents.$inferSelect,
-      ships: Record<string, number>,
-    ) {
-      const probeCount = ships.espionageProbe ?? 0;
-      const coords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
-
-      const attackerTech = await this.getEspionageTech(event.userId);
-
-      const [targetPlanet] = await db
-        .select()
-        .from(planets)
-        .where(
-          and(
-            eq(planets.galaxy, event.targetGalaxy),
-            eq(planets.system, event.targetSystem),
-            eq(planets.position, event.targetPosition),
-          ),
-        )
-        .limit(1);
-
-      if (!targetPlanet) {
-        if (messageService) {
-          await messageService.createSystemMessage(
-            event.userId,
-            'espionage',
-            `Espionnage ${coords}`,
-            `Aucune planète trouvée à la position ${coords}.`,
-          );
-        }
-        await this.scheduleReturn(
-          event.id, event.originPlanetId,
-          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, 0, 0, 0,
-        );
-        return { mission: 'spy', success: false, reason: 'no_planet' };
-      }
-
-      const defenderTech = await this.getEspionageTech(targetPlanet.userId);
-      const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech);
-
-      let body = `Rapport d'espionnage de ${coords}\n\n`;
-
-      if (visibility.resources) {
-        await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
-        const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
-        body += `Ressources :\nMinerai : ${Math.floor(Number(planet.minerai))}\nSilicium : ${Math.floor(Number(planet.silicium))}\nHydrogène : ${Math.floor(Number(planet.hydrogene))}\n\n`;
-      }
-
-      if (visibility.fleet) {
-        const [targetShips] = await db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
-        if (targetShips) {
-          body += `Flotte :\n`;
-          const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler'] as const;
-          for (const t of shipTypes) {
-            if (targetShips[t] > 0) body += `${t}: ${targetShips[t]}\n`;
-          }
-          body += '\n';
-        }
-      }
-
-      if (visibility.defenses) {
-        const [defs] = await db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
-        if (defs) {
-          body += `Défenses :\n`;
-          const defTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
-          for (const t of defTypes) {
-            if (defs[t] > 0) body += `${t}: ${defs[t]}\n`;
-          }
-          body += '\n';
-        }
-      }
-
-      if (visibility.buildings) {
-        const bRows = await db.select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
-          .from(planetBuildings).where(eq(planetBuildings.planetId, targetPlanet.id));
-        body += `Bâtiments :\n`;
-        for (const row of bRows) {
-          if (row.level > 0) body += `${row.buildingId}: ${row.level}\n`;
-        }
-        body += '\n';
-      }
-
-      if (visibility.research) {
-        const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
-        if (research) {
-          body += `Recherches :\n`;
-          const researchCols = ['espionageTech', 'computerTech', 'energyTech', 'combustion', 'impulse', 'hyperspaceDrive', 'weapons', 'shielding', 'armor'] as const;
-          for (const col of researchCols) {
-            if (research[col] > 0) body += `${col}: ${research[col]}\n`;
-          }
-        }
-      }
-
-      if (messageService) {
-        await messageService.createSystemMessage(
-          event.userId,
-          'espionage',
-          `Rapport d'espionnage ${coords}`,
-          body,
-        );
-      }
-
-      const detectionChance = calculateDetectionChance(probeCount, attackerTech, defenderTech);
-      const detected = Math.random() * 100 < detectionChance;
-
-      if (detected) {
-        if (messageService) {
-          const [attackerUser] = await db.select({ username: users.username }).from(users).where(eq(users.id, event.userId)).limit(1);
-          await messageService.createSystemMessage(
-            targetPlanet.userId,
-            'espionage',
-            `Activité d'espionnage détectée ${coords}`,
-            `${probeCount} sonde(s) d'espionnage provenant de ${attackerUser?.username ?? 'Inconnu'} ont été détectées et détruites.`,
-          );
-        }
-        await db
-          .update(fleetEvents)
-          .set({ status: 'completed' })
-          .where(eq(fleetEvents.id, event.id));
-
-        return { mission: 'spy', success: true, detected: true };
-      }
-
-      await this.scheduleReturn(
-        event.id, event.originPlanetId,
-        { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-        ships, 0, 0, 0,
-      );
-
-      return { mission: 'spy', success: true, detected: false };
     },
 
     async processRecycle(
