@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -11,10 +11,9 @@ import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
-import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
+import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ResearchDetailContent } from '@/components/entity-details/ResearchDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 
 export default function Research() {
@@ -70,6 +69,12 @@ export default function Research() {
       setCancelConfirm(false);
     },
   });
+
+  const researchLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    techs?.forEach((t) => { levels[t.id] = t.currentLevel; });
+    return levels;
+  }, [techs]);
 
   if (isLoading || !techs) {
     return (
@@ -266,7 +271,7 @@ export default function Research() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.research[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ResearchDetailContent researchId={detailId} />}
+        {detailId && <ResearchDetailContent researchId={detailId} researchLevels={researchLevels} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog

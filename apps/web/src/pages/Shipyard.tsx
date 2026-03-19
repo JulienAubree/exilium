@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -11,10 +11,9 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
-import { EntityDetailOverlay, InfoButton } from '@/components/common/EntityDetailOverlay';
+import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { formatMissingPrerequisite } from '@/lib/prerequisites';
 
 
 export default function Shipyard() {
@@ -61,6 +60,17 @@ export default function Shipyard() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+
+  const { data: researchList } = trpc.research.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
+  const researchLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    researchList?.forEach((r) => { levels[r.id] = r.currentLevel; });
+    return levels;
+  }, [researchList]);
 
   const buildMutation = trpc.shipyard.buildShip.useMutation({
     onSuccess: () => {
@@ -325,7 +335,7 @@ export default function Shipyard() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ShipDetailContent shipId={detailId} />}
+        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog

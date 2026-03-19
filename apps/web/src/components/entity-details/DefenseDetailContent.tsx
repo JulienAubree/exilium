@@ -1,73 +1,159 @@
-import { getDefenseDetails, resolveBuildingName, resolveResearchName, type DefenseDetails } from '@/lib/entity-details';
+import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { ResourceCost } from '@/components/common/ResourceCost';
-import { DetailSection, StatRow } from '@/components/common/EntityDetailOverlay';
+import { GameImage } from '@/components/common/GameImage';
+import { getDefenseDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
+import { resolveBonus } from '@ogame-clone/game-engine';
 
-export function DefenseDetailContent({ defenseId }: { defenseId: string }) {
+const fmt = (n: number) => n.toLocaleString('fr-FR');
+
+function EffectiveStatRow({ label, base, effective, multiplier }: { label: string; base: number; effective: number; multiplier: number }) {
+  const bonusPercent = Math.round((multiplier - 1) * 100);
+  const hasBonus = bonusPercent > 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-slate-400">{label}</span>
+        <span className="text-slate-200 font-mono font-semibold">{fmt(effective)}</span>
+      </div>
+      {hasBonus && (
+        <div className="text-[10px] text-right text-emerald-500">
+          base {fmt(base)} &middot; +{bonusPercent}%
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface Props {
+  defenseId: string;
+  researchLevels: Record<string, number>;
+}
+
+export function DefenseDetailContent({ defenseId, researchLevels }: Props) {
   const { data: gameConfig } = useGameConfig();
-  const details: DefenseDetails = getDefenseDetails(defenseId, gameConfig ?? undefined);
+  const details = getDefenseDetails(defenseId, gameConfig ?? undefined);
+
+  const effective = useMemo(() => {
+    const defs = gameConfig?.bonuses ?? [];
+    const weaponsMult = resolveBonus('weapons', null, researchLevels, defs);
+    const shieldMult = resolveBonus('shielding', null, researchLevels, defs);
+    const armorMult = resolveBonus('armor', null, researchLevels, defs);
+    return {
+      weapons: Math.floor(details.combat.weapons * weaponsMult),
+      weaponsMult,
+      shield: Math.floor(details.combat.shield * shieldMult),
+      shieldMult,
+      armor: Math.floor(details.combat.armor * armorMult),
+      armorMult,
+    };
+  }, [researchLevels, details, gameConfig?.bonuses]);
 
   const hasBuildingPrereqs = details.prerequisites.buildings && details.prerequisites.buildings.length > 0;
   const hasResearchPrereqs = details.prerequisites.research && details.prerequisites.research.length > 0;
 
   return (
     <>
-      <p className="text-sm italic text-muted-foreground">{details.flavorText}</p>
-
-      <DetailSection title="Cout unitaire">
-        <ResourceCost
-          minerai={details.cost.minerai}
-          silicium={details.cost.silicium}
-          hydrogene={details.cost.hydrogene}
+      {/* Hero image */}
+      <div className="relative -mx-5 -mt-5 h-[200px] overflow-hidden">
+        <GameImage
+          category="defenses"
+          id={defenseId}
+          size="full"
+          alt={details.name}
+          className="w-full h-full object-cover"
         />
-      </DetailSection>
+      </div>
 
-      <DetailSection title="Stats de combat">
-        <div className="space-y-1">
-          <StatRow label="Armes" value={details.combat.weapons} />
-          <StatRow label="Bouclier" value={details.combat.shield} />
-          <StatRow label="Coque" value={details.combat.armor} />
+      {/* Defense name */}
+      <h3 className="text-lg font-semibold text-white">{details.name}</h3>
+
+      {/* Flavor text */}
+      {details.flavorText && (
+        <p className="text-xs italic text-[#888] leading-relaxed">{details.flavorText}</p>
+      )}
+
+      {/* Combat stats */}
+      <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+        <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+          Stats de combat
         </div>
-      </DetailSection>
+        <EffectiveStatRow label="Armes" base={details.combat.weapons} effective={effective.weapons} multiplier={effective.weaponsMult} />
+        <EffectiveStatRow label="Bouclier" base={details.combat.shield} effective={effective.shield} multiplier={effective.shieldMult} />
+        <EffectiveStatRow label="Coque" base={details.combat.armor} effective={effective.armor} multiplier={effective.armorMult} />
+      </div>
 
-      {details.rapidFireFrom.length > 0 && (
-        <DetailSection title="Tir rapide subi de">
-          <ul className="space-y-1">
-            {details.rapidFireFrom.map((rf) => (
-              <li key={rf.unitId} className="text-sm text-muted-foreground flex items-center justify-between">
-                <span>{rf.unitName}</span>
-                <span className="font-mono text-red-400">x{rf.value}</span>
-              </li>
-            ))}
-          </ul>
-        </DetailSection>
-      )}
+      {/* Unit cost */}
+      <div>
+        <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+          Coût unitaire
+        </div>
+        <div className="flex items-center gap-4 text-[11px] font-mono font-semibold">
+          {details.cost.minerai > 0 && (
+            <span className="text-amber-400">{fmt(details.cost.minerai)} minerai</span>
+          )}
+          {details.cost.silicium > 0 && (
+            <span className="text-cyan-400">{fmt(details.cost.silicium)} silicium</span>
+          )}
+          {details.cost.hydrogene > 0 && (
+            <span className="text-emerald-400">{fmt(details.cost.hydrogene)} hydrogène</span>
+          )}
+        </div>
+      </div>
 
+      {/* Max per planet */}
       {details.maxPerPlanet && (
-        <DetailSection title="Limite">
-          <p className="text-sm text-muted-foreground">
-            Maximum {details.maxPerPlanet} par planete
-          </p>
-        </DetailSection>
+        <p className="text-xs text-slate-400">
+          Maximum {details.maxPerPlanet} par planète
+        </p>
       )}
 
+      {/* Rapid fire from */}
+      {details.rapidFireFrom.length > 0 && (
+        <div>
+          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            Tir rapide subi
+          </div>
+          <div className="space-y-1.5">
+            {details.rapidFireFrom.map((rf) => (
+              <div key={rf.unitId} className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2">
+                  <GameImage
+                    category={gameConfig?.ships[rf.unitId] ? 'ships' : 'defenses'}
+                    id={rf.unitId}
+                    size="thumb"
+                    alt={rf.unitName}
+                    className="h-6 w-6 rounded object-cover"
+                  />
+                  <span className="text-slate-300">{rf.unitName}</span>
+                </div>
+                <span className="font-mono font-semibold text-red-400">x{rf.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Prerequisites */}
       {(hasBuildingPrereqs || hasResearchPrereqs) && (
-        <DetailSection title="Prerequis">
-          <ul className="space-y-1">
+        <div>
+          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            Prérequis
+          </div>
+          <div className="space-y-1">
             {details.prerequisites.buildings?.map((p) => (
-              <li key={p.buildingId} className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <div key={p.buildingId} className="text-[11px] flex items-center gap-1.5 text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
                 {resolveBuildingName(p.buildingId, gameConfig ?? undefined)} niveau {p.level}
-              </li>
+              </div>
             ))}
             {details.prerequisites.research?.map((p) => (
-              <li key={p.researchId} className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <div key={p.researchId} className="text-[11px] flex items-center gap-1.5 text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
                 {resolveResearchName(p.researchId, gameConfig ?? undefined)} niveau {p.level}
-              </li>
+              </div>
             ))}
-          </ul>
-        </DetailSection>
+          </div>
+        </div>
       )}
     </>
   );
