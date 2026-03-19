@@ -171,8 +171,8 @@ export default function Research() {
                   })}
                 </div>
 
-                {/* Desktop: card grid */}
-                <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
+                {/* Desktop: vertical card grid */}
+                <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                   {categoryTechs.map((tech) => {
                     const canAfford =
                       resources.minerai >= tech.nextLevelCost.minerai &&
@@ -180,82 +180,78 @@ export default function Research() {
                       resources.hydrogene >= tech.nextLevelCost.hydrogene;
 
                     return (
-                      <div key={tech.id} className={`glass-card relative p-4 space-y-3 ${!tech.prerequisitesMet ? 'opacity-50' : ''}`}>
-                        <InfoButton onClick={() => setDetailId(tech.id)} />
-                        <div className="flex items-center gap-3">
+                      <button
+                        key={tech.id}
+                        onClick={() => setDetailId(tech.id)}
+                        className={`retro-card text-left cursor-pointer overflow-hidden flex flex-col ${!tech.prerequisitesMet ? 'opacity-50' : ''}`}
+                      >
+                        <div className="relative h-[130px] overflow-hidden">
                           <GameImage
                             category="research"
                             id={tech.id}
-                            size="icon"
+                            size="full"
                             alt={tech.name}
-                            className="h-10 w-10 rounded"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="flex flex-1 items-center justify-between">
-                            <span className="text-base font-semibold">{tech.name}</span>
-                            <Badge variant="secondary">Niv. {tech.currentLevel}</Badge>
-                          </div>
+                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                            Niv. {tech.currentLevel}
+                          </span>
                         </div>
 
-                        <p className="text-xs text-muted-foreground">{tech.description}</p>
-
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">
-                            Coût niveau {tech.currentLevel + 1} :
+                        <div className="p-3 flex flex-col flex-1 gap-1.5">
+                          <div className="text-[13px] font-semibold text-foreground truncate">
+                            {tech.name}
                           </div>
-                          <ResourceCost
-                            minerai={tech.nextLevelCost.minerai}
-                            silicium={tech.nextLevelCost.silicium}
-                            hydrogene={tech.nextLevelCost.hydrogene}
-                            currentMinerai={resources.minerai}
-                            currentSilicium={resources.silicium}
-                            currentHydrogene={resources.hydrogene}
-                          />
-                          <div className="text-xs text-muted-foreground">
-                            Durée : {formatDuration(tech.nextLevelTime)}
-                          </div>
-                        </div>
 
-                        {!tech.prerequisitesMet && tech.missingPrerequisites.length > 0 && (
-                          <p className="text-xs text-destructive">
-                            Prérequis : {tech.missingPrerequisites.map((p) => formatMissingPrerequisite(p, gameConfig)).join(', ')}
-                          </p>
-                        )}
+                          <div className="flex-1" />
 
-                        {tech.isResearching && tech.researchEndTime ? (
-                          <div className="space-y-2">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-primary">En recherche...</span>
-                              </div>
-                              <Timer
-                                endTime={new Date(tech.researchEndTime)}
-                                totalDuration={tech.nextLevelTime}
-                                onComplete={() => {
-                                  utils.research.list.invalidate({ planetId: planetId! });
-                                }}
+                          {tech.isResearching && tech.researchEndTime ? (
+                            <Timer
+                              endTime={new Date(tech.researchEndTime)}
+                              totalDuration={tech.nextLevelTime}
+                              onComplete={() => {
+                                utils.research.list.invalidate({ planetId: planetId! });
+                              }}
+                            />
+                          ) : (
+                            <>
+                              <ResourceCost
+                                minerai={tech.nextLevelCost.minerai}
+                                silicium={tech.nextLevelCost.silicium}
+                                hydrogene={tech.nextLevelCost.hydrogene}
+                                currentMinerai={resources.minerai}
+                                currentSilicium={resources.silicium}
+                                currentHydrogene={resources.hydrogene}
                               />
-                            </div>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setCancelConfirm(true)}
-                              disabled={cancelMutation.isPending}
-                            >
-                              Annuler
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              startMutation.mutate({ planetId: planetId!, researchId: tech.id as any })
-                            }
-                            disabled={!canAfford || !tech.prerequisitesMet || isAnyResearching || startMutation.isPending}
-                          >
-                            Rechercher niv. {tech.currentLevel + 1}
-                          </Button>
-                        )}
-                      </div>
+                              <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 6v6l4 2" />
+                                </svg>
+                                {formatDuration(tech.nextLevelTime)}
+                              </div>
+                              {!tech.prerequisitesMet ? (
+                                <div className="text-[10px] text-destructive">
+                                  Prérequis manquants
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="retro"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    startMutation.mutate({ planetId: planetId!, researchId: tech.id as any });
+                                  }}
+                                  disabled={!canAfford || isAnyResearching || startMutation.isPending}
+                                >
+                                  Rechercher
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
