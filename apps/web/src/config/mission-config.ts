@@ -1,5 +1,3 @@
-import { SHIP_STATS } from '@ogame-clone/game-engine';
-
 export type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle' | 'mine' | 'pirate';
 
 const COMBAT_SHIPS = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'] as const;
@@ -120,10 +118,14 @@ export type ShipCategory = 'required' | 'optional' | 'disabled';
 
 /**
  * Compute total cargo capacity for a fleet composition.
+ * @param shipConfigs - Ship stats from the game config (DB), keyed by ship ID.
  */
-export function getCargoCapacity(selectedShips: Record<string, number>): number {
+export function getCargoCapacity(
+  selectedShips: Record<string, number>,
+  shipConfigs: Record<string, { cargoCapacity: number }>,
+): number {
   return Object.entries(selectedShips).reduce((sum, [id, count]) => {
-    const stats = SHIP_STATS[id as keyof typeof SHIP_STATS];
+    const stats = shipConfigs[id];
     return sum + (stats ? stats.cargoCapacity * count : 0);
   }, 0);
 }

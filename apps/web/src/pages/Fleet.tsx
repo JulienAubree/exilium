@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { MissionSelector } from '@/components/fleet/MissionSelector';
 import { PveMissionBanner } from '@/components/fleet/PveMissionBanner';
 import { FleetComposition } from '@/components/fleet/FleetComposition';
@@ -31,6 +32,7 @@ export default function Fleet() {
   const prefillRef = useRef<{ mission: Mission; galaxy: number; system: number; position: number } | null>(null);
 
   // Data queries
+  const { data: gameConfig } = useGameConfig();
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
@@ -169,7 +171,7 @@ export default function Fleet() {
   };
 
   const totalCargo = cargo.minerai + cargo.silicium + cargo.hydrogene;
-  const cargoCapacity = getCargoCapacity(selectedShips);
+  const cargoCapacity = getCargoCapacity(selectedShips, gameConfig?.ships ?? {});
   const validationError = getValidationError();
 
   if (isLoading) return <CardGridSkeleton />;
