@@ -30,6 +30,8 @@ import type { Queue } from 'bullmq';
 import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
+import { TransportHandler } from './handlers/transport.handler.js';
+import type { MissionHandler, MissionHandlerContext, FleetEvent as HandlerFleetEvent } from './fleet.types.js';
 
 interface SendFleetInput {
   originPlanetId: string;
@@ -88,6 +90,23 @@ export function createFleetService(
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>,
   pirateService?: ReturnType<typeof createPirateService>,
 ) {
+  const handlers: Record<string, MissionHandler> = {
+    transport: new TransportHandler(),
+  };
+
+  const handlerCtx: MissionHandlerContext = {
+    db,
+    resourceService,
+    gameConfigService,
+    messageService,
+    pveService,
+    asteroidBeltService,
+    pirateService,
+    fleetArrivalQueue,
+    fleetReturnQueue,
+    universeSpeed,
+  };
+
   return {
     async sendFleet(userId: string, input: SendFleetInput) {
       const planet = await this.getOwnedPlanet(userId, input.originPlanetId);
@@ -374,33 +393,68 @@ export function createFleetService(
         cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
       };
 
-      if (event.mission === 'transport') {
-        if (event.targetPlanetId) {
-          const [targetPlanet] = await db
-            .select()
-            .from(planets)
-            .where(eq(planets.id, event.targetPlanetId))
-            .limit(1);
+      // Handler-based dispatch
+      const handler = handlers[event.mission];
+      if (handler) {
+        const handlerEvent: HandlerFleetEvent = {
+          id: event.id,
+          userId: event.userId,
+          originPlanetId: event.originPlanetId,
+          targetPlanetId: event.targetPlanetId,
+          targetGalaxy: event.targetGalaxy,
+          targetSystem: event.targetSystem,
+          targetPosition: event.targetPosition,
+          mission: event.mission,
+          phase: event.phase,
+          status: event.status,
+          departureTime: event.departureTime,
+          arrivalTime: event.arrivalTime,
+          mineraiCargo: event.mineraiCargo,
+          siliciumCargo: event.siliciumCargo,
+          hydrogeneCargo: event.hydrogeneCargo,
+          ships,
+          metadata: event.metadata,
+          pveMissionId: event.pveMissionId,
+        };
+        const result = await handler.processArrival(handlerEvent, handlerCtx);
 
-          if (targetPlanet) {
-            await db
-              .update(planets)
-              .set({
-                minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
-                silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
-                hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
-              })
-              .where(eq(planets.id, event.targetPlanetId));
+        if (result.scheduleReturn) {
+          const cargo = result.cargo ?? { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo };
+          const returnShips = result.shipsAfterArrival ?? ships;
+          await this.scheduleReturn(
+            event.id, event.originPlanetId,
+            { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+            returnShips, cargo.minerai, cargo.silicium, cargo.hydrogene,
+          );
+        }
+
+        if (result.schedulePhase) {
+          await fleetArrivalQueue.add(
+            result.schedulePhase.jobName,
+            { fleetEventId: event.id },
+            { delay: result.schedulePhase.delayMs, jobId: `fleet-${result.schedulePhase.jobName}-${event.id}` },
+          );
+        }
+
+        if (!result.scheduleReturn && !result.schedulePhase && !result.createReturnEvent) {
+          await db.update(fleetEvents).set({ status: 'completed' }).where(eq(fleetEvents.id, event.id));
+        }
+
+        if (result.createReturnEvent) {
+          // Handle special return events (e.g. colonize success)
+          const returnData = result.createReturnEvent;
+          await db.insert(fleetEvents).values(returnData as typeof fleetEvents.$inferInsert);
+          if (returnData.id) {
+            const returnShips = (returnData.ships ?? ships) as Record<string, number>;
+            await this.scheduleReturn(
+              returnData.id as string, event.originPlanetId,
+              { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
+              returnShips, 0, 0, 0,
+            );
           }
         }
 
-        await this.scheduleReturn(event.id, event.originPlanetId, {
-          galaxy: event.targetGalaxy,
-          system: event.targetSystem,
-          position: event.targetPosition,
-        }, ships, 0, 0, 0);
-
-        return { ...eventMeta, mission: 'transport', delivered: true };
+        return { ...eventMeta, mission: event.mission };
       }
 
       if (event.mission === 'station') {
