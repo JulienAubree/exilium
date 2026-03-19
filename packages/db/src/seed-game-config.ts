@@ -5,6 +5,7 @@ import {
   entityCategories,
   buildingDefinitions,
   buildingPrerequisites,
+  bonusDefinitions,
   researchDefinitions,
   researchPrerequisites,
   shipDefinitions,
@@ -294,6 +295,25 @@ const TUTORIAL_QUESTS = [
   { id: 'quest_16', order: 16, title: 'Centre de missions', narrativeText: "Votre colonie est florissante. Un centre de missions vous permettra de détecter de nouvelles opportunités : gisements et menaces pirates.", conditionType: 'building_level', conditionTargetId: 'missionCenter', conditionTargetValue: 1, rewardMinerai: 1800, rewardSilicium: 800, rewardHydrogene: 250 },
 ];
 
+// ── Bonus definitions data ──
+
+const BONUS_DEFINITIONS = [
+  { id: 'robotics__building_time', sourceType: 'building', sourceId: 'robotics', stat: 'building_time', percentPerLevel: -15, category: null },
+  { id: 'researchLab__research_time', sourceType: 'building', sourceId: 'researchLab', stat: 'research_time', percentPerLevel: -15, category: null },
+  { id: 'shipyard__ship_build_time__build_industrial', sourceType: 'building', sourceId: 'shipyard', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_industrial' },
+  { id: 'arsenal__defense_build_time', sourceType: 'building', sourceId: 'arsenal', stat: 'defense_build_time', percentPerLevel: -15, category: null },
+  { id: 'commandCenter__ship_build_time__build_military', sourceType: 'building', sourceId: 'commandCenter', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_military' },
+  { id: 'weapons__weapons', sourceType: 'research', sourceId: 'weapons', stat: 'weapons', percentPerLevel: 10, category: null },
+  { id: 'shielding__shielding', sourceType: 'research', sourceId: 'shielding', stat: 'shielding', percentPerLevel: 10, category: null },
+  { id: 'armor__armor', sourceType: 'research', sourceId: 'armor', stat: 'armor', percentPerLevel: 10, category: null },
+  { id: 'combustion__ship_speed__combustion', sourceType: 'research', sourceId: 'combustion', stat: 'ship_speed', percentPerLevel: 10, category: 'combustion' },
+  { id: 'impulse__ship_speed__impulse', sourceType: 'research', sourceId: 'impulse', stat: 'ship_speed', percentPerLevel: 20, category: 'impulse' },
+  { id: 'hyperspaceDrive__ship_speed__hyperspaceDrive', sourceType: 'research', sourceId: 'hyperspaceDrive', stat: 'ship_speed', percentPerLevel: 30, category: 'hyperspaceDrive' },
+  { id: 'rockFracturing__mining_duration', sourceType: 'research', sourceId: 'rockFracturing', stat: 'mining_duration', percentPerLevel: -10, category: null },
+  { id: 'computerTech__fleet_count', sourceType: 'research', sourceId: 'computerTech', stat: 'fleet_count', percentPerLevel: 100, category: null },
+  { id: 'espionageTech__spy_range', sourceType: 'research', sourceId: 'espionageTech', stat: 'spy_range', percentPerLevel: 100, category: null },
+];
+
 // ── Universe config data ──
 
 const UNIVERSE_CONFIG = [
@@ -341,6 +361,14 @@ async function seed() {
     await db.insert(buildingPrerequisites).values(bPrereqs);
   }
   console.log(`  ✓ ${bPrereqs.length} building prerequisites`);
+
+  // 2b. Bonus definitions (upsert)
+  for (const bd of BONUS_DEFINITIONS) {
+    const { id, ...bdData } = bd;
+    await db.insert(bonusDefinitions).values(bd)
+      .onConflictDoUpdate({ target: bonusDefinitions.id, set: bdData });
+  }
+  console.log(`  ✓ ${BONUS_DEFINITIONS.length} bonus definitions`);
 
   // 3. Research definitions
   for (const r of RESEARCH) {
