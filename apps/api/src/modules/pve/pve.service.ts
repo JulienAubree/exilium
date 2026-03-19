@@ -20,6 +20,16 @@ export function createPveService(
         .orderBy(asc(pveMissions.createdAt));
     },
 
+    async getMissionById(userId: string, missionId: string) {
+      const [mission] = await db.select().from(pveMissions)
+        .where(and(
+          eq(pveMissions.id, missionId),
+          eq(pveMissions.userId, userId),
+        ))
+        .limit(1);
+      return mission ?? null;
+    },
+
     async getMissionCenterLevel(userId: string): Promise<number> {
       const result = await db.execute(sql`
         SELECT COALESCE(MAX(pb.level), 0) as max_level

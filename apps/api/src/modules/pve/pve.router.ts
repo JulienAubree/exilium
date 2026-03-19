@@ -14,6 +14,12 @@ export function createPveRouter(
       return { missions, centerLevel };
     }),
 
+    getMissionById: protectedProcedure
+      .input(z.object({ missionId: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        return pveService.getMissionById(ctx.userId!, input.missionId);
+      }),
+
     getSystemBelts: protectedProcedure
       .input(z.object({
         galaxy: z.number().int().min(1).max(9),
