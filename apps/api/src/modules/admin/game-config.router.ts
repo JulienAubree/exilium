@@ -501,6 +501,43 @@ export function createGameConfigRouter(
         await gameConfigService.deleteTutorialQuest(input.id);
         return { success: true };
       }),
+
+    // ── Bonus definitions ──
+
+    createBonus: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        sourceType: z.enum(['building', 'research']),
+        sourceId: z.string().min(1),
+        stat: z.string().min(1),
+        percentPerLevel: z.number(),
+        category: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createBonus(input);
+        return { success: true };
+      }),
+
+    updateBonus: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          stat: z.string().optional(),
+          percentPerLevel: z.number().optional(),
+          category: z.string().nullable().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updateBonus(input.id, input.data);
+        return { success: true };
+      }),
+
+    deleteBonus: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteBonus(input.id);
+        return { success: true };
+      }),
   });
 
   return router({
