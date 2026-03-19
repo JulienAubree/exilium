@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
+import { type PlanetContext } from '@/lib/entity-details';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
@@ -11,11 +12,6 @@ interface BuildingListItem {
   id: string;
   name: string;
   currentLevel: number;
-}
-
-interface PlanetContext {
-  maxTemp: number;
-  productionFactor: number;
 }
 
 interface Props {
@@ -257,10 +253,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
             </thead>
             <tbody className="text-slate-300">
               {tableData.type === 'mine' &&
-                (tableData as { type: 'mine'; title: string; rows: MineRow[] }).rows.map((row, i) => (
+                tableData.rows.map((row, i) => (
                   <tr
                     key={row.level}
-                    className={i === 0 ? 'bg-[#1e293b]' : i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
                   >
                     <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
                       {row.level}{i === 0 ? ' \u25C4' : ''}
@@ -273,10 +269,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                   </tr>
                 ))}
               {tableData.type === 'solar' &&
-                (tableData as { type: 'solar'; title: string; rows: SolarRow[] }).rows.map((row, i) => (
+                tableData.rows.map((row, i) => (
                   <tr
                     key={row.level}
-                    className={i === 0 ? 'bg-[#1e293b]' : i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
                   >
                     <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
                       {row.level}{i === 0 ? ' \u25C4' : ''}
@@ -288,10 +284,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                   </tr>
                 ))}
               {tableData.type === 'storage' &&
-                (tableData as { type: 'storage'; title: string; rows: StorageRow[] }).rows.map((row, i) => (
+                tableData.rows.map((row, i) => (
                   <tr
                     key={row.level}
-                    className={i === 0 ? 'bg-[#1e293b]' : i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
                   >
                     <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
                       {row.level}{i === 0 ? ' \u25C4' : ''}
