@@ -10,7 +10,7 @@ import { MissionSelector } from '@/components/fleet/MissionSelector';
 import { PveMissionBanner } from '@/components/fleet/PveMissionBanner';
 import { FleetComposition } from '@/components/fleet/FleetComposition';
 import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
-import { MISSION_CONFIG, getCargoCapacity, type Mission } from '@/config/mission-config';
+import { MISSION_CONFIG, getCargoCapacity, SHIP_NAMES, type Mission } from '@/config/mission-config';
 
 export default function Fleet() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -151,14 +151,14 @@ export default function Fleet() {
     if (config.requiredShips && !config.recommendedShips) {
       const hasRequired = config.requiredShips.some((id) => (selectedShips[id] ?? 0) > 0);
       if (!hasRequired) {
-        const names = config.requiredShips.join(', ');
+        const names = config.requiredShips.map((id) => SHIP_NAMES[id] ?? id).join(', ');
         return `Cette mission nécessite : ${names}`;
       }
     }
 
     if (config.exclusive && config.requiredShips) {
       const hasDisallowed = selected.some(([id]) => !config.requiredShips!.includes(id));
-      if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShips.join(', ')}`;
+      if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShips.map((id) => SHIP_NAMES[id] ?? id).join(', ')}`;
     }
 
     // Check total cargo does not exceed capacity

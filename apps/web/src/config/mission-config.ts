@@ -88,7 +88,7 @@ export const MISSION_CONFIG: Record<Mission, MissionConfig> = {
     requiredShips: ['prospector'],
     exclusive: false,
     recommendedShips: null,
-    requiresPveMission: false,
+    requiresPveMission: true,
   },
   pirate: {
     label: 'Pirate',
@@ -100,6 +100,20 @@ export const MISSION_CONFIG: Record<Mission, MissionConfig> = {
     recommendedShips: null,
     requiresPveMission: true,
   },
+};
+
+export const SHIP_NAMES: Record<string, string> = {
+  smallCargo: 'Petit transporteur',
+  largeCargo: 'Grand transporteur',
+  lightFighter: 'Chasseur léger',
+  heavyFighter: 'Chasseur lourd',
+  cruiser: 'Croiseur',
+  battleship: 'Vaisseau de bataille',
+  colonyShip: 'Vaisseau de colonisation',
+  recycler: 'Recycleur',
+  espionageProbe: "Sonde d'espionnage",
+  prospector: 'Prospecteur',
+  explorer: 'Explorateur',
 };
 
 export type ShipCategory = 'required' | 'optional' | 'disabled';
