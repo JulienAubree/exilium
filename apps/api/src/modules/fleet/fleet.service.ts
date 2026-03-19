@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { planets, planetShips, fleetEvents, userResearch, pveMissions } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus } from '@ogame-clone/game-engine';
-import type { ShipStats } from '@ogame-clone/game-engine';
+import type { BonusDefinition, ShipStats } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -597,7 +597,7 @@ export function createFleetService(
       ships: Record<string, number>,
       shipStatsMap: Record<string, ShipStats>,
       researchLevels: Record<string, number>,
-      bonusDefs: { sourceType: string; sourceId: string; stat: string; percentPerLevel: number; category: string | null }[],
+      bonusDefs: BonusDefinition[],
     ): Record<string, number> {
       const multipliers: Record<string, number> = {};
       for (const shipId of Object.keys(ships)) {

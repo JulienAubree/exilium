@@ -37,24 +37,26 @@ describe('researchCost', () => {
 });
 
 describe('researchTime', () => {
-  it('espionage tech level 1, lab 3 applies 0.35 phaseMultiplier', () => {
-    const time = researchTime(espionageTechDef, 1, 3);
-    // cost: 70 + 350 = 420, time: (420 / 4000) * 3600 * 0.35 = 132.3 → 132
-    expect(time).toBe(132);
+  it('espionage tech level 1, no bonus (multiplier=1)', () => {
+    const time = researchTime(espionageTechDef, 1, 1);
+    // cost: 70 + 350 = 420, time: (420 / 1000) * 3600 * 1 * 0.35 = 529.2 → 529
+    expect(time).toBe(529);
   });
 
-  it('weapons tech level 1, lab 4 applies 0.35 phaseMultiplier', () => {
-    const time = researchTime(weaponsDef, 1, 4);
-    expect(time).toBe(88);
+  it('weapons tech level 1, 0.5 multiplier', () => {
+    const time = researchTime(weaponsDef, 1, 0.5);
+    // cost: 280 + 70 = 350, time: (350 / 1000) * 3600 * 0.5 * 0.35 = 220.5 → 220
+    expect(time).toBe(220);
   });
 
-  it('espionage tech level 4, lab 3 applies 0.65 phaseMultiplier', () => {
-    const time = researchTime(espionageTechDef, 4, 3);
-    expect(time).toBe(3650);
+  it('espionage tech level 4, 0.7 multiplier', () => {
+    const time = researchTime(espionageTechDef, 4, 0.7);
+    // cost: 1040 + 5200 = 6240, time: (6240 / 1000) * 3600 * 0.7 * 0.65 = 10221.12 → 10221
+    expect(time).toBe(10221);
   });
 
   it('minimum time is 1 second', () => {
-    const time = researchTime(computerTechDef, 1, 1000);
+    const time = researchTime(computerTechDef, 1, 0.001);
     expect(time).toBeGreaterThanOrEqual(1);
   });
 });

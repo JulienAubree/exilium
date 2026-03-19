@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { userResearch } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { resolveBonus } from '@ogame-clone/game-engine';
-import type { CombatMultipliers, ShipStats } from '@ogame-clone/game-engine';
+import type { BonusDefinition, CombatMultipliers, ShipStats } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -159,7 +159,7 @@ export function buildShipCosts(config: GameConfig) {
 export async function getCombatMultipliers(
   db: Database,
   userId: string,
-  bonusDefs: { sourceType: string; sourceId: string; stat: string; percentPerLevel: number; category: string | null }[],
+  bonusDefs: BonusDefinition[],
 ): Promise<CombatMultipliers> {
   const [research] = await db
     .select({

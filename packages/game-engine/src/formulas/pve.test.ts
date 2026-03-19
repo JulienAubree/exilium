@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   baseExtraction,
   totalExtracted,
-  extractionDuration,
   prospectionDuration,
   miningDuration,
   poolSize,
@@ -39,21 +38,6 @@ describe('totalExtracted', () => {
   });
 });
 
-describe('extractionDuration', () => {
-  it('returns 15 min at level 1', () => {
-    expect(extractionDuration(1)).toBe(15);
-  });
-  it('returns 5 min at level 11 (floor)', () => {
-    expect(extractionDuration(11)).toBe(5);
-  });
-  it('returns 5 min at level 15 (floor)', () => {
-    expect(extractionDuration(15)).toBe(5);
-  });
-  it('returns 10 min at level 6', () => {
-    expect(extractionDuration(6)).toBe(10);
-  });
-});
-
 describe('prospectionDuration', () => {
   it('returns 9 min for 20000 deposit', () => {
     expect(prospectionDuration(20000)).toBe(9);
@@ -73,26 +57,26 @@ describe('prospectionDuration', () => {
 });
 
 describe('miningDuration', () => {
-  it('returns 15 min at center 1, fracturing 0', () => {
-    expect(miningDuration(1, 0)).toBe(15);
+  it('returns 15 min at center 1, no bonus', () => {
+    expect(miningDuration(1, 1)).toBe(15);
   });
-  it('returns 10.5 min at center 1, fracturing 3', () => {
-    expect(miningDuration(1, 3)).toBe(10.5);
+  it('returns 10.5 min at center 1, 0.7 multiplier', () => {
+    expect(miningDuration(1, 0.7)).toBeCloseTo(10.5);
   });
-  it('returns 7.5 min at center 1, fracturing 5', () => {
-    expect(miningDuration(1, 5)).toBe(7.5);
+  it('returns 7.5 min at center 1, 0.5 multiplier', () => {
+    expect(miningDuration(1, 0.5)).toBeCloseTo(7.5);
   });
-  it('returns 3 min at center 1, fracturing 8', () => {
-    expect(miningDuration(1, 8)).toBeCloseTo(3);
+  it('returns 3 min at center 1, 0.2 multiplier', () => {
+    expect(miningDuration(1, 0.2)).toBeCloseTo(3);
   });
-  it('returns 5 min at center 11, fracturing 0 (floor)', () => {
-    expect(miningDuration(11, 0)).toBe(5);
+  it('returns 5 min at center 11, no bonus (floor)', () => {
+    expect(miningDuration(11, 1)).toBe(5);
   });
-  it('returns 1 min at center 11, fracturing 8 (floor * min multiplier)', () => {
-    expect(miningDuration(11, 8)).toBeCloseTo(1);
+  it('returns 0.5 min at center 11, 0.1 multiplier', () => {
+    expect(miningDuration(11, 0.1)).toBeCloseTo(0.5);
   });
-  it('floors multiplier at 0.2 (fracturing 10 same as 8)', () => {
-    expect(miningDuration(1, 10)).toBe(miningDuration(1, 8));
+  it('clamps multiplier at 0.01', () => {
+    expect(miningDuration(1, 0.01)).toBeCloseTo(0.15);
   });
 });
 

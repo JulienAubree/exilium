@@ -18,20 +18,23 @@ describe('shipCost', () => {
 });
 
 describe('shipTime', () => {
-  it('light fighter, shipyard 1 = 2880s', () => {
-    expect(shipTime(lightFighterDef, 1)).toBe(2880);
+  it('light fighter, no bonus (multiplier=1)', () => {
+    // (3000 + 1000) / 2500 * 3600 * 1 = 5760
+    expect(shipTime(lightFighterDef, 1)).toBe(5760);
   });
 
-  it('light fighter, shipyard 5 = 960s', () => {
-    expect(shipTime(lightFighterDef, 5)).toBe(960);
+  it('light fighter, 0.5 multiplier', () => {
+    // (3000 + 1000) / 2500 * 3600 * 0.5 = 2880
+    expect(shipTime(lightFighterDef, 0.5)).toBe(2880);
   });
 
-  it('cruiser, shipyard 5 = 6480s', () => {
-    expect(shipTime(cruiserDef, 5)).toBe(6480);
+  it('cruiser, 0.5 multiplier', () => {
+    // (20000 + 7000) / 2500 * 3600 * 0.5 = 19440
+    expect(shipTime(cruiserDef, 0.5)).toBe(19440);
   });
 
   it('minimum time is 1 second', () => {
-    expect(shipTime(espionageProbeDef, 1000)).toBeGreaterThanOrEqual(1);
+    expect(shipTime(espionageProbeDef, 0.001)).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -46,11 +49,13 @@ describe('defenseCost', () => {
 });
 
 describe('defenseTime', () => {
-  it('rocket launcher, shipyard 1 = 1440s', () => {
-    expect(defenseTime(rocketLauncherDef, 1)).toBe(1440);
+  it('rocket launcher, no bonus (multiplier=1)', () => {
+    // (2000 + 0) / 2500 * 3600 * 1 = 2880
+    expect(defenseTime(rocketLauncherDef, 1)).toBe(2880);
   });
 
-  it('gauss cannon, shipyard 6 = 7200s', () => {
-    expect(defenseTime(gaussCannonDef, 6)).toBe(7200);
+  it('gauss cannon, 0.5 multiplier', () => {
+    // (20000 + 15000) / 2500 * 3600 * 0.5 = 25200
+    expect(defenseTime(gaussCannonDef, 0.5)).toBe(25200);
   });
 });

@@ -30,7 +30,7 @@ export interface CategoryConfig {
 
 export interface BonusConfig {
   id: string;
-  sourceType: string;
+  sourceType: 'building' | 'research';
   sourceId: string;
   stat: string;
   percentPerLevel: number;
@@ -385,7 +385,7 @@ export function createGameConfigService(db: Database) {
     // Bonuses
     const bonuses: BonusConfig[] = bonusRows.map(b => ({
       id: b.id,
-      sourceType: b.sourceType,
+      sourceType: b.sourceType as 'building' | 'research',
       sourceId: b.sourceId,
       stat: b.stat,
       percentPerLevel: b.percentPerLevel,

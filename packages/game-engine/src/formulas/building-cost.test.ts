@@ -56,31 +56,32 @@ describe('buildingCost', () => {
 });
 
 describe('buildingTime', () => {
-  it('minerai mine level 1, robotics 0 applies 0.35 phaseMultiplier', () => {
-    const time = buildingTime(mineraiMineDef, 1, 0);
-    // 45 * 0.35 = 15.75 → 15
+  it('minerai mine level 1, no bonus (multiplier=1)', () => {
+    const time = buildingTime(mineraiMineDef, 1, 1);
+    // 45 * 1 * 0.35 = 15.75 → 15
     expect(time).toBe(15);
   });
 
-  it('minerai mine level 1, robotics 5 applies 0.35 phaseMultiplier', () => {
-    const time = buildingTime(mineraiMineDef, 1, 5);
-    // 45 / 6 * 0.35 = 2.625 → 2
-    expect(time).toBe(2);
+  it('minerai mine level 1, 50% bonus (multiplier=0.5)', () => {
+    const time = buildingTime(mineraiMineDef, 1, 0.5);
+    // 45 * 0.5 * 0.35 = 7.875 → 7
+    expect(time).toBe(7);
   });
 
-  it('minerai mine level 10, robotics 0 has no phaseMultiplier', () => {
-    const time = buildingTime(mineraiMineDef, 10, 0);
+  it('minerai mine level 10, no bonus has no phaseMultiplier', () => {
+    const time = buildingTime(mineraiMineDef, 10, 1);
+    // 45 * 1.5^9 * 1 * 1.0 = 1729
     expect(time).toBe(1729);
   });
 
-  it('robotics level 3, robotics 2 applies 0.55 phaseMultiplier', () => {
-    const time = buildingTime(roboticsDef, 3, 2);
-    // 60 * 4 / 3 * 0.55 = 44
-    expect(time).toBe(44);
+  it('robotics level 3, 0.7 multiplier applies 0.55 phaseMultiplier', () => {
+    const time = buildingTime(roboticsDef, 3, 0.7);
+    // 60 * 2^2 * 0.7 * 0.55 = 60 * 4 * 0.7 * 0.55 = 92.4 → 92
+    expect(time).toBe(92);
   });
 
   it('minimum time is 1 second', () => {
-    const time = buildingTime(mineraiMineDef, 1, 1000);
+    const time = buildingTime(mineraiMineDef, 1, 0.001);
     expect(time).toBe(1);
   });
 });
