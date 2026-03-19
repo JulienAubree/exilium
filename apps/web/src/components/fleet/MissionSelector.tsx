@@ -7,9 +7,14 @@ interface MissionSelectorProps {
   locked: boolean;
 }
 
-const MISSIONS: Mission[] = ['transport', 'station', 'spy', 'attack', 'colonize', 'recycle', 'mine', 'pirate'];
+const SELECTABLE_MISSIONS: Mission[] = ['transport', 'station', 'spy', 'attack', 'colonize', 'recycle'];
 
 export function MissionSelector({ selected, onChange, locked }: MissionSelectorProps) {
+  // In PvE mode, include the pre-filled mission (mine/pirate) even though it's not manually selectable
+  const missions = selected && !SELECTABLE_MISSIONS.includes(selected)
+    ? [...SELECTABLE_MISSIONS, selected]
+    : SELECTABLE_MISSIONS;
+
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="mb-2 flex items-center justify-between">
@@ -19,7 +24,7 @@ export function MissionSelector({ selected, onChange, locked }: MissionSelectorP
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {MISSIONS.map((m) => {
+        {missions.map((m) => {
           const config = MISSION_CONFIG[m];
           const isSelected = selected === m;
           return (
