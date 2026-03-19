@@ -4,6 +4,7 @@ import { planets, planetShips, planetDefenses, planetBuildings, userResearch, us
 import { calculateSpyReport, calculateDetectionChance } from '@ogame-clone/game-engine';
 import type { Database } from '@ogame-clone/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { formatDuration } from '../fleet.types.js';
 
 export class SpyHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -48,7 +49,8 @@ export class SpyHandler implements MissionHandler {
     const defenderTech = await this.getEspionageTech(ctx.db, targetPlanet.userId);
     const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech);
 
-    let body = `Rapport d'espionnage de ${coords}\n\n`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+    let body = `Rapport d'espionnage de ${coords}\nDurée du trajet : ${duration}\n\n`;
 
     if (visibility.resources) {
       await ctx.resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);

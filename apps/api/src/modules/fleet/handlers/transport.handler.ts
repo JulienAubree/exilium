@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { planets } from '@ogame-clone/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { formatDuration } from '../fleet.types.js';
 
 export class TransportHandler implements MissionHandler {
   async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -29,6 +30,23 @@ export class TransportHandler implements MissionHandler {
           })
           .where(eq(planets.id, fleetEvent.targetPlanetId));
       }
+    }
+
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+
+    if (ctx.messageService) {
+      const parts = [`Transport effectué vers ${coords}\n`];
+      parts.push(`Durée du trajet : ${duration}`);
+      if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
+        parts.push(`Cargo livré : ${mineraiCargo} minerai, ${siliciumCargo} silicium, ${hydrogeneCargo} hydrogène`);
+      }
+      await ctx.messageService.createSystemMessage(
+        fleetEvent.userId,
+        'mission',
+        `Transport effectué ${coords}`,
+        parts.join('\n'),
+      );
     }
 
     return {

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { planets, planetShips } from '@ogame-clone/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { formatDuration } from '../fleet.types.js';
 
 export class StationHandler implements MissionHandler {
   async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -51,6 +52,28 @@ export class StationHandler implements MissionHandler {
             .where(eq(planetShips.planetId, fleetEvent.targetPlanetId));
         }
       }
+    }
+
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+
+    if (ctx.messageService) {
+      const shipList = Object.entries(fleetEvent.ships)
+        .filter(([, count]) => count > 0)
+        .map(([id, count]) => `${id}: ${count}`)
+        .join(', ');
+      const parts = [`Flotte stationnée en ${coords}\n`];
+      parts.push(`Durée du trajet : ${duration}`);
+      parts.push(`Vaisseaux stationnés : ${shipList}`);
+      if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
+        parts.push(`Cargo déposé : ${mineraiCargo} minerai, ${siliciumCargo} silicium, ${hydrogeneCargo} hydrogène`);
+      }
+      await ctx.messageService.createSystemMessage(
+        fleetEvent.userId,
+        'mission',
+        `Flotte stationnée ${coords}`,
+        parts.join('\n'),
+      );
     }
 
     // Station: no return trip, dispatcher will mark completed

@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, debrisFields } from '@ogame-clone/db';
 import { simulateCombat, totalCargoCapacity } from '@ogame-clone/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, buildCombatStats, buildShipCosts, getCombatTechs } from '../fleet.types.js';
+import { buildShipStatsMap, buildCombatStats, buildShipCosts, getCombatTechs, formatDuration } from '../fleet.types.js';
 
 export class AttackHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -244,7 +244,9 @@ export class AttackHandler implements MissionHandler {
     const outcomeText = outcome === 'attacker' ? 'Victoire' :
                         outcome === 'defender' ? 'Défaite' : 'Match nul';
 
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
     const reportBody = `Combat ${coords} — ${outcomeText}\n\n` +
+      `Durée du trajet : ${duration}\n` +
       `Rounds : ${roundCount}\n` +
       `Pertes attaquant : ${JSON.stringify(attackerLosses)}\n` +
       `Pertes défenseur : ${JSON.stringify(defenderLosses)}\n` +

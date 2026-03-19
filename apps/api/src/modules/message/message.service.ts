@@ -122,7 +122,7 @@ export function createMessageService(db: Database, redis: Redis) {
 
     async createSystemMessage(
       recipientId: string,
-      type: 'system' | 'colonization' | 'espionage' | 'combat' | 'alliance',
+      type: 'system' | 'colonization' | 'espionage' | 'combat' | 'alliance' | 'mission',
       subject: string,
       body: string,
     ) {

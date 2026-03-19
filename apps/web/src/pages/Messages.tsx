@@ -17,6 +17,7 @@ const TYPE_FILTERS = [
   { label: 'Espionnage', value: 'espionage' },
   { label: 'Colonisation', value: 'colonization' },
   { label: 'Alliance', value: 'alliance' },
+  { label: 'Mission', value: 'mission' },
 ] as const;
 
 export default function Messages() {

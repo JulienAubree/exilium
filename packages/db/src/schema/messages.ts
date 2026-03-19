@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 
-export const messageTypeEnum = pgEnum('message_type', ['system', 'colonization', 'player', 'espionage', 'combat', 'alliance']);
+export const messageTypeEnum = pgEnum('message_type', ['system', 'colonization', 'player', 'espionage', 'combat', 'alliance', 'mission']);
 
 export const messages = pgTable('messages', {
   id: uuid('id').primaryKey().defaultRandom(),

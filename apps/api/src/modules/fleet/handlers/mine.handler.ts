@@ -4,7 +4,7 @@ import { fleetEvents, pveMissions, asteroidDeposits, userResearch } from '@ogame
 import { prospectionDuration, miningDuration, totalExtracted, totalCargoCapacity } from '@ogame-clone/game-engine';
 import { BELT_POSITIONS } from '../../universe/universe.config.js';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
-import { buildShipStatsMap } from '../fleet.types.js';
+import { buildShipStatsMap, formatDuration } from '../fleet.types.js';
 
 export class MineHandler implements PhasedMissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -45,6 +45,7 @@ export class MineHandler implements PhasedMissionHandler {
       phase: 'prospecting',
       departureTime: now,
       arrivalTime: prospectArrival,
+      metadata: { ...(fleetEvent.metadata as Record<string, unknown> ?? {}), originalDepartureTime: fleetEvent.departureTime.toISOString() },
     }).where(eq(fleetEvents.id, fleetEvent.id));
 
     return {
@@ -141,6 +142,23 @@ export class MineHandler implements PhasedMissionHandler {
     }).where(eq(fleetEvents.id, fleetEvent.id));
 
     await ctx.pveService.completeMission(mission.id);
+
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const meta = fleetEvent.metadata as { originalDepartureTime?: string } | null;
+    const originalDeparture = meta?.originalDepartureTime ? new Date(meta.originalDepartureTime) : fleetEvent.departureTime;
+    const totalDuration = formatDuration(Date.now() - originalDeparture.getTime());
+
+    if (ctx.messageService) {
+      const parts = [`Extraction terminée en ${coords}\n`];
+      parts.push(`Durée totale : ${totalDuration}`);
+      parts.push(`Ressource extraite : ${extracted} ${params.resourceType}`);
+      await ctx.messageService.createSystemMessage(
+        fleetEvent.userId,
+        'mission',
+        `Extraction terminée ${coords}`,
+        parts.join('\n'),
+      );
+    }
 
     return {
       scheduleReturn: true,

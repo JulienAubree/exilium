@@ -4,6 +4,7 @@ import { planets, planetShips, planetDefenses, fleetEvents } from '@ogame-clone/
 import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFields } from '@ogame-clone/game-engine';
 import { BELT_POSITIONS } from '../../universe/universe.config.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { formatDuration } from '../fleet.types.js';
 
 export class ColonizeHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -20,6 +21,7 @@ export class ColonizeHandler implements MissionHandler {
     const siliciumCargo = Number(fleetEvent.siliciumCargo);
     const hydrogeneCargo = Number(fleetEvent.hydrogeneCargo);
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
 
     // Check if position is an asteroid belt
     if ((BELT_POSITIONS as readonly number[]).includes(fleetEvent.targetPosition)) {
@@ -28,7 +30,7 @@ export class ColonizeHandler implements MissionHandler {
           fleetEvent.userId,
           'colonization',
           `Colonisation échouée ${coords}`,
-          `La position ${coords} est une ceinture d'astéroïdes et ne peut pas être colonisée. Votre flotte fait demi-tour.`,
+          `La position ${coords} est une ceinture d'astéroïdes et ne peut pas être colonisée. Votre flotte fait demi-tour.\nDurée du trajet : ${duration}`,
         );
       }
       return {
@@ -56,7 +58,7 @@ export class ColonizeHandler implements MissionHandler {
           fleetEvent.userId,
           'colonization',
           `Colonisation échouée ${coords}`,
-          `La position ${coords} est déjà occupée. Votre flotte fait demi-tour.`,
+          `La position ${coords} est déjà occupée. Votre flotte fait demi-tour.\nDurée du trajet : ${duration}`,
         );
       }
       return {
@@ -77,7 +79,7 @@ export class ColonizeHandler implements MissionHandler {
           fleetEvent.userId,
           'colonization',
           `Colonisation échouée ${coords}`,
-          `Nombre maximum de planètes atteint (9). Votre flotte fait demi-tour.`,
+          `Nombre maximum de planètes atteint (9). Votre flotte fait demi-tour.\nDurée du trajet : ${duration}`,
         );
       }
       return {
@@ -144,7 +146,7 @@ export class ColonizeHandler implements MissionHandler {
         fleetEvent.userId,
         'colonization',
         `Colonisation réussie ${coords}`,
-        `Une nouvelle colonie a été fondée sur ${coords}. Diamètre : ${diameter}km, ${maxFields} cases disponibles.`,
+        `Une nouvelle colonie a été fondée sur ${coords}. Diamètre : ${diameter}km, ${maxFields} cases disponibles.\nDurée du trajet : ${duration}`,
       );
     }
 

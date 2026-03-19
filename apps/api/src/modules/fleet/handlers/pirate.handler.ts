@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { fleetEvents, pveMissions } from '@ogame-clone/db';
 import { totalCargoCapacity } from '@ogame-clone/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, getCombatTechs } from '../fleet.types.js';
+import { buildShipStatsMap, getCombatTechs, formatDuration } from '../fleet.types.js';
 
 export class PirateHandler implements MissionHandler {
   async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -58,6 +58,38 @@ export class PirateHandler implements MissionHandler {
 
     // Complete PvE mission at arrival (not return)
     await ctx.pveService.completeMission(mission.id);
+
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+    const outcomeText = result.outcome === 'attacker' ? 'Victoire' : 'Défaite';
+
+    if (ctx.messageService) {
+      const parts = [`Mission pirate ${coords} — ${outcomeText}\n`];
+      parts.push(`Durée du trajet : ${duration}`);
+      if (result.outcome === 'attacker') {
+        parts.push(`Butin : ${result.loot.minerai} minerai, ${result.loot.silicium} silicium, ${result.loot.hydrogene} hydrogène`);
+        if (Object.keys(result.bonusShips).length > 0) {
+          const bonusList = Object.entries(result.bonusShips).map(([id, count]) => `${id}: ${count}`).join(', ');
+          parts.push(`Vaisseaux bonus : ${bonusList}`);
+        }
+      }
+      // Ship losses
+      const losses: string[] = [];
+      for (const [shipId, count] of Object.entries(ships)) {
+        const surviving = result.survivingShips[shipId] ?? 0;
+        const lost = count - surviving;
+        if (lost > 0) losses.push(`${shipId}: ${lost}`);
+      }
+      if (losses.length > 0) {
+        parts.push(`Vaisseaux perdus : ${losses.join(', ')}`);
+      }
+      await ctx.messageService.createSystemMessage(
+        fleetEvent.userId,
+        'mission',
+        `Mission pirate ${coords} — ${outcomeText}`,
+        parts.join('\n'),
+      );
+    }
 
     return {
       scheduleReturn: true,

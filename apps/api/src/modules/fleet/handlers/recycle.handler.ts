@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { debrisFields } from '@ogame-clone/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { formatDuration } from '../fleet.types.js';
 
 export class RecycleHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -64,6 +65,21 @@ export class RecycleHandler implements MissionHandler {
           updatedAt: new Date(),
         })
         .where(eq(debrisFields.id, debris.id));
+    }
+
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+
+    if (ctx.messageService) {
+      const parts = [`Recyclage effectué en ${coords}\n`];
+      parts.push(`Durée du trajet : ${duration}`);
+      parts.push(`Débris collectés : ${collectedMinerai} minerai, ${collectedSilicium} silicium`);
+      await ctx.messageService.createSystemMessage(
+        fleetEvent.userId,
+        'mission',
+        `Recyclage effectué ${coords}`,
+        parts.join('\n'),
+      );
     }
 
     return {
