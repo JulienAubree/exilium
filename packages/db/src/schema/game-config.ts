@@ -35,6 +35,17 @@ export const buildingPrerequisites = pgTable('building_prerequisites', {
   primaryKey({ columns: [t.buildingId, t.requiredBuildingId] }),
 ]);
 
+// ── Bonus Definitions ──
+
+export const bonusDefinitions = pgTable('bonus_definitions', {
+  id: varchar('id', { length: 128 }).primaryKey(),
+  sourceType: varchar('source_type', { length: 16 }).notNull(), // 'building' | 'research'
+  sourceId: varchar('source_id', { length: 64 }).notNull(),
+  stat: varchar('stat', { length: 64 }).notNull(),
+  percentPerLevel: real('percent_per_level').notNull(),
+  category: varchar('category', { length: 64 }),
+});
+
 // ── Research Definitions ──
 
 export const researchDefinitions = pgTable('research_definitions', {
