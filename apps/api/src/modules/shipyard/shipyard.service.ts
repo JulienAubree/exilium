@@ -2,7 +2,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites } from '@ogame-clone/game-engine';
+import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
@@ -13,6 +13,18 @@ export function createShipyardService(
   shipyardQueue: Queue,
   gameConfigService: GameConfigService,
 ) {
+  function getShipBuildCategory(
+    shipDef: { prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } },
+    bonuses: { stat: string; sourceId: string; category: string | null }[],
+  ): string | null {
+    const firstBuildingPrereq = shipDef.prerequisites?.buildings?.[0]?.buildingId;
+    if (!firstBuildingPrereq) return null;
+    const bonus = bonuses.find(
+      b => b.stat === 'ship_build_time' && b.sourceId === firstBuildingPrereq
+    );
+    return bonus?.category ?? null;
+  }
+
   return {
     async getBuildingLevels(planetId: string): Promise<Record<string, number>> {
       const rows = await db
@@ -41,11 +53,9 @@ export function createShipyardService(
           const prereqCheck = checkShipPrerequisites(def.prerequisites, buildingLevels, research);
           const cost = shipCost(def);
 
-          const productionBuildingId = def.prerequisites.buildings?.[0]?.buildingId;
-          const productionBuildingDef = productionBuildingId ? config.buildings[productionBuildingId] : null;
-          const buildingLevel = productionBuildingId ? (buildingLevels[productionBuildingId] ?? 0) : 0;
-          const reductionFactor = productionBuildingDef?.buildTimeReductionFactor ?? 1;
-          const time = shipTime(def, buildingLevel, reductionFactor);
+          const buildCategory = getShipBuildCategory(def, config.bonuses);
+          const bonusMultiplier = resolveBonus('ship_build_time', buildCategory, buildingLevels, config.bonuses);
+          const time = shipTime(def, bonusMultiplier);
 
           return {
             id: def.id,
@@ -75,11 +85,8 @@ export function createShipyardService(
           const prereqCheck = checkDefensePrerequisites(def.prerequisites, buildingLevels, research);
           const cost = defenseCost(def);
 
-          const productionBuildingId = def.prerequisites.buildings?.[0]?.buildingId;
-          const productionBuildingDef = productionBuildingId ? config.buildings[productionBuildingId] : null;
-          const buildingLevel = productionBuildingId ? (buildingLevels[productionBuildingId] ?? 0) : 0;
-          const reductionFactor = productionBuildingDef?.buildTimeReductionFactor ?? 1;
-          const time = defenseTime(def, buildingLevel, reductionFactor);
+          const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
+          const time = defenseTime(def, bonusMultiplier);
 
           return {
             id: def.id,
@@ -149,13 +156,15 @@ export function createShipyardService(
       const hasActive = existingActive.some((e) => e.status === 'active');
 
       const buildingLevels = await this.getBuildingLevels(planetId);
-      const productionBuildingId = def.prerequisites?.buildings?.[0]?.buildingId;
-      const productionBuildingDef = productionBuildingId ? config.buildings[productionBuildingId] : null;
-      const buildingLevel = productionBuildingId ? (buildingLevels[productionBuildingId] ?? 0) : 0;
-      const reductionFactor = productionBuildingDef?.buildTimeReductionFactor ?? 1;
-      const unitTime = type === 'ship'
-        ? shipTime(def, buildingLevel, reductionFactor)
-        : defenseTime(def, buildingLevel, reductionFactor);
+      let unitTime: number;
+      if (type === 'ship') {
+        const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+        const bonusMultiplier = resolveBonus('ship_build_time', buildCategory, buildingLevels, config.bonuses);
+        unitTime = shipTime(def, bonusMultiplier);
+      } else {
+        const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
+        unitTime = defenseTime(def, bonusMultiplier);
+      }
 
       const now = new Date();
       const status = hasActive ? 'queued' : 'active';
@@ -239,13 +248,17 @@ export function createShipyardService(
       const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
 
       const buildingLevels = await this.getBuildingLevels(entry.planetId);
-      const productionBuildingId = def?.prerequisites?.buildings?.[0]?.buildingId;
-      const productionBuildingDef = productionBuildingId ? config.buildings[productionBuildingId] : null;
-      const buildingLevel = productionBuildingId ? (buildingLevels[productionBuildingId] ?? 0) : 0;
-      const reductionFactor = productionBuildingDef?.buildTimeReductionFactor ?? 1;
-      const unitTime = def
-        ? (entry.type === 'ship' ? shipTime(def, buildingLevel, reductionFactor) : defenseTime(def, buildingLevel, reductionFactor))
-        : 60;
+      let unitTime = 60;
+      if (def) {
+        if (entry.type === 'ship') {
+          const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+          const bonusMultiplier = resolveBonus('ship_build_time', buildCategory, buildingLevels, config.bonuses);
+          unitTime = shipTime(def, bonusMultiplier);
+        } else {
+          const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
+          unitTime = defenseTime(def, bonusMultiplier);
+        }
+      }
 
       await db
         .update(buildQueue)
@@ -282,13 +295,17 @@ export function createShipyardService(
       const def = nextBatch.type === 'ship' ? config.ships[nextBatch.itemId] : config.defenses[nextBatch.itemId];
 
       const buildingLevels = await this.getBuildingLevels(planetId);
-      const productionBuildingId = def?.prerequisites?.buildings?.[0]?.buildingId;
-      const productionBuildingDef = productionBuildingId ? config.buildings[productionBuildingId] : null;
-      const buildingLevel = productionBuildingId ? (buildingLevels[productionBuildingId] ?? 0) : 0;
-      const reductionFactor = productionBuildingDef?.buildTimeReductionFactor ?? 1;
-      const unitTime = def
-        ? (nextBatch.type === 'ship' ? shipTime(def, buildingLevel, reductionFactor) : defenseTime(def, buildingLevel, reductionFactor))
-        : 60;
+      let unitTime = 60;
+      if (def) {
+        if (nextBatch.type === 'ship') {
+          const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+          const bonusMultiplier = resolveBonus('ship_build_time', buildCategory, buildingLevels, config.bonuses);
+          unitTime = shipTime(def, bonusMultiplier);
+        } else {
+          const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
+          unitTime = defenseTime(def, bonusMultiplier);
+        }
+      }
 
       const now = new Date();
       await db
