@@ -616,6 +616,24 @@ export function createFleetService(
       return created;
     },
 
+    async estimateFleet(userId: string, input: { originPlanetId: string; targetGalaxy: number; targetSystem: number; targetPosition: number; ships: Record<string, number> }) {
+      const planet = await this.getOwnedPlanet(userId, input.originPlanetId);
+      const config = await gameConfigService.getFullConfig();
+      const shipStatsMap = buildShipStatsMap(config);
+      const researchLevels = await this.getResearchLevels(userId);
+      const speedMultipliers = this.buildSpeedMultipliers(input.ships, shipStatsMap, researchLevels, config.bonuses);
+      const speed = fleetSpeed(input.ships, shipStatsMap, speedMultipliers);
+      if (speed === 0) return { fuel: 0, duration: 0 };
+
+      const origin = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
+      const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
+      const dist = distance(origin, target);
+      const dur = travelTime(origin, target, speed, universeSpeed);
+      const fuel = fuelConsumption(input.ships, dist, dur, shipStatsMap);
+
+      return { fuel, duration: dur };
+    },
+
     async getOwnedPlanet(userId: string, planetId: string) {
       const [planet] = await db
         .select()

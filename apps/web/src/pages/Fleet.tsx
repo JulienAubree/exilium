@@ -170,6 +170,14 @@ export default function Fleet() {
     return null;
   };
 
+  // Fleet estimate (fuel + duration)
+  const activeShips = Object.fromEntries(Object.entries(selectedShips).filter(([, c]) => c > 0));
+  const hasShips = Object.keys(activeShips).length > 0;
+  const { data: estimate } = trpc.fleet.estimate.useQuery(
+    { originPlanetId: planetId!, targetGalaxy: target.galaxy, targetSystem: target.system, targetPosition: target.position, ships: activeShips },
+    { enabled: !!planetId && hasShips && target.galaxy > 0 && target.system > 0 && target.position > 0 },
+  );
+
   const totalCargo = cargo.minerai + cargo.silicium + cargo.hydrogene;
   const cargoCapacity = getCargoCapacity(selectedShips, gameConfig?.ships ?? {});
   const validationError = getValidationError();
@@ -282,6 +290,8 @@ export default function Fleet() {
         selectedShips={selectedShips}
         totalCargo={totalCargo}
         cargoCapacity={cargoCapacity}
+        fuel={hasShips ? (estimate?.fuel ?? null) : null}
+        duration={hasShips ? (estimate?.duration ?? null) : null}
         disabled={!!validationError}
         sending={sendMutation.isPending}
         onSend={() => {

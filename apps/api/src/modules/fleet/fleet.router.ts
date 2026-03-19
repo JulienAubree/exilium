@@ -35,6 +35,18 @@ export function createFleetRouter(fleetService: ReturnType<typeof createFleetSer
         return fleetService.recallFleet(ctx.userId!, input.fleetEventId);
       }),
 
+    estimate: protectedProcedure
+      .input(z.object({
+        originPlanetId: z.string().uuid(),
+        targetGalaxy: z.number().int().min(1).max(9),
+        targetSystem: z.number().int().min(1).max(499),
+        targetPosition: z.number().int().min(1).max(16),
+        ships: z.record(z.enum(shipIds), z.number().int().min(0).max(999999)),
+      }))
+      .query(async ({ ctx, input }) => {
+        return fleetService.estimateFleet(ctx.userId!, input);
+      }),
+
     movements: protectedProcedure
       .query(async ({ ctx }) => {
         return fleetService.listMovements(ctx.userId!);

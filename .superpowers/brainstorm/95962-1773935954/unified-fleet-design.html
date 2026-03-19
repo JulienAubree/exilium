@@ -1,0 +1,268 @@
+<h2>Page Flotte unifiee &mdash; design complet</h2>
+<p class="subtitle">Cas 1 : arrivee depuis la page Missions (mission minage pre-remplie). Cas 2 : acces direct.</p>
+
+<div class="split">
+  <!-- CASE 1: PVE pre-filled -->
+  <div class="mockup">
+    <div class="mockup-header">Cas 1 : Depuis une mission PvE (minage)</div>
+    <div class="mockup-body" style="background:#0d0d1a;padding:12px;font-family:monospace;font-size:11px;color:#ccc;">
+
+      <!-- PvE mission reminder banner -->
+      <div style="background:#1a2a3a;border:1px solid #2a5a8a;border-radius:6px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">&#9935;</span>
+        <div>
+          <div style="color:#6af;font-size:11px;font-weight:bold;">Extraction miniere</div>
+          <div style="color:#8ab;font-size:10px;">Silicium &mdash; ~12 000 unites &mdash; Ceinture [1:42:8]</div>
+        </div>
+      </div>
+
+      <!-- Mission chips - LOCKED -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="color:#888;font-size:9px;text-transform:uppercase;">Mission</span>
+          <span style="color:#886;font-size:8px;">&#128274; Verrouillee pour cette mission</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Transport</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Stationner</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Espionner</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Attaque</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Coloniser</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Recycler</span>
+          <span style="background:#2a4a3a;color:#5d8;padding:3px 10px;border-radius:14px;font-size:10px;border:1px solid #4a7;">&#10003; Miner</span>
+          <span style="background:#333;color:#555;padding:3px 10px;border-radius:14px;font-size:10px;">Pirate</span>
+        </div>
+      </div>
+
+      <!-- Destination - LOCKED -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;justify-content:center;">
+        <span style="color:#888;font-size:10px;">Cible :</span>
+        <span style="background:#1a1a2e;border:1px solid #333;padding:3px 8px;border-radius:3px;color:#666;">1</span>
+        <span style="color:#555;">:</span>
+        <span style="background:#1a1a2e;border:1px solid #333;padding:3px 8px;border-radius:3px;color:#666;">42</span>
+        <span style="color:#555;">:</span>
+        <span style="background:#1a1a2e;border:1px solid #333;padding:3px 8px;border-radius:3px;color:#666;">8</span>
+        <span style="color:#886;font-size:8px;">&#128274;</span>
+      </div>
+
+      <!-- REQUIRED ships -->
+      <div style="background:#1a2a1a;border:1px solid #2a4a2a;border-radius:6px;padding:8px 10px;margin-bottom:6px;">
+        <div style="color:#5d8;font-size:9px;text-transform:uppercase;margin-bottom:6px;">&#9733; Requis</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#0d1a0d;padding:4px 8px;border-radius:4px;">
+          <span style="font-size:10px;color:#afa;">Prospecteur</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+            <span style="background:#2a4a2a;padding:2px 10px;border-radius:3px;font-size:10px;color:#afa;">8</span>
+            <span style="color:#585;font-size:9px;">/8</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONAL ships -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:6px;">
+        <div style="color:#aaa;font-size:9px;text-transform:uppercase;margin-bottom:6px;">Optionnels</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Petit cargo</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/12</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Grand cargo</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/5</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Chasseur leger</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/30</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISABLED ships -->
+      <div style="background:#1a1a1e;border:1px solid #2a2a2e;border-radius:6px;padding:8px 10px;margin-bottom:8px;opacity:0.5;">
+        <div style="color:#666;font-size:9px;text-transform:uppercase;margin-bottom:6px;">Non disponibles</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
+            <span style="font-size:10px;color:#555;">Vaisseau colonie</span>
+            <span style="color:#555;font-size:9px;">0 dispo</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
+            <span style="font-size:10px;color:#555;">Recycleur</span>
+            <span style="color:#555;font-size:9px;">0 dispo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cargo -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="color:#888;font-size:9px;text-transform:uppercase;">Cargo</span>
+          <span style="color:#5d8;font-size:9px;">0 / 40 000</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Minerai</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Silicium</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Hydrogene</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#1a2a1a;border:1px solid #2a4a2a;border-radius:6px;">
+        <div style="font-size:9px;color:#8a8;">8 vaisseaux &bull; Fuel: 42 H&#8322; &bull; Trajet: 1h23m</div>
+        <span style="background:#3a6;color:#fff;padding:5px 20px;border-radius:4px;font-size:11px;font-weight:bold;">Envoyer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASE 2: Direct access -->
+  <div class="mockup">
+    <div class="mockup-header">Cas 2 : Acces direct (pas de pre-remplissage)</div>
+    <div class="mockup-body" style="background:#0d0d1a;padding:12px;font-family:monospace;font-size:11px;color:#ccc;">
+
+      <!-- No banner -->
+
+      <!-- Mission chips - OPEN -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+        <div style="color:#888;font-size:9px;text-transform:uppercase;margin-bottom:6px;">Mission</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span style="background:#2a4a3a;color:#5d8;padding:3px 10px;border-radius:14px;font-size:10px;border:1px solid #4a7;">Transport</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Stationner</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Espionner</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Attaque</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Coloniser</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Recycler</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Miner</span>
+          <span style="background:#222;color:#aaa;padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;">Pirate</span>
+        </div>
+      </div>
+
+      <!-- Destination - OPEN -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;justify-content:center;">
+        <span style="color:#888;font-size:10px;">Cible :</span>
+        <span style="background:#222;border:1px solid #555;padding:3px 8px;border-radius:3px;">1</span>
+        <span style="color:#555;">:</span>
+        <span style="background:#222;border:1px solid #555;padding:3px 8px;border-radius:3px;">1</span>
+        <span style="color:#555;">:</span>
+        <span style="background:#222;border:1px solid #555;padding:3px 8px;border-radius:3px;">1</span>
+      </div>
+
+      <!-- Hint -->
+      <div style="background:#1a2a3a;border:1px solid #2a4a6a;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;">
+        <span style="color:#6af;font-size:10px;">Transport : envoyez des ressources vers une planete alliee</span>
+      </div>
+
+      <!-- REQUIRED ships -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:6px;">
+        <div style="color:#aaa;font-size:9px;text-transform:uppercase;margin-bottom:6px;">&#9733; Recommandes</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Petit cargo</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/12</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Grand cargo</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;cursor:pointer;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONAL ships -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:6px;">
+        <div style="color:#aaa;font-size:9px;text-transform:uppercase;margin-bottom:6px;">Optionnels</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Chasseur leger</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/30</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Croiseur</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/5</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#151528;padding:4px 8px;border-radius:4px;">
+            <span style="font-size:10px;">Prospecteur</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#5d8;font-size:9px;">MAX</span>
+              <span style="background:#222;padding:2px 10px;border-radius:3px;font-size:10px;">0</span>
+              <span style="color:#666;font-size:9px;">/8</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISABLED ships -->
+      <div style="background:#1a1a1e;border:1px solid #2a2a2e;border-radius:6px;padding:8px 10px;margin-bottom:8px;opacity:0.5;">
+        <div style="color:#666;font-size:9px;text-transform:uppercase;margin-bottom:6px;">Non disponibles</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;justify-content:space-between;padding:4px 8px;">
+            <span style="font-size:10px;color:#555;">Vaisseau colonie</span>
+            <span style="color:#555;font-size:9px;">0 dispo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cargo -->
+      <div style="background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="color:#888;font-size:9px;text-transform:uppercase;">Cargo</span>
+          <span style="color:#888;font-size:9px;">0 / 0</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Minerai</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Silicium</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="color:#666;font-size:8px;margin-bottom:2px;">Hydrogene</div>
+            <span style="background:#222;border:1px solid #444;padding:2px 6px;border-radius:3px;font-size:10px;display:inline-block;width:50px;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#1a1a2e;border:1px solid #333;border-radius:6px;">
+        <div style="font-size:9px;color:#888;">Aucun vaisseau &bull; Selectionnez une flotte</div>
+        <span style="background:#333;color:#666;padding:5px 20px;border-radius:4px;font-size:11px;">Envoyer</span>
+      </div>
+    </div>
+  </div>
+</div>
