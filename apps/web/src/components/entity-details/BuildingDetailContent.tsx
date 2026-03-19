@@ -156,13 +156,13 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
   return (
     <>
       {/* 1. Hero image */}
-      <div className="relative -mx-5 -mt-5 h-[200px] bg-gradient-to-br from-[#0f3460] via-[#16213e] to-[#1a1a2e] flex items-center justify-center">
+      <div className="relative -mx-5 -mt-5 h-[200px] overflow-hidden">
         <GameImage
           category="buildings"
           id={buildingId}
           size="full"
           alt={name}
-          className="h-[120px] w-[120px] rounded-2xl object-cover"
+          className="w-full h-full object-cover"
         />
         <span className="absolute bottom-3 right-3 bg-emerald-700 text-white text-xs font-bold px-3 py-1 rounded-full">
           Niveau {currentLevel}
