@@ -248,8 +248,8 @@ export default function Defense() {
                   })}
                 </div>
 
-                {/* Desktop: card grid */}
-                <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
+                {/* Desktop: vertical card grid */}
+                <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                   {categoryDefenses.map((defense) => {
                     const qty = quantities[defense.id] || 1;
                     const maxQty = defense.maxPerPlanet
@@ -267,83 +267,92 @@ export default function Defense() {
                       resources.hydrogene >= totalCost.hydrogene;
 
                     return (
-                      <div key={defense.id} className={`glass-card relative p-4 space-y-3 ${!defense.prerequisitesMet ? 'opacity-50' : ''}`}>
-                        <InfoButton onClick={() => setDetailId(defense.id)} />
-                        <div className="flex items-center gap-3">
+                      <button
+                        key={defense.id}
+                        onClick={() => setDetailId(defense.id)}
+                        className={`retro-card text-left cursor-pointer overflow-hidden flex flex-col ${!defense.prerequisitesMet ? 'opacity-50' : ''}`}
+                      >
+                        <div className="relative h-[130px] overflow-hidden">
                           <GameImage
                             category="defenses"
                             id={defense.id}
-                            size="icon"
+                            size="full"
                             alt={defense.name}
-                            className="h-10 w-10 rounded"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="flex flex-1 items-center justify-between">
-                            <span className="text-base font-semibold">{defense.name}</span>
-                            <span className="text-sm text-muted-foreground">
-                              x{defense.count}
-                              {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
-                            </span>
-                          </div>
+                          <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                            x{defense.count}
+                            {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
+                          </span>
                         </div>
 
-                        <p className="text-xs text-muted-foreground">{defense.description}</p>
-
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">Coût par unité :</div>
-                          <ResourceCost
-                            minerai={defense.cost.minerai}
-                            silicium={defense.cost.silicium}
-                            hydrogene={defense.cost.hydrogene}
-                            currentMinerai={resources.minerai}
-                            currentSilicium={resources.silicium}
-                            currentHydrogene={resources.hydrogene}
-                          />
-                          <div className="text-xs text-muted-foreground">
-                            Durée par unité : {formatDuration(defense.timePerUnit)}
+                        <div className="p-3 flex flex-col flex-1 gap-1.5">
+                          <div className="text-[13px] font-semibold text-foreground truncate">
+                            {defense.name}
                           </div>
+
+                          <div className="flex-1" />
+
+                          {defense.maxPerPlanet && defense.count >= defense.maxPerPlanet ? (
+                            <div className="text-[10px] text-muted-foreground">Maximum atteint</div>
+                          ) : (
+                            <>
+                              <ResourceCost
+                                minerai={defense.cost.minerai}
+                                silicium={defense.cost.silicium}
+                                hydrogene={defense.cost.hydrogene}
+                                currentMinerai={resources.minerai}
+                                currentSilicium={resources.silicium}
+                                currentHydrogene={resources.hydrogene}
+                              />
+                              <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 6v6l4 2" />
+                                </svg>
+                                {formatDuration(defense.timePerUnit)}
+                              </div>
+                              {!defense.prerequisitesMet ? (
+                                <div className="text-[10px] text-destructive">
+                                  Prérequis manquants
+                                </div>
+                              ) : maxQty > 0 ? (
+                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={maxQty}
+                                    value={effectiveQty}
+                                    onChange={(e) =>
+                                      setQuantities({
+                                        ...quantities,
+                                        [defense.id]: Math.max(1, Math.min(maxQty, Number(e.target.value) || 1)),
+                                      })
+                                    }
+                                    className="w-14 h-7 text-xs"
+                                  />
+                                  <Button
+                                    variant="retro"
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      buildMutation.mutate({
+                                        planetId: planetId!,
+                                        defenseId: defense.id as any,
+                                        quantity: effectiveQty,
+                                      });
+                                    }}
+                                    disabled={!canAfford || buildMutation.isPending || effectiveQty === 0}
+                                  >
+                                    Construire
+                                  </Button>
+                                </div>
+                              ) : null}
+                            </>
+                          )}
                         </div>
-
-                        {!defense.prerequisitesMet && defense.missingPrerequisites.length > 0 && (
-                          <p className="text-xs text-destructive">
-                            Prérequis : {defense.missingPrerequisites.map((p) => formatMissingPrerequisite(p, gameConfig)).join(', ')}
-                          </p>
-                        )}
-
-                        {defense.prerequisitesMet && maxQty > 0 && (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              min={1}
-                              max={maxQty}
-                              value={effectiveQty}
-                              onChange={(e) =>
-                                setQuantities({
-                                  ...quantities,
-                                  [defense.id]: Math.max(1, Math.min(maxQty, Number(e.target.value) || 1)),
-                                })
-                              }
-                              className="w-20"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                buildMutation.mutate({
-                                  planetId: planetId!,
-                                  defenseId: defense.id as any,
-                                  quantity: effectiveQty,
-                                })
-                              }
-                              disabled={!canAfford || buildMutation.isPending || effectiveQty === 0}
-                            >
-                              Construire
-                            </Button>
-                          </div>
-                        )}
-
-                        {defense.maxPerPlanet && defense.count >= defense.maxPerPlanet && (
-                          <p className="text-xs text-muted-foreground">Maximum atteint</p>
-                        )}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
