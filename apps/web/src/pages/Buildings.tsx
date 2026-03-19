@@ -352,7 +352,9 @@ export default function Buildings() {
                             <div className="text-xs text-muted-foreground font-mono">
                               {stats.label === 'Capacité'
                                 ? `capacité ${stats.current.toLocaleString('fr-FR')}`
-                                : `+${stats.current.toLocaleString('fr-FR')}${stats.unit}`}
+                                : stats.label === 'Énergie'
+                                  ? `+${stats.current.toLocaleString('fr-FR')} énergie`
+                                  : `+${stats.current.toLocaleString('fr-FR')}${stats.unit}`}
                             </div>
                           )}
 
