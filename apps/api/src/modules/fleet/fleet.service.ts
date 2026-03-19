@@ -2,7 +2,8 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, fleetEvents, userResearch, pveMissions } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity } from '@ogame-clone/game-engine';
+import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus } from '@ogame-clone/game-engine';
+import type { ShipStats } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -77,8 +78,9 @@ export function createFleetService(
       }
 
       // Get research levels for speed calculation
-      const driveTechs = await this.getDriveTechs(userId);
-      const speed = fleetSpeed(input.ships, driveTechs, shipStatsMap);
+      const researchLevels = await this.getResearchLevels(userId);
+      const speedMultipliers = this.buildSpeedMultipliers(input.ships, shipStatsMap, researchLevels, config.bonuses);
+      const speed = fleetSpeed(input.ships, shipStatsMap, speedMultipliers);
       if (speed === 0) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun vaisseau sélectionné' });
       }
@@ -545,8 +547,10 @@ export function createFleetService(
 
       const config = await gameConfigService.getFullConfig();
       const shipStatsMap = buildShipStatsMap(config);
-      const driveTechs = await this.getDriveTechsByEvent(fleetEventId);
-      const speed = fleetSpeed(ships, driveTechs, shipStatsMap);
+      const [event] = await db.select().from(fleetEvents).where(eq(fleetEvents.id, fleetEventId)).limit(1);
+      const researchLevels = event ? await this.getResearchLevels(event.userId) : {};
+      const speedMultipliers = this.buildSpeedMultipliers(ships, shipStatsMap, researchLevels, config.bonuses);
+      const speed = fleetSpeed(ships, shipStatsMap, speedMultipliers);
       const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
       const duration = travelTime(targetCoords, origin, speed, universeSpeed);
 
@@ -573,29 +577,36 @@ export function createFleetService(
       );
     },
 
-    async getDriveTechs(userId: string) {
+    async getResearchLevels(userId: string): Promise<Record<string, number>> {
       const [research] = await db
         .select()
         .from(userResearch)
         .where(eq(userResearch.userId, userId))
         .limit(1);
-
-      return {
-        combustion: (research?.combustion ?? 0) as number,
-        impulse: (research?.impulse ?? 0) as number,
-        hyperspaceDrive: (research?.hyperspaceDrive ?? 0) as number,
-      };
+      if (!research) return {};
+      const levels: Record<string, number> = {};
+      for (const [key, value] of Object.entries(research)) {
+        if (key !== 'userId' && typeof value === 'number') {
+          levels[key] = value;
+        }
+      }
+      return levels;
     },
 
-    async getDriveTechsByEvent(fleetEventId: string) {
-      const [event] = await db
-        .select()
-        .from(fleetEvents)
-        .where(eq(fleetEvents.id, fleetEventId))
-        .limit(1);
-
-      if (!event) return { combustion: 0, impulse: 0, hyperspaceDrive: 0 };
-      return this.getDriveTechs(event.userId);
+    buildSpeedMultipliers(
+      ships: Record<string, number>,
+      shipStatsMap: Record<string, ShipStats>,
+      researchLevels: Record<string, number>,
+      bonusDefs: { sourceType: string; sourceId: string; stat: string; percentPerLevel: number; category: string | null }[],
+    ): Record<string, number> {
+      const multipliers: Record<string, number> = {};
+      for (const shipId of Object.keys(ships)) {
+        const stats = shipStatsMap[shipId];
+        if (stats) {
+          multipliers[shipId] = resolveBonus('ship_speed', stats.driveType, researchLevels, bonusDefs);
+        }
+      }
+      return multipliers;
     },
 
     async getOrCreateShips(planetId: string) {

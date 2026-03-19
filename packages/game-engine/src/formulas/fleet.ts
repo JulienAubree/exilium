@@ -5,41 +5,28 @@ export interface ShipStats {
   driveType: 'combustion' | 'impulse' | 'hyperspaceDrive';
 }
 
-interface DriveTechs {
-  combustion: number;
-  impulse: number;
-  hyperspaceDrive: number;
-}
-
 interface Coordinates {
   galaxy: number;
   system: number;
   position: number;
 }
 
-const DRIVE_BONUS: Record<string, number> = {
-  combustion: 0.1,
-  impulse: 0.2,
-  hyperspaceDrive: 0.3,
-};
-
-export function shipSpeed(stats: ShipStats, techs: DriveTechs): number {
-  const techLevel = techs[stats.driveType];
-  const bonus = DRIVE_BONUS[stats.driveType];
-  return Math.floor(stats.baseSpeed * (1 + bonus * techLevel));
+export function shipSpeed(stats: ShipStats, speedMultiplier: number): number {
+  return Math.floor(stats.baseSpeed * speedMultiplier);
 }
 
 export function fleetSpeed(
   ships: Record<string, number>,
-  techs: DriveTechs,
   shipStatsMap: Record<string, ShipStats>,
+  speedMultipliers: Record<string, number>,
 ): number {
   let minSpeed = Infinity;
   for (const [shipId, count] of Object.entries(ships)) {
     if (count > 0) {
       const stats = shipStatsMap[shipId];
       if (!stats) continue;
-      const speed = shipSpeed(stats, techs);
+      const multiplier = speedMultipliers[shipId] ?? 1;
+      const speed = shipSpeed(stats, multiplier);
       if (speed < minSpeed) minSpeed = speed;
     }
   }

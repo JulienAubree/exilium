@@ -11,30 +11,30 @@ const SHIP_STATS_MAP: Record<string, ShipStats> = {
 };
 
 describe('shipSpeed', () => {
-  it('small cargo with combustion 0 = 5000', () => {
-    expect(shipSpeed(SHIP_STATS_MAP.smallCargo, { combustion: 0, impulse: 0, hyperspaceDrive: 0 })).toBe(5000);
+  it('small cargo with multiplier 1 = 5000', () => {
+    expect(shipSpeed(SHIP_STATS_MAP.smallCargo, 1)).toBe(5000);
   });
-  it('small cargo with combustion 5 = 7500', () => {
-    expect(shipSpeed(SHIP_STATS_MAP.smallCargo, { combustion: 5, impulse: 0, hyperspaceDrive: 0 })).toBe(7500);
+  it('small cargo with multiplier 1.5 = 7500', () => {
+    expect(shipSpeed(SHIP_STATS_MAP.smallCargo, 1.5)).toBe(7500);
   });
-  it('cruiser with impulse 4 = 27000', () => {
-    expect(shipSpeed(SHIP_STATS_MAP.cruiser, { combustion: 0, impulse: 4, hyperspaceDrive: 0 })).toBe(27000);
+  it('cruiser with multiplier 1.8 = 27000', () => {
+    expect(shipSpeed(SHIP_STATS_MAP.cruiser, 1.8)).toBe(27000);
   });
-  it('battleship with hyperspace 3 = 19000', () => {
-    expect(shipSpeed(SHIP_STATS_MAP.battleship, { combustion: 0, impulse: 0, hyperspaceDrive: 3 })).toBe(19000);
+  it('battleship with multiplier 1.9 = 19000', () => {
+    expect(shipSpeed(SHIP_STATS_MAP.battleship, 1.9)).toBe(19000);
   });
 });
 
 describe('fleetSpeed', () => {
   it('fleet speed is the minimum of all ships', () => {
     const ships = { smallCargo: 5, cruiser: 2 } as Record<string, number>;
-    const techs = { combustion: 5, impulse: 4, hyperspaceDrive: 0 };
-    expect(fleetSpeed(ships, techs, SHIP_STATS_MAP)).toBe(7500);
+    const multipliers = { smallCargo: 1.5, cruiser: 1.8 };
+    expect(fleetSpeed(ships, SHIP_STATS_MAP, multipliers)).toBe(7500);
   });
   it('single ship fleet', () => {
     const ships = { lightFighter: 10 } as Record<string, number>;
-    const techs = { combustion: 3, impulse: 0, hyperspaceDrive: 0 };
-    expect(fleetSpeed(ships, techs, SHIP_STATS_MAP)).toBe(16250);
+    const multipliers = { lightFighter: 1.3 };
+    expect(fleetSpeed(ships, SHIP_STATS_MAP, multipliers)).toBe(16250);
   });
 });
 
