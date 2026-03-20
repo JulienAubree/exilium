@@ -7,6 +7,7 @@ interface FleetSummaryBarProps {
   selectedShips: Record<string, number>;
   totalCargo: number;
   cargoCapacity: number;
+  effectiveCargo?: number;
   fuel: number | null;
   duration: number | null;
   disabled: boolean;
@@ -23,7 +24,7 @@ function formatDuration(seconds: number): string {
   return `${s}s`;
 }
 
-export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapacity, fuel, duration, disabled, sending, onSend }: FleetSummaryBarProps) {
+export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapacity, effectiveCargo, fuel, duration, disabled, sending, onSend }: FleetSummaryBarProps) {
   const shipCount = Object.values(selectedShips).reduce((sum, n) => sum + n, 0);
 
   const config = mission ? MISSION_CONFIG[mission] : null;
@@ -35,7 +36,10 @@ export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapac
         <div className="text-xs text-muted-foreground">
           {shipCount > 0 ? (
             <>
-              {shipCount} vaisseau{shipCount > 1 ? 'x' : ''} &bull; Cargo : {totalCargo.toLocaleString()}/{cargoCapacity.toLocaleString()}
+              {shipCount} vaisseau{shipCount > 1 ? 'x' : ''} &bull; {effectiveCargo != null && effectiveCargo < cargoCapacity
+                ? <>Cargo utile : {effectiveCargo.toLocaleString()}/{cargoCapacity.toLocaleString()}</>
+                : <>Cargo : {totalCargo.toLocaleString()}/{cargoCapacity.toLocaleString()}</>
+              }
             </>
           ) : (
             'Aucun vaisseau sélectionné'

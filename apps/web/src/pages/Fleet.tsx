@@ -12,6 +12,7 @@ import { PveMissionBanner } from '@/components/fleet/PveMissionBanner';
 import { FleetComposition } from '@/components/fleet/FleetComposition';
 import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
 import { MISSION_CONFIG, getCargoCapacity, SHIP_NAMES, type Mission } from '@/config/mission-config';
+import { computeSlagRate } from '@ogame-clone/game-engine';
 
 export default function Fleet() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -180,6 +181,25 @@ export default function Fleet() {
 
   const totalCargo = cargo.minerai + cargo.silicium + cargo.hydrogene;
   const cargoCapacity = getCargoCapacity(selectedShips, gameConfig?.ships ?? {});
+
+  // Compute effective cargo for mine missions (slag reduction)
+  const { data: researchList } = trpc.research.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId && mission === 'mine' },
+  );
+  const effectiveCargo = (() => {
+    if (mission !== 'mine' || !gameConfig || !researchList) return undefined;
+    const refiningLevel = researchList.find((r) => r.id === 'deepSpaceRefining')?.currentLevel ?? 0;
+    // Use an average slag rate across resources for the summary display
+    const position = target.position as 8 | 16;
+    const slagKeys = ['minerai', 'silicium', 'hydrogene'].map((res) => `slag_rate.pos${position}.${res}`);
+    const rates = slagKeys.map((key) => Number(gameConfig.universe[key] ?? 0));
+    const maxRate = Math.max(...rates);
+    if (maxRate === 0) return undefined;
+    const slagRate = computeSlagRate(maxRate, refiningLevel);
+    return Math.floor(cargoCapacity * (1 - slagRate));
+  })();
+
   const validationError = getValidationError();
 
   if (isLoading) return <CardGridSkeleton />;
@@ -290,6 +310,7 @@ export default function Fleet() {
         selectedShips={selectedShips}
         totalCargo={totalCargo}
         cargoCapacity={cargoCapacity}
+        effectiveCargo={effectiveCargo}
         fuel={hasShips ? (estimate?.fuel ?? null) : null}
         duration={hasShips ? (estimate?.duration ?? null) : null}
         disabled={!!validationError}
