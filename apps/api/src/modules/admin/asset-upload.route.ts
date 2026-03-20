@@ -3,7 +3,8 @@ import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
 import { users, type Database } from '@ogame-clone/db';
-import { processImage, isValidCategory } from '../../lib/image-processing.js';
+import { processImage, processPlanetImage, isValidCategory } from '../../lib/image-processing.js';
+import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { env } from '../../config/env.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
@@ -45,7 +46,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const entityId = (data.fields.entityId as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
-      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses' });
+      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets' });
     }
     if (!entityId) {
       return reply.status(400).send({ error: 'entityId is required' });
@@ -62,11 +63,51 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
 
     // 4. Process image
     try {
-      const files = await processImage(buffer, category, entityId, env.ASSETS_DIR);
+      let files: string[];
+      if (category === 'planets') {
+        const planetClassId = entityId;
+        const nextIndex = getNextPlanetImageIndex(planetClassId, env.ASSETS_DIR);
+        files = await processPlanetImage(buffer, planetClassId, nextIndex, env.ASSETS_DIR);
+      } else {
+        files = await processImage(buffer, category, entityId, env.ASSETS_DIR);
+      }
       return reply.send({ success: true, files });
     } catch (err) {
       request.log.error(err, 'Image processing failed');
       return reply.status(500).send({ error: 'Image processing failed' });
     }
+  });
+
+  server.get('/admin/planet-images/:planetClassId', async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    let userId: string;
+    try {
+      const { payload } = await jwtVerify(authHeader.slice(7), JWT_SECRET);
+      userId = payload.userId as string;
+    } catch {
+      return reply.status(401).send({ error: 'Invalid token' });
+    }
+
+    const [user] = await db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user?.isAdmin) {
+      return reply.status(401).send({ error: 'Admin access required' });
+    }
+
+    const { planetClassId } = request.params as { planetClassId: string };
+    const indexes = listPlanetImageIndexes(planetClassId, env.ASSETS_DIR);
+    const images = indexes.map((index) => ({
+      index,
+      thumbUrl: `/assets/planets/${planetClassId}/${index}-thumb.webp`,
+    }));
+
+    return reply.send({ images });
   });
 }
