@@ -13,6 +13,7 @@ import {
   MovementsIcon,
   MissionsIcon,
   MessagesIcon,
+  ReportsIcon,
   RankingIcon,
   HistoryIcon,
 } from '@/lib/icons';
@@ -26,7 +27,7 @@ const TAB_GROUPS = {
   accueil: ['/'],
   base: ['/resources', '/buildings', '/research', '/shipyard', '/defense'],
   galaxie: ['/galaxy', '/fleet', '/missions', '/movements'],
-  social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
+  social: ['/messages', '/reports', '/alliance', '/ranking', '/alliance-ranking'],
 } as const;
 
 type TabGroup = keyof typeof TAB_GROUPS;
@@ -47,6 +48,7 @@ const SHEET_ITEMS = {
   ],
   social: [
     { label: 'Messages', path: '/messages', icon: MessagesIcon },
+    { label: 'Rapports', path: '/reports', icon: ReportsIcon },
     { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
     { label: 'Classement', path: '/ranking', icon: RankingIcon },
   ],

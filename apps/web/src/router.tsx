@@ -101,6 +101,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'reports',
+        lazy: () => import('./pages/Reports').then((m) => ({ Component: m.default })),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'ranking',
         lazy: () => import('./pages/Ranking').then((m) => ({ Component: m.default })),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

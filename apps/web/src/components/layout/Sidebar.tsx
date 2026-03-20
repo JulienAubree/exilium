@@ -12,6 +12,7 @@ import {
   MovementsIcon,
   MissionsIcon,
   MessagesIcon,
+  ReportsIcon,
   RankingIcon,
   AllianceIcon,
   AllianceRankingIcon,
@@ -55,6 +56,7 @@ const sections: { title: string; items: NavItem[] }[] = [
     title: 'Social',
     items: [
       { label: 'Messages', path: '/messages', icon: MessagesIcon },
+      { label: 'Rapports', path: '/reports', icon: ReportsIcon },
       { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
       { label: 'Classement', path: '/ranking', icon: RankingIcon },
       { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },
