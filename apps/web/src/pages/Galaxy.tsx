@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/common/Skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { PlanetDot } from '@/components/galaxy/PlanetDot';
 
 export default function Galaxy() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -149,7 +150,7 @@ export default function Galaxy() {
                     <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
                     {slot ? (
                       <>
-                        <div className="h-2 w-2 rounded-full bg-primary" />
+                        <PlanetDot planetClassId={(slot as any).planetClassId} size={20} />
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium">{(slot as any).planetName}</span>
                           <div className="text-xs text-muted-foreground">
@@ -174,7 +175,7 @@ export default function Galaxy() {
                       </>
                     ) : (
                       <>
-                        <div className="h-2 w-2 rounded-full bg-muted" />
+                        <div className="h-5 w-5 rounded-full bg-muted/30" />
                         <span className="text-sm text-muted-foreground">Vide</span>
                       </>
                     )}
@@ -215,7 +216,12 @@ export default function Galaxy() {
                         <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
                         {slot ? (
                           <>
-                            <td className="px-2 py-1">{(slot as any).planetName}</td>
+                            <td className="px-2 py-1">
+                              <span className="inline-flex items-center gap-2">
+                                <PlanetDot planetClassId={(slot as any).planetClassId} size={18} />
+                                {(slot as any).planetName}
+                              </span>
+                            </td>
                             <td className="px-2 py-1 text-xs text-muted-foreground">
                               {(slot as any).planetClassId
                                 ? gameConfig?.planetTypes?.find((t) => t.id === (slot as any).planetClassId)?.name ?? ''

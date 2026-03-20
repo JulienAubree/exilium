@@ -31,10 +31,6 @@ export function createGalaxyService(db: Database) {
       }
 
       for (const planet of systemPlanets) {
-        // Only show planetClassId for the current user's own planets
-        if (planet.userId !== currentUserId) {
-          planet.planetClassId = null;
-        }
         slots[planet.position - 1] = planet;
       }
 
