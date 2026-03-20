@@ -13,7 +13,7 @@ import {
 interface GameConfigData {
   buildings: Record<string, { id: string; name: string; description: string; flavorText?: string | null; baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; prerequisites: { buildingId: string; level: number }[] }>;
   research: Record<string, { id: string; name: string; description: string; flavorText?: string | null; effectDescription?: string | null; baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
-  ships: Record<string, { id: string; name: string; description: string; flavorText?: string | null; cost: { minerai: number; silicium: number; hydrogene: number }; baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string; weapons: number; shield: number; armor: number; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
+  ships: Record<string, { id: string; name: string; description: string; flavorText?: string | null; cost: { minerai: number; silicium: number; hydrogene: number }; baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string; weapons: number; shield: number; armor: number; isStationary: boolean; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
   defenses: Record<string, { id: string; name: string; description: string; flavorText?: string | null; cost: { minerai: number; silicium: number; hydrogene: number }; weapons: number; shield: number; armor: number; maxPerPlanet: number | null; prerequisites: { buildings: { buildingId: string; level: number }[]; research: { researchId: string; level: number }[] } }>;
   rapidFire: Record<string, Record<string, number>>;
 }
@@ -66,6 +66,7 @@ export interface ShipDetails {
   prerequisites: { buildings?: { buildingId: string; level: number }[]; research?: { researchId: string; level: number }[] };
   combat: { weapons: number; shield: number; armor: number };
   stats: { baseSpeed: number; fuelConsumption: number; cargoCapacity: number; driveType: string };
+  isStationary: boolean;
   rapidFireAgainst: RapidFireEntry[];
   rapidFireFrom: RapidFireEntry[];
 }
@@ -234,6 +235,7 @@ export function getShipDetails(id: string, config?: GameConfigData): ShipDetails
     prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
     combat,
     stats,
+    isStationary: cfgDef?.isStationary ?? def?.isStationary ?? false,
     rapidFireAgainst: getRapidFireAgainst(id, config),
     rapidFireFrom: getRapidFireFrom(id, config),
   };

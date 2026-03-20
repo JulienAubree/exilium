@@ -91,27 +91,45 @@ export function ShipDetailContent({ shipId, researchLevels }: Props) {
         <EffectiveStatRow label="Coque" base={details.combat.armor} effective={effective.armor} multiplier={effective.armorMult} />
       </div>
 
-      {/* Movement */}
-      <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-        <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
-          Déplacement
+      {/* Energy production (stationary ships only) */}
+      {details.isStationary && (
+        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+            Production d&apos;énergie
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Formule</span>
+            <span className="text-slate-200 font-mono text-[10px]">max(10, ⌊tempMax / 4⌋ + 20)</span>
+          </div>
+          <p className="text-[10px] text-slate-500">
+            Ce vaisseau est stationnaire : il ne peut pas être envoyé en mission et est vulnérable aux attaques.
+          </p>
         </div>
-        <EffectiveStatRow label="Vitesse" base={details.stats.baseSpeed} effective={effective.speed} multiplier={effective.speedMult} />
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-400">Consommation</span>
-          <span className="text-slate-200 font-mono">{fmt(details.stats.fuelConsumption)}</span>
+      )}
+
+      {/* Movement — hide for stationary ships */}
+      {!details.isStationary && (
+        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+            Déplacement
+          </div>
+          <EffectiveStatRow label="Vitesse" base={details.stats.baseSpeed} effective={effective.speed} multiplier={effective.speedMult} />
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Consommation</span>
+            <span className="text-slate-200 font-mono">{fmt(details.stats.fuelConsumption)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Capacité de fret</span>
+            <span className="text-slate-200 font-mono">{fmt(details.stats.cargoCapacity)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Propulsion</span>
+            <span className="text-slate-200 font-mono">
+              {DRIVE_LABELS[details.stats.driveType] ?? details.stats.driveType}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-400">Capacité de fret</span>
-          <span className="text-slate-200 font-mono">{fmt(details.stats.cargoCapacity)}</span>
-        </div>
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-400">Propulsion</span>
-          <span className="text-slate-200 font-mono">
-            {DRIVE_LABELS[details.stats.driveType] ?? details.stats.driveType}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Unit cost */}
       <div>
