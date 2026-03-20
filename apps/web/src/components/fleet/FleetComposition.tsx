@@ -8,6 +8,7 @@ interface Ship {
   id: string;
   name: string;
   count: number;
+  isStationary?: boolean;
 }
 
 interface FleetCompositionProps {
@@ -106,7 +107,7 @@ export function FleetComposition({ ships, mission, selectedShips, onChange }: Fl
   const categorized: Record<ShipCategory, Ship[]> = { required: [], optional: [], disabled: [] };
 
   for (const ship of ships) {
-    const category = categorizeShip(ship.id, ship.count, mission);
+    const category = categorizeShip(ship.id, ship.count, mission, { isStationary: ship.isStationary });
     categorized[category].push(ship);
   }
 

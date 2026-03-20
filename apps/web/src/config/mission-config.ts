@@ -112,6 +112,7 @@ export const SHIP_NAMES: Record<string, string> = {
   espionageProbe: "Sonde d'espionnage",
   prospector: 'Prospecteur',
   explorer: 'Explorateur',
+  solarSatellite: 'Satellite solaire',
 };
 
 export type ShipCategory = 'required' | 'optional' | 'disabled';
@@ -140,7 +141,10 @@ export function categorizeShip(
   shipId: string,
   shipCount: number,
   mission: Mission,
+  shipConfig?: { isStationary?: boolean },
 ): ShipCategory {
+  if (shipConfig?.isStationary) return 'disabled';
+
   const config = MISSION_CONFIG[mission];
 
   if (shipCount === 0) return 'disabled';

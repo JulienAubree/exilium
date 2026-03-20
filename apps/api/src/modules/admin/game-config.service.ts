@@ -99,6 +99,7 @@ export interface ShipConfig {
   flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
+  isStationary: boolean;
   prerequisites: {
     buildings: { buildingId: string; level: number }[];
     research: { researchId: string; level: number }[];
@@ -287,6 +288,7 @@ export function createGameConfigService(db: Database) {
         flavorText: s.flavorText ?? null,
         categoryId: s.categoryId,
         sortOrder: s.sortOrder,
+        isStationary: s.isStationary,
         prerequisites: {
           buildings: prereqs.filter(p => p.requiredBuildingId).map(p => ({ buildingId: p.requiredBuildingId!, level: p.requiredLevel })),
           research: prereqs.filter(p => p.requiredResearchId).map(p => ({ researchId: p.requiredResearchId!, level: p.requiredLevel })),
