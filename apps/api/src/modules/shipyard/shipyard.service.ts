@@ -6,11 +6,12 @@ import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, c
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
+import type { BuildCompletionResult } from '../../workers/completion.types.js';
 
 export function createShipyardService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
-  shipyardQueue: Queue,
+  completionQueue: Queue,
   gameConfigService: GameConfigService,
 ) {
   function getShipBuildCategory(
@@ -188,8 +189,8 @@ export function createShipyardService(
         .returning();
 
       if (!hasActive) {
-        await shipyardQueue.add(
-          'complete-unit',
+        await completionQueue.add(
+          'shipyard-unit',
           { buildQueueId: entry.id },
           { delay: unitTime * 1000, jobId: `shipyard-${entry.id}-1` },
         );
@@ -198,7 +199,7 @@ export function createShipyardService(
       return { entry, unitTime };
     },
 
-    async completeUnit(buildQueueId: string) {
+    async completeUnit(buildQueueId: string): Promise<BuildCompletionResult> {
       const [entry] = await db
         .select()
         .from(buildQueue)
@@ -242,7 +243,38 @@ export function createShipyardService(
 
         await this.activateNextBatch(entry.planetId);
 
-        return { completed: true, itemId: entry.itemId, totalCompleted: newCompletedCount };
+        const unitName = config.ships[entry.itemId]?.name
+          ?? config.defenses[entry.itemId]?.name
+          ?? entry.itemId;
+
+        const [planet] = await db
+          .select({ name: planets.name })
+          .from(planets)
+          .where(eq(planets.id, entry.planetId))
+          .limit(1);
+
+        return {
+          userId: entry.userId,
+          planetId: entry.planetId,
+          eventType: 'shipyard-done',
+          notificationPayload: {
+            planetId: entry.planetId,
+            unitId: entry.itemId,
+            name: unitName,
+            count: newCompletedCount,
+          },
+          eventPayload: {
+            unitId: entry.itemId,
+            name: unitName,
+            count: newCompletedCount,
+            planetName: planet?.name ?? 'Planète',
+          },
+          tutorialCheck: entry.type === 'ship' ? {
+            type: 'ship_count',
+            targetId: entry.itemId,
+            targetValue: newCompletedCount,
+          } : undefined,
+        };
       }
 
       const now = new Date();
@@ -269,13 +301,13 @@ export function createShipyardService(
         })
         .where(eq(buildQueue.id, buildQueueId));
 
-      await shipyardQueue.add(
-        'complete-unit',
+      await completionQueue.add(
+        'shipyard-unit',
         { buildQueueId: entry.id },
         { delay: unitTime * 1000, jobId: `shipyard-${entry.id}-${newCompletedCount + 1}` },
       );
 
-      return { completed: false, itemId: entry.itemId, totalCompleted: newCompletedCount };
+      return null;
     },
 
     async activateNextBatch(planetId: string) {
@@ -318,8 +350,8 @@ export function createShipyardService(
         })
         .where(eq(buildQueue.id, nextBatch.id));
 
-      await shipyardQueue.add(
-        'complete-unit',
+      await completionQueue.add(
+        'shipyard-unit',
         { buildQueueId: nextBatch.id },
         { delay: unitTime * 1000, jobId: `shipyard-${nextBatch.id}-1` },
       );
@@ -372,7 +404,7 @@ export function createShipyardService(
       // Remove pending BullMQ job if this was the active batch
       if (entry.status === 'active') {
         const jobId = `shipyard-${entry.id}-${entry.completedCount + 1}`;
-        const job = await shipyardQueue.getJob(jobId);
+        const job = await completionQueue.getJob(jobId);
         if (job) await job.remove();
       }
 
