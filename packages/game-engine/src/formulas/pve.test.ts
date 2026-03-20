@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   baseExtraction,
-  totalExtracted,
   prospectionDuration,
   miningDuration,
   poolSize,
@@ -25,20 +24,6 @@ describe('baseExtraction', () => {
   });
 });
 
-describe('totalExtracted', () => {
-  it('caps at 10 prospectors', () => {
-    expect(totalExtracted(1, 15, 100000, 500000)).toBe(2000 * 10);
-  });
-  it('caps at cargo capacity', () => {
-    expect(totalExtracted(1, 3, 5000, 100000)).toBe(5000);
-  });
-  it('caps at deposit remaining', () => {
-    expect(totalExtracted(1, 3, 100000, 1000)).toBe(1000);
-  });
-  it('normal case: 3 prospectors at level 1', () => {
-    expect(totalExtracted(1, 3, 100000, 100000)).toBe(6000);
-  });
-});
 
 describe('prospectionDuration', () => {
   it('returns 9 min for 20000 deposit', () => {
@@ -132,40 +117,38 @@ describe('computeSlagRate', () => {
 });
 
 describe('computeMiningExtraction', () => {
-  it('reduces effective cargo and increases deposit loss', () => {
+  it('distributes proportionally to remaining quantities', () => {
     const result = computeMiningExtraction({
       centerLevel: 1,
       nbProspectors: 3,
       cargoCapacity: 10000,
-      depositRemaining: 100000,
+      mineraiRemaining: 50000,
+      siliciumRemaining: 30000,
+      hydrogeneRemaining: 20000,
       slagRate: 0.30,
     });
-    expect(result.playerReceives).toBe(6000);
-    expect(result.depositLoss).toBeCloseTo(8571.43, 0);
+    expect(result.playerReceives).toEqual({ minerai: 3000, silicium: 1800, hydrogene: 1200 });
+    expect(result.depositLoss.minerai).toBeCloseTo(4285, 0);
+    expect(result.depositLoss.silicium).toBeCloseTo(2571, 0);
+    expect(result.depositLoss.hydrogene).toBeCloseTo(1714, 0);
   });
 
-  it('caps at effective cargo when extraction exceeds it', () => {
-    const result = computeMiningExtraction({
-      centerLevel: 10,
-      nbProspectors: 10,
-      cargoCapacity: 10000,
-      depositRemaining: 500000,
-      slagRate: 0.30,
-    });
-    expect(result.playerReceives).toBe(7000);
-    expect(result.depositLoss).toBeCloseTo(10000, 0);
-  });
-
-  it('handles deposit nearly depleted (less than depositLoss)', () => {
+  it('handles deposit nearly depleted (all drained)', () => {
     const result = computeMiningExtraction({
       centerLevel: 1,
       nbProspectors: 3,
       cargoCapacity: 10000,
-      depositRemaining: 500,
+      mineraiRemaining: 200,
+      siliciumRemaining: 200,
+      hydrogeneRemaining: 100,
       slagRate: 0.30,
     });
-    expect(result.playerReceives).toBe(350);
-    expect(result.depositLoss).toBe(500);
+    expect(result.depositLoss).toEqual({ minerai: 200, silicium: 200, hydrogene: 100 });
+    expect(result.playerReceives).toEqual({
+      minerai: Math.floor(200 * 0.7),
+      silicium: Math.floor(200 * 0.7),
+      hydrogene: Math.floor(100 * 0.7),
+    });
   });
 
   it('returns full extraction when slagRate is 0', () => {
@@ -173,22 +156,55 @@ describe('computeMiningExtraction', () => {
       centerLevel: 1,
       nbProspectors: 3,
       cargoCapacity: 10000,
-      depositRemaining: 100000,
+      mineraiRemaining: 50000,
+      siliciumRemaining: 50000,
+      hydrogeneRemaining: 0,
       slagRate: 0,
     });
-    expect(result.playerReceives).toBe(6000);
-    expect(result.depositLoss).toBe(6000);
+    expect(result.playerReceives).toEqual({ minerai: 3000, silicium: 3000, hydrogene: 0 });
+    expect(result.depositLoss).toEqual({ minerai: 3000, silicium: 3000, hydrogene: 0 });
   });
 
-  it('handles very high slag rate (0.99)', () => {
+  it('handles only one resource remaining', () => {
     const result = computeMiningExtraction({
       centerLevel: 1,
       nbProspectors: 3,
       cargoCapacity: 10000,
-      depositRemaining: 100000,
-      slagRate: 0.99,
+      mineraiRemaining: 0,
+      siliciumRemaining: 0,
+      hydrogeneRemaining: 80000,
+      slagRate: 0.15,
     });
-    expect(result.playerReceives).toBe(100);
-    expect(result.depositLoss).toBe(10000);
+    expect(result.playerReceives).toEqual({ minerai: 0, silicium: 0, hydrogene: 6000 });
+    expect(result.depositLoss.hydrogene).toBeCloseTo(7058, 0);
+  });
+
+  it('returns all zeros when deposit is empty', () => {
+    const result = computeMiningExtraction({
+      centerLevel: 1,
+      nbProspectors: 3,
+      cargoCapacity: 10000,
+      mineraiRemaining: 0,
+      siliciumRemaining: 0,
+      hydrogeneRemaining: 0,
+      slagRate: 0.30,
+    });
+    expect(result.playerReceives).toEqual({ minerai: 0, silicium: 0, hydrogene: 0 });
+    expect(result.depositLoss).toEqual({ minerai: 0, silicium: 0, hydrogene: 0 });
+  });
+
+  it('caps at effective cargo when extraction exceeds it', () => {
+    const result = computeMiningExtraction({
+      centerLevel: 10,
+      nbProspectors: 10,
+      cargoCapacity: 10000,
+      mineraiRemaining: 200000,
+      siliciumRemaining: 200000,
+      hydrogeneRemaining: 100000,
+      slagRate: 0.30,
+    });
+    expect(result.playerReceives.minerai).toBe(Math.floor(7000 * 0.4));
+    expect(result.playerReceives.silicium).toBe(Math.floor(7000 * 0.4));
+    expect(result.playerReceives.hydrogene).toBe(7000 - 2800 - 2800);
   });
 });

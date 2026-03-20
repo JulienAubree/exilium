@@ -7,21 +7,6 @@ export function baseExtraction(centerLevel: number): number {
 }
 
 /**
- * Total resources extracted for a mining trip.
- * Capped by: 10 prospectors max, fleet cargo capacity, deposit remaining.
- */
-export function totalExtracted(
-  centerLevel: number,
-  nbProspectors: number,
-  fleetCargoCapacity: number,
-  depositRemaining: number,
-): number {
-  const effectiveProspectors = Math.min(nbProspectors, 10);
-  const extracted = baseExtraction(centerLevel) * effectiveProspectors;
-  return Math.min(extracted, fleetCargoCapacity, depositRemaining);
-}
-
-/**
  * Prospection duration in minutes.
  * Formula: 5 + floor(depositTotalQuantity / 10000) * 2
  */
@@ -63,36 +48,79 @@ export function computeSlagRate(baseSlagRate: number, refiningLevel: number): nu
   return Math.min(0.99, Math.max(0, rate));
 }
 
+export interface ResourceAmounts {
+  minerai: number;
+  silicium: number;
+  hydrogene: number;
+}
+
+export interface MultiResourceExtraction {
+  playerReceives: ResourceAmounts;
+  depositLoss: ResourceAmounts;
+}
+
 /**
- * Compute mining extraction with slag mechanics.
- * Returns playerReceives (net resources) and depositLoss (gross deducted from deposit).
+ * Compute mining extraction with slag mechanics across multiple resources.
+ * Distributes extraction proportionally to remaining quantities per resource.
+ * Returns per-resource playerReceives (net) and depositLoss (gross deducted).
  */
 export function computeMiningExtraction(params: {
   centerLevel: number;
   nbProspectors: number;
   cargoCapacity: number;
-  depositRemaining: number;
+  mineraiRemaining: number;
+  siliciumRemaining: number;
+  hydrogeneRemaining: number;
   slagRate: number;
-}): { playerReceives: number; depositLoss: number } {
-  const { centerLevel, nbProspectors, cargoCapacity, depositRemaining, slagRate } = params;
+}): MultiResourceExtraction {
+  const { centerLevel, nbProspectors, cargoCapacity, mineraiRemaining, siliciumRemaining, hydrogeneRemaining, slagRate } = params;
+
+  const zero: ResourceAmounts = { minerai: 0, silicium: 0, hydrogene: 0 };
+  const totalRemaining = mineraiRemaining + siliciumRemaining + hydrogeneRemaining;
+  if (totalRemaining <= 0) return { playerReceives: { ...zero }, depositLoss: { ...zero } };
+
   const effectiveProspectors = Math.min(nbProspectors, 10);
   const rawExtraction = baseExtraction(centerLevel) * effectiveProspectors;
-  const effectiveCargo = cargoCapacity * (1 - slagRate);
+  const effectiveCargo = slagRate === 0 ? cargoCapacity : cargoCapacity * (1 - slagRate);
   const maxExtractable = Math.min(rawExtraction, effectiveCargo);
 
+  const ratioM = mineraiRemaining / totalRemaining;
+  const ratioS = siliciumRemaining / totalRemaining;
+
+  if (maxExtractable >= totalRemaining) {
+    const depositLoss: ResourceAmounts = {
+      minerai: mineraiRemaining,
+      silicium: siliciumRemaining,
+      hydrogene: hydrogeneRemaining,
+    };
+    const playerReceives: ResourceAmounts = {
+      minerai: Math.floor(mineraiRemaining * (1 - slagRate)),
+      silicium: Math.floor(siliciumRemaining * (1 - slagRate)),
+      hydrogene: Math.floor(hydrogeneRemaining * (1 - slagRate)),
+    };
+    if (slagRate === 0) {
+      return { playerReceives: { ...depositLoss }, depositLoss };
+    }
+    return { playerReceives, depositLoss };
+  }
+
+  const playerM = Math.floor(maxExtractable * ratioM);
+  const playerS = Math.floor(maxExtractable * ratioS);
+  const playerH = maxExtractable - playerM - playerS;
+
   if (slagRate === 0) {
-    const capped = Math.min(maxExtractable, depositRemaining);
-    return { playerReceives: capped, depositLoss: capped };
+    const amounts: ResourceAmounts = { minerai: playerM, silicium: playerS, hydrogene: playerH };
+    return { playerReceives: { ...amounts }, depositLoss: { ...amounts } };
   }
 
-  const depositLoss = maxExtractable / (1 - slagRate);
-
-  if (depositRemaining >= depositLoss) {
-    return { playerReceives: Math.floor(maxExtractable), depositLoss };
-  }
+  const depositLoss: ResourceAmounts = {
+    minerai: Math.min(Math.floor(playerM / (1 - slagRate)), mineraiRemaining),
+    silicium: Math.min(Math.floor(playerS / (1 - slagRate)), siliciumRemaining),
+    hydrogene: Math.min(Math.floor(playerH / (1 - slagRate)), hydrogeneRemaining),
+  };
 
   return {
-    playerReceives: Math.floor(depositRemaining * (1 - slagRate)),
-    depositLoss: depositRemaining,
+    playerReceives: { minerai: playerM, silicium: playerS, hydrogene: playerH },
+    depositLoss,
   };
 }
