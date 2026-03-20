@@ -56,8 +56,8 @@ export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapac
       </div>
       {shipCount > 0 && fuel != null && duration != null && (
         <div className="mt-1.5 flex gap-4 text-xs text-muted-foreground">
-          <span>⛽ {fuel.toLocaleString()} hydrogène</span>
-          <span>⏱ {formatDuration(duration)} (aller)</span>
+          <span>{fuel.toLocaleString()} hydrogène</span>
+          <span>{formatDuration(duration)} (aller)</span>
         </div>
       )}
     </div>
