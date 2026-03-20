@@ -197,13 +197,32 @@ export default function Resources() {
           <section className="glass-card p-4">
             <h2 className="text-sm font-semibold text-foreground mb-3">Balance énergétique</h2>
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-energy font-medium glow-energy">Centrale solaire</span>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">Niv. {data.levels.solarPlant}</Badge>
-                  <span className="text-energy font-mono">+{data.rates.energyProduced}</span>
-                </div>
-              </div>
+              {(() => {
+                const satCount = data.levels.solarSatelliteCount ?? 0;
+                const satEnergyPerUnit = Math.max(10, Math.floor(data.maxTemp / 4) + 20);
+                const satEnergyTotal = satEnergyPerUnit * satCount;
+                const plantEnergy = data.rates.energyProduced - satEnergyTotal;
+                return (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-energy font-medium glow-energy">Centrale solaire</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Niv. {data.levels.solarPlant}</Badge>
+                        <span className="text-energy font-mono">+{plantEnergy}</span>
+                      </div>
+                    </div>
+                    {satCount > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-energy font-medium glow-energy">Satellites solaires</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">x{satCount}</Badge>
+                          <span className="text-energy font-mono">+{satEnergyTotal}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               <div className="flex items-center justify-between text-sm font-medium">
                 <span className="text-muted-foreground">Balance énergétique</span>
@@ -228,7 +247,7 @@ export default function Resources() {
               {data.rates.productionFactor < 1 && (
                 <p className="text-xs text-destructive">
                   Facteur de production : {(data.rates.productionFactor * 100).toFixed(1)}% — Construisez
-                  une centrale solaire ou réduisez la puissance de vos mines !
+                  une centrale solaire ou des satellites solaires !
                 </p>
               )}
             </div>
