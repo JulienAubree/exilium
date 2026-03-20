@@ -13,4 +13,5 @@ export const userResearch = pgTable('user_research', {
   shielding: smallint('shielding').notNull().default(0),
   armor: smallint('armor').notNull().default(0),
   rockFracturing: smallint('rock_fracturing').notNull().default(0),
+  deepSpaceRefining: smallint('deep_space_refining').notNull().default(0),
 });

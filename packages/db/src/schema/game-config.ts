@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, integer, real, jsonb, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, integer, real, jsonb, primaryKey, smallint } from 'drizzle-orm/pg-core';
 
 // ── Entity Categories ──
 
@@ -59,6 +59,7 @@ export const researchDefinitions = pgTable('research_definitions', {
   sortOrder: integer('sort_order').notNull().default(0),
   flavorText: text('flavor_text'),
   effectDescription: text('effect_description'),
+  maxLevel: smallint('max_level'),
 });
 
 export const researchPrerequisites = pgTable('research_prerequisites', {
