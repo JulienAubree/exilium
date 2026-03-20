@@ -57,6 +57,13 @@
       "when": 1742601600000,
       "tag": "0007_solar_satellite",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773998952824,
+      "tag": "0008_multi_resource_deposits",
+      "breakpoints": true
     }
   ]
 }
