@@ -23,6 +23,7 @@ Remove:
 - `resource_type`
 - `total_quantity`
 - `remaining_quantity`
+- Index `deposits_belt_remaining_idx` on `(beltId, remainingQuantity)` — references removed column
 
 Add:
 - `minerai_total` numeric(20,2) NOT NULL DEFAULT 0
@@ -31,6 +32,8 @@ Add:
 - `silicium_remaining` numeric(20,2) NOT NULL DEFAULT 0
 - `hydrogene_total` numeric(20,2) NOT NULL DEFAULT 0
 - `hydrogene_remaining` numeric(20,2) NOT NULL DEFAULT 0
+
+New index: `deposits_belt_remaining_idx` on `(beltId)` — the old index filtered on `remainingQuantity`; the new index covers belt lookups, and availability is checked via `WHERE minerai_remaining + silicium_remaining + hydrogene_remaining > 0`.
 
 A resource with `*_remaining = 0` and `*_total = 0` was never present in the deposit. A resource with `*_total > 0` and `*_remaining = 0` has been depleted.
 
@@ -91,20 +94,36 @@ interface MultiResourceExtraction {
 **Algorithm:**
 
 1. Compute `rawExtraction` and `effectiveCargo` as today (unchanged).
-2. `maxExtractable = min(rawExtraction, effectiveCargo)`.
-3. `totalRemaining = minerai_remaining + silicium_remaining + hydrogene_remaining`.
-4. If `totalRemaining <= 0`: return all zeros.
-5. If `maxExtractable >= totalRemaining`: extract everything remaining.
-6. Otherwise, distribute `maxExtractable` proportionally:
+2. If `slagRate === 0`: `effectiveCargo = cargoCapacity` (no slag reduction). Otherwise `effectiveCargo = cargoCapacity * (1 - slagRate)`.
+3. `maxExtractable = min(rawExtraction, effectiveCargo)`.
+4. `totalRemaining = minerai_remaining + silicium_remaining + hydrogene_remaining`.
+5. If `totalRemaining <= 0`: return all zeros.
+6. Distribute proportionally to remaining quantities:
    ```
    ratio_m = minerai_remaining / totalRemaining
    ratio_s = silicium_remaining / totalRemaining
    ratio_h = hydrogene_remaining / totalRemaining
+   ```
+7. **Normal case** (`maxExtractable < totalRemaining`):
+   ```
    player_m = floor(maxExtractable * ratio_m)
    player_s = floor(maxExtractable * ratio_s)
    player_h = maxExtractable - player_m - player_s  // remainder goes to last
+   depositLoss_m = floor(player_m / (1 - slagRate))  // clamped to minerai_remaining
+   depositLoss_s = floor(player_s / (1 - slagRate))  // clamped to silicium_remaining
+   depositLoss_h = floor(player_h / (1 - slagRate))  // clamped to hydrogene_remaining
    ```
-7. Apply slag: `depositLoss_x = floor(player_x / (1 - slagRate))` for each resource. Clamp each to its remaining amount.
+8. **Deposit nearly depleted** (`maxExtractable >= totalRemaining`): the fleet could extract more than what's left. The deposit is fully drained:
+   ```
+   depositLoss_m = minerai_remaining
+   depositLoss_s = silicium_remaining
+   depositLoss_h = hydrogene_remaining
+   player_m = floor(minerai_remaining * (1 - slagRate))
+   player_s = floor(silicium_remaining * (1 - slagRate))
+   player_h = floor(hydrogene_remaining * (1 - slagRate))
+   ```
+   The player receives less than the deposit total because slag is lost.
+9. If `slagRate === 0`: `depositLoss_x = player_x` for each resource (no slag, player receives exactly what the deposit loses).
 
 **Slag rate** is a single value per position (not per resource). `computeSlagRate(baseSlagRate, refiningLevel)` is unchanged.
 
@@ -141,7 +160,7 @@ After the UPDATE, recompute actual `playerReceives` per resource from what was a
 - Write all 3 cargo columns to `fleet_events`.
 
 **`processArrival` (prospection duration):**
-- `totalQuantity` becomes sum of `minerai_remaining + silicium_remaining + hydrogene_remaining`.
+- `totalQuantity` becomes sum of `minerai_total + silicium_total + hydrogene_total` (use `*_total` not `*_remaining` so duration is stable regardless of prior extractions by other players).
 
 ### 6. PvE Mission Data Changes
 
@@ -158,6 +177,10 @@ These are JSONB columns — no schema migration needed, just code changes.
 
 When all 3 `*_remaining` hit 0, `regenerates_at` is set. On regeneration, the deposit is re-generated with fresh rolls (presence + proportions) at centerLevel=1 (same as today).
 
+**`regenerateDepletedDeposits`** — update the query filter: currently checks `remainingQuantity <= 0`. Must change to `minerai_remaining + silicium_remaining + hydrogene_remaining <= 0`.
+
+**`generateMiningMission`** (in `pve.service.ts`) — update the available-deposit filter: currently checks `Number(d.remainingQuantity) > 0`. Must change to `Number(d.mineraiRemaining) + Number(d.siliciumRemaining) + Number(d.hydrogeneRemaining) > 0`.
+
 ### 8. System Message
 
 Current message shows one resource extracted. Updated message shows breakdown:
@@ -172,8 +195,8 @@ Only show resources with non-zero amounts.
 
 ### 9. Frontend Impact
 
-**Mission cards** (`apps/web/src/pages/Missions.tsx` or similar):
-- Currently show one `resourceType` + icon. Now show up to 3 resource icons/amounts.
+**Mission cards** (`apps/web/src/pages/Missions.tsx` or equivalent):
+- Currently show one `resourceType` + icon + estimated quantity. Now show up to 3 resource icons with their estimated quantities. Only display resources with non-zero amounts.
 
 **Fleet summary / cargo display:**
 - Already supports 3 cargo types — no change needed.
