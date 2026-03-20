@@ -30,6 +30,7 @@ export interface PlanetLevels {
   mineraiMinePercent?: number;
   siliciumMinePercent?: number;
   hydrogeneSynthPercent?: number;
+  isHomeworld?: boolean;
 }
 
 export interface ProductionRates {
@@ -59,7 +60,11 @@ export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTyp
   const sBonus = bonus?.siliciumBonus ?? 1;
   const hBonus = bonus?.hydrogeneBonus ?? 1;
 
-  const solarSatEnergy = solarSatelliteEnergy(planet.maxTemp) * planet.solarSatelliteCount;
+  // Homeworld satellites produce a fixed 30 energy each (position-8 equivalent)
+  // to avoid unfair advantage based on random starting position
+  const HOMEWORLD_SAT_ENERGY = 30;
+  const satEnergyPerUnit = planet.isHomeworld ? HOMEWORLD_SAT_ENERGY : solarSatelliteEnergy(planet.maxTemp);
+  const solarSatEnergy = satEnergyPerUnit * planet.solarSatelliteCount;
   const energyProduced = solarPlantEnergy(planet.solarPlantLevel) + solarSatEnergy;
 
   const mineraiEnergy = Math.floor(mineraiMineEnergy(planet.mineraiMineLevel) * mineraiPct);
