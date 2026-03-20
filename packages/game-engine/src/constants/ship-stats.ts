@@ -19,4 +19,5 @@ export const SHIP_STATS: Record<ShipId, ShipStats> = {
   recycler: { baseSpeed: 2000, fuelConsumption: 300, cargoCapacity: 20000, driveType: 'combustion' },
   prospector: { baseSpeed: 3000, fuelConsumption: 50, cargoCapacity: 750, driveType: 'combustion' },
   explorer: { baseSpeed: 8000, fuelConsumption: 100, cargoCapacity: 2000, driveType: 'combustion' },
+  solarSatellite: { baseSpeed: 0, fuelConsumption: 0, cargoCapacity: 0, driveType: 'combustion' },
 };

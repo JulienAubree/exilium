@@ -17,6 +17,7 @@ export const COMBAT_STATS: Record<string, UnitCombatStats> = {
   recycler:       { weapons: 1,    shield: 10,    armor: 16000 },
   prospector:     { weapons: 5,    shield: 10,    armor: 5000 },
   explorer:       { weapons: 20,   shield: 20,    armor: 8000 },
+  solarSatellite: { weapons: 1,    shield: 1,     armor: 2000 },
   // Defenses
   rocketLauncher: { weapons: 80,   shield: 20,    armor: 2000 },
   lightLaser:     { weapons: 100,  shield: 25,    armor: 2000 },
@@ -29,11 +30,11 @@ export const COMBAT_STATS: Record<string, UnitCombatStats> = {
 
 // rapidFire[attacker][target] = N → (N-1)/N chance to fire again
 export const RAPID_FIRE: Record<string, Record<string, number>> = {
-  smallCargo:   { espionageProbe: 5 },
-  largeCargo:   { espionageProbe: 5 },
-  lightFighter: { espionageProbe: 5 },
-  heavyFighter: { espionageProbe: 5, smallCargo: 3 },
-  cruiser:      { espionageProbe: 5, lightFighter: 6, smallCargo: 3, rocketLauncher: 10 },
-  battleship:   { espionageProbe: 5, lightFighter: 4, smallCargo: 4, largeCargo: 4 },
-  colonyShip:   { espionageProbe: 5 },
+  smallCargo:   { espionageProbe: 5, solarSatellite: 5 },
+  largeCargo:   { espionageProbe: 5, solarSatellite: 5 },
+  lightFighter: { espionageProbe: 5, solarSatellite: 5 },
+  heavyFighter: { espionageProbe: 5, smallCargo: 3, solarSatellite: 5 },
+  cruiser:      { espionageProbe: 5, lightFighter: 6, smallCargo: 3, rocketLauncher: 10, solarSatellite: 5 },
+  battleship:   { espionageProbe: 5, lightFighter: 4, smallCargo: 4, largeCargo: 4, solarSatellite: 5 },
+  colonyShip:   { espionageProbe: 5, solarSatellite: 5 },
 };

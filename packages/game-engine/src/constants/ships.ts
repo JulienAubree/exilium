@@ -9,7 +9,8 @@ export type ShipId =
   | 'colonyShip'
   | 'recycler'
   | 'prospector'
-  | 'explorer';
+  | 'explorer'
+  | 'solarSatellite';
 
 export interface ShipDefinition {
   id: ShipId;
@@ -17,6 +18,7 @@ export interface ShipDefinition {
   description: string;
   cost: { minerai: number; silicium: number; hydrogene: number };
   countColumn: string;
+  isStationary?: boolean;
   prerequisites: {
     buildings?: { buildingId: string; level: number }[];
     research?: { researchId: string; level: number }[];
@@ -151,6 +153,17 @@ export const SHIPS: Record<ShipId, ShipDefinition> = {
     description: 'Vaisseau d\'exploration pour découvrir de nouveaux systèmes.',
     cost: { minerai: 1000, silicium: 250, hydrogene: 0 },
     countColumn: 'explorer',
+    prerequisites: {
+      buildings: [{ buildingId: 'shipyard', level: 1 }],
+    },
+  },
+  solarSatellite: {
+    id: 'solarSatellite',
+    name: 'Satellite solaire',
+    description: "Produit de l'énergie en orbite. Ne peut pas être envoyé en mission.",
+    cost: { minerai: 0, silicium: 2000, hydrogene: 500 },
+    countColumn: 'solarSatellite',
+    isStationary: true,
     prerequisites: {
       buildings: [{ buildingId: 'shipyard', level: 1 }],
     },
