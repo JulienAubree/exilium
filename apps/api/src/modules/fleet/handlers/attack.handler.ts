@@ -77,7 +77,7 @@ export class AttackHandler implements MissionHandler {
 
     const defenderFleet: Record<string, number> = {};
     const defenderDefenses: Record<string, number> = {};
-    const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler'] as const;
+    const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler', 'prospector', 'explorer', 'solarSatellite'] as const;
     const defenseTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
 
     if (defShips) {
