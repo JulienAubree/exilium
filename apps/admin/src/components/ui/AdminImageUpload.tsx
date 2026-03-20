@@ -2,12 +2,13 @@ import { useState, useRef } from 'react';
 import { fetchWithAuth } from '@/trpc';
 import { Loader2 } from 'lucide-react';
 
-type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses';
+type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets';
 
 interface AdminImageUploadProps {
   category: AssetCategory;
   entityId: string;
   entityName: string;
+  onUploadComplete?: () => void;
 }
 
 // Must match toKebab in apps/web/src/lib/assets.ts
@@ -15,7 +16,7 @@ function toKebab(id: string): string {
   return id.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function AdminImageUpload({ category, entityId, entityName }: AdminImageUploadProps) {
+export function AdminImageUpload({ category, entityId, entityName, onUploadComplete }: AdminImageUploadProps) {
   const [error, setError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cacheBust, setCacheBust] = useState('');
@@ -53,6 +54,7 @@ export function AdminImageUpload({ category, entityId, entityName }: AdminImageU
 
       setCacheBust(String(Date.now()));
       setError(false);
+      onUploadComplete?.();
     } catch {
       alert('Upload failed');
     } finally {

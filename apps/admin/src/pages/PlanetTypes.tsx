@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { trpc } from '@/trpc';
+import { trpc, fetchWithAuth } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 const FIELDS = [
@@ -36,6 +37,46 @@ function defaultForm(): Record<string, string | number> {
     fieldsBonus: 1.0,
     sortOrder: 0,
   };
+}
+
+function PlanetImagePool({ planetClassId }: { planetClassId: string }) {
+  const [images, setImages] = useState<{ index: number; thumbUrl: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadImages = async () => {
+    try {
+      const res = await fetchWithAuth(`/admin/planet-images/${planetClassId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setImages(data.images);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadImages(); }, [planetClassId]);
+
+  return (
+    <div className="mt-2">
+      <div className="text-xs text-gray-500 mb-1">Visuels ({images.length})</div>
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {images.map((img) => (
+          <img
+            key={img.index}
+            src={`${img.thumbUrl}?t=${Date.now()}`}
+            alt={`${planetClassId} ${img.index}`}
+            className="w-10 h-10 rounded border border-panel-border object-cover"
+          />
+        ))}
+        <AdminImageUpload
+          category="planets"
+          entityId={planetClassId}
+          entityName={planetClassId}
+          onUploadComplete={loadImages}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function PlanetTypes() {
@@ -109,42 +150,49 @@ export default function PlanetTypes() {
           </thead>
           <tbody>
             {types.map((pt) => (
-              <tr key={pt.id}>
-                <td className="font-mono text-gray-400">{pt.id}</td>
-                <td>{pt.name}</td>
-                <td className="font-mono text-xs">{JSON.stringify(pt.positions)}</td>
-                <td className={pt.mineraiBonus !== 1 ? (pt.mineraiBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
-                  x{pt.mineraiBonus}
-                </td>
-                <td className={pt.siliciumBonus !== 1 ? (pt.siliciumBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
-                  x{pt.siliciumBonus}
-                </td>
-                <td className={pt.hydrogeneBonus !== 1 ? (pt.hydrogeneBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
-                  x{pt.hydrogeneBonus}
-                </td>
-                <td>{pt.diameterMin.toLocaleString('fr-FR')}</td>
-                <td>{pt.diameterMax.toLocaleString('fr-FR')}</td>
-                <td className={pt.fieldsBonus !== 1 ? (pt.fieldsBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
-                  x{pt.fieldsBonus}
-                </td>
-                <td>{pt.sortOrder}</td>
-                <td>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setEditing(pt.id)}
-                      className="admin-btn-ghost p-1.5"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => { setDeleting(pt.id); setDeleteError(null); }}
-                      className="admin-btn-ghost p-1.5 text-red-400"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              <Fragment key={pt.id}>
+                <tr>
+                  <td className="font-mono text-gray-400">{pt.id}</td>
+                  <td>{pt.name}</td>
+                  <td className="font-mono text-xs">{JSON.stringify(pt.positions)}</td>
+                  <td className={pt.mineraiBonus !== 1 ? (pt.mineraiBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
+                    x{pt.mineraiBonus}
+                  </td>
+                  <td className={pt.siliciumBonus !== 1 ? (pt.siliciumBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
+                    x{pt.siliciumBonus}
+                  </td>
+                  <td className={pt.hydrogeneBonus !== 1 ? (pt.hydrogeneBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
+                    x{pt.hydrogeneBonus}
+                  </td>
+                  <td>{pt.diameterMin.toLocaleString('fr-FR')}</td>
+                  <td>{pt.diameterMax.toLocaleString('fr-FR')}</td>
+                  <td className={pt.fieldsBonus !== 1 ? (pt.fieldsBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
+                    x{pt.fieldsBonus}
+                  </td>
+                  <td>{pt.sortOrder}</td>
+                  <td>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setEditing(pt.id)}
+                        className="admin-btn-ghost p-1.5"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => { setDeleting(pt.id); setDeleteError(null); }}
+                        className="admin-btn-ghost p-1.5 text-red-400"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={11} className="px-2 pb-2">
+                    <PlanetImagePool planetClassId={pt.id} />
+                  </td>
+                </tr>
+              </Fragment>
             ))}
           </tbody>
         </table>
