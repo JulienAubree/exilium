@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, pveMissions, asteroidDeposits, userResearch } from '@ogame-clone/db';
+import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@ogame-clone/db';
 import { prospectionDuration, miningDuration, totalCargoCapacity, resolveBonus, computeSlagRate, computeMiningExtraction } from '@ogame-clone/game-engine';
 import { BELT_POSITIONS } from '../../universe/universe.config.js';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
@@ -175,29 +175,101 @@ export class MineHandler implements PhasedMissionHandler {
 
     await ctx.pveService.completeMission(mission.id);
 
-    // System message
+    // Build report data
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     const meta = fleetEvent.metadata as { originalDepartureTime?: string } | null;
     const originalDeparture = meta?.originalDepartureTime ? new Date(meta.originalDepartureTime) : fleetEvent.departureTime;
     const totalDuration = formatDuration(Date.now() - originalDeparture.getTime());
 
+    // Fetch origin planet for coordinates
+    const [originPlanet] = await ctx.db.select({
+      galaxy: planets.galaxy,
+      system: planets.system,
+      position: planets.position,
+      name: planets.name,
+    }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+
+    // Collect technologies that influenced the result
+    // Note: `config` and `shipStatsMap` are already in scope from extraction logic above
+    const technologies: Array<{ name: string; level: number | null; bonusType: string; description: string }> = [];
+    if (refiningLevel > 0) {
+      technologies.push({
+        name: 'deepSpaceRefining',
+        level: refiningLevel,
+        bonusType: 'slag_reduction',
+        description: `Scories reduites a ${Math.round(slagRate * 100)}%`,
+      });
+    }
+    const researchLevels: Record<string, number> = {};
+    if (research) {
+      for (const [key, value] of Object.entries(research)) {
+        if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
+      }
+    }
+    const durationBonus = resolveBonus('mining_duration', null, researchLevels, config.bonuses);
+    if (durationBonus < 1) {
+      technologies.push({
+        name: 'mining_duration',
+        level: null,
+        bonusType: 'duration_reduction',
+        description: `Duree de minage -${Math.round((1 - durationBonus) * 100)}%`,
+      });
+    }
+
+    // Create system message
+    let messageId: string | undefined;
     if (ctx.messageService) {
-      const parts = [`Extraction terminée en ${coords}\n`];
-      parts.push(`Durée totale : ${totalDuration}`);
+      const parts = [`Extraction terminee en ${coords}\n`];
+      parts.push(`Duree totale : ${totalDuration}`);
       const resLines: string[] = [];
       if (cargo.minerai > 0) resLines.push(`Minerai: +${cargo.minerai.toLocaleString('fr-FR')}`);
       if (cargo.silicium > 0) resLines.push(`Silicium: +${cargo.silicium.toLocaleString('fr-FR')}`);
-      if (cargo.hydrogene > 0) resLines.push(`Hydrogène: +${cargo.hydrogene.toLocaleString('fr-FR')}`);
+      if (cargo.hydrogene > 0) resLines.push(`Hydrogene: +${cargo.hydrogene.toLocaleString('fr-FR')}`);
       parts.push(resLines.join(' | '));
       if (slagRate > 0) {
         parts.push(`Pertes (scories) : ${Math.round(slagRate * 100)}%`);
       }
-      await ctx.messageService.createSystemMessage(
+      const msg = await ctx.messageService.createSystemMessage(
         fleetEvent.userId,
         'mission',
-        `Extraction terminée ${coords}`,
+        `Extraction terminee ${coords}`,
         parts.join('\n'),
       );
+      messageId = msg.id;
+    }
+
+    // Create mission report
+    if (ctx.reportService) {
+      await ctx.reportService.create({
+        userId: fleetEvent.userId,
+        fleetEventId: fleetEvent.id,
+        pveMissionId: pveMissionId ?? undefined,
+        messageId,
+        missionType: 'mine',
+        title: `Rapport de minage ${coords}`,
+        coordinates: {
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+        },
+        originCoordinates: originPlanet ? {
+          galaxy: originPlanet.galaxy,
+          system: originPlanet.system,
+          position: originPlanet.position,
+          planetName: originPlanet.name,
+        } : undefined,
+        fleet: {
+          ships: ships,
+          totalCargo: totalCargoCapacity(ships, shipStatsMap),
+        },
+        departureTime: originalDeparture,
+        completionTime: new Date(),
+        result: {
+          rewards: cargo,
+          slagRate,
+          technologies,
+        },
+      });
     }
 
     return {
