@@ -9,6 +9,7 @@ import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
+import type { createReportService } from '../report/report.service.js';
 import type { Queue } from 'bullmq';
 
 // ── Input types ──
@@ -67,6 +68,7 @@ export interface MissionHandlerContext {
   pveService?: ReturnType<typeof createPveService>;
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>;
   pirateService?: ReturnType<typeof createPirateService>;
+  reportService?: ReturnType<typeof createReportService>;
   fleetArrivalQueue: Queue;
   fleetReturnQueue: Queue;
   universeSpeed: number;

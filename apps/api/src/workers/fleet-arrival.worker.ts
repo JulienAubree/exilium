@@ -8,6 +8,7 @@ import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
 import { createMessageService } from '../modules/message/message.service.js';
+import { createReportService } from '../modules/report/report.service.js';
 import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
@@ -21,7 +22,8 @@ export function startFleetArrivalWorker(db: ReturnType<typeof createDb>) {
   const pirateService = createPirateService(db, gameConfigService);
   const pveService = createPveService(db, asteroidBeltService, pirateService);
   const messageService = createMessageService(db, redis);
-  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService, pveService, asteroidBeltService, pirateService);
+  const reportService = createReportService(db);
+  const fleetService = createFleetService(db, resourceService, fleetArrivalQueue, fleetReturnQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService, pveService, asteroidBeltService, pirateService, reportService);
 
   const worker = new Worker(
     'fleet-arrival',

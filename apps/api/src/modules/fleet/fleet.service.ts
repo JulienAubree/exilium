@@ -11,6 +11,7 @@ import type { Queue } from 'bullmq';
 import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
+import type { createReportService } from '../report/report.service.js';
 import { TransportHandler } from './handlers/transport.handler.js';
 import { StationHandler } from './handlers/station.handler.js';
 import { SpyHandler } from './handlers/spy.handler.js';
@@ -33,6 +34,7 @@ export function createFleetService(
   pveService?: ReturnType<typeof createPveService>,
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>,
   pirateService?: ReturnType<typeof createPirateService>,
+  reportService?: ReturnType<typeof createReportService>,
 ) {
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
@@ -53,6 +55,7 @@ export function createFleetService(
     pveService,
     asteroidBeltService,
     pirateService,
+    reportService,
     fleetArrivalQueue,
     fleetReturnQueue,
     universeSpeed,
