@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,22 @@ const TYPE_FILTERS = [
   { label: 'Alliance', value: 'alliance' },
   { label: 'Mission', value: 'mission' },
 ] as const;
+
+function ReportLink({ messageId }: { messageId: string }) {
+  const navigate = useNavigate();
+  const { data: report } = trpc.report.byMessage.useQuery({ messageId });
+
+  if (!report) return null;
+
+  return (
+    <button
+      onClick={() => navigate(`/reports?id=${report.id}`)}
+      className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+    >
+      Voir le rapport detaille
+    </button>
+  );
+}
 
 export default function Messages() {
   const utils = trpc.useUtils();
@@ -309,6 +326,10 @@ export default function Messages() {
           <div className="space-y-3">
             <p className="text-sm whitespace-pre-wrap">{detail.body}</p>
 
+            {detail.type === 'mission' && (
+              <ReportLink messageId={detail.id} />
+            )}
+
             {detail.type === 'player' && (
               showReply ? replyForm : (
                 <Button
@@ -505,6 +526,9 @@ export default function Messages() {
                 De : {detail.senderUsername ?? 'Système'} — {new Date(detail.createdAt).toLocaleString('fr-FR')}
               </div>
               <p className="text-sm whitespace-pre-wrap">{detail.body}</p>
+              {detail.type === 'mission' && (
+                <ReportLink messageId={detail.id} />
+              )}
               {detail.type === 'player' && (
                 showReply ? (
                   <div className="space-y-2">
