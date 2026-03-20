@@ -16,11 +16,6 @@ const TIER_COLORS: Record<string, string> = {
   hard: 'bg-red-500/20 text-red-400 border-red-500/40',
 };
 
-const RESOURCE_LABELS: Record<string, string> = {
-  minerai: 'Minerai',
-  silicium: 'Silicium',
-  hydrogene: 'Hydrogène',
-};
 
 export default function Missions() {
   const navigate = useNavigate();
@@ -103,13 +98,17 @@ export default function Missions() {
 
                 {isMining ? (
                   <div className="space-y-1">
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Ressource : </span>
-                      <span className="font-medium">{RESOURCE_LABELS[params.resourceType] ?? params.resourceType}</span>
-                    </div>
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Quantité estimée : </span>
-                      <span className="font-medium">{Number(rewards.estimatedQuantity ?? 0).toLocaleString('fr-FR')}</span>
+                    <div className="text-xs text-muted-foreground">Ressources estimées :</div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {rewards.minerai > 0 && (
+                        <span className="text-minerai">M: {Number(rewards.minerai).toLocaleString('fr-FR')}</span>
+                      )}
+                      {rewards.silicium > 0 && (
+                        <span className="text-silicium">S: {Number(rewards.silicium).toLocaleString('fr-FR')}</span>
+                      )}
+                      {rewards.hydrogene > 0 && (
+                        <span className="text-hydrogene">H: {Number(rewards.hydrogene).toLocaleString('fr-FR')}</span>
+                      )}
                     </div>
                   </div>
                 ) : (

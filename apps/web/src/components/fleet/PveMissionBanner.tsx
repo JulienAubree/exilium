@@ -30,15 +30,18 @@ export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
   const coords = `[${params.galaxy}:${params.system}:${params.position}]`;
 
   if (mission.missionType === 'mine') {
-    const resourceType = (params.resourceType ?? rewards.resourceType) as string;
-    const estimatedQty = rewards.estimatedQuantity as number | undefined;
+    const miningRewards = rewards as Record<string, number>;
+    const resParts: string[] = [];
+    if (miningRewards.minerai > 0) resParts.push(`${Number(miningRewards.minerai).toLocaleString()} minerai`);
+    if (miningRewards.silicium > 0) resParts.push(`${Number(miningRewards.silicium).toLocaleString()} silicium`);
+    if (miningRewards.hydrogene > 0) resParts.push(`${Number(miningRewards.hydrogene).toLocaleString()} H₂`);
     return (
       <div className="flex items-center gap-3 rounded-lg border border-blue-800/60 bg-blue-950/40 p-3">
         <span className="text-xl">⛏</span>
         <div>
           <div className="text-sm font-semibold text-blue-300">Extraction minière</div>
           <div className="text-xs text-blue-400/80">
-            {resourceType}{estimatedQty ? ` — ~${estimatedQty.toLocaleString()} unités` : ''} — Ceinture {coords}
+            {resParts.join(', ')} — Ceinture {coords}
           </div>
         </div>
       </div>
