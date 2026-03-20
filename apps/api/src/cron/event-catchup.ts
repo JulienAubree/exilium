@@ -3,6 +3,13 @@ import { buildQueue, fleetEvents } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { buildCompletionQueue, fleetQueue } from '../queues/queues.js';
 
+const fleetPhaseToJobName: Record<string, string> = {
+  outbound: 'arrive',
+  return: 'return',
+  prospecting: 'prospect-done',
+  mining: 'mine-done',
+};
+
 export async function eventCatchup(db: Database) {
   const now = new Date();
 
@@ -41,10 +48,8 @@ export async function eventCatchup(db: Database) {
     .where(and(eq(fleetEvents.status, 'active'), lte(fleetEvents.arrivalTime, now)));
 
   for (const fleet of expiredFleets) {
-    const jobName = fleet.phase === 'return' ? 'return' : 'arrive';
-    const jobId = fleet.phase === 'return'
-      ? `fleet-return-${fleet.id}`
-      : `fleet-arrive-${fleet.id}`;
+    const jobName = fleetPhaseToJobName[fleet.phase] ?? 'arrive';
+    const jobId = `fleet-${jobName}-${fleet.id}`;
 
     const existingJob = await fleetQueue.getJob(jobId);
     if (!existingJob) {
