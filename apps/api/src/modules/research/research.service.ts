@@ -109,6 +109,9 @@ export function createResearchService(
 
       const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
       const nextLevel = currentLevel + 1;
+      if (def.maxLevel != null && nextLevel > def.maxLevel) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Niveau maximum atteint (${def.maxLevel})` });
+      }
       const cost = researchCost(def, nextLevel);
       const bonusMultiplier = resolveBonus('research_time', null, buildingLevels, config.bonuses);
       const time = researchTime(def, nextLevel, bonusMultiplier);
