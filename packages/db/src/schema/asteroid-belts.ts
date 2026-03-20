@@ -1,4 +1,4 @@
-import { pgTable, uuid, smallint, varchar, numeric, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, smallint, numeric, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 export const asteroidBelts = pgTable('asteroid_belts', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -12,10 +12,13 @@ export const asteroidBelts = pgTable('asteroid_belts', {
 export const asteroidDeposits = pgTable('asteroid_deposits', {
   id: uuid('id').primaryKey().defaultRandom(),
   beltId: uuid('belt_id').notNull().references(() => asteroidBelts.id, { onDelete: 'cascade' }),
-  resourceType: varchar('resource_type', { length: 32 }).notNull(),  // 'minerai' | 'silicium' | 'hydrogene'
-  totalQuantity: numeric('total_quantity', { precision: 20, scale: 2 }).notNull(),
-  remainingQuantity: numeric('remaining_quantity', { precision: 20, scale: 2 }).notNull(),
-  regeneratesAt: timestamp('regenerates_at', { withTimezone: true }),  // set when depleted
+  mineraiTotal: numeric('minerai_total', { precision: 20, scale: 2 }).notNull().default('0'),
+  mineraiRemaining: numeric('minerai_remaining', { precision: 20, scale: 2 }).notNull().default('0'),
+  siliciumTotal: numeric('silicium_total', { precision: 20, scale: 2 }).notNull().default('0'),
+  siliciumRemaining: numeric('silicium_remaining', { precision: 20, scale: 2 }).notNull().default('0'),
+  hydrogeneTotal: numeric('hydrogene_total', { precision: 20, scale: 2 }).notNull().default('0'),
+  hydrogeneRemaining: numeric('hydrogene_remaining', { precision: 20, scale: 2 }).notNull().default('0'),
+  regeneratesAt: timestamp('regenerates_at', { withTimezone: true }),
 }, (table) => [
-  index('deposits_belt_remaining_idx').on(table.beltId, table.remainingQuantity),
+  index('deposits_belt_idx').on(table.beltId),
 ]);
