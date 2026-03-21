@@ -10,11 +10,10 @@ export function createPveRouter(
   return router({
     getMissions: protectedProcedure.query(async ({ ctx }) => {
       const centerLevel = await pveService.getMissionCenterLevel(ctx.userId!);
-      let missions = await pveService.getMissions(ctx.userId!);
-      if (centerLevel > 0 && missions.length === 0) {
-        await pveService.refreshPool(ctx.userId!);
-        missions = await pveService.getMissions(ctx.userId!);
+      if (centerLevel > 0) {
+        await pveService.materializeDiscoveries(ctx.userId!);
       }
+      const missions = await pveService.getMissions(ctx.userId!);
       return { missions, centerLevel };
     }),
 
