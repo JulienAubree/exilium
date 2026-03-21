@@ -173,13 +173,23 @@ export function createBuildingService(
       const currentLevel = buildingLevels[activeBuild.itemId] ?? 0;
       const cost = def ? buildingCost(def, currentLevel + 1) : { minerai: 0, silicium: 0, hydrogene: 0 };
 
-      // Refund resources
+      // Pro-rata refund capped at 70%
+      const now = Date.now();
+      const totalDuration = new Date(activeBuild.endTime).getTime() - new Date(activeBuild.startTime).getTime();
+      const timeLeft = Math.max(0, new Date(activeBuild.endTime).getTime() - now);
+      const refundRatio = Math.min(0.7, totalDuration > 0 ? timeLeft / totalDuration : 0);
+      const refund = {
+        minerai: Math.floor(cost.minerai * refundRatio),
+        silicium: Math.floor(cost.silicium * refundRatio),
+        hydrogene: Math.floor(cost.hydrogene * refundRatio),
+      };
+
       await db
         .update(planets)
         .set({
-          minerai: String(Number(planet.minerai) + cost.minerai),
-          silicium: String(Number(planet.silicium) + cost.silicium),
-          hydrogene: String(Number(planet.hydrogene) + cost.hydrogene),
+          minerai: String(Number(planet.minerai) + refund.minerai),
+          silicium: String(Number(planet.silicium) + refund.silicium),
+          hydrogene: String(Number(planet.hydrogene) + refund.hydrogene),
         })
         .where(eq(planets.id, planetId));
 

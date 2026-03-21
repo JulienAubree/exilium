@@ -169,6 +169,17 @@ export function createResearchService(
         : 0;
       const cost = def ? researchCost(def, currentLevel + 1) : { minerai: 0, silicium: 0, hydrogene: 0 };
 
+      // Pro-rata refund capped at 70%
+      const now = Date.now();
+      const totalDuration = new Date(activeResearch.endTime).getTime() - new Date(activeResearch.startTime).getTime();
+      const remaining = Math.max(0, new Date(activeResearch.endTime).getTime() - now);
+      const refundRatio = Math.min(0.7, totalDuration > 0 ? remaining / totalDuration : 0);
+      const refund = {
+        minerai: Math.floor(cost.minerai * refundRatio),
+        silicium: Math.floor(cost.silicium * refundRatio),
+        hydrogene: Math.floor(cost.hydrogene * refundRatio),
+      };
+
       const [planet] = await db
         .select()
         .from(planets)
@@ -179,9 +190,9 @@ export function createResearchService(
         await db
           .update(planets)
           .set({
-            minerai: String(Number(planet.minerai) + cost.minerai),
-            silicium: String(Number(planet.silicium) + cost.silicium),
-            hydrogene: String(Number(planet.hydrogene) + cost.hydrogene),
+            minerai: String(Number(planet.minerai) + refund.minerai),
+            silicium: String(Number(planet.silicium) + refund.silicium),
+            hydrogene: String(Number(planet.hydrogene) + refund.hydrogene),
           })
           .where(eq(planets.id, planet.id));
       }
@@ -189,7 +200,7 @@ export function createResearchService(
       await completionQueue.remove(`research-${activeResearch.id}`);
       await db.delete(buildQueue).where(eq(buildQueue.id, activeResearch.id));
 
-      return { cancelled: true };
+      return { cancelled: true, refund };
     },
 
     async completeResearch(buildQueueId: string): Promise<BuildCompletionResult> {

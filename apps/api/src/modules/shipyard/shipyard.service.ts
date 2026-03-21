@@ -393,16 +393,34 @@ export function createShipyardService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Type non annulable' });
       }
 
-      // Refund remaining (uncompleted) units
+      // Pro-rata refund: completed units → 0, in-progress unit → pro rata (max 70%), queued units → 70%
       const config = await gameConfigService.getFullConfig();
       const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
       const unitCost = def ? (entry.type === 'ship' ? shipCost(def) : defenseCost(def)) : { minerai: 0, silicium: 0, hydrogene: 0 };
       const remaining = entry.quantity - entry.completedCount;
-      const refund = {
-        minerai: unitCost.minerai * remaining,
-        silicium: unitCost.silicium * remaining,
-        hydrogene: unitCost.hydrogene * remaining,
-      };
+
+      let refund: { minerai: number; silicium: number; hydrogene: number };
+      if (entry.status === 'active') {
+        // 1 unit is in progress (pro rata, max 70%), rest are waiting (70%)
+        const waitingUnits = remaining - 1;
+        const now = Date.now();
+        const totalDuration = new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime();
+        const timeLeft = Math.max(0, new Date(entry.endTime).getTime() - now);
+        const currentUnitRatio = Math.min(0.7, totalDuration > 0 ? timeLeft / totalDuration : 0);
+
+        refund = {
+          minerai: Math.floor(unitCost.minerai * currentUnitRatio) + Math.floor(unitCost.minerai * 0.7) * waitingUnits,
+          silicium: Math.floor(unitCost.silicium * currentUnitRatio) + Math.floor(unitCost.silicium * 0.7) * waitingUnits,
+          hydrogene: Math.floor(unitCost.hydrogene * currentUnitRatio) + Math.floor(unitCost.hydrogene * 0.7) * waitingUnits,
+        };
+      } else {
+        // Queued: nothing started → 70% refund
+        refund = {
+          minerai: Math.floor(unitCost.minerai * 0.7) * remaining,
+          silicium: Math.floor(unitCost.silicium * 0.7) * remaining,
+          hydrogene: Math.floor(unitCost.hydrogene * 0.7) * remaining,
+        };
+      }
 
       const [planet] = await db.select().from(planets).where(eq(planets.id, planetId)).limit(1);
       if (planet) {
