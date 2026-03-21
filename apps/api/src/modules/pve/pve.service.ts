@@ -2,7 +2,7 @@ import { eq, and, sql, asc, inArray } from 'drizzle-orm';
 import { pveMissions, planets, missionCenterState, fleetEvents } from '@ogame-clone/db';
 import { TRPCError } from '@trpc/server';
 import type { Database } from '@ogame-clone/db';
-import { accumulationCap, poolSize, discoveryCooldown, depositSize, depositComposition } from '@ogame-clone/game-engine';
+import { discoveryCooldown, depositSize, depositComposition } from '@ogame-clone/game-engine';
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
 
@@ -201,97 +201,6 @@ export function createPveService(
       await db.update(missionCenterState)
         .set({ lastDismissAt: new Date() })
         .where(eq(missionCenterState.userId, userId));
-    },
-
-    async refreshPool(userId: string) {
-      const centerLevel = await this.getMissionCenterLevel(userId);
-      if (centerLevel === 0) return;
-
-      const cap = accumulationCap(centerLevel);
-      const target = poolSize(centerLevel);
-
-      const countResult = await db.execute(sql`
-        SELECT COUNT(*) as count FROM pve_missions
-        WHERE user_id = ${userId} AND status = 'available'
-      `);
-      let currentCount = Number(countResult[0]?.count ?? 0);
-
-      if (currentCount >= cap) {
-        // At cap: FIFO replace oldest
-        const oldest = await db.select({ id: pveMissions.id }).from(pveMissions)
-          .where(and(
-            eq(pveMissions.userId, userId),
-            eq(pveMissions.status, 'available'),
-          ))
-          .orderBy(asc(pveMissions.createdAt))
-          .limit(1);
-
-        if (oldest.length > 0) {
-          await db.delete(pveMissions).where(eq(pveMissions.id, oldest[0].id));
-          currentCount--;
-        }
-      }
-
-      // Fill up to target pool size
-      const toGenerate = Math.max(0, target - currentCount);
-      if (toGenerate === 0) return;
-
-      // Get player's planets to find their systems
-      const playerPlanets = await db.select({
-        galaxy: planets.galaxy,
-        system: planets.system,
-      }).from(planets)
-        .where(eq(planets.userId, userId));
-
-      if (playerPlanets.length === 0) return;
-
-      for (let i = 0; i < toGenerate; i++) {
-        const planet = playerPlanets[Math.floor(Math.random() * playerPlanets.length)];
-
-        // Weighted random: 60% mining, 40% combat
-        const isMining = Math.random() < 0.6;
-
-        if (isMining && centerLevel >= 1) {
-          await this.generateMiningMission(userId, planet.galaxy, planet.system, centerLevel);
-        } else if (!isMining && centerLevel >= 3) {
-          await this.generatePirateMission(userId, planet.galaxy, planet.system, centerLevel);
-        } else if (centerLevel >= 1) {
-          await this.generateMiningMission(userId, planet.galaxy, planet.system, centerLevel);
-        }
-      }
-    },
-
-    async generateMiningMission(userId: string, galaxy: number, system: number, centerLevel: number) {
-      const availablePositions: (8 | 16)[] = centerLevel >= 2 ? [8, 16] : [8];
-      const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
-
-      const belt = await asteroidBeltService.getOrCreateBelt(galaxy, system, position);
-      const deposits = await asteroidBeltService.getDeposits(belt.id);
-
-      const available = deposits.filter(d =>
-        Number(d.mineraiRemaining) + Number(d.siliciumRemaining) + Number(d.hydrogeneRemaining) > 0,
-      );
-      if (available.length === 0) return;
-
-      const deposit = available[Math.floor(Math.random() * available.length)];
-
-      const resources: Record<string, number> = {};
-      if (Number(deposit.mineraiRemaining) > 0) resources.minerai = Number(deposit.mineraiRemaining);
-      if (Number(deposit.siliciumRemaining) > 0) resources.silicium = Number(deposit.siliciumRemaining);
-      if (Number(deposit.hydrogeneRemaining) > 0) resources.hydrogene = Number(deposit.hydrogeneRemaining);
-
-      await db.insert(pveMissions).values({
-        userId,
-        missionType: 'mine',
-        parameters: {
-          galaxy, system, position,
-          beltId: belt.id,
-          depositId: deposit.id,
-          resources,
-        },
-        rewards: { ...resources },
-        status: 'available',
-      });
     },
 
     async generatePirateMission(userId: string, galaxy: number, system: number, centerLevel: number) {

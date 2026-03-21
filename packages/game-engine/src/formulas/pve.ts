@@ -62,23 +62,6 @@ export function depositComposition(
 }
 
 /**
- * Visible pool size based on Mission Center level.
- */
-export function poolSize(centerLevel: number): number {
-  if (centerLevel <= 2) return 3;
-  if (centerLevel <= 4) return 4;
-  if (centerLevel <= 6) return 5;
-  return 6;
-}
-
-/**
- * Max accumulated missions (2x pool size).
- */
-export function accumulationCap(centerLevel: number): number {
-  return poolSize(centerLevel) * 2;
-}
-
-/**
  * Compute effective slag rate after deep space refining tech.
  * Formula: clamp(baseSlagRate * 0.85^refiningLevel, 0, 0.99)
  */

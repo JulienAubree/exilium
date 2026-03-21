@@ -6,8 +6,6 @@ import {
   discoveryCooldown,
   depositSize,
   depositComposition,
-  poolSize,
-  accumulationCap,
   computeSlagRate,
   computeMiningExtraction,
 } from './pve.js';
@@ -98,33 +96,6 @@ describe('depositComposition', () => {
     expect(comp.minerai).toBeCloseTo(0.6, 1);
     expect(comp.silicium).toBeCloseTo(0.3, 1);
     expect(comp.hydrogene).toBeCloseTo(0.1, 1);
-  });
-});
-
-describe('poolSize', () => {
-  it('returns 3 at level 1-2', () => {
-    expect(poolSize(1)).toBe(3);
-    expect(poolSize(2)).toBe(3);
-  });
-  it('returns 4 at level 3-4', () => {
-    expect(poolSize(3)).toBe(4);
-    expect(poolSize(4)).toBe(4);
-  });
-  it('returns 5 at level 5-6', () => {
-    expect(poolSize(5)).toBe(5);
-    expect(poolSize(6)).toBe(5);
-  });
-  it('returns 6 (cap) at level 7+', () => {
-    expect(poolSize(7)).toBe(6);
-    expect(poolSize(10)).toBe(6);
-  });
-});
-
-describe('accumulationCap', () => {
-  it('is 2x pool size', () => {
-    expect(accumulationCap(1)).toBe(6);
-    expect(accumulationCap(3)).toBe(8);
-    expect(accumulationCap(7)).toBe(12);
   });
 });
 
