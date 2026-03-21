@@ -1,7 +1,7 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
-import { pveMissions, planets } from '@ogame-clone/db';
+import { pveMissions, planets, missionCenterState } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import { accumulationCap, poolSize } from '@ogame-clone/game-engine';
+import { accumulationCap, poolSize, discoveryCooldown, depositSize, depositComposition } from '@ogame-clone/game-engine';
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
 
@@ -57,6 +57,100 @@ export function createPveService(
       await db.update(pveMissions)
         .set({ status: 'available' })
         .where(eq(pveMissions.id, missionId));
+    },
+
+    async materializeDiscoveries(userId: string) {
+      const centerLevel = await this.getMissionCenterLevel(userId);
+      if (centerLevel === 0) return;
+
+      const now = new Date();
+
+      // Get or create state
+      let [state] = await db.select().from(missionCenterState)
+        .where(eq(missionCenterState.userId, userId)).limit(1);
+
+      if (!state) {
+        const cooldownMs = discoveryCooldown(centerLevel) * 3600 * 1000;
+        const [created] = await db.insert(missionCenterState).values({
+          userId,
+          nextDiscoveryAt: new Date(now.getTime() + cooldownMs),
+          updatedAt: now,
+        }).onConflictDoNothing().returning();
+        // If conflict (race condition), re-read
+        if (!created) {
+          [state] = await db.select().from(missionCenterState)
+            .where(eq(missionCenterState.userId, userId)).limit(1);
+        } else {
+          return; // Just created — first discovery is in the future
+        }
+      }
+
+      if (!state || state.nextDiscoveryAt > now) return;
+
+      const cooldownMs = discoveryCooldown(centerLevel) * 3600 * 1000;
+      const elapsed = now.getTime() - state.nextDiscoveryAt.getTime();
+      // +1 because the discovery at nextDiscoveryAt itself counts as the first one
+      const n = Math.floor(elapsed / cooldownMs) + 1;
+
+      // Count current available missions
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(pveMissions)
+        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
+      const currentCount = countResult?.count ?? 0;
+
+      const CAP = 3;
+      const toCreate = Math.min(n, CAP - currentCount);
+
+      // Get player's home planet for coordinates
+      const [homePlanet] = await db.select({
+        galaxy: planets.galaxy,
+        system: planets.system,
+      }).from(planets).where(eq(planets.userId, userId)).limit(1);
+
+      if (homePlanet) {
+        for (let i = 0; i < toCreate; i++) {
+          await this.generateDiscoveredMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
+        }
+      }
+
+      // Advance timer by n * cooldown
+      const newNextDiscovery = new Date(state.nextDiscoveryAt.getTime() + n * cooldownMs);
+      await db.update(missionCenterState).set({
+        nextDiscoveryAt: newNextDiscovery,
+        updatedAt: now,
+      }).where(eq(missionCenterState.userId, userId));
+    },
+
+    async generateDiscoveredMission(userId: string, galaxy: number, system: number, centerLevel: number) {
+      // Position selection: level 1-2 = only 8, level 3+ = 8 or 16
+      const position = centerLevel >= 3 && Math.random() < 0.5 ? 16 : 8;
+
+      const belt = await asteroidBeltService.getOrCreateBelt(galaxy, system, position);
+
+      // RNG: size and composition
+      const varianceMultiplier = 0.6 + Math.random() * 1.0; // 0.6 to 1.6
+      const totalQuantity = depositSize(centerLevel, varianceMultiplier);
+      const mineraiOffset = (Math.random() * 0.30) - 0.15; // -0.15 to +0.15
+      const siliciumOffset = (Math.random() * 0.20) - 0.10; // -0.10 to +0.10
+      const composition = depositComposition(mineraiOffset, siliciumOffset);
+
+      const deposit = await asteroidBeltService.generateDiscoveredDeposit(
+        belt.id, totalQuantity, composition,
+      );
+
+      const minerai = Math.floor(totalQuantity * composition.minerai);
+      const silicium = Math.floor(totalQuantity * composition.silicium);
+      const hydrogene = totalQuantity - minerai - silicium;
+
+      // rewards = total deposit size (for display to the player, not per-trip extraction)
+      await db.insert(pveMissions).values({
+        userId,
+        missionType: 'mine',
+        parameters: { galaxy, system, position, beltId: belt.id, depositId: deposit.id },
+        rewards: { minerai, silicium, hydrogene },
+        status: 'available',
+      });
     },
 
     async refreshPool(userId: string) {

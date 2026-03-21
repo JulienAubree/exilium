@@ -129,6 +129,30 @@ export function createAsteroidBeltService(db: Database) {
       return result;
     },
 
+    async generateDiscoveredDeposit(
+      beltId: string,
+      totalQuantity: number,
+      composition: { minerai: number; silicium: number; hydrogene: number },
+    ) {
+      const mineraiTotal = Math.floor(totalQuantity * composition.minerai);
+      const siliciumTotal = Math.floor(totalQuantity * composition.silicium);
+      const hydrogeneTotal = totalQuantity - mineraiTotal - siliciumTotal;
+
+      const [deposit] = await db
+        .insert(asteroidDeposits)
+        .values({
+          beltId,
+          mineraiTotal: String(mineraiTotal),
+          mineraiRemaining: String(mineraiTotal),
+          siliciumTotal: String(siliciumTotal),
+          siliciumRemaining: String(siliciumTotal),
+          hydrogeneTotal: String(hydrogeneTotal),
+          hydrogeneRemaining: String(hydrogeneTotal),
+        })
+        .returning();
+      return deposit;
+    },
+
     async extractFromDeposit(
       depositId: string,
       loss: { minerai: number; silicium: number; hydrogene: number },
