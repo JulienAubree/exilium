@@ -19,7 +19,13 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function Missions() {
   const navigate = useNavigate();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.pve.getMissions.useQuery();
+  const dismissMutation = trpc.pve.dismissMission.useMutation({
+    onSuccess: () => {
+      utils.pve.getMissions.invalidate();
+    },
+  });
 
   if (isLoading) {
     return (
@@ -133,18 +139,34 @@ export default function Missions() {
                   </div>
                 )}
 
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    const missionType = isMining ? 'mine' : 'pirate';
-                    navigate(
-                      `/fleet?mission=${missionType}&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`,
-                    );
-                  }}
-                >
-                  {isMining ? 'Envoyer' : 'Attaquer'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      const missionType = isMining ? 'mine' : 'pirate';
+                      navigate(
+                        `/fleet?mission=${missionType}&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`,
+                      );
+                    }}
+                  >
+                    {isMining ? 'Envoyer' : 'Attaquer'}
+                  </Button>
+                  {isMining && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => dismissMutation.mutate({ missionId: mission.id })}
+                      disabled={dismissMutation.isPending}
+                      title="Annuler ce gisement"
+                    >
+                      Annuler
+                    </Button>
+                  )}
+                </div>
+                {dismissMutation.error && (
+                  <div className="text-xs text-red-400">{dismissMutation.error.message}</div>
+                )}
               </div>
             );
           })}
