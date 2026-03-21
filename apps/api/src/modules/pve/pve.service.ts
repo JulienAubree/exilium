@@ -143,10 +143,30 @@ export function createPveService(
     },
 
     async generateDiscoveredMission(userId: string, galaxy: number, system: number, centerLevel: number) {
-      // Position selection: level 1-2 = only 8, level 3+ = 8 or 16
-      const position = centerLevel >= 3 && Math.random() < 0.5 ? 16 : 8;
+      // Build candidate coordinates (nearby systems × available positions)
+      const positions: (8 | 16)[] = centerLevel >= 3 ? [8, 16] : [8];
+      const candidates: { system: number; position: 8 | 16 }[] = [];
+      for (let offset = 0; offset <= 5; offset++) {
+        for (const pos of positions) {
+          if (system + offset <= 499) candidates.push({ system: system + offset, position: pos });
+          if (offset > 0 && system - offset >= 1) candidates.push({ system: system - offset, position: pos });
+        }
+      }
 
-      const belt = await asteroidBeltService.getOrCreateBelt(galaxy, system, position);
+      // Exclude coordinates already used by available missions
+      const existingMissions = await db.select({ parameters: pveMissions.parameters })
+        .from(pveMissions)
+        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
+      const usedCoords = new Set(existingMissions.map(m => {
+        const p = m.parameters as { system?: number; position?: number };
+        return `${p.system}:${p.position}`;
+      }));
+
+      const available = candidates.filter(c => !usedCoords.has(`${c.system}:${c.position}`));
+      if (available.length === 0) return;
+
+      const pick = available[Math.floor(Math.random() * available.length)];
+      const belt = await asteroidBeltService.getOrCreateBelt(galaxy, pick.system, pick.position);
 
       // RNG: size and composition
       const varianceMultiplier = 0.6 + Math.random() * 1.0; // 0.6 to 1.6
@@ -167,7 +187,7 @@ export function createPveService(
       await db.insert(pveMissions).values({
         userId,
         missionType: 'mine',
-        parameters: { galaxy, system, position, beltId: belt.id, depositId: deposit.id },
+        parameters: { galaxy, system: pick.system, position: pick.position, beltId: belt.id, depositId: deposit.id },
         rewards: { minerai, silicium, hydrogene },
         status: 'available',
       });
