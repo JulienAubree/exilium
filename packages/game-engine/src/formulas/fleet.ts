@@ -67,7 +67,8 @@ export function fuelConsumption(
     if (count > 0) {
       const stats = shipStatsMap[shipId];
       if (!stats) continue;
-      const consumption = stats.fuelConsumption * count * (dist / 35000) * ((duration + 10) / (duration - 10));
+      const speedFactor = duration <= 10 ? 1 : (duration + 10) / (duration - 10);
+      const consumption = stats.fuelConsumption * count * (dist / 35000) * speedFactor;
       total += Math.max(1, Math.round(consumption));
     }
   }
