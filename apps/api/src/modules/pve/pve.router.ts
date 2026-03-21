@@ -14,7 +14,12 @@ export function createPveRouter(
         await pveService.materializeDiscoveries(ctx.userId!);
       }
       const missions = await pveService.getMissions(ctx.userId!);
-      return { missions, centerLevel };
+      const discoveryState = await pveService.getDiscoveryState(ctx.userId!);
+      return {
+        missions,
+        centerLevel,
+        nextDiscoveryAt: discoveryState?.nextDiscoveryAt?.toISOString() ?? null,
+      };
     }),
 
     getMissionById: protectedProcedure

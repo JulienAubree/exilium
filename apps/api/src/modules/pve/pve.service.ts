@@ -60,6 +60,12 @@ export function createPveService(
         .where(eq(pveMissions.id, missionId));
     },
 
+    async getDiscoveryState(userId: string) {
+      const [state] = await db.select().from(missionCenterState)
+        .where(eq(missionCenterState.userId, userId)).limit(1);
+      return state ?? null;
+    },
+
     async materializeDiscoveries(userId: string) {
       const centerLevel = await this.getMissionCenterLevel(userId);
       if (centerLevel === 0) return;

@@ -3,6 +3,7 @@ import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
+import { Timer } from '@/components/common/Timer';
 
 const TIER_LABELS: Record<string, string> = {
   easy: 'Facile',
@@ -38,6 +39,8 @@ export default function Missions() {
 
   const centerLevel = data?.centerLevel ?? 0;
   const missions = data?.missions ?? [];
+  const nextDiscoveryAt = data?.nextDiscoveryAt ? new Date(data.nextDiscoveryAt) : null;
+  const nextDiscoveryInFuture = nextDiscoveryAt && nextDiscoveryAt.getTime() > Date.now();
 
   if (centerLevel === 0) {
     return (
@@ -57,22 +60,32 @@ export default function Missions() {
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Missions" />
 
-      <div className="glass-card p-4">
+      <div className="glass-card p-4 space-y-3">
         <div className="flex items-center gap-3 text-sm">
           <span className="text-muted-foreground">Centre de missions :</span>
           <span className="font-semibold text-primary">Niveau {centerLevel}</span>
           <span className="text-muted-foreground">|</span>
           <span className="text-muted-foreground">
-            {missions.length}/3 gisement{missions.length !== 1 ? 's' : ''} disponible{missions.length !== 1 ? 's' : ''}
+            {missions.length}/3 gisement{missions.length !== 1 ? 's' : ''} découvert{missions.length !== 1 ? 's' : ''}
           </span>
         </div>
+
+        {nextDiscoveryInFuture && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Prochaine découverte dans</span>
+            <Timer
+              endTime={nextDiscoveryAt}
+              onComplete={() => utils.pve.getMissions.invalidate()}
+            />
+          </div>
+        )}
       </div>
 
       <div className="glass-card border-primary/20 bg-primary/5 p-4 space-y-2">
         <h3 className="text-sm font-semibold text-primary">Comment fonctionnent les missions ?</h3>
         <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
           <li>Votre Centre de missions <span className="text-foreground">découvre automatiquement</span> de nouveaux gisements miniers au fil du temps.</li>
-          <li>Vous pouvez stocker jusqu'à <span className="text-foreground">3 gisements</span> simultanément. Au-delà, les découvertes sont perdues.</li>
+          <li>Jusqu'à <span className="text-foreground">3 missions maximum</span> peuvent être découvertes en même temps. Au-delà, les découvertes sont perdues.</li>
           <li>Un gisement reste exploitable <span className="text-foreground">tant qu'il contient des ressources</span> — envoyez plusieurs flottes pour le vider entièrement.</li>
           <li>Vous pouvez <span className="text-foreground">annuler</span> un gisement qui ne vous intéresse pas pour libérer un emplacement (cooldown 24h).</li>
           <li>Upgrader le Centre de missions = découvertes plus fréquentes, gisements plus gros, extraction plus efficace.</li>
