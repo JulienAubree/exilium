@@ -155,7 +155,7 @@ export function createShipyardService(
       await resourceService.spendResources(planetId, userId, totalCost);
 
       const existingActive = await this.getShipyardQueue(planetId);
-      const hasActive = existingActive.some((e) => e.status === 'active');
+      const hasActive = existingActive.some((e) => e.status === 'active' && e.type === type);
 
       const buildingLevels = await this.getBuildingLevels(planetId);
       let unitTime: number;
@@ -241,7 +241,7 @@ export function createShipyardService(
           .set({ completedCount: newCompletedCount, status: 'completed' })
           .where(eq(buildQueue.id, buildQueueId));
 
-        await this.activateNextBatch(entry.planetId);
+        await this.activateNextBatch(entry.planetId, entry.type as 'ship' | 'defense');
 
         const unitName = config.ships[entry.itemId]?.name
           ?? config.defenses[entry.itemId]?.name
@@ -310,7 +310,7 @@ export function createShipyardService(
       return null;
     },
 
-    async activateNextBatch(planetId: string) {
+    async activateNextBatch(planetId: string, type: 'ship' | 'defense') {
       const [nextBatch] = await db
         .select()
         .from(buildQueue)
@@ -318,6 +318,7 @@ export function createShipyardService(
           and(
             eq(buildQueue.planetId, planetId),
             eq(buildQueue.status, 'queued'),
+            eq(buildQueue.type, type),
           ),
         )
         .limit(1);
@@ -412,7 +413,7 @@ export function createShipyardService(
 
       // Activate next queued batch if we cancelled the active one
       if (entry.status === 'active') {
-        await this.activateNextBatch(planetId);
+        await this.activateNextBatch(planetId, entry.type as 'ship' | 'defense');
       }
 
       return { cancelled: true, refund };
