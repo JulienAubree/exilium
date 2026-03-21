@@ -63,9 +63,20 @@ export default function Missions() {
           <span className="font-semibold text-primary">Niveau {centerLevel}</span>
           <span className="text-muted-foreground">|</span>
           <span className="text-muted-foreground">
-            {missions.length} mission{missions.length !== 1 ? 's' : ''} disponible{missions.length !== 1 ? 's' : ''}
+            {missions.length}/3 gisement{missions.length !== 1 ? 's' : ''} disponible{missions.length !== 1 ? 's' : ''}
           </span>
         </div>
+      </div>
+
+      <div className="glass-card border-primary/20 bg-primary/5 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-primary">Comment fonctionnent les missions ?</h3>
+        <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+          <li>Votre Centre de missions <span className="text-foreground">découvre automatiquement</span> de nouveaux gisements miniers au fil du temps.</li>
+          <li>Vous pouvez stocker jusqu'à <span className="text-foreground">3 gisements</span> simultanément. Au-delà, les découvertes sont perdues.</li>
+          <li>Un gisement reste exploitable <span className="text-foreground">tant qu'il contient des ressources</span> — envoyez plusieurs flottes pour le vider entièrement.</li>
+          <li>Vous pouvez <span className="text-foreground">annuler</span> un gisement qui ne vous intéresse pas pour libérer un emplacement (cooldown 24h).</li>
+          <li>Upgrader le Centre de missions = découvertes plus fréquentes, gisements plus gros, extraction plus efficace.</li>
+        </ul>
       </div>
 
       {missions.length === 0 ? (

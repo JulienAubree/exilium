@@ -72,17 +72,30 @@ export function createPveService(
 
       if (!state) {
         const cooldownMs = discoveryCooldown(centerLevel) * 3600 * 1000;
+        // Set nextDiscoveryAt to now so the first visit triggers an immediate discovery
         const [created] = await db.insert(missionCenterState).values({
           userId,
-          nextDiscoveryAt: new Date(now.getTime() + cooldownMs),
+          nextDiscoveryAt: now,
           updatedAt: now,
         }).onConflictDoNothing().returning();
-        // If conflict (race condition), re-read
         if (!created) {
+          // Race condition — re-read
           [state] = await db.select().from(missionCenterState)
             .where(eq(missionCenterState.userId, userId)).limit(1);
         } else {
-          return; // Just created — first discovery is in the future
+          // Immediately generate a first discovery
+          const [homePlanet] = await db.select({
+            galaxy: planets.galaxy,
+            system: planets.system,
+          }).from(planets).where(eq(planets.userId, userId)).limit(1);
+          if (homePlanet) {
+            await this.generateDiscoveredMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
+          }
+          // Schedule next discovery
+          await db.update(missionCenterState).set({
+            nextDiscoveryAt: new Date(now.getTime() + cooldownMs),
+          }).where(eq(missionCenterState.userId, userId));
+          return;
         }
       }
 
