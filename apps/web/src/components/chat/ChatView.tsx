@@ -40,7 +40,7 @@ export function ChatView({ threadId, otherUsername, onBack, onThreadCreated, cla
     },
   });
 
-  if (!threadId || !otherUsername) {
+  if (!otherUsername) {
     return (
       <div className={`flex items-center justify-center ${className}`}>
         <p className="text-sm text-muted-foreground">Sélectionnez une conversation</p>
