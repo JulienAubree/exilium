@@ -158,11 +158,6 @@ export function createMessageService(db: Database, redis: Redis) {
         })
         .returning();
 
-      publishNotification(redis, recipientId, {
-        type: 'new-message',
-        payload: { messageId: msg.id, type, subject, senderUsername: null },
-      });
-
       return msg;
     },
 
@@ -357,7 +352,7 @@ export function createMessageService(db: Database, redis: Redis) {
       const [result] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(messages)
-        .where(and(eq(messages.recipientId, userId), eq(messages.read, false)));
+        .where(and(eq(messages.recipientId, userId), eq(messages.read, false), eq(messages.type, 'player')));
 
       return result?.count ?? 0;
     },
