@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useSSE } from './useSSE';
 import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
+import { useChatStore } from '@/stores/chat.store';
 
 function showBrowserNotification(title: string, body: string) {
   if (typeof Notification === 'undefined') return;
@@ -56,9 +57,21 @@ export function useNotifications() {
     switch (event.type) {
       case 'new-message':
         utils.message.inbox.invalidate();
+        utils.message.conversations.invalidate();
         utils.message.unreadCount.invalidate();
-        addToast(`Nouveau message : ${event.payload.subject}`);
-        showBrowserNotification('Nouveau message', String(event.payload.subject));
+        // Open minimized chat bubble on desktop for player messages
+        if (event.payload.type === 'player' && event.payload.senderId && event.payload.senderUsername) {
+          const chatStore = useChatStore.getState();
+          const alreadyOpen = chatStore.windows.find((w) => w.userId === event.payload.senderId);
+          if (!alreadyOpen) {
+            chatStore.openChat(String(event.payload.senderId), String(event.payload.senderUsername));
+            chatStore.minimizeChat(String(event.payload.senderId));
+          } else if (alreadyOpen.threadId) {
+            utils.message.thread.invalidate({ threadId: alreadyOpen.threadId });
+          }
+        }
+        addToast(`Message de ${event.payload.senderUsername ?? 'un joueur'}`);
+        showBrowserNotification('Nouveau message', String(event.payload.senderUsername ?? 'Nouveau message'));
         break;
       case 'building-done':
         utils.building.list.invalidate();

@@ -5,6 +5,7 @@ import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { Toaster } from '@/components/ui/Toaster';
+import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { TutorialPanel } from '@/components/tutorial/TutorialPanel';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -54,6 +55,7 @@ export function Layout() {
 
       {/* Mobile/tablet bottom navigation */}
       <BottomTabBar />
+      <ChatOverlay />
       <Toaster />
     </div>
   );
