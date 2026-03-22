@@ -115,7 +115,7 @@ export const RESEARCH: Record<ResearchId, ResearchDefinition> = {
   rockFracturing: {
     id: 'rockFracturing',
     name: 'Technologie de fracturation des roches',
-    description: 'Améliore les techniques d\'extraction minière, réduisant le temps de minage.',
+    description: 'Améliore les techniques d\'extraction minière, augmentant la capacité d\'extraction de 15% par niveau.',
     baseCost: { minerai: 2000, silicium: 4000, hydrogene: 1000 },
     costFactor: 2,
     prerequisites: {

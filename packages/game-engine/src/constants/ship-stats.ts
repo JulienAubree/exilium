@@ -18,7 +18,7 @@ export const SHIP_STATS: Record<ShipId, ShipStats> = {
   espionageProbe: { baseSpeed: 100000000, fuelConsumption: 1, cargoCapacity: 0, driveType: 'combustion', miningExtraction: 0 },
   colonyShip: { baseSpeed: 2500, fuelConsumption: 1000, cargoCapacity: 7500, driveType: 'impulse', miningExtraction: 0 },
   recycler: { baseSpeed: 2000, fuelConsumption: 300, cargoCapacity: 20000, driveType: 'combustion', miningExtraction: 0 },
-  prospector: { baseSpeed: 3000, fuelConsumption: 50, cargoCapacity: 750, driveType: 'combustion', miningExtraction: 2500 },
+  prospector: { baseSpeed: 3000, fuelConsumption: 50, cargoCapacity: 750, driveType: 'combustion', miningExtraction: 3000 },
   explorer: { baseSpeed: 8000, fuelConsumption: 100, cargoCapacity: 2000, driveType: 'combustion', miningExtraction: 0 },
   solarSatellite: { baseSpeed: 0, fuelConsumption: 0, cargoCapacity: 0, driveType: 'combustion', miningExtraction: 0 },
 };

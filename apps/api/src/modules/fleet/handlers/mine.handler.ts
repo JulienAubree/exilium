@@ -91,9 +91,10 @@ export class MineHandler implements PhasedMissionHandler {
     const config = await ctx.gameConfigService.getFullConfig();
     const shipStatsMap = buildShipStatsMap(config);
     const cargoCapacity = totalCargoCapacity(fleetEvent.ships, shipStatsMap);
-    const fleetExtr = totalMiningExtraction(fleetEvent.ships, shipStatsMap);
-    const bonusMultiplier = resolveBonus('mining_duration', null, researchLevels, config.bonuses);
-    const mineMins = miningDuration(cargoCapacity, fleetExtr, bonusMultiplier);
+    const baseFleetExtr = totalMiningExtraction(fleetEvent.ships, shipStatsMap);
+    const extractionMultiplier = resolveBonus('mining_extraction', null, researchLevels, config.bonuses);
+    const fleetExtr = Math.floor(baseFleetExtr * extractionMultiplier);
+    const mineMins = miningDuration(cargoCapacity, fleetExtr, 1);
     const mineMs = mineMins * 60 * 1000;
 
     const now = new Date();
@@ -131,7 +132,7 @@ export class MineHandler implements PhasedMissionHandler {
     const config = await ctx.gameConfigService.getFullConfig();
     const shipStatsMap = buildShipStatsMap(config);
     const cargoCapacity = totalCargoCapacity(ships, shipStatsMap);
-    const fleetExtr = totalMiningExtraction(ships, shipStatsMap);
+    const baseFleetExtr = totalMiningExtraction(ships, shipStatsMap);
 
     // Single slag rate per position
     const position = fleetEvent.targetPosition as 8 | 16;
@@ -141,6 +142,16 @@ export class MineHandler implements PhasedMissionHandler {
     const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, fleetEvent.userId)).limit(1);
     const refiningLevel = research?.deepSpaceRefining ?? 0;
     const slagRate = computeSlagRate(baseSlagRate, refiningLevel);
+
+    // Apply rock fracturing extraction bonus
+    const researchLevelsForExtraction: Record<string, number> = {};
+    if (research) {
+      for (const [key, value] of Object.entries(research)) {
+        if (key !== 'userId' && typeof value === 'number') researchLevelsForExtraction[key] = value;
+      }
+    }
+    const extractionMultiplier = resolveBonus('mining_extraction', null, researchLevelsForExtraction, config.bonuses);
+    const fleetExtr = Math.floor(baseFleetExtr * extractionMultiplier);
 
     // Fetch deposit remaining
     const [deposit] = await ctx.db.select().from(asteroidDeposits)
@@ -209,19 +220,12 @@ export class MineHandler implements PhasedMissionHandler {
         description: `Scories reduites a ${Math.round(slagRate * 100)}%`,
       });
     }
-    const researchLevels: Record<string, number> = {};
-    if (research) {
-      for (const [key, value] of Object.entries(research)) {
-        if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
-      }
-    }
-    const durationBonus = resolveBonus('mining_duration', null, researchLevels, config.bonuses);
-    if (durationBonus < 1) {
+    if (extractionMultiplier > 1) {
       technologies.push({
-        name: 'mining_duration',
+        name: 'mining_extraction',
         level: null,
-        bonusType: 'duration_reduction',
-        description: `Duree de minage -${Math.round((1 - durationBonus) * 100)}%`,
+        bonusType: 'extraction_bonus',
+        description: `Extraction +${Math.round((extractionMultiplier - 1) * 100)}%`,
       });
     }
 

@@ -28,8 +28,8 @@ describe('prospectionDuration', () => {
 });
 
 describe('miningDuration', () => {
-  // fleetExtraction = sum of miningExtraction per ship (e.g. 5 prospectors × 2500 = 12500)
-  // cargo 3750, extraction 12500: 3750 / 12500 * 10 = 3 → clamped to 5
+  // fleetExtraction = sum of miningExtraction per ship (e.g. 5 prospectors × 3000 = 15000)
+  // cargo 3750, extraction 15000: 3750 / 15000 * 10 = 2.5 → clamped to 5
   it('clamps to 5 min when cargo/extraction ratio is low', () => {
     expect(miningDuration(3750, 12500, 1)).toBe(5);
   });
