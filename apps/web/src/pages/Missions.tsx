@@ -84,7 +84,7 @@ export default function Missions() {
       <div className="glass-card border-primary/20 bg-primary/5 p-4 space-y-2">
         <h3 className="text-sm font-semibold text-primary">Comment fonctionnent les missions ?</h3>
         <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-          <li>Votre Centre de missions <span className="text-foreground">découvre automatiquement</span> de nouveaux gisements miniers au fil du temps.</li>
+          <li>Votre Centre de missions <span className="text-foreground">découvre automatiquement</span> un nouveau gisement toutes les <span className="text-foreground">{Math.max(1, 7 - centerLevel)}h</span> (6h au niv. 1, −1h/niveau, min 1h).</li>
           <li>Jusqu'à <span className="text-foreground">3 missions maximum</span> peuvent être découvertes en même temps. Au-delà, les découvertes sont perdues.</li>
           <li>Un gisement reste exploitable <span className="text-foreground">tant qu'il contient des ressources</span> — envoyez plusieurs flottes pour le vider entièrement.</li>
           <li>Vous pouvez <span className="text-foreground">annuler</span> un gisement qui ne vous intéresse pas pour libérer un emplacement (cooldown 24h).</li>

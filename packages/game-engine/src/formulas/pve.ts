@@ -24,11 +24,11 @@ export function miningDuration(centerLevel: number, bonusMultiplier: number): nu
 
 /**
  * Discovery cooldown in hours.
- * Formula: max(1, 8 - level)
- * Level 1 = 7h, level 2 = 6h, …, level 7+ = 1h.
+ * Formula: max(1, 7 - level)
+ * Level 1 = 6h, level 2 = 5h, …, level 6+ = 1h.
  */
 export function discoveryCooldown(centerLevel: number): number {
-  return Math.max(1, 8 - centerLevel);
+  return Math.max(1, 7 - centerLevel);
 }
 
 /**
