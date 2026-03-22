@@ -22,6 +22,27 @@ export function createMessageService(db: Database, redis: Redis) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vous ne pouvez pas vous envoyer un message' });
       }
 
+      // Auto-detect existing thread between the two users
+      let existingThreadId: string | undefined;
+      const [existingThread] = await db
+        .select({ threadId: messages.threadId })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.type, 'player'),
+            sql`${messages.threadId} IS NOT NULL`,
+            or(
+              and(eq(messages.senderId, senderId), eq(messages.recipientId, recipient.id)),
+              and(eq(messages.senderId, recipient.id), eq(messages.recipientId, senderId)),
+            ),
+          ),
+        )
+        .limit(1);
+
+      if (existingThread) {
+        existingThreadId = existingThread.threadId!;
+      }
+
       const [msg] = await db
         .insert(messages)
         .values({
@@ -30,12 +51,12 @@ export function createMessageService(db: Database, redis: Redis) {
           type: 'player',
           subject,
           body,
-          threadId: threadId ?? undefined,
+          threadId: existingThreadId ?? undefined,
         })
         .returning();
 
-      // If no threadId was provided, set threadId = message's own id (starts a new thread)
-      if (!threadId) {
+      // Only create a new thread (self-referential) if no existing thread was found
+      if (!existingThreadId) {
         await db
           .update(messages)
           .set({ threadId: msg.id })
@@ -51,7 +72,7 @@ export function createMessageService(db: Database, redis: Redis) {
 
       publishNotification(redis, recipient.id, {
         type: 'new-message',
-        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null },
+        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId },
       });
 
       return msg;
@@ -114,7 +135,7 @@ export function createMessageService(db: Database, redis: Redis) {
 
       publishNotification(redis, recipientId, {
         type: 'new-message',
-        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null },
+        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId },
       });
 
       return msg;
@@ -339,6 +360,93 @@ export function createMessageService(db: Database, redis: Redis) {
         .where(and(eq(messages.recipientId, userId), eq(messages.read, false)));
 
       return result?.count ?? 0;
+    },
+
+    async listConversations(userId: string) {
+      // Step 1: Get all distinct threadIds where user participates (player messages only)
+      const threads = await db
+        .select({
+          threadId: messages.threadId,
+          lastCreatedAt: sql<Date>`MAX(${messages.createdAt})`.as('last_created_at'),
+        })
+        .from(messages)
+        .where(
+          and(
+            or(eq(messages.senderId, userId), eq(messages.recipientId, userId)),
+            eq(messages.type, 'player'),
+            sql`${messages.threadId} IS NOT NULL`,
+          ),
+        )
+        .groupBy(messages.threadId)
+        .orderBy(sql`MAX(${messages.createdAt}) DESC`);
+
+      if (threads.length === 0) return [];
+
+      // Step 2: For each thread, get last message + other user + unread count
+      const results = await Promise.all(
+        threads.map(async (t) => {
+          const [lastMsg] = await db
+            .select({
+              body: messages.body,
+              senderId: messages.senderId,
+              recipientId: messages.recipientId,
+              createdAt: messages.createdAt,
+            })
+            .from(messages)
+            .where(eq(messages.threadId, t.threadId!))
+            .orderBy(desc(messages.createdAt))
+            .limit(1);
+
+          if (!lastMsg) return null;
+
+          const otherUserId = lastMsg.senderId === userId ? lastMsg.recipientId : lastMsg.senderId;
+          if (!otherUserId) return null;
+
+          const [otherUser] = await db
+            .select({ id: users.id, username: users.username })
+            .from(users)
+            .where(eq(users.id, otherUserId))
+            .limit(1);
+
+          if (!otherUser) return null;
+
+          const [unreadResult] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(messages)
+            .where(
+              and(
+                eq(messages.threadId, t.threadId!),
+                eq(messages.recipientId, userId),
+                eq(messages.read, false),
+              ),
+            );
+
+          return {
+            threadId: t.threadId!,
+            otherUser: { id: otherUser.id, username: otherUser.username },
+            lastMessage: {
+              body: lastMsg.body,
+              senderId: lastMsg.senderId,
+              createdAt: lastMsg.createdAt,
+            },
+            unreadCount: unreadResult?.count ?? 0,
+          };
+        }),
+      );
+
+      return results.filter(Boolean);
+    },
+
+    async deleteThread(userId: string, threadId: string) {
+      await db
+        .delete(messages)
+        .where(
+          and(
+            eq(messages.threadId, threadId),
+            or(eq(messages.senderId, userId), eq(messages.recipientId, userId)),
+          ),
+        );
+      return { success: true };
     },
   };
 }

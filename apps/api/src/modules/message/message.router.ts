@@ -38,11 +38,12 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
     send: protectedProcedure
       .input(z.object({
         recipientUsername: z.string().min(1).max(64),
-        subject: z.string().min(1).max(255),
+        subject: z.string().min(1).max(255).optional(),
         body: z.string().min(1).max(5000),
       }))
       .mutation(async ({ ctx, input }) => {
-        return messageService.sendMessage(ctx.userId!, input.recipientUsername, input.subject, input.body);
+        const subject = input.subject ?? input.body.slice(0, 100);
+        return messageService.sendMessage(ctx.userId!, input.recipientUsername, subject, input.body);
       }),
 
     reply: protectedProcedure
@@ -69,6 +70,17 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
     unreadCount: protectedProcedure
       .query(async ({ ctx }) => {
         return messageService.countUnread(ctx.userId!);
+      }),
+
+    conversations: protectedProcedure
+      .query(async ({ ctx }) => {
+        return messageService.listConversations(ctx.userId!);
+      }),
+
+    deleteThread: protectedProcedure
+      .input(z.object({ threadId: z.string().uuid() }))
+      .mutation(async ({ ctx, input }) => {
+        return messageService.deleteThread(ctx.userId!, input.threadId);
       }),
   });
 }
