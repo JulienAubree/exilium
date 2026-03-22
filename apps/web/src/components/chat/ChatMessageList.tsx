@@ -35,21 +35,20 @@ export function ChatMessageList({ messages, currentUserId, className = '' }: Cha
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  let lastDateKey = '';
+  const enriched = messages.map((msg, i) => {
+    const date = new Date(msg.createdAt);
+    const dateKey = getDateKey(date);
+    const showSeparator = i === 0 || dateKey !== getDateKey(new Date(messages[i - 1].createdAt));
+    return { ...msg, date, showSeparator };
+  });
 
   return (
     <div ref={containerRef} className={`flex-1 overflow-y-auto p-4 space-y-2 ${className}`}>
-      {messages.map((msg) => {
-        const date = new Date(msg.createdAt);
-        const dateKey = getDateKey(date);
-        const showSeparator = dateKey !== lastDateKey;
-        lastDateKey = dateKey;
-
-        return (
+      {enriched.map((msg) => (
           <div key={msg.id}>
-            {showSeparator && (
+            {msg.showSeparator && (
               <div className="text-center text-[10px] text-muted-foreground/60 my-3">
-                {formatDateSeparator(date)}
+                {formatDateSeparator(msg.date)}
               </div>
             )}
             <ChatBubble
@@ -59,8 +58,7 @@ export function ChatMessageList({ messages, currentUserId, className = '' }: Cha
               createdAt={msg.createdAt}
             />
           </div>
-        );
-      })}
+        ))}
       <div ref={bottomRef} />
     </div>
   );
