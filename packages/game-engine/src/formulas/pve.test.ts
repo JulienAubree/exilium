@@ -45,26 +45,35 @@ describe('prospectionDuration', () => {
 });
 
 describe('miningDuration', () => {
-  it('returns 15 min at center 1, no bonus', () => {
-    expect(miningDuration(1, 1)).toBe(15);
+  // center 1: baseExtraction = 2000
+  // 5 prospectors, cargo 3750: 3750 / (5*2000) * 10 = 3.75 → clamped to 5
+  it('clamps to 5 min when cargo/prosp ratio is low', () => {
+    expect(miningDuration(1, 3750, 5, 1)).toBe(5);
   });
-  it('returns 10.5 min at center 1, 0.7 multiplier', () => {
-    expect(miningDuration(1, 0.7)).toBeCloseTo(10.5);
+  // 5 prospectors, cargo 20000: 20000 / (5*2000) * 10 = 20
+  it('scales with cargo capacity', () => {
+    expect(miningDuration(1, 20000, 5, 1)).toBe(20);
   });
-  it('returns 7.5 min at center 1, 0.5 multiplier', () => {
-    expect(miningDuration(1, 0.5)).toBeCloseTo(7.5);
+  // 10 prospectors, cargo 20000: 20000 / (10*2000) * 10 = 10
+  it('more prospectors reduce duration', () => {
+    expect(miningDuration(1, 20000, 10, 1)).toBe(10);
   });
-  it('returns 3 min at center 1, 0.2 multiplier', () => {
-    expect(miningDuration(1, 0.2)).toBeCloseTo(3);
+  // center 5: baseExtraction = 5200
+  // 10 prospectors, cargo 52000: 52000 / (10*5200) * 10 = 10
+  it('higher center level increases extraction rate', () => {
+    expect(miningDuration(5, 52000, 10, 1)).toBe(10);
   });
-  it('returns 5 min at center 11, no bonus (floor)', () => {
-    expect(miningDuration(11, 1)).toBe(5);
+  // bonus multiplier applies
+  it('applies bonus multiplier', () => {
+    expect(miningDuration(1, 20000, 5, 0.5)).toBeCloseTo(10);
   });
-  it('returns 0.5 min at center 11, 0.1 multiplier', () => {
-    expect(miningDuration(11, 0.1)).toBeCloseTo(0.5);
+  // caps prospectors at 10
+  it('caps effective prospectors at 10', () => {
+    expect(miningDuration(1, 20000, 15, 1)).toBe(miningDuration(1, 20000, 10, 1));
   });
-  it('clamps multiplier at 0.01', () => {
-    expect(miningDuration(1, 0.01)).toBeCloseTo(0.15);
+  // minimum 1 prospector
+  it('treats 0 prospectors as 1', () => {
+    expect(miningDuration(1, 2000, 0, 1)).toBe(miningDuration(1, 2000, 1, 1));
   });
 });
 

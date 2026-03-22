@@ -89,8 +89,11 @@ export class MineHandler implements PhasedMissionHandler {
       }
     }
     const config = await ctx.gameConfigService.getFullConfig();
+    const shipStatsMap = buildShipStatsMap(config);
+    const cargoCapacity = totalCargoCapacity(fleetEvent.ships, shipStatsMap);
+    const prospectorCount = fleetEvent.ships['prospector'] ?? 0;
     const bonusMultiplier = resolveBonus('mining_duration', null, researchLevels, config.bonuses);
-    const mineMins = miningDuration(centerLevel, bonusMultiplier);
+    const mineMins = miningDuration(centerLevel, cargoCapacity, prospectorCount, bonusMultiplier);
     const mineMs = mineMins * 60 * 1000;
 
     const now = new Date();
