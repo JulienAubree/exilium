@@ -1,0 +1,67 @@
+import { useEffect, useRef } from 'react';
+import { ChatBubble } from './ChatBubble';
+
+interface Message {
+  id: string;
+  senderId: string | null;
+  senderUsername: string | null;
+  body: string;
+  createdAt: Date | string;
+}
+
+interface ChatMessageListProps {
+  messages: Message[];
+  currentUserId: string;
+  className?: string;
+}
+
+function formatDateSeparator(date: Date): string {
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return 'Hier';
+  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function getDateKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export function ChatMessageList({ messages, currentUserId, className = '' }: ChatMessageListProps) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length]);
+
+  let lastDateKey = '';
+
+  return (
+    <div ref={containerRef} className={`flex-1 overflow-y-auto p-4 space-y-2 ${className}`}>
+      {messages.map((msg) => {
+        const date = new Date(msg.createdAt);
+        const dateKey = getDateKey(date);
+        const showSeparator = dateKey !== lastDateKey;
+        lastDateKey = dateKey;
+
+        return (
+          <div key={msg.id}>
+            {showSeparator && (
+              <div className="text-center text-[10px] text-muted-foreground/60 my-3">
+                {formatDateSeparator(date)}
+              </div>
+            )}
+            <ChatBubble
+              body={msg.body}
+              isSent={msg.senderId === currentUserId}
+              senderUsername={msg.senderId !== currentUserId ? (msg.senderUsername ?? undefined) : undefined}
+              createdAt={msg.createdAt}
+            />
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
+    </div>
+  );
+}
