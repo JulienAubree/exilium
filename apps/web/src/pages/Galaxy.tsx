@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
+import { useAuthStore } from '@/stores/auth.store';
+import { useChatStore } from '@/stores/chat.store';
 
 export default function Galaxy() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -26,6 +28,8 @@ export default function Galaxy() {
   }, [activePlanet, initialized]);
 
   const navigate = useNavigate();
+  const currentUser = useAuthStore((s) => s.user);
+  const openChat = useChatStore((s) => s.openChat);
   const { data, isLoading } = trpc.galaxy.system.useQuery(
     { galaxy, system },
   );
@@ -280,7 +284,19 @@ export default function Galaxy() {
                               )}
                             </td>
                             <td className="px-2 py-1">
-                              <span className="text-xs text-muted-foreground">-</span>
+                              {(slot as any).userId && (slot as any).userId !== currentUser?.id && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs h-6 px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openChat((slot as any).userId, (slot as any).username);
+                                  }}
+                                >
+                                  Message
+                                </Button>
+                              )}
                             </td>
                           </>
                         ) : (

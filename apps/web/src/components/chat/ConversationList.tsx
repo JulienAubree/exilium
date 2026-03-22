@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { UserAvatar } from './UserAvatar';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 interface ConversationListProps {
   activeThreadId: string | null;
@@ -27,8 +28,17 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  const utils = trpc.useUtils();
   const { data: conversations } = trpc.message.conversations.useQuery();
+  const deleteMutation = trpc.message.deleteThread.useMutation({
+    onSuccess: () => {
+      utils.message.conversations.invalidate();
+      utils.message.unreadCount.invalidate();
+      setDeleteConfirm(null);
+    },
+  });
   const { data: searchResults } = trpc.user.search.useQuery(
     { query: searchQuery },
     { enabled: searchMode && searchQuery.length >= 2 },
@@ -120,7 +130,11 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
               <button
                 key={conv.threadId}
                 onClick={() => onSelectThread(conv.threadId, conv.otherUser.username)}
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setDeleteConfirm(conv.threadId);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left group ${
                   activeThreadId === conv.threadId ? 'bg-primary/10' : 'hover:bg-muted/30'
                 }`}
               >
@@ -150,6 +164,16 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onConfirm={() => { if (deleteConfirm) deleteMutation.mutate({ threadId: deleteConfirm }); }}
+        onCancel={() => setDeleteConfirm(null)}
+        title="Supprimer cette conversation ?"
+        description="Tous les messages de cette conversation seront supprimés. Cette action est irréversible."
+        variant="destructive"
+        confirmLabel="Supprimer"
+      />
     </div>
   );
 }
