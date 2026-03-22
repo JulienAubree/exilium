@@ -32,7 +32,7 @@ Output: Array<{
 }>
 ```
 
-SQL logic: group by `threadId`, filter `type = 'player'`, join `users` for the other participant. Order by `lastMessage.createdAt` desc.
+SQL logic: group by `threadId`, filter `type = 'player'` AND `threadId IS NOT NULL`, join `users` for the other participant. Messages with `threadId = NULL` are legacy/orphaned and excluded from the chat view. Order by `lastMessage.createdAt` desc.
 
 ### New: `user.search`
 
@@ -43,11 +43,11 @@ Input: { query: string } (min 2 chars)
 Output: Array<{ id: string, username: string }> (limit 10)
 ```
 
-ILIKE on `users.username`, exclude current user.
+ILIKE on `users.username`, exclude current user. No `user` tRPC router exists yet — create `apps/api/src/modules/user/user.router.ts` and register it in the root router.
 
 ### Modified: `message.send`
 
-The `subject` parameter is no longer required from the frontend. Auto-generate it from the body (truncated) for internal storage. Signature becomes:
+The `subject` parameter is no longer required from the frontend. Auto-generate it as `body.slice(0, 100)` for internal DB storage. The service must auto-detect if a thread already exists between the two users: query for an existing `threadId` where both users are participants (type='player'). If found, reuse that `threadId`. If not, create a new thread (threadId = message's own id, as today). This ensures one conversation per player pair.
 
 ```
 Input: {
@@ -59,7 +59,7 @@ Input: {
 ### Unchanged
 
 - `message.thread` — already returns all messages in a thread chronologically, marks as read. Used as-is for the chat view.
-- `message.reply` — already handles replying within a thread. Used as-is.
+- `message.reply` — already handles replying within a thread. The frontend passes the last message's `id` from the thread as `messageId`. Used as-is.
 - `message.unreadCount` — used for badge display.
 - `message.inbox`, `message.sent`, `message.detail` — kept for backward compatibility but no longer called by the new frontend.
 
@@ -133,7 +133,7 @@ Components reused between the page and the overlay:
 
 ## Real-time & Notifications
 
-- SSE `new-message` already exists. On receive:
+- SSE `new-message` already exists. Its payload currently contains `{ messageId, type, subject, senderUsername }`. Add `senderId` to the payload so the frontend can call `openChat(senderId, senderUsername)`. On receive:
   - If conversation open (page or overlay): append message + auto-scroll
   - If not open (desktop): add minimized bubble in overlay with badge
   - If not open (mobile): badge increment only
@@ -143,7 +143,14 @@ Components reused between the page and the overlay:
 ## Deletions
 
 - No individual message deletion in the chat UI
-- Delete entire conversation: context menu or swipe, with confirmation dialog. Calls existing `message.delete` for each message in the thread (or a new batch delete endpoint if needed).
+- Delete entire conversation: context menu or swipe, with confirmation dialog. New endpoint `message.deleteThread` that deletes all messages in a thread where the user is a participant (single SQL DELETE with `WHERE threadId = ? AND (senderId = ? OR recipientId = ?)`).
+
+### New: `message.deleteThread`
+
+```
+Input: { threadId: string }
+Output: { success: boolean }
+```
 
 ## Avatar Colors
 
