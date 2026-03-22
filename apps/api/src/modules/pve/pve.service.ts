@@ -175,13 +175,29 @@ export function createPveService(
       const siliciumOffset = (Math.random() * 0.20) - 0.10; // -0.10 to +0.10
       const composition = depositComposition(mineraiOffset, siliciumOffset);
 
-      const deposit = await asteroidBeltService.generateDiscoveredDeposit(
-        belt.id, totalQuantity, composition,
-      );
+      let minerai = Math.floor(totalQuantity * composition.minerai);
+      let silicium = Math.floor(totalQuantity * composition.silicium);
+      let hydrogene = totalQuantity - minerai - silicium;
 
-      const minerai = Math.floor(totalQuantity * composition.minerai);
-      const silicium = Math.floor(totalQuantity * composition.silicium);
-      const hydrogene = totalQuantity - minerai - silicium;
+      // Cap hydrogene at 1500, redistribute excess to minerai/silicium
+      const HYDROGENE_CAP = 1500;
+      if (hydrogene > HYDROGENE_CAP) {
+        const excess = hydrogene - HYDROGENE_CAP;
+        hydrogene = HYDROGENE_CAP;
+        minerai += Math.floor(excess * 2 / 3);
+        silicium += excess - Math.floor(excess * 2 / 3);
+      }
+
+      const cappedTotal = minerai + silicium + hydrogene;
+      const cappedComposition = {
+        minerai: minerai / cappedTotal,
+        silicium: silicium / cappedTotal,
+        hydrogene: hydrogene / cappedTotal,
+      };
+
+      const deposit = await asteroidBeltService.generateDiscoveredDeposit(
+        belt.id, cappedTotal, cappedComposition,
+      );
 
       // rewards = total deposit size (for display to the player, not per-trip extraction)
       await db.insert(pveMissions).values({
