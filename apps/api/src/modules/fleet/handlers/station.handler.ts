@@ -12,50 +12,59 @@ export class StationHandler implements MissionHandler {
     const mineraiCargo = Number(fleetEvent.mineraiCargo);
     const siliciumCargo = Number(fleetEvent.siliciumCargo);
     const hydrogeneCargo = Number(fleetEvent.hydrogeneCargo);
-
-    if (fleetEvent.targetPlanetId) {
-      const [targetPlanet] = await ctx.db
-        .select()
-        .from(planets)
-        .where(eq(planets.id, fleetEvent.targetPlanetId))
-        .limit(1);
-
-      if (targetPlanet) {
-        // Deposit resources
-        await ctx.db
-          .update(planets)
-          .set({
-            minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
-            silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
-            hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
-          })
-          .where(eq(planets.id, fleetEvent.targetPlanetId));
-
-        // Transfer ships
-        const [targetShips] = await ctx.db
-          .select()
-          .from(planetShips)
-          .where(eq(planetShips.planetId, fleetEvent.targetPlanetId))
-          .limit(1);
-
-        if (targetShips) {
-          const shipUpdates: Record<string, number> = {};
-          for (const [shipId, count] of Object.entries(fleetEvent.ships)) {
-            if (count > 0) {
-              const current = (targetShips[shipId as keyof typeof targetShips] ?? 0) as number;
-              shipUpdates[shipId] = current + count;
-            }
-          }
-          await ctx.db
-            .update(planetShips)
-            .set(shipUpdates)
-            .where(eq(planetShips.planetId, fleetEvent.targetPlanetId));
-        }
-      }
-    }
-
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+
+    // Check target planet exists
+    const [targetPlanet] = fleetEvent.targetPlanetId
+      ? await ctx.db.select().from(planets).where(eq(planets.id, fleetEvent.targetPlanetId)).limit(1)
+      : [];
+
+    if (!targetPlanet) {
+      if (ctx.messageService) {
+        await ctx.messageService.createSystemMessage(
+          fleetEvent.userId,
+          'mission',
+          `Stationnement echoue ${coords}`,
+          `Planete deserte trouvee en ${coords}. Impossible de stationner en zone hostile.\nDuree du trajet : ${duration}\nVotre flotte fait demi-tour avec son cargo.`,
+        );
+      }
+      return {
+        scheduleReturn: true,
+        cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+      };
+    }
+
+    // Deposit resources
+    await ctx.db
+      .update(planets)
+      .set({
+        minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
+        silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
+        hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
+      })
+      .where(eq(planets.id, targetPlanet.id));
+
+    // Transfer ships
+    const [targetShips] = await ctx.db
+      .select()
+      .from(planetShips)
+      .where(eq(planetShips.planetId, targetPlanet.id))
+      .limit(1);
+
+    if (targetShips) {
+      const shipUpdates: Record<string, number> = {};
+      for (const [shipId, count] of Object.entries(fleetEvent.ships)) {
+        if (count > 0) {
+          const current = (targetShips[shipId as keyof typeof targetShips] ?? 0) as number;
+          shipUpdates[shipId] = current + count;
+        }
+      }
+      await ctx.db
+        .update(planetShips)
+        .set(shipUpdates)
+        .where(eq(planetShips.planetId, targetPlanet.id));
+    }
 
     if (ctx.messageService) {
       const shipList = Object.entries(fleetEvent.ships)
