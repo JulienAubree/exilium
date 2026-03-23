@@ -19,6 +19,8 @@ import {
 } from './schema/game-config.js';
 import { pirateTemplates } from './schema/pve-missions.js';
 import { tutorialQuestDefinitions } from './schema/tutorial-quest-definitions.js';
+import { missionDefinitions } from './schema/mission-definitions.js';
+import { uiLabels } from './schema/ui-labels.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://ogame:ogame@localhost:5432/ogame';
 const client = postgres(DATABASE_URL);
@@ -287,41 +289,91 @@ const PIRATE_TEMPLATES = [
 // ── Tutorial quests data ──
 
 const TUTORIAL_QUESTS = [
-  { id: 'quest_1', order: 1, title: 'Premiers pas', narrativeText: "Commandant, bienvenue sur votre nouvelle colonie. Notre priorité est d'établir une extraction de minerai. Construisez votre première mine pour alimenter nos projets.", conditionType: 'building_level', conditionTargetId: 'mineraiMine', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 0, rewardHydrogene: 0 },
-  { id: 'quest_2', order: 2, title: 'Fondations technologiques', narrativeText: "Excellent travail. Le silicium est essentiel pour toute technologie avancée. Lancez l'extraction de silicium sans tarder.", conditionType: 'building_level', conditionTargetId: 'siliciumMine', conditionTargetValue: 1, rewardMinerai: 0, rewardSilicium: 100, rewardHydrogene: 0 },
-  { id: 'quest_3', order: 3, title: 'Alimenter la colonie', narrativeText: "Nos installations ont besoin d'énergie pour fonctionner. Une centrale solaire assurera l'alimentation de vos mines.", conditionType: 'building_level', conditionTargetId: 'solarPlant', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 75, rewardHydrogene: 0 },
-  { id: 'quest_4', order: 4, title: 'Expansion minière', narrativeText: "Bien. Il est temps d'accélérer notre production. Montez votre mine de minerai au niveau 3 pour assurer un flux constant.", conditionType: 'building_level', conditionTargetId: 'mineraiMine', conditionTargetValue: 3, rewardMinerai: 200, rewardSilicium: 100, rewardHydrogene: 0 },
-  { id: 'quest_5', order: 5, title: 'Équilibre énergétique', narrativeText: "La croissance exige de l'énergie. Améliorez votre centrale solaire au niveau 3 pour soutenir l'expansion.", conditionType: 'building_level', conditionTargetId: 'solarPlant', conditionTargetValue: 3, rewardMinerai: 250, rewardSilicium: 150, rewardHydrogene: 50 },
-  { id: 'quest_6', order: 6, title: "L'automatisation", narrativeText: 'Les robots de construction accéléreront tous vos projets futurs. Construisez une usine de robots.', conditionType: 'building_level', conditionTargetId: 'robotics', conditionTargetValue: 1, rewardMinerai: 350, rewardSilicium: 200, rewardHydrogene: 150 },
-  { id: 'quest_7', order: 7, title: 'La science avant tout', narrativeText: "La recherche est la clé du progrès. Construisez un laboratoire de recherche pour débloquer les technologies avancées.", conditionType: 'building_level', conditionTargetId: 'researchLab', conditionTargetValue: 1, rewardMinerai: 200, rewardSilicium: 400, rewardHydrogene: 200 },
-  { id: 'quest_8', order: 8, title: 'Maîtrise énergétique', narrativeText: "Avant de concevoir des moteurs, nous devons maîtriser les fondamentaux de l'énergie. Recherchez la Technologie Énergie.", conditionType: 'research_level', conditionTargetId: 'energyTech', conditionTargetValue: 1, rewardMinerai: 150, rewardSilicium: 350, rewardHydrogene: 200 },
-  { id: 'quest_9', order: 9, title: 'Premiers moteurs', narrativeText: "Nos scientifiques peuvent désormais concevoir des moteurs à combustion. Cette propulsion sera essentielle pour nos futurs vaisseaux.", conditionType: 'research_level', conditionTargetId: 'combustion', conditionTargetValue: 1, rewardMinerai: 400, rewardSilicium: 200, rewardHydrogene: 300 },
-  { id: 'quest_10', order: 10, title: 'Le chantier spatial', narrativeText: "Commandant, il est temps de conquérir les étoiles. Un chantier spatial nous permettra de construire nos premiers vaisseaux.", conditionType: 'building_level', conditionTargetId: 'shipyard', conditionTargetValue: 1, rewardMinerai: 500, rewardSilicium: 300, rewardHydrogene: 150 },
-  { id: 'quest_11', order: 11, title: 'Premier vol', narrativeText: "Le moment est historique. Construisez votre premier Explorateur et ouvrez la voie vers les systèmes voisins.", conditionType: 'ship_count', conditionTargetId: 'explorer', conditionTargetValue: 1, rewardMinerai: 600, rewardSilicium: 350, rewardHydrogene: 150 },
-  { id: 'quest_12', order: 12, title: 'Cargaison abandonnée', narrativeText: "Nos scanners ont détecté un vaisseau de transport abandonné dans la ceinture d'astéroïdes en [{galaxy}:{system}:8]. Envoyez votre explorateur récupérer la cargaison !", conditionType: 'fleet_return', conditionTargetId: 'any', conditionTargetValue: 1, rewardMinerai: 800, rewardSilicium: 450, rewardHydrogene: 200 },
-  { id: 'quest_13', order: 13, title: 'Agrandir le chantier', narrativeText: "Pour construire des vaisseaux plus avancés, nous devons agrandir notre chantier spatial au niveau 2.", conditionType: 'building_level', conditionTargetId: 'shipyard', conditionTargetValue: 2, rewardMinerai: 1000, rewardSilicium: 500, rewardHydrogene: 200 },
-  { id: 'quest_14', order: 14, title: 'Premier prospecteur', narrativeText: "Le Prospecteur est un vaisseau minier spécialisé. Construisez-en un pour exploiter les gisements d'astéroïdes.", conditionType: 'ship_count', conditionTargetId: 'prospector', conditionTargetValue: 1, rewardMinerai: 1200, rewardSilicium: 600, rewardHydrogene: 200 },
-  { id: 'quest_15', order: 15, title: 'Première récolte', narrativeText: "Un gisement prometteur a été repéré en [{galaxy}:{system}:8]. Envoyez vos prospecteurs pour votre première extraction !", conditionType: 'mission_complete', conditionTargetId: 'mine', conditionTargetValue: 1, rewardMinerai: 1500, rewardSilicium: 700, rewardHydrogene: 250 },
-  { id: 'quest_16', order: 16, title: 'Centre de missions', narrativeText: "Votre colonie est florissante. Un centre de missions vous permettra de détecter de nouvelles opportunités : gisements et menaces pirates.", conditionType: 'building_level', conditionTargetId: 'missionCenter', conditionTargetValue: 1, rewardMinerai: 1800, rewardSilicium: 800, rewardHydrogene: 250 },
+  { id: 'quest_1', order: 1, title: 'Premiers pas', narrativeText: "Commandant, bienvenue sur votre nouvelle colonie. Notre priorité est d'établir une extraction de minerai. Construisez votre première mine pour alimenter nos projets.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'mineraiMine', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 0, rewardHydrogene: 0 },
+  { id: 'quest_2', order: 2, title: 'Fondations technologiques', narrativeText: "Excellent travail. Le silicium est essentiel pour toute technologie avancée. Lancez l'extraction de silicium sans tarder.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'siliciumMine', conditionTargetValue: 1, rewardMinerai: 0, rewardSilicium: 100, rewardHydrogene: 0 },
+  { id: 'quest_3', order: 3, title: 'Alimenter la colonie', narrativeText: "Nos installations ont besoin d'énergie pour fonctionner. Une centrale solaire assurera l'alimentation de vos mines.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'solarPlant', conditionTargetValue: 1, rewardMinerai: 100, rewardSilicium: 75, rewardHydrogene: 0 },
+  { id: 'quest_4', order: 4, title: 'Expansion minière', narrativeText: "Bien. Il est temps d'accélérer notre production. Montez votre mine de minerai au niveau 3 pour assurer un flux constant.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'mineraiMine', conditionTargetValue: 3, rewardMinerai: 200, rewardSilicium: 100, rewardHydrogene: 0 },
+  { id: 'quest_5', order: 5, title: 'Équilibre énergétique', narrativeText: "La croissance exige de l'énergie. Améliorez votre centrale solaire au niveau 3 pour soutenir l'expansion.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'solarPlant', conditionTargetValue: 3, rewardMinerai: 250, rewardSilicium: 150, rewardHydrogene: 50 },
+  { id: 'quest_6', order: 6, title: "L'automatisation", narrativeText: 'Les robots de construction accéléreront tous vos projets futurs. Construisez une usine de robots.', conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'robotics', conditionTargetValue: 1, rewardMinerai: 350, rewardSilicium: 200, rewardHydrogene: 150 },
+  { id: 'quest_7', order: 7, title: 'La science avant tout', narrativeText: "La recherche est la clé du progrès. Construisez un laboratoire de recherche pour débloquer les technologies avancées.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'researchLab', conditionTargetValue: 1, rewardMinerai: 200, rewardSilicium: 400, rewardHydrogene: 200 },
+  { id: 'quest_8', order: 8, title: 'Maîtrise énergétique', narrativeText: "Avant de concevoir des moteurs, nous devons maîtriser les fondamentaux de l'énergie. Recherchez la Technologie Énergie.", conditionType: 'research_level', conditionLabel: 'Niveau recherche', conditionTargetId: 'energyTech', conditionTargetValue: 1, rewardMinerai: 150, rewardSilicium: 350, rewardHydrogene: 200 },
+  { id: 'quest_9', order: 9, title: 'Premiers moteurs', narrativeText: "Nos scientifiques peuvent désormais concevoir des moteurs à combustion. Cette propulsion sera essentielle pour nos futurs vaisseaux.", conditionType: 'research_level', conditionLabel: 'Niveau recherche', conditionTargetId: 'combustion', conditionTargetValue: 1, rewardMinerai: 400, rewardSilicium: 200, rewardHydrogene: 300 },
+  { id: 'quest_10', order: 10, title: 'Le chantier spatial', narrativeText: "Commandant, il est temps de conquérir les étoiles. Un chantier spatial nous permettra de construire nos premiers vaisseaux.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'shipyard', conditionTargetValue: 1, rewardMinerai: 500, rewardSilicium: 300, rewardHydrogene: 150 },
+  { id: 'quest_11', order: 11, title: 'Premier vol', narrativeText: "Le moment est historique. Construisez votre premier Explorateur et ouvrez la voie vers les systèmes voisins.", conditionType: 'ship_count', conditionLabel: 'Nombre vaisseaux', conditionTargetId: 'explorer', conditionTargetValue: 1, rewardMinerai: 600, rewardSilicium: 350, rewardHydrogene: 150 },
+  { id: 'quest_12', order: 12, title: 'Cargaison abandonnée', narrativeText: "Nos scanners ont détecté un vaisseau de transport abandonné dans la ceinture d'astéroïdes en [{galaxy}:{system}:8]. Envoyez votre explorateur récupérer la cargaison !", conditionType: 'fleet_return', conditionLabel: 'Retour de flotte', conditionTargetId: 'any', conditionTargetValue: 1, rewardMinerai: 800, rewardSilicium: 450, rewardHydrogene: 200 },
+  { id: 'quest_13', order: 13, title: 'Agrandir le chantier', narrativeText: "Pour construire des vaisseaux plus avancés, nous devons agrandir notre chantier spatial au niveau 2.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'shipyard', conditionTargetValue: 2, rewardMinerai: 1000, rewardSilicium: 500, rewardHydrogene: 200 },
+  { id: 'quest_14', order: 14, title: 'Premier prospecteur', narrativeText: "Le Prospecteur est un vaisseau minier spécialisé. Construisez-en un pour exploiter les gisements d'astéroïdes.", conditionType: 'ship_count', conditionLabel: 'Nombre vaisseaux', conditionTargetId: 'prospector', conditionTargetValue: 1, rewardMinerai: 1200, rewardSilicium: 600, rewardHydrogene: 200 },
+  { id: 'quest_15', order: 15, title: 'Première récolte', narrativeText: "Un gisement prometteur a été repéré en [{galaxy}:{system}:8]. Envoyez vos prospecteurs pour votre première extraction !", conditionType: 'mission_complete', conditionLabel: 'Mission complétée', conditionTargetId: 'mine', conditionTargetValue: 1, rewardMinerai: 1500, rewardSilicium: 700, rewardHydrogene: 250 },
+  { id: 'quest_16', order: 16, title: 'Centre de missions', narrativeText: "Votre colonie est florissante. Un centre de missions vous permettra de détecter de nouvelles opportunités : gisements et menaces pirates.", conditionType: 'building_level', conditionLabel: 'Niveau bâtiment', conditionTargetId: 'missionCenter', conditionTargetValue: 1, rewardMinerai: 1800, rewardSilicium: 800, rewardHydrogene: 250 },
 ];
 
 // ── Bonus definitions data ──
 
 const BONUS_DEFINITIONS = [
-  { id: 'robotics__building_time', sourceType: 'building', sourceId: 'robotics', stat: 'building_time', percentPerLevel: -15, category: null },
-  { id: 'researchLab__research_time', sourceType: 'building', sourceId: 'researchLab', stat: 'research_time', percentPerLevel: -15, category: null },
-  { id: 'shipyard__ship_build_time__build_industrial', sourceType: 'building', sourceId: 'shipyard', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_industrial' },
-  { id: 'arsenal__defense_build_time', sourceType: 'building', sourceId: 'arsenal', stat: 'defense_build_time', percentPerLevel: -15, category: null },
-  { id: 'commandCenter__ship_build_time__build_military', sourceType: 'building', sourceId: 'commandCenter', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_military' },
-  { id: 'weapons__weapons', sourceType: 'research', sourceId: 'weapons', stat: 'weapons', percentPerLevel: 10, category: null },
-  { id: 'shielding__shielding', sourceType: 'research', sourceId: 'shielding', stat: 'shielding', percentPerLevel: 10, category: null },
-  { id: 'armor__armor', sourceType: 'research', sourceId: 'armor', stat: 'armor', percentPerLevel: 10, category: null },
-  { id: 'combustion__ship_speed__combustion', sourceType: 'research', sourceId: 'combustion', stat: 'ship_speed', percentPerLevel: 10, category: 'combustion' },
-  { id: 'impulse__ship_speed__impulse', sourceType: 'research', sourceId: 'impulse', stat: 'ship_speed', percentPerLevel: 20, category: 'impulse' },
-  { id: 'hyperspaceDrive__ship_speed__hyperspaceDrive', sourceType: 'research', sourceId: 'hyperspaceDrive', stat: 'ship_speed', percentPerLevel: 30, category: 'hyperspaceDrive' },
-  { id: 'rockFracturing__mining_extraction', sourceType: 'research', sourceId: 'rockFracturing', stat: 'mining_extraction', percentPerLevel: 15, category: null },
-  { id: 'computerTech__fleet_count', sourceType: 'research', sourceId: 'computerTech', stat: 'fleet_count', percentPerLevel: 100, category: null },
-  { id: 'espionageTech__spy_range', sourceType: 'research', sourceId: 'espionageTech', stat: 'spy_range', percentPerLevel: 100, category: null },
+  { id: 'robotics__building_time', sourceType: 'building', sourceId: 'robotics', stat: 'building_time', percentPerLevel: -15, category: null, statLabel: 'Temps de construction' },
+  { id: 'researchLab__research_time', sourceType: 'building', sourceId: 'researchLab', stat: 'research_time', percentPerLevel: -15, category: null, statLabel: 'Temps de recherche' },
+  { id: 'shipyard__ship_build_time__build_industrial', sourceType: 'building', sourceId: 'shipyard', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_industrial', statLabel: 'Temps de construction des vaisseaux' },
+  { id: 'arsenal__defense_build_time', sourceType: 'building', sourceId: 'arsenal', stat: 'defense_build_time', percentPerLevel: -15, category: null, statLabel: 'Temps de construction des défenses' },
+  { id: 'commandCenter__ship_build_time__build_military', sourceType: 'building', sourceId: 'commandCenter', stat: 'ship_build_time', percentPerLevel: -15, category: 'build_military', statLabel: 'Temps de construction des vaisseaux' },
+  { id: 'weapons__weapons', sourceType: 'research', sourceId: 'weapons', stat: 'weapons', percentPerLevel: 10, category: null, statLabel: 'Dégâts des armes' },
+  { id: 'shielding__shielding', sourceType: 'research', sourceId: 'shielding', stat: 'shielding', percentPerLevel: 10, category: null, statLabel: 'Puissance des boucliers' },
+  { id: 'armor__armor', sourceType: 'research', sourceId: 'armor', stat: 'armor', percentPerLevel: 10, category: null, statLabel: 'Résistance de la coque' },
+  { id: 'combustion__ship_speed__combustion', sourceType: 'research', sourceId: 'combustion', stat: 'ship_speed', percentPerLevel: 10, category: 'combustion', statLabel: 'Vitesse des vaisseaux' },
+  { id: 'impulse__ship_speed__impulse', sourceType: 'research', sourceId: 'impulse', stat: 'ship_speed', percentPerLevel: 20, category: 'impulse', statLabel: 'Vitesse des vaisseaux' },
+  { id: 'hyperspaceDrive__ship_speed__hyperspaceDrive', sourceType: 'research', sourceId: 'hyperspaceDrive', stat: 'ship_speed', percentPerLevel: 30, category: 'hyperspaceDrive', statLabel: 'Vitesse des vaisseaux' },
+  { id: 'rockFracturing__mining_extraction', sourceType: 'research', sourceId: 'rockFracturing', stat: 'mining_extraction', percentPerLevel: 15, category: null, statLabel: "Capacité d'extraction" },
+  { id: 'computerTech__fleet_count', sourceType: 'research', sourceId: 'computerTech', stat: 'fleet_count', percentPerLevel: 100, category: null, statLabel: 'Flottes simultanées' },
+  { id: 'espionageTech__spy_range', sourceType: 'research', sourceId: 'espionageTech', stat: 'spy_range', percentPerLevel: 100, category: null, statLabel: "Portée d'espionnage" },
+];
+
+// ── Mission definitions data ──
+
+const MISSION_DEFINITIONS = [
+  { id: 'transport', label: 'Transport', hint: 'Envoyez des ressources vers une planète alliée', buttonLabel: 'Envoyer', color: '#3b82f6', sortOrder: 1, dangerous: false, requiredShipRoles: null, exclusive: false, recommendedShipRoles: ['smallCargo', 'largeCargo'], requiresPveMission: false },
+  { id: 'station', label: 'Stationner', hint: 'Stationnez votre flotte sur une planète alliée', buttonLabel: 'Envoyer', color: '#10b981', sortOrder: 2, dangerous: false, requiredShipRoles: null, exclusive: false, recommendedShipRoles: null, requiresPveMission: false },
+  { id: 'spy', label: 'Espionner', hint: "Envoyez des sondes d'espionnage", buttonLabel: 'Espionner', color: '#8b5cf6', sortOrder: 3, dangerous: false, requiredShipRoles: ['espionageProbe'], exclusive: true, recommendedShipRoles: null, requiresPveMission: false },
+  { id: 'attack', label: 'Attaque', hint: 'Attaquez une planète ennemie', buttonLabel: 'Attaquer', color: '#ef4444', sortOrder: 4, dangerous: true, requiredShipRoles: ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'], exclusive: false, recommendedShipRoles: null, requiresPveMission: false },
+  { id: 'colonize', label: 'Coloniser', hint: 'Colonisez une position vide', buttonLabel: 'Coloniser', color: '#f97316', sortOrder: 5, dangerous: true, requiredShipRoles: ['colonyShip'], exclusive: true, recommendedShipRoles: null, requiresPveMission: false },
+  { id: 'recycle', label: 'Recycler', hint: 'Récupérez les débris en orbite', buttonLabel: 'Recycler', color: '#06b6d4', sortOrder: 6, dangerous: false, requiredShipRoles: ['recycler'], exclusive: true, recommendedShipRoles: null, requiresPveMission: false },
+  { id: 'mine', label: 'Miner', hint: "Envoyez des prospecteurs sur une ceinture d'astéroïdes", buttonLabel: 'Envoyer', color: '#f59e0b', sortOrder: 7, dangerous: false, requiredShipRoles: ['prospector'], exclusive: false, recommendedShipRoles: null, requiresPveMission: true },
+  { id: 'pirate', label: 'Pirate', hint: 'Attaquez un repaire pirate', buttonLabel: 'Attaquer', color: '#e11d48', sortOrder: 8, dangerous: true, requiredShipRoles: ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'], exclusive: false, recommendedShipRoles: null, requiresPveMission: true },
+];
+
+// ── UI labels data ──
+
+const UI_LABELS = [
+  // Propulsion
+  { key: 'drive.combustion', label: 'Combustion' },
+  { key: 'drive.impulse', label: 'Impulsion' },
+  { key: 'drive.hyperspaceDrive', label: 'Hyperespace' },
+  // Fleet phases
+  { key: 'phase.outbound', label: 'En route' },
+  { key: 'phase.prospecting', label: 'Prospection' },
+  { key: 'phase.mining', label: 'Extraction' },
+  { key: 'phase.return', label: 'Retour' },
+  { key: 'phase.base', label: 'Base' },
+  // PvE tiers
+  { key: 'tier.easy', label: 'Facile' },
+  { key: 'tier.medium', label: 'Moyen' },
+  { key: 'tier.hard', label: 'Difficile' },
+  // Event types
+  { key: 'event.building-done', label: 'Construction' },
+  { key: 'event.research-done', label: 'Recherche' },
+  { key: 'event.shipyard-done', label: 'Chantier' },
+  { key: 'event.fleet-arrived', label: 'Flotte arrivée' },
+  { key: 'event.fleet-returned', label: 'Flotte de retour' },
+  { key: 'event.pve-mission-done', label: 'Mission PvE' },
+  { key: 'event.tutorial-quest-done', label: 'Tutoriel' },
+  // Spy visibility
+  { key: 'spy_visibility.resources', label: 'Ressources' },
+  { key: 'spy_visibility.fleet', label: 'Flotte' },
+  { key: 'spy_visibility.defenses', label: 'Défenses' },
+  { key: 'spy_visibility.buildings', label: 'Bâtiments' },
+  { key: 'spy_visibility.research', label: 'Recherches' },
+  // Combat outcomes
+  { key: 'outcome.attacker', label: 'Victoire' },
+  { key: 'outcome.defender', label: 'Défaite' },
+  { key: 'outcome.draw', label: 'Match nul' },
 ];
 
 // ── Universe config data ──
@@ -491,6 +543,22 @@ async function seed() {
       .onConflictDoUpdate({ target: pirateTemplates.id, set: ptData });
   }
   console.log(`  ✓ ${PIRATE_TEMPLATES.length} pirate templates`);
+
+  // 14b. Mission definitions
+  for (const m of MISSION_DEFINITIONS) {
+    const { id: _id, ...mData } = m;
+    await db.insert(missionDefinitions).values(m)
+      .onConflictDoUpdate({ target: missionDefinitions.id, set: mData });
+  }
+  console.log(`  ✓ ${MISSION_DEFINITIONS.length} mission definitions`);
+
+  // 14c. UI labels
+  for (const l of UI_LABELS) {
+    const { key: _key, ...lData } = l;
+    await db.insert(uiLabels).values(l)
+      .onConflictDoUpdate({ target: uiLabels.key, set: lData });
+  }
+  console.log(`  ✓ ${UI_LABELS.length} UI labels`);
 
   // 14. Tutorial quest definitions
   for (const tq of TUTORIAL_QUESTS) {
