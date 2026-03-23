@@ -88,21 +88,21 @@ export interface DefenseDetails {
 // Name resolvers (use config if available, fall back to constants)
 // ---------------------------------------------------------------------------
 
+function humanize(id: string): string {
+  return id.replace(/([A-Z])/g, ' $1').trim();
+}
+
 export function resolveBuildingName(id: string, config?: GameConfigData): string {
-  if (config) return config.buildings[id]?.name ?? id;
-  return BUILDINGS[id as BuildingId]?.name ?? id;
+  return config?.buildings[id]?.name ?? BUILDINGS[id as BuildingId]?.name ?? humanize(id);
 }
 
 export function resolveResearchName(id: string, config?: GameConfigData): string {
-  if (config) return config.research[id]?.name ?? id;
-  return RESEARCH[id as ResearchId]?.name ?? id;
+  return config?.research[id]?.name ?? RESEARCH[id as ResearchId]?.name ?? humanize(id);
 }
 
 function resolveUnitName(id: string, config?: GameConfigData): string {
-  if (config) {
-    return config.ships[id]?.name ?? config.defenses[id]?.name ?? id;
-  }
-  return SHIPS[id as ShipId]?.name ?? DEFENSES[id as DefenseId]?.name ?? id;
+  return config?.ships[id]?.name ?? config?.defenses[id]?.name
+    ?? SHIPS[id as ShipId]?.name ?? DEFENSES[id as DefenseId]?.name ?? humanize(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -159,7 +159,7 @@ export function getBuildingDetails(id: string, config?: GameConfigData, planet?:
   const details: BuildingDetails = {
     type: 'building',
     id,
-    name: cfgDef?.name ?? def?.name ?? id,
+    name: cfgDef?.name ?? def?.name ?? humanize(id),
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
     baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
@@ -206,7 +206,7 @@ export function getResearchDetails(id: string, config?: GameConfigData): Researc
   return {
     type: 'research',
     id,
-    name: cfgDef?.name ?? def?.name ?? id,
+    name: cfgDef?.name ?? def?.name ?? humanize(id),
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
     effect: cfgDef?.effectDescription ?? '',
@@ -228,7 +228,7 @@ export function getShipDetails(id: string, config?: GameConfigData): ShipDetails
   return {
     type: 'ship',
     id,
-    name: cfgDef?.name ?? def?.name ?? id,
+    name: cfgDef?.name ?? def?.name ?? humanize(id),
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
     cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
@@ -250,7 +250,7 @@ export function getDefenseDetails(id: string, config?: GameConfigData): DefenseD
   return {
     type: 'defense',
     id,
-    name: cfgDef?.name ?? def?.name ?? id,
+    name: cfgDef?.name ?? def?.name ?? humanize(id),
     description: cfgDef?.description ?? def?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
     cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },

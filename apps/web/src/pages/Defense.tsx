@@ -13,6 +13,7 @@ import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { DefenseDetailContent } from '@/components/entity-details/DefenseDetailContent';
+import { getDefenseName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
 
 
@@ -109,7 +110,7 @@ export default function Defense() {
           <h2 className="text-base font-semibold mb-3">File de construction</h2>
           <div className="space-y-3">
             {defenseQueue.map((item) => {
-              const name = gameConfig?.defenses[item.itemId]?.name ?? defenses?.find(d => d.id === item.itemId)?.name ?? item.itemId;
+              const name = getDefenseName(item.itemId, gameConfig);
               const remaining = item.quantity - (item.completedCount ?? 0);
               return (
                 <div key={item.id} className="space-y-1 border-l-4 border-l-orange-500 pl-3">

@@ -24,14 +24,27 @@ export function eventTypeLabel(type: string) {
   }
 }
 
+import { getEntityName } from './entity-names';
+
+const MISSION_LABELS: Record<string, string> = {
+  transport: 'Transport',
+  station: 'Stationnement',
+  spy: 'Espionnage',
+  attack: 'Attaque',
+  colonize: 'Colonisation',
+  recycle: 'Recyclage',
+  mine: 'Minage',
+  pirate: 'Pirate',
+};
+
 export function formatEventText(event: { type: string; payload?: unknown }, options?: { includePlanet?: boolean }) {
   const p = event.payload as any;
   const planet = options?.includePlanet && p.planetName ? ` sur ${p.planetName}` : '';
   switch (event.type) {
-    case 'building-done': return `${p.name ?? p.buildingId} niveau ${p.level}${planet}`;
-    case 'research-done': return `${p.name ?? p.techId} niveau ${p.level}${planet}`;
-    case 'shipyard-done': return `${p.count}x ${p.name ?? p.unitId}${planet}`;
-    case 'fleet-arrived': return `Mission ${p.mission} arrivée en ${p.targetCoords}`;
+    case 'building-done': return `${p.name ?? getEntityName(p.buildingId)} niveau ${p.level}${planet}`;
+    case 'research-done': return `${p.name ?? getEntityName(p.techId)} niveau ${p.level}${planet}`;
+    case 'shipyard-done': return `${p.count}x ${p.name ?? getEntityName(p.unitId)}${planet}`;
+    case 'fleet-arrived': return `Mission ${MISSION_LABELS[p.mission] ?? p.mission} arrivée en ${p.targetCoords}`;
     case 'fleet-returned': return `Flotte rentrée sur ${p.originName}`;
     case 'pve-mission-done': {
       const mLabel = p.missionType === 'pirate' ? 'Pirate' : 'Minage';

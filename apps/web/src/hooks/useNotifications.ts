@@ -3,6 +3,7 @@ import { useSSE } from './useSSE';
 import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
 import { useChatStore } from '@/stores/chat.store';
+import { getEntityName } from '@/lib/entity-names';
 
 function showBrowserNotification(title: string, body: string) {
   if (typeof Notification === 'undefined') return;
@@ -76,13 +77,13 @@ export function useNotifications() {
       case 'building-done':
         utils.building.list.invalidate();
         utils.resource.production.invalidate();
-        addToast(`Construction terminée : ${event.payload.name ?? event.payload.buildingId} niv. ${event.payload.level}`);
-        showBrowserNotification('Construction terminée', `${event.payload.name ?? event.payload.buildingId} niveau ${event.payload.level}`);
+        addToast(`Construction terminée : ${event.payload.name ?? getEntityName(String(event.payload.buildingId))} niv. ${event.payload.level}`);
+        showBrowserNotification('Construction terminée', `${event.payload.name ?? getEntityName(String(event.payload.buildingId))} niveau ${event.payload.level}`);
         break;
       case 'research-done':
         utils.research.list.invalidate();
-        addToast(`Recherche terminée : ${event.payload.name ?? event.payload.techId} niv. ${event.payload.level}`);
-        showBrowserNotification('Recherche terminée', `${event.payload.name ?? event.payload.techId} niveau ${event.payload.level}`);
+        addToast(`Recherche terminée : ${event.payload.name ?? getEntityName(String(event.payload.techId))} niv. ${event.payload.level}`);
+        showBrowserNotification('Recherche terminée', `${event.payload.name ?? getEntityName(String(event.payload.techId))} niveau ${event.payload.level}`);
         break;
       case 'shipyard-done': {
         utils.shipyard.queue.invalidate();
@@ -91,7 +92,7 @@ export function useNotifications() {
 
         // Debounce: accumulate same-unit notifications over 3s window
         const unitId = String(event.payload.unitId);
-        const name = String(event.payload.name ?? event.payload.unitId);
+        const name = String(event.payload.name ?? getEntityName(String(event.payload.unitId)));
         const count = Number(event.payload.count) || 1;
 
         const existing = shipyardBuffer.current.get(unitId);

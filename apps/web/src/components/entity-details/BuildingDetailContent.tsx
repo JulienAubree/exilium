@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { type PlanetContext } from '@/lib/entity-details';
+import { getBuildingName } from '@/lib/entity-names';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
@@ -129,7 +130,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
   const building = buildings.find((b) => b.id === buildingId);
   const currentLevel = building?.currentLevel ?? 0;
   const configDef = gameConfig?.buildings[buildingId];
-  const name = configDef?.name ?? buildingId;
+  const name = getBuildingName(buildingId, gameConfig);
   const flavorText = configDef?.flavorText ?? '';
   const prerequisites = configDef?.prerequisites ?? [];
 
@@ -356,7 +357,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
           <div className="space-y-1">
             {prerequisites.map((p) => {
               const met = (buildings.find((b) => b.id === p.buildingId)?.currentLevel ?? 0) >= p.level;
-              const prereqName = gameConfig?.buildings[p.buildingId]?.name ?? p.buildingId;
+              const prereqName = getBuildingName(p.buildingId, gameConfig);
               return (
                 <div
                   key={p.buildingId}

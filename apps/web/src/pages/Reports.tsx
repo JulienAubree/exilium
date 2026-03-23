@@ -4,6 +4,7 @@ import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { getShipName, getDefenseName, getBuildingName, getResearchName, getUnitName } from '@/lib/entity-names';
 import { cn } from '@/lib/utils';
 
 const MISSION_TYPE_LABELS: Record<string, string> = {
@@ -202,7 +203,7 @@ export default function Reports() {
               {Object.entries((selectedReport.fleet as any).ships).map(([ship, count]) => (
                 <span key={ship} className="text-sm">
                   <span className="text-foreground">{String(count)}x</span>{' '}
-                  <span className="text-muted-foreground">{gameConfig?.ships[ship]?.name ?? ship}</span>
+                  <span className="text-muted-foreground">{getShipName(ship, gameConfig)}</span>
                 </span>
               ))}
             </div>
@@ -342,7 +343,7 @@ export default function Reports() {
                       {Object.entries(result.fleet as Record<string, number>).map(([ship, count]) => (
                         <span key={ship} className="text-sm">
                           <span className="text-foreground font-medium">{(count as number).toLocaleString('fr-FR')}x</span>{' '}
-                          <span className="text-muted-foreground">{gameConfig?.ships[ship]?.name ?? ship}</span>
+                          <span className="text-muted-foreground">{getShipName(ship, gameConfig)}</span>
                         </span>
                       ))}
                     </div>
@@ -359,7 +360,7 @@ export default function Reports() {
                       {Object.entries(result.defenses as Record<string, number>).map(([def, count]) => (
                         <span key={def} className="text-sm">
                           <span className="text-foreground font-medium">{(count as number).toLocaleString('fr-FR')}x</span>{' '}
-                          <span className="text-muted-foreground">{gameConfig?.defenses[def]?.name ?? def}</span>
+                          <span className="text-muted-foreground">{getDefenseName(def, gameConfig)}</span>
                         </span>
                       ))}
                     </div>
@@ -374,7 +375,7 @@ export default function Reports() {
                   <div className="rounded border border-border p-3 space-y-1">
                     {Object.entries(result.buildings as Record<string, number>).map(([building, level]) => (
                       <div key={building} className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{gameConfig?.buildings[building]?.name ?? building}</span>
+                        <span className="text-muted-foreground">{getBuildingName(building, gameConfig)}</span>
                         <span className="text-foreground font-medium">Niv. {level as number}</span>
                       </div>
                     ))}
@@ -389,7 +390,7 @@ export default function Reports() {
                   <div className="rounded border border-border p-3 space-y-1">
                     {Object.entries(result.research as Record<string, number>).map(([tech, level]) => (
                       <div key={tech} className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{gameConfig?.research[tech]?.name ?? tech}</span>
+                        <span className="text-muted-foreground">{getResearchName(tech, gameConfig)}</span>
                         <span className="text-foreground font-medium">Niv. {level as number}</span>
                       </div>
                     ))}
@@ -437,7 +438,7 @@ export default function Reports() {
                         {Object.entries(result.defenderFleet as Record<string, number>).map(([ship, count]) => (
                           <span key={ship} className="text-sm">
                             <span className="text-foreground font-medium">{(count as number).toLocaleString('fr-FR')}x</span>{' '}
-                            <span className="text-muted-foreground">{gameConfig?.ships[ship]?.name ?? ship}</span>
+                            <span className="text-muted-foreground">{getShipName(ship, gameConfig)}</span>
                           </span>
                         ))}
                       </div>
@@ -447,7 +448,7 @@ export default function Reports() {
                         {Object.entries(result.defenderDefenses as Record<string, number>).map(([def, count]) => (
                           <span key={def} className="text-sm">
                             <span className="text-foreground font-medium">{(count as number).toLocaleString('fr-FR')}x</span>{' '}
-                            <span className="text-muted-foreground">{gameConfig?.defenses[def]?.name ?? def}</span>
+                            <span className="text-muted-foreground">{getDefenseName(def, gameConfig)}</span>
                           </span>
                         ))}
                       </div>
@@ -468,7 +469,7 @@ export default function Reports() {
                           {Object.entries(result.attackerLosses as Record<string, number>).map(([ship, count]) => (
                             <span key={ship} className="text-sm">
                               <span className="text-red-400 font-medium">-{(count as number).toLocaleString('fr-FR')}</span>{' '}
-                              <span className="text-muted-foreground">{gameConfig?.ships[ship]?.name ?? ship}</span>
+                              <span className="text-muted-foreground">{getShipName(ship, gameConfig)}</span>
                             </span>
                           ))}
                         </div>
@@ -481,7 +482,7 @@ export default function Reports() {
                           {Object.entries(result.defenderLosses as Record<string, number>).map(([unit, count]) => (
                             <span key={unit} className="text-sm">
                               <span className="text-red-400 font-medium">-{(count as number).toLocaleString('fr-FR')}</span>{' '}
-                              <span className="text-muted-foreground">{gameConfig?.ships[unit]?.name ?? gameConfig?.defenses[unit]?.name ?? unit}</span>
+                              <span className="text-muted-foreground">{getUnitName(unit, gameConfig)}</span>
                             </span>
                           ))}
                         </div>
@@ -500,7 +501,7 @@ export default function Reports() {
                       {Object.entries(result.repairedDefenses as Record<string, number>).map(([def, count]) => (
                         <span key={def} className="text-sm">
                           <span className="text-emerald-400 font-medium">+{(count as number).toLocaleString('fr-FR')}</span>{' '}
-                          <span className="text-muted-foreground">{gameConfig?.defenses[def]?.name ?? def}</span>
+                          <span className="text-muted-foreground">{getDefenseName(def, gameConfig)}</span>
                         </span>
                       ))}
                     </div>

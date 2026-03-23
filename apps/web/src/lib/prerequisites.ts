@@ -1,4 +1,4 @@
-import { BUILDINGS, type BuildingId, RESEARCH, type ResearchId } from '@ogame-clone/game-engine';
+import { getEntityName } from './entity-names';
 
 interface NameConfig {
   buildings?: Record<string, { name: string }>;
@@ -13,9 +13,5 @@ export function formatMissingPrerequisite(prereq: string, config?: NameConfig): 
   const match = prereq.match(/^(\w+) level (\d+)/);
   if (!match) return prereq;
   const [, id, level] = match;
-  const buildingName = config?.buildings?.[id]?.name ?? BUILDINGS[id as BuildingId]?.name;
-  if (buildingName) return `${buildingName} niv. ${level}`;
-  const researchName = config?.research?.[id]?.name ?? RESEARCH[id as ResearchId]?.name;
-  if (researchName) return `${researchName} niv. ${level}`;
-  return prereq;
+  return `${getEntityName(id, config)} niv. ${level}`;
 }

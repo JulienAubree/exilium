@@ -7,7 +7,8 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { MISSION_CONFIG, SHIP_NAMES } from '@/config/mission-config';
+import { MISSION_CONFIG } from '@/config/mission-config';
+import { getShipName } from '@/lib/entity-names';
 import { cn } from '@/lib/utils';
 
 const MISSION_BORDER_COLORS: Record<string, string> = {
@@ -89,7 +90,7 @@ export default function Movements() {
                   Vaisseaux :{' '}
                   {Object.entries(ships)
                     .filter(([, v]) => v > 0)
-                    .map(([k, v]) => `${gameConfig?.ships[k]?.name ?? SHIP_NAMES[k] ?? k}: ${v}`)
+                    .map(([k, v]) => `${getShipName(k, gameConfig)}: ${v}`)
                     .join(', ')}
                 </div>
                 {(Number(event.mineraiCargo) > 0 || Number(event.siliciumCargo) > 0 || Number(event.hydrogeneCargo) > 0) && (
