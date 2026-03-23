@@ -86,6 +86,7 @@ export interface ArrivalResult {
   shipsAfterArrival?: Record<string, number>;
   completePveMission?: boolean;
   createReturnEvent?: Record<string, unknown>;
+  reportId?: string;
 }
 
 export interface PhaseResult {
@@ -97,6 +98,7 @@ export interface PhaseResult {
   cargo?: ResourceCargo;
   updateFleet?: Record<string, unknown>;
   completePveMission?: boolean;
+  reportId?: string;
 }
 
 // ── Handler interfaces ──

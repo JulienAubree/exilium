@@ -122,12 +122,16 @@ export function useNotifications() {
       case 'fleet-arrived':
         utils.fleet.movements.invalidate();
         utils.resource.production.invalidate();
+        utils.report.list.invalidate();
+        utils.report.unreadCount.invalidate();
         addToast(`Flotte arrivée : mission ${event.payload.mission} en ${event.payload.targetCoords}`);
         showBrowserNotification('Flotte arrivée', `Mission ${event.payload.mission} en ${event.payload.targetCoords}`);
         break;
       case 'fleet-returned':
         utils.fleet.movements.invalidate();
         utils.resource.production.invalidate();
+        utils.report.list.invalidate();
+        utils.report.unreadCount.invalidate();
         addToast(`Flotte de retour sur ${event.payload.originName}`);
         showBrowserNotification('Flotte de retour', `Flotte rentrée sur ${event.payload.originName}`);
         break;

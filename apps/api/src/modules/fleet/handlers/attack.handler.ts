@@ -283,6 +283,7 @@ export class AttackHandler implements MissionHandler {
     }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
 
     // Create structured mission report
+    let reportId: string | undefined;
     if (ctx.reportService) {
       const reportResult: Record<string, unknown> = {
         outcome,
@@ -301,7 +302,7 @@ export class AttackHandler implements MissionHandler {
           hydrogene: pillagedHydrogene,
         };
       }
-      await ctx.reportService.create({
+      const report = await ctx.reportService.create({
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         messageId,
@@ -326,6 +327,7 @@ export class AttackHandler implements MissionHandler {
         completionTime: fleetEvent.arrivalTime,
         result: reportResult,
       });
+      reportId = report.id;
     }
 
     const hasShips = Object.values(survivingShips).some(v => v > 0);
@@ -338,10 +340,11 @@ export class AttackHandler implements MissionHandler {
           hydrogene: hydrogeneCargo + pillagedHydrogene,
         },
         shipsAfterArrival: survivingShips,
+        reportId,
       };
     }
 
     // All ships destroyed — no return
-    return { scheduleReturn: false };
+    return { scheduleReturn: false, reportId };
   }
 }

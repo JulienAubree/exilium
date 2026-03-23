@@ -377,6 +377,7 @@ export function createFleetService(
             mission: event.mission,
             originName: eventMeta.originName,
             targetCoords: eventMeta.targetCoords,
+            reportId: result.reportId,
           },
           eventPayload: {
             mission: event.mission,
@@ -388,6 +389,7 @@ export function createFleetService(
               silicium: Number(event.siliciumCargo),
               hydrogene: Number(event.hydrogeneCargo),
             },
+            reportId: result.reportId,
           },
         };
       }
@@ -479,6 +481,14 @@ export function createFleetService(
         );
       }
 
+      // Store reportId in metadata for retrieval during processReturn
+      if (result.reportId) {
+        const existingMeta = (event.metadata ?? {}) as Record<string, unknown>;
+        await db.update(fleetEvents).set({
+          metadata: { ...existingMeta, reportId: result.reportId },
+        }).where(eq(fleetEvents.id, event.id));
+      }
+
       if (result.scheduleReturn) {
         const cargo = result.cargo ?? { minerai: 0, silicium: 0, hydrogene: 0 };
         await this.scheduleReturn(
@@ -515,7 +525,7 @@ export function createFleetService(
         .limit(1);
 
       // Merge returning ships + PvE bonus ships into a single atomic update
-      const meta = event.metadata as { bonusShips?: Record<string, number> } | null;
+      const meta = event.metadata as { bonusShips?: Record<string, number>; reportId?: string } | null;
       const originShips = await this.getOrCreateShips(event.originPlanetId);
       const shipUpdates: Record<string, number> = {};
       for (const [shipId, count] of Object.entries(ships)) {
@@ -562,6 +572,8 @@ export function createFleetService(
         .set({ status: 'completed' })
         .where(eq(fleetEvents.id, event.id));
 
+      const reportId = meta?.reportId;
+
       return {
         userId: event.userId,
         planetId: event.originPlanetId,
@@ -571,6 +583,7 @@ export function createFleetService(
           mission: event.mission,
           originName: originPlanet?.name ?? 'Planète',
           targetCoords: `${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}`,
+          reportId,
         },
         eventPayload: {
           mission: event.mission,
@@ -582,6 +595,7 @@ export function createFleetService(
             silicium: Number(event.siliciumCargo),
             hydrogene: Number(event.hydrogeneCargo),
           },
+          reportId,
         },
         extraEvents: (event.mission === 'mine' || event.mission === 'pirate') ? [{
           type: 'pve-mission-done',
@@ -594,6 +608,7 @@ export function createFleetService(
               silicium: Number(event.siliciumCargo),
               hydrogene: Number(event.hydrogeneCargo),
             },
+            reportId,
           },
         }] : undefined,
         tutorialChecks: [

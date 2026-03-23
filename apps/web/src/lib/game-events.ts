@@ -115,7 +115,10 @@ export function groupEvents<T extends { type: string; payload?: any; planetId?: 
   return result;
 }
 
-export function eventNavigationTarget(type: string): string {
+export function eventNavigationTarget(type: string, payload?: unknown): string {
+  const p = payload as Record<string, unknown> | undefined;
+  if (p?.reportId) return `/reports?id=${p.reportId}`;
+
   switch (type) {
     case 'building-done': return '/buildings';
     case 'research-done': return '/research';

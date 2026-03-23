@@ -251,8 +251,9 @@ export class MineHandler implements PhasedMissionHandler {
     }
 
     // Create mission report
+    let reportId: string | undefined;
     if (ctx.reportService) {
-      await ctx.reportService.create({
+      const report = await ctx.reportService.create({
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         pveMissionId: pveMissionId ?? undefined,
@@ -282,11 +283,13 @@ export class MineHandler implements PhasedMissionHandler {
           technologies,
         },
       });
+      reportId = report.id;
     }
 
     return {
       scheduleReturn: true,
       cargo,
+      reportId,
     };
   }
 }

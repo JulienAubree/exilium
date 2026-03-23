@@ -241,7 +241,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
                   groupEvents(recentEvents).map((event) => (
                     <button
                       key={event.id}
-                      onClick={() => { navigate(eventNavigationTarget(event.type)); setBellOpen(false); }}
+                      onClick={() => { navigate(eventNavigationTarget(event.type, event.payload)); setBellOpen(false); }}
                       className={cn(
                         'flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-accent',
                         !event.read && 'bg-primary/5 font-medium',

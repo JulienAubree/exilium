@@ -162,10 +162,11 @@ export class SpyHandler implements MissionHandler {
     }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
 
     // Create structured mission report
+    let reportId: string | undefined;
     if (ctx.reportService) {
       const config = await ctx.gameConfigService.getFullConfig();
       const shipStatsMap = buildShipStatsMap(config);
-      await ctx.reportService.create({
+      const report = await ctx.reportService.create({
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         messageId,
@@ -190,6 +191,7 @@ export class SpyHandler implements MissionHandler {
         completionTime: fleetEvent.arrivalTime,
         result: reportResult,
       });
+      reportId = report.id;
     }
 
     if (detected) {
@@ -203,10 +205,10 @@ export class SpyHandler implements MissionHandler {
         );
       }
       // Probes destroyed — no return (dispatcher marks completed)
-      return { scheduleReturn: false, shipsAfterArrival: {} };
+      return { scheduleReturn: false, shipsAfterArrival: {}, reportId };
     }
 
-    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 } };
+    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
   }
 
   private async getEspionageTech(db: Database, userId: string): Promise<number> {
