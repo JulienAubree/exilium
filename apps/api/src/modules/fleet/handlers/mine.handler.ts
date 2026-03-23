@@ -2,17 +2,17 @@ import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@ogame-clone/db';
 import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@ogame-clone/game-engine';
-import { BELT_POSITIONS } from '../../universe/universe.config.js';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { buildShipStatsMap, formatDuration } from '../fleet.types.js';
 
 export class MineHandler implements PhasedMissionHandler {
-  async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
+  async validateFleet(input: SendFleetInput, config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
     const prospectorCount = input.ships['prospector'] ?? 0;
     if (prospectorCount === 0) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 prospecteur' });
     }
-    if (!BELT_POSITIONS.includes(input.targetPosition as 8 | 16)) {
+    const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
+    if (!beltPositions.includes(input.targetPosition)) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Les missions de minage ciblent uniquement les ceintures d\'astéroïdes (positions 8 ou 16)' });
     }
   }

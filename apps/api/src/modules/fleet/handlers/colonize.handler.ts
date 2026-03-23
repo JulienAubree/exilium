@@ -2,7 +2,6 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, fleetEvents } from '@ogame-clone/db';
 import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFields } from '@ogame-clone/game-engine';
-import { BELT_POSITIONS, UNIVERSE_CONFIG } from '../../universe/universe.config.js';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration } from '../fleet.types.js';
@@ -24,8 +23,12 @@ export class ColonizeHandler implements MissionHandler {
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
 
+    const config = await ctx.gameConfigService.getFullConfig();
+    const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
+    const maxPlanetsPerPlayer = Number(config.universe.maxPlanetsPerPlayer) || 9;
+
     // Check if position is an asteroid belt
-    if ((BELT_POSITIONS as readonly number[]).includes(fleetEvent.targetPosition)) {
+    if (beltPositions.includes(fleetEvent.targetPosition)) {
       if (ctx.messageService) {
         await ctx.messageService.createSystemMessage(
           fleetEvent.userId,
@@ -74,13 +77,13 @@ export class ColonizeHandler implements MissionHandler {
       .from(planets)
       .where(eq(planets.userId, fleetEvent.userId));
 
-    if (userPlanets.length >= UNIVERSE_CONFIG.maxPlanetsPerPlayer) {
+    if (userPlanets.length >= maxPlanetsPerPlayer) {
       if (ctx.messageService) {
         await ctx.messageService.createSystemMessage(
           fleetEvent.userId,
           'colonization',
           `Colonisation échouée ${coords}`,
-          `Nombre maximum de planètes atteint (${UNIVERSE_CONFIG.maxPlanetsPerPlayer}). Votre flotte fait demi-tour.\nDurée du trajet : ${duration}`,
+          `Nombre maximum de planètes atteint (${maxPlanetsPerPlayer}). Votre flotte fait demi-tour.\nDurée du trajet : ${duration}`,
         );
       }
       return {
@@ -90,7 +93,6 @@ export class ColonizeHandler implements MissionHandler {
     }
 
     // Success: create new planet
-    const config = await ctx.gameConfigService.getFullConfig();
     const planetTypeForPos = config.planetTypes.find(
       (pt) => pt.id !== 'homeworld' && (pt.positions as number[]).includes(fleetEvent.targetPosition),
     );
