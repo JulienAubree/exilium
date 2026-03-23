@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/common/Skeleton';
+import { CoordinateInput } from '@/components/common/CoordinateInput';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
@@ -68,66 +68,30 @@ export default function Galaxy() {
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Galaxie" />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-muted-foreground">Galaxie</label>
-          <div className="flex items-center gap-1 flex-1 sm:flex-initial">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setGalaxy(Math.max(1, galaxy - 1))}
-              disabled={galaxy <= 1}
-            >
-              &lt;
-            </Button>
-            <Input
-              type="number"
-              min={1}
-              max={9}
-              value={galaxy}
-              onChange={(e) => setGalaxy(Math.max(1, Math.min(9, Number(e.target.value) || 1)))}
-              className="w-16 text-center"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setGalaxy(Math.min(9, galaxy + 1))}
-              disabled={galaxy >= 9}
-            >
-              &gt;
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-muted-foreground">Système</label>
-          <div className="flex items-center gap-1 flex-1 sm:flex-initial">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSystem(Math.max(1, system - 1))}
-              disabled={system <= 1}
-            >
-              &lt;
-            </Button>
-            <Input
-              type="number"
-              min={1}
-              max={499}
-              value={system}
-              onChange={(e) => setSystem(Math.max(1, Math.min(499, Number(e.target.value) || 1)))}
-              className="w-20 text-center"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSystem(Math.min(499, system + 1))}
-              disabled={system >= 499}
-            >
-              &gt;
-            </Button>
-          </div>
-        </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSystem(Math.max(1, system - 1))}
+          disabled={system <= 1}
+        >
+          &lt;
+        </Button>
+        <CoordinateInput
+          galaxy={galaxy}
+          system={system}
+          position={1}
+          onChange={(c) => { setGalaxy(c.galaxy); setSystem(c.system); }}
+          hidePosition
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSystem(Math.min(499, system + 1))}
+          disabled={system >= 499}
+        >
+          &gt;
+        </Button>
       </div>
 
       <div className="glass-card p-4">

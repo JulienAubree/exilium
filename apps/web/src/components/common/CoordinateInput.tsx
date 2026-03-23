@@ -7,10 +7,11 @@ interface CoordinateInputProps {
   position: number;
   onChange: (coords: { galaxy: number; system: number; position: number }) => void;
   disabled?: boolean;
+  hidePosition?: boolean;
   className?: string;
 }
 
-export function CoordinateInput({ galaxy, system, position, onChange, disabled, className }: CoordinateInputProps) {
+export function CoordinateInput({ galaxy, system, position, onChange, disabled, hidePosition, className }: CoordinateInputProps) {
   const galaxyRef = useRef<HTMLInputElement>(null);
   const systemRef = useRef<HTMLInputElement>(null);
   const positionRef = useRef<HTMLInputElement>(null);
@@ -90,23 +91,27 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
         />
       </div>
 
-      <span className="text-primary/60 font-mono text-sm select-none mx-0.5">:</span>
+      {!hidePosition && (
+        <>
+          <span className="text-primary/60 font-mono text-sm select-none mx-0.5">:</span>
 
-      <div className="flex flex-col items-center">
-        <span className="text-[9px] uppercase text-muted-foreground/70 leading-none mb-0.5">Pos</span>
-        <input
-          ref={positionRef}
-          type="number"
-          min={1}
-          max={16}
-          value={position || ''}
-          onChange={(e) => handleChange('position', e.target.value)}
-          onBlur={() => handleBlur('position')}
-          onKeyDown={(e) => handleKeyDown('position', e)}
-          disabled={disabled}
-          className={cn(fieldClass, 'w-8')}
-        />
-      </div>
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] uppercase text-muted-foreground/70 leading-none mb-0.5">Pos</span>
+            <input
+              ref={positionRef}
+              type="number"
+              min={1}
+              max={16}
+              value={position || ''}
+              onChange={(e) => handleChange('position', e.target.value)}
+              onBlur={() => handleBlur('position')}
+              onKeyDown={(e) => handleKeyDown('position', e)}
+              disabled={disabled}
+              className={cn(fieldClass, 'w-8')}
+            />
+          </div>
+        </>
+      )}
 
       <span className="text-muted-foreground font-mono text-sm select-none ml-1">]</span>
 
