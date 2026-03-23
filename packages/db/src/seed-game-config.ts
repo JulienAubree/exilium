@@ -379,6 +379,7 @@ const UI_LABELS = [
 // ── Universe config data ──
 
 const UNIVERSE_CONFIG = [
+  // ── Existing keys (untouched) ──
   { key: 'name', value: 'Universe 1' },
   { key: 'speed', value: 1 },
   { key: 'galaxies', value: 9 },
@@ -390,9 +391,57 @@ const UNIVERSE_CONFIG = [
   { key: 'startingMinerai', value: 500 },
   { key: 'startingSilicium', value: 300 },
   { key: 'startingHydrogene', value: 100 },
-  // Slag rates (scories) — per position
   { key: 'slag_rate.pos8', value: 0.45 },
   { key: 'slag_rate.pos16', value: 0.30 },
+
+  // ── Economy & general rules ──
+  { key: 'cancel_refund_ratio', value: 0.7 },
+  { key: 'belt_positions', value: [8, 16] },
+  { key: 'homePlanetDiameter', value: 12000 },
+  { key: 'home_planet_position_min', value: 4 },
+  { key: 'home_planet_position_max', value: 12 },
+
+  // ── Combat ──
+  { key: 'combat_max_rounds', value: 6 },
+  { key: 'combat_defense_repair_probability', value: 0.7 },
+  { key: 'combat_bounce_threshold', value: 0.01 },
+  { key: 'combat_rapid_destruction_threshold', value: 0.3 },
+
+  // ── PvE ──
+  { key: 'pve_max_concurrent_missions', value: 3 },
+  { key: 'pve_hydrogene_cap', value: 1500 },
+  { key: 'pve_dismiss_cooldown_hours', value: 24 },
+  { key: 'pve_mission_expiry_days', value: 7 },
+  { key: 'pve_search_radius', value: 5 },
+  { key: 'pve_tier_medium_unlock', value: 4 },
+  { key: 'pve_tier_hard_unlock', value: 6 },
+  { key: 'pve_deposit_variance_min', value: 0.6 },
+  { key: 'pve_deposit_variance_max', value: 1.6 },
+
+  // ── Fleet ──
+  { key: 'fleet_distance_galaxy_factor', value: 20000 },
+  { key: 'fleet_distance_system_base', value: 2700 },
+  { key: 'fleet_distance_system_factor', value: 95 },
+  { key: 'fleet_distance_position_base', value: 1000 },
+  { key: 'fleet_distance_position_factor', value: 5 },
+  { key: 'fleet_same_position_distance', value: 5 },
+  { key: 'fleet_speed_factor', value: 35000 },
+
+  // ── Formulas (consumed by SP3, created here) ──
+  { key: 'pve_discovery_cooldown_base', value: 7 },
+  { key: 'pve_deposit_size_base', value: 15000 },
+  { key: 'spy_visibility_thresholds', value: [1, 3, 5, 7, 9] },
+  { key: 'ranking_points_divisor', value: 1000 },
+  { key: 'shipyard_time_divisor', value: 2500 },
+  { key: 'research_time_divisor', value: 1000 },
+  { key: 'storage_base', value: 5000 },
+  { key: 'storage_coeff_a', value: 2.5 },
+  { key: 'storage_coeff_b', value: 20 },
+  { key: 'storage_coeff_c', value: 33 },
+  { key: 'satellite_home_planet_energy', value: 50 },
+  { key: 'satellite_base_divisor', value: 4 },
+  { key: 'satellite_base_offset', value: 20 },
+  { key: 'phase_multiplier', value: {"1":0.35,"2":0.45,"3":0.55,"4":0.65,"5":0.78,"6":0.90,"7":0.95} },
 ];
 
 async function seed() {
