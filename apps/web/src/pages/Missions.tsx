@@ -4,12 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { Timer } from '@/components/common/Timer';
-
-const TIER_LABELS: Record<string, string> = {
-  easy: 'Facile',
-  medium: 'Moyen',
-  hard: 'Difficile',
-};
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 const TIER_COLORS: Record<string, string> = {
   easy: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -21,6 +16,7 @@ const TIER_COLORS: Record<string, string> = {
 export default function Missions() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const { data: gameConfig } = useGameConfig();
   const { data, isLoading } = trpc.pve.getMissions.useQuery();
   const dismissMutation = trpc.pve.dismissMission.useMutation({
     onSuccess: () => {
@@ -117,7 +113,7 @@ export default function Missions() {
                         TIER_COLORS[mission.difficultyTier] ?? ''
                       }`}
                     >
-                      {TIER_LABELS[mission.difficultyTier] ?? mission.difficultyTier}
+                      {gameConfig?.labels[`tier.${mission.difficultyTier}`] ?? mission.difficultyTier}
                     </span>
                   )}
                 </div>

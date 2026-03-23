@@ -1,24 +1,20 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, eventTypeLabel, formatEventText, formatDateTime, groupEvents } from '@/lib/game-events';
 
-const EVENT_TYPE_OPTIONS = [
-  { value: 'building-done', label: 'Constructions' },
-  { value: 'research-done', label: 'Recherches' },
-  { value: 'shipyard-done', label: 'Chantier spatial' },
-  { value: 'fleet-arrived', label: 'Flottes arrivées' },
-  { value: 'fleet-returned', label: 'Flottes de retour' },
-  { value: 'pve-mission-done', label: 'Missions PvE' },
-  { value: 'tutorial-quest-done', label: 'Tutoriel' },
-] as const;
-
-type GameEventType = (typeof EVENT_TYPE_OPTIONS)[number]['value'];
-
 export default function History() {
   const { data: gameConfig } = useGameConfig();
-  const [selectedTypes, setSelectedTypes] = useState<GameEventType[]>([]);
+
+  const eventTypeOptions = useMemo(() => {
+    if (!gameConfig?.labels) return [];
+    return Object.entries(gameConfig.labels)
+      .filter(([k]) => k.startsWith('event.'))
+      .map(([k, label]) => ({ value: k.replace('event.', ''), label }));
+  }, [gameConfig?.labels]);
+
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
   const loaderRef = useRef<HTMLDivElement>(null);
   const lastAppendedCursorRef = useRef<string | undefined>(undefined);
@@ -26,7 +22,7 @@ export default function History() {
   const currentCursor = cursors[cursors.length - 1];
 
   const { data, isFetching } = trpc.gameEvent.history.useQuery(
-    { cursor: currentCursor, limit: 20, types: selectedTypes.length > 0 ? selectedTypes : undefined },
+    { cursor: currentCursor, limit: 20, types: selectedTypes.length > 0 ? selectedTypes as any : undefined },
     { placeholderData: (prev: any) => prev },
   );
 
@@ -38,7 +34,7 @@ export default function History() {
   }
 
   // Reset on filter change
-  const handleFilterChange = (type: GameEventType) => {
+  const handleFilterChange = (type: string) => {
     setSelectedTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
@@ -77,7 +73,7 @@ export default function History() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        {EVENT_TYPE_OPTIONS.map((opt) => (
+        {eventTypeOptions.map((opt) => (
           <button
             key={opt.value}
             onClick={() => handleFilterChange(opt.value)}

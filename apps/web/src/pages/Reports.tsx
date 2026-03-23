@@ -7,17 +7,6 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName, getDefenseName, getBuildingName, getResearchName, getUnitName } from '@/lib/entity-names';
 import { cn } from '@/lib/utils';
 
-const MISSION_TYPE_LABELS: Record<string, string> = {
-  mine: 'Minage',
-  transport: 'Transport',
-  spy: 'Espionnage',
-  attack: 'Attaque',
-  pirate: 'Pirate',
-  colonize: 'Colonisation',
-  recycle: 'Recyclage',
-  station: 'Stationnement',
-};
-
 const RESOURCE_COLORS: Record<string, string> = {
   minerai: 'text-orange-400',
   silicium: 'text-emerald-400',
@@ -117,7 +106,7 @@ export default function Reports() {
 
   const filterPills = (
     <div className="flex flex-wrap gap-2">
-      {Object.entries(MISSION_TYPE_LABELS).map(([type, label]) => (
+      {Object.entries(gameConfig?.missions ?? {}).map(([type, mission]) => (
         <button
           key={type}
           onClick={() => handleFilterChange(type)}
@@ -127,7 +116,7 @@ export default function Reports() {
               : 'bg-muted text-muted-foreground hover:bg-accent'
           }`}
         >
-          {label}
+          {mission.label}
         </button>
       ))}
     </div>
@@ -158,7 +147,7 @@ export default function Reports() {
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
-              {MISSION_TYPE_LABELS[report.missionType] ?? report.missionType}
+              {gameConfig?.missions[report.missionType]?.label ?? report.missionType}
             </div>
           </button>
         ))}
@@ -185,7 +174,7 @@ export default function Reports() {
         </Button>
       </div>
       <div className="text-xs text-muted-foreground mb-4">
-        {MISSION_TYPE_LABELS[selectedReport.missionType]} — Cible : {formatCoords(selectedReport.coordinates as any)}
+        {gameConfig?.missions[selectedReport.missionType]?.label ?? selectedReport.missionType} — Cible : {formatCoords(selectedReport.coordinates as any)}
         {!!(selectedReport.originCoordinates as any) && (
           <> — Origine : {(selectedReport.originCoordinates as any).planetName} {formatCoords(selectedReport.originCoordinates as any)}</>
         )}
@@ -278,13 +267,7 @@ export default function Reports() {
         {selectedReport.missionType === 'spy' && (() => {
           const result = selectedReport.result as any;
           const visibility = result.visibility ?? {};
-          const VISIBILITY_LABELS: Record<string, string> = {
-            resources: 'Ressources',
-            fleet: 'Flotte',
-            defenses: 'Défenses',
-            buildings: 'Bâtiments',
-            research: 'Recherches',
-          };
+          const visibilityKeys = ['resources', 'fleet', 'defenses', 'buildings', 'research'] as const;
           return (
             <>
               {/* Visibility & Detection */}
@@ -292,7 +275,7 @@ export default function Reports() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Informations obtenues</h3>
                 <div className="rounded border border-border p-3">
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {Object.entries(VISIBILITY_LABELS).map(([key, label]) => (
+                    {visibilityKeys.map((key) => (
                       <span
                         key={key}
                         className={cn(
@@ -302,7 +285,7 @@ export default function Reports() {
                             : 'bg-white/5 text-muted-foreground',
                         )}
                       >
-                        {visibility[key] ? '\u2713' : '\u2717'} {label}
+                        {visibility[key] ? '\u2713' : '\u2717'} {gameConfig?.labels[`spy_visibility.${key}`] ?? key}
                       </span>
                     ))}
                   </div>
@@ -404,12 +387,13 @@ export default function Reports() {
         {/* Attack-specific results */}
         {selectedReport.missionType === 'attack' && (() => {
           const result = selectedReport.result as any;
-          const OUTCOME_STYLES: Record<string, { label: string; className: string }> = {
-            attacker: { label: 'Victoire', className: 'bg-emerald-500/20 text-emerald-400' },
-            defender: { label: 'Défaite', className: 'bg-red-500/20 text-red-400' },
-            draw: { label: 'Match nul', className: 'bg-amber-500/20 text-amber-400' },
+          const OUTCOME_STYLES: Record<string, string> = {
+            attacker: 'bg-emerald-500/20 text-emerald-400',
+            defender: 'bg-red-500/20 text-red-400',
+            draw: 'bg-amber-500/20 text-amber-400',
           };
-          const outcomeStyle = OUTCOME_STYLES[result.outcome] ?? OUTCOME_STYLES.draw;
+          const outcomeClassName = OUTCOME_STYLES[result.outcome] ?? OUTCOME_STYLES.draw;
+          const outcomeLabel = gameConfig?.labels[`outcome.${result.outcome}`] ?? result.outcome;
           const hasAttackerLosses = result.attackerLosses && Object.keys(result.attackerLosses).length > 0;
           const hasDefenderLosses = result.defenderLosses && Object.keys(result.defenderLosses).length > 0;
           return (
@@ -419,8 +403,8 @@ export default function Reports() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Résultat</h3>
                 <div className="rounded border border-border p-3">
                   <div className="flex items-center gap-3">
-                    <span className={cn('rounded-full px-4 py-1.5 text-sm font-bold', outcomeStyle.className)}>
-                      {outcomeStyle.label}
+                    <span className={cn('rounded-full px-4 py-1.5 text-sm font-bold', outcomeClassName)}>
+                      {outcomeLabel}
                     </span>
                     <span className="text-sm text-muted-foreground">{result.roundCount} round{result.roundCount > 1 ? 's' : ''}</span>
                   </div>

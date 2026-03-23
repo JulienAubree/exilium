@@ -142,15 +142,8 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
     );
     if (!bonus) return null;
 
-    const STAT_LABELS: Record<string, string> = {
-      building_time: 'Temps de construction',
-      research_time: 'Temps de recherche',
-      ship_build_time: 'Temps de construction vaisseaux',
-      defense_build_time: 'Temps de construction défenses',
-    };
-
     return {
-      label: STAT_LABELS[bonus.stat] ?? bonus.stat,
+      label: bonus.statLabel ?? bonus.stat,
       category: bonus.category,
     };
   }, [gameConfig, buildingId]);

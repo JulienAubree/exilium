@@ -1,5 +1,6 @@
 import { trpc } from '@/trpc';
 import { Badge } from '@/components/ui/badge';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface PveMissionBannerProps {
   pveMissionId: string;
@@ -11,13 +12,8 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: 'bg-red-900/50 text-red-300 border-red-700',
 };
 
-const DIFFICULTY_LABELS: Record<string, string> = {
-  easy: 'Facile',
-  medium: 'Moyen',
-  hard: 'Difficile',
-};
-
 export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
+  const { data: gameConfig } = useGameConfig();
   const { data: mission } = trpc.pve.getMissionById.useQuery(
     { missionId: pveMissionId },
     { staleTime: 60_000 },
@@ -59,7 +55,7 @@ export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-red-300">Repaire pirate</span>
-          <Badge className={DIFFICULTY_COLORS[tier]}>{DIFFICULTY_LABELS[tier]}</Badge>
+          <Badge className={DIFFICULTY_COLORS[tier]}>{gameConfig?.labels[`tier.${tier}`] ?? tier}</Badge>
         </div>
         <div className="text-xs text-red-400/80">
           {coords} — Récompense : {minerai.toLocaleString()} minerai, {silicium.toLocaleString()} silicium, {hydrogene.toLocaleString()} H₂

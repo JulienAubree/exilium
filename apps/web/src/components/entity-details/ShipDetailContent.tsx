@@ -7,12 +7,6 @@ import { resolveBonus, solarSatelliteEnergy } from '@ogame-clone/game-engine';
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
 
-const DRIVE_LABELS: Record<string, string> = {
-  combustion: 'Combustion',
-  impulse: 'Impulsion',
-  hyperspaceDrive: 'Hyperespace',
-};
-
 function EffectiveStatRow({ label, base, effective, multiplier }: { label: string; base: number; effective: number; multiplier: number }) {
   const bonusPercent = Math.round((multiplier - 1) * 100);
   const hasBonus = bonusPercent > 0;
@@ -135,7 +129,7 @@ export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlane
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-slate-400">Propulsion</span>
             <span className="text-slate-200 font-mono">
-              {DRIVE_LABELS[details.stats.driveType] ?? details.stats.driveType}
+              {gameConfig?.labels[`drive.${details.stats.driveType}`] ?? details.stats.driveType}
             </span>
           </div>
         </div>

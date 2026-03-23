@@ -14,31 +14,25 @@ import { cn } from '@/lib/utils';
 
 // ── Mission theming ──
 
-const MISSION_STYLE: Record<string, { border: string; text: string; hex: string }> = {
-  transport: { border: 'border-l-blue-500', text: 'text-blue-400', hex: '#3b82f6' },
-  station:   { border: 'border-l-emerald-500', text: 'text-emerald-400', hex: '#10b981' },
-  spy:       { border: 'border-l-violet-500', text: 'text-violet-400', hex: '#8b5cf6' },
-  attack:    { border: 'border-l-red-500', text: 'text-red-400', hex: '#ef4444' },
-  colonize:  { border: 'border-l-orange-500', text: 'text-orange-400', hex: '#f97316' },
-  mine:      { border: 'border-l-amber-500', text: 'text-amber-400', hex: '#f59e0b' },
-  pirate:    { border: 'border-l-rose-600', text: 'text-rose-400', hex: '#e11d48' },
-  recycle:   { border: 'border-l-cyan-500', text: 'text-cyan-400', hex: '#06b6d4' },
+const MISSION_STYLE: Record<string, { border: string; text: string }> = {
+  transport: { border: 'border-l-blue-500', text: 'text-blue-400' },
+  station:   { border: 'border-l-emerald-500', text: 'text-emerald-400' },
+  spy:       { border: 'border-l-violet-500', text: 'text-violet-400' },
+  attack:    { border: 'border-l-red-500', text: 'text-red-400' },
+  colonize:  { border: 'border-l-orange-500', text: 'text-orange-400' },
+  mine:      { border: 'border-l-amber-500', text: 'text-amber-400' },
+  pirate:    { border: 'border-l-rose-600', text: 'text-rose-400' },
+  recycle:   { border: 'border-l-cyan-500', text: 'text-cyan-400' },
 };
 
-const PHASE_STYLE: Record<string, { label: string; classes: string; dot: string; pulse?: boolean }> = {
-  outbound:    { label: 'En route', classes: 'text-blue-300 bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-400', pulse: true },
-  prospecting: { label: 'Prospection', classes: 'text-amber-300 bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-400', pulse: true },
-  mining:      { label: 'Extraction', classes: 'text-amber-200 bg-amber-400/10 border-amber-400/20', dot: 'bg-amber-300', pulse: true },
-  return:      { label: 'Retour', classes: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
+const PHASE_STYLE: Record<string, { classes: string; dot: string; pulse?: boolean }> = {
+  outbound:    { classes: 'text-blue-300 bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-400', pulse: true },
+  prospecting: { classes: 'text-amber-300 bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-400', pulse: true },
+  mining:      { classes: 'text-amber-200 bg-amber-400/10 border-amber-400/20', dot: 'bg-amber-300', pulse: true },
+  return:      { classes: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
 };
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
-
-const DRIVE_LABELS: Record<string, string> = {
-  combustion: 'Combustion',
-  impulse: 'Impulsion',
-  hyperspaceDrive: 'Hyperespace',
-};
 
 // ── Progress hook (updates every second) ──
 
@@ -66,28 +60,22 @@ function useProgress(departure: string, arrival: string) {
 
 // ── Mining Phase Stepper ──
 
-const MINE_PHASES = [
-  { key: 'outbound', label: 'En route' },
-  { key: 'prospecting', label: 'Prospection' },
-  { key: 'mining', label: 'Extraction' },
-  { key: 'return', label: 'Retour' },
-  { key: 'base', label: 'Base' },
-] as const;
+const MINE_PHASE_KEYS = ['outbound', 'prospecting', 'mining', 'return', 'base'] as const;
 
-function MiningPhaseStepper({ phase, progress, hex }: { phase: string; progress: number; hex: string }) {
-  const currentIdx = MINE_PHASES.findIndex((p) => p.key === phase);
+function MiningPhaseStepper({ phase, progress, hex, gameConfig }: { phase: string; progress: number; hex: string; gameConfig?: any }) {
+  const currentIdx = MINE_PHASE_KEYS.indexOf(phase as any);
 
   return (
     <div className="space-y-1.5">
       {/* Step circles + connecting lines */}
       <div className="flex items-center">
-        {MINE_PHASES.map((step, i) => {
+        {MINE_PHASE_KEYS.map((key, i) => {
           const isDone = i < currentIdx;
           const isActive = i === currentIdx;
           const isFuture = i > currentIdx;
 
           return (
-            <div key={step.key} className="flex items-center flex-1 last:flex-none">
+            <div key={key} className="flex items-center flex-1 last:flex-none">
               {/* Circle */}
               <div className="relative flex items-center justify-center">
                 <div
@@ -114,7 +102,7 @@ function MiningPhaseStepper({ phase, progress, hex }: { phase: string; progress:
               </div>
 
               {/* Connecting line */}
-              {i < MINE_PHASES.length - 1 && (
+              {i < MINE_PHASE_KEYS.length - 1 && (
                 <div className="flex-1 h-0.5 mx-1">
                   {isDone ? (
                     <div className="h-full rounded-full" style={{ background: `${hex}60` }} />
@@ -137,11 +125,11 @@ function MiningPhaseStepper({ phase, progress, hex }: { phase: string; progress:
 
       {/* Labels */}
       <div className="flex">
-        {MINE_PHASES.map((step, i) => {
+        {MINE_PHASE_KEYS.map((key, i) => {
           const isDone = i < currentIdx;
           const isActive = i === currentIdx;
           return (
-            <div key={step.key} className={cn('flex-1 last:flex-none', i === MINE_PHASES.length - 1 && 'text-right')}>
+            <div key={key} className={cn('flex-1 last:flex-none', i === MINE_PHASE_KEYS.length - 1 && 'text-right')}>
               <span className={cn(
                 'text-[10px]',
                 isDone && 'text-muted-foreground/60',
@@ -150,7 +138,7 @@ function MiningPhaseStepper({ phase, progress, hex }: { phase: string; progress:
               )}
               style={isActive ? { color: hex } : {}}
               >
-                {step.label}
+                {gameConfig?.labels[`phase.${key}`] ?? key}
               </span>
             </div>
           );
@@ -213,7 +201,9 @@ function MovementCard({
   const isReturn = event.phase === 'return';
 
   const mStyle = MISSION_STYLE[event.mission] ?? MISSION_STYLE.transport;
+  const missionHex = gameConfig?.missions?.[event.mission]?.color ?? '#888';
   const pStyle = PHASE_STYLE[event.phase] ?? PHASE_STYLE.outbound;
+  const phaseLabel = gameConfig?.labels?.[`phase.${event.phase}`] ?? event.phase;
   const missionLabel = gameConfig?.missions?.[event.mission]?.label ?? event.mission;
 
   const minerai = Number(event.mineraiCargo);
@@ -261,7 +251,7 @@ function MovementCard({
       {/* Clickable summary */}
       <div
         className="relative p-4 space-y-3 cursor-pointer select-none"
-        style={{ background: `linear-gradient(135deg, ${mStyle.hex}08 0%, transparent 50%)` }}
+        style={{ background: `linear-gradient(135deg, ${missionHex}08 0%, transparent 50%)` }}
         onClick={() => setExpanded((v) => !v)}
       >
         {/* Header: Mission + Phase + Timer */}
@@ -275,7 +265,7 @@ function MovementCard({
               pStyle.classes,
             )}>
               <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', pStyle.dot, pStyle.pulse && 'animate-pulse')} />
-              {pStyle.label}
+              {phaseLabel}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -304,7 +294,7 @@ function MovementCard({
 
         {/* Mining stepper (4 phases) */}
         {event.mission === 'mine' ? (
-          <MiningPhaseStepper phase={event.phase} progress={progress} hex={mStyle.hex} />
+          <MiningPhaseStepper phase={event.phase} progress={progress} hex={missionHex} gameConfig={gameConfig} />
         ) : (
           /* Standard progress bar */
           <div className="relative h-1.5">
@@ -313,7 +303,7 @@ function MovementCard({
               className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear"
               style={{
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, ${mStyle.hex}30, ${mStyle.hex})`,
+                background: `linear-gradient(90deg, ${missionHex}30, ${missionHex})`,
               }}
             />
             {progress > 0 && progress < 100 && (
@@ -321,8 +311,8 @@ function MovementCard({
                 className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-[left] duration-1000 ease-linear"
                 style={{
                   left: `calc(${progress}% - 5px)`,
-                  background: mStyle.hex,
-                  boxShadow: `0 0 10px ${mStyle.hex}90, 0 0 3px ${mStyle.hex}`,
+                  background: missionHex,
+                  boxShadow: `0 0 10px ${missionHex}90, 0 0 3px ${missionHex}`,
                 }}
               />
             )}
@@ -443,7 +433,7 @@ function MovementCard({
                               {stats ? fmt(stats.cargoCapacity * count) : '—'}
                             </td>
                             <td className="px-2 py-1.5 text-right text-muted-foreground">
-                              {stats ? DRIVE_LABELS[stats.driveType] ?? stats.driveType : '—'}
+                              {stats ? gameConfig?.labels?.[`drive.${stats.driveType}`] ?? stats.driveType : '—'}
                             </td>
                           </tr>
                         );

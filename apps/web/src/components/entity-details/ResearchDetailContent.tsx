@@ -4,27 +4,6 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { resolveBonus } from '@ogame-clone/game-engine';
 
-const STAT_LABELS: Record<string, string> = {
-  weapons: 'Dégâts des armes',
-  shielding: 'Puissance des boucliers',
-  armor: 'Résistance de la coque',
-  ship_speed: 'Vitesse des vaisseaux',
-  building_time: 'Temps de construction',
-  research_time: 'Temps de recherche',
-  ship_build_time: 'Temps de construction des vaisseaux',
-  defense_build_time: 'Temps de construction des défenses',
-  fleet_count: 'Flottes simultanées',
-  spy_range: "Portée d'espionnage",
-  mining_duration: 'Durée de minage',
-  mining_extraction: "Capacité d'extraction",
-};
-
-const DRIVE_LABELS: Record<string, string> = {
-  combustion: 'Combustion',
-  impulse: 'Impulsion',
-  hyperspaceDrive: 'Hyperespace',
-};
-
 const COMBAT_STATS = new Set(['weapons', 'shielding', 'armor']);
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
@@ -111,7 +90,7 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
         }
 
         if (items.length > 0) {
-          const driveLabel = DRIVE_LABELS[bonus.category] ?? bonus.category;
+          const driveLabel = gameConfig?.labels[`drive.${bonus.category}`] ?? bonus.category;
           sections.push({
             label: `Vaisseaux affectés (${driveLabel})`,
             type: 'units',
@@ -146,13 +125,13 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
       } else if (bonus.stat === 'fleet_count') {
         const maxFleets = Math.floor(resolveBonus('fleet_count', null, researchLevels, gameConfig.bonuses));
         sections.push({
-          label: STAT_LABELS[bonus.stat],
+          label: bonus.statLabel ?? bonus.stat,
           type: 'description',
           description: `+1 flotte par niveau — Actuellement : ${maxFleets} flotte${maxFleets > 1 ? 's' : ''} simultanée${maxFleets > 1 ? 's' : ''}`,
           percentPerLevel: bonus.percentPerLevel,
         });
       } else {
-        const statLabel = STAT_LABELS[bonus.stat] ?? bonus.stat;
+        const statLabel = bonus.statLabel ?? bonus.stat;
         const sign = bonus.percentPerLevel > 0 ? '+' : '';
         sections.push({
           label: statLabel,
@@ -172,7 +151,7 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
     const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
     const bonuses = matchingBonuses.map((b) => ({
       stat: b.stat,
-      label: STAT_LABELS[b.stat] ?? b.stat,
+      label: b.statLabel ?? b.stat,
       percentPerLevel: b.percentPerLevel,
     }));
 

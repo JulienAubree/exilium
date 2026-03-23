@@ -399,14 +399,7 @@ export default function Overview() {
                   const targetCoords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
                   const originCoords = planet ? `[${planet.galaxy}:${planet.system}:${planet.position}]` : '';
 
-                  const PHASE_LABELS: Record<string, string> = {
-                    outbound: 'En route', prospecting: 'Prospection', mining: 'Extraction', return: 'Retour',
-                  };
-                  const MISSION_HEX: Record<string, string> = {
-                    transport: '#3b82f6', station: '#10b981', spy: '#8b5cf6', attack: '#ef4444',
-                    colonize: '#f97316', mine: '#f59e0b', pirate: '#e11d48', recycle: '#06b6d4',
-                  };
-                  const hex = MISSION_HEX[event.mission] ?? '#3b82f6';
+                  const hex = gameConfig?.missions[event.mission]?.color ?? '#3b82f6';
 
                   const dep = new Date(event.departureTime).getTime();
                   const arr = new Date(event.arrivalTime).getTime();
@@ -428,7 +421,7 @@ export default function Overview() {
                           style={{ background: hex, boxShadow: `0 0 6px ${hex}60` }}
                         />
                         <span className="text-sm font-medium text-foreground">{missionLabel}</span>
-                        <span className="text-[10px] text-muted-foreground/70">{PHASE_LABELS[event.phase] ?? event.phase}</span>
+                        <span className="text-[10px] text-muted-foreground/70">{gameConfig?.labels[`phase.${event.phase}`] ?? event.phase}</span>
                         <div className="ml-auto flex-shrink-0">
                           <Timer
                             endTime={new Date(event.arrivalTime)}
