@@ -57,7 +57,7 @@ export function ChatView({ threadId, otherUsername, onBack, onThreadCreated, cla
   };
 
   return (
-    <div className={`flex flex-col ${className}`}>
+    <div className={`flex flex-col min-h-0 h-full ${className}`}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30">
         {onBack && (
