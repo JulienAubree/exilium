@@ -64,11 +64,17 @@ export function useNotifications() {
         if (event.payload.type === 'player' && event.payload.senderId && event.payload.senderUsername) {
           const chatStore = useChatStore.getState();
           const alreadyOpen = chatStore.windows.find((w) => w.userId === event.payload.senderId);
+          const tid = event.payload.threadId ? String(event.payload.threadId) : null;
           if (!alreadyOpen) {
-            chatStore.openChat(String(event.payload.senderId), String(event.payload.senderUsername));
+            chatStore.openChat(String(event.payload.senderId), String(event.payload.senderUsername), tid);
             chatStore.minimizeChat(String(event.payload.senderId));
-          } else if (alreadyOpen.threadId) {
-            utils.message.thread.invalidate({ threadId: alreadyOpen.threadId });
+          } else {
+            if (tid && !alreadyOpen.threadId) {
+              chatStore.setThreadId(String(event.payload.senderId), tid);
+            }
+            if (alreadyOpen.threadId || tid) {
+              utils.message.thread.invalidate({ threadId: (alreadyOpen.threadId || tid)! });
+            }
           }
         }
         addToast(`Message de ${event.payload.senderUsername ?? 'un joueur'}`);

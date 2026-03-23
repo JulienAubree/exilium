@@ -72,7 +72,7 @@ export function createMessageService(db: Database, redis: Redis) {
 
       publishNotification(redis, recipient.id, {
         type: 'new-message',
-        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId },
+        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId, threadId: msg.threadId },
       });
 
       return msg;
@@ -135,7 +135,7 @@ export function createMessageService(db: Database, redis: Redis) {
 
       publishNotification(redis, recipientId, {
         type: 'new-message',
-        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId },
+        payload: { messageId: msg.id, type: 'player', subject, senderUsername: sender?.username ?? null, senderId, threadId },
       });
 
       return msg;

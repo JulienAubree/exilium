@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { trpc } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
@@ -15,6 +16,19 @@ export function ChatOverlayWindow({ userId: otherUserId, username, threadId }: C
   const currentUserId = useAuthStore((s) => s.user?.id);
   const { closeChat, minimizeChat, setThreadId } = useChatStore();
   const utils = trpc.useUtils();
+
+  // Resolve threadId from conversations when not provided
+  const { data: conversations } = trpc.message.conversations.useQuery(undefined, {
+    enabled: !threadId,
+  });
+
+  useEffect(() => {
+    if (threadId || !conversations) return;
+    const conv = conversations.find((c) => c?.otherUser.id === otherUserId);
+    if (conv?.threadId) {
+      setThreadId(otherUserId, conv.threadId);
+    }
+  }, [threadId, conversations, otherUserId, setThreadId]);
 
   const { data: thread } = trpc.message.thread.useQuery(
     { threadId: threadId! },
