@@ -29,7 +29,6 @@ export function createFleetService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
   fleetQueue: Queue,
-  universeSpeed: number,
   messageService: ReturnType<typeof createMessageService> | undefined,
   gameConfigService: GameConfigService,
   pveService?: ReturnType<typeof createPveService>,
@@ -58,7 +57,6 @@ export function createFleetService(
     pirateService,
     reportService,
     fleetQueue,
-    universeSpeed,
     assetsDir: env.ASSETS_DIR,
   };
 
@@ -105,6 +103,7 @@ export function createFleetService(
       const origin = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
       const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
       const dist = distance(origin, target);
+      const universeSpeed = Number(config.universe.speed) || 1;
       const duration = travelTime(origin, target, speed, universeSpeed);
       const fuel = fuelConsumption(input.ships, dist, duration, shipStatsMap);
 
@@ -665,6 +664,7 @@ export function createFleetService(
       const researchLevels = event ? await this.getResearchLevels(event.userId) : {};
       const speedMultipliers = this.buildSpeedMultipliers(ships, shipStatsMap, researchLevels, config.bonuses);
       const speed = fleetSpeed(ships, shipStatsMap, speedMultipliers);
+      const universeSpeed = Number(config.universe.speed) || 1;
       const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
       const duration = travelTime(targetCoords, origin, speed, universeSpeed);
 
@@ -739,6 +739,7 @@ export function createFleetService(
       const speed = fleetSpeed(input.ships, shipStatsMap, speedMultipliers);
       if (speed === 0) return { fuel: 0, duration: 0 };
 
+      const universeSpeed = Number(config.universe.speed) || 1;
       const origin = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
       const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
       const dist = distance(origin, target);

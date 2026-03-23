@@ -70,7 +70,6 @@ export interface MissionHandlerContext {
   pirateService?: ReturnType<typeof createPirateService>;
   reportService?: ReturnType<typeof createReportService>;
   fleetQueue: Queue;
-  universeSpeed: number;
   assetsDir: string;
 }
 

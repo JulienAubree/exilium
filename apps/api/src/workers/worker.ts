@@ -14,7 +14,6 @@ import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
 import { createReportService } from '../modules/report/report.service.js';
 import { buildCompletionQueue, fleetQueue } from '../queues/queues.js';
-import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import { startBuildCompletionWorker } from './build-completion.worker.js';
 import { startFleetWorker } from './fleet.worker.js';
 import { eventCatchup } from '../cron/event-catchup.js';
@@ -40,7 +39,7 @@ const researchService = createResearchService(db, resourceService, buildCompleti
 const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService);
 
 // Fleet service (receives the unified fleet queue)
-const fleetService = createFleetService(db, resourceService, fleetQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService, pveService, asteroidBeltService, pirateService, reportService);
+const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, pveService, asteroidBeltService, pirateService, reportService);
 
 console.log('[worker] Starting workers...');
 

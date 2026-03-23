@@ -38,7 +38,6 @@ import { createReportService } from '../modules/report/report.service.js';
 import { createReportRouter } from '../modules/report/report.router.js';
 import { createUserService } from '../modules/user/user.service.js';
 import { createUserRouter } from '../modules/user/user.router.js';
-import { UNIVERSE_CONFIG } from '../modules/universe/universe.config.js';
 import { env } from '../config/env.js';
 import type { Database } from '@ogame-clone/db';
 import type Redis from 'ioredis';
@@ -61,7 +60,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const pveService = createPveService(db, asteroidBeltService, pirateService);
   const reportService = createReportService(db);
   const userService = createUserService(db);
-  const fleetService = createFleetService(db, resourceService, fleetQueue, UNIVERSE_CONFIG.speed, messageService, gameConfigService, pveService, asteroidBeltService, pirateService, reportService);
+  const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, pveService, asteroidBeltService, pirateService, reportService);
   const allianceService = createAllianceService(db, messageService);
   const playerAdminService = createPlayerAdminService(db);
   const gameEventService = createGameEventService(db);

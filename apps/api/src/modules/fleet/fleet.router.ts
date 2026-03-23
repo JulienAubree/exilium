@@ -2,14 +2,13 @@ import { z } from 'zod';
 import { MissionType } from '@ogame-clone/shared';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createFleetService } from './fleet.service.js';
-import { UNIVERSE_CONFIG } from '../universe/universe.config.js';
 
 const shipsSchema = z.record(z.string(), z.number().int().min(0).max(999999));
 const missionValues = Object.values(MissionType) as [string, ...string[]];
 const coordSchema = {
-  targetGalaxy: z.number().int().min(1).max(UNIVERSE_CONFIG.galaxies),
-  targetSystem: z.number().int().min(1).max(UNIVERSE_CONFIG.systems),
-  targetPosition: z.number().int().min(1).max(UNIVERSE_CONFIG.positions),
+  targetGalaxy: z.number().int().min(1).max(999),
+  targetSystem: z.number().int().min(1).max(9999),
+  targetPosition: z.number().int().min(1).max(999),
 };
 
 export function createFleetRouter(fleetService: ReturnType<typeof createFleetService>) {
