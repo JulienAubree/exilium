@@ -143,6 +143,14 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
             percentPerLevel: bonus.percentPerLevel,
           });
         }
+      } else if (bonus.stat === 'fleet_count') {
+        const maxFleets = Math.floor(resolveBonus('fleet_count', null, researchLevels, gameConfig.bonuses));
+        sections.push({
+          label: STAT_LABELS[bonus.stat],
+          type: 'description',
+          description: `+1 flotte par niveau — Actuellement : ${maxFleets} flotte${maxFleets > 1 ? 's' : ''} simultanée${maxFleets > 1 ? 's' : ''}`,
+          percentPerLevel: bonus.percentPerLevel,
+        });
       } else {
         const statLabel = STAT_LABELS[bonus.stat] ?? bonus.stat;
         const sign = bonus.percentPerLevel > 0 ? '+' : '';
@@ -301,14 +309,15 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
                   {row.values.map((v, j) => {
                     const ppl = progressionData.bonuses[j].percentPerLevel;
                     const isPositive = ppl > 0;
+                    const isFleetCount = progressionData.bonuses[j].stat === 'fleet_count';
                     return (
                       <td key={j} className={`px-2 py-1.5 text-right ${isPositive ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {row.level === 0 ? '\u2014' : `${isPositive ? '+' : ''}${v.totalPct}%`}
+                        {row.level === 0 ? '\u2014' : isFleetCount ? `${1 + row.level}` : `${isPositive ? '+' : ''}${v.totalPct}%`}
                       </td>
                     );
                   })}
                   <td className="px-2 py-1.5 text-right text-slate-500">
-                    {progressionData.bonuses.map((b) => `${b.percentPerLevel > 0 ? '+' : ''}${b.percentPerLevel}%`).join(', ')}
+                    {progressionData.bonuses.map((b) => b.stat === 'fleet_count' ? '+1' : `${b.percentPerLevel > 0 ? '+' : ''}${b.percentPerLevel}%`).join(', ')}
                   </td>
                 </tr>
               ))}
