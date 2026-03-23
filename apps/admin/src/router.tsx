@@ -36,6 +36,8 @@ export const router = createBrowserRouter([
       { path: 'players/:id', lazy: () => import('./pages/PlayerDetail').then((m) => ({ Component: m.default })) },
       { path: 'pve-missions', lazy: () => import('./pages/PveMissions').then((m) => ({ Component: m.default })) },
       { path: 'tutorial-quests', lazy: () => import('./pages/TutorialQuests').then((m) => ({ Component: m.default })) },
+      { path: 'missions', lazy: () => import('./pages/Missions').then((m) => ({ Component: m.default })) },
+      { path: 'labels', lazy: () => import('./pages/Labels').then((m) => ({ Component: m.default })) },
     ],
   },
 ]);
