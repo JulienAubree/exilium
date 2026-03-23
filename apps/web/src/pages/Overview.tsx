@@ -15,7 +15,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, groupEvents } from '@/lib/game-events';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { MISSION_CONFIG } from '@/config/mission-config';
-import { getUnitName } from '@/lib/entity-names';
+import { getUnitName, getShipName } from '@/lib/entity-names';
 import {
   HistoryIcon,
   MovementsIcon,
@@ -395,31 +395,68 @@ export default function Overview() {
               <div className="space-y-1.5">
                 {fleetMovements.map((event) => {
                   const isReturn = event.phase === 'return';
+                  const ships = event.ships as Record<string, number>;
+                  const shipCount = Object.values(ships).reduce((sum, n) => sum + n, 0);
+                  const missionLabel = MISSION_CONFIG[event.mission as keyof typeof MISSION_CONFIG]?.label ?? event.mission;
+                  const targetCoords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+                  const originCoords = planet ? `[${planet.galaxy}:${planet.system}:${planet.position}]` : '';
+
+                  const PHASE_LABELS: Record<string, string> = {
+                    outbound: 'En route', prospecting: 'Prospection', mining: 'Extraction', return: 'Retour',
+                  };
+                  const MISSION_HEX: Record<string, string> = {
+                    transport: '#3b82f6', station: '#10b981', spy: '#8b5cf6', attack: '#ef4444',
+                    colonize: '#f97316', mine: '#f59e0b', pirate: '#e11d48', recycle: '#06b6d4',
+                  };
+                  const hex = MISSION_HEX[event.mission] ?? '#3b82f6';
+
+                  const dep = new Date(event.departureTime).getTime();
+                  const arr = new Date(event.arrivalTime).getTime();
+                  const total = arr - dep;
+                  const progress = total > 0 ? Math.min(100, Math.max(0, ((Date.now() - dep) / total) * 100)) : 100;
+
+                  const hasCargo = Number(event.mineraiCargo) > 0 || Number(event.siliciumCargo) > 0 || Number(event.hydrogeneCargo) > 0;
+
                   return (
                     <div
                       key={event.id}
-                      className="flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                      className="px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors space-y-1.5"
                       onClick={() => navigate('/movements')}
                     >
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{
-                          background: isReturn ? '#22c55e' : '#3b82f6',
-                          boxShadow: isReturn ? '0 0 6px rgba(34,197,94,0.5)' : '0 0 6px rgba(59,130,246,0.5)',
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-foreground font-medium">
-                          {isReturn ? 'Retour — ' : ''}{MISSION_CONFIG[event.mission as keyof typeof MISSION_CONFIG]?.label ?? event.mission}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          [{event.targetGalaxy}:{event.targetSystem}:{event.targetPosition}]
+                      {/* Line 1: Mission + Phase + Timer */}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: hex, boxShadow: `0 0 6px ${hex}60` }}
+                        />
+                        <span className="text-sm font-medium text-foreground">{missionLabel}</span>
+                        <span className="text-[10px] text-muted-foreground/70">{PHASE_LABELS[event.phase] ?? event.phase}</span>
+                        <div className="ml-auto flex-shrink-0">
+                          <Timer
+                            endTime={new Date(event.arrivalTime)}
+                            onComplete={() => utils.fleet.movements.invalidate()}
+                          />
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground flex-shrink-0">
-                        <Timer
-                          endTime={new Date(event.arrivalTime)}
-                          onComplete={() => utils.fleet.movements.invalidate()}
+                      {/* Line 2: Route + ship count */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pl-4">
+                        <span className="truncate">
+                          {isReturn ? `${targetCoords} → ${planet?.name ?? ''} ${originCoords}` : `${planet?.name ?? ''} ${originCoords} → ${targetCoords}`}
+                        </span>
+                        <span className="text-muted-foreground/30 flex-shrink-0">·</span>
+                        <span className="flex-shrink-0">{shipCount} vsx</span>
+                        {hasCargo && (
+                          <>
+                            <span className="text-muted-foreground/30 flex-shrink-0">·</span>
+                            <span className="flex-shrink-0 text-amber-400/70">cargo</span>
+                          </>
+                        )}
+                      </div>
+                      {/* Mini progress bar */}
+                      <div className="h-0.5 rounded-full bg-white/[0.04] overflow-hidden ml-4">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${progress}%`, background: hex }}
                         />
                       </div>
                     </div>
