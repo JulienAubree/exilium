@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 
 interface ChatInputProps {
   onSend: (body: string) => void;
@@ -8,12 +8,14 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, disabled, placeholder = 'Ecrire un message...' }: ChatInputProps) {
   const [value, setValue] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
     onSend(trimmed);
     setValue('');
+    requestAnimationFrame(() => inputRef.current?.focus());
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -26,6 +28,7 @@ export function ChatInput({ onSend, disabled, placeholder = 'Ecrire un message..
   return (
     <div className="flex items-center gap-2 p-3 border-t border-border/50">
       <textarea
+        ref={inputRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
