@@ -29,7 +29,7 @@ const resourceService = createResourceService(db);
 const messageService = createMessageService(db, redis);
 const asteroidBeltService = createAsteroidBeltService(db);
 const pirateService = createPirateService(db, gameConfigService);
-const pveService = createPveService(db, asteroidBeltService, pirateService);
+const pveService = createPveService(db, asteroidBeltService, pirateService, gameConfigService);
 const reportService = createReportService(db);
 const tutorialService = createTutorialService(db, pveService);
 

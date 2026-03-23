@@ -5,12 +5,13 @@ import type { Database } from '@ogame-clone/db';
 import { discoveryCooldown, depositSize, depositComposition } from '@ogame-clone/game-engine';
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
-import { UNIVERSE_CONFIG, BELT_POSITIONS } from '../universe/universe.config.js';
+import type { GameConfigService } from '../admin/game-config.service.js';
 
 export function createPveService(
   db: Database,
   asteroidBeltService: ReturnType<typeof createAsteroidBeltService>,
   pirateService: ReturnType<typeof createPirateService>,
+  gameConfigService: GameConfigService,
 ) {
   return {
     async getMissions(userId: string) {
@@ -68,6 +69,7 @@ export function createPveService(
     },
 
     async materializeDiscoveries(userId: string) {
+      const config = await gameConfigService.getFullConfig();
       const centerLevel = await this.getMissionCenterLevel(userId);
       if (centerLevel === 0) return;
 
@@ -120,7 +122,7 @@ export function createPveService(
         .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
       const currentCount = countResult?.count ?? 0;
 
-      const CAP = 3;
+      const CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
       const toCreate = Math.min(n, CAP - currentCount);
 
       // Get player's home planet for coordinates
@@ -144,13 +146,17 @@ export function createPveService(
     },
 
     async generateDiscoveredMission(userId: string, galaxy: number, system: number, centerLevel: number) {
+      const config = await gameConfigService.getFullConfig();
       // Build candidate coordinates (nearby systems × available positions)
-      const positions = centerLevel >= 3 ? [...BELT_POSITIONS] : [BELT_POSITIONS[0]];
+      const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
+      const positions = centerLevel >= 3 ? [...beltPositions] : [beltPositions[0]];
       const candidates: { system: number; position: 8 | 16 }[] = [];
-      for (let offset = 0; offset <= 5; offset++) {
+      const searchRadius = Number(config.universe.pve_search_radius) || 5;
+      const systems = Number(config.universe.systems) || 499;
+      for (let offset = 0; offset <= searchRadius; offset++) {
         for (const pos of positions) {
-          if (system + offset <= UNIVERSE_CONFIG.systems) candidates.push({ system: system + offset, position: pos });
-          if (offset > 0 && system - offset >= 1) candidates.push({ system: system - offset, position: pos });
+          if (system + offset <= systems) candidates.push({ system: system + offset, position: pos as 8 | 16 });
+          if (offset > 0 && system - offset >= 1) candidates.push({ system: system - offset, position: pos as 8 | 16 });
         }
       }
 
@@ -170,7 +176,9 @@ export function createPveService(
       const belt = await asteroidBeltService.getOrCreateBelt(galaxy, pick.system, pick.position);
 
       // RNG: size and composition
-      const varianceMultiplier = 0.6 + Math.random() * 1.0; // 0.6 to 1.6
+      const varianceMin = Number(config.universe.pve_deposit_variance_min) || 0.6;
+      const varianceMax = Number(config.universe.pve_deposit_variance_max) || 1.6;
+      const varianceMultiplier = varianceMin + Math.random() * (varianceMax - varianceMin);
       const totalQuantity = depositSize(centerLevel, varianceMultiplier);
       const mineraiOffset = (Math.random() * 0.30) - 0.15; // -0.15 to +0.15
       const siliciumOffset = (Math.random() * 0.20) - 0.10; // -0.10 to +0.10
@@ -180,8 +188,8 @@ export function createPveService(
       let silicium = Math.floor(totalQuantity * composition.silicium);
       let hydrogene = totalQuantity - minerai - silicium;
 
-      // Cap hydrogene at 1500, redistribute excess to minerai/silicium
-      const HYDROGENE_CAP = 1500;
+      // Cap hydrogene, redistribute excess to minerai/silicium
+      const HYDROGENE_CAP = Number(config.universe.pve_hydrogene_cap) || 1500;
       if (hydrogene > HYDROGENE_CAP) {
         const excess = hydrogene - HYDROGENE_CAP;
         hydrogene = HYDROGENE_CAP;
@@ -211,14 +219,16 @@ export function createPveService(
     },
 
     async dismissMission(userId: string, missionId: string) {
+      const config = await gameConfigService.getFullConfig();
+      const dismissCooldownHours = Number(config.universe.pve_dismiss_cooldown_hours) || 24;
       // Check cooldown
       const [state] = await db.select().from(missionCenterState)
         .where(eq(missionCenterState.userId, userId)).limit(1);
 
       if (state?.lastDismissAt) {
         const hoursSinceLastDismiss = (Date.now() - state.lastDismissAt.getTime()) / (3600 * 1000);
-        if (hoursSinceLastDismiss < 24) {
-          const remainingHours = Math.ceil(24 - hoursSinceLastDismiss);
+        if (hoursSinceLastDismiss < dismissCooldownHours) {
+          const remainingHours = Math.ceil(dismissCooldownHours - hoursSinceLastDismiss);
           throw new TRPCError({
             code: 'TOO_MANY_REQUESTS',
             message: `Vous devez attendre encore ${remainingHours}h avant de pouvoir annuler un gisement`,
@@ -260,9 +270,12 @@ export function createPveService(
     },
 
     async generatePirateMission(userId: string, galaxy: number, system: number, centerLevel: number) {
+      const config = await gameConfigService.getFullConfig();
+      const tierMediumUnlock = Number(config.universe.pve_tier_medium_unlock) || 4;
+      const tierHardUnlock = Number(config.universe.pve_tier_hard_unlock) || 6;
       const availableTiers: ('easy' | 'medium' | 'hard')[] = ['easy'];
-      if (centerLevel >= 4) availableTiers.push('medium');
-      if (centerLevel >= 6) availableTiers.push('hard');
+      if (centerLevel >= tierMediumUnlock) availableTiers.push('medium');
+      if (centerLevel >= tierHardUnlock) availableTiers.push('hard');
 
       const tier = availableTiers[Math.floor(Math.random() * availableTiers.length)];
       const template = await pirateService.pickTemplate(centerLevel, tier);
@@ -270,9 +283,11 @@ export function createPveService(
 
       // Random position in system (exclude belt positions)
       let position: number;
-      const beltSet = new Set<number>(BELT_POSITIONS);
+      const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
+      const beltSet = new Set<number>(beltPositions);
+      const universePositions = Number(config.universe.positions) || 16;
       do {
-        position = 1 + Math.floor(Math.random() * UNIVERSE_CONFIG.positions);
+        position = 1 + Math.floor(Math.random() * universePositions);
       } while (beltSet.has(position));
 
       const rewards = template.rewards as {
@@ -294,10 +309,12 @@ export function createPveService(
     },
 
     async expireOldMissions() {
+      const config = await gameConfigService.getFullConfig();
+      const expiryDays = Number(config.universe.pve_mission_expiry_days) || 7;
       await db.execute(sql`
         DELETE FROM pve_missions
         WHERE status = 'available'
-          AND created_at < NOW() - INTERVAL '7 days'
+          AND created_at < NOW() - INTERVAL '1 day' * ${expiryDays}
       `);
     },
   };
