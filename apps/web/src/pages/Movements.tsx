@@ -64,6 +64,101 @@ function useProgress(departure: string, arrival: string) {
   return pct;
 }
 
+// ── Mining Phase Stepper ──
+
+const MINE_PHASES = [
+  { key: 'outbound', label: 'En route' },
+  { key: 'prospecting', label: 'Prospection' },
+  { key: 'mining', label: 'Extraction' },
+  { key: 'return', label: 'Retour' },
+] as const;
+
+function MiningPhaseStepper({ phase, progress, hex }: { phase: string; progress: number; hex: string }) {
+  const currentIdx = MINE_PHASES.findIndex((p) => p.key === phase);
+
+  return (
+    <div className="space-y-1.5">
+      {/* Step circles + connecting lines */}
+      <div className="flex items-center">
+        {MINE_PHASES.map((step, i) => {
+          const isDone = i < currentIdx;
+          const isActive = i === currentIdx;
+          const isFuture = i > currentIdx;
+
+          return (
+            <div key={step.key} className="flex items-center flex-1 last:flex-none">
+              {/* Circle */}
+              <div className="relative flex items-center justify-center">
+                <div
+                  className={cn(
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
+                    isDone && 'border-transparent',
+                    isActive && 'border-transparent',
+                    isFuture && 'border-white/10 bg-transparent',
+                  )}
+                  style={{
+                    ...(isDone ? { background: `${hex}60` } : {}),
+                    ...(isActive ? { background: hex, boxShadow: `0 0 10px ${hex}80` } : {}),
+                  }}
+                >
+                  {isDone && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" className="text-white">
+                      <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  {isActive && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  )}
+                </div>
+              </div>
+
+              {/* Connecting line */}
+              {i < MINE_PHASES.length - 1 && (
+                <div className="flex-1 h-0.5 mx-1">
+                  {isDone ? (
+                    <div className="h-full rounded-full" style={{ background: `${hex}60` }} />
+                  ) : isActive ? (
+                    <div className="h-full rounded-full overflow-hidden bg-white/[0.06]">
+                      <div
+                        className="h-full rounded-full transition-[width] duration-1000 ease-linear"
+                        style={{ width: `${progress}%`, background: hex }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full rounded-full bg-white/[0.06]" />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Labels */}
+      <div className="flex">
+        {MINE_PHASES.map((step, i) => {
+          const isDone = i < currentIdx;
+          const isActive = i === currentIdx;
+          return (
+            <div key={step.key} className={cn('flex-1 last:flex-none', i === MINE_PHASES.length - 1 && 'text-right')}>
+              <span className={cn(
+                'text-[10px]',
+                isDone && 'text-muted-foreground/60',
+                isActive && 'font-semibold',
+                !isDone && !isActive && 'text-muted-foreground/30',
+              )}
+              style={isActive ? { color: hex } : {}}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Movement Card ──
 
 interface MovementEvent {
@@ -179,18 +274,21 @@ function MovementCard({
           </div>
         </div>
 
-        {/* Route + Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-foreground font-medium truncate">{fromLabel}</span>
-            <svg width="24" height="10" viewBox="0 0 24 10" className="flex-shrink-0 opacity-40">
-              <line x1="0" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
-              <polyline points="15,2 19,5 15,8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-            </svg>
-            <span className="text-foreground font-medium truncate">{toLabel}</span>
-          </div>
+        {/* Route */}
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-foreground font-medium truncate">{fromLabel}</span>
+          <svg width="24" height="10" viewBox="0 0 24 10" className="flex-shrink-0 opacity-40">
+            <line x1="0" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+            <polyline points="15,2 19,5 15,8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+          </svg>
+          <span className="text-foreground font-medium truncate">{toLabel}</span>
+        </div>
 
-          {/* Progress bar with glowing marker */}
+        {/* Mining stepper (4 phases) */}
+        {event.mission === 'mine' ? (
+          <MiningPhaseStepper phase={event.phase} progress={progress} hex={mStyle.hex} />
+        ) : (
+          /* Standard progress bar */
           <div className="relative h-1.5">
             <div className="absolute inset-0 rounded-full bg-white/[0.04]" />
             <div
@@ -211,7 +309,7 @@ function MovementCard({
               />
             )}
           </div>
-        </div>
+        )}
 
         {/* Ships (summary) */}
         <div className="flex flex-wrap gap-1.5 items-center">
