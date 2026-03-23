@@ -3,6 +3,21 @@ import { Layout } from './components/layout/Layout';
 import { useAuthStore } from './stores/auth.store';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
+/** Wrap a lazy import to auto-reload on stale chunk errors (post-deployment) */
+function lazyLoad(importFn: () => Promise<{ default: React.ComponentType }>) {
+  return () =>
+    importFn()
+      .then((m) => ({ Component: m.default }))
+      .catch((err) => {
+        // Chunk load failure (stale deployment) — reload once
+        if (!sessionStorage.getItem('chunk_reload')) {
+          sessionStorage.setItem('chunk_reload', '1');
+          window.location.reload();
+        }
+        throw err;
+      });
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.accessToken);
   if (!token) return <Navigate to="/login" replace />;
@@ -28,12 +43,12 @@ function RouteErrorFallback() {
 export const router = createBrowserRouter([
   {
     path: '/login',
-    lazy: () => import('./pages/Login').then((m) => ({ Component: m.default })),
+    lazy: lazyLoad(() => import('./pages/Login')),
     errorElement: <RouteErrorFallback />,
   },
   {
     path: '/register',
-    lazy: () => import('./pages/Register').then((m) => ({ Component: m.default })),
+    lazy: lazyLoad(() => import('./pages/Register')),
     errorElement: <RouteErrorFallback />,
   },
   {
@@ -47,82 +62,82 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        lazy: () => import('./pages/Overview').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Overview')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'resources',
-        lazy: () => import('./pages/Resources').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Resources')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'buildings',
-        lazy: () => import('./pages/Buildings').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Buildings')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'research',
-        lazy: () => import('./pages/Research').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Research')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'shipyard',
-        lazy: () => import('./pages/Shipyard').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Shipyard')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'defense',
-        lazy: () => import('./pages/Defense').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Defense')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'galaxy',
-        lazy: () => import('./pages/Galaxy').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Galaxy')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'fleet',
-        lazy: () => import('./pages/Fleet').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Fleet')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'missions',
-        lazy: () => import('./pages/Missions').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Missions')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'movements',
-        lazy: () => import('./pages/Movements').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Movements')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'messages',
-        lazy: () => import('./pages/Messages').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Messages')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'reports',
-        lazy: () => import('./pages/Reports').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Reports')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'ranking',
-        lazy: () => import('./pages/Ranking').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Ranking')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'alliance',
-        lazy: () => import('./pages/Alliance').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/Alliance')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'alliance-ranking',
-        lazy: () => import('./pages/AllianceRanking').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/AllianceRanking')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'history',
-        lazy: () => import('./pages/History').then((m) => ({ Component: m.default })),
+        lazy: lazyLoad(() => import('./pages/History')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
     ],

@@ -20,7 +20,7 @@ export function registerSSE(app: FastifyInstance, redisUrl: string, jwtSecret: U
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
     });
 
     const subscriber = new Redis(redisUrl);
