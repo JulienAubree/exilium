@@ -77,17 +77,17 @@ export class AttackHandler implements MissionHandler {
 
     const defenderFleet: Record<string, number> = {};
     const defenderDefenses: Record<string, number> = {};
-    const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler', 'prospector', 'explorer', 'solarSatellite'] as const;
-    const defenseTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
 
     if (defShips) {
-      for (const t of shipTypes) {
-        if (defShips[t] > 0) defenderFleet[t] = defShips[t];
+      for (const [key, val] of Object.entries(defShips)) {
+        if (key === 'planetId') continue;
+        if (typeof val === 'number' && val > 0) defenderFleet[key] = val;
       }
     }
     if (defDefs) {
-      for (const t of defenseTypes) {
-        if (defDefs[t] > 0) defenderDefenses[t] = defDefs[t];
+      for (const [key, val] of Object.entries(defDefs)) {
+        if (key === 'planetId') continue;
+        if (typeof val === 'number' && val > 0) defenderDefenses[key] = val;
       }
     }
 
@@ -132,9 +132,10 @@ export class AttackHandler implements MissionHandler {
     // Apply defender ship losses
     if (defShips) {
       const shipUpdates: Record<string, number> = {};
-      for (const t of shipTypes) {
-        const lost = defenderLosses[t] ?? 0;
-        if (lost > 0) shipUpdates[t] = defShips[t] - lost;
+      for (const [key, val] of Object.entries(defShips)) {
+        if (key === 'planetId') continue;
+        const lost = defenderLosses[key] ?? 0;
+        if (lost > 0) shipUpdates[key] = (val as number) - lost;
       }
       if (Object.keys(shipUpdates).length > 0) {
         await ctx.db.update(planetShips).set(shipUpdates).where(eq(planetShips.planetId, targetPlanet.id));
@@ -144,11 +145,12 @@ export class AttackHandler implements MissionHandler {
     // Apply defender defense losses (minus repairs)
     if (defDefs) {
       const defUpdates: Record<string, number> = {};
-      for (const t of defenseTypes) {
-        const lost = defenderLosses[t] ?? 0;
-        const repaired = repairedDefenses[t] ?? 0;
+      for (const [key, val] of Object.entries(defDefs)) {
+        if (key === 'planetId') continue;
+        const lost = defenderLosses[key] ?? 0;
+        const repaired = repairedDefenses[key] ?? 0;
         const netLoss = lost - repaired;
-        if (netLoss > 0) defUpdates[t] = defDefs[t] - netLoss;
+        if (netLoss > 0) defUpdates[key] = (val as number) - netLoss;
       }
       if (Object.keys(defUpdates).length > 0) {
         await ctx.db.update(planetDefenses).set(defUpdates).where(eq(planetDefenses.planetId, targetPlanet.id));

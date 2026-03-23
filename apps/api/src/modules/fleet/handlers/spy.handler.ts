@@ -80,12 +80,12 @@ export class SpyHandler implements MissionHandler {
       const [targetShips] = await ctx.db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
       if (targetShips) {
         const fleetData: Record<string, number> = {};
-        const shipTypes = ['smallCargo', 'largeCargo', 'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'espionageProbe', 'colonyShip', 'recycler'] as const;
         body += `Flotte :\n`;
-        for (const t of shipTypes) {
-          if (targetShips[t] > 0) {
-            fleetData[t] = targetShips[t];
-            body += `${t}: ${targetShips[t]}\n`;
+        for (const [key, val] of Object.entries(targetShips)) {
+          if (key === 'planetId') continue;
+          if (typeof val === 'number' && val > 0) {
+            fleetData[key] = val;
+            body += `${key}: ${val}\n`;
           }
         }
         reportResult.fleet = fleetData;
@@ -97,12 +97,12 @@ export class SpyHandler implements MissionHandler {
       const [defs] = await ctx.db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
       if (defs) {
         const defensesData: Record<string, number> = {};
-        const defTypes = ['rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'plasmaTurret', 'smallShield', 'largeShield'] as const;
         body += `Défenses :\n`;
-        for (const t of defTypes) {
-          if (defs[t] > 0) {
-            defensesData[t] = defs[t];
-            body += `${t}: ${defs[t]}\n`;
+        for (const [key, val] of Object.entries(defs)) {
+          if (key === 'planetId') continue;
+          if (typeof val === 'number' && val > 0) {
+            defensesData[key] = val;
+            body += `${key}: ${val}\n`;
           }
         }
         reportResult.defenses = defensesData;
@@ -129,12 +129,12 @@ export class SpyHandler implements MissionHandler {
       const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
       if (research) {
         const researchData: Record<string, number> = {};
-        const researchCols = ['espionageTech', 'computerTech', 'energyTech', 'combustion', 'impulse', 'hyperspaceDrive', 'weapons', 'shielding', 'armor'] as const;
         body += `Recherches :\n`;
-        for (const col of researchCols) {
-          if (research[col] > 0) {
-            researchData[col] = research[col];
-            body += `${col}: ${research[col]}\n`;
+        for (const [key, val] of Object.entries(research)) {
+          if (key === 'userId') continue;
+          if (typeof val === 'number' && val > 0) {
+            researchData[key] = val;
+            body += `${key}: ${val}\n`;
           }
         }
         reportResult.research = researchData;
