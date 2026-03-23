@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Timer } from '@/components/common/Timer';
@@ -15,7 +14,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, groupEvents } from '@/lib/game-events';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { MISSION_CONFIG } from '@/config/mission-config';
-import { getUnitName, getShipName } from '@/lib/entity-names';
+import { getUnitName } from '@/lib/entity-names';
 import {
   HistoryIcon,
   MovementsIcon,

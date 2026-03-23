@@ -7,7 +7,7 @@ import { publishNotification } from '../notification/notification.publisher.js';
 
 export function createMessageService(db: Database, redis: Redis) {
   return {
-    async sendMessage(senderId: string, recipientUsername: string, subject: string, body: string, threadId?: string) {
+    async sendMessage(senderId: string, recipientUsername: string, subject: string, body: string, _threadId?: string) {
       const [recipient] = await db
         .select({ id: users.id })
         .from(users)

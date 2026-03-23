@@ -5,7 +5,7 @@ import { BELT_POSITIONS } from '../universe/universe.config.js';
 
 export function createGalaxyService(db: Database) {
   return {
-    async getSystem(galaxy: number, system: number, currentUserId?: string) {
+    async getSystem(galaxy: number, system: number, _currentUserId?: string) {
       const systemPlanets = await db
         .select({
           position: planets.position,

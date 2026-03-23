@@ -1,4 +1,4 @@
-import { eq, and, or } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import {
   entityCategories,
   buildingDefinitions,
@@ -795,7 +795,7 @@ export function createGameConfigService(db: Database) {
       invalidateCache();
     },
 
-    async deleteRapidFire(attackerId: string, targetId: string) {
+    async deleteRapidFire(attackerId: string, _targetId: string) {
       await db.delete(rapidFire)
         .where(eq(rapidFire.attackerId, attackerId));
       // More precise: delete where both match

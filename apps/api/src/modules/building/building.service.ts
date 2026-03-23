@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, buildQueue, planetBuildings } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
@@ -28,7 +28,7 @@ export function createBuildingService(
     },
 
     async listBuildings(userId: string, planetId: string) {
-      const planet = await this.getOwnedPlanet(userId, planetId);
+      await this.getOwnedPlanet(userId, planetId);
       const config = await gameConfigService.getFullConfig();
       const buildingLevels = await this.getBuildingLevels(planetId);
 

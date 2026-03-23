@@ -99,7 +99,7 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
 
       // Victory: loot + bonus ships
       let loot = { minerai: 0, silicium: 0, hydrogene: 0 };
-      let bonusShips: Record<string, number> = {};
+      const bonusShips: Record<string, number> = {};
 
       if (result.outcome === 'attacker') {
         // Cap loot to cargo capacity

@@ -28,7 +28,7 @@ export function createResearchService(
 ) {
   return {
     async listResearch(userId: string, planetId: string) {
-      const planet = await this.getOwnedPlanet(userId, planetId);
+      await this.getOwnedPlanet(userId, planetId);
       const research = await this.getOrCreateResearch(userId);
       const config = await gameConfigService.getFullConfig();
       const buildingLevels = await getBuildingLevels(db, planetId);
@@ -76,7 +76,7 @@ export function createResearchService(
     },
 
     async startResearch(userId: string, planetId: string, researchId: string) {
-      const planet = await this.getOwnedPlanet(userId, planetId);
+      await this.getOwnedPlanet(userId, planetId);
       const research = await this.getOrCreateResearch(userId);
       const config = await gameConfigService.getFullConfig();
       const def = config.research[researchId];

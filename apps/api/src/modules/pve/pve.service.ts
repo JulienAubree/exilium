@@ -259,7 +259,7 @@ export function createPveService(
     },
 
     async generatePirateMission(userId: string, galaxy: number, system: number, centerLevel: number) {
-      let availableTiers: ('easy' | 'medium' | 'hard')[] = ['easy'];
+      const availableTiers: ('easy' | 'medium' | 'hard')[] = ['easy'];
       if (centerLevel >= 4) availableTiers.push('medium');
       if (centerLevel >= 6) availableTiers.push('hard');
 

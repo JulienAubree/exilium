@@ -1,4 +1,4 @@
-import { eq, like, or, sql, count, isNull } from 'drizzle-orm';
+import { eq, like, or, sql, count } from 'drizzle-orm';
 import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 

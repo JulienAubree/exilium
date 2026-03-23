@@ -80,7 +80,6 @@ export class MineHandler implements PhasedMissionHandler {
     }
 
     // Transition to mining phase
-    const centerLevel = await ctx.pveService.getMissionCenterLevel(fleetEvent.userId);
     const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, fleetEvent.userId)).limit(1);
     const researchLevels: Record<string, number> = {};
     if (research) {

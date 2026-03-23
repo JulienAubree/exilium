@@ -5,7 +5,6 @@ import type { Database } from '@ogame-clone/db';
 import {
   calculateMaxTemp,
   calculateMinTemp,
-  calculateDiameter,
   calculateMaxFields,
 } from '@ogame-clone/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -34,9 +33,9 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
       const diameter = 12000;
       const maxFields = calculateMaxFields(diameter);
 
-      const startingMinerai = Number(universe.startingMinerai) ?? 500;
-      const startingSilicium = Number(universe.startingSilicium) ?? 300;
-      const startingHydrogene = Number(universe.startingHydrogene) ?? 100;
+      const startingMinerai = Number(universe.startingMinerai) || 500;
+      const startingSilicium = Number(universe.startingSilicium) || 300;
+      const startingHydrogene = Number(universe.startingHydrogene) || 100;
 
       const [planet] = await db
         .insert(planets)

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { eq, isNull, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   entityCategories,
   buildingDefinitions,
@@ -17,7 +17,6 @@ import {
   universeConfig,
   planetTypes,
 } from './schema/game-config.js';
-import { planets } from './schema/planets.js';
 import { pirateTemplates } from './schema/pve-missions.js';
 import { tutorialQuestDefinitions } from './schema/tutorial-quest-definitions.js';
 
@@ -356,7 +355,7 @@ async function seed() {
 
   // 1. Building definitions (upsert)
   for (const b of BUILDINGS) {
-    const { prerequisites: _bp, ...row } = b;
+    const { prerequisites: _prereqs, ...row } = b;
     await db.insert(buildingDefinitions).values(row)
       .onConflictDoUpdate({ target: buildingDefinitions.id, set: { ...row } });
   }
@@ -378,7 +377,7 @@ async function seed() {
 
   // 2b. Bonus definitions (upsert)
   for (const bd of BONUS_DEFINITIONS) {
-    const { id, ...bdData } = bd;
+    const { id: _id, ...bdData } = bd;
     await db.insert(bonusDefinitions).values(bd)
       .onConflictDoUpdate({ target: bonusDefinitions.id, set: bdData });
   }
@@ -386,7 +385,7 @@ async function seed() {
 
   // 3. Research definitions
   for (const r of RESEARCH) {
-    const { prerequisites: _rp, ...row } = r;
+    const { prerequisites: _prereqs, ...row } = r;
     await db.insert(researchDefinitions).values(row)
       .onConflictDoUpdate({ target: researchDefinitions.id, set: { ...row } });
   }
@@ -410,7 +409,7 @@ async function seed() {
 
   // 5. Ship definitions
   for (const s of SHIPS) {
-    const { prerequisites: _sp, ...row } = s;
+    const { prerequisites: _prereqs, ...row } = s;
     const values = { isStationary: false, ...row };
     await db.insert(shipDefinitions).values(values)
       .onConflictDoUpdate({ target: shipDefinitions.id, set: values });
@@ -435,7 +434,7 @@ async function seed() {
 
   // 7. Defense definitions
   for (const d of DEFENSES) {
-    const { prerequisites: _dp, ...row } = d;
+    const { prerequisites: _prereqs, ...row } = d;
     await db.insert(defenseDefinitions).values(row)
       .onConflictDoUpdate({ target: defenseDefinitions.id, set: { ...row } });
   }
@@ -487,7 +486,7 @@ async function seed() {
 
   // 13. Pirate templates
   for (const pt of PIRATE_TEMPLATES) {
-    const { id, ...ptData } = pt;
+    const { id: _id, ...ptData } = pt;
     await db.insert(pirateTemplates).values(pt)
       .onConflictDoUpdate({ target: pirateTemplates.id, set: ptData });
   }
@@ -495,14 +494,14 @@ async function seed() {
 
   // 14. Tutorial quest definitions
   for (const tq of TUTORIAL_QUESTS) {
-    const { id, ...tqData } = tq;
+    const { id: _id, ...tqData } = tq;
     await db.insert(tutorialQuestDefinitions).values(tq)
       .onConflictDoUpdate({ target: tutorialQuestDefinitions.id, set: tqData });
   }
   console.log(`  ✓ ${TUTORIAL_QUESTS.length} tutorial quest definitions`);
 
   // 15. Migrate existing planets: set homeworld type on first planet of each user
-  const homePlanets = await db.execute(sql`
+  await db.execute(sql`
     UPDATE planets SET planet_class_id = 'homeworld'
     WHERE planet_class_id IS NULL
     AND id IN (

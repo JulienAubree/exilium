@@ -67,7 +67,7 @@ export default function Fleet() {
     setTarget({ galaxy: data.galaxy, system: data.system, position: data.position });
     setMission(data.mission);
     setSearchParams({}, { replace: true });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Default target to current planet coordinates (when no PvE params)
   useEffect(() => {

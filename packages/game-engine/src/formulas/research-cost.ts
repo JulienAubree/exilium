@@ -1,5 +1,5 @@
 import { getPhaseMultiplier } from '../constants/progression.js';
-import type { ResourceCost, BuildingCostDef } from './building-cost.js';
+import type { ResourceCost } from './building-cost.js';
 
 export interface ResearchCostDef {
   baseCost: { minerai: number; silicium: number; hydrogene: number };
