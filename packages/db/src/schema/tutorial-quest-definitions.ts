@@ -11,4 +11,5 @@ export const tutorialQuestDefinitions = pgTable('tutorial_quest_definitions', {
   rewardMinerai: integer('reward_minerai').notNull().default(0),
   rewardSilicium: integer('reward_silicium').notNull().default(0),
   rewardHydrogene: integer('reward_hydrogene').notNull().default(0),
+  conditionLabel: varchar('condition_label', { length: 128 }),
 });

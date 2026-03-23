@@ -42,6 +42,7 @@ export const bonusDefinitions = pgTable('bonus_definitions', {
   stat: varchar('stat', { length: 64 }).notNull(),
   percentPerLevel: real('percent_per_level').notNull(),
   category: varchar('category', { length: 64 }),
+  statLabel: varchar('stat_label', { length: 128 }),
 });
 
 // ── Research Definitions ──
