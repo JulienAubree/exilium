@@ -1,13 +1,6 @@
-import {
-  BUILDINGS, type BuildingId,
-  RESEARCH, type ResearchId,
-  SHIPS, type ShipId,
-  DEFENSES, type DefenseId,
-} from '@ogame-clone/game-engine';
-
 /**
  * Centralized name resolver — never returns a raw ID.
- * Priority: gameConfig (DB) > game-engine constants > hardcoded fallback map.
+ * Priority: gameConfig (DB) > humanized ID.
  */
 
 interface GameConfigLike {
@@ -17,37 +10,30 @@ interface GameConfigLike {
   defenses?: Record<string, { name: string }>;
 }
 
+function humanize(id: string): string {
+  return id.replace(/([A-Z])/g, ' $1').trim();
+}
 
 export function getBuildingName(id: string, config?: GameConfigLike | null): string {
-  return config?.buildings?.[id]?.name
-    ?? BUILDINGS[id as BuildingId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+  return config?.buildings?.[id]?.name ?? humanize(id);
 }
 
 export function getResearchName(id: string, config?: GameConfigLike | null): string {
-  return config?.research?.[id]?.name
-    ?? RESEARCH[id as ResearchId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+  return config?.research?.[id]?.name ?? humanize(id);
 }
 
 export function getShipName(id: string, config?: GameConfigLike | null): string {
-  return config?.ships?.[id]?.name
-    ?? SHIPS[id as ShipId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+  return config?.ships?.[id]?.name ?? humanize(id);
 }
 
 export function getDefenseName(id: string, config?: GameConfigLike | null): string {
-  return config?.defenses?.[id]?.name
-    ?? DEFENSES[id as DefenseId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+  return config?.defenses?.[id]?.name ?? humanize(id);
 }
 
 export function getUnitName(id: string, config?: GameConfigLike | null): string {
   return config?.ships?.[id]?.name
     ?? config?.defenses?.[id]?.name
-    ?? SHIPS[id as ShipId]?.name
-    ?? DEFENSES[id as DefenseId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+    ?? humanize(id);
 }
 
 export function getEntityName(id: string, config?: GameConfigLike | null): string {
@@ -55,9 +41,5 @@ export function getEntityName(id: string, config?: GameConfigLike | null): strin
     ?? config?.research?.[id]?.name
     ?? config?.ships?.[id]?.name
     ?? config?.defenses?.[id]?.name
-    ?? BUILDINGS[id as BuildingId]?.name
-    ?? RESEARCH[id as ResearchId]?.name
-    ?? SHIPS[id as ShipId]?.name
-    ?? DEFENSES[id as DefenseId]?.name
-    ?? id.replace(/([A-Z])/g, ' $1').trim();
+    ?? humanize(id);
 }
