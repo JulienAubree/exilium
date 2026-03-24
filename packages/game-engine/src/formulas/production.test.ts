@@ -138,3 +138,34 @@ describe('Solar satellite energy', () => {
     expect(solarSatelliteEnergy(240, true)).toBe(50);
   });
 });
+
+describe('Parametric config', () => {
+  it('mineraiProduction with custom config', () => {
+    const result = mineraiProduction(5, 1, { baseProduction: 50, exponentBase: 1.2 });
+    // 50 * 5 * 1.2^5 = 250 * 2.48832 = 622.08 -> 622
+    expect(result).toBe(622);
+  });
+
+  it('hydrogeneProduction with custom temp coeffs', () => {
+    const result = hydrogeneProduction(5, 80, 1, { baseProduction: 10, exponentBase: 1.1, tempCoeffA: 2.0, tempCoeffB: 0.01 });
+    // 10 * 5 * 1.61051 * (2.0 - 0.8) = 80.5255 * 1.2 = 96.63 -> 96
+    expect(result).toBe(96);
+  });
+
+  it('storageCapacity with custom config', () => {
+    const result = storageCapacity(1, { storageBase: 10000, coeffA: 2.5, coeffB: 20, coeffC: 33 });
+    // 10000 * floor(2.5 * e^(20/33)) = 10000 * floor(4.585) = 10000 * 4 = 40000
+    expect(result).toBe(40000);
+  });
+
+  it('solarSatelliteEnergy with custom config', () => {
+    expect(solarSatelliteEnergy(80, true, { homePlanetEnergy: 100, baseDivisor: 4, baseOffset: 20 })).toBe(100);
+    expect(solarSatelliteEnergy(80, false, { homePlanetEnergy: 100, baseDivisor: 2, baseOffset: 10 })).toBe(50);
+  });
+
+  it('energyConsumption with custom config', () => {
+    const result = mineraiMineEnergy(5, { baseConsumption: 20, exponentBase: 1.1 });
+    // 20 * 5 * 1.61051 = 161.051 -> 161
+    expect(result).toBe(161);
+  });
+});

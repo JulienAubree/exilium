@@ -1,65 +1,93 @@
 /**
  * Minerai mine production per hour.
- * Formula: 30 * level * 1.1^level * productionFactor
+ * Formula: baseProduction * level * exponentBase^level * productionFactor
  */
-export function mineraiProduction(level: number, productionFactor: number = 1): number {
-  return Math.floor(30 * level * Math.pow(1.1, level) * productionFactor);
+export function mineraiProduction(
+  level: number,
+  productionFactor: number = 1,
+  config: { baseProduction: number; exponentBase: number } = { baseProduction: 30, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseProduction * level * Math.pow(config.exponentBase, level) * productionFactor);
 }
 
 /**
  * Silicium mine production per hour.
- * Formula: 20 * level * 1.1^level * productionFactor
+ * Formula: baseProduction * level * exponentBase^level * productionFactor
  */
-export function siliciumProduction(level: number, productionFactor: number = 1): number {
-  return Math.floor(20 * level * Math.pow(1.1, level) * productionFactor);
+export function siliciumProduction(
+  level: number,
+  productionFactor: number = 1,
+  config: { baseProduction: number; exponentBase: number } = { baseProduction: 20, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseProduction * level * Math.pow(config.exponentBase, level) * productionFactor);
 }
 
 /**
  * Hydrogen synthesizer production per hour.
- * Formula: 10 * level * 1.1^level * (1.36 - 0.004 * maxTemp) * productionFactor
+ * Formula: baseProduction * level * exponentBase^level * (tempCoeffA - tempCoeffB * maxTemp) * productionFactor
  */
-export function hydrogeneProduction(level: number, maxTemp: number, productionFactor: number = 1): number {
-  return Math.floor(10 * level * Math.pow(1.1, level) * (1.36 - 0.004 * maxTemp) * productionFactor);
+export function hydrogeneProduction(
+  level: number,
+  maxTemp: number,
+  productionFactor: number = 1,
+  config: { baseProduction: number; exponentBase: number; tempCoeffA: number; tempCoeffB: number } = { baseProduction: 10, exponentBase: 1.1, tempCoeffA: 1.36, tempCoeffB: 0.004 },
+): number {
+  return Math.floor(config.baseProduction * level * Math.pow(config.exponentBase, level) * (config.tempCoeffA - config.tempCoeffB * maxTemp) * productionFactor);
 }
 
 /**
  * Solar plant energy production.
- * Formula: 20 * level * 1.1^level
+ * Formula: baseProduction * level * exponentBase^level
  */
-export function solarPlantEnergy(level: number): number {
-  return Math.floor(20 * level * Math.pow(1.1, level));
+export function solarPlantEnergy(
+  level: number,
+  config: { baseProduction: number; exponentBase: number } = { baseProduction: 20, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseProduction * level * Math.pow(config.exponentBase, level));
 }
 
 /**
  * Minerai mine energy consumption.
- * Formula: 10 * level * 1.1^level
+ * Formula: baseConsumption * level * exponentBase^level
  */
-export function mineraiMineEnergy(level: number): number {
-  return Math.floor(10 * level * Math.pow(1.1, level));
+export function mineraiMineEnergy(
+  level: number,
+  config: { baseConsumption: number; exponentBase: number } = { baseConsumption: 10, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseConsumption * level * Math.pow(config.exponentBase, level));
 }
 
 /**
  * Silicium mine energy consumption.
- * Formula: 10 * level * 1.1^level
+ * Formula: baseConsumption * level * exponentBase^level
  */
-export function siliciumMineEnergy(level: number): number {
-  return Math.floor(10 * level * Math.pow(1.1, level));
+export function siliciumMineEnergy(
+  level: number,
+  config: { baseConsumption: number; exponentBase: number } = { baseConsumption: 10, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseConsumption * level * Math.pow(config.exponentBase, level));
 }
 
 /**
  * Hydrogen synthesizer energy consumption.
- * Formula: 20 * level * 1.1^level
+ * Formula: baseConsumption * level * exponentBase^level
  */
-export function hydrogeneSynthEnergy(level: number): number {
-  return Math.floor(20 * level * Math.pow(1.1, level));
+export function hydrogeneSynthEnergy(
+  level: number,
+  config: { baseConsumption: number; exponentBase: number } = { baseConsumption: 20, exponentBase: 1.1 },
+): number {
+  return Math.floor(config.baseConsumption * level * Math.pow(config.exponentBase, level));
 }
 
 /**
  * Storage capacity for minerai, silicium, or hydrogene.
- * Formula: 5000 * floor(2.5 * e^(20 * level / 33))
+ * Formula: storageBase * floor(coeffA * e^(coeffB * level / coeffC))
  */
-export function storageCapacity(level: number): number {
-  return 5000 * Math.floor(2.5 * Math.exp((20 * level) / 33));
+export function storageCapacity(
+  level: number,
+  config: { storageBase: number; coeffA: number; coeffB: number; coeffC: number } = { storageBase: 5000, coeffA: 2.5, coeffB: 20, coeffC: 33 },
+): number {
+  return config.storageBase * Math.floor(config.coeffA * Math.exp((config.coeffB * level) / config.coeffC));
 }
 
 /**
@@ -76,10 +104,14 @@ export function calculateProductionFactor(energyProduced: number, energyConsumed
 
 /**
  * Solar satellite energy production per unit.
- * Home planet: always 50.
- * Other planets: max(10, floor(maxTemp / 4) + 20)
+ * Home planet: always homePlanetEnergy.
+ * Other planets: max(10, floor(maxTemp / baseDivisor) + baseOffset)
  */
-export function solarSatelliteEnergy(maxTemp: number, isHomePlanet: boolean = false): number {
-  if (isHomePlanet) return 50;
-  return Math.max(10, Math.floor(maxTemp / 4) + 20);
+export function solarSatelliteEnergy(
+  maxTemp: number,
+  isHomePlanet: boolean = false,
+  config: { homePlanetEnergy: number; baseDivisor: number; baseOffset: number } = { homePlanetEnergy: 50, baseDivisor: 4, baseOffset: 20 },
+): number {
+  if (isHomePlanet) return config.homePlanetEnergy;
+  return Math.max(10, Math.floor(maxTemp / config.baseDivisor) + config.baseOffset);
 }
