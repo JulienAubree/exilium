@@ -5,11 +5,14 @@ import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFiel
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration } from '../fleet.types.js';
+import { findShipByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
 
 export class ColonizeHandler implements MissionHandler {
-  async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
+  async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
+    const config = await ctx.gameConfigService.getFullConfig();
+    const colonyShipDef = findShipByRole(config, 'colonizer');
     for (const [shipType, count] of Object.entries(input.ships)) {
-      if (count > 0 && shipType !== 'colonyShip') {
+      if (count > 0 && shipType !== colonyShipDef.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seuls les vaisseaux de colonisation peuvent être envoyés en mission colonisation' });
       }
     }
@@ -24,6 +27,8 @@ export class ColonizeHandler implements MissionHandler {
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
 
     const config = await ctx.gameConfigService.getFullConfig();
+    const colonyShipDef = findShipByRole(config, 'colonizer');
+    const homeworldType = findPlanetTypeByRole(config, 'homeworld');
     const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
     const maxPlanetsPerPlayer = Number(config.universe.maxPlanetsPerPlayer) || 9;
 
@@ -94,7 +99,7 @@ export class ColonizeHandler implements MissionHandler {
 
     // Success: create new planet
     const planetTypeForPos = config.planetTypes.find(
-      (pt) => pt.id !== 'homeworld' && (pt.positions as number[]).includes(fleetEvent.targetPosition),
+      (pt) => pt.id !== homeworldType.id && (pt.positions as number[]).includes(fleetEvent.targetPosition),
     );
 
     const randomOffset = Math.floor(Math.random() * 41) - 20;
@@ -111,7 +116,7 @@ export class ColonizeHandler implements MissionHandler {
       diameter = calculateDiameter(fleetEvent.targetPosition, Math.random());
     }
     const maxFields = calculateMaxFields(diameter, fieldsBonus);
-    const planetImageIndex = getRandomPlanetImageIndex(planetTypeForPos?.id ?? 'homeworld', ctx.assetsDir);
+    const planetImageIndex = getRandomPlanetImageIndex(planetTypeForPos?.id ?? homeworldType.id, ctx.assetsDir);
 
     const [newPlanet] = await ctx.db
       .insert(planets)
@@ -136,8 +141,8 @@ export class ColonizeHandler implements MissionHandler {
 
     // Colony ship is consumed
     const remainingShips = { ...ships };
-    if (remainingShips.colonyShip) {
-      remainingShips.colonyShip = Math.max(0, remainingShips.colonyShip - 1);
+    if (remainingShips[colonyShipDef.id]) {
+      remainingShips[colonyShipDef.id] = Math.max(0, remainingShips[colonyShipDef.id] - 1);
     }
 
     // Mark original event completed

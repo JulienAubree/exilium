@@ -5,11 +5,14 @@ import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity } from
 import type { Database } from '@ogame-clone/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration, buildShipStatsMap } from '../fleet.types.js';
+import { findShipByRole } from '../../../lib/config-helpers.js';
 
 export class SpyHandler implements MissionHandler {
-  async validateFleet(input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
+  async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
+    const config = await ctx.gameConfigService.getFullConfig();
+    const probeDef = findShipByRole(config, 'probe');
     for (const [shipType, count] of Object.entries(input.ships)) {
-      if (count > 0 && shipType !== 'espionageProbe') {
+      if (count > 0 && shipType !== probeDef.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seules les sondes d\'espionnage peuvent être envoyées en mission espionnage' });
       }
     }
@@ -17,7 +20,9 @@ export class SpyHandler implements MissionHandler {
 
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
     const ships = fleetEvent.ships;
-    const probeCount = ships.espionageProbe ?? 0;
+    const config = await ctx.gameConfigService.getFullConfig();
+    const probeDef = findShipByRole(config, 'probe');
+    const probeCount = ships[probeDef.id] ?? 0;
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
 
     const attackerTech = await this.getEspionageTech(ctx.db, fleetEvent.userId);
