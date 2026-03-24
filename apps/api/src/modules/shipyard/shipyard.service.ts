@@ -1,4 +1,4 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, asc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
@@ -359,6 +359,7 @@ export function createShipyardService(
             ...(facilityId ? [eq(buildQueue.facilityId, facilityId)] : []),
           ),
         )
+        .orderBy(asc(buildQueue.startTime))
         .limit(1);
 
       if (!nextBatch) return;
