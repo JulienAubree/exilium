@@ -7,6 +7,7 @@ import { CoordinateInput } from '@/components/common/CoordinateInput';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
+import { AsteroidBelt } from '@/components/galaxy/AsteroidBelt';
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
 
@@ -119,14 +120,15 @@ export default function Galaxy() {
                 if (isBelt) {
                   const beltMission = missionByPosition.get(i + 1);
                   return (
-                    <div key={i} className="flex items-center gap-3 rounded-lg p-2 bg-orange-500/5 border border-orange-500/20">
-                      <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
-                      <span className="flex-1 text-sm text-orange-400">Ceinture d&apos;astéroïdes</span>
+                    <div key={i} className="relative flex items-center gap-3 rounded-lg p-2 overflow-hidden border border-orange-500/20 bg-gradient-to-r from-orange-950/20 via-orange-900/10 to-orange-950/20">
+                      <AsteroidBelt className="absolute inset-0 w-full h-full opacity-60" />
+                      <span className="relative z-10 w-6 text-center text-xs font-mono text-orange-400/80">{i + 1}</span>
+                      <span className="relative z-10 flex-1 text-sm font-medium text-orange-300/90 tracking-wide">Ceinture d&apos;astéroïdes</span>
                       {beltMission && (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20"
+                          className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20"
                           onClick={() => navigate(`/fleet?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                         >
                           Miner
@@ -197,10 +199,13 @@ export default function Galaxy() {
                     if (isBelt) {
                       const beltMission = missionByPosition.get(i + 1);
                       return (
-                        <tr key={i} className="border-b border-orange-500/20 bg-orange-500/5">
-                          <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
-                          <td colSpan={3} className="px-2 py-1 text-sm text-orange-400">
-                            Ceinture d&apos;astéroïdes
+                        <tr key={i} className="border-b border-orange-500/20">
+                          <td className="px-2 py-1 text-orange-400/80">{i + 1}</td>
+                          <td colSpan={3} className="px-2 py-1 relative overflow-hidden">
+                            <div className="relative h-8 flex items-center rounded bg-gradient-to-r from-orange-950/20 via-orange-900/10 to-orange-950/20">
+                              <AsteroidBelt className="absolute inset-0 w-full h-full opacity-60" />
+                              <span className="relative z-10 pl-2 text-sm font-medium text-orange-300/90 tracking-wide">Ceinture d&apos;astéroïdes</span>
+                            </div>
                           </td>
                           <td className="px-2 py-1">
                             {beltMission && (
