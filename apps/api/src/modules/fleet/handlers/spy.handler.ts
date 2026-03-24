@@ -52,8 +52,13 @@ export class SpyHandler implements MissionHandler {
     }
 
     const defenderTech = await this.getEspionageTech(ctx.db, targetPlanet.userId);
-    const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech);
-    const detectionChance = calculateDetectionChance(probeCount, attackerTech, defenderTech);
+    const spyThresholds = (config.universe['spy_visibility_thresholds'] as number[] | undefined) ?? [1, 3, 5, 7, 9];
+    const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech, spyThresholds);
+    const detectionConfig = {
+      probeMultiplier: Number(config.universe['spy_probe_multiplier']) || 2,
+      techMultiplier: Number(config.universe['spy_tech_multiplier']) || 4,
+    };
+    const detectionChance = calculateDetectionChance(probeCount, attackerTech, defenderTech, detectionConfig);
     const detected = Math.random() * 100 < detectionChance;
 
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());

@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { planets, planetShips, fleetEvents, userResearch, pveMissions } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus } from '@ogame-clone/game-engine';
-import type { BonusDefinition, ShipStats } from '@ogame-clone/game-engine';
+import type { BonusDefinition, ShipStats, FleetConfig } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -60,6 +60,18 @@ export function createFleetService(
     assetsDir: env.ASSETS_DIR,
   };
 
+  function buildFleetConfig(config: { universe: Record<string, unknown> }): FleetConfig {
+    return {
+      galaxyFactor: Number(config.universe.fleet_distance_galaxy_factor) || 20000,
+      systemBase: Number(config.universe.fleet_distance_system_base) || 2700,
+      systemFactor: Number(config.universe.fleet_distance_system_factor) || 95,
+      positionBase: Number(config.universe.fleet_distance_position_base) || 1000,
+      positionFactor: Number(config.universe.fleet_distance_position_factor) || 5,
+      samePositionDistance: Number(config.universe.fleet_same_position_distance) || 5,
+      speedFactor: Number(config.universe.fleet_speed_factor) || 35000,
+    };
+  }
+
   return {
     async sendFleet(userId: string, input: SendFleetInput) {
       const planet = await this.getOwnedPlanet(userId, input.originPlanetId);
@@ -100,12 +112,13 @@ export function createFleetService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun vaisseau sélectionné' });
       }
 
+      const fleetConfig = buildFleetConfig(config);
       const origin = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
       const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
-      const dist = distance(origin, target);
+      const dist = distance(origin, target, fleetConfig);
       const universeSpeed = Number(config.universe.speed) || 1;
-      const duration = travelTime(origin, target, speed, universeSpeed);
-      const fuel = fuelConsumption(input.ships, dist, duration, shipStatsMap);
+      const duration = travelTime(origin, target, speed, universeSpeed, fleetConfig);
+      const fuel = fuelConsumption(input.ships, dist, duration, shipStatsMap, { speedFactor: fleetConfig.speedFactor });
 
       // Validate cargo doesn't exceed capacity
       const cargo = totalCargoCapacity(input.ships, shipStatsMap);
@@ -659,6 +672,7 @@ export function createFleetService(
       if (!originPlanet) return;
 
       const config = await gameConfigService.getFullConfig();
+      const fleetConfig = buildFleetConfig(config);
       const shipStatsMap = buildShipStatsMap(config);
       const [event] = await db.select().from(fleetEvents).where(eq(fleetEvents.id, fleetEventId)).limit(1);
       const researchLevels = event ? await this.getResearchLevels(event.userId) : {};
@@ -666,7 +680,7 @@ export function createFleetService(
       const speed = fleetSpeed(ships, shipStatsMap, speedMultipliers);
       const universeSpeed = Number(config.universe.speed) || 1;
       const origin = { galaxy: originPlanet.galaxy, system: originPlanet.system, position: originPlanet.position };
-      const duration = travelTime(targetCoords, origin, speed, universeSpeed);
+      const duration = travelTime(targetCoords, origin, speed, universeSpeed, fleetConfig);
 
       const now = new Date();
       const returnTime = new Date(now.getTime() + duration * 1000);
@@ -739,12 +753,13 @@ export function createFleetService(
       const speed = fleetSpeed(input.ships, shipStatsMap, speedMultipliers);
       if (speed === 0) return { fuel: 0, duration: 0 };
 
+      const fleetConfig = buildFleetConfig(config);
       const universeSpeed = Number(config.universe.speed) || 1;
       const origin = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
       const target = { galaxy: input.targetGalaxy, system: input.targetSystem, position: input.targetPosition };
-      const dist = distance(origin, target);
-      const dur = travelTime(origin, target, speed, universeSpeed);
-      const fuel = fuelConsumption(input.ships, dist, dur, shipStatsMap);
+      const dist = distance(origin, target, fleetConfig);
+      const dur = travelTime(origin, target, speed, universeSpeed, fleetConfig);
+      const fuel = fuelConsumption(input.ships, dist, dur, shipStatsMap, { speedFactor: fleetConfig.speedFactor });
 
       return { fuel, duration: dur };
     },

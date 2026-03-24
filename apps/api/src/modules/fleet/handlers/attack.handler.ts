@@ -2,6 +2,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, debrisFields } from '@ogame-clone/db';
 import { simulateCombat, totalCargoCapacity } from '@ogame-clone/game-engine';
+import type { CombatConfig } from '@ogame-clone/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, buildCombatStats, buildShipCosts, getCombatMultipliers, formatDuration } from '../fleet.types.js';
 
@@ -44,6 +45,12 @@ export class AttackHandler implements MissionHandler {
     const shipIdSet = new Set(Object.keys(config.ships));
     const defenseIdSet = new Set(Object.keys(config.defenses));
     const debrisRatio = (config.universe['debrisRatio'] as number) ?? 0.3;
+    const combatConfig: CombatConfig = {
+      maxRounds: Number(config.universe['combat_max_rounds']) || 6,
+      bounceThreshold: Number(config.universe['combat_bounce_threshold']) || 0.01,
+      rapidDestructionThreshold: Number(config.universe['combat_rapid_destruction_threshold']) || 0.3,
+      repairProbability: Number(config.universe['combat_defense_repair_probability']) || 0.7,
+    };
 
     const [targetPlanet] = await ctx.db
       .select()
@@ -112,7 +119,7 @@ export class AttackHandler implements MissionHandler {
       const result = simulateCombat(
         ships, defenderCombined, attackerMultipliers, defenderMultipliers,
         combatStatsMap, config.rapidFire,
-        shipIdSet, shipCostsMap, defenseIdSet, debrisRatio,
+        shipIdSet, shipCostsMap, defenseIdSet, debrisRatio, combatConfig,
       );
       outcome = result.outcome;
       attackerLosses = result.attackerLosses;
