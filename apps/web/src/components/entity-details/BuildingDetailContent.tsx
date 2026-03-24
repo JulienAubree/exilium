@@ -3,6 +3,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { type PlanetContext } from '@/lib/entity-details';
 import { getBuildingName } from '@/lib/entity-names';
+import { buildProductionConfig } from '@/lib/production-config';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
@@ -43,6 +44,7 @@ function getContextualTable(
   currentLevel: number,
   maxTemp: number,
   productionFactor: number,
+  prodConfig?: ReturnType<typeof buildProductionConfig>,
 ): TableData | null {
   const pf = productionFactor;
   const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
@@ -63,19 +65,28 @@ function getContextualTable(
       return {
         type: 'mine',
         title: 'Production & Énergie',
-        rows: makeMineRows((l) => mineraiProduction(l, pf), mineraiMineEnergy),
+        rows: makeMineRows(
+          (l) => mineraiProduction(l, pf, prodConfig?.minerai),
+          (l) => mineraiMineEnergy(l, prodConfig?.mineraiEnergy),
+        ),
       };
     case 'siliciumMine':
       return {
         type: 'mine',
         title: 'Production & Énergie',
-        rows: makeMineRows((l) => siliciumProduction(l, pf), siliciumMineEnergy),
+        rows: makeMineRows(
+          (l) => siliciumProduction(l, pf, prodConfig?.silicium),
+          (l) => siliciumMineEnergy(l, prodConfig?.siliciumEnergy),
+        ),
       };
     case 'hydrogeneSynth':
       return {
         type: 'mine',
         title: 'Production & Énergie',
-        rows: makeMineRows((l) => hydrogeneProduction(l, maxTemp, pf), hydrogeneSynthEnergy),
+        rows: makeMineRows(
+          (l) => hydrogeneProduction(l, maxTemp, pf, prodConfig?.hydrogene),
+          (l) => hydrogeneSynthEnergy(l, prodConfig?.hydrogeneEnergy),
+        ),
       };
     case 'solarPlant':
       return {
@@ -83,8 +94,8 @@ function getContextualTable(
         title: "Production d'énergie",
         rows: levels.map((level, i) => ({
           level,
-          production: solarPlantEnergy(level),
-          gain: i === 0 ? null : solarPlantEnergy(level) - solarPlantEnergy(level - 1),
+          production: solarPlantEnergy(level, prodConfig?.solar),
+          gain: i === 0 ? null : solarPlantEnergy(level, prodConfig?.solar) - solarPlantEnergy(level - 1, prodConfig?.solar),
         })),
       };
     case 'storageMinerai':
@@ -95,8 +106,8 @@ function getContextualTable(
         title: 'Capacité de stockage',
         rows: levels.map((level, i) => ({
           level,
-          capacity: storageCapacity(level),
-          gain: i === 0 ? null : storageCapacity(level) - storageCapacity(level - 1),
+          capacity: storageCapacity(level, prodConfig?.storage),
+          gain: i === 0 ? null : storageCapacity(level, prodConfig?.storage) - storageCapacity(level - 1, prodConfig?.storage),
         })),
       };
     case 'missionCenter':
@@ -148,6 +159,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
     };
   }, [gameConfig, buildingId]);
 
+  const prodConfig = useMemo(
+    () => (gameConfig ? buildProductionConfig(gameConfig) : undefined),
+    [gameConfig],
+  );
+
   // Contextual table
   const tableData = useMemo(
     () =>
@@ -156,8 +172,9 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         currentLevel,
         planetContext?.maxTemp ?? 50,
         planetContext?.productionFactor ?? 1,
+        prodConfig,
       ),
-    [buildingId, currentLevel, planetContext],
+    [buildingId, currentLevel, planetContext, prodConfig],
   );
 
   return (

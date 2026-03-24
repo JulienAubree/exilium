@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { buildProductionConfig } from '../lib/production-config';
 import { cn } from '@/lib/utils';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
@@ -38,53 +39,54 @@ function getProductionStats(
   level: number,
   maxTemp: number,
   productionFactor: number,
+  prodConfig?: ReturnType<typeof buildProductionConfig>,
 ): ProductionStats | null {
   const pf = productionFactor;
   switch (buildingId) {
     case 'mineraiMine':
       return {
-        current: mineraiProduction(level, pf),
-        next: mineraiProduction(level + 1, pf),
-        delta: mineraiProduction(level + 1, pf) - mineraiProduction(level, pf),
+        current: mineraiProduction(level, pf, prodConfig?.minerai),
+        next: mineraiProduction(level + 1, pf, prodConfig?.minerai),
+        delta: mineraiProduction(level + 1, pf, prodConfig?.minerai) - mineraiProduction(level, pf, prodConfig?.minerai),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: mineraiMineEnergy(level),
-        energyNext: mineraiMineEnergy(level + 1),
-        energyDelta: mineraiMineEnergy(level + 1) - mineraiMineEnergy(level),
+        energyCurrent: mineraiMineEnergy(level, prodConfig?.mineraiEnergy),
+        energyNext: mineraiMineEnergy(level + 1, prodConfig?.mineraiEnergy),
+        energyDelta: mineraiMineEnergy(level + 1, prodConfig?.mineraiEnergy) - mineraiMineEnergy(level, prodConfig?.mineraiEnergy),
       };
     case 'siliciumMine':
       return {
-        current: siliciumProduction(level, pf),
-        next: siliciumProduction(level + 1, pf),
-        delta: siliciumProduction(level + 1, pf) - siliciumProduction(level, pf),
+        current: siliciumProduction(level, pf, prodConfig?.silicium),
+        next: siliciumProduction(level + 1, pf, prodConfig?.silicium),
+        delta: siliciumProduction(level + 1, pf, prodConfig?.silicium) - siliciumProduction(level, pf, prodConfig?.silicium),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: siliciumMineEnergy(level),
-        energyNext: siliciumMineEnergy(level + 1),
-        energyDelta: siliciumMineEnergy(level + 1) - siliciumMineEnergy(level),
+        energyCurrent: siliciumMineEnergy(level, prodConfig?.siliciumEnergy),
+        energyNext: siliciumMineEnergy(level + 1, prodConfig?.siliciumEnergy),
+        energyDelta: siliciumMineEnergy(level + 1, prodConfig?.siliciumEnergy) - siliciumMineEnergy(level, prodConfig?.siliciumEnergy),
       };
     case 'hydrogeneSynth':
       return {
-        current: hydrogeneProduction(level, maxTemp, pf),
-        next: hydrogeneProduction(level + 1, maxTemp, pf),
-        delta: hydrogeneProduction(level + 1, maxTemp, pf) - hydrogeneProduction(level, maxTemp, pf),
+        current: hydrogeneProduction(level, maxTemp, pf, prodConfig?.hydrogene),
+        next: hydrogeneProduction(level + 1, maxTemp, pf, prodConfig?.hydrogene),
+        delta: hydrogeneProduction(level + 1, maxTemp, pf, prodConfig?.hydrogene) - hydrogeneProduction(level, maxTemp, pf, prodConfig?.hydrogene),
         label: 'Production', unit: '/h', color: 'text-emerald-400',
-        energyCurrent: hydrogeneSynthEnergy(level),
-        energyNext: hydrogeneSynthEnergy(level + 1),
-        energyDelta: hydrogeneSynthEnergy(level + 1) - hydrogeneSynthEnergy(level),
+        energyCurrent: hydrogeneSynthEnergy(level, prodConfig?.hydrogeneEnergy),
+        energyNext: hydrogeneSynthEnergy(level + 1, prodConfig?.hydrogeneEnergy),
+        energyDelta: hydrogeneSynthEnergy(level + 1, prodConfig?.hydrogeneEnergy) - hydrogeneSynthEnergy(level, prodConfig?.hydrogeneEnergy),
       };
     case 'solarPlant':
       return {
-        current: solarPlantEnergy(level),
-        next: solarPlantEnergy(level + 1),
-        delta: solarPlantEnergy(level + 1) - solarPlantEnergy(level),
+        current: solarPlantEnergy(level, prodConfig?.solar),
+        next: solarPlantEnergy(level + 1, prodConfig?.solar),
+        delta: solarPlantEnergy(level + 1, prodConfig?.solar) - solarPlantEnergy(level, prodConfig?.solar),
         label: 'Énergie', unit: '', color: 'text-amber-400',
       };
     case 'storageMinerai':
     case 'storageSilicium':
     case 'storageHydrogene':
       return {
-        current: storageCapacity(level),
-        next: storageCapacity(level + 1),
-        delta: storageCapacity(level + 1) - storageCapacity(level),
+        current: storageCapacity(level, prodConfig?.storage),
+        next: storageCapacity(level + 1, prodConfig?.storage),
+        delta: storageCapacity(level + 1, prodConfig?.storage) - storageCapacity(level, prodConfig?.storage),
         label: 'Capacité', unit: '', color: 'text-sky-400',
       };
     default:
@@ -172,6 +174,7 @@ export default function Buildings() {
   const isAnyUpgrading = buildings.some((b) => b.isUpgrading);
   const maxTemp = resourceData?.maxTemp ?? 50;
   const productionFactor = resourceData?.rates.productionFactor ?? 1;
+  const prodConfig = gameConfig ? buildProductionConfig(gameConfig) : undefined;
 
   const buildingCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'building')
@@ -313,6 +316,7 @@ export default function Buildings() {
                       building.currentLevel,
                       maxTemp,
                       productionFactor,
+                      prodConfig,
                     );
 
                     return (

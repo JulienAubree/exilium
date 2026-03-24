@@ -204,7 +204,9 @@ export default function Fleet() {
     const refiningLevel = researchList.find((r) => r.id === 'deepSpaceRefining')?.currentLevel ?? 0;
     const position = target.position as 8 | 16;
     const baseSlagRate = Number(gameConfig.universe[`slag_rate.pos${position}`] ?? 0);
-    const slagRate = computeSlagRate(baseSlagRate, refiningLevel);
+    const decayBase = Number(gameConfig.universe.pve_slag_decay_base) || 0.85;
+    const maxRate = Number(gameConfig.universe.pve_slag_max_rate) || 0.99;
+    const slagRate = computeSlagRate(baseSlagRate, refiningLevel, { decayBase, maxRate });
 
     // Effective cargo (after slag)
     const effectiveCargo = Math.floor(cargoCapacity * (1 - slagRate));

@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { buildProductionConfig } from '@/lib/production-config';
 import { solarSatelliteEnergy } from '@ogame-clone/game-engine';
 import { Badge } from '@/components/ui/badge';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -10,6 +12,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 export default function Resources() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
+  const { data: gameConfig } = useGameConfig();
 
   const { data, isLoading } = trpc.resource.production.useQuery(
     { planetId: planetId! },
@@ -201,7 +204,8 @@ export default function Resources() {
               {(() => {
                 const satCount = data.levels.solarSatelliteCount ?? 0;
                 const isHomePlanet = data.planetClassId === 'homeworld';
-                const satEnergyPerUnit = solarSatelliteEnergy(data.maxTemp, isHomePlanet);
+                const prodConfig = gameConfig ? buildProductionConfig(gameConfig) : undefined;
+                const satEnergyPerUnit = solarSatelliteEnergy(data.maxTemp, isHomePlanet, prodConfig?.satellite);
                 const satEnergyTotal = satEnergyPerUnit * satCount;
                 const plantEnergy = data.rates.energyProduced - satEnergyTotal;
                 return (

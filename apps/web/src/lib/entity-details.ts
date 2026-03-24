@@ -8,6 +8,7 @@ import {
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
 } from '@ogame-clone/game-engine';
+import { buildProductionConfig } from './production-config';
 
 // GameConfig shape from the API
 interface GameConfigData {
@@ -151,11 +152,12 @@ export interface PlanetContext {
   productionFactor: number;
 }
 
-export function getBuildingDetails(id: string, config?: GameConfigData, planet?: PlanetContext): BuildingDetails {
+export function getBuildingDetails(id: string, config?: GameConfigData, planet?: PlanetContext, fullConfig?: Parameters<typeof buildProductionConfig>[0]): BuildingDetails {
   const cfgDef = config?.buildings[id];
   const def = BUILDINGS[id as BuildingId];
   const pf = planet?.productionFactor ?? 1;
   const maxTemp = planet?.maxTemp ?? 50;
+  const prodConfig = fullConfig ? buildProductionConfig(fullConfig) : undefined;
   const details: BuildingDetails = {
     type: 'building',
     id,
@@ -169,31 +171,31 @@ export function getBuildingDetails(id: string, config?: GameConfigData, planet?:
 
   switch (id) {
     case 'mineraiMine':
-      details.productionTable = buildTable((lvl) => mineraiProduction(lvl, pf));
+      details.productionTable = buildTable((lvl) => mineraiProduction(lvl, pf, prodConfig?.minerai));
       details.productionLabel = pf < 1 ? `Production minerai/h (energie: ${Math.round(pf * 100)}%)` : 'Production minerai/h';
-      details.energyTable = buildTable(mineraiMineEnergy);
+      details.energyTable = buildTable((lvl) => mineraiMineEnergy(lvl, prodConfig?.mineraiEnergy));
       details.energyLabel = 'Consommation energie';
       break;
     case 'siliciumMine':
-      details.productionTable = buildTable((lvl) => siliciumProduction(lvl, pf));
+      details.productionTable = buildTable((lvl) => siliciumProduction(lvl, pf, prodConfig?.silicium));
       details.productionLabel = pf < 1 ? `Production silicium/h (energie: ${Math.round(pf * 100)}%)` : 'Production silicium/h';
-      details.energyTable = buildTable(siliciumMineEnergy);
+      details.energyTable = buildTable((lvl) => siliciumMineEnergy(lvl, prodConfig?.siliciumEnergy));
       details.energyLabel = 'Consommation energie';
       break;
     case 'hydrogeneSynth':
-      details.productionTable = buildTable((lvl) => hydrogeneProduction(lvl, maxTemp, pf));
+      details.productionTable = buildTable((lvl) => hydrogeneProduction(lvl, maxTemp, pf, prodConfig?.hydrogene));
       details.productionLabel = `Production H\u2082/h (temp. ${maxTemp}${pf < 1 ? `, energie: ${Math.round(pf * 100)}%` : ''})`;
-      details.energyTable = buildTable(hydrogeneSynthEnergy);
+      details.energyTable = buildTable((lvl) => hydrogeneSynthEnergy(lvl, prodConfig?.hydrogeneEnergy));
       details.energyLabel = 'Consommation energie';
       break;
     case 'solarPlant':
-      details.energyTable = buildTable(solarPlantEnergy);
+      details.energyTable = buildTable((lvl) => solarPlantEnergy(lvl, prodConfig?.solar));
       details.energyLabel = 'Production energie';
       break;
     case 'storageMinerai':
     case 'storageSilicium':
     case 'storageHydrogene':
-      details.storageTable = buildTable(storageCapacity, 10);
+      details.storageTable = buildTable((lvl) => storageCapacity(lvl, prodConfig?.storage), 10);
       break;
   }
 

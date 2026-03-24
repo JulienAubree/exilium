@@ -3,6 +3,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { getShipDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
 import { EnergieIcon } from '@/components/common/ResourceIcons';
+import { buildProductionConfig } from '@/lib/production-config';
 import { resolveBonus, solarSatelliteEnergy } from '@ogame-clone/game-engine';
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
@@ -35,6 +36,10 @@ interface Props {
 export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlanet }: Props) {
   const { data: gameConfig } = useGameConfig();
   const details = getShipDetails(shipId, gameConfig ?? undefined);
+  const prodConfig = useMemo(
+    () => (gameConfig ? buildProductionConfig(gameConfig) : undefined),
+    [gameConfig],
+  );
 
   const effective = useMemo(() => {
     const defs = gameConfig?.bonuses ?? [];
@@ -101,7 +106,7 @@ export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlane
             <span className="text-slate-400">Par satellite</span>
             <span className="text-energy font-mono font-semibold flex items-center gap-1">
               <EnergieIcon size={12} className="text-energy" />
-              +{fmt(solarSatelliteEnergy(maxTemp ?? 50, isHomePlanet))}
+              +{fmt(solarSatelliteEnergy(maxTemp ?? 50, isHomePlanet, prodConfig?.satellite))}
             </span>
           </div>
           <p className="text-[10px] text-slate-500 leading-relaxed">
