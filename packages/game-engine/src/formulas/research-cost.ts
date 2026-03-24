@@ -6,8 +6,8 @@ export interface ResearchCostDef {
   costFactor: number;
 }
 
-export function researchCost(def: ResearchCostDef, level: number): ResourceCost {
-  const factor = Math.pow(def.costFactor, level - 1) * getPhaseMultiplier(level);
+export function researchCost(def: ResearchCostDef, level: number, phaseMap?: Record<number, number>): ResourceCost {
+  const factor = Math.pow(def.costFactor, level - 1) * getPhaseMultiplier(level, phaseMap);
   return {
     minerai: Math.floor(def.baseCost.minerai * factor),
     silicium: Math.floor(def.baseCost.silicium * factor),
@@ -19,8 +19,8 @@ export function researchCost(def: ResearchCostDef, level: number): ResourceCost 
  * Research time in seconds.
  * @param bonusMultiplier - result of resolveBonus('research_time', null, ...)
  */
-export function researchTime(def: ResearchCostDef, level: number, bonusMultiplier: number): number {
-  const cost = researchCost(def, level);
-  const seconds = Math.floor(((cost.minerai + cost.silicium) / 1000) * 3600 * bonusMultiplier * getPhaseMultiplier(level));
+export function researchTime(def: ResearchCostDef, level: number, bonusMultiplier: number, config: { timeDivisor: number; phaseMap?: Record<number, number> } = { timeDivisor: 1000 }): number {
+  const cost = researchCost(def, level, config.phaseMap);
+  const seconds = Math.floor(((cost.minerai + cost.silicium) / config.timeDivisor) * 3600 * bonusMultiplier * getPhaseMultiplier(level, config.phaseMap));
   return Math.max(1, seconds);
 }

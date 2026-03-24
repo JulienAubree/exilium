@@ -13,6 +13,6 @@ export const PHASE_MULTIPLIER: Record<number, number> = {
   7: 0.95,
 };
 
-export function getPhaseMultiplier(level: number): number {
-  return PHASE_MULTIPLIER[level] ?? 1.0;
+export function getPhaseMultiplier(level: number, phaseMap: Record<number, number> = PHASE_MULTIPLIER): number {
+  return phaseMap[level] ?? 1.0;
 }

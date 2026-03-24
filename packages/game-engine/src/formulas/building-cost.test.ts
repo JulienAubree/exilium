@@ -85,3 +85,13 @@ describe('buildingTime', () => {
     expect(time).toBe(1);
   });
 });
+
+describe('Parametric config', () => {
+  it('buildingCost with custom phaseMap', () => {
+    const def = { baseCost: { minerai: 100, silicium: 50, hydrogene: 0 }, costFactor: 2, baseTime: 60 };
+    const customPhase = { 1: 0.5 };
+    const cost = buildingCost(def, 1, customPhase);
+    // 100 * 2^0 * 0.5 = 50
+    expect(cost.minerai).toBe(50);
+  });
+});
