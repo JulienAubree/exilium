@@ -35,6 +35,20 @@ export interface CombatResult {
   repairedDefenses: Record<string, number>;
 }
 
+export interface CombatConfig {
+  maxRounds: number;
+  bounceThreshold: number;
+  rapidDestructionThreshold: number;
+  repairProbability: number;
+}
+
+const DEFAULT_COMBAT_CONFIG: CombatConfig = {
+  maxRounds: 6,
+  bounceThreshold: 0.01,
+  rapidDestructionThreshold: 0.3,
+  repairProbability: 0.7,
+};
+
 function createUnits(
   fleet: Record<string, number>,
   multipliers: CombatMultipliers,
@@ -62,13 +76,13 @@ function createUnits(
   return units;
 }
 
-function fireAtTarget(attacker: CombatUnit, target: CombatUnit): void {
+function fireAtTarget(attacker: CombatUnit, target: CombatUnit, config: CombatConfig): void {
   if (attacker.destroyed || target.destroyed) return;
 
   const damage = attacker.weapons;
 
-  // Bounce: if damage < 1% of target's max shield, no damage dealt
-  if (damage < 0.01 * target.maxShield) return;
+  // Bounce: if damage < bounceThreshold% of target's max shield, no damage dealt
+  if (damage < config.bounceThreshold * target.maxShield) return;
 
   // Shield absorbs first
   if (target.shield >= damage) {
@@ -79,8 +93,8 @@ function fireAtTarget(attacker: CombatUnit, target: CombatUnit): void {
     target.armor -= remaining;
   }
 
-  // Rapid destruction: if hull <= 30% of max, unit is destroyed
-  if (target.armor <= 0 || target.armor <= 0.3 * target.maxArmor) {
+  // Rapid destruction: if hull <= rapidDestructionThreshold% of max, unit is destroyed
+  if (target.armor <= 0 || target.armor <= config.rapidDestructionThreshold * target.maxArmor) {
     target.destroyed = true;
     target.armor = 0;
   }
@@ -90,6 +104,7 @@ function executeRound(
   attackers: CombatUnit[],
   defenders: CombatUnit[],
   rapidFireMap: Record<string, Record<string, number>>,
+  config: CombatConfig,
 ): void {
   const aliveAttackers = attackers.filter((u) => !u.destroyed);
   const aliveDefenders = defenders.filter((u) => !u.destroyed);
@@ -98,7 +113,7 @@ function executeRound(
   for (const attacker of aliveAttackers) {
     if (aliveDefenders.length === 0) break;
     let target = aliveDefenders[Math.floor(Math.random() * aliveDefenders.length)];
-    fireAtTarget(attacker, target);
+    fireAtTarget(attacker, target, config);
 
     // Rapid fire
     const rf = rapidFireMap[attacker.type];
@@ -110,7 +125,7 @@ function executeRound(
           const stillAlive = aliveDefenders.filter((u) => !u.destroyed);
           if (stillAlive.length === 0) break;
           target = stillAlive[Math.floor(Math.random() * stillAlive.length)];
-          fireAtTarget(attacker, target);
+          fireAtTarget(attacker, target, config);
         } else {
           keepFiring = false;
         }
@@ -124,7 +139,7 @@ function executeRound(
     const alive = attackers.filter((u) => !u.destroyed);
     if (alive.length === 0) break;
     const target = alive[Math.floor(Math.random() * alive.length)];
-    fireAtTarget(defender, target);
+    fireAtTarget(defender, target, config);
 
     // Rapid fire for defenders
     const rf = rapidFireMap[defender.type];
@@ -137,7 +152,7 @@ function executeRound(
           const stillAlive = attackers.filter((u) => !u.destroyed);
           if (stillAlive.length === 0) break;
           currentTarget = stillAlive[Math.floor(Math.random() * stillAlive.length)];
-          fireAtTarget(defender, currentTarget);
+          fireAtTarget(defender, currentTarget, config);
         } else {
           keepFiring = false;
         }
@@ -193,6 +208,7 @@ export function calculateDebris(
 export function repairDefenses(
   defenderLosses: Record<string, number>,
   defenseIds: Set<string>,
+  repairProbability: number = 0.7,
 ): Record<string, number> {
   const repaired: Record<string, number> = {};
 
@@ -200,7 +216,7 @@ export function repairDefenses(
     if (defenseIds.has(type)) {
       let repairedCount = 0;
       for (let i = 0; i < count; i++) {
-        if (Math.random() < 0.7) {
+        if (Math.random() < repairProbability) {
           repairedCount++;
         }
       }
@@ -224,15 +240,15 @@ export function simulateCombat(
   shipCosts: Record<string, { minerai: number; silicium: number }>,
   defenseIds: Set<string>,
   debrisRatio = 0.3,
+  combatConfig: CombatConfig = DEFAULT_COMBAT_CONFIG,
 ): CombatResult {
   const attackers = createUnits(attackerFleet, attackerMultipliers, combatStats);
   const defenders = createUnits(defenderFleet, defenderMultipliers, combatStats);
 
   const rounds: RoundResult[] = [];
-  const maxRounds = 6;
 
-  for (let round = 1; round <= maxRounds; round++) {
-    executeRound(attackers, defenders, rapidFireMap);
+  for (let round = 1; round <= combatConfig.maxRounds; round++) {
+    executeRound(attackers, defenders, rapidFireMap, combatConfig);
 
     const attackersRemaining = attackers.filter((u) => !u.destroyed).length;
     const defendersRemaining = defenders.filter((u) => !u.destroyed).length;
@@ -268,7 +284,7 @@ export function simulateCombat(
   }
 
   const debris = calculateDebris(attackerLosses, defenderLosses, shipIds, shipCosts, debrisRatio);
-  const repairedDefenses = repairDefenses(defenderLosses, defenseIds);
+  const repairedDefenses = repairDefenses(defenderLosses, defenseIds, combatConfig.repairProbability);
 
   return {
     rounds,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { simulateCombat, calculateDebris, repairDefenses } from './combat.js';
-import type { UnitCombatStats } from './combat.js';
+import type { UnitCombatStats, CombatConfig } from './combat.js';
 
 const COMBAT_STATS: Record<string, UnitCombatStats> = {
   smallCargo:     { weapons: 5,    shield: 10,    armor: 4000 },
@@ -271,5 +271,22 @@ describe('repairDefenses', () => {
     const ratio = totalRepaired / (count * destroyed);
     expect(ratio).toBeGreaterThan(0.65);
     expect(ratio).toBeLessThan(0.75);
+  });
+});
+
+describe('CombatConfig', () => {
+  it('respects custom maxRounds', () => {
+    const config: CombatConfig = { maxRounds: 1, bounceThreshold: 0.01, rapidDestructionThreshold: 0.3, repairProbability: 0.7 };
+    const stats: Record<string, UnitCombatStats> = {
+      a: { weapons: 1, shield: 0, armor: 1000 },
+      d: { weapons: 1, shield: 0, armor: 1000 },
+    };
+    const result = simulateCombat(
+      { a: 10 }, { d: 10 },
+      { weapons: 1, shielding: 1, armor: 1 },
+      { weapons: 1, shielding: 1, armor: 1 },
+      stats, {}, new Set(['a']), { a: { minerai: 100, silicium: 100 } }, new Set(), 0.3, config,
+    );
+    expect(result.rounds.length).toBe(1);
   });
 });
