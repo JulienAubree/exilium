@@ -24,6 +24,8 @@ export interface RoundResult {
   round: number;
   attackersRemaining: number;
   defendersRemaining: number;
+  attackerShips: Record<string, number>;
+  defenderShips: Record<string, number>;
 }
 
 export interface CombatResult {
@@ -74,6 +76,16 @@ function createUnits(
     }
   }
   return units;
+}
+
+function countSurvivingByType(units: CombatUnit[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const unit of units) {
+    if (!unit.destroyed) {
+      counts[unit.type] = (counts[unit.type] ?? 0) + 1;
+    }
+  }
+  return counts;
 }
 
 function fireAtTarget(attacker: CombatUnit, target: CombatUnit, config: CombatConfig): void {
@@ -253,7 +265,13 @@ export function simulateCombat(
     const attackersRemaining = attackers.filter((u) => !u.destroyed).length;
     const defendersRemaining = defenders.filter((u) => !u.destroyed).length;
 
-    rounds.push({ round, attackersRemaining, defendersRemaining });
+    rounds.push({
+      round,
+      attackersRemaining,
+      defendersRemaining,
+      attackerShips: countSurvivingByType(attackers),
+      defenderShips: countSurvivingByType(defenders),
+    });
 
     if (attackersRemaining === 0 || defendersRemaining === 0) break;
   }

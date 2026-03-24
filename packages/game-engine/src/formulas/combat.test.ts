@@ -250,6 +250,26 @@ describe('simulateCombat', () => {
     expect(result.outcome).toBe('attacker');
     expect(result.rounds.length).toBeLessThanOrEqual(6);
   });
+
+  it('rounds include per-type ship counts', () => {
+    const result = simulateCombat(
+      { battleship: 5 },
+      { lightFighter: 10, rocketLauncher: 5 },
+      unitMultipliers,
+      unitMultipliers,
+      COMBAT_STATS,
+      RAPID_FIRE,
+      SHIP_IDS,
+      SHIP_COSTS,
+      DEFENSE_IDS,
+    );
+    expect(result.rounds.length).toBeGreaterThanOrEqual(1);
+    const firstRound = result.rounds[0];
+    expect(firstRound.attackerShips).toBeDefined();
+    expect(firstRound.defenderShips).toBeDefined();
+    expect(typeof firstRound.attackerShips.battleship).toBe('number');
+    expect(firstRound.defenderShips).toBeDefined();
+  });
 });
 
 describe('repairDefenses', () => {
