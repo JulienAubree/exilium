@@ -18,6 +18,7 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
           planetType: planets.planetType,
           userId: planets.userId,
           username: users.username,
+          allianceId: allianceMembers.allianceId,
           allianceTag: alliances.tag,
           planetClassId: planets.planetClassId,
         })

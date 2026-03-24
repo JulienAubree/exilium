@@ -35,6 +35,7 @@ export default function Galaxy() {
     { galaxy, system },
   );
   const { data: gameConfig } = useGameConfig();
+  const { data: myAlliance } = trpc.alliance.myAlliance.useQuery();
   const { data: pveData } = trpc.pve.getMissions.useQuery();
 
   // Map position → mission for current galaxy:system
@@ -116,6 +117,9 @@ export default function Galaxy() {
             >
               {data?.slots.map((slot, i) => {
                 const isBelt = slot && 'type' in slot && (slot as any).type === 'belt';
+                const isOtherPlayer = slot && !isBelt && (slot as any).userId && (slot as any).userId !== currentUser?.id;
+                const isSameAlliance = isOtherPlayer && myAlliance && (slot as any).allianceId && (slot as any).allianceId === myAlliance.id;
+                const canAttack = isOtherPlayer && !isSameAlliance;
 
                 if (isBelt) {
                   const beltMission = missionByPosition.get(i + 1);
@@ -160,7 +164,7 @@ export default function Galaxy() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1 ml-auto">
-                          {(slot as any).userId && (slot as any).userId !== currentUser?.id && (
+                          {isOtherPlayer && (
                             <>
                               <Button
                                 size="sm"
@@ -170,14 +174,16 @@ export default function Galaxy() {
                               >
                                 Espionner
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
-                              >
-                                Attaquer
-                              </Button>
+                              {canAttack && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                  onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                >
+                                  Attaquer
+                                </Button>
+                              )}
                             </>
                           )}
                           {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
@@ -217,6 +223,9 @@ export default function Galaxy() {
                 <tbody>
                   {data?.slots.map((slot, i) => {
                     const isBelt = slot && 'type' in slot && (slot as any).type === 'belt';
+                    const isOtherPlayer2 = slot && !isBelt && (slot as any).userId && (slot as any).userId !== currentUser?.id;
+                    const isSameAlliance2 = isOtherPlayer2 && myAlliance && (slot as any).allianceId && (slot as any).allianceId === myAlliance.id;
+                    const canAttack2 = isOtherPlayer2 && !isSameAlliance2;
 
                     if (isBelt) {
                       const beltMission = missionByPosition.get(i + 1);
@@ -275,7 +284,7 @@ export default function Galaxy() {
                               )}
                             </td>
                             <td className="px-2 py-1">
-                              {(slot as any).userId && (slot as any).userId !== currentUser?.id && (
+                              {isOtherPlayer2 && (
                                 <div className="flex items-center gap-1">
                                   <Button
                                     size="sm"
@@ -286,15 +295,17 @@ export default function Galaxy() {
                                   >
                                     Espionner
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                    onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
-                                    title="Attaquer"
-                                  >
-                                    Attaquer
-                                  </Button>
+                                  {canAttack2 && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                      onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                      title="Attaquer"
+                                    >
+                                      Attaquer
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="ghost"
