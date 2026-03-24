@@ -1,9 +1,4 @@
 import {
-  BUILDINGS, type BuildingId,
-  RESEARCH, type ResearchId,
-  SHIPS, type ShipId,
-  DEFENSES, type DefenseId,
-  COMBAT_STATS, RAPID_FIRE, SHIP_STATS,
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
@@ -94,16 +89,15 @@ function humanize(id: string): string {
 }
 
 export function resolveBuildingName(id: string, config?: GameConfigData): string {
-  return config?.buildings[id]?.name ?? BUILDINGS[id as BuildingId]?.name ?? humanize(id);
+  return config?.buildings[id]?.name ?? humanize(id);
 }
 
 export function resolveResearchName(id: string, config?: GameConfigData): string {
-  return config?.research[id]?.name ?? RESEARCH[id as ResearchId]?.name ?? humanize(id);
+  return config?.research[id]?.name ?? humanize(id);
 }
 
 function resolveUnitName(id: string, config?: GameConfigData): string {
-  return config?.ships[id]?.name ?? config?.defenses[id]?.name
-    ?? SHIPS[id as ShipId]?.name ?? DEFENSES[id as DefenseId]?.name ?? humanize(id);
+  return config?.ships[id]?.name ?? config?.defenses[id]?.name ?? humanize(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +112,8 @@ function buildTable(fn: (level: number) => number, levels = 15): { level: number
 }
 
 function getRapidFireAgainst(unitId: string, config?: GameConfigData): RapidFireEntry[] {
-  const rf = config?.rapidFire ?? RAPID_FIRE;
+  const rf = config?.rapidFire;
+  if (!rf) return [];
   const targets = rf[unitId];
   if (!targets) return [];
   return Object.entries(targets).map(([targetId, value]) => ({
@@ -129,7 +124,8 @@ function getRapidFireAgainst(unitId: string, config?: GameConfigData): RapidFire
 }
 
 function getRapidFireFrom(unitId: string, config?: GameConfigData): RapidFireEntry[] {
-  const rf = config?.rapidFire ?? RAPID_FIRE;
+  const rf = config?.rapidFire;
+  if (!rf) return [];
   const entries: RapidFireEntry[] = [];
   for (const [attackerId, targets] of Object.entries(rf)) {
     if (targets[unitId]) {
@@ -154,19 +150,18 @@ export interface PlanetContext {
 
 export function getBuildingDetails(id: string, config?: GameConfigData, planet?: PlanetContext, fullConfig?: Parameters<typeof buildProductionConfig>[0]): BuildingDetails {
   const cfgDef = config?.buildings[id];
-  const def = BUILDINGS[id as BuildingId];
   const pf = planet?.productionFactor ?? 1;
   const maxTemp = planet?.maxTemp ?? 50;
   const prodConfig = fullConfig ? buildProductionConfig(fullConfig) : undefined;
   const details: BuildingDetails = {
     type: 'building',
     id,
-    name: cfgDef?.name ?? def?.name ?? humanize(id),
-    description: cfgDef?.description ?? def?.description ?? '',
+    name: cfgDef?.name ?? humanize(id),
+    description: cfgDef?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
-    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
-    costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
-    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? [],
+    baseCost: cfgDef?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
+    costFactor: cfgDef?.costFactor ?? 1,
+    prerequisites: cfgDef?.prerequisites ?? [],
   };
 
   switch (id) {
@@ -204,40 +199,38 @@ export function getBuildingDetails(id: string, config?: GameConfigData, planet?:
 
 export function getResearchDetails(id: string, config?: GameConfigData): ResearchDetails {
   const cfgDef = config?.research[id];
-  const def = RESEARCH[id as ResearchId];
   return {
     type: 'research',
     id,
-    name: cfgDef?.name ?? def?.name ?? humanize(id),
-    description: cfgDef?.description ?? def?.description ?? '',
+    name: cfgDef?.name ?? humanize(id),
+    description: cfgDef?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
     effect: cfgDef?.effectDescription ?? '',
-    baseCost: cfgDef?.baseCost ?? def?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
-    costFactor: cfgDef?.costFactor ?? def?.costFactor ?? 1,
-    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
+    baseCost: cfgDef?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
+    costFactor: cfgDef?.costFactor ?? 1,
+    prerequisites: cfgDef?.prerequisites ?? {},
   };
 }
 
 export function getShipDetails(id: string, config?: GameConfigData): ShipDetails {
   const cfgDef = config?.ships[id];
-  const def = SHIPS[id as ShipId];
   const combat = cfgDef
     ? { weapons: cfgDef.weapons, shield: cfgDef.shield, armor: cfgDef.armor }
-    : COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
+    : { weapons: 0, shield: 0, armor: 0 };
   const stats = cfgDef
     ? { baseSpeed: cfgDef.baseSpeed, fuelConsumption: cfgDef.fuelConsumption, cargoCapacity: cfgDef.cargoCapacity, driveType: cfgDef.driveType, miningExtraction: cfgDef.miningExtraction ?? 0 }
-    : { ...(SHIP_STATS[id as ShipId] ?? { baseSpeed: 0, fuelConsumption: 0, cargoCapacity: 0, driveType: 'combustion', miningExtraction: 0 }) };
+    : { baseSpeed: 0, fuelConsumption: 0, cargoCapacity: 0, driveType: 'combustion' as string, miningExtraction: 0 };
   return {
     type: 'ship',
     id,
-    name: cfgDef?.name ?? def?.name ?? humanize(id),
-    description: cfgDef?.description ?? def?.description ?? '',
+    name: cfgDef?.name ?? humanize(id),
+    description: cfgDef?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
-    cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
-    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
+    cost: cfgDef?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
+    prerequisites: cfgDef?.prerequisites ?? {},
     combat,
     stats,
-    isStationary: cfgDef?.isStationary ?? def?.isStationary ?? false,
+    isStationary: cfgDef?.isStationary ?? false,
     rapidFireAgainst: getRapidFireAgainst(id, config),
     rapidFireFrom: getRapidFireFrom(id, config),
   };
@@ -245,20 +238,19 @@ export function getShipDetails(id: string, config?: GameConfigData): ShipDetails
 
 export function getDefenseDetails(id: string, config?: GameConfigData): DefenseDetails {
   const cfgDef = config?.defenses[id];
-  const def = DEFENSES[id as DefenseId];
   const combat = cfgDef
     ? { weapons: cfgDef.weapons, shield: cfgDef.shield, armor: cfgDef.armor }
-    : COMBAT_STATS[id] ?? { weapons: 0, shield: 0, armor: 0 };
+    : { weapons: 0, shield: 0, armor: 0 };
   return {
     type: 'defense',
     id,
-    name: cfgDef?.name ?? def?.name ?? humanize(id),
-    description: cfgDef?.description ?? def?.description ?? '',
+    name: cfgDef?.name ?? humanize(id),
+    description: cfgDef?.description ?? '',
     flavorText: cfgDef?.flavorText ?? '',
-    cost: cfgDef?.cost ?? def?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
-    prerequisites: cfgDef?.prerequisites ?? def?.prerequisites ?? {},
+    cost: cfgDef?.cost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
+    prerequisites: cfgDef?.prerequisites ?? {},
     combat,
     rapidFireFrom: getRapidFireFrom(id, config),
-    maxPerPlanet: cfgDef?.maxPerPlanet ?? def?.maxPerPlanet,
+    maxPerPlanet: cfgDef?.maxPerPlanet ?? undefined,
   };
 }
