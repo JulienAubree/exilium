@@ -159,15 +159,37 @@ export default function Galaxy() {
                             {(slot as any).username}
                           </div>
                         </div>
-                        {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
-                          <Link
-                            to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
-                            className="text-xs text-orange-400 hover:underline cursor-pointer"
-                            title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
-                          >
-                            DF
-                          </Link>
-                        )}
+                        <div className="flex items-center gap-1 ml-auto">
+                          {(slot as any).userId && (slot as any).userId !== currentUser?.id && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-6 px-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                                onClick={() => navigate(`/fleet?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                              >
+                                Espionner
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                              >
+                                Attaquer
+                              </Button>
+                            </>
+                          )}
+                          {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
+                            <Link
+                              to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                              className="text-xs text-orange-400 hover:underline cursor-pointer"
+                              title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
+                            >
+                              DF
+                            </Link>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -254,17 +276,38 @@ export default function Galaxy() {
                             </td>
                             <td className="px-2 py-1">
                               {(slot as any).userId && (slot as any).userId !== currentUser?.id && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-xs h-6 px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openChat((slot as any).userId, (slot as any).username);
-                                  }}
-                                >
-                                  Message
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-xs h-6 px-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                                    onClick={() => navigate(`/fleet?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                    title="Espionner"
+                                  >
+                                    Espionner
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                    onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                    title="Attaquer"
+                                  >
+                                    Attaquer
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-xs h-6 px-1.5"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openChat((slot as any).userId, (slot as any).username);
+                                    }}
+                                    title="Message"
+                                  >
+                                    Message
+                                  </Button>
+                                </div>
                               )}
                             </td>
                           </>
