@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
 import { UserAvatar } from './UserAvatar';
@@ -7,12 +8,13 @@ import { ChatInput } from './ChatInput';
 interface ChatViewProps {
   threadId: string | null;
   otherUsername: string | null;
+  otherUserId?: string | null;
   onBack?: () => void;
   onThreadCreated?: (threadId: string) => void;
   className?: string;
 }
 
-export function ChatView({ threadId, otherUsername, onBack, onThreadCreated, className = '' }: ChatViewProps) {
+export function ChatView({ threadId, otherUsername, otherUserId, onBack, onThreadCreated, className = '' }: ChatViewProps) {
   const userId = useAuthStore((s) => s.user?.id);
   const utils = trpc.useUtils();
 
@@ -67,7 +69,13 @@ export function ChatView({ threadId, otherUsername, onBack, onThreadCreated, cla
         )}
         <UserAvatar username={otherUsername} size="md" />
         <div>
-          <div className="text-sm font-semibold text-foreground">{otherUsername}</div>
+          {otherUserId ? (
+            <Link to={`/player/${otherUserId}`} className="text-sm font-semibold text-foreground hover:underline">
+              {otherUsername}
+            </Link>
+          ) : (
+            <div className="text-sm font-semibold text-foreground">{otherUsername}</div>
+          )}
         </div>
       </div>
 

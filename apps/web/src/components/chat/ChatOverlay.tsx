@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, Link } from 'react-router';
 import { useChatStore } from '@/stores/chat.store';
 import { trpc } from '@/trpc';
 import { UserAvatar } from './UserAvatar';
@@ -104,9 +104,13 @@ function ChatFab() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline">
-                        <span className={`text-xs ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                        <Link
+                          to={`/player/${conv.otherUser.id}`}
+                          className={`text-xs hover:underline ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {conv.otherUser.username}
-                        </span>
+                        </Link>
                         <span className="text-[9px] text-muted-foreground/60 ml-1 flex-shrink-0">
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>

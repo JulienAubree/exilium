@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { UserAvatar } from './UserAvatar';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 interface ConversationListProps {
   activeThreadId: string | null;
-  onSelectThread: (threadId: string, otherUsername: string) => void;
+  onSelectThread: (threadId: string, otherUsername: string, otherUserId: string) => void;
   onNewConversation: (username: string) => void;
 }
 
@@ -129,7 +130,7 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
             filtered.map((conv) => (
               <button
                 key={conv.threadId}
-                onClick={() => onSelectThread(conv.threadId, conv.otherUser.username)}
+                onClick={() => onSelectThread(conv.threadId, conv.otherUser.username, conv.otherUser.id)}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   setDeleteConfirm(conv.threadId);
@@ -148,9 +149,13 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline">
-                    <span className={`text-sm ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                    <Link
+                      to={`/player/${conv.otherUser.id}`}
+                      className={`text-sm hover:underline ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {conv.otherUser.username}
-                    </span>
+                    </Link>
                     <span className="text-[10px] text-muted-foreground/60 ml-2 flex-shrink-0">
                       {formatRelative(conv.lastMessage.createdAt)}
                     </span>

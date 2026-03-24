@@ -5,17 +5,20 @@ import { ChatView } from '@/components/chat/ChatView';
 export default function Messages() {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [activeUsername, setActiveUsername] = useState<string | null>(null);
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
-  const handleSelectThread = (threadId: string, username: string) => {
+  const handleSelectThread = (threadId: string, username: string, userId: string) => {
     setActiveThreadId(threadId);
     setActiveUsername(username);
+    setActiveUserId(userId);
     setMobileView('chat');
   };
 
   const handleNewConversation = (username: string) => {
     setActiveThreadId(null);
     setActiveUsername(username);
+    setActiveUserId(null);
     setMobileView('chat');
   };
 
@@ -41,6 +44,7 @@ export default function Messages() {
         <ChatView
           threadId={activeThreadId}
           otherUsername={activeUsername}
+          otherUserId={activeUserId}
           onThreadCreated={handleThreadCreated}
         />
       </div>
@@ -57,6 +61,7 @@ export default function Messages() {
           <ChatView
             threadId={activeThreadId}
             otherUsername={activeUsername}
+            otherUserId={activeUserId}
             onBack={handleBack}
             onThreadCreated={handleThreadCreated}
             className="h-full"

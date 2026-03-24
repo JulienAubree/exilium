@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
@@ -70,7 +71,13 @@ export function ChatOverlayWindow({ userId: otherUserId, username, threadId }: C
         onClick={() => minimizeChat(otherUserId)}
       >
         <UserAvatar username={username} size="sm" />
-        <span className="text-sm font-semibold text-foreground flex-1 truncate">{username}</span>
+        <Link
+          to={`/player/${otherUserId}`}
+          className="text-sm font-semibold text-foreground flex-1 truncate hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {username}
+        </Link>
         <button
           onClick={(e) => { e.stopPropagation(); minimizeChat(otherUserId); }}
           aria-label="Réduire"

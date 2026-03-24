@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { TablePageSkeleton } from '@/components/common/PageSkeleton';
@@ -67,7 +67,13 @@ export default function Ranking() {
                       entry.rank
                     )}
                   </span>
-                  <span className={cn('text-sm', isMe && 'font-semibold text-primary')}>{entry.username}</span>
+                  <Link
+                    to={`/player/${entry.userId}`}
+                    className={cn('text-sm hover:underline', isMe && 'font-semibold text-primary')}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {entry.username}
+                  </Link>
                 </div>
                 <span className="text-sm text-muted-foreground">{entry.totalPoints.toLocaleString('fr-FR')}</span>
               </div>
@@ -112,7 +118,9 @@ export default function Ranking() {
                       )}
                     </td>
                     <td className={cn('px-2 py-1', isMe && 'font-semibold text-primary')}>
-                      {entry.username}
+                      <Link to={`/player/${entry.userId}`} className="hover:underline">
+                        {entry.username}
+                      </Link>
                     </td>
                     <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
                   </tr>
