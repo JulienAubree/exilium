@@ -1,4 +1,6 @@
-import { pgTable, uuid, varchar, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, boolean, text, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+
+export const playstyleEnum = pgEnum('playstyle', ['miner', 'warrior', 'explorer']);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -8,6 +10,12 @@ export const users = pgTable('users', {
   isAdmin: boolean('is_admin').notNull().default(false),
   bannedAt: timestamp('banned_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  bio: text('bio'),
+  avatarId: varchar('avatar_id', { length: 128 }),
+  playstyle: playstyleEnum('playstyle'),
+  seekingAlliance: boolean('seeking_alliance').notNull().default(false),
+  theme: varchar('theme', { length: 16 }).notNull().default('dark'),
+  profileVisibility: jsonb('profile_visibility').notNull().default({ bio: true, playstyle: true, stats: true }),
 });
 
 export const refreshTokens = pgTable('refresh_tokens', {
