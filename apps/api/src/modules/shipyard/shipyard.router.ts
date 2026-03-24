@@ -17,9 +17,12 @@ export function createShipyardRouter(shipyardService: ReturnType<typeof createSh
       }),
 
     queue: protectedProcedure
-      .input(z.object({ planetId: z.string().uuid() }))
+      .input(z.object({
+        planetId: z.string().uuid(),
+        facilityId: z.enum(['shipyard', 'commandCenter', 'arsenal']).optional(),
+      }))
       .query(async ({ input }) => {
-        return shipyardService.getShipyardQueue(input.planetId);
+        return shipyardService.getShipyardQueue(input.planetId, input.facilityId);
       }),
 
     buildShip: protectedProcedure

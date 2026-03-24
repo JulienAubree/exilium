@@ -26,6 +26,17 @@ export function createShipyardService(
     return bonus?.category ?? null;
   }
 
+  function getFacilityId(
+    type: 'ship' | 'defense',
+    itemId: string,
+    config: { ships: Record<string, any>; defenses: Record<string, any> },
+  ): string {
+    if (type === 'defense') return 'arsenal';
+    const shipDef = config.ships[itemId];
+    const firstBuildingPrereq = shipDef?.prerequisites?.buildings?.[0]?.buildingId;
+    return firstBuildingPrereq ?? 'shipyard';
+  }
+
   return {
     async getBuildingLevels(planetId: string): Promise<Record<string, number>> {
       const rows = await db
@@ -106,17 +117,23 @@ export function createShipyardService(
         });
     },
 
-    async getShipyardQueue(planetId: string) {
+    async getShipyardQueue(planetId: string, facilityId?: string) {
+      const conditions = [
+        eq(buildQueue.planetId, planetId),
+        inArray(buildQueue.status, ['active', 'queued']),
+      ];
+      if (facilityId) {
+        conditions.push(eq(buildQueue.facilityId, facilityId));
+      }
       return db
         .select()
         .from(buildQueue)
-        .where(
-          and(
-            eq(buildQueue.planetId, planetId),
-            inArray(buildQueue.status, ['active', 'queued']),
-          ),
-        )
-        .then((rows) => rows.filter((r) => r.type === 'ship' || r.type === 'defense'));
+        .where(and(...conditions))
+        .then((rows) =>
+          facilityId
+            ? rows
+            : rows.filter((r) => r.type === 'ship' || r.type === 'defense'),
+        );
     },
 
     async startBuild(
@@ -128,6 +145,7 @@ export function createShipyardService(
     ) {
       await this.getOwnedPlanet(userId, planetId);
       const config = await gameConfigService.getFullConfig();
+      const facilityId = getFacilityId(type, itemId, config);
 
       const def = type === 'ship' ? config.ships[itemId] : config.defenses[itemId];
       if (!def) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unité invalide' });
@@ -157,7 +175,7 @@ export function createShipyardService(
       await resourceService.spendResources(planetId, userId, totalCost);
 
       const existingActive = await this.getShipyardQueue(planetId);
-      const sameTypeQueue = existingActive.filter((e) => e.type === type);
+      const sameTypeQueue = existingActive.filter((e) => e.facilityId === facilityId);
       const hasActive = sameTypeQueue.some((e) => e.status === 'active');
 
       const buildingLevels = await this.getBuildingLevels(planetId);
@@ -202,6 +220,7 @@ export function createShipyardService(
           startTime,
           endTime,
           status,
+          facilityId,
         })
         .returning();
 
@@ -258,7 +277,7 @@ export function createShipyardService(
           .set({ completedCount: newCompletedCount, status: 'completed' })
           .where(eq(buildQueue.id, buildQueueId));
 
-        await this.activateNextBatch(entry.planetId, entry.type as 'ship' | 'defense');
+        await this.activateNextBatch(entry.planetId, entry.type as 'ship' | 'defense', entry.facilityId);
 
         const unitName = config.ships[entry.itemId]?.name
           ?? config.defenses[entry.itemId]?.name
@@ -328,7 +347,7 @@ export function createShipyardService(
       return null;
     },
 
-    async activateNextBatch(planetId: string, type: 'ship' | 'defense') {
+    async activateNextBatch(planetId: string, type: 'ship' | 'defense', facilityId?: string | null) {
       const [nextBatch] = await db
         .select()
         .from(buildQueue)
@@ -337,6 +356,7 @@ export function createShipyardService(
             eq(buildQueue.planetId, planetId),
             eq(buildQueue.status, 'queued'),
             eq(buildQueue.type, type),
+            ...(facilityId ? [eq(buildQueue.facilityId, facilityId)] : []),
           ),
         )
         .limit(1);
@@ -451,7 +471,7 @@ export function createShipyardService(
 
       // Activate next queued batch if we cancelled the active one
       if (entry.status === 'active') {
-        await this.activateNextBatch(planetId, entry.type as 'ship' | 'defense');
+        await this.activateNextBatch(planetId, entry.type as 'ship' | 'defense', entry.facilityId);
       }
 
       return { cancelled: true, refund };
