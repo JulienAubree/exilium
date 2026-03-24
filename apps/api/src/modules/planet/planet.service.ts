@@ -9,6 +9,7 @@ import {
 } from '@ogame-clone/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getRandomPlanetImageIndex } from '../../lib/planet-image.util.js';
+import { findPlanetTypeByRole } from '../../lib/config-helpers.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -18,6 +19,7 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
   return {
     async createHomePlanet(userId: string) {
       const config = await gameConfigService.getFullConfig();
+      const homeworldType = findPlanetTypeByRole(config, 'homeworld');
       const universe = config.universe;
 
       const galaxies = Number(universe.galaxies) || 9;
@@ -48,7 +50,7 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
           system,
           position,
           planetType: 'planet',
-          planetClassId: 'homeworld',
+          planetClassId: homeworldType.id,
           diameter,
           maxFields,
           minTemp,
@@ -56,7 +58,7 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
           minerai: String(startingMinerai),
           silicium: String(startingSilicium),
           hydrogene: String(startingHydrogene),
-          planetImageIndex: getRandomPlanetImageIndex('homeworld', assetsDir),
+          planetImageIndex: getRandomPlanetImageIndex(homeworldType.id, assetsDir),
         })
         .returning();
 
