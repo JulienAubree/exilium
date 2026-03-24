@@ -6,6 +6,7 @@ import { discoveryCooldown, depositSize, depositComposition } from '@ogame-clone
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { findBuildingByRole } from '../../lib/config-helpers.js';
 
 export function createPveService(
   db: Database,
@@ -34,12 +35,14 @@ export function createPveService(
     },
 
     async getMissionCenterLevel(userId: string): Promise<number> {
+      const config = await gameConfigService.getFullConfig();
+      const missionCenterDef = findBuildingByRole(config, 'mission_center');
       const result = await db.execute(sql`
         SELECT COALESCE(MAX(pb.level), 0) as max_level
         FROM planet_buildings pb
         JOIN planets p ON p.id = pb.planet_id
         WHERE p.user_id = ${userId}
-          AND pb.building_id = 'missionCenter'
+          AND pb.building_id = ${missionCenterDef.id}
       `);
       return Number(result[0]?.max_level ?? 0);
     },
