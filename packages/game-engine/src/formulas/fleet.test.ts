@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { shipSpeed, fleetSpeed, travelTime, fuelConsumption, totalCargoCapacity } from './fleet.js';
-import type { ShipStats } from './fleet.js';
+import { shipSpeed, fleetSpeed, distance, travelTime, fuelConsumption, totalCargoCapacity } from './fleet.js';
+import type { ShipStats, FleetConfig } from './fleet.js';
 
 const SHIP_STATS_MAP: Record<string, ShipStats> = {
   smallCargo: { baseSpeed: 5000, fuelConsumption: 10, cargoCapacity: 5000, driveType: 'combustion', miningExtraction: 0 },
@@ -85,5 +85,13 @@ describe('totalCargoCapacity', () => {
   });
   it('empty fleet = 0', () => {
     expect(totalCargoCapacity({}, SHIP_STATS_MAP)).toBe(0);
+  });
+});
+
+describe('FleetConfig', () => {
+  it('distance uses custom galaxy factor', () => {
+    const config: FleetConfig = { galaxyFactor: 50000, systemBase: 2700, systemFactor: 95, positionBase: 1000, positionFactor: 5, samePositionDistance: 5, speedFactor: 35000 };
+    const d = distance({ galaxy: 1, system: 1, position: 1 }, { galaxy: 2, system: 1, position: 1 }, config);
+    expect(d).toBe(50000);
   });
 });

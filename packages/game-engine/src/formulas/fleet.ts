@@ -12,6 +12,26 @@ interface Coordinates {
   position: number;
 }
 
+export interface FleetConfig {
+  galaxyFactor: number;
+  systemBase: number;
+  systemFactor: number;
+  positionBase: number;
+  positionFactor: number;
+  samePositionDistance: number;
+  speedFactor: number;
+}
+
+const DEFAULT_FLEET_CONFIG: FleetConfig = {
+  galaxyFactor: 20000,
+  systemBase: 2700,
+  systemFactor: 95,
+  positionBase: 1000,
+  positionFactor: 5,
+  samePositionDistance: 5,
+  speedFactor: 35000,
+};
+
 export function shipSpeed(stats: ShipStats, speedMultiplier: number): number {
   return Math.floor(stats.baseSpeed * speedMultiplier);
 }
@@ -34,17 +54,17 @@ export function fleetSpeed(
   return minSpeed === Infinity ? 0 : minSpeed;
 }
 
-export function distance(origin: Coordinates, target: Coordinates): number {
+export function distance(origin: Coordinates, target: Coordinates, config: FleetConfig = DEFAULT_FLEET_CONFIG): number {
   if (origin.galaxy !== target.galaxy) {
-    return 20000 * Math.abs(origin.galaxy - target.galaxy);
+    return config.galaxyFactor * Math.abs(origin.galaxy - target.galaxy);
   }
   if (origin.system !== target.system) {
-    return 2700 + 95 * Math.abs(origin.system - target.system);
+    return config.systemBase + config.systemFactor * Math.abs(origin.system - target.system);
   }
   if (origin.position !== target.position) {
-    return 1000 + 5 * Math.abs(origin.position - target.position);
+    return config.positionBase + config.positionFactor * Math.abs(origin.position - target.position);
   }
-  return 5;
+  return config.samePositionDistance;
 }
 
 export function travelTime(
@@ -52,9 +72,10 @@ export function travelTime(
   target: Coordinates,
   speed: number,
   universeSpeed: number,
+  config: FleetConfig = DEFAULT_FLEET_CONFIG,
 ): number {
-  const dist = distance(origin, target);
-  return Math.round(10 + (35000 / speed) * Math.sqrt((dist * 10) / universeSpeed));
+  const dist = distance(origin, target, config);
+  return Math.round(10 + (config.speedFactor / speed) * Math.sqrt((dist * 10) / universeSpeed));
 }
 
 export function fuelConsumption(
@@ -62,14 +83,15 @@ export function fuelConsumption(
   dist: number,
   duration: number,
   shipStatsMap: Record<string, ShipStats>,
+  config: { speedFactor: number } = { speedFactor: 35000 },
 ): number {
   let total = 0;
   for (const [shipId, count] of Object.entries(ships)) {
     if (count > 0) {
       const stats = shipStatsMap[shipId];
       if (!stats) continue;
-      const speedFactor = duration <= 10 ? 1 : (duration + 10) / (duration - 10);
-      const consumption = stats.fuelConsumption * count * (dist / 35000) * speedFactor;
+      const speedFac = duration <= 10 ? 1 : (duration + 10) / (duration - 10);
+      const consumption = stats.fuelConsumption * count * (dist / config.speedFactor) * speedFac;
       total += Math.max(1, Math.round(consumption));
     }
   }
