@@ -663,6 +663,28 @@ export function createFleetService(
           }
         }
 
+        // Notify defender for dangerous missions so their inbound list refreshes
+        const config = await gameConfigService.getFullConfig();
+        const missionDef = config.missions[event.mission];
+        const notifyUsers: Array<{ userId: string; type: string; payload: Record<string, unknown> }> = [];
+        if (missionDef?.dangerous && event.targetPlanetId) {
+          const [targetPlanet] = await db
+            .select({ userId: planets.userId })
+            .from(planets)
+            .where(eq(planets.id, event.targetPlanetId))
+            .limit(1);
+          if (targetPlanet && targetPlanet.userId !== event.userId) {
+            notifyUsers.push({
+              userId: targetPlanet.userId,
+              type: 'fleet-attack-landed',
+              payload: {
+                targetCoords: eventMeta.targetCoords,
+                reportId: result.reportId,
+              },
+            });
+          }
+        }
+
         return {
           userId: event.userId,
           planetId: event.originPlanetId,
@@ -686,6 +708,7 @@ export function createFleetService(
             },
             reportId: result.reportId,
           },
+          notifyUsers,
         };
       }
 

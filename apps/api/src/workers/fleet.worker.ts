@@ -63,6 +63,16 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
           payload: result.eventPayload,
         });
 
+        // Notify other users (e.g. defender on attack)
+        if (result.notifyUsers) {
+          for (const notify of result.notifyUsers) {
+            publishNotification(redis, notify.userId, {
+              type: notify.type,
+              payload: notify.payload,
+            });
+          }
+        }
+
         // Extra events (e.g. pve-mission-done)
         if (result.extraEvents) {
           for (const extra of result.extraEvents) {

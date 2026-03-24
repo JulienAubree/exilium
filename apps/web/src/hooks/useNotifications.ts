@@ -171,6 +171,16 @@ export function useNotifications() {
         addToast(`Attaque détectée vers ${event.payload.targetCoords} !`);
         showBrowserNotification('Attaque détectée !', `Flotte hostile en approche vers ${event.payload.targetCoords}`);
         break;
+      case 'fleet-attack-landed':
+        utils.fleet.inbound.invalidate();
+        utils.resource.production.invalidate();
+        utils.shipyard.ships.invalidate();
+        utils.shipyard.defenses.invalidate();
+        utils.report.list.invalidate();
+        utils.report.unreadCount.invalidate();
+        addToast(`Votre planète ${event.payload.targetCoords} a été attaquée !`);
+        showBrowserNotification('Planète attaquée !', `Combat terminé en ${event.payload.targetCoords}`);
+        break;
       case 'new-alliance-message': {
         const allianceId = String(event.payload.allianceId);
         utils.message.allianceChat.invalidate({ allianceId });

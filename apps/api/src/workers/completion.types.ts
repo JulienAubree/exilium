@@ -29,4 +29,10 @@ export type FleetCompletionResult = {
     targetId: string;
     targetValue: number;
   }>;
+  /** Notify other users (e.g. defender on attack arrival) */
+  notifyUsers?: Array<{
+    userId: string;
+    type: string;
+    payload: Record<string, unknown>;
+  }>;
 } | null;
