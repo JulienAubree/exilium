@@ -43,14 +43,29 @@
   66%      { transform: translate(-0.5px, 0.4px); }
 }
 
+@keyframes asteroid-dust {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(2px, -0.5px); }
+}
+
 @keyframes asteroid-sparkle {
   0%, 100% { opacity: 0; }
   50%      { opacity: 0.9; }
 }
 
+@keyframes asteroid-trail {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 0.5; }
+}
+
 .asteroid-sparkle {
   opacity: 0;
   animation: asteroid-sparkle 3s ease-in-out infinite;
+}
+
+.asteroid-trail {
+  opacity: 0;
+  animation: asteroid-trail 4s ease-in-out infinite;
 }
 
 .asteroid-glow {
