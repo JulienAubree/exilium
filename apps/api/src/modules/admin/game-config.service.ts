@@ -168,6 +168,8 @@ export interface ProductionConfigEntry {
   exponentBase: number;
   energyConsumption: number | null;
   storageBase: number | null;
+  tempCoeffA: number | null;
+  tempCoeffB: number | null;
 }
 
 export interface PirateTemplateConfig {
@@ -367,6 +369,8 @@ export function createGameConfigService(db: Database) {
         exponentBase: p.exponentBase,
         energyConsumption: p.energyConsumption,
         storageBase: p.storageBase,
+        tempCoeffA: p.tempCoeffA ?? null,
+        tempCoeffB: p.tempCoeffB ?? null,
       };
     }
 
@@ -869,6 +873,8 @@ export function createGameConfigService(db: Database) {
       exponentBase: number;
       energyConsumption: number | null;
       storageBase: number | null;
+      tempCoeffA: number | null;
+      tempCoeffB: number | null;
     }>) {
       await db.update(productionConfig).set(data).where(eq(productionConfig.id, id));
       invalidateCache();

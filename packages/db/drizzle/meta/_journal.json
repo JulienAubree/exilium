@@ -92,6 +92,13 @@
       "when": 1774335421704,
       "tag": "0012_clumsy_pepper_potts",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1774338667560,
+      "tag": "0013_sweet_naoko",
+      "breakpoints": true
     }
   ]
 }

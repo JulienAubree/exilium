@@ -322,6 +322,8 @@ export function createGameConfigRouter(
           exponentBase: z.number().optional(),
           energyConsumption: z.number().nullable().optional(),
           storageBase: z.number().nullable().optional(),
+          tempCoeffA: z.number().nullable().optional(),
+          tempCoeffB: z.number().nullable().optional(),
         }),
       }))
       .mutation(async ({ input }) => {

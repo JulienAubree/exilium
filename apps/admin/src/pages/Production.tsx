@@ -10,6 +10,8 @@ interface EditState {
   exponentBase: number;
   energyConsumption: number | null;
   storageBase: number | null;
+  tempCoeffA: number | null;
+  tempCoeffB: number | null;
 }
 
 export default function Production() {
@@ -41,6 +43,8 @@ export default function Production() {
               <th>Exposant base</th>
               <th>Conso energie</th>
               <th>Stockage base</th>
+              <th>Coeff Temp A</th>
+              <th>Coeff Temp B</th>
               <th></th>
             </tr>
           </thead>
@@ -116,6 +120,44 @@ export default function Production() {
                   </td>
                   <td>
                     {isEditing ? (
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={editing.tempCoeffA ?? ''}
+                        onChange={(e) =>
+                          setEditing({
+                            ...editing,
+                            tempCoeffA: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
+                        className="admin-input w-24 py-1 text-sm"
+                        placeholder="null"
+                      />
+                    ) : (
+                      <span className="font-mono text-sm">{p.tempCoeffA ?? '-'}</span>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={editing.tempCoeffB ?? ''}
+                        onChange={(e) =>
+                          setEditing({
+                            ...editing,
+                            tempCoeffB: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
+                        className="admin-input w-24 py-1 text-sm"
+                        placeholder="null"
+                      />
+                    ) : (
+                      <span className="font-mono text-sm">{p.tempCoeffB ?? '-'}</span>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
                       <div className="flex gap-1">
                         <button
                           onClick={() =>
@@ -126,6 +168,8 @@ export default function Production() {
                                 exponentBase: editing.exponentBase,
                                 energyConsumption: editing.energyConsumption,
                                 storageBase: editing.storageBase,
+                                tempCoeffA: editing.tempCoeffA,
+                                tempCoeffB: editing.tempCoeffB,
                               },
                             })
                           }
@@ -147,6 +191,8 @@ export default function Production() {
                             exponentBase: p.exponentBase,
                             energyConsumption: p.energyConsumption,
                             storageBase: p.storageBase,
+                            tempCoeffA: p.tempCoeffA,
+                            tempCoeffB: p.tempCoeffB,
                           })
                         }
                         className="admin-btn-ghost p-1.5"

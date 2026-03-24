@@ -161,11 +161,11 @@ const RAPID_FIRE_DATA = [
 // ── Production config data ──
 
 const PRODUCTION_CONFIG = [
-  { id: 'mineraiMine', baseProduction: 30, exponentBase: 1.1, energyConsumption: 10, storageBase: null },
-  { id: 'siliciumMine', baseProduction: 20, exponentBase: 1.1, energyConsumption: 10, storageBase: null },
-  { id: 'hydrogeneSynth', baseProduction: 10, exponentBase: 1.1, energyConsumption: 20, storageBase: null },
-  { id: 'solarPlant', baseProduction: 20, exponentBase: 1.1, energyConsumption: null, storageBase: null },
-  { id: 'storage', baseProduction: 5000, exponentBase: 1.1, energyConsumption: null, storageBase: 5000 },
+  { id: 'mineraiMine', baseProduction: 30, exponentBase: 1.1, energyConsumption: 10, storageBase: null, tempCoeffA: null, tempCoeffB: null },
+  { id: 'siliciumMine', baseProduction: 20, exponentBase: 1.1, energyConsumption: 10, storageBase: null, tempCoeffA: null, tempCoeffB: null },
+  { id: 'hydrogeneSynth', baseProduction: 10, exponentBase: 1.1, energyConsumption: 20, storageBase: null, tempCoeffA: 1.36, tempCoeffB: 0.004 },
+  { id: 'solarPlant', baseProduction: 20, exponentBase: 1.1, energyConsumption: null, storageBase: null, tempCoeffA: null, tempCoeffB: null },
+  { id: 'storage', baseProduction: 5000, exponentBase: 1.1, energyConsumption: null, storageBase: 5000, tempCoeffA: null, tempCoeffB: null },
 ];
 
 // ── Planet types data ──

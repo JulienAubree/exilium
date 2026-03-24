@@ -150,6 +150,8 @@ export const productionConfig = pgTable('production_config', {
   exponentBase: real('exponent_base').notNull().default(1.1),
   energyConsumption: real('energy_consumption'),
   storageBase: real('storage_base'),
+  tempCoeffA: real('temp_coeff_a'),
+  tempCoeffB: real('temp_coeff_b'),
 });
 
 // ── Planet Types ──
