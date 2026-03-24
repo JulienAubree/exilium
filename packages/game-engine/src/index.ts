@@ -1,4 +1,3 @@
-export * from './constants/progression.js';
 export * from './constants/tutorial-quests.js';
 export * from './formulas/production.js';
 export * from './formulas/planet.js';

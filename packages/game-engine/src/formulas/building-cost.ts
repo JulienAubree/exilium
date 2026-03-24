@@ -1,4 +1,10 @@
-import { getPhaseMultiplier } from '../constants/progression.js';
+const DEFAULT_PHASE_MULTIPLIER: Record<number, number> = {
+  1: 0.35, 2: 0.45, 3: 0.55, 4: 0.65, 5: 0.78, 6: 0.90, 7: 0.95,
+};
+
+export function getPhaseMultiplier(level: number, phaseMap: Record<number, number> = DEFAULT_PHASE_MULTIPLIER): number {
+  return phaseMap[level] ?? 1.0;
+}
 
 export interface ResourceCost {
   minerai: number;
