@@ -8,9 +8,50 @@
 
 BEGIN;
 
--- ── 0. Safety: cancel all active fleet events ──
+-- ── 0. Safety: refund & cancel all active fleet events ──
 -- Fleets in transit would have stale coordinates after relocation.
--- Refund ships to origin planet.
+-- Return ships + cargo to origin planet before cancelling.
+
+-- 0a. Refund ships from active fleets to origin planets
+DO $$
+DECLARE
+  fe RECORD;
+  ship_key TEXT;
+  ship_count INT;
+BEGIN
+  FOR fe IN
+    SELECT id, origin_planet_id, ships, minerai_cargo, silicium_cargo, hydrogene_cargo
+    FROM fleet_events WHERE status = 'active'
+  LOOP
+    -- Ensure planet_ships row exists
+    INSERT INTO planet_ships (planet_id)
+    VALUES (fe.origin_planet_id)
+    ON CONFLICT (planet_id) DO NOTHING;
+
+    -- Return each ship type
+    FOR ship_key, ship_count IN
+      SELECT key, (value)::INT FROM jsonb_each_text(fe.ships) WHERE (value)::INT > 0
+    LOOP
+      EXECUTE format(
+        'UPDATE planet_ships SET %I = %I + $1 WHERE planet_id = $2',
+        ship_key, ship_key
+      ) USING ship_count, fe.origin_planet_id;
+    END LOOP;
+
+    -- Return cargo
+    IF fe.minerai_cargo::NUMERIC > 0 OR fe.silicium_cargo::NUMERIC > 0 OR fe.hydrogene_cargo::NUMERIC > 0 THEN
+      UPDATE planets
+      SET minerai = (minerai::NUMERIC + fe.minerai_cargo::NUMERIC)::TEXT,
+          silicium = (silicium::NUMERIC + fe.silicium_cargo::NUMERIC)::TEXT,
+          hydrogene = (hydrogene::NUMERIC + fe.hydrogene_cargo::NUMERIC)::TEXT
+      WHERE id = fe.origin_planet_id;
+    END IF;
+
+    RAISE NOTICE '  Refunded fleet % -> planet %', fe.id, fe.origin_planet_id;
+  END LOOP;
+END $$;
+
+-- 0b. Mark all active fleets as completed
 UPDATE fleet_events SET status = 'completed' WHERE status = 'active';
 
 -- ── 1. Build relocation mapping ──
