@@ -5,11 +5,14 @@ interface ChatWindow {
   username: string;
   threadId: string | null;
   minimized: boolean;
+  allianceId?: string;
+  allianceTag?: string;
 }
 
 interface ChatStore {
   windows: ChatWindow[];
   openChat: (userId: string, username: string, threadId?: string | null) => void;
+  openAllianceChat: (allianceId: string, allianceName: string, allianceTag: string) => void;
   closeChat: (userId: string) => void;
   minimizeChat: (userId: string) => void;
   expandChat: (userId: string) => void;
@@ -32,6 +35,29 @@ export const useChatStore = create<ChatStore>((set) => ({
         };
       }
       const windows = [...state.windows, { userId, username, threadId, minimized: false }];
+      if (windows.length > MAX_WINDOWS) windows.shift();
+      return { windows };
+    }),
+
+  openAllianceChat: (allianceId, allianceName, allianceTag) =>
+    set((state) => {
+      const key = `alliance:${allianceId}`;
+      const existing = state.windows.find((w) => w.userId === key);
+      if (existing) {
+        return {
+          windows: state.windows.map((w) =>
+            w.userId === key ? { ...w, minimized: false } : w,
+          ),
+        };
+      }
+      const windows = [...state.windows, {
+        userId: key,
+        username: `[${allianceTag}] ${allianceName}`,
+        threadId: allianceId,
+        minimized: false,
+        allianceId,
+        allianceTag,
+      }];
       if (windows.length > MAX_WINDOWS) windows.shift();
       return { windows };
     }),

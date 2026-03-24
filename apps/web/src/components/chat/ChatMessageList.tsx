@@ -13,6 +13,7 @@ interface ChatMessageListProps {
   messages: Message[];
   currentUserId: string;
   className?: string;
+  showSenderName?: boolean;
 }
 
 function formatDateSeparator(date: Date): string {
@@ -27,7 +28,7 @@ function getDateKey(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
-export function ChatMessageList({ messages, currentUserId, className = '' }: ChatMessageListProps) {
+export function ChatMessageList({ messages, currentUserId, className = '', showSenderName = false }: ChatMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +57,7 @@ export function ChatMessageList({ messages, currentUserId, className = '' }: Cha
               isSent={msg.senderId === currentUserId}
               senderUsername={msg.senderId !== currentUserId ? (msg.senderUsername ?? undefined) : undefined}
               createdAt={msg.createdAt}
+              showName={showSenderName}
             />
           </div>
         ))}

@@ -82,5 +82,17 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
       .mutation(async ({ ctx, input }) => {
         return messageService.deleteThread(ctx.userId!, input.threadId);
       }),
+
+    allianceChat: protectedProcedure
+      .input(z.object({ allianceId: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        return messageService.getAllianceChat(ctx.userId!, input.allianceId);
+      }),
+
+    sendAllianceChat: protectedProcedure
+      .input(z.object({ body: z.string().min(1).max(5000) }))
+      .mutation(async ({ ctx, input }) => {
+        return messageService.sendAllianceChat(ctx.userId!, input.body);
+      }),
   });
 }

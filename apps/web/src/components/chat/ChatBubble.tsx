@@ -5,9 +5,10 @@ interface ChatBubbleProps {
   isSent: boolean;
   senderUsername?: string;
   createdAt: Date | string;
+  showName?: boolean;
 }
 
-export function ChatBubble({ body, isSent, senderUsername, createdAt }: ChatBubbleProps) {
+export function ChatBubble({ body, isSent, senderUsername, createdAt, showName }: ChatBubbleProps) {
   const time = new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   if (isSent) {
@@ -25,6 +26,9 @@ export function ChatBubble({ body, isSent, senderUsername, createdAt }: ChatBubb
     <div className="flex gap-2 items-end max-w-[75%]">
       {senderUsername && <UserAvatar username={senderUsername} size="sm" />}
       <div className="rounded-xl rounded-bl-sm bg-muted/50 px-3 py-2 text-foreground text-sm">
+        {showName && senderUsername && (
+          <p className="text-[10px] font-semibold text-primary/80 mb-0.5">{senderUsername}</p>
+        )}
         <p className="whitespace-pre-wrap break-words">{body}</p>
         <div className="text-[10px] text-muted-foreground mt-0.5">{time}</div>
       </div>

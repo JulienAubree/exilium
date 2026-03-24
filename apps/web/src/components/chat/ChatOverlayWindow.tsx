@@ -11,29 +11,34 @@ interface ChatOverlayWindowProps {
   userId: string;
   username: string;
   threadId: string | null;
+  allianceId?: string;
+  allianceTag?: string;
 }
 
-export function ChatOverlayWindow({ userId: otherUserId, username, threadId }: ChatOverlayWindowProps) {
+export function ChatOverlayWindow({ userId: otherUserId, username, threadId, allianceId, allianceTag }: ChatOverlayWindowProps) {
   const currentUserId = useAuthStore((s) => s.user?.id);
   const { closeChat, minimizeChat, setThreadId } = useChatStore();
   const utils = trpc.useUtils();
 
-  // Resolve threadId from conversations when not provided
+  const isAlliance = !!allianceId;
+  const windowKey = isAlliance ? `alliance:${allianceId}` : otherUserId;
+
+  // --- Player chat ---
   const { data: conversations } = trpc.message.conversations.useQuery(undefined, {
-    enabled: !threadId,
+    enabled: !isAlliance && !threadId,
   });
 
   useEffect(() => {
-    if (threadId || !conversations) return;
+    if (isAlliance || threadId || !conversations) return;
     const conv = conversations.find((c) => c?.otherUser.id === otherUserId);
     if (conv?.threadId) {
       setThreadId(otherUserId, conv.threadId);
     }
-  }, [threadId, conversations, otherUserId, setThreadId]);
+  }, [isAlliance, threadId, conversations, otherUserId, setThreadId]);
 
   const { data: thread } = trpc.message.thread.useQuery(
     { threadId: threadId! },
-    { enabled: !!threadId },
+    { enabled: !isAlliance && !!threadId },
   );
 
   const replyMutation = trpc.message.reply.useMutation({
@@ -55,38 +60,67 @@ export function ChatOverlayWindow({ userId: otherUserId, username, threadId }: C
     },
   });
 
+  // --- Alliance chat ---
+  const { data: allianceThread } = trpc.message.allianceChat.useQuery(
+    { allianceId: allianceId! },
+    { enabled: isAlliance && !!allianceId },
+  );
+
+  const allianceSendMutation = trpc.message.sendAllianceChat.useMutation({
+    onSuccess: () => {
+      utils.message.allianceChat.invalidate({ allianceId: allianceId! });
+    },
+  });
+
   const handleSend = (body: string) => {
-    if (thread && thread.length > 0) {
+    if (isAlliance) {
+      allianceSendMutation.mutate({ body });
+    } else if (thread && thread.length > 0) {
       replyMutation.mutate({ messageId: thread[thread.length - 1].id, body });
     } else {
       sendMutation.mutate({ recipientUsername: username, body });
     }
   };
 
+  const activeThread = isAlliance ? allianceThread : thread;
+  const isPending = isAlliance ? allianceSendMutation.isPending : (replyMutation.isPending || sendMutation.isPending);
+
   return (
     <div className="w-[300px] h-[400px] flex flex-col rounded-t-xl overflow-hidden border border-border/30 bg-card shadow-xl">
       {/* Header */}
       <div
-        className="flex items-center gap-2 px-3 py-2 bg-primary/20 cursor-pointer"
-        onClick={() => minimizeChat(otherUserId)}
+        className={`flex items-center gap-2 px-3 py-2 cursor-pointer ${isAlliance ? 'bg-yellow-500/20' : 'bg-primary/20'}`}
+        onClick={() => minimizeChat(windowKey)}
       >
-        <UserAvatar username={username} size="sm" />
-        <Link
-          to={`/player/${otherUserId}`}
-          className="text-sm font-semibold text-foreground flex-1 truncate hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {username}
-        </Link>
+        {isAlliance ? (
+          <div className="w-7 h-7 rounded-full bg-yellow-500/30 border border-yellow-500/50 flex items-center justify-center text-[10px] font-bold text-yellow-400">
+            {allianceTag?.slice(0, 2)}
+          </div>
+        ) : (
+          <UserAvatar username={username} size="sm" />
+        )}
+        {isAlliance ? (
+          <span className="text-sm font-semibold text-foreground flex-1 truncate">
+            [{allianceTag}] Chat
+          </span>
+        ) : (
+          <Link
+            to={`/player/${otherUserId}`}
+            className="text-sm font-semibold text-foreground flex-1 truncate hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {username}
+          </Link>
+        )}
         <button
-          onClick={(e) => { e.stopPropagation(); minimizeChat(otherUserId); }}
+          onClick={(e) => { e.stopPropagation(); minimizeChat(windowKey); }}
           aria-label="Réduire"
           className="text-muted-foreground hover:text-foreground"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14" /></svg>
         </button>
         <button
-          onClick={(e) => { e.stopPropagation(); closeChat(otherUserId); }}
+          onClick={(e) => { e.stopPropagation(); closeChat(windowKey); }}
           aria-label="Fermer"
           className="text-muted-foreground hover:text-foreground"
         >
@@ -95,18 +129,18 @@ export function ChatOverlayWindow({ userId: otherUserId, username, threadId }: C
       </div>
 
       {/* Messages */}
-      {thread && currentUserId ? (
-        <ChatMessageList messages={thread} currentUserId={currentUserId} className="flex-1" />
+      {activeThread && currentUserId ? (
+        <ChatMessageList messages={activeThread} currentUserId={currentUserId} className="flex-1" showSenderName={isAlliance} />
       ) : (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-          Début de conversation
+          {isAlliance ? 'Chat d\'alliance' : 'Début de conversation'}
         </div>
       )}
 
       {/* Input */}
       <ChatInput
         onSend={handleSend}
-        disabled={replyMutation.isPending || sendMutation.isPending}
+        disabled={isPending}
         placeholder="Aa"
       />
     </div>

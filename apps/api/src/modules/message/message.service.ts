@@ -1,6 +1,6 @@
 import { eq, and, desc, or, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { messages, users } from '@ogame-clone/db';
+import { messages, users, allianceMembers, alliances } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
 import type Redis from 'ioredis';
 import { publishNotification } from '../notification/notification.publisher.js';
@@ -442,6 +442,100 @@ export function createMessageService(db: Database, redis: Redis) {
           ),
         );
       return { success: true };
+    },
+
+    async sendAllianceChat(senderId: string, body: string) {
+      const [membership] = await db
+        .select({
+          allianceId: allianceMembers.allianceId,
+          allianceTag: alliances.tag,
+        })
+        .from(allianceMembers)
+        .innerJoin(alliances, eq(alliances.id, allianceMembers.allianceId))
+        .where(eq(allianceMembers.userId, senderId))
+        .limit(1);
+
+      if (!membership) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Vous n\'êtes pas dans une alliance.' });
+      }
+
+      const members = await db
+        .select({ userId: allianceMembers.userId })
+        .from(allianceMembers)
+        .where(eq(allianceMembers.allianceId, membership.allianceId));
+
+      const [sender] = await db
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, senderId))
+        .limit(1);
+
+      const subject = `[${membership.allianceTag}]`;
+      const values = members.map((m) => ({
+        senderId,
+        recipientId: m.userId,
+        type: 'alliance' as const,
+        subject,
+        body,
+        threadId: membership.allianceId,
+        read: m.userId === senderId,
+      }));
+
+      await db.insert(messages).values(values);
+
+      for (const member of members) {
+        if (member.userId === senderId) continue;
+        publishNotification(redis, member.userId, {
+          type: 'new-alliance-message',
+          payload: {
+            allianceId: membership.allianceId,
+            allianceTag: membership.allianceTag,
+            senderUsername: sender?.username ?? null,
+            senderId,
+          },
+        });
+      }
+
+      return { success: true };
+    },
+
+    async getAllianceChat(userId: string, allianceId: string) {
+      await db
+        .update(messages)
+        .set({ read: true })
+        .where(
+          and(
+            eq(messages.threadId, allianceId),
+            eq(messages.recipientId, userId),
+            eq(messages.type, 'alliance'),
+            eq(messages.read, false),
+          ),
+        );
+
+      return db
+        .select({
+          id: messages.id,
+          senderId: messages.senderId,
+          senderUsername: users.username,
+          recipientId: messages.recipientId,
+          type: messages.type,
+          subject: messages.subject,
+          body: messages.body,
+          read: messages.read,
+          readBySender: messages.readBySender,
+          threadId: messages.threadId,
+          createdAt: messages.createdAt,
+        })
+        .from(messages)
+        .leftJoin(users, eq(users.id, messages.senderId))
+        .where(
+          and(
+            eq(messages.recipientId, userId),
+            eq(messages.threadId, allianceId),
+            eq(messages.type, 'alliance'),
+          ),
+        )
+        .orderBy(messages.createdAt);
     },
   };
 }

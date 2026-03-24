@@ -159,6 +159,20 @@ export function useNotifications() {
         addToast(`${event.payload.fromUsername} a refusé votre demande d'ami`);
         showBrowserNotification('Demande refusée', `${event.payload.fromUsername} a refusé votre demande d'ami`);
         break;
+      case 'new-alliance-message': {
+        const allianceId = String(event.payload.allianceId);
+        utils.message.allianceChat.invalidate({ allianceId });
+        const chatStore = useChatStore.getState();
+        const key = `alliance:${allianceId}`;
+        const alreadyOpen = chatStore.windows.find((w) => w.userId === key);
+        if (!alreadyOpen) {
+          chatStore.openAllianceChat(allianceId, '', String(event.payload.allianceTag));
+          chatStore.minimizeChat(key);
+        }
+        addToast(`[${event.payload.allianceTag}] ${event.payload.senderUsername}`);
+        showBrowserNotification('Chat Alliance', `${event.payload.senderUsername}: nouveau message`);
+        break;
+      }
     }
   });
 }

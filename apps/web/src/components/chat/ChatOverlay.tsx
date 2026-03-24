@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router';
 import { useChatStore } from '@/stores/chat.store';
 import { trpc } from '@/trpc';
@@ -146,9 +146,27 @@ function ChatFab() {
   );
 }
 
+function useAllianceAutoOpen() {
+  const { data: myAlliance } = trpc.alliance.myAlliance.useQuery();
+  const openAllianceChat = useChatStore((s) => s.openAllianceChat);
+  const minimizeChat = useChatStore((s) => s.minimizeChat);
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    if (!myAlliance || openedRef.current) return;
+    openedRef.current = true;
+    const key = `alliance:${myAlliance.id}`;
+    openAllianceChat(myAlliance.id, myAlliance.name, myAlliance.tag);
+    // Start minimized
+    minimizeChat(key);
+  }, [myAlliance, openAllianceChat, minimizeChat]);
+}
+
 export function ChatOverlay() {
   const { pathname } = useLocation();
   const { windows, expandChat, closeChat } = useChatStore();
+
+  useAllianceAutoOpen();
 
   // Hide on /messages page (page takes over) and on mobile (lg:flex)
   if (pathname === '/messages') return null;
@@ -165,6 +183,8 @@ export function ChatOverlay() {
           userId={w.userId}
           username={w.username}
           threadId={w.threadId}
+          allianceId={w.allianceId}
+          allianceTag={w.allianceTag}
         />
       ))}
 
@@ -175,7 +195,13 @@ export function ChatOverlay() {
             onClick={() => expandChat(w.userId)}
             title={w.username}
           >
-            <UserAvatar username={w.username} size="lg" className="shadow-lg cursor-pointer hover:scale-105 transition-transform" />
+            {w.allianceId ? (
+              <div className="w-10 h-10 rounded-full bg-yellow-500/20 border-2 border-yellow-500/50 flex items-center justify-center text-xs font-bold text-yellow-400 shadow-lg cursor-pointer hover:scale-105 transition-transform">
+                {w.allianceTag?.slice(0, 3)}
+              </div>
+            ) : (
+              <UserAvatar username={w.username} size="lg" className="shadow-lg cursor-pointer hover:scale-105 transition-transform" />
+            )}
           </button>
           <button
             onClick={() => closeChat(w.userId)}
