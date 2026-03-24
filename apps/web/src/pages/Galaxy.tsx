@@ -120,15 +120,15 @@ export default function Galaxy() {
                 if (isBelt) {
                   const beltMission = missionByPosition.get(i + 1);
                   return (
-                    <div key={i} className="relative flex items-center gap-3 rounded-lg p-2 overflow-hidden border border-orange-500/20 bg-gradient-to-r from-orange-950/20 via-orange-900/10 to-orange-950/20">
-                      <AsteroidBelt className="absolute inset-0 w-full h-full opacity-60" />
-                      <span className="relative z-10 w-6 text-center text-xs font-mono text-orange-400/80">{i + 1}</span>
-                      <span className="relative z-10 flex-1 text-sm font-medium text-orange-300/90 tracking-wide">Ceinture d&apos;astéroïdes</span>
+                    <div key={i} className="group relative flex items-center gap-3 rounded-lg px-2 h-10 overflow-hidden border border-orange-500/15 bg-black/20">
+                      <AsteroidBelt className="absolute inset-0 w-full h-full" />
+                      <span className="relative z-10 w-6 text-center text-xs font-mono text-orange-400/70">{i + 1}</span>
+                      <span className="relative z-10 flex-1 text-sm text-orange-300/80 tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Ceinture d&apos;astéroïdes</span>
                       {beltMission && (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20"
+                          className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 backdrop-blur-sm"
                           onClick={() => navigate(`/fleet?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                         >
                           Miner
@@ -199,12 +199,12 @@ export default function Galaxy() {
                     if (isBelt) {
                       const beltMission = missionByPosition.get(i + 1);
                       return (
-                        <tr key={i} className="border-b border-orange-500/20">
-                          <td className="px-2 py-1 text-orange-400/80">{i + 1}</td>
-                          <td colSpan={3} className="px-2 py-1 relative overflow-hidden">
-                            <div className="relative h-8 flex items-center rounded bg-gradient-to-r from-orange-950/20 via-orange-900/10 to-orange-950/20">
-                              <AsteroidBelt className="absolute inset-0 w-full h-full opacity-60" />
-                              <span className="relative z-10 pl-2 text-sm font-medium text-orange-300/90 tracking-wide">Ceinture d&apos;astéroïdes</span>
+                        <tr key={i} className="border-b border-orange-500/10">
+                          <td className="px-2 py-1 text-orange-400/70 relative z-10">{i + 1}</td>
+                          <td colSpan={3} className="px-2 py-0 relative overflow-hidden">
+                            <div className="relative h-9 flex items-center rounded bg-black/20">
+                              <AsteroidBelt className="absolute inset-0 w-full h-full" />
+                              <span className="relative z-10 pl-2 text-sm text-orange-300/80 tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Ceinture d&apos;astéroïdes</span>
                             </div>
                           </td>
                           <td className="px-2 py-1">
@@ -212,7 +212,7 @@ export default function Galaxy() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20"
+                                className="text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 backdrop-blur-sm"
                                 onClick={() => navigate(`/fleet?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                               >
                                 Miner
