@@ -56,3 +56,17 @@ describe('calculateDetectionChance', () => {
     expect(calculateDetectionChance(5, 2, 5)).toBe(22);
   });
 });
+
+describe('Parametric config', () => {
+  it('calculateSpyReport with custom thresholds', () => {
+    const result = calculateSpyReport(2, 0, 0, [1, 2, 3, 4, 5]);
+    expect(result.resources).toBe(true);
+    expect(result.fleet).toBe(true);
+    expect(result.defenses).toBe(false);
+  });
+
+  it('calculateDetectionChance with custom multipliers', () => {
+    const chance = calculateDetectionChance(1, 0, 0, { probeMultiplier: 10, techMultiplier: 4 });
+    expect(chance).toBe(10);
+  });
+});

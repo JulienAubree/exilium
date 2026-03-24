@@ -198,3 +198,15 @@ describe('computeMiningExtraction', () => {
     expect(result.playerReceives.hydrogene).toBe(7000 - 2800 - 2800);
   });
 });
+
+describe('Parametric config', () => {
+  it('discoveryCooldown with custom base', () => {
+    expect(discoveryCooldown(1, { base: 10, minimum: 2 })).toBe(9);
+    expect(discoveryCooldown(9, { base: 10, minimum: 2 })).toBe(2);
+  });
+
+  it('depositSize with custom base and increment', () => {
+    const size = depositSize(3, 1.0, { base: 20000, increment: 10000 });
+    expect(size).toBe(40000);
+  });
+});

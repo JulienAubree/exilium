@@ -28,16 +28,23 @@ export function miningDuration(
  * Formula: max(1, 7 - level)
  * Level 1 = 6h, level 2 = 5h, …, level 6+ = 1h.
  */
-export function discoveryCooldown(centerLevel: number): number {
-  return Math.max(1, 7 - centerLevel);
+export function discoveryCooldown(
+  centerLevel: number,
+  config: { base: number; minimum: number } = { base: 7, minimum: 1 },
+): number {
+  return Math.max(config.minimum, config.base - centerLevel);
 }
 
 /**
  * Total resource quantity of a deposit.
  * Formula: floor((15000 + 5000 * (centerLevel - 1)) * varianceMultiplier)
  */
-export function depositSize(centerLevel: number, varianceMultiplier: number): number {
-  return Math.floor((15000 + 5000 * (centerLevel - 1)) * varianceMultiplier);
+export function depositSize(
+  centerLevel: number,
+  varianceMultiplier: number,
+  config: { base: number; increment: number } = { base: 15000, increment: 5000 },
+): number {
+  return Math.floor((config.base + config.increment * (centerLevel - 1)) * varianceMultiplier);
 }
 
 /**
@@ -47,11 +54,12 @@ export function depositSize(centerLevel: number, varianceMultiplier: number): nu
 export function depositComposition(
   mineraiOffset: number,
   siliciumOffset: number,
+  config: { baseMinerai: number; baseSilicium: number; minHydrogene: number } = { baseMinerai: 0.60, baseSilicium: 0.30, minHydrogene: 0.02 },
 ): { minerai: number; silicium: number; hydrogene: number } {
-  const rawMinerai = 0.60 + mineraiOffset;
-  const rawSilicium = 0.30 + siliciumOffset;
+  const rawMinerai = config.baseMinerai + mineraiOffset;
+  const rawSilicium = config.baseSilicium + siliciumOffset;
   const unclamped = 1 - rawMinerai - rawSilicium;
-  const hydrogene = Math.max(0.02, unclamped);
+  const hydrogene = Math.max(config.minHydrogene, unclamped);
   // Scale minerai and silicium proportionally to fill (1 - hydrogene)
   const msTotal = rawMinerai + rawSilicium;
   const msRoom = 1 - hydrogene;
@@ -67,9 +75,13 @@ export function depositComposition(
  * Compute effective slag rate after deep space refining tech.
  * Formula: clamp(baseSlagRate * 0.85^refiningLevel, 0, 0.99)
  */
-export function computeSlagRate(baseSlagRate: number, refiningLevel: number): number {
-  const rate = baseSlagRate * Math.pow(0.85, refiningLevel);
-  return Math.min(0.99, Math.max(0, rate));
+export function computeSlagRate(
+  baseSlagRate: number,
+  refiningLevel: number,
+  config: { decayBase: number; maxRate: number } = { decayBase: 0.85, maxRate: 0.99 },
+): number {
+  const rate = baseSlagRate * Math.pow(config.decayBase, refiningLevel);
+  return Math.min(config.maxRate, Math.max(0, rate));
 }
 
 export interface ResourceAmounts {

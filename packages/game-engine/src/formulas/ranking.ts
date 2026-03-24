@@ -18,6 +18,7 @@ export interface UnitDef {
 export function calculateBuildingPoints(
   levels: Record<string, number>,
   buildingDefs: Record<string, BuildingDef>,
+  pointsDivisor: number = 1000,
 ): number {
   let totalResources = 0;
 
@@ -31,12 +32,13 @@ export function calculateBuildingPoints(
     }
   }
 
-  return Math.floor(totalResources / 1000);
+  return Math.floor(totalResources / pointsDivisor);
 }
 
 export function calculateResearchPoints(
   levels: Record<string, number>,
   researchDefs: Record<string, ResearchDef>,
+  pointsDivisor: number = 1000,
 ): number {
   let totalResources = 0;
 
@@ -50,12 +52,13 @@ export function calculateResearchPoints(
     }
   }
 
-  return Math.floor(totalResources / 1000);
+  return Math.floor(totalResources / pointsDivisor);
 }
 
 export function calculateFleetPoints(
   counts: Record<string, number>,
   shipDefs: Record<string, UnitDef>,
+  pointsDivisor: number = 1000,
 ): number {
   let totalResources = 0;
 
@@ -66,12 +69,13 @@ export function calculateFleetPoints(
     }
   }
 
-  return Math.floor(totalResources / 1000);
+  return Math.floor(totalResources / pointsDivisor);
 }
 
 export function calculateDefensePoints(
   counts: Record<string, number>,
   defenseDefs: Record<string, UnitDef>,
+  pointsDivisor: number = 1000,
 ): number {
   let totalResources = 0;
 
@@ -82,7 +86,7 @@ export function calculateDefensePoints(
     }
   }
 
-  return Math.floor(totalResources / 1000);
+  return Math.floor(totalResources / pointsDivisor);
 }
 
 export function calculateTotalPoints(
