@@ -160,12 +160,14 @@ export function createFleetService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Capacité de fret dépassée' });
       }
 
-      // Handler-based validation
+      // Handler-based validation (trade handler reserves the offer atomically)
       const sendHandler = handlers[input.mission];
       if (sendHandler) {
         await sendHandler.validateFleet({ ...input, userId }, config, handlerCtx);
       }
 
+      // Everything after this point must rollback the trade reservation on failure
+      try {
       // Find target planet (may not exist for colonization or PvE missions)
       let targetPlanet: typeof planets.$inferSelect | undefined;
       if (input.mission !== 'mine' && input.mission !== 'pirate') {
@@ -322,6 +324,16 @@ export function createFleetService(
         travelTime: duration,
         fuelConsumed: fuel,
       };
+      } catch (err) {
+        // Rollback trade reservation if anything failed after validateFleet
+        if (input.tradeId) {
+          await db
+            .update(marketOffers)
+            .set({ status: 'active', reservedBy: null, reservedAt: null, fleetEventId: null })
+            .where(and(eq(marketOffers.id, input.tradeId), eq(marketOffers.status, 'reserved')));
+        }
+        throw err;
+      }
     },
 
     async recallFleet(userId: string, fleetEventId: string) {
