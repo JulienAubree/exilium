@@ -18,6 +18,7 @@ import {
   RankingIcon,
   HistoryIcon,
   ProfileIcon,
+  MarketIcon,
 } from '@/lib/icons';
 import { useUIStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -27,7 +28,7 @@ import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
   accueil: ['/'],
-  base: ['/resources', '/buildings', '/research', '/shipyard', '/command-center', '/defense'],
+  base: ['/resources', '/buildings', '/research', '/shipyard', '/command-center', '/defense', '/market'],
   galaxie: ['/galaxy', '/fleet', '/missions', '/movements'],
   social: ['/profile', '/messages', '/reports', '/alliance', '/ranking', '/alliance-ranking'],
 };
@@ -42,6 +43,7 @@ const SHEET_ITEMS = {
     { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
     { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
     { label: 'Défense', path: '/defense', icon: DefenseIcon },
+    { label: 'Marché', path: '/market', icon: MarketIcon },
   ],
   galaxie: [
     { label: 'Vue galaxie', path: '/galaxy', icon: GalaxyIcon },
