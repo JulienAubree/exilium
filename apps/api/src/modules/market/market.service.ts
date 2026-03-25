@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
 import { marketOffers, planets, planetBuildings, fleetEvents } from '@ogame-clone/db';
 import type { Database } from '@ogame-clone/db';
-import { maxMarketOffers, calculateCommission } from '@ogame-clone/game-engine';
+import { maxMarketOffers } from '@ogame-clone/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { publishNotification } from '../notification/notification.publisher.js';
@@ -165,133 +165,6 @@ export function createMarketService(
 
       // Cancel expiration job
       await marketQueue.remove(`market-expire-${offerId}`);
-
-      return { success: true };
-    },
-
-    async reserveOffer(userId: string, planetId: string, offerId: string) {
-      // Verify buyer has market building
-      const marketLevel = await getMarketLevel(planetId);
-      if (marketLevel < 1) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis pour acheter' });
-      }
-
-      const now = new Date();
-      const config = await gameConfigService.getFullConfig();
-      const reservationMinutes = Number(config.universe.market_reservation_minutes) || 60;
-
-      // Atomic reserve: UPDATE...WHERE status='active' AND sellerId != userId RETURNING
-      // This prevents double-reservation race conditions
-      const [offer] = await db
-        .update(marketOffers)
-        .set({
-          status: 'reserved',
-          reservedBy: userId,
-          reservedAt: now,
-        })
-        .where(
-          and(
-            eq(marketOffers.id, offerId),
-            eq(marketOffers.status, 'active'),
-            ne(marketOffers.sellerId, userId),
-          ),
-        )
-        .returning();
-
-      if (!offer) {
-        // Check if it's a self-purchase attempt
-        const [existing] = await db
-          .select({ sellerId: marketOffers.sellerId, status: marketOffers.status })
-          .from(marketOffers)
-          .where(eq(marketOffers.id, offerId))
-          .limit(1);
-        if (existing?.sellerId === userId) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Impossible d\'acheter sa propre offre' });
-        }
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Offre non disponible' });
-      }
-
-      // Schedule reservation expiration
-      await marketQueue.add(
-        'market-reservation-expire',
-        { offerId },
-        { delay: reservationMinutes * 60 * 1000, jobId: `market-reservation-${offerId}` },
-      );
-
-      // Return offer details + seller planet coordinates for fleet dispatch
-      const [sellerPlanet] = await db
-        .select({ name: planets.name, galaxy: planets.galaxy, system: planets.system, position: planets.position })
-        .from(planets)
-        .where(eq(planets.id, offer.planetId))
-        .limit(1);
-
-      // Notify seller
-      publishNotification(redis, offer.sellerId, {
-        type: 'market-offer-reserved',
-        payload: {
-          offerId: offer.id,
-          resourceType: offer.resourceType,
-          quantity: Number(offer.quantity),
-          planetName: sellerPlanet?.name ?? 'Planète inconnue',
-        },
-      });
-
-      const commissionPercent = Number(config.universe.market_commission_percent) || 5;
-      const price = {
-        minerai: Number(offer.priceMinerai),
-        silicium: Number(offer.priceSilicium),
-        hydrogene: Number(offer.priceHydrogene),
-      };
-      const commission = calculateCommission(price, commissionPercent);
-
-      return {
-        offer: {
-          id: offer.id,
-          resourceType: offer.resourceType,
-          quantity: Number(offer.quantity),
-          price,
-          commission,
-          totalPayment: {
-            minerai: price.minerai + commission.minerai,
-            silicium: price.silicium + commission.silicium,
-            hydrogene: price.hydrogene + commission.hydrogene,
-          },
-        },
-        sellerPlanet: sellerPlanet ?? { galaxy: 0, system: 0, position: 0 },
-      };
-    },
-
-    async cancelReservation(userId: string, offerId: string) {
-      const [offer] = await db
-        .select()
-        .from(marketOffers)
-        .where(
-          and(
-            eq(marketOffers.id, offerId),
-            eq(marketOffers.status, 'reserved'),
-            eq(marketOffers.reservedBy, userId),
-          ),
-        )
-        .limit(1);
-
-      if (!offer) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Réservation non trouvée' });
-      }
-
-      if (offer.fleetEventId) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Flotte déjà envoyée, rappelez la flotte pour annuler' });
-      }
-
-      await db
-        .update(marketOffers)
-        .set({
-          status: 'active',
-          reservedBy: null,
-          reservedAt: null,
-        })
-        .where(eq(marketOffers.id, offerId));
-
-      await marketQueue.remove(`market-reservation-${offerId}`);
 
       return { success: true };
     },

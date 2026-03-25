@@ -63,6 +63,7 @@ export function createFleetService(
     reportService,
     fleetQueue,
     assetsDir: env.ASSETS_DIR,
+    redis,
   };
 
   function buildFleetConfig(config: { universe: Record<string, unknown> }): FleetConfig {
@@ -174,7 +175,7 @@ export function createFleetService(
       // Handler-based validation
       const sendHandler = handlers[input.mission];
       if (sendHandler) {
-        await sendHandler.validateFleet(input, config, handlerCtx);
+        await sendHandler.validateFleet({ ...input, userId }, config, handlerCtx);
       }
 
       // Find target planet (may not exist for colonization or PvE missions)
@@ -259,7 +260,7 @@ export function createFleetService(
         }
       }
 
-      // Link trade fleet to offer and cancel reservation expiration
+      // Link trade fleet to offer
       if (input.tradeId) {
         await db
           .update(marketOffers)
@@ -353,6 +354,10 @@ export function createFleetService(
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Flotte non trouvée ou non rappelable' });
       }
 
+      if (event.mission === 'trade') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Les flottes de commerce ne peuvent pas être rappelées' });
+      }
+
       const now = new Date();
       const elapsed = now.getTime() - event.departureTime.getTime();
       const returnTime = new Date(now.getTime() + elapsed);
@@ -372,19 +377,6 @@ export function createFleetService(
       // Release PvE mission back to available if recalling
       if (event.pveMissionId && pveService) {
         await pveService.releaseMission(event.pveMissionId);
-      }
-
-      // Release trade offer back to active if recalling
-      if (event.tradeId) {
-        await db
-          .update(marketOffers)
-          .set({
-            status: 'active',
-            reservedBy: null,
-            reservedAt: null,
-            fleetEventId: null,
-          })
-          .where(eq(marketOffers.id, event.tradeId));
       }
 
       await db

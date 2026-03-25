@@ -204,11 +204,6 @@ export function useNotifications() {
         addToast(`Offre expirée, ressources restituées (${event.payload.quantity}x ${event.payload.resourceType})`);
         showBrowserNotification('Offre expirée', 'Ressources restituées');
         break;
-      case 'market-reservation-expired':
-        utils.market.list.invalidate();
-        addToast('Réservation expirée');
-        showBrowserNotification('Réservation expirée', "Vous n'avez pas envoyé de flotte à temps");
-        break;
       case 'new-alliance-message': {
         const allianceId = String(event.payload.allianceId);
         utils.message.allianceChat.invalidate({ allianceId });

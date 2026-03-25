@@ -42,20 +42,5 @@ export function createMarketRouter(marketService: ReturnType<typeof createMarket
       .mutation(async ({ ctx, input }) => {
         return marketService.cancelOffer(ctx.userId!, input.offerId);
       }),
-
-    reserveOffer: protectedProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        offerId: z.string().uuid(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return marketService.reserveOffer(ctx.userId!, input.planetId, input.offerId);
-      }),
-
-    cancelReservation: protectedProcedure
-      .input(z.object({ offerId: z.string().uuid() }))
-      .mutation(async ({ ctx, input }) => {
-        return marketService.cancelReservation(ctx.userId!, input.offerId);
-      }),
   });
 }

@@ -11,10 +11,12 @@ import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js'
 import type { createPirateService } from '../pve/pirate.service.js';
 import type { createReportService } from '../report/report.service.js';
 import type { Queue } from 'bullmq';
+import type Redis from 'ioredis';
 
 // ── Input types ──
 
 export interface SendFleetInput {
+  userId?: string;
   originPlanetId: string;
   targetGalaxy: number;
   targetSystem: number;
@@ -73,6 +75,7 @@ export interface MissionHandlerContext {
   reportService?: ReturnType<typeof createReportService>;
   fleetQueue: Queue;
   assetsDir: string;
+  redis?: Redis;
 }
 
 // ── Result types ──

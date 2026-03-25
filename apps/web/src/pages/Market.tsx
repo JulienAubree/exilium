@@ -92,23 +92,6 @@ export default function Market() {
     onError: (err) => addToast(err.message, 'error'),
   });
 
-  const reserveMutation = trpc.market.reserveOffer.useMutation({
-    onSuccess: (data) => {
-      addToast('Offre reservee ! Envoyez votre flotte.');
-      const { sellerPlanet, offer } = data;
-      navigate(`/fleet?mission=trade&galaxy=${sellerPlanet.galaxy}&system=${sellerPlanet.system}&position=${sellerPlanet.position}&tradeId=${offer.id}&cargoMi=${offer.totalPayment.minerai}&cargoSi=${offer.totalPayment.silicium}&cargoH2=${offer.totalPayment.hydrogene}`);
-    },
-    onError: (err) => addToast(err.message, 'error'),
-  });
-
-  const cancelReservationMutation = trpc.market.cancelReservation.useMutation({
-    onSuccess: () => {
-      addToast('Reservation annulee');
-      utils.market.myOffers.invalidate();
-    },
-    onError: (err) => addToast(err.message, 'error'),
-  });
-
   const handleCreateOffer = () => {
     if (!planetId) return;
     createOfferMutation.mutate({
@@ -121,9 +104,18 @@ export default function Market() {
     });
   };
 
-  const handleBuy = (offerId: string) => {
+  const handleBuy = (offer: {
+    id: string;
+    priceMinerai: number;
+    priceSilicium: number;
+    priceHydrogene: number;
+    sellerCoords: { galaxy: number; system: number; position: number };
+  }) => {
     if (!planetId) return;
-    reserveMutation.mutate({ planetId, offerId });
+    const commMi = offer.priceMinerai > 0 ? Math.ceil(offer.priceMinerai * commissionPercent / 100) : 0;
+    const commSi = offer.priceSilicium > 0 ? Math.ceil(offer.priceSilicium * commissionPercent / 100) : 0;
+    const commH2 = offer.priceHydrogene > 0 ? Math.ceil(offer.priceHydrogene * commissionPercent / 100) : 0;
+    navigate(`/fleet?mission=trade&galaxy=${offer.sellerCoords.galaxy}&system=${offer.sellerCoords.system}&position=${offer.sellerCoords.position}&tradeId=${offer.id}&cargoMi=${offer.priceMinerai + commMi}&cargoSi=${offer.priceSilicium + commSi}&cargoH2=${offer.priceHydrogene + commH2}`);
   };
 
   const formatPrice = (mi: number, si: number, h2: number) => {
@@ -277,8 +269,7 @@ export default function Market() {
                         variant="retro"
                         size="sm"
                         className="w-full mt-auto"
-                        onClick={() => handleBuy(offer.id)}
-                        disabled={reserveMutation.isPending}
+                        onClick={() => handleBuy(offer)}
                       >
                         Acheter
                       </Button>
@@ -430,16 +421,6 @@ export default function Market() {
                           disabled={cancelOfferMutation.isPending}
                         >
                           Annuler
-                        </Button>
-                      )}
-                      {offer.status === 'reserved' && !offer.fleetEventId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => cancelReservationMutation.mutate({ offerId: offer.id })}
-                          disabled={cancelReservationMutation.isPending}
-                        >
-                          Annuler reservation
                         </Button>
                       )}
                     </div>

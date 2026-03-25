@@ -197,7 +197,7 @@ function MovementCard({
     : '';
   const originLabel = originPlanet?.name ?? 'Planete';
 
-  const canRecall = ['outbound', 'prospecting', 'mining'].includes(event.phase);
+  const canRecall = ['outbound', 'prospecting', 'mining'].includes(event.phase) && event.mission !== 'trade';
   const isReturn = event.phase === 'return';
 
   const mStyle = MISSION_STYLE[event.mission] ?? MISSION_STYLE.transport;
