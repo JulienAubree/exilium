@@ -14,10 +14,28 @@ const RESOURCE_COLORS: Record<string, string> = {
   hydrogene: 'text-blue-400',
 };
 
+const RESOURCE_GLOWS: Record<string, string> = {
+  minerai: 'glow-minerai',
+  silicium: 'glow-silicium',
+  hydrogene: 'glow-hydrogene',
+};
+
+const RESOURCE_CARD_CLASS: Record<string, string> = {
+  minerai: 'retro-card-minerai',
+  silicium: 'retro-card-silicium',
+  hydrogene: 'retro-card-hydrogene',
+};
+
+const RESOURCE_BORDER_ACTIVE: Record<string, string> = {
+  minerai: 'border-orange-400/50 shadow-[0_0_8px_rgba(251,146,60,0.15)]',
+  silicium: 'border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.15)]',
+  hydrogene: 'border-blue-400/50 shadow-[0_0_8px_rgba(96,165,250,0.15)]',
+};
+
 const RESOURCE_LABELS: Record<string, string> = {
   minerai: 'Minerai',
   silicium: 'Silicium',
-  hydrogene: 'Hydrogène',
+  hydrogene: 'Hydrogene',
 };
 
 type Tab = 'buy' | 'sell' | 'my';
@@ -53,7 +71,7 @@ export default function Market() {
   // Mutations
   const createOfferMutation = trpc.market.createOffer.useMutation({
     onSuccess: () => {
-      addToast('Offre créée !');
+      addToast('Offre creee !');
       utils.market.myOffers.invalidate();
       utils.resource.production.invalidate();
       setSellQuantity(0);
@@ -67,7 +85,7 @@ export default function Market() {
 
   const cancelOfferMutation = trpc.market.cancelOffer.useMutation({
     onSuccess: () => {
-      addToast('Offre annulée');
+      addToast('Offre annulee');
       utils.market.myOffers.invalidate();
       utils.resource.production.invalidate();
     },
@@ -76,7 +94,7 @@ export default function Market() {
 
   const reserveMutation = trpc.market.reserveOffer.useMutation({
     onSuccess: (data) => {
-      addToast('Offre réservée ! Envoyez votre flotte.');
+      addToast('Offre reservee ! Envoyez votre flotte.');
       const { sellerPlanet, offer } = data;
       navigate(`/fleet?mission=trade&galaxy=${sellerPlanet.galaxy}&system=${sellerPlanet.system}&position=${sellerPlanet.position}&tradeId=${offer.id}&cargoMi=${offer.totalPayment.minerai}&cargoSi=${offer.totalPayment.silicium}&cargoH2=${offer.totalPayment.hydrogene}`);
     },
@@ -85,7 +103,7 @@ export default function Market() {
 
   const cancelReservationMutation = trpc.market.cancelReservation.useMutation({
     onSuccess: () => {
-      addToast('Réservation annulée');
+      addToast('Reservation annulee');
       utils.market.myOffers.invalidate();
     },
     onError: (err) => addToast(err.message, 'error'),
@@ -117,280 +135,321 @@ export default function Market() {
   };
 
   const STATUS_STYLES: Record<string, string> = {
-    active: 'bg-emerald-500/20 text-emerald-400',
-    reserved: 'bg-amber-500/20 text-amber-400',
-    sold: 'bg-blue-500/20 text-blue-400',
-    expired: 'bg-red-500/20 text-red-400',
-    cancelled: 'bg-white/10 text-muted-foreground',
+    active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+    reserved: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+    sold: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+    expired: 'bg-red-500/20 text-red-400 border border-red-500/30',
+    cancelled: 'bg-white/5 text-muted-foreground border border-white/10',
   };
 
   const STATUS_LABELS: Record<string, string> = {
     active: 'Active',
-    reserved: 'Réservée',
+    reserved: 'Reservee',
     sold: 'Vendue',
-    expired: 'Expirée',
-    cancelled: 'Annulée',
+    expired: 'Expiree',
+    cancelled: 'Annulee',
   };
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title="Marché Galactique" />
+      <PageHeader title="Marche Galactique" />
 
       {/* Tabs */}
-      <div className="flex gap-0">
-        {([
-          { key: 'buy' as Tab, label: 'Acheter' },
-          { key: 'sell' as Tab, label: 'Vendre' },
-          { key: 'my' as Tab, label: 'Mes offres' },
-        ]).map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={cn(
-              'px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors',
-              tab === key
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Buy tab */}
-      {tab === 'buy' && (
-        <section className="glass-card p-4">
-          {/* Resource filters */}
-          <div className="flex flex-wrap gap-2 mb-4">
+      <div className="glass-card overflow-hidden">
+        <div className="flex border-b border-white/10">
+          {([
+            { key: 'buy' as Tab, label: 'Acheter' },
+            { key: 'sell' as Tab, label: 'Vendre' },
+            { key: 'my' as Tab, label: 'Mes offres' },
+          ]).map(({ key, label }) => (
             <button
-              onClick={() => setResourceFilter(undefined)}
+              key={key}
+              onClick={() => setTab(key)}
               className={cn(
-                'rounded-full px-4 py-1.5 text-sm transition-colors',
-                !resourceFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent',
+                'relative flex-1 px-5 py-3 text-sm font-medium uppercase tracking-wider transition-colors',
+                tab === key
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.03]',
               )}
             >
-              Tout
+              {label}
+              {tab === key && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary shadow-[0_0_8px_rgba(103,212,232,0.4)]" />
+              )}
             </button>
-            {(['minerai', 'silicium', 'hydrogene'] as const).map((r) => (
+          ))}
+        </div>
+
+        {/* Buy tab */}
+        {tab === 'buy' && (
+          <div className="p-4 lg:p-5">
+            {/* Resource filters */}
+            <div className="flex flex-wrap gap-2 mb-5">
               <button
-                key={r}
-                onClick={() => setResourceFilter(r)}
+                onClick={() => setResourceFilter(undefined)}
                 className={cn(
-                  'rounded-full px-4 py-1.5 text-sm transition-colors',
-                  resourceFilter === r ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent',
+                  'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
+                  !resourceFilter
+                    ? 'border-primary/50 text-primary bg-primary/10 shadow-[0_0_8px_rgba(103,212,232,0.15)]'
+                    : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
                 )}
               >
-                {RESOURCE_LABELS[r]}
+                Tout
               </button>
-            ))}
-          </div>
+              {(['minerai', 'silicium', 'hydrogene'] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setResourceFilter(r)}
+                  className={cn(
+                    'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
+                    resourceFilter === r
+                      ? cn(RESOURCE_COLORS[r], RESOURCE_BORDER_ACTIVE[r], 'bg-white/5')
+                      : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
+                  )}
+                >
+                  {RESOURCE_LABELS[r]}
+                </button>
+              ))}
+            </div>
 
-          {/* Offers table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-muted-foreground border-b border-border">
-                  <th className="text-left py-2 px-2">Ressource</th>
-                  <th className="text-right py-2 px-2">Quantité</th>
-                  <th className="text-right py-2 px-2">Prix</th>
-                  <th className="text-right py-2 px-2">Commission</th>
-                  <th className="text-center py-2 px-2">Coords</th>
-                  <th className="text-center py-2 px-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {offersLoading && (
-                  <tr><td colSpan={6} className="text-center py-4 text-muted-foreground">Chargement...</td></tr>
-                )}
-                {!offersLoading && (!offersData?.offers || offersData.offers.length === 0) && (
-                  <tr><td colSpan={6} className="text-center py-4 text-muted-foreground">Aucune offre disponible</td></tr>
-                )}
-                {offersData?.offers.map((offer) => {
+            {/* Offers grid */}
+            {offersLoading && (
+              <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                <div className="h-4 w-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mr-3" />
+                Chargement...
+              </div>
+            )}
+            {!offersLoading && (!offersData?.offers || offersData.offers.length === 0) && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <svg className="h-10 w-10 mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p className="text-sm">Aucune offre disponible</p>
+              </div>
+            )}
+            {!offersLoading && offersData?.offers && offersData.offers.length > 0 && (
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {offersData.offers.map((offer) => {
                   const commMi = offer.priceMinerai > 0 ? Math.ceil(offer.priceMinerai * commissionPercent / 100) : 0;
                   const commSi = offer.priceSilicium > 0 ? Math.ceil(offer.priceSilicium * commissionPercent / 100) : 0;
                   const commH2 = offer.priceHydrogene > 0 ? Math.ceil(offer.priceHydrogene * commissionPercent / 100) : 0;
                   return (
-                    <tr key={offer.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                      <td className={cn('py-2 px-2 font-medium', RESOURCE_COLORS[offer.resourceType])}>
-                        {RESOURCE_LABELS[offer.resourceType]}
-                      </td>
-                      <td className="text-right py-2 px-2">{offer.quantity.toLocaleString('fr-FR')}</td>
-                      <td className="text-right py-2 px-2">{formatPrice(offer.priceMinerai, offer.priceSilicium, offer.priceHydrogene)}</td>
-                      <td className="text-right py-2 px-2 text-muted-foreground">{formatPrice(commMi, commSi, commH2)}</td>
-                      <td className="text-center py-2 px-2 text-muted-foreground">
-                        [{offer.sellerCoords.galaxy}:{offer.sellerCoords.system}:{offer.sellerCoords.position}]
-                      </td>
-                      <td className="text-center py-2 px-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleBuy(offer.id)}
-                          disabled={reserveMutation.isPending}
-                        >
-                          Acheter
-                        </Button>
-                      </td>
-                    </tr>
+                    <div
+                      key={offer.id}
+                      className={cn('retro-card p-4 flex flex-col gap-3', RESOURCE_CARD_CLASS[offer.resourceType])}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className={cn('text-lg font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType], RESOURCE_GLOWS[offer.resourceType])}>
+                            {offer.quantity.toLocaleString('fr-FR')}
+                          </span>
+                          <span className={cn('ml-1.5 text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>
+                            {RESOURCE_LABELS[offer.resourceType]}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          [{offer.sellerCoords.galaxy}:{offer.sellerCoords.system}:{offer.sellerCoords.position}]
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Prix</span>
+                          <span className="text-foreground">{formatPrice(offer.priceMinerai, offer.priceSilicium, offer.priceHydrogene)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Commission ({commissionPercent}%)</span>
+                          <span className="text-muted-foreground">{formatPrice(commMi, commSi, commH2)}</span>
+                        </div>
+                        <div className="border-t border-white/10 pt-1 flex justify-between font-medium">
+                          <span className="text-muted-foreground">Total</span>
+                          <span className="text-foreground">
+                            {formatPrice(
+                              offer.priceMinerai + commMi,
+                              offer.priceSilicium + commSi,
+                              offer.priceHydrogene + commH2,
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="retro"
+                        size="sm"
+                        className="w-full mt-auto"
+                        onClick={() => handleBuy(offer.id)}
+                        disabled={reserveMutation.isPending}
+                      >
+                        Acheter
+                      </Button>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        </section>
-      )}
+        )}
 
-      {/* Sell tab */}
-      {tab === 'sell' && (
-        <section className="glass-card p-4 max-w-lg">
-          <div className="space-y-4">
-            {/* Resource select */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Ressource à vendre</label>
-              <div className="flex gap-2">
-                {(['minerai', 'silicium', 'hydrogene'] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setSellResource(r)}
+        {/* Sell tab */}
+        {tab === 'sell' && (
+          <div className="p-4 lg:p-5">
+            <div className="max-w-lg space-y-5">
+              {/* Resource select */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider">Ressource a vendre</label>
+                <div className="flex gap-2">
+                  {(['minerai', 'silicium', 'hydrogene'] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setSellResource(r)}
+                      className={cn(
+                        'flex-1 rounded-md border px-3 py-2.5 text-sm font-medium transition-all',
+                        sellResource === r
+                          ? cn(RESOURCE_COLORS[r], RESOURCE_BORDER_ACTIVE[r], 'bg-white/5')
+                          : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
+                      )}
+                    >
+                      {RESOURCE_LABELS[r]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider">Quantite</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={sellQuantity || ''}
+                  onChange={(e) => setSellQuantity(Math.max(0, Number(e.target.value) || 0))}
+                  className="w-full rounded-md border border-border bg-muted/50 px-3 py-2.5 text-sm focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors"
+                  placeholder="10000"
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider">Prix demande</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    { key: 'minerai' as const, value: sellPriceMinerai, setter: setSellPriceMinerai },
+                    { key: 'silicium' as const, value: sellPriceSilicium, setter: setSellPriceSilicium },
+                    { key: 'hydrogene' as const, value: sellPriceHydrogene, setter: setSellPriceHydrogene },
+                  ]).map(({ key, value, setter }) => (
+                    <div key={key}>
+                      <div className={cn('text-[10px] mb-1.5 font-medium uppercase tracking-wider', RESOURCE_COLORS[key])}>
+                        {RESOURCE_LABELS[key]}
+                      </div>
+                      <input
+                        type="number"
+                        min={0}
+                        value={value || ''}
+                        onChange={(e) => setter(Math.max(0, Number(e.target.value) || 0))}
+                        className="w-full rounded-md border border-border bg-muted/50 px-3 py-2.5 text-sm focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Commission preview */}
+              {(sellPriceMinerai > 0 || sellPriceSilicium > 0 || sellPriceHydrogene > 0) && (
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-4 text-xs">
+                  <div className="text-muted-foreground mb-1.5">
+                    Commission ({commissionPercent}%) payee par l'acheteur :
+                  </div>
+                  <div className="text-primary font-medium">
+                    {formatPrice(
+                      sellPriceMinerai > 0 ? Math.ceil(sellPriceMinerai * commissionPercent / 100) : 0,
+                      sellPriceSilicium > 0 ? Math.ceil(sellPriceSilicium * commissionPercent / 100) : 0,
+                      sellPriceHydrogene > 0 ? Math.ceil(sellPriceHydrogene * commissionPercent / 100) : 0,
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <Button
+                variant="retro"
+                className="w-full"
+                onClick={handleCreateOffer}
+                disabled={
+                  createOfferMutation.isPending ||
+                  sellQuantity <= 0 ||
+                  (sellPriceMinerai <= 0 && sellPriceSilicium <= 0 && sellPriceHydrogene <= 0)
+                }
+              >
+                Mettre en vente
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* My offers tab */}
+        {tab === 'my' && (
+          <div className="p-4 lg:p-5">
+            {!myOffers || myOffers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <svg className="h-10 w-10 mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" />
+                </svg>
+                <p className="text-sm">Aucune offre.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {myOffers.map((offer) => (
+                  <div
+                    key={offer.id}
                     className={cn(
-                      'flex-1 rounded px-3 py-2 text-sm font-medium transition-colors',
-                      sellResource === r
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-accent',
+                      'retro-card flex items-center justify-between p-4',
+                      RESOURCE_CARD_CLASS[offer.resourceType],
                     )}
                   >
-                    {RESOURCE_LABELS[r]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quantity */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Quantité</label>
-              <input
-                type="number"
-                min={1}
-                value={sellQuantity || ''}
-                onChange={(e) => setSellQuantity(Math.max(0, Number(e.target.value) || 0))}
-                className="w-full rounded bg-muted px-3 py-2 text-sm"
-                placeholder="10000"
-              />
-            </div>
-
-            {/* Price */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Prix demandé</label>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <div className="text-[10px] text-orange-400 mb-1">Minerai</div>
-                  <input
-                    type="number"
-                    min={0}
-                    value={sellPriceMinerai || ''}
-                    onChange={(e) => setSellPriceMinerai(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full rounded bg-muted px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <div className="text-[10px] text-emerald-400 mb-1">Silicium</div>
-                  <input
-                    type="number"
-                    min={0}
-                    value={sellPriceSilicium || ''}
-                    onChange={(e) => setSellPriceSilicium(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full rounded bg-muted px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <div className="text-[10px] text-blue-400 mb-1">Hydrogène</div>
-                  <input
-                    type="number"
-                    min={0}
-                    value={sellPriceHydrogene || ''}
-                    onChange={(e) => setSellPriceHydrogene(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full rounded bg-muted px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Commission preview */}
-            {(sellPriceMinerai > 0 || sellPriceSilicium > 0 || sellPriceHydrogene > 0) && (
-              <div className="rounded border border-border p-3 text-xs text-muted-foreground">
-                <div>Commission ({commissionPercent}%) payée par l'acheteur :</div>
-                <div className="text-foreground mt-1">
-                  {formatPrice(
-                    sellPriceMinerai > 0 ? Math.ceil(sellPriceMinerai * commissionPercent / 100) : 0,
-                    sellPriceSilicium > 0 ? Math.ceil(sellPriceSilicium * commissionPercent / 100) : 0,
-                    sellPriceHydrogene > 0 ? Math.ceil(sellPriceHydrogene * commissionPercent / 100) : 0,
-                  )}
-                </div>
-              </div>
-            )}
-
-            <Button
-              className="w-full"
-              onClick={handleCreateOffer}
-              disabled={
-                createOfferMutation.isPending ||
-                sellQuantity <= 0 ||
-                (sellPriceMinerai <= 0 && sellPriceSilicium <= 0 && sellPriceHydrogene <= 0)
-              }
-            >
-              Mettre en vente
-            </Button>
-          </div>
-        </section>
-      )}
-
-      {/* My offers tab */}
-      {tab === 'my' && (
-        <section className="glass-card p-4">
-          <div className="space-y-2">
-            {!myOffers || myOffers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucune offre.</p>
-            ) : (
-              myOffers.map((offer) => (
-                <div key={offer.id} className="flex items-center justify-between rounded border border-border p-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className={cn('font-medium', RESOURCE_COLORS[offer.resourceType])}>
-                        {Number(offer.quantity).toLocaleString('fr-FR')} {RESOURCE_LABELS[offer.resourceType]}
-                      </span>
-                      <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', STATUS_STYLES[offer.status])}>
-                        {STATUS_LABELS[offer.status]}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className={cn('font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType], RESOURCE_GLOWS[offer.resourceType])}>
+                          {Number(offer.quantity).toLocaleString('fr-FR')}
+                        </span>
+                        <span className={cn('text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>
+                          {RESOURCE_LABELS[offer.resourceType]}
+                        </span>
+                        <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-medium', STATUS_STYLES[offer.status])}>
+                          {STATUS_LABELS[offer.status]}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1.5">
+                        Prix : {formatPrice(offer.priceMinerai, offer.priceSilicium, offer.priceHydrogene)}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Prix : {formatPrice(offer.priceMinerai, offer.priceSilicium, offer.priceHydrogene)}
+                    <div className="shrink-0 ml-3">
+                      {offer.status === 'active' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}
+                          disabled={cancelOfferMutation.isPending}
+                        >
+                          Annuler
+                        </Button>
+                      )}
+                      {offer.status === 'reserved' && !offer.fleetEventId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => cancelReservationMutation.mutate({ offerId: offer.id })}
+                          disabled={cancelReservationMutation.isPending}
+                        >
+                          Annuler reservation
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  {offer.status === 'active' && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}
-                      disabled={cancelOfferMutation.isPending}
-                    >
-                      Annuler
-                    </Button>
-                  )}
-                  {offer.status === 'reserved' && !offer.fleetEventId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => cancelReservationMutation.mutate({ offerId: offer.id })}
-                      disabled={cancelReservationMutation.isPending}
-                    >
-                      Annuler réservation
-                    </Button>
-                  )}
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-        </section>
-      )}
+        )}
+      </div>
     </div>
   );
 }
