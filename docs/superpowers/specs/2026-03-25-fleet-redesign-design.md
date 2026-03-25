@@ -76,7 +76,7 @@ A **generic `Breadcrumb` component** (not fleet-specific) is used across all fle
   - Route: origin → target coordinates
   - Mini ship thumbnails (GameImage 20x20) with counts
   - Progress bar (standard) or stepper (mining missions with 4 phases)
-- Shows the 3-5 most recent/urgent movements
+- Shows up to 5 movements, sorted by nearest arrival time
 
 ### 2. Stationed Fleet (`/fleet/stationed`)
 
@@ -86,7 +86,7 @@ A **generic `Breadcrumb` component** (not fleet-specific) is used across all fle
 - Breadcrumb: `Flotte > Flotte stationnee`
 - Same category grouping as dashboard but larger:
   - Bigger ship images
-  - Ship stats visible (speed, cargo capacity, firepower)
+  - Ship stats visible: base values with research bonuses displayed as (base + bonus), following the existing `resolveBonus` pattern
   - Per-ship checkbox + quantity input for selection
   - "Select all" per category
 - Sticky bottom bar: "Envoyer les vaisseaux selectionnes" → navigates to `/fleet/send` with selected ships pre-filled as URL params or state
@@ -155,7 +155,7 @@ A **generic `Breadcrumb` component** (not fleet-specific) is used across all fle
 
 ### Ship Images
 - The `GameImage` component already supports `category="ships"` with fallback (colored letter)
-- Ship images directory (`public/assets/ships/`) exists but is empty
+- Ship images directory (`apps/web/public/assets/ships/`) exists but is empty
 - All ship references use GameImage — images will appear automatically when added
 - Three sizes used: icon (20x20 in movement cards), thumb (44x48 in dashboard grid), full (larger in stationed page)
 
@@ -164,11 +164,13 @@ A **generic `Breadcrumb` component** (not fleet-specific) is used across all fle
 - Each mission type has a consistent color:
   - Transport: blue (#3b82f6)
   - Attack: red (#e74c3c)
-  - Spy: purple
+  - Spy: purple (#8b5cf6)
   - Mine: green (#2ecc71)
-  - Colonize: teal
-  - Recycle: orange
-  - Station: blue-gray
+  - Colonize: teal (#14b8a6)
+  - Recycle: orange (#e67e22)
+  - Station: blue-gray (#64748b)
+  - Pirate: rose (#f43f5e)
+  - Trade: amber (#f59e0b)
 
 ### Ship Categories
 Uses existing game config categories:
