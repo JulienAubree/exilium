@@ -7,6 +7,10 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
+import { MissionIcon } from '@/components/fleet/MissionIcon';
+import { GameImage } from '@/components/common/GameImage';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName } from '@/lib/entity-names';
 import { resolveBonus } from '@ogame-clone/game-engine';
@@ -257,6 +261,7 @@ function MovementCard({
         {/* Header: Mission + Phase + Timer */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-wrap">
+            <MissionIcon mission={event.mission as any} size={16} className="flex-shrink-0" />
             <span className={cn('text-base font-bold tracking-tight', mStyle.text)}>
               {missionLabel}
             </span>
@@ -326,6 +331,7 @@ function MovementCard({
               key={id}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
             >
+              <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-5 w-5 rounded-sm" />
               <span className="text-foreground font-semibold">{count}&times;</span>
               <span className="text-muted-foreground">{getShipName(id, gameConfig)}</span>
             </span>
@@ -421,7 +427,12 @@ function MovementCard({
                         const isSlowest = stats && shipSpeed === slowestSpeed && slowestSpeed < Infinity;
                         return (
                           <tr key={id} className={i % 2 === 0 ? 'bg-white/[0.02]' : ''}>
-                            <td className="px-2 py-1.5 text-foreground">{getShipName(id, gameConfig)}</td>
+                            <td className="px-2 py-1.5 text-foreground">
+                              <span className="inline-flex items-center gap-1.5">
+                                <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-4 w-4 rounded-sm" />
+                                {getShipName(id, gameConfig)}
+                              </span>
+                            </td>
                             <td className="px-2 py-1.5 text-right text-foreground font-semibold">{count}</td>
                             <td className={cn('px-2 py-1.5 text-right', isSlowest ? 'text-amber-400' : 'text-muted-foreground')}>
                               {stats ? fmt(shipSpeed) : '—'}
@@ -705,6 +716,7 @@ function InboundFleetCard({
                 key={id}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
               >
+                <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-5 w-5 rounded-sm" />
                 <span className="text-foreground font-semibold">{count}&times;</span>
                 <span className="text-muted-foreground">{getShipName(id, gameConfig)}</span>
               </span>
@@ -837,6 +849,10 @@ export default function Movements() {
   if (isLoading) {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
+        <Breadcrumb segments={[
+          { label: 'Flotte', path: '/fleet' },
+          { label: 'Mouvements', path: '/fleet/movements' },
+        ]} />
         <PageHeader title="Mouvements" />
         <CardGridSkeleton count={3} />
       </div>
@@ -861,7 +877,17 @@ export default function Movements() {
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
+      <Breadcrumb segments={[
+        { label: 'Flotte', path: '/fleet' },
+        { label: 'Mouvements', path: '/fleet/movements' },
+      ]} />
       <PageHeader title="Mouvements" />
+
+      {/* Hostile alert banner */}
+      {(() => {
+        const hostileFleets = (inboundFleets ?? []).filter((f: any) => f.hostile);
+        return hostileFleets.length > 0 ? <HostileAlertBanner hostileFleets={hostileFleets} hideLink /> : null;
+      })()}
 
       {/* Inbound fleets */}
       {sortedInbound.length > 0 && (() => {
