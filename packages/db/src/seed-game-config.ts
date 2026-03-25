@@ -67,6 +67,21 @@ const BUILDINGS = [
   { id: 'storageSilicium', name: 'Entrepôt de silicium', description: 'Augmente le stockage de silicium.', baseCostMinerai: 1000, baseCostSilicium: 500, baseCostHydrogene: 0, costFactor: 2, baseTime: 60, categoryId: 'building_stockage', sortOrder: 10, role: 'storage_silicium', flavorText: "Ces chambres a environnement controle preservent le silicium dans des conditions optimales.", prerequisites: [] },
   { id: 'storageHydrogene', name: "Réservoir d'hydrogène", description: "Augmente le stockage d'hydrogène.", baseCostMinerai: 1000, baseCostSilicium: 1000, baseCostHydrogene: 0, costFactor: 2, baseTime: 60, categoryId: 'building_stockage', sortOrder: 11, role: 'storage_hydrogene', flavorText: "Des reservoirs cryogeniques haute pression maintiennent l'hydrogene a l'etat liquide pour un stockage maximal.", prerequisites: [] },
   { id: 'missionCenter', name: 'Centre de missions', description: "Découvre des gisements miniers toutes les 6h (−1h/niveau, min 1h). Détecte aussi les menaces pirates.", baseCostMinerai: 5000, baseCostSilicium: 3000, baseCostHydrogene: 1000, costFactor: 1.8, baseTime: 300, categoryId: 'building_defense', sortOrder: 12, role: 'mission_center', flavorText: "Le centre de missions scanne en permanence les ceintures d'asteroides a la recherche de gisements exploitables. Chaque amelioration accelere la frequence des decouvertes et la taille des gisements detectes.", prerequisites: [{ buildingId: 'shipyard', level: 2 }] },
+  {
+    id: 'galacticMarket',
+    name: 'Marché Galactique',
+    description: 'Permet les échanges de ressources avec les autres joueurs de l\'univers.',
+    baseCostMinerai: 5000,
+    baseCostSilicium: 5000,
+    baseCostHydrogene: 1000,
+    costFactor: 1.5,
+    baseTime: 120,
+    categoryId: 'building_industrie',
+    sortOrder: 7,
+    role: 'market',
+    flavorText: 'Le marché galactique met en relation acheteurs et vendeurs à travers l\'univers.',
+    prerequisites: [{ buildingId: 'shipyard', level: 2 }],
+  },
 ];
 
 // ── Research data ──
@@ -339,6 +354,19 @@ const MISSION_DEFINITIONS = [
   { id: 'recycle', label: 'Recycler', hint: 'Récupérez les débris en orbite', buttonLabel: 'Recycler', color: '#06b6d4', sortOrder: 6, dangerous: false, requiredShipRoles: ['recycler'], exclusive: true, recommendedShipRoles: null, requiresPveMission: false },
   { id: 'mine', label: 'Miner', hint: "Envoyez des prospecteurs sur une ceinture d'astéroïdes", buttonLabel: 'Envoyer', color: '#f59e0b', sortOrder: 7, dangerous: false, requiredShipRoles: ['prospector'], exclusive: false, recommendedShipRoles: null, requiresPveMission: true },
   { id: 'pirate', label: 'Pirate', hint: 'Attaquez un repaire pirate', buttonLabel: 'Attaquer', color: '#e11d48', sortOrder: 8, dangerous: true, requiredShipRoles: ['lightFighter', 'heavyFighter', 'cruiser', 'battleship'], exclusive: false, recommendedShipRoles: null, requiresPveMission: true },
+  {
+    id: 'trade',
+    label: 'Commerce',
+    hint: 'Envoyez une flotte chercher des marchandises achetées sur le marché',
+    buttonLabel: 'Commercer',
+    color: '#a78bfa',
+    sortOrder: 9,
+    dangerous: false,
+    requiredShipRoles: null,
+    exclusive: false,
+    recommendedShipRoles: ['smallCargo', 'largeCargo'],
+    requiresPveMission: false,
+  },
 ];
 
 // ── UI labels data ──
@@ -444,6 +472,11 @@ const UNIVERSE_CONFIG = [
   { key: 'satellite_base_divisor', value: 4 },
   { key: 'satellite_base_offset', value: 20 },
   { key: 'phase_multiplier', value: {"1":0.35,"2":0.45,"3":0.55,"4":0.65,"5":0.78,"6":0.90,"7":0.95} },
+
+  // ── Market ──
+  { key: 'market_commission_percent', value: 5, label: 'Commission du marché galactique (%)' },
+  { key: 'market_offer_duration_hours', value: 48, label: 'Durée de vie des offres du marché (heures)' },
+  { key: 'market_reservation_minutes', value: 60, label: 'Temps de réservation avant expiration (minutes)' },
 ];
 
 async function seed() {

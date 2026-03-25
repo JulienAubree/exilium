@@ -7,6 +7,7 @@ export enum MissionType {
   Recycle = 'recycle',
   Mine = 'mine',
   Pirate = 'pirate',
+  Trade = 'trade',
 }
 
 export enum FleetPhase {

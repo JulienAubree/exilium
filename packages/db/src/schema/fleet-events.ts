@@ -3,6 +3,7 @@ import { pgTable, uuid, smallint, timestamp, numeric, jsonb, pgEnum, index } fro
 import { users } from './users.js';
 import { planets } from './planets.js';
 import { pveMissions } from './pve-missions.js';
+import { marketOffers } from './market-offers.js';
 
 export const fleetMissionEnum = pgEnum('fleet_mission', [
   'transport',
@@ -13,6 +14,7 @@ export const fleetMissionEnum = pgEnum('fleet_mission', [
   'recycle',
   'mine',
   'pirate',
+  'trade',
 ]);
 
 export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'prospecting', 'mining', 'return']);
@@ -38,6 +40,7 @@ export const fleetEvents = pgTable('fleet_events', {
   ships: jsonb('ships').notNull().default('{}'),
   metadata: jsonb('metadata'),
   pveMissionId: uuid('pve_mission_id').references(() => pveMissions.id, { onDelete: 'set null' }),
+  tradeId: uuid('trade_id').references(() => marketOffers.id, { onDelete: 'set null' }),
   detectedAt: timestamp('detected_at', { withTimezone: true }),
   detectionScore: smallint('detection_score'),
 }, (table) => [
