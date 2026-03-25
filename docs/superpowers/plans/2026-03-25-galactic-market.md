@@ -374,8 +374,8 @@ export class TradeHandler implements MissionHandler {
     }
 
     // Verify the reserver is the one sending the fleet
-    // (userId is checked upstream in sendFleet, but we pass it via ctx or input)
-    // The offer.reservedBy check happens in the service layer where userId is available.
+    // Note: userId is not directly available in the handler. This check is done
+    // in sendFleet (service layer) before calling validateFleet. See Task 3 Step 3.
 
     // Verify coordinates match seller's planet
     const [sellerPlanet] = await ctx.db
@@ -507,12 +507,26 @@ trade: new TradeHandler(),
 
 3. In `sendFleet`, after fleet event creation, add trade-specific logic to link the fleet event to the offer. Find where `pveMissionId` is handled and add similar handling for `tradeId`:
 ```typescript
-// After the fleetEvents insert, if input.tradeId:
+// Before the fleetEvents insert, if input.tradeId, verify ownership:
+if (input.tradeId) {
+  const [tradeOffer] = await db
+    .select({ reservedBy: marketOffers.reservedBy })
+    .from(marketOffers)
+    .where(and(eq(marketOffers.id, input.tradeId), eq(marketOffers.status, 'reserved')))
+    .limit(1);
+  if (!tradeOffer || tradeOffer.reservedBy !== userId) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette offre n\'est pas réservée par vous' });
+  }
+}
+
+// After the fleetEvents insert, if input.tradeId, link the fleet to the offer:
 if (input.tradeId) {
   await db
     .update(marketOffers)
     .set({ fleetEventId: newFleetEvent.id })
     .where(eq(marketOffers.id, input.tradeId));
+  // Cancel reservation expiration job (fleet was sent in time)
+  await marketQueue.remove(`market-reservation-${input.tradeId}`);
 }
 ```
 
@@ -641,14 +655,14 @@ export function createMarketService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis' });
       }
 
-      // Check max offers
+      // Check max offers (active + reserved both count against the limit)
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(marketOffers)
         .where(
           and(
             eq(marketOffers.sellerId, userId),
-            eq(marketOffers.status, 'active'),
+            sql`${marketOffers.status} IN ('active', 'reserved')`,
           ),
         );
       if (count >= maxMarketOffers(marketLevel)) {
