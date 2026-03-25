@@ -117,6 +117,7 @@ export function createMarketService(
           priceMinerai: String(input.priceMinerai),
           priceSilicium: String(input.priceSilicium),
           priceHydrogene: String(input.priceHydrogene),
+          status: 'active',
           expiresAt,
         })
         .returning();
@@ -175,38 +176,40 @@ export function createMarketService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis pour acheter' });
       }
 
-      const [offer] = await db
-        .select()
-        .from(marketOffers)
-        .where(
-          and(
-            eq(marketOffers.id, offerId),
-            eq(marketOffers.status, 'active'),
-          ),
-        )
-        .limit(1);
-
-      if (!offer) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Offre non disponible' });
-      }
-
-      if (offer.sellerId === userId) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Impossible d\'acheter sa propre offre' });
-      }
-
       const now = new Date();
       const config = await gameConfigService.getFullConfig();
       const reservationMinutes = Number(config.universe.market_reservation_minutes) || 60;
 
-      // Reserve
-      await db
+      // Atomic reserve: UPDATE...WHERE status='active' AND sellerId != userId RETURNING
+      // This prevents double-reservation race conditions
+      const [offer] = await db
         .update(marketOffers)
         .set({
           status: 'reserved',
           reservedBy: userId,
           reservedAt: now,
         })
-        .where(eq(marketOffers.id, offerId));
+        .where(
+          and(
+            eq(marketOffers.id, offerId),
+            eq(marketOffers.status, 'active'),
+            ne(marketOffers.sellerId, userId),
+          ),
+        )
+        .returning();
+
+      if (!offer) {
+        // Check if it's a self-purchase attempt
+        const [existing] = await db
+          .select({ sellerId: marketOffers.sellerId, status: marketOffers.status })
+          .from(marketOffers)
+          .where(eq(marketOffers.id, offerId))
+          .limit(1);
+        if (existing?.sellerId === userId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Impossible d\'acheter sa propre offre' });
+        }
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Offre non disponible' });
+      }
 
       // Schedule reservation expiration
       await marketQueue.add(
@@ -253,7 +256,7 @@ export function createMarketService(
             hydrogene: price.hydrogene + commission.hydrogene,
           },
         },
-        sellerPlanet: sellerPlanet!,
+        sellerPlanet: sellerPlanet ?? { galaxy: 0, system: 0, position: 0 },
       };
     },
 
