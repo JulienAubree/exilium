@@ -116,6 +116,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'market',
+        lazy: lazyLoad(() => import('./pages/Market')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'messages',
         lazy: lazyLoad(() => import('./pages/Messages')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

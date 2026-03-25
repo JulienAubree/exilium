@@ -180,6 +180,20 @@ export function AllianceRankingIcon(props: IconProps) {
   );
 }
 
+export function MarketIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 21h18" />
+      <path d="M3 7v1a3 3 0 0 0 6 0V7" />
+      <path d="M9 7v1a3 3 0 0 0 6 0V7" />
+      <path d="M15 7v1a3 3 0 0 0 6 0V7" />
+      <path d="M3 7l2-4h14l2 4" />
+      <path d="M5 21V10" />
+      <path d="M19 21V10" />
+    </Icon>
+  );
+}
+
 export function MissionsIcon(props: IconProps) {
   return (
     <Icon {...props}>

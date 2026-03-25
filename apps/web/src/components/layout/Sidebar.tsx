@@ -11,6 +11,7 @@ import {
   FleetIcon,
   GalaxyIcon,
   MovementsIcon,
+  MarketIcon,
   MissionsIcon,
   MessagesIcon,
   ReportsIcon,
@@ -53,6 +54,7 @@ const sections: { title: string; items: NavItem[] }[] = [
       { label: 'Flotte', path: '/fleet', icon: FleetIcon },
       { label: 'Missions', path: '/missions', icon: MissionsIcon },
       { label: 'Mouvements', path: '/movements', icon: MovementsIcon },
+      { label: 'Marché', path: '/market', icon: MarketIcon },
     ],
   },
   {
