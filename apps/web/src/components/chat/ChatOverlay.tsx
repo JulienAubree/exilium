@@ -203,10 +203,15 @@ export function ChatOverlay() {
               <UserAvatar username={w.username} size="lg" className="shadow-lg cursor-pointer hover:scale-105 transition-transform" />
             )}
           </button>
+          {w.unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
+              {w.unreadCount > 9 ? '9+' : w.unreadCount}
+            </span>
+          )}
           <button
             onClick={() => closeChat(w.userId)}
             aria-label={`Fermer ${w.username}`}
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground"
+            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground"
           >
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>

@@ -5,6 +5,7 @@ interface ChatWindow {
   username: string;
   threadId: string | null;
   minimized: boolean;
+  unreadCount: number;
   allianceId?: string;
   allianceTag?: string;
 }
@@ -17,6 +18,7 @@ interface ChatStore {
   minimizeChat: (userId: string) => void;
   expandChat: (userId: string) => void;
   setThreadId: (userId: string, threadId: string) => void;
+  incrementUnread: (userId: string) => void;
 }
 
 const MAX_WINDOWS = 3;
@@ -30,11 +32,11 @@ export const useChatStore = create<ChatStore>((set) => ({
       if (existing) {
         return {
           windows: state.windows.map((w) =>
-            w.userId === userId ? { ...w, minimized: false, threadId: threadId ?? w.threadId } : w,
+            w.userId === userId ? { ...w, minimized: false, unreadCount: 0, threadId: threadId ?? w.threadId } : w,
           ),
         };
       }
-      const windows = [...state.windows, { userId, username, threadId, minimized: false }];
+      const windows = [...state.windows, { userId, username, threadId, minimized: false, unreadCount: 0 }];
       if (windows.length > MAX_WINDOWS) windows.shift();
       return { windows };
     }),
@@ -55,6 +57,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         username: `[${allianceTag}] ${allianceName}`,
         threadId: allianceId,
         minimized: false,
+        unreadCount: 0,
         allianceId,
         allianceTag,
       }];
@@ -75,7 +78,14 @@ export const useChatStore = create<ChatStore>((set) => ({
   expandChat: (userId) =>
     set((state) => ({
       windows: state.windows.map((w) =>
-        w.userId === userId ? { ...w, minimized: false } : w,
+        w.userId === userId ? { ...w, minimized: false, unreadCount: 0 } : w,
+      ),
+    })),
+
+  incrementUnread: (userId) =>
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.userId === userId && w.minimized ? { ...w, unreadCount: w.unreadCount + 1 } : w,
       ),
     })),
 

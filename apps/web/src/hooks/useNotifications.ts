@@ -76,6 +76,7 @@ export function useNotifications() {
               utils.message.thread.invalidate({ threadId: (alreadyOpen.threadId || tid)! });
             }
           }
+          chatStore.incrementUnread(String(event.payload.senderId));
         }
         addToast(`Message de ${event.payload.senderUsername ?? 'un joueur'}`);
         showBrowserNotification('Nouveau message', String(event.payload.senderUsername ?? 'Nouveau message'));
@@ -218,6 +219,7 @@ export function useNotifications() {
           chatStore.openAllianceChat(allianceId, '', String(event.payload.allianceTag));
           chatStore.minimizeChat(key);
         }
+        chatStore.incrementUnread(key);
         addToast(`[${event.payload.allianceTag}] ${event.payload.senderUsername}`);
         showBrowserNotification('Chat Alliance', `${event.payload.senderUsername}: nouveau message`);
         break;
