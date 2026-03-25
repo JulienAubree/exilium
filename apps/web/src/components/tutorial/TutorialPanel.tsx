@@ -28,10 +28,10 @@ export function TutorialPanel() {
     if (!data.playerCoords) return null;
     const { galaxy, system } = data.playerCoords;
     if (quest.id === 'quest_12') {
-      return `/fleet?galaxy=${galaxy}&system=${system}&position=8&mission=transport`;
+      return `/fleet/send?galaxy=${galaxy}&system=${system}&position=8&mission=transport`;
     }
     if (quest.id === 'quest_15' && data.tutorialMiningMissionId) {
-      return `/fleet?galaxy=${galaxy}&system=${system}&position=8&mission=mine&pveMissionId=${data.tutorialMiningMissionId}`;
+      return `/fleet/send?galaxy=${galaxy}&system=${system}&position=8&mission=mine&pveMissionId=${data.tutorialMiningMissionId}`;
     }
     return null;
   };

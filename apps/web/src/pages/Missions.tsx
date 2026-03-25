@@ -166,7 +166,7 @@ export default function Missions() {
                     onClick={() => {
                       const missionType = isMining ? 'mine' : 'pirate';
                       navigate(
-                        `/fleet?mission=${missionType}&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`,
+                        `/fleet/send?mission=${missionType}&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`,
                       );
                     }}
                   >

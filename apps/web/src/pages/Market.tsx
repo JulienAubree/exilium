@@ -115,7 +115,7 @@ export default function Market() {
     const commMi = offer.priceMinerai > 0 ? Math.ceil(offer.priceMinerai * commissionPercent / 100) : 0;
     const commSi = offer.priceSilicium > 0 ? Math.ceil(offer.priceSilicium * commissionPercent / 100) : 0;
     const commH2 = offer.priceHydrogene > 0 ? Math.ceil(offer.priceHydrogene * commissionPercent / 100) : 0;
-    navigate(`/fleet?mission=trade&galaxy=${offer.sellerCoords.galaxy}&system=${offer.sellerCoords.system}&position=${offer.sellerCoords.position}&tradeId=${offer.id}&cargoMi=${offer.priceMinerai + commMi}&cargoSi=${offer.priceSilicium + commSi}&cargoH2=${offer.priceHydrogene + commH2}`);
+    navigate(`/fleet/send?mission=trade&galaxy=${offer.sellerCoords.galaxy}&system=${offer.sellerCoords.system}&position=${offer.sellerCoords.position}&tradeId=${offer.id}&cargoMi=${offer.priceMinerai + commMi}&cargoSi=${offer.priceSilicium + commSi}&cargoH2=${offer.priceHydrogene + commH2}`);
   };
 
   const formatPrice = (mi: number, si: number, h2: number) => {

@@ -144,7 +144,7 @@ export default function Galaxy() {
                           size="sm"
                           variant="outline"
                           className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 backdrop-blur-sm"
-                          onClick={() => navigate(`/fleet?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
+                          onClick={() => navigate(`/fleet/send?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                         >
                           Miner
                         </Button>
@@ -181,7 +181,7 @@ export default function Galaxy() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-xs h-6 px-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
-                                onClick={() => navigate(`/fleet?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                onClick={() => navigate(`/fleet/send?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                               >
                                 Espionner
                               </Button>
@@ -190,7 +190,7 @@ export default function Galaxy() {
                                   size="sm"
                                   variant="ghost"
                                   className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                  onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                  onClick={() => navigate(`/fleet/send?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                                 >
                                   Attaquer
                                 </Button>
@@ -199,7 +199,7 @@ export default function Galaxy() {
                           )}
                           {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
                             <Link
-                              to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                              to={`/fleet/send?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
                               className="text-xs text-orange-400 hover:underline cursor-pointer"
                               title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
                             >
@@ -217,7 +217,7 @@ export default function Galaxy() {
                             size="sm"
                             variant="ghost"
                             className="text-xs h-6 px-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20"
-                            onClick={() => navigate(`/fleet?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                            onClick={() => navigate(`/fleet/send?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                           >
                             Coloniser
                           </Button>
@@ -265,7 +265,7 @@ export default function Galaxy() {
                                 size="sm"
                                 variant="outline"
                                 className="text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 backdrop-blur-sm"
-                                onClick={() => navigate(`/fleet?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
+                                onClick={() => navigate(`/fleet/send?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                               >
                                 Miner
                               </Button>
@@ -296,7 +296,7 @@ export default function Galaxy() {
                               {(slot as any).username}
                               {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
                                 <Link
-                                  to={`/fleet?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                                  to={`/fleet/send?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
                                   className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
                                   title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
                                 >
@@ -311,7 +311,7 @@ export default function Galaxy() {
                                     size="sm"
                                     variant="ghost"
                                     className="text-xs h-6 px-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
-                                    onClick={() => navigate(`/fleet?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                    onClick={() => navigate(`/fleet/send?mission=spy&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                                     title="Espionner"
                                   >
                                     Espionner
@@ -321,7 +321,7 @@ export default function Galaxy() {
                                       size="sm"
                                       variant="ghost"
                                       className="text-xs h-6 px-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                      onClick={() => navigate(`/fleet?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                      onClick={() => navigate(`/fleet/send?mission=attack&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                                       title="Attaquer"
                                     >
                                       Attaquer
@@ -354,7 +354,7 @@ export default function Galaxy() {
                                   size="sm"
                                   variant="ghost"
                                   className="text-xs h-6 px-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20"
-                                  onClick={() => navigate(`/fleet?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                  onClick={() => navigate(`/fleet/send?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
                                   title="Coloniser"
                                 >
                                   Coloniser
