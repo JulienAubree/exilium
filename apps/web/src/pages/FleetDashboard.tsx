@@ -203,7 +203,7 @@ export default function FleetDashboard() {
               {recentMovements.map((movement) => (
                 <MovementCardCompact
                   key={movement.id}
-                  movement={movement}
+                  movement={{ ...movement, ships: movement.ships as Record<string, number> }}
                   shipNames={shipNames}
                 />
               ))}
