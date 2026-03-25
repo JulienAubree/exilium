@@ -181,11 +181,16 @@ export function useNotifications() {
         addToast(`Votre planète ${event.payload.targetCoords} a été attaquée !`);
         showBrowserNotification('Planète attaquée !', `Combat terminé en ${event.payload.targetCoords}`);
         break;
-      case 'market-offer-reserved':
+      case 'market-offer-reserved': {
         utils.market.myOffers.invalidate();
-        addToast(`Votre offre a été réservée (${event.payload.quantity}x ${event.payload.resourceType})`);
-        showBrowserNotification('Offre réservée', `${event.payload.quantity}x ${event.payload.resourceType}`);
+        const resLabel: Record<string, string> = { minerai: 'Minerai', silicium: 'Silicium', hydrogene: 'Hydrogène' };
+        const resName = resLabel[String(event.payload.resourceType)] ?? event.payload.resourceType;
+        const qty = Number(event.payload.quantity).toLocaleString('fr-FR');
+        const pName = event.payload.planetName ?? 'votre planète';
+        addToast(`Offre acceptée : ${qty} ${resName}. Un cargo est en route vers ${pName}`);
+        showBrowserNotification('Offre acceptée', `${qty} ${resName} — cargo en route vers ${pName}`);
         break;
+      }
       case 'market-offer-sold':
         utils.market.myOffers.invalidate();
         utils.resource.production.invalidate();

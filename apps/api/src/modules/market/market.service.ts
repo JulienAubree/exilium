@@ -218,6 +218,13 @@ export function createMarketService(
         { delay: reservationMinutes * 60 * 1000, jobId: `market-reservation-${offerId}` },
       );
 
+      // Return offer details + seller planet coordinates for fleet dispatch
+      const [sellerPlanet] = await db
+        .select({ name: planets.name, galaxy: planets.galaxy, system: planets.system, position: planets.position })
+        .from(planets)
+        .where(eq(planets.id, offer.planetId))
+        .limit(1);
+
       // Notify seller
       publishNotification(redis, offer.sellerId, {
         type: 'market-offer-reserved',
@@ -225,15 +232,9 @@ export function createMarketService(
           offerId: offer.id,
           resourceType: offer.resourceType,
           quantity: Number(offer.quantity),
+          planetName: sellerPlanet?.name ?? 'Planète inconnue',
         },
       });
-
-      // Return offer details + seller planet coordinates for fleet dispatch
-      const [sellerPlanet] = await db
-        .select({ galaxy: planets.galaxy, system: planets.system, position: planets.position })
-        .from(planets)
-        .where(eq(planets.id, offer.planetId))
-        .limit(1);
 
       const commissionPercent = Number(config.universe.market_commission_percent) || 5;
       const price = {
