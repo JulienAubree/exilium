@@ -5,6 +5,7 @@ export * from './formulas/resources.js';
 export * from './formulas/research-cost.js';
 export * from './formulas/shipyard-cost.js';
 export * from './formulas/fleet.js';
+export * from './formulas/market.js';
 export * from './prerequisites/prerequisites.js';
 export * from './formulas/ranking.js';
 export * from './formulas/combat.js';
