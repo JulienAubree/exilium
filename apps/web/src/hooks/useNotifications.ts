@@ -181,6 +181,28 @@ export function useNotifications() {
         addToast(`Votre planète ${event.payload.targetCoords} a été attaquée !`);
         showBrowserNotification('Planète attaquée !', `Combat terminé en ${event.payload.targetCoords}`);
         break;
+      case 'market-offer-reserved':
+        utils.market.myOffers.invalidate();
+        addToast(`Votre offre a été réservée (${event.payload.quantity}x ${event.payload.resourceType})`);
+        showBrowserNotification('Offre réservée', `${event.payload.quantity}x ${event.payload.resourceType}`);
+        break;
+      case 'market-offer-sold':
+        utils.market.myOffers.invalidate();
+        utils.resource.production.invalidate();
+        addToast('Vente finalisée ! Paiement reçu');
+        showBrowserNotification('Vente finalisée', `${event.payload.quantity}x ${event.payload.resourceType} vendu`);
+        break;
+      case 'market-offer-expired':
+        utils.market.myOffers.invalidate();
+        utils.resource.production.invalidate();
+        addToast(`Offre expirée, ressources restituées (${event.payload.quantity}x ${event.payload.resourceType})`);
+        showBrowserNotification('Offre expirée', 'Ressources restituées');
+        break;
+      case 'market-reservation-expired':
+        utils.market.list.invalidate();
+        addToast('Réservation expirée');
+        showBrowserNotification('Réservation expirée', "Vous n'avez pas envoyé de flotte à temps");
+        break;
       case 'new-alliance-message': {
         const allianceId = String(event.payload.allianceId);
         utils.message.allianceChat.invalidate({ allianceId });
