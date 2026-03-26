@@ -114,6 +114,7 @@ export function FleetComposition({ ships, mission, selectedShips, onChange }: Fl
   const categorized: Record<ShipCategory, Ship[]> = { required: [], optional: [], disabled: [] };
 
   for (const ship of ships) {
+    if (ship.count === 0) continue;
     const category = categorizeShip(ship.id, ship.count, gameConfig?.missions[mission], { isStationary: ship.isStationary });
     categorized[category].push(ship);
   }
