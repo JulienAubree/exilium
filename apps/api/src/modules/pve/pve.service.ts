@@ -104,6 +104,7 @@ export function createPveService(
           }).from(planets).where(eq(planets.userId, userId)).limit(1);
           if (homePlanet) {
             await this.generateDiscoveredMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
+            await this.generatePirateMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
           }
           // Schedule next discovery
           await db.update(missionCenterState).set({
@@ -120,15 +121,20 @@ export function createPveService(
       // +1 because the discovery at nextDiscoveryAt itself counts as the first one
       const n = Math.floor(elapsed / cooldownMs) + 1;
 
-      // Count current available missions
-      const [countResult] = await db
+      // Count current available missions by type
+      const [miningCount] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(pveMissions)
-        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
-      const currentCount = countResult?.count ?? 0;
+        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available'), eq(pveMissions.missionType, 'mine')));
+      const [pirateCount] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(pveMissions)
+        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available'), eq(pveMissions.missionType, 'pirate')));
 
-      const CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
-      const toCreate = Math.min(n, CAP - currentCount);
+      const MINING_CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
+      const PIRATE_CAP = Number(config.universe.pve_max_pirate_missions) || 2;
+      const miningToCreate = Math.min(n, MINING_CAP - (miningCount?.count ?? 0));
+      const pirateToCreate = Math.min(n, PIRATE_CAP - (pirateCount?.count ?? 0));
 
       // Get player's home planet for coordinates
       const [homePlanet] = await db.select({
@@ -137,8 +143,11 @@ export function createPveService(
       }).from(planets).where(eq(planets.userId, userId)).limit(1);
 
       if (homePlanet) {
-        for (let i = 0; i < toCreate; i++) {
+        for (let i = 0; i < miningToCreate; i++) {
           await this.generateDiscoveredMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
+        }
+        for (let i = 0; i < pirateToCreate; i++) {
+          await this.generatePirateMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
         }
       }
 
