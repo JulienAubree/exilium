@@ -10,6 +10,7 @@ import {
   storageCapacity,
   buildingBonusAtLevel,
   discoveryCooldown, depositSize,
+  maxMarketOffers,
 } from '@ogame-clone/game-engine';
 
 interface BuildingListItem {
@@ -32,12 +33,14 @@ interface MineRow { level: number; production: number; gain: number | null; ener
 interface SolarRow { level: number; production: number; gain: number | null }
 interface StorageRow { level: number; capacity: number; gain: number | null }
 interface MissionCenterRow { level: number; cooldown: number; depositSize: number }
+interface MarketRow { level: number; maxOffers: number }
 
 type TableData =
   | { type: 'mine'; title: string; rows: MineRow[] }
   | { type: 'solar'; title: string; rows: SolarRow[] }
   | { type: 'storage'; title: string; rows: StorageRow[] }
-  | { type: 'missionCenter'; title: string; rows: MissionCenterRow[] };
+  | { type: 'missionCenter'; title: string; rows: MissionCenterRow[] }
+  | { type: 'market'; title: string; rows: MarketRow[] };
 
 function getContextualTable(
   buildingId: string,
@@ -118,6 +121,15 @@ function getContextualTable(
           level,
           cooldown: discoveryCooldown(level),
           depositSize: depositSize(level, 1.0),
+        })),
+      };
+    case 'galacticMarket':
+      return {
+        type: 'market',
+        title: 'Offres simultanees',
+        rows: levels.map((level) => ({
+          level,
+          maxOffers: maxMarketOffers(level),
         })),
       };
     default:
@@ -291,6 +303,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                     </th>
                   </>
                 )}
+                {tableData.type === 'market' && (
+                  <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
+                    Offres max
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="text-slate-300">
@@ -351,6 +368,18 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                     </td>
                     <td className="px-2 py-1.5 text-right text-cyan-400">{row.cooldown}h</td>
                     <td className="px-2 py-1.5 text-right">{fmt(row.depositSize)}</td>
+                  </tr>
+                ))}
+              {tableData.type === 'market' &&
+                tableData.rows.map((row, i) => (
+                  <tr
+                    key={row.level}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                  >
+                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
+                      {row.level}{i === 0 ? ' \u25C4' : ''}
+                    </td>
+                    <td className="px-2 py-1.5 text-right text-amber-400">{row.maxOffers}</td>
                   </tr>
                 ))}
             </tbody>
