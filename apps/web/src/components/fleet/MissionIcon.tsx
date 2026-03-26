@@ -2,15 +2,15 @@ import type { SVGProps } from 'react';
 import { type Mission } from '@/config/mission-config';
 
 const MISSION_COLORS: Record<Mission, string> = {
-  transport: '#3b82f6',
-  attack: '#e74c3c',
-  spy: '#8b5cf6',
-  mine: '#2ecc71',
-  colonize: '#14b8a6',
-  recycle: '#e67e22',
-  station: '#64748b',
-  pirate: '#f43f5e',
-  trade: '#f59e0b',
+  transport: '#3b82f6',   // blue-500
+  station:   '#10b981',   // emerald-500
+  spy:       '#8b5cf6',   // violet-500
+  attack:    '#ef4444',   // red-500
+  colonize:  '#f97316',   // orange-500
+  recycle:   '#06b6d4',   // cyan-500
+  mine:      '#f59e0b',   // amber-500
+  pirate:    '#e11d48',   // rose-600
+  trade:     '#a78bfa',   // violet-400
 };
 
 export function getMissionColor(mission: Mission): string {

@@ -27,6 +27,7 @@ const MISSION_STYLE: Record<string, { border: string; text: string }> = {
   mine:      { border: 'border-l-amber-500', text: 'text-amber-400' },
   pirate:    { border: 'border-l-rose-600', text: 'text-rose-400' },
   recycle:   { border: 'border-l-cyan-500', text: 'text-cyan-400' },
+  trade:     { border: 'border-l-violet-400', text: 'text-violet-300' },
 };
 
 const PHASE_STYLE: Record<string, { classes: string; dot: string; pulse?: boolean }> = {

@@ -44,7 +44,7 @@ const MISSION_BORDER: Record<string, string> = {
   mine:      'border-l-amber-500',
   pirate:    'border-l-rose-600',
   recycle:   'border-l-cyan-500',
-  trade:     'border-l-yellow-500',
+  trade:     'border-l-violet-400',
 };
 
 // ── Phase labels for compact display ──
