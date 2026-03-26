@@ -16,6 +16,7 @@ import { createGalaxyService } from '../modules/galaxy/galaxy.service.js';
 import { createGalaxyRouter } from '../modules/galaxy/galaxy.router.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { createFleetRouter } from '../modules/fleet/fleet.router.js';
+import { createContactService } from '../modules/fleet/contact.service.js';
 import { createMessageService } from '../modules/message/message.service.js';
 import { createMessageRouter } from '../modules/message/message.router.js';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
@@ -68,6 +69,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const friendService = createFriendService(db, redis, gameEventService);
   const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService);
   const allianceService = createAllianceService(db, messageService);
+  const contactService = createContactService(db, friendService, allianceService);
   const playerAdminService = createPlayerAdminService(db);
   const tutorialService = createTutorialService(db, pveService);
   const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis);
@@ -79,7 +81,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const researchRouter = createResearchRouter(researchService);
   const shipyardRouter = createShipyardRouter(shipyardService);
   const galaxyRouter = createGalaxyRouter(galaxyService);
-  const fleetRouter = createFleetRouter(fleetService);
+  const fleetRouter = createFleetRouter(fleetService, contactService);
   const messageRouter = createMessageRouter(messageService);
   const rankingRouter = createRankingRouter(rankingService);
   const allianceRouter = createAllianceRouter(allianceService);

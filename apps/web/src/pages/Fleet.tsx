@@ -13,6 +13,7 @@ import { MissionSelector } from '@/components/fleet/MissionSelector';
 import { PveMissionBanner } from '@/components/fleet/PveMissionBanner';
 import { FleetComposition } from '@/components/fleet/FleetComposition';
 import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
+import { TargetContactsDropdown } from '@/components/fleet/TargetContactsDropdown';
 import { getCargoCapacity, type Mission } from '@/config/mission-config';
 import { getShipName } from '@/lib/entity-names';
 import { computeSlagRate, miningDuration, resolveBonus } from '@ogame-clone/game-engine';
@@ -302,6 +303,9 @@ export default function Fleet() {
           onChange={setTarget}
           disabled={pveMode || tradeMode}
         />
+        {!(pveMode || tradeMode) && (
+          <TargetContactsDropdown onSelect={setTarget} />
+        )}
       </div>
 
       {/* Mission Hint (only in direct mode, not PvE — banner replaces it) */}

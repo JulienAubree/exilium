@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MissionType } from '@ogame-clone/shared';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createFleetService } from './fleet.service.js';
+import type { createContactService } from './contact.service.js';
 
 const shipsSchema = z.record(z.string(), z.number().int().min(0).max(999999));
 const missionValues = Object.values(MissionType) as [string, ...string[]];
@@ -11,7 +12,10 @@ const coordSchema = {
   targetPosition: z.number().int().min(1).max(999),
 };
 
-export function createFleetRouter(fleetService: ReturnType<typeof createFleetService>) {
+export function createFleetRouter(
+  fleetService: ReturnType<typeof createFleetService>,
+  contactService: ReturnType<typeof createContactService>,
+) {
   return router({
     send: protectedProcedure
       .input(z.object({
@@ -58,6 +62,11 @@ export function createFleetRouter(fleetService: ReturnType<typeof createFleetSer
     inbound: protectedProcedure
       .query(async ({ ctx }) => {
         return fleetService.listInboundFleets(ctx.userId!);
+      }),
+
+    contacts: protectedProcedure
+      .query(async ({ ctx }) => {
+        return contactService.getContacts(ctx.userId!);
       }),
   });
 }
