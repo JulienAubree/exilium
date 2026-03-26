@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,12 @@ export default function Shipyard() {
   const shipCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'ship' && c.id !== 'ship_combat')
     .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const { data: buildings } = trpc.building.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+  const shipyardLevel = buildings?.find((b) => b.id === 'shipyard')?.currentLevel ?? 0;
 
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -97,6 +103,22 @@ export default function Shipyard() {
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
         <PageHeader title="Chantier spatial" />
         <CardGridSkeleton count={6} />
+      </div>
+    );
+  }
+
+  if (buildings && shipyardLevel < 1) {
+    return (
+      <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
+        <PageHeader title="Chantier spatial" />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            Avant de pouvoir acceder au chantier spatial, veuillez construire le <span className="text-foreground font-semibold">Chantier spatial</span>.
+          </p>
+          <Link to="/buildings" className="text-xs text-primary hover:underline">
+            Aller aux batiments
+          </Link>
+        </div>
       </div>
     );
   }

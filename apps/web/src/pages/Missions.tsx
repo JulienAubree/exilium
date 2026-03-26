@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -42,11 +42,13 @@ export default function Missions() {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
         <PageHeader title="Missions" />
-        <div className="glass-card p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Vous devez construire un <span className="font-semibold text-primary">Centre de missions</span> pour
-            débloquer les missions PvE.
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            Avant de pouvoir acceder aux missions, veuillez construire le <span className="text-foreground font-semibold">Centre de missions</span>.
           </p>
+          <Link to="/buildings" className="text-xs text-primary hover:underline">
+            Aller aux batiments
+          </Link>
         </div>
       </div>
     );

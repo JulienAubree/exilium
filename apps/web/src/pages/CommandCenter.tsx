@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,12 @@ export default function CommandCenter() {
   const shipCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'ship' && c.id === 'ship_combat')
     .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const { data: buildings } = trpc.building.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+  const commandCenterLevel = buildings?.find((b) => b.id === 'commandCenter')?.currentLevel ?? 0;
 
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -97,6 +103,22 @@ export default function CommandCenter() {
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
         <PageHeader title="Centre de commandement" />
         <CardGridSkeleton count={6} />
+      </div>
+    );
+  }
+
+  if (buildings && commandCenterLevel < 1) {
+    return (
+      <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
+        <PageHeader title="Centre de commandement" />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            Avant de pouvoir acceder au centre de commandement, veuillez construire le <span className="text-foreground font-semibold">Centre de commandement</span>.
+          </p>
+          <Link to="/buildings" className="text-xs text-primary hover:underline">
+            Aller aux batiments
+          </Link>
+        </div>
       </div>
     );
   }
