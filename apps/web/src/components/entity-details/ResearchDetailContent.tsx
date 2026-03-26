@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { getResearchDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
-import { resolveBonus } from '@ogame-clone/game-engine';
+import { resolveBonus, calculateSpyReport, calculateDetectionChance, calculateAttackDetection } from '@ogame-clone/game-engine';
 
 const COMBAT_STATS = new Set(['weapons', 'shielding', 'armor']);
 
@@ -228,6 +228,285 @@ export function ResearchDetailContent({ researchId, researchLevels }: Props) {
           </div>
         </div>
       )}
+
+      {/* Espionage tech — spy mechanics explanation */}
+      {researchId === 'espionageTech' && (() => {
+        const thresholds = [1, 3, 5, 7, 9];
+        const visLabels = ['Ressources', 'Flotte', 'Défenses', 'Bâtiments', 'Recherches'];
+        const probeRange = [1, 2, 3, 5, 7, 9, 12];
+        const enemyLevel = Math.max(0, currentLevel - 2);
+        return (
+          <>
+            <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                Comment fonctionne l'espionnage ?
+              </div>
+              <div className="text-[11px] text-slate-300 space-y-1.5">
+                <p>Envoyez des <span className="text-violet-400">sondes d'espionnage</span> sur une planète ennemie pour obtenir des renseignements.</p>
+                <p>Les informations visibles dépendent du <span className="text-emerald-400">nombre de sondes</span> et de la <span className="text-amber-400">différence de niveau</span> entre votre techno espionnage et celle du défenseur.</p>
+                <p className="text-slate-500">Formule : Info effective = Sondes − (Niveau ennemi − Votre niveau)</p>
+                <p>Plus vous envoyez de sondes, plus vous obtenez d'infos, mais plus le risque de <span className="text-red-400">détection</span> augmente. Si vos sondes sont détectées, elles sont détruites.</p>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Visibilité selon le nombre de sondes
+              </div>
+              <p className="text-[10px] text-slate-500 mb-2">
+                Hypothèse : ennemi niveau {enemyLevel} (votre niveau : {currentLevel})
+              </p>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Sondes</th>
+                    {visLabels.map((l) => (
+                      <th key={l} className="px-1.5 py-1.5 border-b border-[#1e293b] text-center text-[10px]">{l}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {probeRange.map((probes, i) => {
+                    const vis = calculateSpyReport(probes, currentLevel, enemyLevel, thresholds);
+                    const flags = [vis.resources, vis.fleet, vis.defenses, vis.buildings, vis.research];
+                    return (
+                      <tr key={probes} className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}>
+                        <td className="px-2 py-1.5 text-center font-mono">{probes}</td>
+                        {flags.map((f, j) => (
+                          <td key={j} className={`px-1.5 py-1.5 text-center ${f ? 'text-emerald-400' : 'text-slate-600'}`}>
+                            {f ? '\u2713' : '\u2717'}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Risque de détection
+              </div>
+              <p className="text-[10px] text-slate-500 mb-2">
+                Formule : Sondes × 2 − (Votre niv. − Niv. ennemi) × 4, borné entre 0% et 100%
+              </p>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Sondes</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right">Détection</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {probeRange.map((probes, i) => {
+                    const chance = calculateDetectionChance(probes, currentLevel, enemyLevel);
+                    return (
+                      <tr key={probes} className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}>
+                        <td className="px-2 py-1.5 font-mono">{probes}</td>
+                        <td className={`px-2 py-1.5 text-right ${chance >= 50 ? 'text-red-400' : chance > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {chance}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Augmenter votre niveau d'espionnage réduit la détection de 4% par niveau d'avance sur l'ennemi.
+              </p>
+            </div>
+          </>
+        );
+      })()}
+
+      {/* Sensor Network — detection mechanics */}
+      {researchId === 'sensorNetwork' && (() => {
+        const scoreThresholds = [0, 1, 3, 5, 7];
+        const timingPercents = [20, 40, 60, 80, 100];
+        const tierLabels = ['Alerte', '+ Coordonnées', '+ Nb vaisseaux', '+ Détail flotte', '+ Nom attaquant'];
+        const levels = Array.from({ length: 8 }, (_, i) => i + 1);
+        return (
+          <>
+            <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                Comment fonctionne la détection ?
+              </div>
+              <div className="text-[11px] text-slate-300 space-y-1.5">
+                <p>Le réseau de capteurs <span className="text-cyan-400">détecte automatiquement</span> les flottes hostiles en approche de vos planètes.</p>
+                <p>Le <span className="text-emerald-400">score de détection</span> = votre niveau capteurs − niveau furtivité de l'attaquant.</p>
+                <p>Plus le score est élevé, plus la détection est <span className="text-amber-400">précoce</span> (temps restant avant impact) et plus les <span className="text-violet-400">informations</span> sont détaillées.</p>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Paliers de détection
+              </div>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Score</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">Délai</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Infos visibles</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {scoreThresholds.map((threshold, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}>
+                      <td className="px-2 py-1.5 font-mono">≥ {threshold}</td>
+                      <td className="px-2 py-1.5 text-right text-cyan-400">{timingPercents[i]}%</td>
+                      <td className="px-2 py-1.5 text-[10px]">{tierLabels[i]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Délai = % du temps de trajet restant quand l'alerte se déclenche. 100% = détection immédiate au départ.
+              </p>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Comparatif : votre capteurs vs furtivité ennemie
+              </div>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre niv.</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Furtivité 0</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Furtivité 3</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Furtivité 5</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Furtivité 7</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {levels.map((lvl, i) => (
+                    <tr key={lvl} className={`${i % 2 === 0 ? 'bg-[#1e293b]' : ''} ${lvl === currentLevel ? 'ring-1 ring-emerald-500/50' : ''}`}>
+                      <td className={`px-2 py-1.5 ${lvl === currentLevel ? 'font-semibold text-emerald-400' : ''}`}>
+                        {lvl}{lvl === currentLevel ? ' \u25C4' : ''}
+                      </td>
+                      {[0, 3, 5, 7].map((stealth) => {
+                        const det = calculateAttackDetection(lvl, stealth, scoreThresholds, timingPercents);
+                        return (
+                          <td key={stealth} className={`px-2 py-1.5 text-center ${det.detectionPercent >= 80 ? 'text-emerald-400' : det.detectionPercent >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {det.detectionPercent}%
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Valeurs = % du trajet restant à la détection. Plus c'est élevé, plus vous avez le temps de réagir.
+              </p>
+            </div>
+          </>
+        );
+      })()}
+
+      {/* Stealth tech — counter-detection mechanics */}
+      {researchId === 'stealthTech' && (() => {
+        const scoreThresholds = [0, 1, 3, 5, 7];
+        const timingPercents = [20, 40, 60, 80, 100];
+        const levels = Array.from({ length: 8 }, (_, i) => i + 1);
+        return (
+          <>
+            <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                Comment fonctionne la furtivité ?
+              </div>
+              <div className="text-[11px] text-slate-300 space-y-1.5">
+                <p>La technologie furtive <span className="text-violet-400">réduit l'efficacité</span> du réseau de capteurs ennemi lorsque vous attaquez.</p>
+                <p>Le score de détection de l'ennemi = <span className="text-cyan-400">son niveau capteurs</span> − <span className="text-violet-400">votre niveau furtivité</span>.</p>
+                <p>Un score plus bas signifie une détection <span className="text-emerald-400">plus tardive</span> et <span className="text-emerald-400">moins d'informations</span> révélées à l'ennemi.</p>
+                <p className="text-slate-500">Objectif : dépasser le niveau de capteurs ennemi pour attaquer avec un minimum d'alerte.</p>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Comparatif : votre furtivité vs capteurs ennemis
+              </div>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre niv.</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Capteurs 1</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Capteurs 3</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Capteurs 5</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-center">Capteurs 7</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {levels.map((lvl, i) => (
+                    <tr key={lvl} className={`${i % 2 === 0 ? 'bg-[#1e293b]' : ''} ${lvl === currentLevel ? 'ring-1 ring-violet-500/50' : ''}`}>
+                      <td className={`px-2 py-1.5 ${lvl === currentLevel ? 'font-semibold text-violet-400' : ''}`}>
+                        {lvl}{lvl === currentLevel ? ' \u25C4' : ''}
+                      </td>
+                      {[1, 3, 5, 7].map((sensor) => {
+                        const det = calculateAttackDetection(sensor, lvl, scoreThresholds, timingPercents);
+                        const score = sensor - lvl;
+                        let label: string;
+                        if (score < 0) {
+                          label = `${det.detectionPercent}%`;
+                        } else {
+                          label = `${det.detectionPercent}%`;
+                        }
+                        return (
+                          <td key={sensor} className={`px-2 py-1.5 text-center ${det.detectionPercent <= 20 ? 'text-emerald-400' : det.detectionPercent <= 40 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {label}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Valeurs = % du trajet restant quand l'ennemi vous détecte. Plus c'est bas, mieux c'est pour vous.
+              </p>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Informations masquées par niveau
+              </div>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre furtivité</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Masqué contre capteurs 5</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {[0, 1, 3, 5, 6, 7].map((stealth, i) => {
+                    const det = calculateAttackDetection(5, stealth, scoreThresholds, timingPercents);
+                    const vis = det.visibility;
+                    const hidden: string[] = [];
+                    if (!vis.attackerName) hidden.push('Nom');
+                    if (!vis.shipDetails) hidden.push('Détail flotte');
+                    if (!vis.shipCount) hidden.push('Nb vaisseaux');
+                    if (!vis.originCoords) hidden.push('Coordonnées');
+                    return (
+                      <tr key={stealth} className={`${i % 2 === 0 ? 'bg-[#1e293b]' : ''} ${stealth === currentLevel ? 'ring-1 ring-violet-500/50' : ''}`}>
+                        <td className={`px-2 py-1.5 ${stealth === currentLevel ? 'font-semibold text-violet-400' : ''}`}>
+                          {stealth}{stealth === currentLevel ? ' \u25C4' : ''}
+                        </td>
+                        <td className="px-2 py-1.5 text-[10px]">
+                          {hidden.length > 0 ? (
+                            <span className="text-emerald-400">{hidden.join(', ')}</span>
+                          ) : (
+                            <span className="text-red-400">Rien — détection complète</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Contre un ennemi avec capteurs niv. 5 : chaque point de furtivité masque des informations supplémentaires.
+              </p>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Affected entities */}
       {affectedEntities?.map((section, idx) => (
