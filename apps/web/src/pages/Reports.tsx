@@ -390,6 +390,14 @@ export default function Reports() {
           const result = selectedReport.result as any;
           const visibility = result.visibility ?? {};
           const visibilityKeys = ['resources', 'fleet', 'defenses', 'buildings', 'research'] as const;
+          const probeCount: number = result.probeCount ?? 0;
+          const attackerTech: number = result.attackerTech ?? 0;
+          const defenderTech: number = result.defenderTech ?? 0;
+          const detectionChance: number = result.detectionChance ?? 0;
+          const techDiff = defenderTech - attackerTech;
+          const effectiveInfo = probeCount - techDiff;
+          const thresholds = [1, 3, 5, 7, 9];
+          const thresholdLabels = ['Ressources', 'Flotte', 'Défenses', 'Bâtiments', 'Recherches'];
           return (
             <>
               {/* Visibility & Detection */}
@@ -412,11 +420,140 @@ export default function Reports() {
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                    <span>Sondes : <span className="text-foreground font-medium">{result.probeCount}</span></span>
-                    <span>Tech espionnage : <span className="text-foreground font-medium">{result.attackerTech}</span> vs <span className="text-foreground font-medium">{result.defenderTech}</span></span>
-                    <span>Chance de détection : <span className={cn('font-medium', result.detectionChance > 50 ? 'text-red-400' : 'text-foreground')}>{result.detectionChance}%</span></span>
+                    <span>Sondes : <span className="text-foreground font-medium">{probeCount}</span></span>
+                    <span>Tech espionnage : <span className="text-foreground font-medium">{attackerTech}</span> vs <span className="text-foreground font-medium">{defenderTech}</span></span>
+                    <span>Chance de détection : <span className={cn('font-medium', detectionChance > 50 ? 'text-red-400' : 'text-foreground')}>{detectionChance}%</span></span>
                     {result.detected && <span className="text-red-400 font-medium">Sondes détruites</span>}
                   </div>
+                </div>
+              </div>
+
+              {/* Pipeline explanation */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Comment ce rapport a été calculé</h3>
+                <div className="space-y-3">
+
+                  {/* Step 1: Effective info */}
+                  <div className="rounded border border-border p-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">1</div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="text-xs font-medium text-foreground">Calcul de l'info effective</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          <span className="text-violet-400 font-mono">{probeCount}</span> sondes
+                          {techDiff !== 0 && (
+                            <> − (<span className="text-red-400 font-mono">{defenderTech}</span> tech ennemi − <span className="text-emerald-400 font-mono">{attackerTech}</span> votre tech) </>
+                          )}
+                          {techDiff === 0 && (
+                            <> (tech égale : pas de malus) </>
+                          )}
+                          = <span className="text-foreground font-bold font-mono">{effectiveInfo}</span> info effective
+                        </div>
+                        {techDiff > 0 && (
+                          <div className="text-[10px] text-amber-400/80">
+                            L'ennemi a {techDiff} niveau{techDiff > 1 ? 'x' : ''} d'avance en espionnage, ce qui réduit vos informations de {techDiff} point{techDiff > 1 ? 's' : ''}.
+                          </div>
+                        )}
+                        {techDiff < 0 && (
+                          <div className="text-[10px] text-emerald-400/80">
+                            Vous avez {-techDiff} niveau{-techDiff > 1 ? 'x' : ''} d'avance en espionnage, ce qui augmente vos informations de {-techDiff} point{-techDiff > 1 ? 's' : ''}.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Visibility thresholds */}
+                  <div className="rounded border border-border p-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">2</div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="text-xs font-medium text-foreground">Seuils de visibilité</div>
+                        <div className="text-[11px] text-muted-foreground mb-1">
+                          Votre score de <span className="text-foreground font-bold">{effectiveInfo}</span> débloque les catégories dont le seuil est inférieur ou égal.
+                        </div>
+                        <div className="space-y-0.5">
+                          {thresholds.map((t, i) => {
+                            const unlocked = effectiveInfo >= t;
+                            return (
+                              <div key={i} className="flex items-center gap-2 text-[11px]">
+                                <div className={cn(
+                                  'w-14 text-right font-mono',
+                                  unlocked ? 'text-emerald-400' : 'text-muted-foreground/50',
+                                )}>
+                                  ≥ {t}
+                                </div>
+                                <div className={cn(
+                                  'h-1.5 flex-1 rounded-full',
+                                  unlocked ? 'bg-emerald-500/30' : 'bg-white/5',
+                                )}>
+                                  <div
+                                    className={cn('h-full rounded-full', unlocked ? 'bg-emerald-500' : 'bg-transparent')}
+                                    style={{ width: unlocked ? '100%' : '0%' }}
+                                  />
+                                </div>
+                                <span className={cn(
+                                  'w-24 text-[10px]',
+                                  unlocked ? 'text-emerald-400' : 'text-muted-foreground/50',
+                                )}>
+                                  {unlocked ? '\u2713' : '\u2717'} {thresholdLabels[i]}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {effectiveInfo < 9 && (
+                          <div className="text-[10px] text-slate-500 mt-1">
+                            Pour tout voir : envoyez {9 + techDiff} sonde{9 + techDiff > 1 ? 's' : ''}{techDiff > 0 ? ` (ou montez votre tech espionnage pour réduire l'écart)` : ''}.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Detection */}
+                  <div className="rounded border border-border p-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">3</div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="text-xs font-medium text-foreground">Risque de détection</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          <span className="text-violet-400 font-mono">{probeCount}</span> × 2
+                          {attackerTech !== defenderTech && (
+                            <> − (<span className="text-emerald-400 font-mono">{attackerTech}</span> − <span className="text-red-400 font-mono">{defenderTech}</span>) × 4</>
+                          )}
+                          {' '}= <span className={cn('font-bold font-mono', detectionChance >= 50 ? 'text-red-400' : detectionChance > 0 ? 'text-amber-400' : 'text-emerald-400')}>{detectionChance}%</span>
+                        </div>
+                        {/* Detection bar */}
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 flex-1 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className={cn('h-full rounded-full transition-all', detectionChance >= 50 ? 'bg-red-500' : detectionChance > 0 ? 'bg-amber-500' : 'bg-emerald-500')}
+                              style={{ width: `${Math.min(100, detectionChance)}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground w-8 text-right">{detectionChance}%</span>
+                        </div>
+                        {result.detected ? (
+                          <div className="text-[10px] text-red-400">
+                            Vos sondes ont été détectées et détruites par l'ennemi.
+                          </div>
+                        ) : detectionChance > 0 ? (
+                          <div className="text-[10px] text-emerald-400/80">
+                            Vos sondes n'ont pas été détectées cette fois-ci.
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-emerald-400/80">
+                            Aucun risque de détection grâce à votre avance technologique.
+                          </div>
+                        )}
+                        <div className="text-[10px] text-slate-500">
+                          Chaque niveau d'avance en tech espionnage réduit la détection de 4%. Chaque sonde supplémentaire augmente le risque de 2%.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
