@@ -73,9 +73,7 @@ export function ResearchIcon(props: IconProps) {
 export function ShipyardIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M12 2L4 7v10l8 5 8-5V7l-8-5Z" />
-      <path d="M12 22V12" />
-      <path d="M20 7l-8 5-8-5" />
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </Icon>
   );
 }
@@ -83,15 +81,8 @@ export function ShipyardIcon(props: IconProps) {
 export function CommandCenterIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 2v4" />
-      <path d="M12 18v4" />
-      <path d="M2 12h4" />
-      <path d="M18 12h4" />
-      <path d="m4.93 4.93 2.83 2.83" />
-      <path d="m16.24 16.24 2.83 2.83" />
-      <path d="m4.93 19.07 2.83-2.83" />
-      <path d="m16.24 7.76 2.83-2.83" />
+      <polygon points="12,2 14.5,8 21,8.5 16,13 17.5,20 12,16.5 6.5,20 8,13 3,8.5 9.5,8" />
+      <path d="M6 20l6 3 6-3" />
     </Icon>
   );
 }
@@ -107,8 +98,9 @@ export function DefenseIcon(props: IconProps) {
 export function FleetIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M12 2L2 19h20L12 2Z" />
-      <path d="M12 9v4" />
+      <path d="M12 4l-2 5h4l-2-5z" />
+      <path d="M6 11l-2 5h4l-2-5z" />
+      <path d="M18 11l-2 5h4l-2-5z" />
     </Icon>
   );
 }
@@ -116,10 +108,11 @@ export function FleetIcon(props: IconProps) {
 export function GalaxyIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <circle cx="12" cy="12" r="2" />
-      <ellipse cx="12" cy="12" rx="10" ry="4" />
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" />
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" fillOpacity={0.3} />
+      <circle cx="12" cy="12" r="6" opacity={0.4} />
+      <circle cx="12" cy="12" r="10" opacity={0.25} />
+      <circle cx="18" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="6" cy="5" r="1" fill="currentColor" stroke="none" opacity={0.6} />
     </Icon>
   );
 }
@@ -183,13 +176,11 @@ export function AllianceRankingIcon(props: IconProps) {
 export function MarketIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M3 21h18" />
-      <path d="M3 7v1a3 3 0 0 0 6 0V7" />
-      <path d="M9 7v1a3 3 0 0 0 6 0V7" />
-      <path d="M15 7v1a3 3 0 0 0 6 0V7" />
-      <path d="M3 7l2-4h14l2 4" />
-      <path d="M5 21V10" />
-      <path d="M19 21V10" />
+      <ellipse cx="12" cy="18" rx="8" ry="3" />
+      <ellipse cx="12" cy="14" rx="8" ry="3" />
+      <ellipse cx="12" cy="10" rx="8" ry="3" />
+      <path d="M4 10v8" />
+      <path d="M20 10v8" />
     </Icon>
   );
 }
@@ -197,12 +188,10 @@ export function MarketIcon(props: IconProps) {
 export function MissionsIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M4 6h16" />
-      <path d="M4 12h16" />
-      <path d="M4 18h12" />
-      <circle cx="2" cy="6" r="1" fill="currentColor" stroke="none" />
-      <circle cx="2" cy="12" r="1" fill="currentColor" stroke="none" />
-      <circle cx="2" cy="18" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="12" x2="17" y2="7" />
+      <circle cx="12" cy="12" r="3" opacity={0.3} />
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" fillOpacity={0.4} stroke="none" />
     </Icon>
   );
 }
