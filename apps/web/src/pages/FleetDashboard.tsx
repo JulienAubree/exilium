@@ -160,22 +160,21 @@ export default function FleetDashboard() {
             </Link>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-4">
-            {!ships || ships.filter((s) => s.count > 0).length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
+          {!ships || ships.filter((s) => s.count > 0).length === 0 ? (
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
+              <p className="text-sm text-muted-foreground">
                 Aucun vaisseau stationne.{' '}
                 <Link to="/shipyard" className="text-primary hover:underline">
                   Construire des vaisseaux
                 </Link>
               </p>
-            ) : (
-              <ShipCategoryGrid
-                ships={ships}
-                imageSize="h-12 w-12"
-                hideEmpty
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <ShipCategoryGrid
+              ships={ships}
+              hideEmpty
+            />
+          )}
         </div>
 
         {/* Right: Active movements */}

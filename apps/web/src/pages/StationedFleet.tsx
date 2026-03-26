@@ -106,7 +106,6 @@ export default function StationedFleet() {
 
       <ShipCategoryGrid
         ships={availableShips}
-        imageSize="h-16 w-16"
         hideEmpty
         selectedIds={selectedIds}
         onShipClick={(shipId) => {
