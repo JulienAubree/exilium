@@ -670,6 +670,75 @@ export default function Reports() {
                 </div>
               </div>
 
+              {/* Combat stats summary */}
+              {(result.attackerStats || result.defenderStats) && (
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Statistiques de combat</h3>
+                  <div className="rounded border border-border p-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {result.attackerStats && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground mb-2">Attaquant</div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Bouclier absorbe</span>
+                            <span className="text-cyan-400 font-medium">{Math.floor(result.attackerStats.shieldAbsorbed).toLocaleString('fr-FR')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Blindage bloque</span>
+                            <span className="text-amber-400 font-medium">{Math.floor(result.attackerStats.armorBlocked).toLocaleString('fr-FR')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Degats gaspilles</span>
+                            <span className="text-red-400/60 font-medium">{Math.floor(result.attackerStats.overkillWasted).toLocaleString('fr-FR')}</span>
+                          </div>
+                          {result.attackerStats.damageDealtByCategory && Object.keys(result.attackerStats.damageDealtByCategory).length > 0 && (
+                            <div className="pt-1 border-t border-border/30">
+                              <div className="text-xs text-muted-foreground mb-1">Degats infliges par categorie</div>
+                              {Object.entries(result.attackerStats.damageDealtByCategory as Record<string, number>).map(([cat, dmg]) => (
+                                <div key={cat} className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground capitalize">{cat}</span>
+                                  <span className="text-foreground">{Math.floor(dmg as number).toLocaleString('fr-FR')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {result.defenderStats && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground mb-2">Defenseur</div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Bouclier absorbe</span>
+                            <span className="text-cyan-400 font-medium">{Math.floor(result.defenderStats.shieldAbsorbed).toLocaleString('fr-FR')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Blindage bloque</span>
+                            <span className="text-amber-400 font-medium">{Math.floor(result.defenderStats.armorBlocked).toLocaleString('fr-FR')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Degats gaspilles</span>
+                            <span className="text-red-400/60 font-medium">{Math.floor(result.defenderStats.overkillWasted).toLocaleString('fr-FR')}</span>
+                          </div>
+                          {result.defenderStats.damageDealtByCategory && Object.keys(result.defenderStats.damageDealtByCategory).length > 0 && (
+                            <div className="pt-1 border-t border-border/30">
+                              <div className="text-xs text-muted-foreground mb-1">Degats infliges par categorie</div>
+                              {Object.entries(result.defenderStats.damageDealtByCategory as Record<string, number>).map(([cat, dmg]) => (
+                                <div key={cat} className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground capitalize">{cat}</span>
+                                  <span className="text-foreground">{Math.floor(dmg as number).toLocaleString('fr-FR')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Initial forces — attacker + defender */}
               <div>
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Forces initiales</h3>
@@ -720,7 +789,7 @@ export default function Reports() {
                         <summary className="cursor-pointer px-3 py-2 text-sm font-medium hover:bg-accent/50 transition-colors">
                           Round {round.round}
                           <span className="ml-3 text-xs text-muted-foreground">
-                            Att: {round.attackersRemaining} — Def: {round.defendersRemaining}
+                            Att: {Object.values((round.attackerShips ?? {}) as Record<string, number>).reduce((s, n) => s + n, 0)} — Def: {Object.values((round.defenderShips ?? {}) as Record<string, number>).reduce((s, n) => s + n, 0)}
                           </span>
                         </summary>
                         <div className="px-3 pb-3 pt-1 space-y-2 border-t border-border/50">
@@ -753,6 +822,43 @@ export default function Reports() {
                           {round.attackerShips && Object.keys(round.attackerShips).length === 0 &&
                            round.defenderShips && Object.keys(round.defenderShips).length === 0 && (
                             <div className="text-xs text-muted-foreground">Toutes les unites ont ete detruites</div>
+                          )}
+                          {/* Per-round combat stats */}
+                          {(round.attackerStats || round.defenderStats) && (
+                            <div className="mt-2 pt-2 border-t border-border/30 grid grid-cols-2 gap-3">
+                              {round.attackerStats && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1">Stats attaquant</div>
+                                  <div className="space-y-0.5 text-xs">
+                                    {round.attackerStats.shieldAbsorbed > 0 && (
+                                      <div><span className="text-cyan-400">{Math.floor(round.attackerStats.shieldAbsorbed).toLocaleString('fr-FR')}</span> bouclier absorbe</div>
+                                    )}
+                                    {round.attackerStats.armorBlocked > 0 && (
+                                      <div><span className="text-amber-400">{Math.floor(round.attackerStats.armorBlocked).toLocaleString('fr-FR')}</span> blindage bloque</div>
+                                    )}
+                                    {round.attackerStats.overkillWasted > 0 && (
+                                      <div><span className="text-red-400/60">{Math.floor(round.attackerStats.overkillWasted).toLocaleString('fr-FR')}</span> degats gaspilles</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {round.defenderStats && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1">Stats defenseur</div>
+                                  <div className="space-y-0.5 text-xs">
+                                    {round.defenderStats.shieldAbsorbed > 0 && (
+                                      <div><span className="text-cyan-400">{Math.floor(round.defenderStats.shieldAbsorbed).toLocaleString('fr-FR')}</span> bouclier absorbe</div>
+                                    )}
+                                    {round.defenderStats.armorBlocked > 0 && (
+                                      <div><span className="text-amber-400">{Math.floor(round.defenderStats.armorBlocked).toLocaleString('fr-FR')}</span> blindage bloque</div>
+                                    )}
+                                    {round.defenderStats.overkillWasted > 0 && (
+                                      <div><span className="text-red-400/60">{Math.floor(round.defenderStats.overkillWasted).toLocaleString('fr-FR')}</span> degats gaspilles</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
                       </details>
