@@ -308,11 +308,13 @@ export default function FleetDashboard() {
             <div className="space-y-2">
               {recentMovements.map((movement) => {
                 const origin = planets?.find((p) => p.id === movement.originPlanetId);
+                const target = planets?.find((p) => p.galaxy === movement.targetGalaxy && p.system === movement.targetSystem && p.position === movement.targetPosition);
                 return (
                   <MovementCard
                     key={movement.id}
                     event={movement as unknown as MovementEvent}
                     originPlanet={origin ? { name: origin.name, galaxy: origin.galaxy, system: origin.system, position: origin.position } : undefined}
+                    targetPlanetName={target?.name}
                     researchLevels={researchLevels}
                     onRecall={setRecallConfirm}
                     recallingId={recallConfirm}

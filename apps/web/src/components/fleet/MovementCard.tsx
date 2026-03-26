@@ -167,6 +167,7 @@ export interface MovementEvent {
 export function MovementCard({
   event,
   originPlanet,
+  targetPlanetName,
   researchLevels,
   onRecall,
   recallingId,
@@ -174,6 +175,7 @@ export function MovementCard({
 }: {
   event: MovementEvent;
   originPlanet?: { name: string; galaxy: number; system: number; position: number };
+  targetPlanetName?: string;
   researchLevels: Record<string, number>;
   onRecall?: (id: string) => void;
   recallingId?: string | null;
@@ -188,6 +190,7 @@ export function MovementCard({
   const shipCount = shipEntries.reduce((sum, [, n]) => sum + n, 0);
 
   const targetCoords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
+  const targetLabel = targetPlanetName ? `${targetPlanetName} ${targetCoords}` : targetCoords;
   const originCoords = originPlanet
     ? `[${originPlanet.galaxy}:${originPlanet.system}:${originPlanet.position}]`
     : '';
@@ -208,8 +211,8 @@ export function MovementCard({
   const hasCargo = minerai > 0 || silicium > 0 || hydrogene > 0;
   const totalCargo = minerai + silicium + hydrogene;
 
-  const fromLabel = isReturn ? targetCoords : `${originLabel} ${originCoords}`;
-  const toLabel = isReturn ? `${originLabel} ${originCoords}` : targetCoords;
+  const fromLabel = isReturn ? targetLabel : `${originLabel} ${originCoords}`;
+  const toLabel = isReturn ? `${originLabel} ${originCoords}` : targetLabel;
 
   // Ship stats for expanded panel
   const shipStats = gameConfig?.ships as Record<string, {

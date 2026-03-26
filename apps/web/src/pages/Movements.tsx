@@ -508,11 +508,13 @@ export default function Movements() {
 
           {sorted.map((event) => {
             const origin = planets?.find((p) => p.id === event.originPlanetId);
+            const target = planets?.find((p) => p.galaxy === event.targetGalaxy && p.system === event.targetSystem && p.position === event.targetPosition);
             return (
               <MovementCard
                 key={event.id}
                 event={event as unknown as MovementEvent}
                 originPlanet={origin ? { name: origin.name, galaxy: origin.galaxy, system: origin.system, position: origin.position } : undefined}
+                targetPlanetName={target?.name}
                 researchLevels={researchLevels}
                 onRecall={setRecallConfirm}
                 recallingId={recallConfirm}
