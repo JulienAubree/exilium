@@ -182,14 +182,14 @@ export default function Fleet() {
     if (config?.requiredShipRoles && !config.recommendedShipRoles) {
       const hasRequired = config.requiredShipRoles.some((id) => (selectedShips[id] ?? 0) > 0);
       if (!hasRequired) {
-        const names = config.requiredShipRoles.map((id) => getShipName(id)).join(', ');
+        const names = config.requiredShipRoles.map((id) => getShipName(id, gameConfig)).join(', ');
         return `Cette mission nécessite : ${names}`;
       }
     }
 
     if (config?.exclusive && config.requiredShipRoles) {
       const hasDisallowed = selected.some(([id]) => !config.requiredShipRoles!.includes(id));
-      if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShipRoles.map((id) => getShipName(id)).join(', ')}`;
+      if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShipRoles.map((id) => getShipName(id, gameConfig)).join(', ')}`;
     }
 
     // Check total cargo does not exceed capacity
