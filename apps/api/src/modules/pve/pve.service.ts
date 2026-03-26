@@ -121,20 +121,23 @@ export function createPveService(
       // +1 because the discovery at nextDiscoveryAt itself counts as the first one
       const n = Math.floor(elapsed / cooldownMs) + 1;
 
-      // Count current available missions by type
-      const [miningCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
+      // Count current available missions by type (single query)
+      const missionCounts = await db
+        .select({
+          missionType: pveMissions.missionType,
+          count: sql<number>`count(*)::int`,
+        })
         .from(pveMissions)
-        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available'), eq(pveMissions.missionType, 'mine')));
-      const [pirateCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(pveMissions)
-        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available'), eq(pveMissions.missionType, 'pirate')));
+        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')))
+        .groupBy(pveMissions.missionType);
+
+      const countByType: Record<string, number> = {};
+      for (const row of missionCounts) countByType[row.missionType] = row.count;
 
       const MINING_CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
       const PIRATE_CAP = Number(config.universe.pve_max_pirate_missions) || 2;
-      const miningToCreate = Math.min(n, MINING_CAP - (miningCount?.count ?? 0));
-      const pirateToCreate = Math.min(n, PIRATE_CAP - (pirateCount?.count ?? 0));
+      const miningToCreate = Math.min(n, MINING_CAP - (countByType['mine'] ?? 0));
+      const pirateToCreate = Math.min(n, PIRATE_CAP - (countByType['pirate'] ?? 0));
 
       // Get player's home planet for coordinates
       const [homePlanet] = await db.select({

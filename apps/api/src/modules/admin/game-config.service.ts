@@ -258,6 +258,28 @@ export function createGameConfigService(db: Database) {
       sortOrder: c.sortOrder,
     }));
 
+    // Pre-index prerequisites into Maps (O(n) instead of O(n²) filter loops)
+    const buildingPrereqMap = new Map<string, typeof buildingPrereqRows>();
+    for (const p of buildingPrereqRows) {
+      const arr = buildingPrereqMap.get(p.buildingId);
+      if (arr) arr.push(p); else buildingPrereqMap.set(p.buildingId, [p]);
+    }
+    const researchPrereqMap = new Map<string, typeof researchPrereqRows>();
+    for (const p of researchPrereqRows) {
+      const arr = researchPrereqMap.get(p.researchId);
+      if (arr) arr.push(p); else researchPrereqMap.set(p.researchId, [p]);
+    }
+    const shipPrereqMap = new Map<string, typeof shipPrereqRows>();
+    for (const p of shipPrereqRows) {
+      const arr = shipPrereqMap.get(p.shipId);
+      if (arr) arr.push(p); else shipPrereqMap.set(p.shipId, [p]);
+    }
+    const defensePrereqMap = new Map<string, typeof defensePrereqRows>();
+    for (const p of defensePrereqRows) {
+      const arr = defensePrereqMap.get(p.defenseId);
+      if (arr) arr.push(p); else defensePrereqMap.set(p.defenseId, [p]);
+    }
+
     // Buildings
     const buildings: Record<string, BuildingConfig> = {};
     for (const b of buildingRows) {
@@ -272,8 +294,7 @@ export function createGameConfigService(db: Database) {
         categoryId: b.categoryId,
         sortOrder: b.sortOrder,
         role: b.role ?? null,
-        prerequisites: buildingPrereqRows
-          .filter(p => p.buildingId === b.id)
+        prerequisites: (buildingPrereqMap.get(b.id) ?? [])
           .map(p => ({ buildingId: p.requiredBuildingId, level: p.requiredLevel })),
       };
     }
@@ -281,7 +302,7 @@ export function createGameConfigService(db: Database) {
     // Research
     const research: Record<string, ResearchConfig> = {};
     for (const r of researchRows) {
-      const prereqs = researchPrereqRows.filter(p => p.researchId === r.id);
+      const prereqs = researchPrereqMap.get(r.id) ?? [];
       research[r.id] = {
         id: r.id,
         name: r.name,
@@ -304,7 +325,7 @@ export function createGameConfigService(db: Database) {
     // Ships
     const ships: Record<string, ShipConfig> = {};
     for (const s of shipRows) {
-      const prereqs = shipPrereqRows.filter(p => p.shipId === s.id);
+      const prereqs = shipPrereqMap.get(s.id) ?? [];
       ships[s.id] = {
         id: s.id,
         name: s.name,
@@ -337,7 +358,7 @@ export function createGameConfigService(db: Database) {
     // Defenses
     const defenses: Record<string, DefenseConfig> = {};
     for (const d of defenseRows) {
-      const prereqs = defensePrereqRows.filter(p => p.defenseId === d.id);
+      const prereqs = defensePrereqMap.get(d.id) ?? [];
       defenses[d.id] = {
         id: d.id,
         name: d.name,
