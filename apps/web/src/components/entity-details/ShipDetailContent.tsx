@@ -5,35 +5,13 @@ import { getShipDetails, resolveBuildingName, resolveResearchName } from '@/lib/
 import { EnergieIcon } from '@/components/common/ResourceIcons';
 import { buildProductionConfig } from '@/lib/production-config';
 import { resolveBonus, solarSatelliteEnergy } from '@ogame-clone/game-engine';
+import {
+  ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
+  SpeedIcon, PropulsionIcon, FuelIcon, CargoIcon,
+  StatCell, EffectiveStatCell, SectionHeader, CostPills,
+} from './stat-components';
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
-
-function EffectiveStatRow({ label, base, effective, multiplier }: { label: string; base: number; effective: number; multiplier: number }) {
-  const bonusPercent = Math.round((multiplier - 1) * 100);
-  const hasBonus = bonusPercent > 0;
-  return (
-    <div>
-      <div className="flex items-center justify-between text-[11px]">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-slate-200 font-mono font-semibold">{fmt(effective)}</span>
-      </div>
-      {hasBonus && (
-        <div className="text-[10px] text-right text-emerald-500">
-          base {fmt(base)} &middot; +{bonusPercent}%
-        </div>
-      )}
-    </div>
-  );
-}
-
-function StatRow({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between text-[11px]">
-      <span className="text-slate-400">{label}</span>
-      <span className="text-slate-200 font-mono font-semibold">{fmt(value)}</span>
-    </div>
-  );
-}
 
 interface Props {
   shipId: string;
@@ -95,21 +73,58 @@ export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlane
         <p className="text-xs italic text-[#888] leading-relaxed">{details.flavorText}</p>
       )}
 
-      {/* Combat stats */}
-      <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-        <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
-          Stats de combat
-        </div>
-        <EffectiveStatRow label="Bouclier" base={details.combat.shield} effective={effective.shield} multiplier={effective.shieldMult} />
-        <StatRow label="Blindage" value={details.combat.baseArmor} />
-        <EffectiveStatRow label="Coque" base={details.combat.hull} effective={effective.hull} multiplier={effective.hullMult} />
-        <EffectiveStatRow label="Armement" base={details.combat.weapons} effective={effective.weapons} multiplier={effective.weaponsMult} />
-        <StatRow label="Tirs" value={details.combat.shotCount} />
+      {/* ── Defense ── */}
+      <SectionHeader icon={<ShieldIcon size={14} className="text-sky-400" />} label="Défense" color="text-sky-400" />
+      <div className="grid grid-cols-2 gap-1.5">
+        <EffectiveStatCell
+          icon={<ShieldIcon />}
+          label="Bouclier"
+          base={details.combat.shield}
+          effective={effective.shield}
+          multiplier={effective.shieldMult}
+          variant="shield"
+        />
+        <StatCell
+          icon={<ArmorIcon />}
+          label="Blindage"
+          value={details.combat.baseArmor}
+          variant="armor"
+        />
+        <EffectiveStatCell
+          icon={<HullIcon />}
+          label="Coque"
+          base={details.combat.hull}
+          effective={effective.hull}
+          multiplier={effective.hullMult}
+          variant="hull"
+          wide
+        />
+      </div>
+
+      <div className="h-px bg-[#334155] my-1" />
+
+      {/* ── Attack ── */}
+      <SectionHeader icon={<WeaponsIcon size={14} className="text-red-400" />} label="Attaque" color="text-red-400" />
+      <div className="grid grid-cols-2 gap-1.5">
+        <EffectiveStatCell
+          icon={<WeaponsIcon />}
+          label="Armement"
+          base={details.combat.weapons}
+          effective={effective.weapons}
+          multiplier={effective.weaponsMult}
+          variant="weapons"
+        />
+        <StatCell
+          icon={<ShotsIcon />}
+          label="Tirs / round"
+          value={details.combat.shotCount}
+          variant="shots"
+        />
       </div>
 
       {/* Energy production (stationary ships only) */}
       {details.isStationary && (
-        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2 mt-2">
           <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
             Production d&apos;énergie
           </div>
@@ -127,26 +142,50 @@ export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlane
         </div>
       )}
 
-      {/* Movement — hide for stationary ships */}
+      {/* ── Movement ── */}
       {!details.isStationary && (
-        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
-            Déplacement
-          </div>
-          <EffectiveStatRow label="Vitesse" base={details.stats.baseSpeed} effective={effective.speed} multiplier={effective.speedMult} />
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Consommation</span>
-            <span className="text-slate-200 font-mono">{fmt(details.stats.fuelConsumption)}</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Capacité de fret</span>
-            <span className="text-slate-200 font-mono">{fmt(details.stats.cargoCapacity)}</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Propulsion</span>
-            <span className="text-slate-200 font-mono">
-              {gameConfig?.labels[`drive.${details.stats.driveType}`] ?? details.stats.driveType}
-            </span>
+        <div className="border-t border-[#334155] pt-3 mt-1">
+          <SectionHeader
+            icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><polygon points="3,11 22,2 13,21 11,13" /></svg>}
+            label="Déplacement"
+            color="text-slate-500"
+          />
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="flex items-center gap-2">
+              <SpeedIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Vitesse</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">
+                  {fmt(effective.speed)}
+                  {effective.speedMult > 1 && (
+                    <span className="text-[9px] text-emerald-500 ml-1">+{Math.round((effective.speedMult - 1) * 100)}%</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <PropulsionIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Propulsion</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">
+                  {gameConfig?.labels[`drive.${details.stats.driveType}`] ?? details.stats.driveType}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FuelIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Consommation</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">{fmt(details.stats.fuelConsumption)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CargoIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Fret</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">{fmt(details.stats.cargoCapacity)}</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -157,31 +196,26 @@ export function ShipDetailContent({ shipId, researchLevels, maxTemp, isHomePlane
           <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
             Capacité de minage
           </div>
-          <EffectiveStatRow
-            label="Extraction par voyage"
-            base={details.stats.miningExtraction}
-            effective={effective.mining}
-            multiplier={effective.miningMult}
-          />
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Extraction par voyage</span>
+            <span className="text-slate-200 font-mono font-semibold">
+              {fmt(effective.mining)}
+              {effective.miningMult > 1 && (
+                <span className="text-[9px] text-emerald-500 ml-1">base {fmt(details.stats.miningExtraction)} · +{Math.round((effective.miningMult - 1) * 100)}%</span>
+              )}
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Unit cost */}
-      <div>
-        <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
-          Coût unitaire
-        </div>
-        <div className="flex items-center gap-4 text-[11px] font-mono font-semibold">
-          {details.cost.minerai > 0 && (
-            <span className="text-amber-400">{fmt(details.cost.minerai)} minerai</span>
-          )}
-          {details.cost.silicium > 0 && (
-            <span className="text-cyan-400">{fmt(details.cost.silicium)} silicium</span>
-          )}
-          {details.cost.hydrogene > 0 && (
-            <span className="text-emerald-400">{fmt(details.cost.hydrogene)} hydrogène</span>
-          )}
-        </div>
+      {/* ── Cost ── */}
+      <div className="border-t border-[#334155] pt-3 mt-1">
+        <SectionHeader
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1={3} y1={6} x2={21} y2={6} /><path d="M16 10a4 4 0 0 1-8 0" /></svg>}
+          label="Coût unitaire"
+          color="text-slate-500"
+        />
+        <CostPills cost={details.cost} />
       </div>
 
       {/* Prerequisites */}
