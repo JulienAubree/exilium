@@ -928,7 +928,7 @@ export default function Reports() {
 
       {/* Mobile/tablet detail overlay (below lg) */}
       {selectedId && selectedReport && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 overflow-y-auto p-4 animate-slide-up">
+        <div className="lg:hidden fixed inset-0 z-50 bg-background/95 overflow-y-auto p-4 pb-20 animate-slide-up">
           <Button
             variant="outline"
             size="sm"
