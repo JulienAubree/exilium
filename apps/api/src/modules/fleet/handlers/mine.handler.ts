@@ -282,7 +282,10 @@ export class MineHandler implements PhasedMissionHandler {
         completionTime: new Date(),
         result: {
           rewards: cargo,
+          grossMined: actualLoss,
           slagRate,
+          fleetExtraction: fleetExtr,
+          cargoCapacity,
           technologies,
         },
       });
