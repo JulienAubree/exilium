@@ -85,6 +85,20 @@ interface CombatConfig {
 }
 ```
 
+### Configuration d'un type de vaisseau/défense
+
+```typescript
+interface ShipCombatConfig {
+  shipType: string          // identifiant unique (ex: 'interceptor', 'frigate')
+  categoryId: string        // référence vers une catégorie
+  baseShield: number
+  baseArmor: number         // réduction fixe — pas de bonus recherche
+  baseHull: number
+  baseWeaponDamage: number
+  baseShotCount: number
+}
+```
+
 ### Entrées du simulateur
 
 ```typescript
@@ -169,14 +183,33 @@ Pour chaque tir (1 → shotCount) :
 
 ## 7. Roster des vaisseaux
 
+### Mapping ancien → nouveau roster
+
+| Ancien | Nouveau | Notes |
+|--------|---------|-------|
+| `lightFighter` | `interceptor` | Renommé, stats recalculées |
+| `heavyFighter` | `frigate` | Renommé, reclassé moyen |
+| `cruiser` | `cruiser` | Même identifiant, stats recalculées, reclassé lourd |
+| `battleship` | `battlecruiser` | Renommé, stats recalculées |
+| `smallCargo` | `smallCargo` | Inchangé (reclassé support) |
+| `largeCargo` | `largeCargo` | Inchangé (reclassé support) |
+| `recycler` | `recycler` | Inchangé (reclassé support) |
+| `espionageProbe` | `espionageProbe` | Inchangé (reclassé support) |
+| `colonyShip` | `colonyShip` | Inchangé (reclassé support) |
+| `explorer` | `explorer` | Inchangé (reclassé support) |
+| `prospector` | `prospector` | Inchangé (reclassé support) |
+| `solarSatellite` | `solarSatellite` | Ne participe pas au combat |
+
+Les flottes existantes en base seront migrées via le mapping ci-dessus. Les vaisseaux dont l'identifiant change nécessitent une migration des colonnes dans `planet-ships` et des références dans `fleet-events`.
+
 ### Vaisseaux de combat
 
-| Vaisseau | Catégorie | Bouclier | Blindage | Coque | Armement | Tirs | Rôle |
-|----------|-----------|----------|----------|-------|----------|------|------|
-| **Intercepteur** | Léger | 8 | 1 | 12 | 4 | 3 | Saturation, anti-léger, nettoyage |
-| **Frégate** | Moyen | 16 | 2 | 30 | 12 | 2 | Polyvalence, tenue de ligne |
-| **Croiseur** | Lourd | 28 | 4 | 55 | 45 | 1 | Perçage, anti-lourd |
-| **Cuirassé** | Lourd | 40 | 6 | 100 | 70 | 1 | Briseur de ligne, siège |
+| Vaisseau | ID | Catégorie | Bouclier | Blindage | Coque | Armement | Tirs | Rôle |
+|----------|----|-----------|----------|----------|-------|----------|------|------|
+| **Intercepteur** | `interceptor` | Léger | 8 | 1 | 12 | 4 | 3 | Saturation, anti-léger, nettoyage |
+| **Frégate** | `frigate` | Moyen | 16 | 2 | 30 | 12 | 2 | Polyvalence, tenue de ligne |
+| **Croiseur** | `cruiser` | Lourd | 28 | 4 | 55 | 45 | 1 | Perçage, anti-lourd |
+| **Cuirassé** | `battlecruiser` | Lourd | 40 | 6 | 100 | 70 | 1 | Briseur de ligne, siège |
 
 ### Vaisseaux utilitaires (support)
 
@@ -248,13 +281,22 @@ interface RoundResult {
 - `packages/game-engine/src/formulas/combat.test.ts` — tests complets
 - `packages/db/src/seed-game-config.ts` — nouvelles stats, catégories, suppression rapid fire
 
+### Migration DB / Game Config
+- **`shipDefinitions` / `defenseDefinitions`** dans le game config — les colonnes actuelles (`weapons`, `shield`, `armor`) doivent être remappées :
+  - `weapons` → `baseWeaponDamage`
+  - `shield` → `baseShield`
+  - `armor` (anciennement PV) → `baseHull`
+  - Ajout : `baseArmor` (réduction fixe, nouveau concept), `baseShotCount`, `categoryId`
+  - Suppression : toutes les entrées `rapidFire`
+- **`planet-ships`** — renommage des colonnes : `lightFighter` → `interceptor`, `heavyFighter` → `frigate`, `battleship` → `battlecruiser`
+- **`planet-defenses`** — renommage `gaussCannon` → `electromagneticCannon` (si l'identifiant change)
+- **`fleet-events`** — ajout champ `targetPriority: string` pour la priorité de cible choisie par le joueur ; mise à jour des références de vaisseaux dans les données de flotte stockées
+- **`mission-reports`** — le format JSONB du `CombatResult` change (nouvelles stats par catégorie). Les anciens rapports ne seront plus lisibles — migration ou flag de version nécessaire.
+
 ### Modification
 - `apps/api/src/modules/fleet/handlers/attack.handler.ts` — nouvelle interface simulateur, priorité de cible
 - `apps/api/src/modules/fleet/handlers/pirate.handler.ts` — idem PvE
 - `apps/api/src/modules/fleet/fleet.service.ts` — priorité de cible dans les données de mission
-- `packages/db/src/schema/fleet-events.ts` — champ priorité de cible
-- `packages/db/src/schema/planet-ships.ts` — nouveaux identifiants vaisseaux
-- `packages/db/src/schema/planet-defenses.ts` — nouveaux identifiants défenses
 - `apps/web/src/pages/Reports.tsx` — nouveau format de rapport avec stats par catégorie
 - UI d'envoi de flotte — sélecteur de priorité de cible
 - Pages de construction — nouveaux noms
