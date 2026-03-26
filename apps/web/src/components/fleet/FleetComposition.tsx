@@ -29,15 +29,18 @@ function ShipCard({ ship, value, onChange, onToggle, disabled }: {
   disabled: boolean;
 }) {
   const isSelected = !disabled && value > 0;
+  const isConflict = disabled && value > 0;
+  const isClickable = !disabled || isConflict;
   return (
     <div
-      role={disabled ? undefined : 'button'}
-      onClick={disabled ? undefined : onToggle}
+      role={isClickable ? 'button' : undefined}
+      onClick={isClickable ? onToggle : undefined}
       className={cn(
         'retro-card overflow-hidden flex flex-col',
-        disabled && 'opacity-40',
-        !disabled && 'cursor-pointer',
+        disabled && !isConflict && 'opacity-40',
+        isClickable && 'cursor-pointer',
         isSelected && 'border-primary',
+        isConflict && 'border-destructive',
       )}
     >
       <div className="relative h-24 overflow-hidden">
@@ -58,12 +61,22 @@ function ShipCard({ ship, value, onChange, onToggle, disabled }: {
             </svg>
           </div>
         )}
+        {isConflict && (
+          <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-destructive flex items-center justify-center shadow-md">
+            <svg className="h-3 w-3 text-destructive-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </div>
+        )}
       </div>
       <div className="p-2.5 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
         <span className="text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
           {ship.name}
         </span>
-        {disabled ? (
+        {isConflict ? (
+          <span className="text-[10px] text-destructive">x{value} — incompatible</span>
+        ) : disabled ? (
           <span className="text-[10px] text-muted-foreground/60">non disponible</span>
         ) : isSelected ? (
           <div className="flex items-center gap-1.5 w-full">
@@ -106,7 +119,7 @@ function CollapsibleCardGrid({ ships, selectedShips, onChange, onToggle, disable
           <ShipCard
             key={ship.id}
             ship={ship}
-            value={disabled ? 0 : (selectedShips[ship.id] ?? 0)}
+            value={selectedShips[ship.id] ?? 0}
             onChange={disabled ? () => {} : (count) => onChange(ship.id, count)}
             onToggle={() => onToggle(ship.id)}
             disabled={disabled}
