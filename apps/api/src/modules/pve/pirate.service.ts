@@ -5,7 +5,10 @@ import {
   simulateCombat,
   resolveBonus,
   type CombatMultipliers,
-  type UnitCombatStats,
+  type CombatConfig,
+  type CombatInput,
+  type ShipCategory,
+  type ShipCombatConfig,
 } from '@ogame-clone/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
@@ -59,13 +62,29 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
         bonusShips: { shipId: string; count: number; chance: number }[];
       };
 
-      // Load combat stats from game config
-      const combatStats: Record<string, UnitCombatStats> = {};
+      // Build ShipCombatConfig map from game config
+      const shipCombatConfigs: Record<string, ShipCombatConfig> = {};
       for (const [id, ship] of Object.entries(config.ships)) {
-        combatStats[id] = { weapons: ship.weapons, shield: ship.shield, armor: ship.armor };
+        shipCombatConfigs[id] = {
+          shipType: id,
+          categoryId: ship.combatCategoryId ?? 'support',
+          baseShield: ship.shield,
+          baseArmor: ship.baseArmor ?? 0,
+          baseHull: ship.hull,
+          baseWeaponDamage: ship.weapons,
+          baseShotCount: ship.shotCount ?? 1,
+        };
       }
-      for (const [id, defense] of Object.entries(config.defenses)) {
-        combatStats[id] = { weapons: defense.weapons, shield: defense.shield, armor: defense.armor };
+      for (const [id, def] of Object.entries(config.defenses)) {
+        shipCombatConfigs[id] = {
+          shipType: id,
+          categoryId: def.combatCategoryId ?? 'heavy',
+          baseShield: def.shield,
+          baseArmor: def.baseArmor ?? 0,
+          baseHull: def.hull,
+          baseWeaponDamage: def.weapons,
+          baseShotCount: def.shotCount ?? 1,
+        };
       }
 
       const shipIds = new Set(Object.keys(config.ships));
@@ -74,20 +93,39 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
         shipCosts[id] = { minerai: ship.cost.minerai, silicium: ship.cost.silicium };
       }
 
-      // Use rapidFire map directly from config (already in the right shape)
-      const rapidFireMap = config.rapidFire;
+      const categories: ShipCategory[] = [
+        { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
+        { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
+        { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
+        { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
+      ];
 
-      const result = simulateCombat(
-        playerShips,
-        pirateShips,
-        playerMultipliers,
-        pirateMultipliers,
-        combatStats,
-        rapidFireMap,
-        shipIds,
+      const combatConfig: CombatConfig = {
+        maxRounds: Number(config.universe['combat_max_rounds']) || 4,
+        debrisRatio: Number(config.universe['combat_debris_ratio']) || 0.3,
+        defenseRepairRate: Number(config.universe['combat_defense_repair_rate']) || 0.7,
+        pillageRatio: Number(config.universe['combat_pillage_ratio']) || 0.33,
+        minDamagePerHit: Number(config.universe['combat_min_damage_per_hit']) || 1,
+        researchBonusPerLevel: Number(config.universe['combat_research_bonus_per_level']) || 0.1,
+        categories,
+      };
+
+      const combatInput: CombatInput = {
+        attackerFleet: playerShips,
+        defenderFleet: pirateShips,
+        defenderDefenses: {},
+        attackerMultipliers: playerMultipliers,
+        defenderMultipliers: pirateMultipliers,
+        attackerTargetPriority: 'light',
+        defenderTargetPriority: 'light',
+        combatConfig,
+        shipConfigs: shipCombatConfigs,
         shipCosts,
-        new Set(), // no defenses for pirates
-      );
+        shipIds,
+        defenseIds: new Set(),
+      };
+
+      const result = simulateCombat(combatInput);
 
       // Calculate surviving ships
       const survivingShips: Record<string, number> = {};
