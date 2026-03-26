@@ -225,6 +225,16 @@ export default function Overview() {
     (m) => m.originPlanetId === planet.id,
   );
 
+  // Own fleets heading to this planet from other planets (outbound only)
+  const ownInbound = allMovements?.filter(
+    (m) =>
+      m.phase === 'outbound' &&
+      m.originPlanetId !== planet.id &&
+      m.targetGalaxy === planet.galaxy &&
+      m.targetSystem === planet.system &&
+      m.targetPosition === planet.position,
+  );
+
   const planetInbound = inboundFleets?.filter(
     (f) => f.targetGalaxy === planet.galaxy && f.targetSystem === planet.system && f.targetPosition === planet.position,
   );
@@ -438,6 +448,91 @@ export default function Overview() {
                       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pl-4">
                         <span className="truncate">
                           {isReturn ? `${targetCoords} → ${planet?.name ?? ''} ${originCoords}` : `${planet?.name ?? ''} ${originCoords} → ${targetCoords}`}
+                        </span>
+                        <span className="text-muted-foreground/30 flex-shrink-0">·</span>
+                        <span className="flex-shrink-0">{shipCount} vsx</span>
+                        {hasCargo && (
+                          <>
+                            <span className="text-muted-foreground/30 flex-shrink-0">·</span>
+                            <span className="flex-shrink-0 text-amber-400/70">cargo</span>
+                          </>
+                        )}
+                      </div>
+                      {/* Mini progress bar */}
+                      <div className="h-0.5 rounded-full bg-white/[0.04] overflow-hidden ml-4">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${progress}%`, background: hex }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Mes flottes en approche (own inbound from other planets) */}
+          {ownInbound && ownInbound.length > 0 && (
+            <section className="glass-card p-4 ring-1 ring-emerald-500/10">
+              <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-400">Flottes en approche</span>
+                <span className="text-[10px] text-emerald-400/60 ml-auto">{ownInbound.length}</span>
+              </h2>
+              <div className="space-y-1.5">
+                {ownInbound.map((event) => {
+                  const ships = event.ships as Record<string, number>;
+                  const shipCount = Object.values(ships).reduce((sum, n) => sum + n, 0);
+                  const missionLabel = gameConfig?.missions[event.mission]?.label ?? event.mission;
+                  const hex = gameConfig?.missions[event.mission]?.color ?? '#10b981';
+
+                  const originPl = planets?.find((p) => p.id === event.originPlanetId);
+                  const originName = originPl?.name ?? 'Planète';
+                  const originCoords = originPl
+                    ? `[${originPl.galaxy}:${originPl.system}:${originPl.position}]`
+                    : '';
+
+                  const hasCargo =
+                    Number(event.mineraiCargo) > 0 ||
+                    Number(event.siliciumCargo) > 0 ||
+                    Number(event.hydrogeneCargo) > 0;
+
+                  const dep = new Date(event.departureTime).getTime();
+                  const arr = new Date(event.arrivalTime).getTime();
+                  const total = arr - dep;
+                  const progress =
+                    total > 0
+                      ? Math.min(100, Math.max(0, ((Date.now() - dep) / total) * 100))
+                      : 100;
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="px-2.5 py-2 rounded-md cursor-pointer hover:bg-emerald-500/5 transition-colors space-y-1.5"
+                      onClick={() => navigate('/fleet/movements')}
+                    >
+                      {/* Line 1: Mission + Phase + Timer */}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: hex, boxShadow: `0 0 6px ${hex}60` }}
+                        />
+                        <span className="text-sm font-medium text-foreground">{missionLabel}</span>
+                        <span className="text-[10px] text-muted-foreground/70">
+                          {gameConfig?.labels[`phase.${event.phase}`] ?? event.phase}
+                        </span>
+                        <div className="ml-auto flex-shrink-0">
+                          <Timer
+                            endTime={new Date(event.arrivalTime)}
+                            onComplete={() => utils.fleet.movements.invalidate()}
+                          />
+                        </div>
+                      </div>
+                      {/* Line 2: Route + ship count */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pl-4">
+                        <span className="truncate">
+                          {originName} {originCoords} → ici
                         </span>
                         <span className="text-muted-foreground/30 flex-shrink-0">·</span>
                         <span className="flex-shrink-0">{shipCount} vsx</span>
