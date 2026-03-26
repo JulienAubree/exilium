@@ -31,7 +31,7 @@ function ShipCard({ ship, value, onChange, disabled }: {
       'retro-card overflow-hidden flex flex-col',
       disabled && 'opacity-40',
     )}>
-      <div className="relative h-[130px] overflow-hidden">
+      <div className="relative h-24 overflow-hidden">
         <GameImage
           category="ships"
           id={ship.id}
@@ -84,7 +84,7 @@ function CollapsibleCardGrid({ ships, selectedShips, onChange, disabled }: {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
         {visible.map((ship) => (
           <ShipCard
             key={ship.id}
@@ -137,7 +137,7 @@ export function FleetComposition({ ships, mission, selectedShips, onChange }: Fl
       {showRequired && (
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">{sectionLabel}</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
             {categorized.required.map((ship) => (
               <ShipCard
                 key={ship.id}

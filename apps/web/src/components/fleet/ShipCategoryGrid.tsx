@@ -95,7 +95,7 @@ export function ShipCategoryGrid({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
               {visibleShips.map((ship) => {
                 const isClickable = !!onShipClick;
                 const isSelected = selectedIds?.has(ship.id) ?? false;
@@ -113,7 +113,7 @@ export function ShipCategoryGrid({
                       isClickable && 'cursor-pointer',
                     )}
                   >
-                    <div className="relative h-[130px] overflow-hidden">
+                    <div className="relative h-24 overflow-hidden">
                       <GameImage
                         category="ships"
                         id={ship.id}
