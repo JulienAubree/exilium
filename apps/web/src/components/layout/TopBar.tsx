@@ -4,9 +4,9 @@ import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
+import { ProfileIcon, ReportsIcon, HistoryIcon } from '@/lib/icons';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, eventNavigationTarget, groupEvents } from '@/lib/game-events';
 import { getPlanetImageUrl } from '@/lib/assets';
@@ -43,12 +43,15 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
   const { data: gameConfig } = useGameConfig();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const clearActivePlanet = usePlanetStore((s) => s.clearActivePlanet);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const user = useAuthStore((s) => s.user);
   const utils = trpc.useUtils();
   const { data: unreadCount } = trpc.message.unreadCount.useQuery();
   const { data: eventUnreadCount } = trpc.gameEvent.unreadCount.useQuery();
@@ -110,6 +113,19 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
       return () => document.removeEventListener('mousedown', handleClick);
     }
   }, [bellOpen]);
+
+  // Close profile on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }
+  }, [profileOpen]);
 
   const handleSelectPlanet = (id: string) => {
     setActivePlanet(id);
@@ -272,9 +288,69 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
           )}
         </div>
 
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="hidden lg:flex">
-          Déconnexion
-        </Button>
+        {/* Profile menu */}
+        <div className="relative" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className={cn(
+              'flex items-center gap-2 rounded-full p-0.5 pr-2 transition-colors lg:pr-3',
+              profileOpen ? 'bg-accent' : 'hover:bg-accent',
+            )}
+          >
+            <div className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white',
+              profileOpen && 'ring-2 ring-primary',
+            )}>
+              {user?.username?.slice(0, 2).toUpperCase() ?? '??'}
+            </div>
+            <span className="hidden text-sm font-medium lg:inline">{user?.username ?? ''}</span>
+            <svg className="hidden h-3 w-3 text-muted-foreground lg:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+
+          {profileOpen && (
+            <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+              <div className="p-1.5">
+                <button
+                  onClick={() => { navigate('/profile'); setProfileOpen(false); }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <ProfileIcon width={16} height={16} />
+                  Profil
+                </button>
+                <button
+                  onClick={() => { navigate('/reports'); setProfileOpen(false); }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <ReportsIcon width={16} height={16} />
+                  Rapports
+                </button>
+                <button
+                  onClick={() => { navigate('/history'); setProfileOpen(false); }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <HistoryIcon width={16} height={16} />
+                  Historique
+                </button>
+              </div>
+              <div className="mx-2 border-t border-white/5" />
+              <div className="p-1.5">
+                <button
+                  onClick={() => { setProfileOpen(false); handleLogout(); }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-destructive hover:bg-accent"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

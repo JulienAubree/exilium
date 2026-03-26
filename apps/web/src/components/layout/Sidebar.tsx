@@ -13,12 +13,9 @@ import {
   MarketIcon,
   MissionsIcon,
   MessagesIcon,
-  ReportsIcon,
   RankingIcon,
   AllianceIcon,
   AllianceRankingIcon,
-  HistoryIcon,
-  ProfileIcon,
 } from '@/lib/icons';
 
 interface NavItem {
@@ -29,25 +26,24 @@ interface NavItem {
 
 const sections: { title: string; items: NavItem[] }[] = [
   {
-    title: 'Accueil',
+    title: 'Planète',
     items: [
       { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-      { label: 'Historique', path: '/history', icon: HistoryIcon },
-    ],
-  },
-  {
-    title: 'Base',
-    items: [
       { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
       { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
       { label: 'Recherche', path: '/research', icon: ResearchIcon },
+    ],
+  },
+  {
+    title: 'Production',
+    items: [
       { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
       { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
       { label: 'Défense', path: '/defense', icon: DefenseIcon },
     ],
   },
   {
-    title: 'Galaxie',
+    title: 'Espace',
     items: [
       { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
       { label: 'Flotte', path: '/fleet', icon: FleetIcon },
@@ -56,11 +52,9 @@ const sections: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: 'Social',
+    title: 'Communauté',
     items: [
-      { label: 'Profil', path: '/profile', icon: ProfileIcon },
       { label: 'Messages', path: '/messages', icon: MessagesIcon },
-      { label: 'Rapports', path: '/reports', icon: ReportsIcon },
       { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
       { label: 'Classement', path: '/ranking', icon: RankingIcon },
       { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },

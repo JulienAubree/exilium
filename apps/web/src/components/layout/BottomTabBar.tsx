@@ -1,70 +1,70 @@
 import { useLocation, useNavigate } from 'react-router';
 import {
   OverviewIcon,
-  BuildingsIcon,
-  GalaxyIcon,
-  AllianceIcon,
-  MoreIcon,
   ResourcesIcon,
+  BuildingsIcon,
   ResearchIcon,
   ShipyardIcon,
   CommandCenterIcon,
   DefenseIcon,
   FleetIcon,
+  GalaxyIcon,
+  MarketIcon,
   MissionsIcon,
   MessagesIcon,
-  ReportsIcon,
   RankingIcon,
-  HistoryIcon,
-  ProfileIcon,
-  MarketIcon,
+  AllianceIcon,
+  AllianceRankingIcon,
 } from '@/lib/icons';
 import { useUIStore } from '@/stores/ui.store';
-import { useAuthStore } from '@/stores/auth.store';
-import { usePlanetStore } from '@/stores/planet.store';
 import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
-  accueil: ['/'],
-  base: ['/resources', '/buildings', '/research', '/shipyard', '/command-center', '/defense', '/market'],
-  galaxie: ['/galaxy', '/fleet', '/missions'],
-  social: ['/profile', '/messages', '/reports', '/alliance', '/ranking', '/alliance-ranking'],
+  planete: ['/', '/resources', '/buildings', '/research'],
+  production: ['/shipyard', '/command-center', '/defense'],
+  espace: ['/galaxy', '/fleet', '/missions', '/market'],
+  social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
 };
 
 type TabGroup = keyof typeof TAB_GROUPS;
 
 const SHEET_ITEMS = {
-  base: [
+  planete: [
+    { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
     { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
     { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
+  ],
+  production: [
     { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
     { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
     { label: 'Défense', path: '/defense', icon: DefenseIcon },
-    { label: 'Marché', path: '/market', icon: MarketIcon },
   ],
-  galaxie: [
-    { label: 'Vue galaxie', path: '/galaxy', icon: GalaxyIcon },
+  espace: [
+    { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
     { label: 'Flotte', path: '/fleet', icon: FleetIcon },
     { label: 'Missions', path: '/missions', icon: MissionsIcon },
+    { label: 'Marché', path: '/market', icon: MarketIcon },
   ],
   social: [
-    { label: 'Profil', path: '/profile', icon: ProfileIcon },
     { label: 'Messages', path: '/messages', icon: MessagesIcon },
-    { label: 'Rapports', path: '/reports', icon: ReportsIcon },
     { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
     { label: 'Classement', path: '/ranking', icon: RankingIcon },
+    { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },
   ],
 };
 
 function getActiveTab(pathname: string): TabGroup | null {
-  if (pathname === '/') return 'accueil';
   for (const [group, paths] of Object.entries(TAB_GROUPS)) {
-    if (group === 'accueil') continue;
-    if ((paths as readonly string[]).some((p) => pathname.startsWith(p))) {
+    if (group === 'planete' && pathname === '/') return 'planete';
+    if (group !== 'planete' && (paths as readonly string[]).some((p) => pathname.startsWith(p))) {
       return group as TabGroup;
     }
+  }
+  // Check planete non-root paths
+  if ((TAB_GROUPS.planete as readonly string[]).some((p) => p !== '/' && pathname.startsWith(p))) {
+    return 'planete';
   }
   return null;
 }
@@ -73,8 +73,6 @@ export function BottomTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { activeSheet, toggleSheet, closeSheet } = useUIStore();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const clearActivePlanet = usePlanetStore((s) => s.clearActivePlanet);
   const { data: unreadCount } = trpc.message.unreadCount.useQuery();
   const activeTab = getActiveTab(location.pathname);
 
@@ -84,19 +82,18 @@ export function BottomTabBar() {
   };
 
   const tabs = [
-    { id: 'accueil' as const, label: 'Accueil', icon: OverviewIcon, action: () => { closeSheet(); navigate('/'); } },
-    { id: 'base' as const, label: 'Base', icon: BuildingsIcon, action: () => toggleSheet('base') },
-    { id: 'galaxie' as const, label: 'Galaxie', icon: GalaxyIcon, action: () => toggleSheet('galaxie') },
-    { id: 'social' as const, label: 'Social', icon: AllianceIcon, action: () => toggleSheet('social'), badge: unreadCount ?? 0 },
-    { id: 'plus' as const, label: 'Plus', icon: MoreIcon, action: () => toggleSheet('plus') },
+    { id: 'planete' as const, label: 'Planète', icon: OverviewIcon, action: () => toggleSheet('planete') },
+    { id: 'production' as const, label: 'Production', icon: ShipyardIcon, action: () => toggleSheet('production') },
+    { id: 'espace' as const, label: 'Espace', icon: GalaxyIcon, action: () => toggleSheet('espace') },
+    { id: 'social' as const, label: 'Social', icon: MessagesIcon, action: () => toggleSheet('social'), badge: unreadCount ?? 0 },
   ];
 
   return (
     <>
-      {activeSheet && activeSheet !== 'plus' && (
+      {activeSheet && (
         <BottomSheet open onClose={closeSheet}>
           <nav className="flex flex-col gap-1">
-            {SHEET_ITEMS[activeSheet as keyof typeof SHEET_ITEMS]?.map((item) => (
+            {SHEET_ITEMS[activeSheet]?.map((item) => (
               <button
                 key={item.path}
                 onClick={() => handleSheetNav(item.path)}
@@ -110,26 +107,6 @@ export function BottomTabBar() {
                 <span className="text-sm font-medium">{item.label}</span>
               </button>
             ))}
-          </nav>
-        </BottomSheet>
-      )}
-
-      {activeSheet === 'plus' && (
-        <BottomSheet open onClose={closeSheet}>
-          <nav className="flex flex-col gap-1">
-            <button
-              onClick={() => handleSheetNav('/history')}
-              className="flex items-center gap-3 rounded-lg p-3 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <HistoryIcon width={20} height={20} />
-              <span className="text-sm font-medium">Historique</span>
-            </button>
-            <button
-              onClick={() => { closeSheet(); clearActivePlanet(); clearAuth(); }}
-              className="flex items-center gap-3 rounded-lg p-3 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <span className="text-sm font-medium">Déconnexion</span>
-            </button>
           </nav>
         </BottomSheet>
       )}
