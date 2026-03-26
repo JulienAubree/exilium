@@ -82,4 +82,10 @@ UPDATE "mission_reports" SET result = jsonb_set(result, '{rounds}', (
 WHERE mission_type IN ('attack', 'pirate') AND result ? 'rounds' AND jsonb_typeof(result->'rounds') = 'array';--> statement-breakpoint
 
 -- Cleanup helper function
-DROP FUNCTION IF EXISTS _rename_jsonb_keys(jsonb);
+DROP FUNCTION IF EXISTS _rename_jsonb_keys(jsonb);--> statement-breakpoint
+
+-- Delete old ship/defense definitions replaced by renames
+DELETE FROM "ship_prerequisites" WHERE ship_id IN ('lightFighter', 'heavyFighter', 'battleship');--> statement-breakpoint
+DELETE FROM "ship_definitions" WHERE id IN ('lightFighter', 'heavyFighter', 'battleship');--> statement-breakpoint
+DELETE FROM "defense_prerequisites" WHERE defense_id = 'gaussCannon';--> statement-breakpoint
+DELETE FROM "defense_definitions" WHERE id = 'gaussCannon';
