@@ -2,9 +2,9 @@ import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, debrisFields } from '@ogame-clone/db';
 import { simulateCombat, totalCargoCapacity } from '@ogame-clone/game-engine';
-import type { CombatConfig, RoundResult } from '@ogame-clone/game-engine';
+import type { CombatConfig, ShipCategory, CombatInput, RoundResult } from '@ogame-clone/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, buildCombatStats, buildShipCosts, getCombatMultipliers, formatDuration } from '../fleet.types.js';
+import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers, formatDuration } from '../fleet.types.js';
 
 export class AttackHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -40,16 +40,27 @@ export class AttackHandler implements MissionHandler {
 
     const config = await ctx.gameConfigService.getFullConfig();
     const shipStatsMap = buildShipStatsMap(config);
-    const combatStatsMap = buildCombatStats(config);
+    const shipCombatConfigs = buildShipCombatConfigs(config);
     const shipCostsMap = buildShipCosts(config);
     const shipIdSet = new Set(Object.keys(config.ships));
     const defenseIdSet = new Set(Object.keys(config.defenses));
-    const debrisRatio = (config.universe['debrisRatio'] as number) ?? 0.3;
+
+    // Build CombatConfig from universe config
+    const categories: ShipCategory[] = [
+      { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
+      { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
+      { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
+      { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
+    ];
+
     const combatConfig: CombatConfig = {
-      maxRounds: Number(config.universe['combat_max_rounds']) || 6,
-      bounceThreshold: Number(config.universe['combat_bounce_threshold']) || 0.01,
-      rapidDestructionThreshold: Number(config.universe['combat_rapid_destruction_threshold']) || 0.3,
-      repairProbability: Number(config.universe['combat_defense_repair_probability']) || 0.7,
+      maxRounds: Number(config.universe['combat_max_rounds']) || 4,
+      debrisRatio: Number(config.universe['combat_debris_ratio']) || 0.3,
+      defenseRepairRate: Number(config.universe['combat_defense_repair_rate']) || 0.7,
+      pillageRatio: Number(config.universe['combat_pillage_ratio']) || 0.33,
+      minDamagePerHit: Number(config.universe['combat_min_damage_per_hit']) || 1,
+      researchBonusPerLevel: Number(config.universe['combat_research_bonus_per_level']) || 0.1,
+      categories,
     };
 
     const [targetPlanet] = await ctx.db
@@ -113,15 +124,26 @@ export class AttackHandler implements MissionHandler {
     let repairedDefenses: Record<string, number> = {};
     let roundCount = 0;
     let rounds: RoundResult[] = [];
+    let result: ReturnType<typeof simulateCombat> | undefined;
 
     if (!hasDefenders) {
       outcome = 'attacker';
     } else {
-      const result = simulateCombat(
-        ships, defenderCombined, attackerMultipliers, defenderMultipliers,
-        combatStatsMap, config.rapidFire,
-        shipIdSet, shipCostsMap, defenseIdSet, debrisRatio, combatConfig,
-      );
+      const combatInput: CombatInput = {
+        attackerFleet: ships,
+        defenderFleet,
+        defenderDefenses,
+        attackerMultipliers,
+        defenderMultipliers,
+        attackerTargetPriority: fleetEvent.targetPriority ?? 'light',
+        defenderTargetPriority: 'light',
+        combatConfig,
+        shipConfigs: shipCombatConfigs,
+        shipCosts: shipCostsMap,
+        shipIds: shipIdSet,
+        defenseIds: defenseIdSet,
+      };
+      result = simulateCombat(combatInput);
       outcome = result.outcome;
       attackerLosses = result.attackerLosses;
       defenderLosses = result.defenderLosses;
@@ -317,6 +339,9 @@ export class AttackHandler implements MissionHandler {
         repairedDefenses,
         debris,
         rounds,
+        // New combat stats
+        attackerStats: result?.attackerStats,
+        defenderStats: result?.defenderStats,
       };
       if (outcome === 'attacker') {
         reportResult.pillage = {
