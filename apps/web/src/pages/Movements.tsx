@@ -438,6 +438,16 @@ export default function Movements() {
                 style={{ width: `${fleetSlots.max > 0 ? Math.min(100, (fleetSlots.current / fleetSlots.max) * 100) : 0}%` }}
               />
             </div>
+
+            {/* Explainer */}
+            <p className="text-[11px] text-muted-foreground/50 leading-relaxed">
+              Chaque flotte en mission occupe un emplacement jusqu&apos;a son retour.
+              La <span className="text-muted-foreground/70 font-medium">Technologie Ordinateur</span> augmente
+              le nombre d&apos;emplacements disponibles (+1 par niveau).
+              {fleetSlots.current >= fleetSlots.max && (
+                <span className="text-amber-400/70"> Tous vos emplacements sont utilises — attendez le retour d&apos;une flotte ou ameliorez votre recherche.</span>
+              )}
+            </p>
           </div>
         </div>
       )}
