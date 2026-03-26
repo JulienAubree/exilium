@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { useOutletContext } from 'react-router';
+import { useNavigate, useOutletContext, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -57,6 +56,13 @@ export default function Market() {
   const [sellPriceHydrogene, setSellPriceHydrogene] = useState(0);
 
   const commissionPercent = Number(gameConfig?.universe?.market_commission_percent) || 5;
+
+  // Check if galacticMarket is built
+  const { data: buildings } = trpc.building.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+  const marketLevel = buildings?.find((b) => b.id === 'galacticMarket')?.currentLevel ?? 0;
 
   // Queries
   const { data: offersData, isFetching: offersLoading } = trpc.market.list.useQuery(
@@ -146,7 +152,20 @@ export default function Market() {
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Marche Galactique" />
 
-      {/* Tabs */}
+      {buildings && marketLevel < 1 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <svg className="h-12 w-12 mb-4 text-muted-foreground/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <p className="text-sm text-muted-foreground mb-2">
+            Avant de pouvoir acceder au marche, veuillez construire le <span className="text-foreground font-semibold">Marche Galactique</span>.
+          </p>
+          <Link to="/buildings" className="text-xs text-primary hover:underline">
+            Aller aux batiments
+          </Link>
+        </div>
+      ) : (
+      /* Tabs */
       <div className="glass-card overflow-hidden">
         <div className="flex border-b border-white/10">
           {([
@@ -431,6 +450,7 @@ export default function Market() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
