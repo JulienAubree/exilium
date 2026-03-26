@@ -262,7 +262,7 @@ export default function Fleet() {
   if (isLoading) return <CardGridSkeleton />;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-3 pb-4">
+    <div className="mx-auto max-w-2xl space-y-4 p-4 lg:space-y-6 lg:p-6">
       <Breadcrumb segments={[
         { label: 'Flotte', path: '/fleet' },
         { label: 'Envoyer une flotte', path: '/fleet/send' },
