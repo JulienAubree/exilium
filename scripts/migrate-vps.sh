@@ -49,8 +49,11 @@ echo "    Remote: $(git remote get-url origin)"
 
 # --- 4. Rename PostgreSQL database and user ---
 echo ""
+echo "==> Terminating active connections to '$OLD_DB_NAME'..."
+sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$OLD_DB_NAME' AND pid <> pg_backend_pid();" 2>/dev/null || true
+sleep 1
+
 echo "==> Renaming PostgreSQL database '$OLD_DB_NAME' → '$NEW_DB_NAME'..."
-# ALTER DATABASE requires no active connections (PM2 is already stopped)
 sudo -u postgres psql -c "ALTER DATABASE $OLD_DB_NAME RENAME TO $NEW_DB_NAME;"
 echo "    Database renamed."
 
