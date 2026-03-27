@@ -42,7 +42,7 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
   return (
     <>
       <div
-        className="sticky top-12 z-30 flex h-10 items-center justify-around border-b border-white/5 bg-card/80 backdrop-blur-md px-2 lg:hidden"
+        className="sticky top-12 z-30 flex h-11 cursor-pointer items-center justify-around border-b border-white/5 bg-card/80 backdrop-blur-md px-3 lg:hidden"
         onClick={() => setDetailOpen(!detailOpen)}
       >
         <ResourceCounter icon={<MineraiIcon size={14} className="text-minerai" />} value={resources.minerai} colorClass="text-minerai" />
@@ -74,7 +74,7 @@ function ResourceCounter({ icon, value, colorClass, suffix }: { icon: React.Reac
   return (
     <div className="flex items-center gap-1">
       {icon}
-      <span className={`text-xs font-medium tabular-nums ${colorClass}`}>
+      <span className={`text-sm font-medium tabular-nums ${colorClass}`}>
         {formatNumber(Math.floor(value))}{suffix}
       </span>
     </div>
