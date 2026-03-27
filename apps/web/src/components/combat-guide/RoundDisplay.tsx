@@ -1,6 +1,6 @@
 // apps/web/src/components/combat-guide/RoundDisplay.tsx
 import { useState, useEffect, useCallback } from 'react';
-import type { CombatResult, RoundResult } from '@ogame-clone/game-engine';
+import type { CombatResult } from '@ogame-clone/game-engine';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
 
