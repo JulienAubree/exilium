@@ -26,3 +26,5 @@ export * from './push-subscriptions.js';
 export * from './user-exilium.js';
 export * from './exilium-log.js';
 export * from './flagships.js';
+export * from './flagship-talents.js';
+export * from './flagship-cooldowns.js';

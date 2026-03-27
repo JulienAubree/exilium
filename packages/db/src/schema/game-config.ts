@@ -173,3 +173,29 @@ export const universeConfig = pgTable('universe_config', {
   key: varchar('key', { length: 64 }).primaryKey(),
   value: jsonb('value').notNull(),
 });
+
+// ── Talent Branch Definitions ──
+
+export const talentBranchDefinitions = pgTable('talent_branch_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  color: varchar('color', { length: 32 }).notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+// ── Talent Definitions ──
+
+export const talentDefinitions = pgTable('talent_definitions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  branchId: varchar('branch_id', { length: 64 }).notNull().references(() => talentBranchDefinitions.id, { onDelete: 'cascade' }),
+  tier: smallint('tier').notNull(),
+  position: varchar('position', { length: 16 }).notNull(), // 'left' | 'center' | 'right'
+  name: varchar('name', { length: 128 }).notNull(),
+  description: text('description').notNull().default(''),
+  maxRanks: smallint('max_ranks').notNull().default(1),
+  prerequisiteId: varchar('prerequisite_id', { length: 64 }).references(() => talentDefinitions.id, { onDelete: 'set null' }),
+  effectType: varchar('effect_type', { length: 32 }).notNull(), // 'modify_stat' | 'global_bonus' | 'planet_bonus' | 'timed_buff' | 'unlock'
+  effectParams: jsonb('effect_params').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
