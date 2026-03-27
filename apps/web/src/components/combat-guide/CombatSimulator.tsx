@@ -1,6 +1,6 @@
 // apps/web/src/components/combat-guide/CombatSimulator.tsx
 import { useState } from 'react';
-import { simulateCombat, type CombatResult } from '@ogame-clone/game-engine';
+import { simulateCombat, type CombatResult } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildCombatInput } from '@/lib/combat-helpers';
 import { FleetComposer } from './FleetComposer';

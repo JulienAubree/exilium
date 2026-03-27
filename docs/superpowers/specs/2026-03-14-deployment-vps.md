@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Déployer l'OGame clone sur un VPS bare metal (Node 22) accessible en HTTP sur l'IP directe. Premier déploiement en production.
+Déployer l'Exilium sur un VPS bare metal (Node 22) accessible en HTTP sur l'IP directe. Premier déploiement en production.
 
 ## Infra cible
 
@@ -22,8 +22,8 @@ Client → :80 → Caddy
                 └── /sse → reverse_proxy localhost:3000
 
 PM2 manage :
-  ├── ogame-api    → node apps/api/dist/index.js
-  └── ogame-worker → node apps/api/dist/workers/worker.js
+  ├── exilium-api    → node apps/api/dist/index.js
+  └── exilium-worker → node apps/api/dist/workers/worker.js
 
 Services natifs :
   ├── PostgreSQL :5432
@@ -40,7 +40,7 @@ Config PM2 à la racine du projet. CommonJS car PM2 ne supporte pas ESM.
 module.exports = {
   apps: [
     {
-      name: 'ogame-api',
+      name: 'exilium-api',
       script: 'apps/api/dist/index.js',
       cwd: __dirname,
       env: {
@@ -51,7 +51,7 @@ module.exports = {
       max_memory_restart: '512M',
     },
     {
-      name: 'ogame-worker',
+      name: 'exilium-worker',
       script: 'apps/api/dist/workers/worker.js',
       cwd: __dirname,
       env: {
@@ -73,7 +73,7 @@ Config Caddy pour IP directe (HTTP, pas de SSL) :
 
 ```caddyfile
 :80 {
-    root * /opt/ogame-clone/apps/web/dist
+    root * /opt/exilium/apps/web/dist
     file_server
 
     handle /trpc/* {
@@ -103,12 +103,12 @@ Script de setup initial à lancer une seule fois sur le VPS (en root ou sudo). I
 
 Actions :
 1. Installer PostgreSQL 16
-2. Créer la base `ogame` et l'utilisateur `ogame` avec mot de passe
+2. Créer la base `exilium` et l'utilisateur `exilium` avec mot de passe
 3. Installer Redis
 4. Installer Caddy
 5. Installer pnpm globalement
 6. Installer PM2 globalement (`npm install -g pm2`)
-7. Cloner le repo dans `/opt/ogame-clone`
+7. Cloner le repo dans `/opt/exilium`
 8. Créer le fichier `.env` à partir de `.env.example` (l'utilisateur remplit les valeurs)
 9. Copier le `Caddyfile` dans `/etc/caddy/Caddyfile` et reload Caddy
 
@@ -122,7 +122,7 @@ Script de déploiement à lancer à chaque update :
 #!/bin/bash
 set -e
 
-cd /opt/ogame-clone
+cd /opt/exilium
 
 echo "==> Pulling latest changes..."
 git pull origin main
@@ -154,7 +154,7 @@ Ajouter un commentaire pour les valeurs de production :
 
 ```
 # Database
-DATABASE_URL=postgresql://ogame:ogame@localhost:5432/ogame
+DATABASE_URL=postgresql://exilium:exilium@localhost:5432/exilium
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -178,7 +178,7 @@ S'assurer que `.env` et `ecosystem.config.cjs` ne sont pas ignorés inutilement.
 ## Étape Git : création du repo GitHub
 
 Avant le premier déploiement :
-1. Créer le repo sur GitHub : `gh repo create julienaubree/ogame-clone --private --source=. --push`
+1. Créer le repo sur GitHub : `gh repo create julienaubree/exilium --private --source=. --push`
 2. Le VPS clonera depuis ce remote
 
 ## Flux de déploiement
@@ -188,7 +188,7 @@ Avant le premier déploiement :
 1. Créer le repo GitHub et push
 2. SSH sur le VPS
 3. Lancer `setup-vps.sh` (installe tout, clone le repo)
-4. Éditer `/opt/ogame-clone/.env` avec les valeurs de prod (JWT_SECRET fort, mot de passe DB)
+4. Éditer `/opt/exilium/.env` avec les valeurs de prod (JWT_SECRET fort, mot de passe DB)
 5. Lancer `deploy.sh` (build, push schema, start PM2)
 6. Vérifier : `curl http://IP/health` → `{"status":"ok"}`
 7. `pm2 save` pour persister la config PM2 au reboot
@@ -197,7 +197,7 @@ Avant le premier déploiement :
 ### Déploiements suivants
 
 1. Push sur main depuis la machine locale
-2. `ssh user@vps 'cd /opt/ogame-clone && ./scripts/deploy.sh'`
+2. `ssh user@vps 'cd /opt/exilium && ./scripts/deploy.sh'`
 
 ## Points d'attention
 

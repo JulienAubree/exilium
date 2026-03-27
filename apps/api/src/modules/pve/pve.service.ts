@@ -1,8 +1,8 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
-import { pveMissions, planets, missionCenterState, fleetEvents, planetShips } from '@ogame-clone/db';
+import { pveMissions, planets, missionCenterState, fleetEvents, planetShips } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
-import type { Database } from '@ogame-clone/db';
-import { discoveryCooldown, depositSize, depositComposition, computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
+import type { Database } from '@exilium/db';
+import { discoveryCooldown, depositSize, depositComposition, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

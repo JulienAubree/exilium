@@ -163,7 +163,7 @@ Run: `cd packages/db && npm run build`
 
 - [ ] **Step 10: TypeScript check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
 Expected: no errors
 
 - [ ] **Step 11: Commit**
@@ -338,7 +338,7 @@ Run: `cd packages/game-engine && npm run build`
 
 - [ ] **Step 5: TypeScript check API + web**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: no errors (defaults maintain backward compat)
 
 - [ ] **Step 6: Commit**
@@ -463,7 +463,7 @@ Expected: all pass
 
 - [ ] **Step 4: Rebuild + TS check**
 
-Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 5: Commit**
 
@@ -579,7 +579,7 @@ Expected: all pass
 
 - [ ] **Step 7: Rebuild + TS check**
 
-Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 
 - [ ] **Step 8: Commit**
 
@@ -716,7 +716,7 @@ Expected: all pass
 
 - [ ] **Step 4: Rebuild + TS check**
 
-Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 5: Commit**
 
@@ -839,7 +839,7 @@ Run: `cd packages/game-engine && npx vitest run src/formulas/fleet.test.ts`
 
 - [ ] **Step 4: Rebuild + TS check**
 
-Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 5: Commit**
 
@@ -996,7 +996,7 @@ Expected: all pass
 
 - [ ] **Step 6: Rebuild + TS check**
 
-Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd packages/game-engine && npm run build && cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 
 - [ ] **Step 7: Commit**
 
@@ -1052,7 +1052,7 @@ function buildProductionConfig(config: GameConfig): ProductionConfig {
 }
 ```
 
-Add `import type { ProductionConfig } from '@ogame-clone/game-engine';` at the top.
+Add `import type { ProductionConfig } from '@exilium/game-engine';` at the top.
 
 - [ ] **Step 2: Pass ProductionConfig in resource.service.ts**
 
@@ -1088,7 +1088,7 @@ Import `buildProductionConfig` from the resource service, or duplicate the helpe
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 5: Commit**
 
@@ -1113,7 +1113,7 @@ git commit -m "feat(api): wire ProductionConfig from DB to resource calculations
 After getting config via `gameConfigService.getFullConfig()`, build `FleetConfig`:
 
 ```typescript
-import type { FleetConfig } from '@ogame-clone/game-engine';
+import type { FleetConfig } from '@exilium/game-engine';
 
 // Inside the service, build fleet config from universe config:
 const fleetConfig: FleetConfig = {
@@ -1134,7 +1134,7 @@ Pass `fleetConfig` to `distance(...)`, `travelTime(...)`, `fuelConsumption(...)`
 After getting config, build `CombatConfig`:
 
 ```typescript
-import type { CombatConfig } from '@ogame-clone/game-engine';
+import type { CombatConfig } from '@exilium/game-engine';
 
 const combatConfig: CombatConfig = {
   maxRounds: Number(config.universe.combat_max_rounds) || 6,
@@ -1157,7 +1157,7 @@ const visibility = calculateSpyReport(probeCount, attackerTech, defenderTech, th
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 5: Commit**
 
@@ -1235,7 +1235,7 @@ const totalQuantity = depositSize(centerLevel, varianceMultiplier, { base: depos
 
 - [ ] **Step 6: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 
 - [ ] **Step 7: Commit**
 
@@ -1263,7 +1263,7 @@ git commit -m "feat(api): wire phaseMap, timeDivisors, pointsDivisor, pve config
 Create `apps/web/src/lib/production-config.ts`:
 
 ```typescript
-import type { ProductionConfig } from '@ogame-clone/game-engine';
+import type { ProductionConfig } from '@exilium/game-engine';
 
 export function buildProductionConfig(gameConfig: { production: Record<string, any>; universe: Record<string, unknown> }): ProductionConfig {
   const mc = gameConfig.production['mineraiMine'];
@@ -1331,7 +1331,7 @@ If it calls `computeSlagRate` or `miningDuration`, pass config.
 
 - [ ] **Step 6: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 
 - [ ] **Step 7: Commit**
 
@@ -1360,7 +1360,7 @@ Expected: all pass
 
 Run:
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
+cd /Users/julienaubree/_projet/exilium
 npx tsc --noEmit -p apps/api/tsconfig.json
 npx tsc --noEmit -p apps/web/tsconfig.json
 npx tsc --noEmit -p apps/admin/tsconfig.json

@@ -1,6 +1,6 @@
 import { ilike, ne, and, or, eq, count } from 'drizzle-orm';
-import { users, planets, rankings, allianceMembers, alliances, friendships } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, planets, rankings, allianceMembers, alliances, friendships } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { TRPCError } from '@trpc/server';

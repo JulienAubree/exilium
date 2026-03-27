@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().default('postgresql://ogame:ogame@localhost:5432/ogame'),
+  DATABASE_URL: z.string().default('postgresql://exilium:exilium@localhost:5432/exilium'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_SECRET: z.string().min(8).default('change-me-in-production'),
   JWT_EXPIRES_IN: z.string().default('2h'),

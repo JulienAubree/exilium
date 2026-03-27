@@ -51,7 +51,7 @@ export * from './game-events.js';
 
 - [ ] **Step 3: Push schema to DB**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db db:push`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db db:push`
 Expected: table `game_events` created with indexes.
 
 - [ ] **Step 4: Commit**
@@ -75,8 +75,8 @@ Note: The project uses postgres-js driver where `db.update().set().where()` does
 ```typescript
 // apps/api/src/modules/game-event/game-event.service.ts
 import { eq, and, desc, lt, sql, inArray } from 'drizzle-orm';
-import { gameEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { gameEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export type GameEventType = 'building-done' | 'research-done' | 'shipyard-done' | 'fleet-arrived' | 'fleet-returned';
 
@@ -367,7 +367,7 @@ Note: `processReturn` already fetches the origin planet further down (for cargo 
 
 - [ ] **Step 3: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm build`
 Expected: successful build with no TS errors.
 
 - [ ] **Step 4: Commit**
@@ -389,14 +389,14 @@ git commit -m "feat: enrich fleet processArrival/processReturn return values for
 - Modify: `apps/api/src/workers/fleet-return.worker.ts`
 
 Each worker needs:
-1. Import `gameEvents` (and `planets` where needed) from `@ogame-clone/db`
+1. Import `gameEvents` (and `planets` where needed) from `@exilium/db`
 2. Insert a `game_events` row alongside the existing `publishNotification`
 
 - [ ] **Step 1: Modify building-completion.worker.ts**
 
 Add import at top:
 ```typescript
-import { gameEvents, planets } from '@ogame-clone/db';
+import { gameEvents, planets } from '@exilium/db';
 ```
 
 After the `publishNotification` call (inside the `if (entry)` block, after line 39), add:
@@ -420,7 +420,7 @@ After the `publishNotification` call (inside the `if (entry)` block, after line 
 
 Add import at top:
 ```typescript
-import { gameEvents, planets } from '@ogame-clone/db';
+import { gameEvents, planets } from '@exilium/db';
 ```
 
 The research worker currently only selects `userId` from `buildQueue`. Also select `planetId`:
@@ -452,7 +452,7 @@ After the `publishNotification` call (inside the `if (entry)` block), add:
 
 Add import at top:
 ```typescript
-import { gameEvents, planets } from '@ogame-clone/db';
+import { gameEvents, planets } from '@exilium/db';
 ```
 
 After the `publishNotification` call (inside the `if (entry && result.completed)` block), add:
@@ -479,7 +479,7 @@ This worker needs significant changes: add Redis, publishNotification, and game 
 // apps/api/src/workers/fleet-arrival.worker.ts
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
-import { createDb, gameEvents } from '@ogame-clone/db';
+import { createDb, gameEvents } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
@@ -547,7 +547,7 @@ Same pattern. Replace the entire file:
 // apps/api/src/workers/fleet-return.worker.ts
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
-import { createDb, gameEvents } from '@ogame-clone/db';
+import { createDb, gameEvents } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
@@ -628,7 +628,7 @@ Uses `createGameEventService` to avoid duplicating cleanup logic.
 
 ```typescript
 // apps/api/src/cron/event-cleanup.ts
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 import { createGameEventService } from '../modules/game-event/game-event.service.js';
 
 export async function eventCleanup(db: Database) {
@@ -1344,7 +1344,7 @@ git commit -m "feat: add History page to sidebar and mobile navigation"
 
 - [ ] **Step 1: Full build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm build`
 Expected: successful build across all packages.
 
 - [ ] **Step 2: Fix any type errors**

@@ -55,7 +55,7 @@ In `packages/game-engine/src/formulas/combat.test.ts`, add a new test inside the
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/packages/game-engine && npx vitest run src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium/packages/game-engine && npx vitest run src/formulas/combat.test.ts`
 Expected: FAIL — `attackerShips` is undefined
 
 - [ ] **Step 3: Enrich RoundResult interface and simulateCombat**
@@ -102,13 +102,13 @@ function countSurvivingByType(units: CombatUnit[]): Record<string, number> {
 
 - [ ] **Step 4: Run tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/packages/game-engine && npx vitest run src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium/packages/game-engine && npx vitest run src/formulas/combat.test.ts`
 Expected: All tests pass (15 existing + 1 new = 16)
 
 - [ ] **Step 5: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add packages/game-engine/src/formulas/combat.ts packages/game-engine/src/formulas/combat.test.ts && git commit -m "feat: enrich RoundResult with per-type unit counts
+cd /Users/julienaubree/_projet/exilium && git add packages/game-engine/src/formulas/combat.ts packages/game-engine/src/formulas/combat.test.ts && git commit -m "feat: enrich RoundResult with per-type unit counts
 
 Each round now includes attackerShips and defenderShips maps showing
 surviving unit counts by type, enabling round-by-round combat reports.
@@ -131,11 +131,11 @@ Before the `if (!hasDefenders)` block (before line 116), add the import and vari
 
 1. First, add `RoundResult` to the existing type import on line 5. Change:
 ```ts
-import type { CombatConfig } from '@ogame-clone/game-engine';
+import type { CombatConfig } from '@exilium/game-engine';
 ```
 to:
 ```ts
-import type { CombatConfig, RoundResult } from '@ogame-clone/game-engine';
+import type { CombatConfig, RoundResult } from '@exilium/game-engine';
 ```
 
 2. Then before line 116, add:
@@ -245,13 +245,13 @@ with:
 
 - [ ] **Step 5: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 6: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add apps/api/src/modules/fleet/handlers/attack.handler.ts && git commit -m "feat: enrich attack report with full combat data + defender report
+cd /Users/julienaubree/_projet/exilium && git add apps/api/src/modules/fleet/handlers/attack.handler.ts && git commit -m "feat: enrich attack report with full combat data + defender report
 
 Add attackerFleet, attackerSurvivors, defenderSurvivors, rounds to report
 result. Create a structured report for the defender with inverted perspective.
@@ -566,13 +566,13 @@ The `getUnitName`, `getShipName`, `getDefenseName`, `RESOURCE_COLORS`, and `cn` 
 
 - [ ] **Step 3: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 4: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add apps/web/src/pages/Reports.tsx && git commit -m "feat: enriched combat report UI with rounds and survivors
+cd /Users/julienaubree/_projet/exilium && git add apps/web/src/pages/Reports.tsx && git commit -m "feat: enriched combat report UI with rounds and survivors
 
 Add attacker fleet in initial forces, collapsible round-by-round detail,
 survivors section. Guard empty fleet for defender reports.
@@ -588,15 +588,15 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>" && git push
 
 - [ ] **Step 1: TS check all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 2: Run game-engine tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/packages/game-engine && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium/packages/game-engine && npx vitest run`
 Expected: All tests pass (including new combat test)
 
 - [ ] **Step 3: Run API tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/apps/api && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium/apps/api && npx vitest run`
 Expected: All tests pass

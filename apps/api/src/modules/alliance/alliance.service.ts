@@ -1,7 +1,7 @@
 import { eq, and, ilike, or, sql, asc, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { alliances, allianceMembers, allianceInvitations, allianceApplications, users, rankings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { alliances, allianceMembers, allianceInvitations, allianceApplications, users, rankings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { createMessageService } from '../message/message.service.js';
 
 type MessageService = ReturnType<typeof createMessageService>;

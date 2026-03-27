@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import type Redis from 'ioredis';
-import type { Database } from '@ogame-clone/db';
-import { gameEvents } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
+import { gameEvents } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 import type { BuildCompletionResult } from './completion.types.js';

@@ -18,7 +18,7 @@
 |------|---------------|
 | `packages/game-engine/src/constants/buildings.ts` | Definitions des 10 batiments : id, nom, couts base, temps base, prerequis |
 | `packages/game-engine/src/formulas/building-cost.ts` | `buildingCost(buildingId, level)` + `buildingTime(buildingId, level, roboticsLevel)` |
-| `packages/game-engine/src/formulas/building-cost.test.ts` | Tests avec valeurs wiki OGame |
+| `packages/game-engine/src/formulas/building-cost.test.ts` | Tests avec valeurs wiki Exilium |
 | `packages/game-engine/src/formulas/resources.ts` | `calculateResources(planet, now)` — lazy calc complet (production + factor + storage cap) |
 | `packages/game-engine/src/formulas/resources.test.ts` | Tests lazy calc |
 
@@ -300,7 +300,7 @@ describe('buildingTime', () => {
 - [ ] **Step 2: Lancer les tests pour verifier qu'ils echouent**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: FAIL — `buildingCost` and `buildingTime` not found
 
@@ -346,7 +346,7 @@ export function buildingTime(buildingId: BuildingId, level: number, roboticsLeve
 - [ ] **Step 4: Lancer les tests**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: ALL PASS
 
@@ -465,7 +465,7 @@ describe('calculateResources', () => {
 - [ ] **Step 2: Lancer les tests pour verifier qu'ils echouent**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 
 - [ ] **Step 3: Implementer**
@@ -574,7 +574,7 @@ export * from './formulas/resources.js';
 - [ ] **Step 5: Lancer les tests**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: ALL PASS
 
@@ -647,13 +647,13 @@ git commit -m "feat(db): add build_queue schema"
 // apps/api/src/modules/resource/resource.service.ts
 import { eq, and, gte, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateResources,
   calculateProductionRates,
   type ResourceCost,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 export function createResourceService(db: Database) {
   return {
@@ -847,7 +847,7 @@ import { createPlanetService } from '../modules/planet/planet.service.js';
 import { createPlanetRouter } from '../modules/planet/planet.router.js';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createResourceRouter } from '../modules/resource/resource.router.js';
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 
 export function buildAppRouter(db: Database) {
   const authService = createAuthService(db);
@@ -894,15 +894,15 @@ git commit -m "feat(api): add resource router with production rates endpoint"
 // apps/api/src/modules/building/building.service.ts
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, buildQueue } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, buildQueue } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   BUILDINGS,
   buildingCost,
   buildingTime,
   calculateProductionRates,
   type BuildingId,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 
 const BUILDING_LEVEL_COLUMNS: Record<BuildingId, keyof typeof planets.$inferSelect> = {
@@ -1182,7 +1182,7 @@ git commit -m "feat(api): add building service with upgrade, cancel, and complet
 import { z } from 'zod';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createBuildingService } from './building.service.js';
-import type { BuildingId } from '@ogame-clone/game-engine';
+import type { BuildingId } from '@exilium/game-engine';
 
 const buildingIds = [
   'metalMine', 'crystalMine', 'deutSynth', 'solarPlant',
@@ -1231,7 +1231,7 @@ import { createResourceService } from '../modules/resource/resource.service.js';
 import { createResourceRouter } from '../modules/resource/resource.router.js';
 import { createBuildingService } from '../modules/building/building.service.js';
 import { createBuildingRouter } from '../modules/building/building.router.js';
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 
 export function buildAppRouter(db: Database) {
   const authService = createAuthService(db);
@@ -1278,7 +1278,7 @@ git commit -m "feat(api): add building router and wire into app router"
 - [ ] **Step 1: Installer bullmq**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api add bullmq
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api add bullmq
 ```
 
 - [ ] **Step 2: Creer le fichier de setup des queues**
@@ -1366,7 +1366,7 @@ git commit -m "feat(api): schedule BullMQ delayed job on building upgrade"
 ```typescript
 // apps/api/src/workers/building-completion.worker.ts
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';
 import { buildingCompletionQueue } from '../queues/queue.js';
@@ -1407,7 +1407,7 @@ export function startBuildingCompletionWorker(db: ReturnType<typeof createDb>) {
 
 ```typescript
 // apps/api/src/workers/worker.ts
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { env } from '../config/env.js';
 import { startBuildingCompletionWorker } from './building-completion.worker.js';
 
@@ -1453,8 +1453,8 @@ git commit -m "feat(api): add building completion worker and worker entrypoint"
 ```typescript
 // apps/api/src/cron/event-catchup.ts
 import { lte, eq, and } from 'drizzle-orm';
-import { buildQueue } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { buildQueue } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { buildingCompletionQueue } from '../queues/queue.js';
 
 /**
@@ -1496,9 +1496,9 @@ export async function eventCatchup(db: Database) {
 ```typescript
 // apps/api/src/cron/resource-tick.ts
 import { sql } from 'drizzle-orm';
-import { planets } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { calculateResources } from '@ogame-clone/game-engine';
+import { planets } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { calculateResources } from '@exilium/game-engine';
 
 /**
  * Materializes resources for all planets.
@@ -1549,7 +1549,7 @@ export async function resourceTick(db: Database) {
 
 ```typescript
 // apps/api/src/workers/worker.ts — version complete
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { env } from '../config/env.js';
 import { startBuildingCompletionWorker } from './building-completion.worker.js';
 import { eventCatchup } from '../cron/event-catchup.js';
@@ -2205,13 +2205,13 @@ git commit -m "feat(web): add Buildings page with upgrade/cancel and live timer"
 - [ ] **Step 1: Generer la migration**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit generate
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit generate
 ```
 
 - [ ] **Step 2: Appliquer la migration (si DB disponible)**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit migrate
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit migrate
 ```
 
 - [ ] **Step 3: Commit la migration**
@@ -2228,21 +2228,21 @@ git commit -m "chore(db): add migration for build_queue table"
 - [ ] **Step 1: Turbo typecheck**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck
+cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck
 ```
 Expected: PASS
 
 - [ ] **Step 2: Turbo lint**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint
+cd /Users/julienaubree/_projet/exilium && pnpm turbo lint
 ```
 Expected: PASS (fix any issues)
 
 - [ ] **Step 3: Turbo test**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test
+cd /Users/julienaubree/_projet/exilium && pnpm turbo test
 ```
 Expected: ALL PASS — production tests (21) + building-cost tests + resources tests
 
@@ -2261,7 +2261,7 @@ git commit -m "fix: resolve typecheck and lint issues from Phase 2"
 2. `pnpm turbo test` — tous les tests passent (production + building-cost + resources)
 3. `pnpm turbo lint` — pas d'erreur lint
 4. API repond a `trpc.resource.production` et `trpc.building.list/upgrade/cancel`
-5. Worker process demarre sans erreur (`pnpm --filter @ogame-clone/api worker`)
+5. Worker process demarre sans erreur (`pnpm --filter @exilium/api worker`)
 6. Page Ressources affiche compteurs temps reel (interpoles 1Hz)
 7. Page Batiments affiche niveaux, couts, bouton upgrade, timer construction
 8. TopBar affiche compteurs live metal/cristal/deut/energie

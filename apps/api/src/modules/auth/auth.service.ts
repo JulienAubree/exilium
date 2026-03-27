@@ -3,8 +3,8 @@ import { hash, verify } from 'argon2';
 import { SignJWT, jwtVerify } from 'jose';
 import { randomBytes, createHash } from 'crypto';
 import { TRPCError } from '@trpc/server';
-import { users, refreshTokens } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, refreshTokens } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { env } from '../../config/env.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);

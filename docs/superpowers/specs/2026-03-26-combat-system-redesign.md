@@ -7,7 +7,7 @@
 
 ## 1. Objectif
 
-Remplacer le système de combat OGame classique (rapid fire probabiliste, ciblage aléatoire, armor-PV) par un système original reposant sur trois piliers :
+Remplacer le système de combat Exilium classique (rapid fire probabiliste, ciblage aléatoire, armor-PV) par un système original reposant sur trois piliers :
 
 - **Les boucliers absorbent les premiers dégâts**
 - **Le blindage réduit chaque impact atteignant la coque**

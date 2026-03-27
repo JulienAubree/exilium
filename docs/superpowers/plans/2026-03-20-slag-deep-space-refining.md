@@ -42,13 +42,13 @@ maxLevel: smallint('max_level'),
 
 - [ ] **Step 3: Generate Drizzle migration**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit generate`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit generate`
 
 Expected: A new migration file is created in `packages/db/drizzle/`
 
 - [ ] **Step 4: Run migration**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit push`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit push`
 
 Expected: Migration applied successfully
 
@@ -90,7 +90,7 @@ In `packages/db/src/seed-game-config.ts`, add to the `UNIVERSE_CONFIG` array (af
 
 - [ ] **Step 3: Run seed**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db seed`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db seed`
 
 Expected: Seed completes with research and universe config counts incremented
 
@@ -163,7 +163,7 @@ deepSpaceRefining: {
 
 - [ ] **Step 4: Verify TypeScript compiles**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine tsc --noEmit`
 
 Expected: No errors
 
@@ -295,7 +295,7 @@ describe('computeMiningExtraction', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine vitest run src/formulas/pve.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine vitest run src/formulas/pve.test.ts`
 
 Expected: FAIL — `computeSlagRate` and `computeMiningExtraction` are not exported
 
@@ -352,11 +352,11 @@ export function computeMiningExtraction(params: {
 
 Check `packages/game-engine/src/index.ts` — it re-exports from `./formulas/pve.js` with `export *`, so the new exports should be automatic. Verify:
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine tsc --noEmit`
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine vitest run src/formulas/pve.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine vitest run src/formulas/pve.test.ts`
 
 Expected: All tests PASS
 
@@ -397,7 +397,7 @@ research[r.id] = {
 
 - [ ] **Step 3: Verify TypeScript compiles**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api tsc --noEmit`
 
 Expected: No errors
 
@@ -425,7 +425,7 @@ if (def.maxLevel != null && nextLevel > def.maxLevel) {
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api tsc --noEmit`
 
 Expected: No errors
 
@@ -443,10 +443,10 @@ git commit -m "feat(api): enforce maxLevel on research"
 
 - [ ] **Step 1: Update imports**
 
-In `mine.handler.ts`, update the import from `@ogame-clone/game-engine`:
+In `mine.handler.ts`, update the import from `@exilium/game-engine`:
 
 ```typescript
-import { prospectionDuration, miningDuration, totalCargoCapacity, resolveBonus, computeSlagRate, computeMiningExtraction } from '@ogame-clone/game-engine';
+import { prospectionDuration, miningDuration, totalCargoCapacity, resolveBonus, computeSlagRate, computeMiningExtraction } from '@exilium/game-engine';
 ```
 
 Remove `totalExtracted` from imports (no longer used directly).
@@ -523,7 +523,7 @@ if (ctx.messageService) {
 
 - [ ] **Step 4: Verify TypeScript compiles**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api tsc --noEmit`
 
 Expected: No errors
 
@@ -572,11 +572,11 @@ In `apps/web/src/pages/Fleet.tsx`, find where `FleetSummaryBar` is rendered. Whe
 - Compute `slagRate = baseSlagRate * 0.85^refiningLevel`
 - Pass `effectiveCargo={Math.floor(cargoCapacity * (1 - slagRate))}` to `FleetSummaryBar`
 
-This requires importing `computeSlagRate` from `@ogame-clone/game-engine`.
+This requires importing `computeSlagRate` from `@exilium/game-engine`.
 
 - [ ] **Step 3: Verify it builds**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter web build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter web build`
 
 Expected: Build succeeds
 
@@ -624,7 +624,7 @@ In `ResearchDetailContent.tsx`, add a custom section after the "Effet en jeu" bl
 
 - [ ] **Step 2: Verify it builds**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter web build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter web build`
 
 Expected: Build succeeds
 
@@ -639,13 +639,13 @@ git commit -m "feat(web): show slag rates in deepSpaceRefining research card"
 
 - [ ] **Step 1: Run all tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm test`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm test`
 
 Expected: All tests pass
 
 - [ ] **Step 2: Run full TypeScript check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm tsc --noEmit`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm tsc --noEmit`
 
 Expected: No errors
 

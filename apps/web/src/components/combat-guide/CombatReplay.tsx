@@ -1,6 +1,6 @@
 // apps/web/src/components/combat-guide/CombatReplay.tsx
 import { useState, useMemo } from 'react';
-import { simulateCombat } from '@ogame-clone/game-engine';
+import { simulateCombat } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildCombatInput } from '@/lib/combat-helpers';
 import { RoundDisplay } from './RoundDisplay';

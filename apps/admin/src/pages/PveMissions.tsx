@@ -5,7 +5,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Plus, Pencil, Trash2, Skull } from 'lucide-react';
-import { computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
+import { computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 
 const TIER_COLORS: Record<string, string> = {
   easy: 'text-emerald-400 bg-emerald-900/20',

@@ -71,7 +71,7 @@ import {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -20`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -20`
 Expected: FAIL — `solarSatelliteEnergy` is not exported
 
 - [ ] **Step 3: Implement `solarSatelliteEnergy`**
@@ -90,7 +90,7 @@ export function solarSatelliteEnergy(maxTemp: number): number {
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -20`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -20`
 Expected: ALL PASS
 
 - [ ] **Step 5: Commit**
@@ -198,7 +198,7 @@ Add `solarSatellite: 5` to all 7 rapid fire entries (consistent with seed data):
 
 - [ ] **Step 6: Verify TypeScript compiles**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -20`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -20`
 Expected: ALL PASS (existing tests still work, TS type-checks that all ShipId entries are present in records)
 
 - [ ] **Step 7: Commit**
@@ -311,7 +311,7 @@ Also update `basePlanet` in the `calculateResources` describe block to include `
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -30`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -30`
 Expected: FAIL — `solarSatelliteCount` is not a known property of `PlanetLevels`
 
 - [ ] **Step 3: Update `PlanetLevels` and `calculateProductionRates`**
@@ -369,7 +369,7 @@ With:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -30`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -30`
 Expected: ALL PASS
 
 - [ ] **Step 5: Commit**
@@ -442,7 +442,7 @@ Add a new test in the `simulateCombat` describe block:
 
 - [ ] **Step 3: Run tests**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -20`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -20`
 Expected: ALL PASS
 
 - [ ] **Step 4: Commit**
@@ -485,12 +485,12 @@ Then add after the `armor` line in `shipDefinitions` table:
 
 - [ ] **Step 3: Generate Drizzle migration**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit generate 2>&1 | tail -10`
+Run: `cd exilium && pnpm --filter @exilium/db drizzle-kit generate 2>&1 | tail -10`
 Expected: Migration file generated
 
 - [ ] **Step 4: Apply migration**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit push 2>&1 | tail -10`
+Run: `cd exilium && pnpm --filter @exilium/db drizzle-kit push 2>&1 | tail -10`
 Expected: Migration applied successfully
 
 - [ ] **Step 5: Commit**
@@ -554,7 +554,7 @@ In `packages/db/src/seed-game-config.ts`, add to the `RAPID_FIRE_DATA` array:
 
 - [ ] **Step 3: Run seed**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/db seed 2>&1 | tail -15`
+Run: `cd exilium && pnpm --filter @exilium/db seed 2>&1 | tail -15`
 Expected: Seed complete with no errors
 
 - [ ] **Step 4: Commit**
@@ -575,10 +575,10 @@ git commit -m "feat: add solar satellite to seed data with rapid fire entries"
 
 - [ ] **Step 1: Add `planetShips` import**
 
-In `apps/api/src/modules/resource/resource.service.ts`, update the import from `@ogame-clone/db`:
+In `apps/api/src/modules/resource/resource.service.ts`, update the import from `@exilium/db`:
 
 ```ts
-import { planets, planetTypes, planetBuildings, planetShips } from '@ogame-clone/db';
+import { planets, planetTypes, planetBuildings, planetShips } from '@exilium/db';
 ```
 
 - [ ] **Step 2: Create `buildPlanetLevels` helper**
@@ -725,7 +725,7 @@ With:
 
 - [ ] **Step 6: Verify build**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/api build 2>&1 | tail -10`
+Run: `cd exilium && pnpm --filter @exilium/api build 2>&1 | tail -10`
 Expected: Build succeeds
 
 - [ ] **Step 7: Commit**
@@ -747,7 +747,7 @@ git commit -m "feat: include solar satellite count in resource production calcul
 In `apps/api/src/modules/resource/resource.router.ts`, import `planetShips`:
 
 ```ts
-import { planetTypes, planetShips } from '@ogame-clone/db';
+import { planetTypes, planetShips } from '@exilium/db';
 ```
 
 Add a query for satellite count and include it in the response. After `const buildingLevels = ...` (line 34), add:
@@ -1035,12 +1035,12 @@ git commit -m "feat: show energy formula on satellite detail page, hide movement
 
 - [ ] **Step 1: Run all game-engine tests**
 
-Run: `cd ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --reporter verbose 2>&1 | tail -30`
+Run: `cd exilium && pnpm --filter @exilium/game-engine test -- --reporter verbose 2>&1 | tail -30`
 Expected: ALL PASS
 
 - [ ] **Step 2: Build all packages**
 
-Run: `cd ogame-clone && pnpm build 2>&1 | tail -20`
+Run: `cd exilium && pnpm build 2>&1 | tail -20`
 Expected: Build succeeds
 
 - [ ] **Step 3: Final commit (if any remaining changes)**

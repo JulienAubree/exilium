@@ -16,7 +16,7 @@ import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
 import { TargetContactsDropdown } from '@/components/fleet/TargetContactsDropdown';
 import { getCargoCapacity, type Mission } from '@/config/mission-config';
 import { getShipName } from '@/lib/entity-names';
-import { computeSlagRate, miningDuration, resolveBonus, computeFleetFP } from '@ogame-clone/game-engine';
+import { computeSlagRate, miningDuration, resolveBonus, computeFleetFP } from '@exilium/game-engine';
 import { cn } from '@/lib/utils';
 
 export default function Fleet() {

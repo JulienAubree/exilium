@@ -1,6 +1,6 @@
 // apps/web/src/components/combat-guide/FleetComposer.tsx
 import { useState } from 'react';
-import { computeFleetFP, type FPConfig } from '@ogame-clone/game-engine';
+import { computeFleetFP, type FPConfig } from '@exilium/game-engine';
 import { buildShipCombatConfigs } from '@/lib/combat-helpers';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';

@@ -1,7 +1,7 @@
 exilium-game.com, www.exilium-game.com {
 	@game_assets path /assets/buildings/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/planets/*
 	handle @game_assets {
-		root * /opt/ogame-clone/uploads
+		root * /opt/exilium/uploads
 		file_server
 	}
 
@@ -20,7 +20,7 @@ exilium-game.com, www.exilium-game.com {
 	}
 
 	handle {
-		root * /opt/ogame-clone/apps/web/dist
+		root * /opt/exilium/apps/web/dist
 		try_files {path} /index.html
 		file_server
 	}
@@ -37,12 +37,12 @@ admin.exilium-game.com {
 
 	@game_assets path /assets/buildings/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/planets/*
 	handle @game_assets {
-		root * /opt/ogame-clone/uploads
+		root * /opt/exilium/uploads
 		file_server
 	}
 
 	handle {
-		root * /opt/ogame-clone/apps/admin/dist
+		root * /opt/exilium/apps/admin/dist
 		try_files {path} /index.html
 		file_server
 	}

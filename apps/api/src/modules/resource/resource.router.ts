@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { protectedProcedure, router } from '../../trpc/router.js';
-import { planetTypes, planetShips } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planetTypes, planetShips } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { createResourceService } from './resource.service.js';
 import type { createPlanetService } from '../planet/planet.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

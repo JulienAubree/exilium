@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
-import { userResearch } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { resolveBonus } from '@ogame-clone/game-engine';
-import type { BonusDefinition, CombatMultipliers, ShipStats, ShipCombatConfig } from '@ogame-clone/game-engine';
+import { userResearch } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { resolveBonus } from '@exilium/game-engine';
+import type { BonusDefinition, CombatMultipliers, ShipStats, ShipCombatConfig } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

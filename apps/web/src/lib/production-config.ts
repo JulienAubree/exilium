@@ -1,4 +1,4 @@
-import type { ProductionConfig } from '@ogame-clone/game-engine';
+import type { ProductionConfig } from '@exilium/game-engine';
 
 export function buildProductionConfig(gameConfig: { production: Record<string, any>; universe: Record<string, unknown> }): ProductionConfig {
   const mc = gameConfig.production['mineraiMine'];

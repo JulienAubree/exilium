@@ -35,7 +35,7 @@ export const fleetQueue = new Queue('fleet', { connection });
 
 - [ ] **Step 2: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: PASS (le nouveau fichier n'est pas encore importe)
 
 - [ ] **Step 3: Commit**
@@ -101,7 +101,7 @@ export type FleetCompletionResult = {
 
 - [ ] **Step 2: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -205,7 +205,7 @@ Ajouter `import type { BuildCompletionResult } from '../../workers/completion.ty
 
 - [ ] **Step 4: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: FAIL possible car `app-router.ts` passe encore `buildingCompletionQueue` — on corrigera a la Task 8.
 
 - [ ] **Step 5: Commit**
@@ -297,7 +297,7 @@ async completeResearch(buildQueueId: string): Promise<BuildCompletionResult> {
 },
 ```
 
-Ajouter `import type { BuildCompletionResult } from '../../workers/completion.types.js';` et `import { planets } from '@ogame-clone/db';` si pas deja importe.
+Ajouter `import type { BuildCompletionResult } from '../../workers/completion.types.js';` et `import { planets } from '@exilium/db';` si pas deja importe.
 
 - [ ] **Step 4: Commit**
 
@@ -546,8 +546,8 @@ git commit -m "refactor: fleetService uses single fleetQueue, returns FleetCompl
 ```typescript
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
-import type { Database } from '@ogame-clone/db';
-import { gameEvents } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
+import { gameEvents } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 import type { BuildCompletionResult } from './completion.types.js';
@@ -662,8 +662,8 @@ export function startBuildCompletionWorker(db: Database, redis: Redis, services:
 ```typescript
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
-import type { Database } from '@ogame-clone/db';
-import { gameEvents } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
+import { gameEvents } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 import type { FleetCompletionResult } from './completion.types.js';
@@ -829,7 +829,7 @@ Note : `createFleetService` perd un parametre (2 queues -> 1 queue), donc sa sig
 
 ```typescript
 import Redis from 'ioredis';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { env } from '../config/env.js';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';
@@ -927,7 +927,7 @@ process.on('SIGTERM', () => {
 
 - [ ] **Step 3: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: PASS
 
 - [ ] **Step 4: Commit**
@@ -948,8 +948,8 @@ git commit -m "refactor: wire unified queues into worker.ts and app-router.ts"
 
 ```typescript
 import { lte, eq, and } from 'drizzle-orm';
-import { buildQueue, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { buildQueue, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { buildCompletionQueue, fleetQueue } from '../queues/queues.js';
 
 const buildJobName: Record<string, string> = {
@@ -1014,7 +1014,7 @@ export async function eventCatchup(db: Database) {
 
 - [ ] **Step 2: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -1056,7 +1056,7 @@ rm apps/api/src/workers/fleet-return.worker.ts
 
 - [ ] **Step 3: Verifier que le build compile**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter api build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter api build`
 Expected: PASS
 
 - [ ] **Step 4: Commit**
@@ -1075,7 +1075,7 @@ git commit -m "chore: remove old queue and worker files (replaced by unified ver
 - [ ] **Step 1: Lancer l'API et le worker en local**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
+cd /Users/julienaubree/_projet/exilium
 pnpm --filter api dev
 ```
 

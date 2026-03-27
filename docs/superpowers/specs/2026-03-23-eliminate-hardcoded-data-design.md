@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Supprimer toutes les donnees hardcodees du projet ogame-clone. Tout doit venir de la base de donnees : labels, textes informatifs, constantes de formules, IDs d'entites dans la logique metier. Le jeu doit etre entierement configurable via l'admin panel sans toucher au code.
+Supprimer toutes les donnees hardcodees du projet exilium. Tout doit venir de la base de donnees : labels, textes informatifs, constantes de formules, IDs d'entites dans la logique metier. Le jeu doit etre entierement configurable via l'admin panel sans toucher au code.
 
 ## Principes
 

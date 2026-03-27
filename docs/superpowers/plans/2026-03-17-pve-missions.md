@@ -383,13 +383,13 @@ pveMissionId: uuid('pve_mission_id').references(() => pveMissions.id, { onDelete
 - [ ] **Step 5: Generate and run migration**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit generate
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit generate
 ```
 
 Review the generated migration. Ensure the `ALTER TYPE fleet_mission ADD VALUE` statements are present and will work (they cannot be inside a transaction). If Drizzle wraps them in a transaction, the migration SQL must be manually adjusted.
 
 ```bash
-pnpm --filter @ogame-clone/db drizzle-kit migrate
+pnpm --filter @exilium/db drizzle-kit migrate
 ```
 
 - [ ] **Step 6: Commit**
@@ -626,7 +626,7 @@ describe('accumulationCap', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run pve.test
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run pve.test
 ```
 
 Expected: FAIL — module not found.
@@ -688,7 +688,7 @@ export function accumulationCap(centerLevel: number): number {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run pve.test
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run pve.test
 ```
 
 Expected: all PASS.
@@ -719,8 +719,8 @@ Create `apps/api/src/modules/pve/asteroid-belt.service.ts`:
 
 ```typescript
 import { eq, and, sql, lte, isNotNull } from 'drizzle-orm';
-import { asteroidBelts, asteroidDeposits } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { asteroidBelts, asteroidDeposits } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 const BELT_POSITIONS = [8, 16] as const;
 const DEPOSITS_PER_BELT = { min: 3, max: 5 };
@@ -915,14 +915,14 @@ Create `apps/api/src/modules/pve/pirate.service.ts`:
 
 ```typescript
 import { eq, and, gte, lte } from 'drizzle-orm';
-import { pirateTemplates, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { pirateTemplates, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   simulateCombat,
   totalCargoCapacity,
   type CombatTechs,
   type UnitCombatStats,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 interface PirateArrivalResult {
@@ -1071,9 +1071,9 @@ Create `apps/api/src/modules/pve/pve.service.ts`:
 
 ```typescript
 import { eq, and, sql, asc, inArray } from 'drizzle-orm';
-import { pveMissions, planetBuildings, planets } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { poolSize, accumulationCap } from '@ogame-clone/game-engine';
+import { pveMissions, planetBuildings, planets } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { poolSize, accumulationCap } from '@exilium/game-engine';
 import type { createAsteroidBeltService } from './asteroid-belt.service.js';
 import type { createPirateService } from './pirate.service.js';
 
@@ -1318,7 +1318,7 @@ Set `targetPlanetId` to null for mine/pirate missions (skip target planet lookup
 
 Also add to the `sendFleet` method: when pveMissionId is provided, call `pveService.startMission(input.pveMissionId)` to mark it as in_progress.
 
-**Important:** Add `pveMissions` and `gameEvents` to the imports from `@ogame-clone/db` at the top of fleet.service.ts.
+**Important:** Add `pveMissions` and `gameEvents` to the imports from `@exilium/db` at the top of fleet.service.ts.
 
 - [ ] **Step 2: Add mine case in processArrival**
 
@@ -1849,7 +1849,7 @@ git add -A && git commit -m "feat: show extraction status in movements view for 
 - [ ] **Step 1: Build all packages**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 Fix any TypeScript errors.
@@ -1857,7 +1857,7 @@ Fix any TypeScript errors.
 - [ ] **Step 2: Run game-engine tests**
 
 ```bash
-pnpm --filter @ogame-clone/game-engine test -- --run
+pnpm --filter @exilium/game-engine test -- --run
 ```
 
 All tests should pass.

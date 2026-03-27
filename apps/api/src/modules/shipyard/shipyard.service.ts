@@ -1,8 +1,8 @@
 import { eq, and, inArray, asc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus } from '@ogame-clone/game-engine';
+import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';

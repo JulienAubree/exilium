@@ -6,7 +6,7 @@
 
 **Architecture:** Two files modified: `Buildings.tsx` (desktop card grid becomes vertical cards) and `BuildingDetailContent.tsx` (complete rewrite of detail content). No backend changes. No mobile layout changes.
 
-**Tech Stack:** React, TypeScript, Tailwind CSS, tRPC, `@ogame-clone/game-engine` formulas.
+**Tech Stack:** React, TypeScript, Tailwind CSS, tRPC, `@exilium/game-engine` formulas.
 
 **Spec:** `docs/superpowers/specs/2026-03-19-entity-cards-redesign.md`
 
@@ -186,7 +186,7 @@ git commit -m "feat: redesign building cards to vertical layout with hero image"
 - `BuildingDetailContent` is rendered inside `EntityDetailOverlay` which wraps children in `<div className="p-5 space-y-5">`. The hero image needs `-mx-5 -mt-5` to go edge-to-edge.
 - `useGameConfig()` returns the full game config including `bonuses: BonusConfig[]` where `BonusConfig = { id, sourceType, sourceId, stat, percentPerLevel, category }`.
 - Bonuses with `stat === 'building_time'` apply to all buildings. Currently only `robotics` has this stat (`percentPerLevel: -15`).
-- Production formulas are in `@ogame-clone/game-engine`: `mineraiProduction(level, productionFactor)`, `siliciumProduction(level, productionFactor)`, `hydrogeneProduction(level, maxTemp, productionFactor)`, `solarPlantEnergy(level)`, `mineraiMineEnergy(level)`, `siliciumMineEnergy(level)`, `hydrogeneSynthEnergy(level)`, `storageCapacity(level)`. All return positive numbers. Energy consumption should be displayed with `-` prefix.
+- Production formulas are in `@exilium/game-engine`: `mineraiProduction(level, productionFactor)`, `siliciumProduction(level, productionFactor)`, `hydrogeneProduction(level, maxTemp, productionFactor)`, `solarPlantEnergy(level)`, `mineraiMineEnergy(level)`, `siliciumMineEnergy(level)`, `hydrogeneSynthEnergy(level)`, `storageCapacity(level)`. All return positive numbers. Energy consumption should be displayed with `-` prefix.
 - The `buildings` list (from `trpc.building.list`) provides: `{ id, name, currentLevel, ... }` for every building on the planet. Needed to resolve bonus source levels ("Usine de robots niv. 5") and prerequisite completion status.
 - Prerequisites come from `gameConfig.buildings[id].prerequisites: { buildingId, level }[]`.
 
@@ -258,7 +258,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 interface BuildingListItem {
   id: string;

@@ -34,8 +34,8 @@ This service aggregates contact data from three sources: own planets, friends' p
 ```ts
 // apps/api/src/modules/fleet/contact.service.ts
 import { eq, and, inArray, asc } from 'drizzle-orm';
-import { planets } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { createFriendService } from '../friend/friend.service.js';
 import type { createAllianceService } from '../alliance/alliance.service.js';
 

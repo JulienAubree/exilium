@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { planets, planetTypes, planetBuildings, planetShips } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { calculateResources } from '@ogame-clone/game-engine';
+import { planets, planetTypes, planetBuildings, planetShips } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { calculateResources } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../lib/config-helpers.js';
 import { buildProductionConfig } from '../lib/production-config.js';
 import type { GameConfigService } from '../modules/admin/game-config.service.js';

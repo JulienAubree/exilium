@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { fleetEvents, pveMissions, planets } from '@ogame-clone/db';
-import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
+import { fleetEvents, pveMissions, planets } from '@exilium/db';
+import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, getCombatMultipliers, formatDuration } from '../fleet.types.js';
 

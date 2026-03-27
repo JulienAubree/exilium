@@ -11,7 +11,7 @@ Les illustrations du jeu (bâtiments, recherches, vaisseaux, défenses) doivent 
 | Catégories couvertes | Toutes : buildings, research, ships, defenses |
 | Endpoint API | REST `POST /admin/upload-asset` (multipart/form-data) |
 | Conversion | sharp côté serveur, mêmes paramètres que le script existant |
-| Stockage prod | Dossier uploads séparé (`/opt/ogame-clone/uploads/assets/`), servi par Caddy |
+| Stockage prod | Dossier uploads séparé (`/opt/exilium/uploads/assets/`), servi par Caddy |
 | Stockage dev | `apps/web/public/assets/` (servi par Vite dev server) |
 | UX admin | Colonne image dans les tableaux + composant `AdminImageUpload` |
 
@@ -73,7 +73,7 @@ path.resolve(__dirname, '../../../../apps/web/public/assets')
 
 Note : l'API est un module ESM (`"type": "module"`), donc `__dirname` n'existe pas nativement — il faut le reconstruire via `fileURLToPath(import.meta.url)`.
 
-En prod : `ASSETS_DIR=/opt/ogame-clone/uploads/assets`
+En prod : `ASSETS_DIR=/opt/exilium/uploads/assets`
 
 ## 2. Utilitaire de conversion d'images
 
@@ -142,7 +142,7 @@ La colonne est placée en première ou deuxième position pour être visible imm
 
 ### Prod
 
-- `ASSETS_DIR=/opt/ogame-clone/uploads/assets` dans `.env`
+- `ASSETS_DIR=/opt/exilium/uploads/assets` dans `.env`
 - Le dossier est créé au premier upload (`mkdirSync recursive`)
 
 ### Caddy
@@ -153,13 +153,13 @@ Ajouter un block `route /assets/*` (pas `handle` — `route` exécute les direct
 
 ```
 route /assets/* {
-    @uploads file /opt/ogame-clone/uploads{path}
+    @uploads file /opt/exilium/uploads{path}
     handle @uploads {
-        root * /opt/ogame-clone/uploads
+        root * /opt/exilium/uploads
         file_server
     }
     handle {
-        root * /opt/ogame-clone/current/apps/web/dist
+        root * /opt/exilium/current/apps/web/dist
         file_server
     }
 }
@@ -182,7 +182,7 @@ Plus le même block `/assets/*` pour afficher les thumbnails dans l'admin.
 ### Deploy script
 
 Modifier `scripts/deploy.sh` pour :
-1. Créer `/opt/ogame-clone/uploads/assets/{buildings,research,ships,defenses}` si inexistant
+1. Créer `/opt/exilium/uploads/assets/{buildings,research,ships,defenses}` si inexistant
 2. Si `uploads/assets/buildings/` est vide et `apps/web/public/assets/buildings/` contient des fichiers, copier les images existantes (migration one-shot)
 
 ### Dépendance sharp
@@ -226,4 +226,4 @@ Modifier `scripts/deploy.sh` pour :
 2. **Affichage** : Le thumbnail se met à jour dans l'admin après upload. L'image est visible sur la page Buildings du jeu.
 3. **Remplacement** : Uploader une nouvelle image pour la même entité → les fichiers sont écrasés, le nouveau thumbnail apparaît.
 4. **Erreurs** : Tester avec un fichier non-image, un fichier > 10MB, sans auth → erreurs correctes.
-5. **Prod** : Après deploy, vérifier que Caddy sert les images depuis `/opt/ogame-clone/uploads/assets/`.
+5. **Prod** : Après deploy, vérifier que Caddy sert les images depuis `/opt/exilium/uploads/assets/`.

@@ -885,7 +885,7 @@ git commit -m "feat: migration script to assign images to existing planets"
 - [ ] **Step 1: Build check**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 2: Push**

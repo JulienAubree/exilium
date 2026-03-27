@@ -1,4 +1,4 @@
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 import { createGameEventService } from '../modules/game-event/game-event.service.js';
 
 export async function eventCleanup(db: Database) {

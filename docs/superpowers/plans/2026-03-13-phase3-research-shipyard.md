@@ -562,7 +562,7 @@ describe('researchTime', () => {
 - [ ] **Step 2: Lancer les tests — vérifier qu'ils échouent**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: FAIL — `researchCost` not found
 
@@ -603,7 +603,7 @@ export function researchTime(researchId: ResearchId, level: number, labLevel: nu
 - [ ] **Step 4: Lancer les tests — vérifier que tout passe**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: ALL PASS
 
@@ -681,7 +681,7 @@ describe('defenseTime', () => {
 - [ ] **Step 2: Lancer les tests — vérifier qu'ils échouent**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 
 - [ ] **Step 3: Implémenter**
@@ -729,7 +729,7 @@ export function defenseTime(defenseId: DefenseId, shipyardLevel: number): number
 - [ ] **Step 4: Lancer les tests — vérifier que tout passe**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 
 - [ ] **Step 5: Commit**
@@ -820,7 +820,7 @@ describe('checkDefensePrerequisites', () => {
 - [ ] **Step 2: Lancer les tests — vérifier qu'ils échouent**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 
 - [ ] **Step 3: Implémenter**
@@ -906,7 +906,7 @@ export function checkDefensePrerequisites(
 - [ ] **Step 4: Lancer les tests — vérifier que tout passe**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 
 - [ ] **Step 5: Mettre à jour l'index game-engine**
@@ -1011,15 +1011,15 @@ git commit -m "feat(db): add planet_ships and planet_defenses schemas"
 // apps/api/src/modules/research/research.service.ts
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, userResearch, buildQueue } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, userResearch, buildQueue } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   RESEARCH,
   researchCost,
   researchTime,
   checkResearchPrerequisites,
   type ResearchId,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { Queue } from 'bullmq';
 
@@ -1282,7 +1282,7 @@ git commit -m "feat(api): add research service"
 import { z } from 'zod';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createResearchService } from './research.service.js';
-import type { ResearchId } from '@ogame-clone/game-engine';
+import type { ResearchId } from '@exilium/game-engine';
 
 const researchIds = [
   'espionageTech', 'computerTech', 'energyTech',
@@ -1337,8 +1337,8 @@ Ce service gère la queue séquentielle du chantier. Les vaisseaux/défenses son
 // apps/api/src/modules/shipyard/shipyard.service.ts
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, buildQueue } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, planetShips, planetDefenses, buildQueue } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   SHIPS,
   DEFENSES,
@@ -1350,7 +1350,7 @@ import {
   checkDefensePrerequisites,
   type ShipId,
   type DefenseId,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { Queue } from 'bullmq';
 
@@ -1705,7 +1705,7 @@ export function createShipyardService(
 }
 ```
 
-Note : on importe `userResearch` depuis `@ogame-clone/db` — il est déjà exporté via `schema/index.ts`.
+Note : on importe `userResearch` depuis `@exilium/db` — il est déjà exporté via `schema/index.ts`.
 
 - [ ] **Step 2: Commit**
 
@@ -1844,7 +1844,7 @@ shipyard: shipyardRouter,
 ```typescript
 // apps/api/src/workers/research-completion.worker.ts
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createResearchService } from '../modules/research/research.service.js';
 import { researchCompletionQueue } from '../queues/queue.js';
@@ -1880,7 +1880,7 @@ export function startResearchCompletionWorker(db: ReturnType<typeof createDb>) {
 ```typescript
 // apps/api/src/workers/shipyard-completion.worker.ts
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import { shipyardCompletionQueue } from '../queues/queue.js';
@@ -1941,8 +1941,8 @@ import { shipyardCompletionQueue } from '../queues/queue.js';
 Code complet :
 ```typescript
 import { lte, eq, and } from 'drizzle-orm';
-import { buildQueue } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { buildQueue } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { buildingCompletionQueue } from '../queues/queue.js';
 import { researchCompletionQueue } from '../queues/queue.js';
 import { shipyardCompletionQueue } from '../queues/queue.js';
@@ -2531,21 +2531,21 @@ git commit -m "feat(web): add Defense page"
 - [ ] **Step 1: Turbo typecheck**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck
+cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck
 ```
 Expected: PASS
 
 - [ ] **Step 2: Turbo lint**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint
+cd /Users/julienaubree/_projet/exilium && pnpm turbo lint
 ```
 Expected: PASS (fix any issues)
 
 - [ ] **Step 3: Turbo test**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test
+cd /Users/julienaubree/_projet/exilium && pnpm turbo test
 ```
 Expected: ALL PASS — tous les tests existants + research-cost + shipyard-cost + prerequisites
 

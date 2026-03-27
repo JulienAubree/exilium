@@ -393,7 +393,7 @@ After the `// Update progress` block (after line 130), add before the return:
           if (playerPlanet) {
             await pveService.generateMiningMission(userId, playerPlanet.galaxy, playerPlanet.system, 1);
             // Store the mining mission ID in tutorial progress metadata
-            const { pveMissions } = await import('@ogame-clone/db');
+            const { pveMissions } = await import('@exilium/db');
             const [miningMission] = await db
               .select()
               .from(pveMissions)
@@ -419,7 +419,7 @@ After the `// Update progress` block (after line 130), add before the return:
 Note: import `pveMissions` at the top of the file instead of the dynamic import. Add to the existing import line:
 
 ```typescript
-import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, pveMissions } from '@ogame-clone/db';
+import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, pveMissions } from '@exilium/db';
 ```
 
 Also add `and` to the drizzle-orm import if not already there (it is — line 1).

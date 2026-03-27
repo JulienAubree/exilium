@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implémenter le combat OGame classique (rounds, rapid fire, débris, 70% defense repair), l'espionnage par sondes, les champs de débris et la mission recycleur.
+**Goal:** Implémenter le combat Exilium classique (rounds, rapid fire, débris, 70% defense repair), l'espionnage par sondes, les champs de débris et la mission recycleur.
 
 **Architecture:** Formules de combat et espionnage dans le game-engine (fonctions pures, testables). Nouveau schema debris_fields + migration enums. Handlers processAttack/processSpy/processRecycle dans fleet.service. Frontend : activation des missions spy/attack/recycle + indicateur débris galaxie.
 
@@ -218,7 +218,7 @@ describe('calculateDetectionChance', () => {
 - [ ] **Step 3: Run tests**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test --filter=@ogame-clone/game-engine
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test --filter=@exilium/game-engine
 ```
 Expected: ALL PASS
 
@@ -651,7 +651,7 @@ describe('simulateCombat', () => {
 - [ ] **Step 3: Run tests**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test --filter=@ogame-clone/game-engine
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test --filter=@exilium/game-engine
 ```
 Expected: ALL PASS
 
@@ -784,13 +784,13 @@ git commit -m "feat(db): add debris_fields table, recycle mission, combat/espion
 
 - [ ] **Step 1: Ajouter les imports nécessaires**
 
-En haut de `apps/api/src/modules/fleet/fleet.service.ts`, ajouter aux imports existants de `@ogame-clone/db` :
+En haut de `apps/api/src/modules/fleet/fleet.service.ts`, ajouter aux imports existants de `@exilium/db` :
 
 ```typescript
-import { userResearch, debrisFields } from '@ogame-clone/db';
+import { userResearch, debrisFields } from '@exilium/db';
 ```
 
-Ajouter les imports de `@ogame-clone/game-engine` (fusionner avec l'import existant) :
+Ajouter les imports de `@exilium/game-engine` (fusionner avec l'import existant) :
 
 ```typescript
 import {
@@ -800,10 +800,10 @@ import {
   calculateDebris,
   type CombatTechs,
   SHIP_STATS,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 ```
 
-Note : fusionner avec les imports `@ogame-clone/game-engine` déjà présents (`fleetSpeed`, `travelTime`, `distance`, `fuelConsumption`, `totalCargoCapacity`, `calculateMaxTemp`, `calculateMinTemp`, `calculateDiameter`, `calculateMaxFields`).
+Note : fusionner avec les imports `@exilium/game-engine` déjà présents (`fleetSpeed`, `travelTime`, `distance`, `fuelConsumption`, `totalCargoCapacity`, `calculateMaxTemp`, `calculateMinTemp`, `calculateDiameter`, `calculateMaxFields`).
 
 - [ ] **Step 2: Ajouter une méthode helper getCombatTechs**
 
@@ -1465,7 +1465,7 @@ git commit -m "feat(api): add processAttack handler with pillage, debris, and ro
 Dans `apps/api/src/modules/galaxy/galaxy.service.ts`, ajouter l'import :
 
 ```typescript
-import { debrisFields } from '@ogame-clone/db';
+import { debrisFields } from '@exilium/db';
 ```
 
 Dans la méthode `getSystem`, après avoir construit le tableau des slots, ajouter une requête pour les débris du système :
@@ -1594,21 +1594,21 @@ git commit -m "feat(web): add message type filters for combat and espionage"
 - [ ] **Step 1: Turbo typecheck**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck
 ```
 Expected: PASS
 
 - [ ] **Step 2: Turbo lint**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo lint
 ```
 Expected: PASS (fix any issues)
 
 - [ ] **Step 3: Turbo test**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test
 ```
 Expected: ALL PASS — 102 tests existants + ~15 combat + ~9 espionage
 

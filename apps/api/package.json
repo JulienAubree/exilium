@@ -1,5 +1,5 @@
 {
-  "name": "@ogame-clone/api",
+  "name": "@exilium/api",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -23,9 +23,9 @@
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "@fastify/multipart": "^9.4.0",
-    "@ogame-clone/db": "workspace:*",
-    "@ogame-clone/game-engine": "workspace:*",
-    "@ogame-clone/shared": "workspace:*",
+    "@exilium/db": "workspace:*",
+    "@exilium/game-engine": "workspace:*",
+    "@exilium/shared": "workspace:*",
     "@trpc/server": "^11.0.0-rc.682",
     "argon2": "^0.41.1",
     "bullmq": "^5.71.0",

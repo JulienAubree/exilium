@@ -138,7 +138,7 @@ registerSSE(server, env.REDIS_URL, JWT_SECRET);
 
 - [ ] **Step 4: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/api`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/api`
 Expected: Fail on `buildAppRouter` signature mismatch (expected since Task 2 updates it)
 
 - [ ] **Step 5: Commit**
@@ -220,7 +220,7 @@ In `createSystemMessage`, after `const [msg] = await db.insert(messages)...retur
 
 - [ ] **Step 3: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/api`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/api`
 Expected: PASS
 
 - [ ] **Step 4: Commit**
@@ -246,7 +246,7 @@ In `apps/api/src/workers/building-completion.worker.ts`, add imports:
 ```typescript
 import Redis from 'ioredis';
 import { eq } from 'drizzle-orm';
-import { buildQueue } from '@ogame-clone/db';
+import { buildQueue } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 ```
 
@@ -285,7 +285,7 @@ In `apps/api/src/workers/research-completion.worker.ts`, add same imports:
 ```typescript
 import Redis from 'ioredis';
 import { eq } from 'drizzle-orm';
-import { buildQueue } from '@ogame-clone/db';
+import { buildQueue } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 ```
 
@@ -323,7 +323,7 @@ In `apps/api/src/workers/shipyard-completion.worker.ts`, add same imports:
 ```typescript
 import Redis from 'ioredis';
 import { eq } from 'drizzle-orm';
-import { buildQueue } from '@ogame-clone/db';
+import { buildQueue } from '@exilium/db';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 ```
 
@@ -356,7 +356,7 @@ After `if (result) { console.log(...); }`, inside the `if (result)` block, publi
 
 - [ ] **Step 4: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/api`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/api`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -436,7 +436,7 @@ export function Toaster() {
 
 - [ ] **Step 3: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/web`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/web`
 Expected: PASS
 
 - [ ] **Step 4: Commit**
@@ -587,7 +587,7 @@ The return should become:
 
 - [ ] **Step 5: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/web`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/web`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -643,7 +643,7 @@ In the JSX, in the `<div className="flex items-center gap-4">` section (before t
 
 - [ ] **Step 2: Run typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck --filter=@ogame-clone/web`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck --filter=@exilium/web`
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -659,15 +659,15 @@ git commit -m "feat(web): add notification bell with unread badge in TopBar"
 
 - [ ] **Step 1: Run full typecheck**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo typecheck`
 Expected: All packages pass
 
 - [ ] **Step 2: Run lint**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo lint`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo lint`
 Expected: 0 errors (warnings OK)
 
 - [ ] **Step 3: Run tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx turbo test`
+Run: `cd /Users/julienaubree/_projet/exilium && npx turbo test`
 Expected: All tests pass

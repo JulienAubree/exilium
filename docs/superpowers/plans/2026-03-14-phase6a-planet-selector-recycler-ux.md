@@ -52,7 +52,7 @@ async listPlanets(userId: string) {
 
 - [ ] **Step 2: Verify typecheck passes**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck --filter=@ogame-clone/api`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck --filter=@exilium/api`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -101,7 +101,7 @@ This follows the same manual localStorage pattern used by `apps/web/src/stores/a
 
 - [ ] **Step 2: Verify typecheck passes**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck --filter=@ogame-clone/web`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck --filter=@exilium/web`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -315,7 +315,7 @@ Key changes:
 
 - [ ] **Step 2: Verify typecheck passes**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck --filter=@ogame-clone/web`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck --filter=@exilium/web`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -369,7 +369,7 @@ Replace with:
 
 - [ ] **Step 2: Verify typecheck passes**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck --filter=@ogame-clone/web`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck --filter=@exilium/web`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -458,7 +458,7 @@ In the step 1 section of the JSX, right before the "Aucun vaisseau disponible" c
 
 - [ ] **Step 3: Verify typecheck passes**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck --filter=@ogame-clone/web`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck --filter=@exilium/web`
 Expected: No errors
 
 - [ ] **Step 4: Commit**
@@ -476,17 +476,17 @@ git commit -m "feat(web): pre-fill fleet wizard from URL query params for recycl
 
 - [ ] **Step 1: Run full typecheck**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck`
 Expected: All packages pass
 
 - [ ] **Step 2: Run lint**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo lint`
 Expected: No errors
 
 - [ ] **Step 3: Run tests**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test`
 Expected: All tests pass
 
 - [ ] **Step 4: Fix any issues found**

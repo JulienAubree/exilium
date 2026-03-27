@@ -6,7 +6,7 @@
 
 **Architecture:** Frontend-only feature. A collapsible card in `Missions.tsx`, a new `/guide/combat` route with tabbed page, and reusable combat visualization components. All combat simulation runs client-side using the existing `packages/game-engine` (already a dependency of `apps/web`). A shared helper builds `CombatInput` from `gameConfig`.
 
-**Tech Stack:** React 19, TypeScript, Tailwind CSS, `@ogame-clone/game-engine` (simulateCombat, computeUnitFP, computeFleetFP), React Router v7, useGameConfig hook.
+**Tech Stack:** React 19, TypeScript, Tailwind CSS, `@exilium/game-engine` (simulateCombat, computeUnitFP, computeFleetFP), React Router v7, useGameConfig hook.
 
 **Spec:** `docs/superpowers/specs/2026-03-27-combat-guide-design.md`
 
@@ -44,7 +44,7 @@ import type {
   CombatMultipliers,
   ShipCombatConfig,
   ShipCategory,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 /** Combat categories — mirrors apps/api/src/modules/fleet/handlers/attack.handler.ts */
 const COMBAT_CATEGORIES: ShipCategory[] = [
@@ -381,7 +381,7 @@ Shared component displaying combat results round by round with animations. Used 
 ```typescript
 // apps/web/src/components/combat-guide/RoundDisplay.tsx
 import { useState, useEffect, useCallback } from 'react';
-import type { CombatResult, RoundResult } from '@ogame-clone/game-engine';
+import type { CombatResult, RoundResult } from '@exilium/game-engine';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
 
@@ -629,7 +629,7 @@ Pre-configured combat scenarios with auto-play animation.
 ```typescript
 // apps/web/src/components/combat-guide/CombatReplay.tsx
 import { useState, useMemo } from 'react';
-import { simulateCombat } from '@ogame-clone/game-engine';
+import { simulateCombat } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildCombatInput } from '@/lib/combat-helpers';
 import { RoundDisplay } from './RoundDisplay';
@@ -781,7 +781,7 @@ Fleet/defense selection panel used by the simulator.
 ```typescript
 // apps/web/src/components/combat-guide/FleetComposer.tsx
 import { useState } from 'react';
-import { computeFleetFP, type FPConfig } from '@ogame-clone/game-engine';
+import { computeFleetFP, type FPConfig } from '@exilium/game-engine';
 import { buildShipCombatConfigs } from '@/lib/combat-helpers';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -932,7 +932,7 @@ git commit -m "feat(web): add FleetComposer component for combat simulator"
 ```typescript
 // apps/web/src/components/combat-guide/CombatSimulator.tsx
 import { useState, useMemo } from 'react';
-import { simulateCombat, type CombatResult } from '@ogame-clone/game-engine';
+import { simulateCombat, type CombatResult } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildCombatInput } from '@/lib/combat-helpers';
 import { FleetComposer } from './FleetComposer';
@@ -1255,7 +1255,7 @@ Replace the `ReferenceTab` placeholder with formulas, tables, and the CombatSimu
 At the top of `apps/web/src/pages/CombatGuide.tsx`, add:
 
 ```typescript
-import { computeUnitFP, type FPConfig, type UnitCombatStats } from '@ogame-clone/game-engine';
+import { computeUnitFP, type FPConfig, type UnitCombatStats } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName, getDefenseName } from '@/lib/entity-names';
 import { CombatSimulator } from '@/components/combat-guide/CombatSimulator';

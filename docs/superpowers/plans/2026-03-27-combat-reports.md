@@ -6,7 +6,7 @@
 
 **Architecture:** Backend changes make pirate handler produce structured combat reports (like attack handler), and enrich all combat reports with FP + shot data. Frontend replaces the monolithic 1052-line Reports.tsx split-view with a card list page (`/reports`) and a dedicated detail page (`/reports/:id`) using extracted components per report type.
 
-**Tech Stack:** TypeScript, React 19, tRPC, Drizzle ORM, Tailwind CSS, `@ogame-clone/game-engine` (simulateCombat, computeFleetFP)
+**Tech Stack:** TypeScript, React 19, tRPC, Drizzle ORM, Tailwind CSS, `@exilium/game-engine` (simulateCombat, computeFleetFP)
 
 ---
 
@@ -35,7 +35,7 @@ import {
   type ShipCombatConfig,
   type UnitCombatStats,
   type FPConfig,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 // Update the interface
 interface PirateArrivalResult {
@@ -65,7 +65,7 @@ In the `return` statement at the end of `processPirateArrival` (~line 156), add 
 
 - [ ] **Step 3: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api typecheck`
 Expected: PASS (no type errors)
 
 - [ ] **Step 4: Commit**
@@ -90,8 +90,8 @@ At the top of `pirate.handler.ts`, add:
 
 ```typescript
 import { eq } from 'drizzle-orm';
-import { fleetEvents, pveMissions, planets } from '@ogame-clone/db';
-import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
+import { fleetEvents, pveMissions, planets } from '@exilium/db';
+import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, getCombatMultipliers, formatDuration } from '../fleet.types.js';
 ```
@@ -244,11 +244,11 @@ And in the report creation, replace `messageId: undefined` with `messageId`.
 
 - [ ] **Step 3: Add `planets` import**
 
-Make sure `planets` is imported from `@ogame-clone/db` at the top of the file (needed for origin planet query).
+Make sure `planets` is imported from `@exilium/db` at the top of the file (needed for origin planet query).
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api typecheck`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -272,7 +272,7 @@ Add `attackerFP`, `defenderFP`, and `shotsPerRound` to the report JSONB stored b
 At the top of `attack.handler.ts`, update the game-engine import to include FP utilities:
 
 ```typescript
-import { simulateCombat, totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
+import { simulateCombat, totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 ```
 
 - [ ] **Step 2: Compute FP and shotsPerRound before report creation**
@@ -324,7 +324,7 @@ In the `reportResult` object (~line 244-261), add the three new fields after `de
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api typecheck`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -375,7 +375,7 @@ After `countUnread` (~line 133), add:
 
 - [ ] **Step 3: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api typecheck`
 Expected: PASS
 
 - [ ] **Step 4: Commit**
@@ -406,7 +406,7 @@ After the `unreadCount` query (~line 46), add:
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/api typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/api typecheck`
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -1043,7 +1043,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { getUnitName, getDefenseName } from '@/lib/entity-names';
 import { RoundDisplay } from '@/components/combat-guide/RoundDisplay';
-import type { CombatResult } from '@ogame-clone/game-engine';
+import type { CombatResult } from '@exilium/game-engine';
 
 const RESOURCE_COLORS: Record<string, string> = {
   minerai: 'text-orange-400',
@@ -1494,7 +1494,7 @@ export default function ReportDetail() {
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/web typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/web typecheck`
 Expected: PASS (or warnings about unused imports in old Reports.tsx — fine, we replace it next)
 
 - [ ] **Step 3: Commit**
@@ -1658,7 +1658,7 @@ export default function Reports() {
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/web typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/web typecheck`
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -1684,7 +1684,7 @@ This will be run on the VPS after deployment. The new reports will be generated 
 
 - [ ] **Step 2: Verify full build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm typecheck`
 Expected: All packages pass
 
 - [ ] **Step 3: Push to main**
@@ -1697,7 +1697,7 @@ git push origin main
 
 On the VPS:
 ```bash
-source /opt/ogame-clone/.env && psql $DATABASE_URL -c "DELETE FROM mission_reports;"
+source /opt/exilium/.env && psql $DATABASE_URL -c "DELETE FROM mission_reports;"
 ```
 
 Then deploy as usual.

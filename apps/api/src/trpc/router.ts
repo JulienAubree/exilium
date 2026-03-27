@@ -3,8 +3,8 @@ import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
 import type { Context } from './context.js';
 import { env } from '../config/env.js';
-import { users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 

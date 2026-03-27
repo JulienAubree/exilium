@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateBuildingPoints,
   calculateResearchPoints,
   calculateFleetPoints,
   calculateDefensePoints,
   calculateTotalPoints,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 async function getBuildingLevels(db: Database, planetId: string): Promise<Record<string, number>> {

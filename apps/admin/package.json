@@ -1,5 +1,5 @@
 {
-  "name": "@ogame-clone/admin",
+  "name": "@exilium/admin",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ogame-clone/game-engine": "workspace:*",
+    "@exilium/game-engine": "workspace:*",
     "@trpc/client": "^11.0.0-rc.682",
     "@trpc/react-query": "^11.0.0-rc.682",
     "@tanstack/react-query": "^5.64.1",
@@ -21,7 +21,7 @@
     "tailwind-merge": "^2.6.0",
     "lucide-react": "^0.474.0",
     "zustand": "^5.0.3",
-    "@ogame-clone/api": "workspace:*"
+    "@exilium/api": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.8",

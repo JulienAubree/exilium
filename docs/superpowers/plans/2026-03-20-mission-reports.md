@@ -83,7 +83,7 @@ export * from './mission-reports.js';
 - [ ] **Step 3: Generate and run migration**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone/packages/db && pnpm db:generate
+cd /Users/julienaubree/_projet/exilium/packages/db && pnpm db:generate
 ```
 
 Verify a new SQL file appears in `drizzle/` with `CREATE TABLE mission_reports`.
@@ -153,7 +153,7 @@ export function startFleetReturnWorker(db: ReturnType<typeof createDb>) {
 - [ ] **Step 3: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 4: Commit**
@@ -175,8 +175,8 @@ git commit -m "fix: inject messageService into fleet workers (was undefined)"
 ```typescript
 // apps/api/src/modules/report/report.service.ts
 import { eq, and, desc, lt, inArray, sql } from 'drizzle-orm';
-import { missionReports } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { missionReports } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createReportService(db: Database) {
   return {
@@ -389,7 +389,7 @@ In the `return router({...})` block, after `tutorial: tutorialRouter,` add:
 - [ ] **Step 3: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 4: Commit**
@@ -465,7 +465,7 @@ In `apps/api/src/trpc/app-router.ts`, update the `createFleetService` call (line
 - [ ] **Step 5: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 6: Commit**
@@ -484,9 +484,9 @@ git commit -m "feat: inject reportService into fleet handler context"
 
 - [ ] **Step 1: Add planet import for origin coordinates**
 
-In `mine.handler.ts` line 3, add `planets` to the existing `@ogame-clone/db` import:
+In `mine.handler.ts` line 3, add `planets` to the existing `@exilium/db` import:
 ```typescript
-import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@ogame-clone/db';
+import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@exilium/db';
 ```
 
 - [ ] **Step 2: Modify processMineDone to create the report**
@@ -612,7 +612,7 @@ Replace the system message + return section (from line 178 to end of `processMin
 - [ ] **Step 3: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 4: Commit**
@@ -1025,7 +1025,7 @@ export default function Reports() {
 - [ ] **Step 2: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 4: Commit**
@@ -1080,7 +1080,7 @@ function ReportLink({ messageId }: { messageId: string }) {
 - [ ] **Step 2: Verify build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 3: Commit**
@@ -1097,19 +1097,19 @@ git commit -m "feat: add 'Voir le rapport' link on mission messages"
 - [ ] **Step 1: Push all changes**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git push
+cd /Users/julienaubree/_projet/exilium && git push
 ```
 
 - [ ] **Step 2: Deploy and run migration on VPS**
 
 SSH into VPS and run:
 ```bash
-cd /opt/ogame-clone && bash deploy.sh
+cd /opt/exilium && bash deploy.sh
 ```
 
 The deploy script should handle `pnpm db:migrate` as part of the deployment. If not, run manually:
 ```bash
-cd /opt/ogame-clone && pnpm --filter @ogame-clone/db db:migrate
+cd /opt/exilium && pnpm --filter @exilium/db db:migrate
 ```
 
 - [ ] **Step 3: Verify end-to-end**

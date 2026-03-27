@@ -47,7 +47,7 @@ This is a nullable varchar — no default needed. Existing rows (building/resear
 Run:
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && npx drizzle-kit generate
+cd /Users/julienaubree/_projet/exilium && npx drizzle-kit generate
 ```
 
 Expected: A new migration file in `packages/db/drizzle/` adding the `facility_id` column.
@@ -57,20 +57,20 @@ Expected: A new migration file in `packages/db/drizzle/` adding the `facility_id
 Run:
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && npx drizzle-kit push
+cd /Users/julienaubree/_projet/exilium && npx drizzle-kit push
 ```
 
 Expected: Column added to database without errors.
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p packages/db/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p packages/db/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 5: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add packages/db/src/schema/build-queue.ts packages/db/drizzle/ && git commit -m "feat: add facilityId column to buildQueue schema
+cd /Users/julienaubree/_projet/exilium && git add packages/db/src/schema/build-queue.ts packages/db/drizzle/ && git commit -m "feat: add facilityId column to buildQueue schema
 
 Nullable varchar column to identify production building (shipyard, commandCenter, arsenal).
 
@@ -276,13 +276,13 @@ to:
 
 - [ ] **Step 8: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 9: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add apps/api/src/modules/shipyard/shipyard.service.ts apps/api/src/modules/shipyard/shipyard.router.ts && git commit -m "feat: add facilityId-based queue separation in shipyard service
+cd /Users/julienaubree/_projet/exilium && git add apps/api/src/modules/shipyard/shipyard.service.ts apps/api/src/modules/shipyard/shipyard.router.ts && git commit -m "feat: add facilityId-based queue separation in shipyard service
 
 Each production building gets its own independent queue. Ships are assigned
 to shipyard or commandCenter based on their first building prerequisite.
@@ -833,13 +833,13 @@ In `apps/web/src/router.tsx`, add the command-center route after the shipyard ro
 
 - [ ] **Step 7: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 8: Commit and push**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && git add apps/web/src/pages/CommandCenter.tsx apps/web/src/pages/Shipyard.tsx apps/web/src/lib/icons.tsx apps/web/src/components/layout/Sidebar.tsx apps/web/src/components/layout/BottomTabBar.tsx apps/web/src/router.tsx && git commit -m "feat: add Centre de commandement page for military ships
+cd /Users/julienaubree/_projet/exilium && git add apps/web/src/pages/CommandCenter.tsx apps/web/src/pages/Shipyard.tsx apps/web/src/lib/icons.tsx apps/web/src/components/layout/Sidebar.tsx apps/web/src/components/layout/BottomTabBar.tsx apps/web/src/router.tsx && git commit -m "feat: add Centre de commandement page for military ships
 
 New page at /command-center showing ship_combat category ships.
 Shipyard page now filters to ship_transport + ship_utilitaire only.
@@ -856,15 +856,15 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>" && git push
 
 - [ ] **Step 1: TS check all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 2: Run API tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/apps/api && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium/apps/api && npx vitest run`
 Expected: All tests pass
 
 - [ ] **Step 3: Run game-engine tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone/packages/game-engine && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium/packages/game-engine && npx vitest run`
 Expected: All tests pass

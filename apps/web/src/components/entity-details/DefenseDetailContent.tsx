@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { getDefenseDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
-import { resolveBonus } from '@ogame-clone/game-engine';
+import { resolveBonus } from '@exilium/game-engine';
 import {
   ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
   StatCell, EffectiveStatCell, SectionHeader, CostPills,

@@ -237,7 +237,7 @@ Trade = 'trade',
 
 - [ ] **Step 7: Build packages and verify**
 
-Run: `pnpm --filter @ogame-clone/db build && pnpm --filter @ogame-clone/shared build`
+Run: `pnpm --filter @exilium/db build && pnpm --filter @exilium/shared build`
 Expected: Build succeeds with no errors.
 
 - [ ] **Step 8: Commit**
@@ -308,7 +308,7 @@ export * from './formulas/market.js';
 
 - [ ] **Step 3: Build and verify**
 
-Run: `pnpm --filter @ogame-clone/game-engine build`
+Run: `pnpm --filter @exilium/game-engine build`
 Expected: Build succeeds.
 
 - [ ] **Step 4: Commit**
@@ -348,8 +348,8 @@ Create `apps/api/src/modules/fleet/handlers/trade.handler.ts`:
 ```typescript
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { marketOffers, planets } from '@ogame-clone/db';
-import { calculateCommission } from '@ogame-clone/game-engine';
+import { marketOffers, planets } from '@exilium/db';
+import { calculateCommission } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 
 export class TradeHandler implements MissionHandler {
@@ -552,7 +552,7 @@ if (event.tradeId) {
 }
 ```
 
-5. Import `marketOffers` from `@ogame-clone/db` at the top of the file.
+5. Import `marketOffers` from `@exilium/db` at the top of the file.
 
 - [ ] **Step 4: Add tradeId to fleet router input**
 
@@ -588,9 +588,9 @@ Create `apps/api/src/modules/market/market.service.ts`:
 import { eq, and, ne, desc, lt, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
-import { marketOffers, planets, planetBuildings, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { maxMarketOffers, calculateCommission } from '@ogame-clone/game-engine';
+import { marketOffers, planets, planetBuildings, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { maxMarketOffers, calculateCommission } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { publishNotification } from '../notification/notification.publisher.js';
@@ -1884,13 +1884,13 @@ git commit -m "feat(market): integrate trade mode in fleet page with locked coor
 - [ ] **Step 1: Run migration**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db db:migrate
+cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db db:migrate
 ```
 
 - [ ] **Step 2: Re-seed game config**
 
 ```bash
-pnpm --filter @ogame-clone/db db:seed
+pnpm --filter @exilium/db db:seed
 ```
 
 - [ ] **Step 3: Build all packages**

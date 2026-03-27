@@ -130,7 +130,7 @@ With:
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/web typecheck`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/web typecheck`
 Expected: PASS
 
 - [ ] **Step 5: Commit and push**

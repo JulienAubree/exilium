@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Users can register, login, and get a home planet with correct OGame properties (diameter, temperature, fields). Protected routes reject unauthenticated requests.
+**Goal:** Users can register, login, and get a home planet with correct Exilium properties (diameter, temperature, fields). Protected routes reject unauthenticated requests.
 
 **Architecture:** Auth module (Argon2 hashing, JWT access 15min + refresh token 7j in DB). Universe config as constants. Planet creation on registration with random coordinates, diameter based on position, temperature formula from spec. tRPC `protectedProcedure` middleware extracts userId from JWT. Frontend has Login/Register pages and an Overview page showing planet info.
 
@@ -136,7 +136,7 @@ Expected: FAIL — module not found
 // packages/game-engine/src/formulas/planet.ts
 
 /**
- * OGame planet temperature formula.
+ * Exilium planet temperature formula.
  * max_temp = 40 + (8 - position) * 30 + randomOffset
  * randomOffset should be in range [-20, 20]
  */
@@ -156,7 +156,7 @@ export function calculateMinTemp(maxTemp: number): number {
  * Middle positions (4-8) get larger planets.
  * randomFactor: 0-1, used to vary within the range.
  *
- * OGame-like diameter ranges by position:
+ * Exilium diameter ranges by position:
  * - Pos 1-3:  5800 - 9800
  * - Pos 4-6:  9000 - 14400
  * - Pos 7-9:  10000 - 15600
@@ -335,7 +335,7 @@ Run: `pnpm install`
 import { z } from 'zod';
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().default('postgresql://ogame:ogame@localhost:5432/ogame'),
+  DATABASE_URL: z.string().default('postgresql://exilium:exilium@localhost:5432/exilium'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_SECRET: z.string().min(8).default('change-me-in-production'),
   JWT_EXPIRES_IN: z.string().default('15m'),
@@ -358,8 +358,8 @@ import { hash, verify } from 'argon2';
 import { SignJWT, jwtVerify } from 'jose';
 import { randomBytes, createHash } from 'crypto';
 import { TRPCError } from '@trpc/server';
-import { users, refreshTokens } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, refreshTokens } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { env } from '../../config/env.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
@@ -497,14 +497,14 @@ git commit -m "feat(api): add auth service (register, login, refresh, logout, JW
 // apps/api/src/modules/planet/planet.service.ts
 import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
   calculateMinTemp,
   calculateDiameter,
   calculateMaxFields,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import { UNIVERSE_CONFIG } from '../universe/universe.config.js';
 
 function randomInt(min: number, max: number): number {
@@ -742,7 +742,7 @@ export function createPlanetRouter(planetService: ReturnType<typeof createPlanet
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createAppRouter } from './trpc/router.js';
 import { createContext } from './trpc/context.js';
 import { createAuthService } from './modules/auth/auth.service.js';
@@ -890,7 +890,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 // apps/web/src/trpc.ts
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
-import type { AppRouter } from '@ogame-clone/api/trpc';
+import type { AppRouter } from '@exilium/api/trpc';
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -984,7 +984,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">OGame Clone</CardTitle>
+          <CardTitle className="text-center text-2xl">Exilium</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

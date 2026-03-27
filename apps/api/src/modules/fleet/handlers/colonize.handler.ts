@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, fleetEvents } from '@ogame-clone/db';
-import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFields } from '@ogame-clone/game-engine';
+import { planets, planetShips, planetDefenses, fleetEvents } from '@exilium/db';
+import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFields } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration } from '../fleet.types.js';

@@ -1,6 +1,6 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
-import type { AppRouter } from '@ogame-clone/api/trpc';
+import type { AppRouter } from '@exilium/api/trpc';
 
 export const trpc = createTRPCReact<AppRouter>();
 

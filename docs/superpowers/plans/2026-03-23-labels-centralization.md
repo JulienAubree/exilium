@@ -306,7 +306,7 @@ db.select().from(missionDefinitions).orderBy(missionDefinitions.sortOrder),
 db.select().from(uiLabels),
 ```
 
-Import `missionDefinitions` and `uiLabels` from `@ogame-clone/db`.
+Import `missionDefinitions` and `uiLabels` from `@exilium/db`.
 
 Destructure the results into `missionsRows` and `labelsRows`.
 
@@ -526,7 +526,7 @@ git commit -m "feat(api): add tRPC procedures for missions and labels CRUD, stat
 Replace the entire file content. Keep only `Mission` type, `getCargoCapacity`, and `categorizeShip` — but `categorizeShip` now takes a mission config object from gameConfig:
 
 ```ts
-import { MissionType } from '@ogame-clone/shared';
+import { MissionType } from '@exilium/shared';
 
 export type Mission = `${MissionType}`;
 
@@ -922,7 +922,7 @@ git commit -m "refactor(admin): replace hardcoded STAT_OPTIONS and CONDITION_LAB
 - [ ] **Step 1: Full compilation check**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
+cd /Users/julienaubree/_projet/exilium
 npx tsc --noEmit -p apps/web/tsconfig.json
 npx tsc --noEmit -p apps/api/tsconfig.json
 npx tsc --noEmit -p apps/admin/tsconfig.json

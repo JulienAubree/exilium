@@ -45,7 +45,7 @@ export * from './planet-buildings.js';
 
 - [ ] **Step 3: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db build`
 Expected: Build succeeds
 
 - [ ] **Step 4: Commit**
@@ -98,7 +98,7 @@ In `packages/db/src/schema/planets.ts`, remove lines 28-38 (the entire "Building
 
 - [ ] **Step 4: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db build`
 Expected: Build succeeds (downstream packages will break, that's expected)
 
 - [ ] **Step 5: Commit**
@@ -123,7 +123,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { sql } from 'drizzle-orm';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://ogame:ogame@localhost:5432/ogame';
+const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://exilium:exilium@localhost:5432/exilium';
 const client = postgres(DATABASE_URL);
 const db = drizzle(client);
 
@@ -318,7 +318,7 @@ with:
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine build`
 
 - [ ] **Step 3: Commit**
 
@@ -364,7 +364,7 @@ with:
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine build`
 
 - [ ] **Step 3: Commit**
 
@@ -401,7 +401,7 @@ export function defenseTime(def: UnitCostDef, buildingLevel: number, reductionFa
 
 - [ ] **Step 2: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine build`
 
 - [ ] **Step 3: Commit**
 
@@ -546,7 +546,7 @@ The seed function's building insertion needs to NOT send `levelColumn` to the DB
 
 - [ ] **Step 8: Verify build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db build`
 
 - [ ] **Step 9: Commit**
 
@@ -625,8 +625,8 @@ At the top of `building.service.ts`, update imports:
 ```typescript
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, buildQueue, planetBuildings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, buildQueue, planetBuildings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 ```
 
 Inside the `createBuildingService` return object, add a `getBuildingLevels` method:
@@ -1213,7 +1213,7 @@ git commit -m "fix: update web pages for building reorganization"
 
 - [ ] **Step 1: Run full monorepo build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm build`
 Expected: All packages and apps build successfully.
 
 - [ ] **Step 2: Fix any remaining type errors**
@@ -1247,15 +1247,15 @@ git push
 
 On the VPS, run:
 ```bash
-cd /opt/ogame-clone
-pm2 stop ogame-worker
-pm2 stop ogame-api
+cd /opt/exilium
+pm2 stop exilium-worker
+pm2 stop exilium-api
 bash scripts/deploy.sh
 # After deploy.sh does git pull + pnpm install + turbo build:
 cd packages/db
 pnpm db:migrate-buildings
 pnpm db:seed
-cd /opt/ogame-clone
+cd /opt/exilium
 pm2 start ecosystem.config.cjs
 ```
 

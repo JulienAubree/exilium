@@ -1,6 +1,6 @@
 import { eq, and, sql, lte, isNotNull } from 'drizzle-orm';
-import { asteroidBelts, asteroidDeposits } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { asteroidBelts, asteroidDeposits } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 const DEPOSITS_PER_BELT = { min: 3, max: 5 };
 

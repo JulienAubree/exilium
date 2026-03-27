@@ -19,7 +19,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 
 interface ProductionStats {

@@ -528,7 +528,7 @@ emplacements_max = floor((diametre / 1000)^2)
 
 #### Config Production
 - `base_production` : multiplicateur de base (30 pour metal, 20 pour cristal...)
-- `exposant` : controle la courbe de croissance (1.1 = standard OGame)
+- `exposant` : controle la courbe de croissance (1.1 = standard Exilium)
 - `conso_energie` : multiplicateur de consommation energetique
 - `stockage_base` : base de calcul de la capacite de stockage
 

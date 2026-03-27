@@ -32,10 +32,10 @@ importers:
 
   apps/admin:
     dependencies:
-      '@ogame-clone/api':
+      '@exilium/api':
         specifier: workspace:*
         version: link:../api
-      '@ogame-clone/game-engine':
+      '@exilium/game-engine':
         specifier: workspace:*
         version: link:../../packages/game-engine
       '@tanstack/react-query':
@@ -96,21 +96,21 @@ importers:
 
   apps/api:
     dependencies:
+      '@exilium/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@exilium/game-engine':
+        specifier: workspace:*
+        version: link:../../packages/game-engine
+      '@exilium/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@fastify/cors':
         specifier: ^10.0.2
         version: 10.1.0
       '@fastify/multipart':
         specifier: ^9.4.0
         version: 9.4.0
-      '@ogame-clone/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@ogame-clone/game-engine':
-        specifier: workspace:*
-        version: link:../../packages/game-engine
-      '@ogame-clone/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@trpc/server':
         specifier: ^11.0.0-rc.682
         version: 11.12.0(typescript@5.9.3)
@@ -160,13 +160,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@ogame-clone/api':
+      '@exilium/api':
         specifier: workspace:*
         version: link:../api
-      '@ogame-clone/game-engine':
+      '@exilium/game-engine':
         specifier: workspace:*
         version: link:../../packages/game-engine
-      '@ogame-clone/shared':
+      '@exilium/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@tanstack/react-query':

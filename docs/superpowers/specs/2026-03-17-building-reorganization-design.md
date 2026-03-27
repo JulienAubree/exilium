@@ -191,7 +191,7 @@ Le calcul actuel somme les colonnes `*Level`. Il doit être remplacé par un `SU
 ### Prérequis de déploiement
 
 **IMPORTANT :** Avant de lancer la migration :
-1. **Arrêter le worker** (`pm2 stop ogame-worker`) pour qu'aucun job de build queue ne s'exécute pendant la migration
+1. **Arrêter le worker** (`pm2 stop exilium-worker`) pour qu'aucun job de build queue ne s'exécute pendant la migration
 2. **Attendre** que les jobs en cours terminent (vérifier la build queue)
 3. Lancer la migration
 4. **Redémarrer** le worker avec le code mis à jour

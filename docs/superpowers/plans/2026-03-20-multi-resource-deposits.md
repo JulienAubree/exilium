@@ -137,7 +137,7 @@ describe('computeMiningExtraction', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run`
 Expected: FAIL — `computeMiningExtraction` doesn't accept new params, `totalExtracted` tests reference removed function.
 
 - [ ] **Step 3: Implement new `computeMiningExtraction` and remove `totalExtracted`**
@@ -232,7 +232,7 @@ Also update the export in `packages/game-engine/src/index.ts` — remove `totalE
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run`
 Expected: All tests PASS.
 
 - [ ] **Step 5: Verify no other file imports `totalExtracted`**
@@ -294,7 +294,7 @@ Note: `varchar` import removed (no longer needed). `index` name changed from `de
 
 - [ ] **Step 2: Generate migration**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/db drizzle-kit generate`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/db drizzle-kit generate`
 
 This should produce `0008_*.sql`. Verify it contains:
 - DROP of `resource_type`, `total_quantity`, `remaining_quantity` columns
@@ -309,7 +309,7 @@ If the generated migration doesn't handle data migration (it won't since Drizzle
 Rename the generated file to `0008_multi_resource_deposits.sql` for clarity:
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone/packages/db/drizzle
+cd /Users/julienaubree/_projet/exilium/packages/db/drizzle
 mv 0008_*.sql 0008_multi_resource_deposits.sql
 ```
 
@@ -401,8 +401,8 @@ Replace the top of `asteroid-belt.service.ts` (imports through `randomRegenDelay
 
 ```ts
 import { eq, and, sql, lte, isNotNull } from 'drizzle-orm';
-import { asteroidBelts, asteroidDeposits } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { asteroidBelts, asteroidDeposits } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 const DEPOSITS_PER_BELT = { min: 3, max: 5 };
 
@@ -872,7 +872,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Run full type-check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm build`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm build`
 Expected: Clean build, no TS errors.
 
 If there are errors, they likely come from:
@@ -884,7 +884,7 @@ Fix any errors before proceeding.
 
 - [ ] **Step 2: Run all tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm test -- --run`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm test -- --run`
 Expected: All tests pass.
 
 - [ ] **Step 3: Commit any fixes**

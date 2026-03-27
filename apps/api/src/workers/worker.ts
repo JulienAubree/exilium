@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { env } from '../config/env.js';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createBuildingService } from '../modules/building/building.service.js';

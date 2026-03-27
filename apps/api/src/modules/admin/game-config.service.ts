@@ -18,8 +18,8 @@ import {
   tutorialQuestDefinitions,
   missionDefinitions,
   uiLabels,
-} from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+} from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
 
 export interface CategoryConfig {

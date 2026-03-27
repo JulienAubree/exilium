@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MissionType } from '@ogame-clone/shared';
+import { MissionType } from '@exilium/shared';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createReportService } from './report.service.js';
 

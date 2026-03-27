@@ -1,7 +1,7 @@
 import { eq, and, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { friendships, users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { friendships, users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
 import { publishNotification } from '../notification/notification.publisher.js';
 import type { createGameEventService } from '../game-event/game-event.service.js';

@@ -1,6 +1,6 @@
 import { eq, like, or, sql, count } from 'drizzle-orm';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createPlayerAdminService(db: Database) {
   return {

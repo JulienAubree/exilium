@@ -4,9 +4,9 @@
 
 **Goal:** Replace the 3-step fleet wizard with a single unified screen where mission type drives ship categorization, with PvE pre-fill support.
 
-**Architecture:** Decompose the current monolithic `Fleet.tsx` into focused sub-components (`MissionSelector`, `FleetComposition`, `PveMissionBanner`, `FleetSummaryBar`). Add one backend endpoint (`pve.getMissionById`) for banner data. Use `SHIP_STATS` from `@ogame-clone/game-engine` for client-side cargo capacity calculation.
+**Architecture:** Decompose the current monolithic `Fleet.tsx` into focused sub-components (`MissionSelector`, `FleetComposition`, `PveMissionBanner`, `FleetSummaryBar`). Add one backend endpoint (`pve.getMissionById`) for banner data. Use `SHIP_STATS` from `@exilium/game-engine` for client-side cargo capacity calculation.
 
-**Tech Stack:** React 18, TypeScript, tRPC (React Query), Tailwind CSS, `@ogame-clone/game-engine`
+**Tech Stack:** React 18, TypeScript, tRPC (React Query), Tailwind CSS, `@exilium/game-engine`
 
 ---
 
@@ -72,7 +72,7 @@ This file centralizes all mission-specific UI logic: ship categorization, hints,
 Create the `apps/web/src/config/` directory if it does not exist, then create `apps/web/src/config/mission-config.ts`:
 
 ```typescript
-import { SHIP_STATS } from '@ogame-clone/game-engine';
+import { SHIP_STATS } from '@exilium/game-engine';
 
 export type Mission = 'transport' | 'station' | 'spy' | 'attack' | 'colonize' | 'recycle' | 'mine' | 'pirate';
 
@@ -968,7 +968,7 @@ git commit -m "feat(web): rewrite Fleet page as unified single-screen with missi
 - [ ] **Step 1: Build packages**
 
 ```bash
-pnpm --filter @ogame-clone/db build && pnpm --filter @ogame-clone/game-engine build
+pnpm --filter @exilium/db build && pnpm --filter @exilium/game-engine build
 ```
 
 - [ ] **Step 2: TypeScript check all apps**

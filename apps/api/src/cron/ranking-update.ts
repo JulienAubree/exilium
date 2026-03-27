@@ -1,4 +1,4 @@
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
 

@@ -27,5 +27,5 @@
 
 Le code existant dans packages/game-engine et packages/shared reste en place.
 Au fur et a mesure que les packages de domaine sont prets, on migre les imports :
-- `@ogame-clone/game-engine` → `@exilium/economie`, `@exilium/flotte`, etc.
-- `@ogame-clone/shared` → `@exilium/core`
+- `@exilium/game-engine` → `@exilium/economie`, `@exilium/flotte`, etc.
+- `@exilium/shared` → `@exilium/core`

@@ -1,7 +1,7 @@
 import { eq, and, desc, or, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { messages, users, allianceMembers, alliances } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { messages, users, allianceMembers, alliances } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
 import { publishNotification } from '../notification/notification.publisher.js';
 

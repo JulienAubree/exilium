@@ -1,6 +1,6 @@
 import { eq, and, desc, lt, inArray, sql } from 'drizzle-orm';
-import { missionReports } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { missionReports } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createReportService(db: Database) {
   return {

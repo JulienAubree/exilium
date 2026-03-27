@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'ogame-api',
+      name: 'exilium-api',
       script: 'apps/api/dist/index.js',
       cwd: __dirname,
       node_args: '--env-file=.env',
@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '512M',
     },
     {
-      name: 'ogame-worker',
+      name: 'exilium-worker',
       script: 'apps/api/dist/workers/worker.js',
       cwd: __dirname,
       node_args: '--env-file=.env',

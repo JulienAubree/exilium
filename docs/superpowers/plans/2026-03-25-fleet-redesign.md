@@ -674,7 +674,7 @@ Remove `MovementsIcon` from imports if no longer used.
 Search the codebase for any links pointing to `/movements` or `/fleet` that need updating:
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && grep -rn '"/movements"' apps/web/src/ --include='*.tsx' --include='*.ts'
+cd /Users/julienaubree/_projet/exilium && grep -rn '"/movements"' apps/web/src/ --include='*.tsx' --include='*.ts'
 grep -rn 'to="/fleet"' apps/web/src/ --include='*.tsx' --include='*.ts'
 grep -rn "navigate('/fleet')" apps/web/src/ --include='*.tsx' --include='*.ts'
 grep -rn "navigate('/movements')" apps/web/src/ --include='*.tsx' --include='*.ts'
@@ -1182,7 +1182,7 @@ git commit -m "feat: enhance movements page with breadcrumb, hostile banner, mis
 - [ ] **Step 1: Search for all stale fleet/movement links**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
+cd /Users/julienaubree/_projet/exilium
 grep -rn '"/movements"' apps/web/src/ --include='*.tsx' --include='*.ts'
 grep -rn "'/movements'" apps/web/src/ --include='*.tsx' --include='*.ts'
 grep -rn 'path: .*/fleet.' apps/web/src/ --include='*.tsx' --include='*.ts'

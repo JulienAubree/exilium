@@ -11,7 +11,7 @@ import {
   buildingBonusAtLevel,
   discoveryCooldown, depositSize,
   maxMarketOffers,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 interface BuildingListItem {
   id: string;

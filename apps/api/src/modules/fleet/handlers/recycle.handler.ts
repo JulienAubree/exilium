@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { debrisFields } from '@ogame-clone/db';
+import { debrisFields } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration } from '../fleet.types.js';
 import { findShipByRole } from '../../../lib/config-helpers.js';

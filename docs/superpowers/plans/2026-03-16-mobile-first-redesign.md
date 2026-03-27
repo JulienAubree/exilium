@@ -803,7 +803,7 @@ git commit -m "refactor: mobile-first PageHeader and EntityDetailOverlay as bott
 
 - [ ] **Step 1: Start dev server and verify**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && pnpm dev`
+Run: `cd /Users/julienaubree/_projet/exilium && pnpm dev`
 
 Verify in the browser:
 - Mobile (375px): TopBar + ResourceBar + content + BottomTabBar visible
@@ -1167,13 +1167,13 @@ git commit -m "refactor: mobile-first Login/Register with Exilium branding"
 - [ ] **Step 1: Run full build**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm build
+cd /Users/julienaubree/_projet/exilium && pnpm build
 ```
 
 - [ ] **Step 2: Run typecheck**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm typecheck
+cd /Users/julienaubree/_projet/exilium && pnpm typecheck
 ```
 
 - [ ] **Step 3: Test on dev server**

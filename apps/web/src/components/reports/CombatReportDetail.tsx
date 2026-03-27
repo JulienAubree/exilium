@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { getUnitName, getDefenseName } from '@/lib/entity-names';
 import { RoundDisplay } from '@/components/combat-guide/RoundDisplay';
-import type { CombatResult } from '@ogame-clone/game-engine';
+import type { CombatResult } from '@exilium/game-engine';
 
 const RESOURCE_COLORS: Record<string, string> = {
   minerai: 'text-orange-400',

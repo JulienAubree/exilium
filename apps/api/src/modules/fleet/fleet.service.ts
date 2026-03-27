@@ -1,9 +1,9 @@
 import { eq, and, inArray, count as dbCount, sql, ne } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch, pveMissions, users, allianceMembers, alliances, marketOffers } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus, calculateAttackDetection, detectionDelay } from '@ogame-clone/game-engine';
-import type { BonusDefinition, ShipStats, FleetConfig } from '@ogame-clone/game-engine';
+import { planets, planetShips, fleetEvents, userResearch, pveMissions, users, allianceMembers, alliances, marketOffers } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus, calculateAttackDetection, detectionDelay } from '@exilium/game-engine';
+import type { BonusDefinition, ShipStats, FleetConfig } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

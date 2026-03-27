@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================
-# OGame Clone — Deploy Script
+# Exilium — Deploy Script
 # Run from project root: ./scripts/deploy.sh
 # ============================================================
 
@@ -22,7 +22,7 @@ echo "==> Loading environment variables..."
 export $(grep -v '^#' .env | xargs)
 
 echo "==> Ensuring uploads directory..."
-UPLOADS_DIR="/opt/ogame-clone/uploads/assets"
+UPLOADS_DIR="/opt/exilium/uploads/assets"
 mkdir -p "$UPLOADS_DIR"/{buildings,research,ships,defenses,planets}
 
 # Sync assets from web public to uploads (copies missing files, keeps existing)
@@ -34,10 +34,10 @@ for cat in buildings research ships defenses planets; do
 done
 
 echo "==> Pushing database schema..."
-pnpm --filter @ogame-clone/db db:push
+pnpm --filter @exilium/db db:push
 
 echo "==> Seeding game config..."
-pnpm --filter @ogame-clone/db db:seed
+pnpm --filter @exilium/db db:seed
 
 echo "==> Reloading PM2 processes..."
 pm2 reload ecosystem.config.cjs --update-env

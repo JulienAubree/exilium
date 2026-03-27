@@ -2,7 +2,7 @@
 
 ## Contexte
 
-Exilium (clone OGame) est un jeu de strategie spatiale sur navigateur avec un frontend React 19 + Vite + Tailwind. Le site actuel a un responsive basique (sidebar overlay, grilles adaptatives) mais n'est pas mobile-first. L'objectif est de repartir sur une architecture mobile-first (Approche "App Shell") pour offrir une vraie jouabilite mobile et tablette, tout en rafraichissant le style visuel.
+Exilium (clone inspiré par OGame) est un jeu de strategie spatiale sur navigateur avec un frontend React 19 + Vite + Tailwind. Le site actuel a un responsive basique (sidebar overlay, grilles adaptatives) mais n'est pas mobile-first. L'objectif est de repartir sur une architecture mobile-first (Approche "App Shell") pour offrir une vraie jouabilite mobile et tablette, tout en rafraichissant le style visuel.
 
 ## Approche retenue
 

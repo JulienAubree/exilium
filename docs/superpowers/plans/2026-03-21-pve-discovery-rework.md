@@ -289,8 +289,8 @@ Replace the `refreshPool` function (lines 62-118) with `materializeDiscoveries`.
 Add imports at the top of `pve.service.ts`:
 
 ```typescript
-import { discoveryCooldown, depositSize, depositComposition } from '@ogame-clone/game-engine';
-import { missionCenterState } from '@ogame-clone/db';
+import { discoveryCooldown, depositSize, depositComposition } from '@exilium/game-engine';
+import { missionCenterState } from '@exilium/db';
 ```
 
 Add the new function inside the returned service object:

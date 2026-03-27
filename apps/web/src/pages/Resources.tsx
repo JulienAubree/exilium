@@ -4,7 +4,7 @@ import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildProductionConfig } from '@/lib/production-config';
-import { solarSatelliteEnergy } from '@ogame-clone/game-engine';
+import { solarSatelliteEnergy } from '@exilium/game-engine';
 import { Badge } from '@/components/ui/badge';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';

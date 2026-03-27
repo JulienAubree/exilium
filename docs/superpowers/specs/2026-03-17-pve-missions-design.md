@@ -5,7 +5,7 @@
 
 ## Summary
 
-A PvE mission layer for the ogame-clone project: mining asteroid belts and fighting pirates. Missions are dispatched via the existing fleet system, gated by a new "Mission Center" building, and displayed in a dedicated pool UI. Designed for casual-friendly progression with no secondary currency and no replacement of the core economy.
+A PvE mission layer for the exilium project: mining asteroid belts and fighting pirates. Missions are dispatched via the existing fleet system, gated by a new "Mission Center" building, and displayed in a dedicated pool UI. Designed for casual-friendly progression with no secondary currency and no replacement of the core economy.
 
 V1 ships **mining + combat PvE**. Exploration is deferred to V1.1.
 

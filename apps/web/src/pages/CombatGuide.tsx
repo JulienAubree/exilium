@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CombatReplay } from '@/components/combat-guide/CombatReplay';
-import { computeUnitFP, type FPConfig, type UnitCombatStats } from '@ogame-clone/game-engine';
+import { computeUnitFP, type FPConfig, type UnitCombatStats } from '@exilium/game-engine';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName, getDefenseName } from '@/lib/entity-names';
 import { CombatSimulator } from '@/components/combat-guide/CombatSimulator';

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
-import { users, type Database } from '@ogame-clone/db';
+import { users, type Database } from '@exilium/db';
 import { processImage, processPlanetImage, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { env } from '../../config/env.js';

@@ -4,7 +4,7 @@ import { GameImage } from '@/components/common/GameImage';
 import { getShipDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
 import { EnergieIcon } from '@/components/common/ResourceIcons';
 import { buildProductionConfig } from '@/lib/production-config';
-import { resolveBonus, solarSatelliteEnergy } from '@ogame-clone/game-engine';
+import { resolveBonus, solarSatelliteEnergy } from '@exilium/game-engine';
 import {
   ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
   SpeedIcon, PropulsionIcon, FuelIcon, CargoIcon,

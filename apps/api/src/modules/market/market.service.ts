@@ -1,9 +1,9 @@
 import { eq, and, ne, desc, lt, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
-import { marketOffers, planets, planetBuildings, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
-import { maxMarketOffers } from '@ogame-clone/game-engine';
+import { marketOffers, planets, planetBuildings, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
+import { maxMarketOffers } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { publishNotification } from '../notification/notification.publisher.js';

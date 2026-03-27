@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deploy the OGame clone on a bare-metal VPS with PM2, Caddy, PostgreSQL, and Redis — accessible via HTTP on the server's IP.
+**Goal:** Deploy the Exilium on a bare-metal VPS with PM2, Caddy, PostgreSQL, and Redis — accessible via HTTP on the server's IP.
 
 **Architecture:** Caddy serves the static frontend and proxies API/SSE requests to Fastify. PM2 manages the API server and BullMQ worker as separate processes. PostgreSQL and Redis run as native services.
 
@@ -38,7 +38,7 @@ Create `ecosystem.config.cjs` at the project root:
 module.exports = {
   apps: [
     {
-      name: 'ogame-api',
+      name: 'exilium-api',
       script: 'apps/api/dist/index.js',
       cwd: __dirname,
       node_args: '--env-file=.env',
@@ -47,7 +47,7 @@ module.exports = {
       max_memory_restart: '512M',
     },
     {
-      name: 'ogame-worker',
+      name: 'exilium-worker',
       script: 'apps/api/dist/workers/worker.js',
       cwd: __dirname,
       node_args: '--env-file=.env',
@@ -81,7 +81,7 @@ Create `Caddyfile` at the project root:
 
 ```caddyfile
 :80 {
-	root * /opt/ogame-clone/apps/web/dist
+	root * /opt/exilium/apps/web/dist
 	file_server
 
 	handle /trpc/* {
@@ -130,12 +130,12 @@ Create `scripts/setup-vps.sh`:
 set -e
 
 # ============================================================
-# OGame Clone — VPS Initial Setup
+# Exilium — VPS Initial Setup
 # Run once as root: sudo bash scripts/setup-vps.sh
 # ============================================================
 
 echo "========================================"
-echo "  OGame Clone — VPS Setup"
+echo "  Exilium — VPS Setup"
 echo "========================================"
 
 # --- PostgreSQL 16 ---
@@ -145,12 +145,12 @@ apt-get update -qq
 apt-get install -y -qq postgresql postgresql-contrib
 
 echo "==> Configuring PostgreSQL..."
-read -sp "Enter password for PostgreSQL user 'ogame': " DB_PASSWORD
+read -sp "Enter password for PostgreSQL user exilium: " DB_PASSWORD
 echo ""
 
-sudo -u postgres psql -c "CREATE USER ogame WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null || echo "User ogame already exists"
-sudo -u postgres psql -c "CREATE DATABASE ogame OWNER ogame;" 2>/dev/null || echo "Database ogame already exists"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ogame TO ogame;"
+sudo -u postgres psql -c "CREATE USER exilium WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null || echo "User exilium already exists"
+sudo -u postgres psql -c "CREATE DATABASE exilium OWNER exilium;" 2>/dev/null || echo "Database exilium already exists"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE exilium TO exilium;"
 
 systemctl enable postgresql
 systemctl start postgresql
@@ -184,10 +184,10 @@ echo "==> Installing PM2..."
 npm install -g pm2
 
 # --- Clone repo ---
-INSTALL_DIR="/opt/ogame-clone"
+INSTALL_DIR="/opt/exilium"
 if [ ! -d "$INSTALL_DIR" ]; then
   echo ""
-  read -p "Enter GitHub repo URL (e.g. git@github.com:user/ogame-clone.git): " REPO_URL
+  read -p "Enter GitHub repo URL (e.g. git@github.com:user/exilium.git): " REPO_URL
   echo "==> Cloning repo to ${INSTALL_DIR}..."
   git clone "$REPO_URL" "$INSTALL_DIR"
 else
@@ -202,7 +202,7 @@ if [ ! -f "${INSTALL_DIR}/.env" ]; then
   echo ""
 
   cat > "${INSTALL_DIR}/.env" << EOF
-DATABASE_URL=postgresql://ogame:${DB_PASSWORD}@localhost:5432/ogame
+DATABASE_URL=postgresql://exilium:${DB_PASSWORD}@localhost:5432/exilium
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=15m
@@ -262,7 +262,7 @@ Create `scripts/deploy.sh`:
 set -e
 
 # ============================================================
-# OGame Clone — Deploy Script
+# Exilium — Deploy Script
 # Run from project root: ./scripts/deploy.sh
 # ============================================================
 
@@ -314,7 +314,7 @@ Remove `WEB_PORT` (not used in production — Caddy serves the frontend). Add pr
 
 ```
 # Database
-DATABASE_URL=postgresql://ogame:ogame@localhost:5432/ogame
+DATABASE_URL=postgresql://exilium:exilium@localhost:5432/exilium
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -347,13 +347,13 @@ Expected: nothing to commit, working tree clean
 
 - [ ] **Step 2: Create private GitHub repo and push**
 
-Run: `gh repo create julienaubree/ogame-clone --private --source=. --push`
+Run: `gh repo create julienaubree/exilium --private --source=. --push`
 
 This creates the repo on GitHub and pushes all existing commits.
 
 - [ ] **Step 3: Verify**
 
-Run: `gh repo view julienaubree/ogame-clone`
+Run: `gh repo view julienaubree/exilium`
 Expected: shows the repo info
 
 ---
@@ -366,22 +366,22 @@ This task is manual — the user SSHs to the VPS and runs the scripts.
 
 ```bash
 ssh user@VPS_IP
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/julienaubree/ogame-clone/main/scripts/setup-vps.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/julienaubree/exilium/main/scripts/setup-vps.sh)"
 # OR: copy setup-vps.sh to the VPS and run it
 ```
 
 Alternatively, if git is already available:
 ```bash
 ssh user@VPS_IP
-git clone git@github.com:julienaubree/ogame-clone.git /opt/ogame-clone
-cd /opt/ogame-clone
+git clone git@github.com:julienaubree/exilium.git /opt/exilium
+cd /opt/exilium
 sudo bash scripts/setup-vps.sh
 ```
 
 - [ ] **Step 2: Run first deploy**
 
 ```bash
-cd /opt/ogame-clone
+cd /opt/exilium
 ./scripts/deploy.sh
 ```
 
@@ -390,7 +390,7 @@ cd /opt/ogame-clone
 ```bash
 # Check PM2 processes
 pm2 list
-# Expected: ogame-api (online), ogame-worker (online)
+# Expected: exilium-api (online), exilium-worker (online)
 
 # Check API health
 curl http://localhost:3000/health

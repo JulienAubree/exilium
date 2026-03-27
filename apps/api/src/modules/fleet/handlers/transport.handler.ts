@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { planets } from '@ogame-clone/db';
+import { planets } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration } from '../fleet.types.js';
 

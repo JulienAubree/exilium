@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Implémenter le combat OGame classique (rounds, rapid fire, débris), l'espionnage par sondes, les champs de débris et la mission recycleur.
+Implémenter le combat Exilium classique (rounds, rapid fire, débris), l'espionnage par sondes, les champs de débris et la mission recycleur.
 
 ---
 

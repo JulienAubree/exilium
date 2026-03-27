@@ -21,7 +21,7 @@ import { tutorialQuestDefinitions } from './schema/tutorial-quest-definitions.js
 import { missionDefinitions } from './schema/mission-definitions.js';
 import { uiLabels } from './schema/ui-labels.js';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://ogame:ogame@localhost:5432/ogame';
+const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://exilium:exilium@localhost:5432/exilium';
 const client = postgres(DATABASE_URL);
 const db = drizzle(client);
 

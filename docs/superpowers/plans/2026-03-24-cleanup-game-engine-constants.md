@@ -94,7 +94,7 @@ Delete file: `packages/game-engine/src/constants/progression.ts`
 Run: `cd packages/game-engine && npx vitest run`
 Expected: All 197 tests pass
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 6: Commit**
@@ -150,10 +150,10 @@ Expected: All tests pass (tests define their own local data, don't import from c
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors (API doesn't import these constants)
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: **ERRORS** in `entity-details.ts` — imports `COMBAT_STATS`, `RAPID_FIRE`, `SHIP_STATS` which no longer exist. This is expected and fixed in the next steps.
 
 - [ ] **Step 5: Commit (partial — game-engine clean)**
@@ -230,10 +230,10 @@ Expected: Build succeeds
 
 - [ ] **Step 4b: TS check apps (expect errors)**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: **ERRORS** in `entity-details.ts` AND `entity-names.ts` — imports of `BUILDINGS`, `RESEARCH`, `SHIPS`, `DEFENSES`, `BuildingId`, `ResearchId`, `ShipId`, `DefenseId` no longer exist. Fixed in Tasks 4-5.
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 5: Commit**
@@ -312,7 +312,7 @@ export function getEntityName(id: string, config?: GameConfigLike | null): strin
 
 - [ ] **Step 2: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: Errors remain in `entity-details.ts` only (fixed in next task). `entity-names.ts` should be clean.
 
 - [ ] **Step 3: Commit**
@@ -348,7 +348,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import { buildProductionConfig } from './production-config';
 
 // NEW:
@@ -356,7 +356,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import { buildProductionConfig } from './production-config';
 ```
 
@@ -567,7 +567,7 @@ export function getDefenseDetails(id: string, config?: GameConfigData): DefenseD
 
 - [ ] **Step 8: Run TS checks on all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 9: Commit**
@@ -601,7 +601,7 @@ Expected: All tests pass
 
 - [ ] **Step 3: TS check all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 4: Build game-engine**
@@ -611,10 +611,10 @@ Expected: Build succeeds
 
 - [ ] **Step 5: Verify no remaining constant imports**
 
-Run: `grep -rn "from.*game-engine.*constants" --include="*.ts" /Users/julienaubree/_projet/ogame-clone/ | grep -v node_modules | grep -v /dist/`
+Run: `grep -rn "from.*game-engine.*constants" --include="*.ts" /Users/julienaubree/_projet/exilium/ | grep -v node_modules | grep -v /dist/`
 Expected: No matches
 
-Run: `grep -rn "BUILDINGS\|SHIPS\b.*=\|RESEARCH\b.*=\|DEFENSES\|COMBAT_STATS\|SHIP_STATS\|RAPID_FIRE\|TUTORIAL_QUESTS" --include="*.ts" /Users/julienaubree/_projet/ogame-clone/apps/ | grep -v node_modules | grep -v /dist/ | grep -v ".test."`
+Run: `grep -rn "BUILDINGS\|SHIPS\b.*=\|RESEARCH\b.*=\|DEFENSES\|COMBAT_STATS\|SHIP_STATS\|RAPID_FIRE\|TUTORIAL_QUESTS" --include="*.ts" /Users/julienaubree/_projet/exilium/apps/ | grep -v node_modules | grep -v /dist/ | grep -v ".test."`
 Expected: No matches (or only local variables with same names in test files)
 
 - [ ] **Step 6: Verify constants directory is gone**

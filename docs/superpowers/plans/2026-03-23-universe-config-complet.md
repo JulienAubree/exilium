@@ -151,8 +151,8 @@ Replace the entire file. Key changes:
 
 ```typescript
 import { eq, and } from 'drizzle-orm';
-import { planets, users, debrisFields, allianceMembers, alliances } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, users, debrisFields, allianceMembers, alliances } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 export function createGalaxyService(db: Database, gameConfigService: GameConfigService) {
@@ -349,7 +349,7 @@ Remove `UNIVERSE_CONFIG` import and use permissive Zod bounds:
 
 ```typescript
 import { z } from 'zod';
-import { MissionType } from '@ogame-clone/shared';
+import { MissionType } from '@exilium/shared';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createFleetService } from './fleet.service.js';
 

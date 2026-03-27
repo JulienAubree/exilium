@@ -42,15 +42,15 @@
 - [ ] **Step 1: Add sharp and @fastify/multipart to API**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
-pnpm --filter @ogame-clone/api add sharp @fastify/multipart
-pnpm --filter @ogame-clone/api add -D @types/busboy
+cd /Users/julienaubree/_projet/exilium
+pnpm --filter @exilium/api add sharp @fastify/multipart
+pnpm --filter @exilium/api add -D @types/busboy
 ```
 
 - [ ] **Step 2: Verify installation**
 
 ```bash
-pnpm --filter @ogame-clone/api exec -- node -e "import('sharp').then(s => console.log('sharp OK', s.default.versions))"
+pnpm --filter @exilium/api exec -- node -e "import('sharp').then(s => console.log('sharp OK', s.default.versions))"
 ```
 
 Expected: prints sharp version info without error.
@@ -82,7 +82,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().default('postgresql://ogame:ogame@localhost:5432/ogame'),
+  DATABASE_URL: z.string().default('postgresql://exilium:exilium@localhost:5432/exilium'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_SECRET: z.string().min(8).default('change-me-in-production'),
   JWT_EXPIRES_IN: z.string().default('2h'),
@@ -100,8 +100,8 @@ Note: Default resolves from `apps/api/src/config/` → `apps/web/public/assets` 
 - [ ] **Step 2: Verify the API still starts**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
-pnpm --filter @ogame-clone/api dev
+cd /Users/julienaubree/_projet/exilium
+pnpm --filter @exilium/api dev
 ```
 
 Check logs for no errors. Ctrl+C to stop.
@@ -188,8 +188,8 @@ export async function processImage(
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
-pnpm --filter @ogame-clone/api typecheck
+cd /Users/julienaubree/_projet/exilium
+pnpm --filter @exilium/api typecheck
 ```
 
 Expected: no errors.
@@ -218,7 +218,7 @@ Create `apps/api/src/modules/admin/asset-upload.route.ts`:
 import type { FastifyInstance } from 'fastify';
 import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
-import { users, type Database } from '@ogame-clone/db';
+import { users, type Database } from '@exilium/db';
 import { processImage, isValidCategory } from '../../lib/image-processing.js';
 import { env } from '../../config/env.js';
 
@@ -291,7 +291,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-pnpm --filter @ogame-clone/api typecheck
+pnpm --filter @exilium/api typecheck
 ```
 
 Expected: no errors.
@@ -343,7 +343,7 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import Redis from 'ioredis';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { buildAppRouter } from './trpc/app-router.js';
 import { createContext } from './trpc/context.js';
 import { env } from './config/env.js';
@@ -389,7 +389,7 @@ try {
 - [ ] **Step 2: Verify API starts and endpoint is reachable**
 
 ```bash
-pnpm --filter @ogame-clone/api dev
+pnpm --filter @exilium/api dev
 ```
 
 In another terminal:
@@ -430,7 +430,7 @@ proxy: {
 - [ ] **Step 2: Verify admin dev server starts**
 
 ```bash
-pnpm --filter @ogame-clone/admin dev
+pnpm --filter @exilium/admin dev
 ```
 
 Check logs for no errors. Ctrl+C to stop.
@@ -563,7 +563,7 @@ export function AdminImageUpload({ category, entityId, entityName }: AdminImageU
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-pnpm --filter @ogame-clone/admin typecheck
+pnpm --filter @exilium/admin typecheck
 ```
 
 Expected: no errors (or only pre-existing ones unrelated to this file).
@@ -761,13 +761,13 @@ Update `Caddyfile` to:
 ```
 exilium-game.com, www.exilium-game.com {
 	route /assets/* {
-		@uploads file /opt/ogame-clone/uploads{path}
+		@uploads file /opt/exilium/uploads{path}
 		handle @uploads {
-			root * /opt/ogame-clone/uploads
+			root * /opt/exilium/uploads
 			file_server
 		}
 		handle {
-			root * /opt/ogame-clone/apps/web/dist
+			root * /opt/exilium/apps/web/dist
 			file_server
 		}
 	}
@@ -787,7 +787,7 @@ exilium-game.com, www.exilium-game.com {
 	}
 
 	handle {
-		root * /opt/ogame-clone/apps/web/dist
+		root * /opt/exilium/apps/web/dist
 		try_files {path} /index.html
 		file_server
 	}
@@ -803,19 +803,19 @@ admin.exilium-game.com {
 	}
 
 	route /assets/* {
-		@uploads file /opt/ogame-clone/uploads{path}
+		@uploads file /opt/exilium/uploads{path}
 		handle @uploads {
-			root * /opt/ogame-clone/uploads
+			root * /opt/exilium/uploads
 			file_server
 		}
 		handle {
-			root * /opt/ogame-clone/apps/web/dist
+			root * /opt/exilium/apps/web/dist
 			file_server
 		}
 	}
 
 	handle {
-		root * /opt/ogame-clone/apps/admin/dist
+		root * /opt/exilium/apps/admin/dist
 		try_files {path} /index.html
 		file_server
 	}
@@ -826,7 +826,7 @@ Key changes:
 - `exilium-game.com`: `route /assets/*` block BEFORE the existing handles, with uploads-first + dist-fallback
 - `admin.exilium-game.com`: `handle /admin/*` proxy to API + `route /assets/*` with same uploads→dist fallback
 
-Note: The spec references `/opt/ogame-clone/current/apps/web/dist` but the actual deploy uses `/opt/ogame-clone/apps/web/dist` (no `current` symlink). The plan follows the existing Caddyfile convention.
+Note: The spec references `/opt/exilium/current/apps/web/dist` but the actual deploy uses `/opt/exilium/apps/web/dist` (no `current` symlink). The plan follows the existing Caddyfile convention.
 
 - [ ] **Step 2: Commit**
 
@@ -848,7 +848,7 @@ In `scripts/deploy.sh`, add after the `echo "==> Loading environment variables..
 
 ```bash
 echo "==> Ensuring uploads directory..."
-UPLOADS_DIR="/opt/ogame-clone/uploads/assets"
+UPLOADS_DIR="/opt/exilium/uploads/assets"
 mkdir -p "$UPLOADS_DIR"/{buildings,research,ships,defenses}
 
 # One-shot migration: copy existing assets from web dist to uploads
@@ -874,10 +874,10 @@ git commit -m "feat: add uploads dir creation and asset migration to deploy scri
 
 - [ ] **Step 1: Document the env var for deployment**
 
-When deploying, add to the server's `.env` file at `/opt/ogame-clone/.env`:
+When deploying, add to the server's `.env` file at `/opt/exilium/.env`:
 
 ```
-ASSETS_DIR=/opt/ogame-clone/uploads/assets
+ASSETS_DIR=/opt/exilium/uploads/assets
 ```
 
 Without this, the API in production would use the default (relative to source), which points to `apps/web/public/assets` — uploads would go to the wrong directory.
@@ -893,7 +893,7 @@ If an `.env.example` file exists in the project root, add `ASSETS_DIR=` as docum
 - [ ] **Step 1: Typecheck all packages**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone
+cd /Users/julienaubree/_projet/exilium
 pnpm exec turbo typecheck
 ```
 
@@ -903,12 +903,12 @@ Expected: all packages pass.
 
 In terminal 1:
 ```bash
-pnpm --filter @ogame-clone/api dev
+pnpm --filter @exilium/api dev
 ```
 
 In terminal 2:
 ```bash
-pnpm --filter @ogame-clone/admin dev
+pnpm --filter @exilium/admin dev
 ```
 
 Open `http://localhost:5174/buildings` in browser. Verify:

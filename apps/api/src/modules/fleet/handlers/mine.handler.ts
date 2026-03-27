@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@ogame-clone/db';
-import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@ogame-clone/game-engine';
+import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@exilium/db';
+import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { buildShipStatsMap, formatDuration } from '../fleet.types.js';
 import { findShipByRole } from '../../../lib/config-helpers.js';

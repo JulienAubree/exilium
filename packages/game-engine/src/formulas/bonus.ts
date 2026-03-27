@@ -10,7 +10,7 @@ export interface BonusDefinition {
  * Resolves the combined multiplier for a given stat + optional category.
  *
  * Matching: bonus.stat === stat AND (bonus.category is null OR bonus.category === category).
- * Buildings: 1 / (1 + level) — diminishing returns (OGame classic).
+ * Buildings: 1 / (1 + level) — diminishing returns (Exilium classic).
  * Research: 1 + percentPerLevel / 100 * level — linear scaling.
  * Combined: product of all matching modifiers, clamped to min 0.01.
  * Returns 1.0 if no bonus matches or all source levels are 0.

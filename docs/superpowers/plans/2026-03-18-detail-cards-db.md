@@ -61,7 +61,7 @@ In `packages/db/drizzle/meta/_journal.json`, add entry at idx 4:
 
 - [ ] **Step 4: Build DB package and verify**
 
-Run: `pnpm --filter @ogame-clone/db build`
+Run: `pnpm --filter @exilium/db build`
 Expected: clean build, no errors
 
 - [ ] **Step 5: Commit**
@@ -232,7 +232,7 @@ At line ~297 (inside `defenses[d.id] = {`), add before `prerequisites`:
 
 - [ ] **Step 9: Build and verify**
 
-Run: `pnpm --filter @ogame-clone/db build && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `pnpm --filter @exilium/db build && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: no errors
 
 - [ ] **Step 10: Commit**

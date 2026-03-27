@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import Redis from 'ioredis';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { buildAppRouter } from './trpc/app-router.js';
 import { createContext } from './trpc/context.js';
 import { env } from './config/env.js';

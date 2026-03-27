@@ -77,7 +77,7 @@ Si aucun bonus ne s'applique (ex: aucun bâtiment avec stat `building_time` dans
 
 Toujours 6 lignes : du niveau actuel du joueur à niveau actuel + 5. La ligne du niveau actuel est mise en évidence (fond distinct + marqueur ◄).
 
-Les valeurs de production sont calculées via les formules existantes de `@ogame-clone/game-engine`, déjà importées dans `Buildings.tsx` : `mineraiProduction`, `siliciumProduction`, `hydrogeneProduction`, `solarPlantEnergy`, `mineraiMineEnergy`, `siliciumMineEnergy`, `hydrogeneSynthEnergy`, `storageCapacity`. Ces formules prennent un niveau en paramètre et retournent la valeur brute.
+Les valeurs de production sont calculées via les formules existantes de `@exilium/game-engine`, déjà importées dans `Buildings.tsx` : `mineraiProduction`, `siliciumProduction`, `hydrogeneProduction`, `solarPlantEnergy`, `mineraiMineEnergy`, `siliciumMineEnergy`, `hydrogeneSynthEnergy`, `storageCapacity`. Ces formules prennent un niveau en paramètre et retournent la valeur brute.
 
 **Mines (minerai, silicium) et Synthétiseur d'hydrogène :**
 

@@ -2,12 +2,12 @@
 set -e
 
 # ============================================================
-# OGame Clone — VPS Initial Setup
+# Exilium — VPS Initial Setup
 # Run once as root: sudo bash scripts/setup-vps.sh
 # ============================================================
 
 echo "========================================"
-echo "  OGame Clone — VPS Setup"
+echo "  Exilium — VPS Setup"
 echo "========================================"
 
 # --- PostgreSQL 16 ---
@@ -17,12 +17,12 @@ apt-get update -qq
 apt-get install -y -qq postgresql postgresql-contrib
 
 echo "==> Configuring PostgreSQL..."
-read -sp "Enter password for PostgreSQL user 'ogame': " DB_PASSWORD
+read -sp "Enter password for PostgreSQL user 'exilium': " DB_PASSWORD
 echo ""
 
-sudo -u postgres psql -c "CREATE USER ogame WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null || echo "User ogame already exists"
-sudo -u postgres psql -c "CREATE DATABASE ogame OWNER ogame;" 2>/dev/null || echo "Database ogame already exists"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ogame TO ogame;"
+sudo -u postgres psql -c "CREATE USER exilium WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null || echo "User exilium already exists"
+sudo -u postgres psql -c "CREATE DATABASE exilium OWNER exilium;" 2>/dev/null || echo "Database exilium already exists"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE exilium TO exilium;"
 
 systemctl enable postgresql
 systemctl start postgresql
@@ -55,10 +55,10 @@ echo "==> Installing PM2..."
 npm install -g pm2
 
 # --- Clone repo ---
-INSTALL_DIR="/opt/ogame-clone"
+INSTALL_DIR="/opt/exilium"
 if [ ! -d "$INSTALL_DIR" ]; then
   echo ""
-  read -p "Enter GitHub repo URL (e.g. git@github.com:user/ogame-clone.git): " REPO_URL
+  read -p "Enter GitHub repo URL (e.g. git@github.com:user/exilium.git): " REPO_URL
   echo "==> Cloning repo to ${INSTALL_DIR}..."
   git clone "$REPO_URL" "$INSTALL_DIR"
 else
@@ -73,7 +73,7 @@ if [ ! -f "${INSTALL_DIR}/.env" ]; then
   echo ""
 
   cat > "${INSTALL_DIR}/.env" << EOF
-DATABASE_URL=postgresql://ogame:${DB_PASSWORD}@localhost:5432/ogame
+DATABASE_URL=postgresql://exilium:${DB_PASSWORD}@localhost:5432/exilium
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=15m

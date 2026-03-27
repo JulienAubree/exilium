@@ -1,13 +1,13 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetTypes, planetBuildings, planetShips } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, planetTypes, planetBuildings, planetShips } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateResources,
   calculateProductionRates,
   type ResourceCost,
   type PlanetTypeBonus,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

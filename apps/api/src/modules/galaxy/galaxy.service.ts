@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
-import { planets, users, debrisFields, allianceMembers, alliances } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, users, debrisFields, allianceMembers, alliances } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 export function createGalaxyService(db: Database, gameConfigService: GameConfigService) {

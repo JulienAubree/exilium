@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { getResearchDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
-import { resolveBonus, calculateSpyReport, calculateDetectionChance, calculateAttackDetection } from '@ogame-clone/game-engine';
+import { resolveBonus, calculateSpyReport, calculateDetectionChance, calculateAttackDetection } from '@exilium/game-engine';
 
 const COMBAT_STATS = new Set(['weapons', 'shielding', 'armor']);
 

@@ -48,7 +48,7 @@ packages/shared/src/types/
 Create `apps/api/src/modules/fleet/fleet.types.ts` with:
 
 ```typescript
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -56,7 +56,7 @@ import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
 import type { Queue } from 'bullmq';
-import type { ShipStats } from '@ogame-clone/game-engine';
+import type { ShipStats } from '@exilium/game-engine';
 
 // ── Input types ──
 
@@ -199,7 +199,7 @@ export async function getCombatTechs(db: Database, userId: string): Promise<Comb
 }
 ```
 
-**Note:** Import `CombatTechs` from `@ogame-clone/game-engine`.
+**Note:** Import `CombatTechs` from `@exilium/game-engine`.
 
 - [ ] **Step 2: Verify build**
 
@@ -247,7 +247,7 @@ If any references to `MissionType.Espionage` or `MissionType.Expedition` exist, 
 
 - [ ] **Step 3: Rebuild shared package**
 
-Run: `npx turbo build --filter=@ogame-clone/shared`
+Run: `npx turbo build --filter=@exilium/shared`
 
 - [ ] **Step 4: Verify full build**
 

@@ -1,11 +1,11 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ogame-postgres
+    container_name: exilium-postgres
     environment:
-      POSTGRES_USER: ogame
-      POSTGRES_PASSWORD: ogame
-      POSTGRES_DB: ogame
+      POSTGRES_USER: exilium
+      POSTGRES_PASSWORD: exilium
+      POSTGRES_DB: exilium
     ports:
       - "5432:5432"
     volumes:
@@ -13,7 +13,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ogame-redis
+    container_name: exilium-redis
     ports:
       - "6379:6379"
     volumes:

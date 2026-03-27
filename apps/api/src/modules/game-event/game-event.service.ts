@@ -1,7 +1,7 @@
 // apps/api/src/modules/game-event/game-event.service.ts
 import { eq, and, desc, lt, sql, inArray } from 'drizzle-orm';
-import { gameEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { gameEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export type GameEventType = 'building-done' | 'research-done' | 'shipyard-done' | 'fleet-arrived' | 'fleet-returned' | 'pve-mission-done' | 'tutorial-quest-done' | 'friend-request' | 'friend-accepted' | 'friend-declined';
 

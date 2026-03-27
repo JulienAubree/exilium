@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the OGame-style combat engine (rapid fire, random targeting, armor-as-HP) with a new system based on shield/armor-reduction/hull mechanics, ship categories, target priority, and deterministic shot counts.
+**Goal:** Replace the Exilium-style combat engine (rapid fire, random targeting, armor-as-HP) with a new system based on shield/armor-reduction/hull mechanics, ship categories, target priority, and deterministic shot counts.
 
 **Architecture:** The combat engine (`combat.ts`) is rewritten with new interfaces (5 stats, categories, target priority, simultaneous resolution). The game config schema gains new columns (shotCount, hull, armor-as-reduction, categoryId for combat) and loses the rapid_fire table. Handlers and frontend adapt to the new interfaces.
 
@@ -178,7 +178,7 @@ export function repairDefenses(
 
 - [ ] **Step 2: Verify file compiles**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit --project packages/game-engine/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit --project packages/game-engine/tsconfig.json`
 
 Expected: No type errors in combat.ts (callers will break — that's expected and handled in later tasks).
 
@@ -283,7 +283,7 @@ describe('simulateCombat', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
 
 Expected: FAIL — `simulateCombat` throws "Not implemented".
 
@@ -430,7 +430,7 @@ describe('damage resolution', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
 
 - [ ] **Step 3: Implement fireShot and fireSalvo**
 
@@ -720,7 +720,7 @@ export function repairDefenses(
 
 - [ ] **Step 5: Run tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
 
 Expected: All tests PASS.
 
@@ -834,7 +834,7 @@ describe('combat stats tracking', () => {
 
 - [ ] **Step 2: Run all tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run packages/game-engine/src/formulas/combat.test.ts`
 
 Expected: All tests PASS.
 
@@ -908,7 +908,7 @@ import { pgTable, uuid, smallint, timestamp, numeric, jsonb, pgEnum, index, varc
 
 - [ ] **Step 6: Generate Drizzle migration**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx drizzle-kit generate`
+Run: `cd /Users/julienaubree/_projet/exilium && npx drizzle-kit generate`
 
 **CRITICAL — Column renames:** Drizzle will generate DROP+ADD instead of RENAME for column name changes. You MUST manually edit the generated SQL migration file to use `ALTER TABLE ... RENAME COLUMN` instead. Specifically:
 - `planet_ships`: `light_fighter` → `interceptor`, `heavy_fighter` → `frigate`, `battleship` → `battlecruiser`
@@ -1082,7 +1082,7 @@ The new `CombatResult` has the same `attackerLosses`/`defenderLosses`/`debris`/`
 
 - [ ] **Step 4: Run the full test suite**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run`
 
 Fix any compilation errors.
 
@@ -1117,7 +1117,7 @@ The handler processes the combat result to build reports. Update it to handle:
 
 - [ ] **Step 3: Run tests**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run`
 
 - [ ] **Step 4: Commit**
 
@@ -1157,7 +1157,7 @@ In `entity-details.ts`, `ShipDetailContent.tsx`, `DefenseDetailContent.tsx`:
 
 - [ ] **Step 5: Run build to check for compilation errors**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npm run build`
+Run: `cd /Users/julienaubree/_projet/exilium && npm run build`
 
 - [ ] **Step 6: Commit**
 
@@ -1244,7 +1244,7 @@ Also in `config-helpers.test.ts`, remove any `rapidFire` mock references.
 
 - [ ] **Step 2: Run test suite**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run`
 
 Expected: All tests pass.
 
@@ -1300,7 +1300,7 @@ git commit -m "fix(migration): migrate JSONB ship keys in fleet events, handle o
 
 - [ ] **Step 1: Run migration on dev database**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx drizzle-kit push` (or `migrate` depending on project setup)
+Run: `cd /Users/julienaubree/_projet/exilium && npx drizzle-kit push` (or `migrate` depending on project setup)
 
 - [ ] **Step 2: Re-seed game config**
 
@@ -1308,13 +1308,13 @@ Run the seed script to populate new ship/defense stats and combat config.
 
 - [ ] **Step 3: Run full test suite**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx vitest run`
+Run: `cd /Users/julienaubree/_projet/exilium && npx vitest run`
 
 Expected: All tests pass.
 
 - [ ] **Step 4: Run full build**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npm run build`
+Run: `cd /Users/julienaubree/_projet/exilium && npm run build`
 
 Expected: No compilation errors.
 

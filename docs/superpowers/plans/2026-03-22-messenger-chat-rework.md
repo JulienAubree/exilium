@@ -51,8 +51,8 @@
 ```ts
 // apps/api/src/modules/user/user.service.ts
 import { ilike, ne, and } from 'drizzle-orm';
-import { users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createUserService(db: Database) {
   return {

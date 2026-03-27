@@ -7,7 +7,7 @@ import { MissionIcon } from './MissionIcon';
 import { Button } from '@/components/ui/button';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName } from '@/lib/entity-names';
-import { resolveBonus } from '@ogame-clone/game-engine';
+import { resolveBonus } from '@exilium/game-engine';
 
 export const fmt = (n: number) => n.toLocaleString('fr-FR');
 

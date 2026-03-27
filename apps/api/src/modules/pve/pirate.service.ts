@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { pirateTemplates } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { pirateTemplates } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   simulateCombat,
   computeFleetFP,
@@ -13,7 +13,7 @@ import {
   type ShipCombatConfig,
   type UnitCombatStats,
   type FPConfig,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 interface PirateArrivalResult {

@@ -2,7 +2,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import { buildProductionConfig } from './production-config';
 
 // GameConfig shape from the API

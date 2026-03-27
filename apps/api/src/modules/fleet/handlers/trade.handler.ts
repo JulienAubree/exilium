@@ -1,7 +1,7 @@
 import { eq, and, ne } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { marketOffers, planets } from '@ogame-clone/db';
-import { calculateCommission, totalCargoCapacity } from '@ogame-clone/game-engine';
+import { marketOffers, planets } from '@exilium/db';
+import { calculateCommission, totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
 import { publishNotification } from '../../notification/notification.publisher.js';

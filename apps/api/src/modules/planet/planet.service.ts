@@ -1,12 +1,12 @@
 import { eq, asc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, planetBuildings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
   calculateMinTemp,
   calculateMaxFields,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getRandomPlanetImageIndex } from '../../lib/planet-image.util.js';
 import { findPlanetTypeByRole } from '../../lib/config-helpers.js';

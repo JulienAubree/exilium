@@ -1,5 +1,5 @@
 /**
- * OGame planet temperature formula.
+ * Planet temperature formula.
  * max_temp = 40 + (8 - position) * 30 + randomOffset
  * randomOffset should be in range [-20, 20]
  */

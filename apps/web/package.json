@@ -1,5 +1,5 @@
 {
-  "name": "@ogame-clone/web",
+  "name": "@exilium/web",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -22,9 +22,9 @@
     "tailwind-merge": "^2.6.0",
     "lucide-react": "^0.474.0",
     "zustand": "^5.0.3",
-    "@ogame-clone/shared": "workspace:*",
-    "@ogame-clone/api": "workspace:*",
-    "@ogame-clone/game-engine": "workspace:*"
+    "@exilium/shared": "workspace:*",
+    "@exilium/api": "workspace:*",
+    "@exilium/game-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.8",

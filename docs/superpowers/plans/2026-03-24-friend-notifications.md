@@ -118,7 +118,7 @@ const friendService = createFriendService(db, redis, gameEventService);
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 5: Commit and push**
@@ -196,7 +196,7 @@ In the same file, add 3 cases to `eventNavigationTarget()`:
 
 - [ ] **Step 5: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 6: Commit and push**
@@ -219,7 +219,7 @@ git push
 
 - [ ] **Step 1: TS check all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 2: Run API tests**

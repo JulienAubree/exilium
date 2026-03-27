@@ -305,7 +305,7 @@ Add to `GameConfig` interface:
 
 - [ ] **Step 2: Load bonus definitions in `getFullConfig()`**
 
-Add `bonusDefinitions` to the import from `@ogame-clone/db`.
+Add `bonusDefinitions` to the import from `@exilium/db`.
 
 Add `bonusRows` to the `Promise.all` parallel load:
 
@@ -496,7 +496,7 @@ cd packages/game-engine && pnpm vitest run src/formulas/building-cost.test.ts
 
 - [ ] **Step 5: Update `building.service.ts` callers**
 
-Add `resolveBonus` to import from `@ogame-clone/game-engine`.
+Add `resolveBonus` to import from `@exilium/game-engine`.
 
 In `listBuildings()` (line 52), replace:
 ```typescript
@@ -545,7 +545,7 @@ Note: old formula was `/ (1000 * (1 + labLevel))` which equals `/ 1000 * 1/(1+la
 
 - [ ] **Step 2: Update `research.service.ts` callers**
 
-Add `resolveBonus` to import from `@ogame-clone/game-engine`.
+Add `resolveBonus` to import from `@exilium/game-engine`.
 
 In `listResearch()` (lines 53-54), replace:
 ```typescript
@@ -595,7 +595,7 @@ export function defenseTime(def: UnitCostDef, bonusMultiplier: number): number {
 
 Add imports:
 ```typescript
-import { resolveBonus } from '@ogame-clone/game-engine';
+import { resolveBonus } from '@exilium/game-engine';
 import type { ShipConfig, GameConfig } from '../admin/game-config.service.js';
 ```
 
@@ -695,7 +695,7 @@ The `speedMultipliers` is `Record<shipId, number>` — precomputed from `resolve
 
 - [ ] **Step 2: Update `fleet.service.ts`**
 
-Add `resolveBonus` to import from `@ogame-clone/game-engine`.
+Add `resolveBonus` to import from `@exilium/game-engine`.
 
 Add a `getResearchLevels()` helper method:
 
@@ -853,7 +853,7 @@ In `apps/api/src/modules/fleet/fleet.types.ts`:
 
 Replace the import of `CombatTechs` with `CombatMultipliers`:
 ```typescript
-import type { CombatMultipliers, ShipStats } from '@ogame-clone/game-engine';
+import type { CombatMultipliers, ShipStats } from '@exilium/game-engine';
 ```
 
 Replace the `getCombatTechs()` helper with `getCombatMultipliers()`:
@@ -880,7 +880,7 @@ export async function getCombatMultipliers(
     armor: research?.armor ?? 0,
   };
 
-  const { resolveBonus } = await import('@ogame-clone/game-engine');
+  const { resolveBonus } = await import('@exilium/game-engine');
   return {
     weapons: resolveBonus('weapons', null, levels, bonusDefs),
     shielding: resolveBonus('shielding', null, levels, bonusDefs),
@@ -892,8 +892,8 @@ export async function getCombatMultipliers(
 Actually, to avoid dynamic import, add `resolveBonus` as a parameter or import it statically at the top. Better approach — import `resolveBonus` at the top of `fleet.types.ts`:
 
 ```typescript
-import { resolveBonus } from '@ogame-clone/game-engine';
-import type { CombatMultipliers, ShipStats } from '@ogame-clone/game-engine';
+import { resolveBonus } from '@exilium/game-engine';
+import type { CombatMultipliers, ShipStats } from '@exilium/game-engine';
 ```
 
 Then the function becomes:
@@ -977,7 +977,7 @@ Update the call to `processPirateArrival` (line 32-33):
 Change the `processPirateArrival` method signature to accept `CombatMultipliers` instead of `CombatTechs`:
 
 ```typescript
-import { simulateCombat, resolveBonus, type CombatMultipliers, type UnitCombatStats } from '@ogame-clone/game-engine';
+import { simulateCombat, resolveBonus, type CombatMultipliers, type UnitCombatStats } from '@exilium/game-engine';
 ```
 
 ```typescript
@@ -1042,7 +1042,7 @@ Remove the deprecated `extractionDuration` function.
 
 - [ ] **Step 2: Update `mine.handler.ts`**
 
-Add `resolveBonus` to imports from `@ogame-clone/game-engine`.
+Add `resolveBonus` to imports from `@exilium/game-engine`.
 
 In `processProspectDone()`, replace:
 ```typescript
@@ -1213,7 +1213,7 @@ Expected: All tests pass.
 - [ ] **Step 2: TypeScript check all packages**
 
 ```bash
-cd /Users/julienaubree/_projet/ogame-clone && pnpm tsc --noEmit -p packages/game-engine/tsconfig.json && pnpm tsc --noEmit -p apps/api/tsconfig.json && pnpm tsc --noEmit -p apps/admin/tsconfig.json
+cd /Users/julienaubree/_projet/exilium && pnpm tsc --noEmit -p packages/game-engine/tsconfig.json && pnpm tsc --noEmit -p apps/api/tsconfig.json && pnpm tsc --noEmit -p apps/admin/tsconfig.json
 ```
 
 Expected: No type errors.

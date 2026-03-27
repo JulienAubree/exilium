@@ -1,6 +1,6 @@
 import { lte, eq, and } from 'drizzle-orm';
-import { buildQueue, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { buildQueue, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { buildCompletionQueue, fleetQueue } from '../queues/queues.js';
 
 const fleetPhaseToJobName: Record<string, string> = {

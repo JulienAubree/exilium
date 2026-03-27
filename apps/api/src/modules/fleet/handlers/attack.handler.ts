@@ -1,8 +1,8 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, debrisFields } from '@ogame-clone/db';
-import { simulateCombat, totalCargoCapacity, computeFleetFP } from '@ogame-clone/game-engine';
-import type { CombatConfig, ShipCategory, CombatInput, RoundResult, UnitCombatStats, FPConfig } from '@ogame-clone/game-engine';
+import { planets, planetShips, planetDefenses, debrisFields } from '@exilium/db';
+import { simulateCombat, totalCargoCapacity, computeFleetFP } from '@exilium/game-engine';
+import type { CombatConfig, ShipCategory, CombatInput, RoundResult, UnitCombatStats, FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers, formatDuration } from '../fleet.types.js';
 

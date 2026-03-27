@@ -111,11 +111,11 @@ export * from './alliances.js';
 
 - [ ] **Step 4: Generate migration**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm drizzle-kit generate`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm drizzle-kit generate`
 
 - [ ] **Step 5: Typecheck**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && pnpm turbo typecheck --filter=@ogame-clone/db`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && pnpm turbo typecheck --filter=@exilium/db`
 
 - [ ] **Step 6: Commit**
 
@@ -140,8 +140,8 @@ Create `apps/api/src/modules/alliance/alliance.service.ts` with the full impleme
 ```typescript
 import { eq, and, ilike, or, sql, asc, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { alliances, allianceMembers, allianceInvitations, allianceApplications, users, rankings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { alliances, allianceMembers, allianceInvitations, allianceApplications, users, rankings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { createMessageService } from '../message/message.service.js';
 
 type MessageService = ReturnType<typeof createMessageService>;
@@ -632,7 +632,7 @@ In `apps/api/src/modules/galaxy/galaxy.service.ts`, add imports:
 
 ```typescript
 import { eq, and } from 'drizzle-orm';
-import { planets, users, debrisFields, allianceMembers, alliances } from '@ogame-clone/db';
+import { planets, users, debrisFields, allianceMembers, alliances } from '@exilium/db';
 ```
 
 Replace the existing query (lines 8-19) to left join alliance data:
@@ -657,7 +657,7 @@ const systemPlanets = await db
 
 - [ ] **Step 6: Typecheck**
 
-Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && pnpm turbo typecheck --filter=@ogame-clone/api`
+Run: `export PATH="/usr/local/opt/node@22/bin:$PATH" && pnpm turbo typecheck --filter=@exilium/api`
 
 - [ ] **Step 7: Commit**
 

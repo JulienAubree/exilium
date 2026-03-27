@@ -69,7 +69,7 @@ export interface ShipStats {
 }
 
 /**
- * Base stats per ship type (OGame classic values).
+ * Base stats per ship type (Exilium classic values).
  * Speed is base speed at drive tech level 0.
  * Fuel consumption is base deuterium per unit for travel.
  */
@@ -269,7 +269,7 @@ describe('totalCargoCapacity', () => {
 - [ ] **Step 2: Lancer les tests — vérifier qu'ils échouent**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: FAIL — `fleet.js` not found
 
@@ -326,7 +326,7 @@ export function fleetSpeed(ships: Record<string, number>, techs: DriveTechs): nu
 
 /**
  * Distance between two coordinates.
- * OGame formula:
+ * Exilium formula:
  * - Same position: 5
  * - Same system, different position: 1000 + 5 * |p1 - p2|
  * - Same galaxy, different system: 2700 + 95 * |s1 - s2|
@@ -362,7 +362,7 @@ export function travelTime(
 /**
  * Total deuterium fuel consumption for a fleet traveling a given distance.
  * Formula per ship type: baseFuel * count * (distance / 35000) * (duration + 10) / (duration - 10)
- * (Simplified OGame approximation, minimum 1)
+ * (Simplified Exilium approximation, minimum 1)
  */
 export function fuelConsumption(
   ships: Record<string, number>,
@@ -406,7 +406,7 @@ export * from './formulas/fleet.js';
 - [ ] **Step 5: Lancer les tests — vérifier que tout passe**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: ALL PASS
 
@@ -498,8 +498,8 @@ git commit -m "feat(db): add fleet_events schema"
 ```typescript
 // apps/api/src/modules/galaxy/galaxy.service.ts
 import { eq, and } from 'drizzle-orm';
-import { planets, users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createGalaxyService(db: Database) {
   return {
@@ -573,8 +573,8 @@ git commit -m "feat(api): add galaxy service and router"
 // apps/api/src/modules/fleet/fleet.service.ts
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { planets, planetShips, fleetEvents, userResearch } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   fleetSpeed,
   travelTime,
@@ -583,7 +583,7 @@ import {
   totalCargoCapacity,
   type ShipId,
   SHIP_STATS,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { Queue } from 'bullmq';
 
@@ -1123,7 +1123,7 @@ git commit -m "feat(api): add fleet router"
 ```typescript
 // apps/api/src/workers/fleet-arrival.worker.ts
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
@@ -1160,7 +1160,7 @@ export function startFleetArrivalWorker(db: ReturnType<typeof createDb>) {
 ```typescript
 // apps/api/src/workers/fleet-return.worker.ts
 import { Worker } from 'bullmq';
-import { createDb } from '@ogame-clone/db';
+import { createDb } from '@exilium/db';
 import { createResourceService } from '../modules/resource/resource.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
@@ -1263,7 +1263,7 @@ import { fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
 Ajouter après le scan buildQueue existant :
 ```typescript
 // Fleet events catchup
-const { fleetEvents: fleetEventsTable } = await import('@ogame-clone/db');
+const { fleetEvents: fleetEventsTable } = await import('@exilium/db');
 const expiredFleets = await db
   .select()
   .from(fleetEventsTable)
@@ -1286,8 +1286,8 @@ for (const fleet of expiredFleets) {
 Remplacement complet de event-catchup.ts :
 ```typescript
 import { lte, eq, and } from 'drizzle-orm';
-import { buildQueue, fleetEvents } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { buildQueue, fleetEvents } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import { buildingCompletionQueue, researchCompletionQueue, shipyardCompletionQueue, fleetArrivalQueue, fleetReturnQueue } from '../queues/queue.js';
 
 export async function eventCatchup(db: Database) {
@@ -1940,21 +1940,21 @@ git commit -m "feat(web): add Movements page with fleet tracking"
 - [ ] **Step 1: Turbo typecheck**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck
 ```
 Expected: PASS
 
 - [ ] **Step 2: Turbo lint**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo lint
 ```
 Expected: PASS (fix any issues)
 
 - [ ] **Step 3: Turbo test**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test
 ```
 Expected: ALL PASS — tous les tests existants + fleet formulas
 

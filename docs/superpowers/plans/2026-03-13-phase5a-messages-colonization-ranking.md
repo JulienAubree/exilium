@@ -177,7 +177,7 @@ describe('calculateTotalPoints', () => {
 - [ ] **Step 2: Lancer les tests — vérifier qu'ils échouent**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: FAIL — `ranking.js` not found
 
@@ -289,7 +289,7 @@ export * from './formulas/ranking.js';
 - [ ] **Step 5: Lancer les tests — vérifier que tout passe**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm --filter @ogame-clone/game-engine test -- --run
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm --filter @exilium/game-engine test -- --run
 ```
 Expected: ALL PASS
 
@@ -400,8 +400,8 @@ git commit -m "feat(db): add rankings schema"
 // apps/api/src/modules/message/message.service.ts
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { messages, users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { messages, users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createMessageService(db: Database) {
   return {
@@ -639,15 +639,15 @@ git commit -m "feat(api): add message router"
 ```typescript
 // apps/api/src/modules/ranking/ranking.service.ts
 import { eq, desc, sql } from 'drizzle-orm';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { users, planets, userResearch, planetShips, planetDefenses, rankings } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import {
   calculateBuildingPoints,
   calculateResearchPoints,
   calculateFleetPoints,
   calculateDefensePoints,
   calculateTotalPoints,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 export function createRankingService(db: Database) {
   return {
@@ -813,7 +813,7 @@ export function createRankingRouter(rankingService: ReturnType<typeof createRank
 
 ```typescript
 // apps/api/src/cron/ranking-update.ts
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
 
 export async function rankingUpdate(db: Database) {
@@ -859,7 +859,7 @@ import {
   calculateMinTemp,
   calculateDiameter,
   calculateMaxFields,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 export function createFleetService(
   db: Database,
@@ -1011,7 +1011,7 @@ Puis ajouter la méthode `processColonize` dans l'objet retourné par `createFle
       if (hasRemainingShips) {
         // Create a new fleet event for the return trip
         const driveTechs = await this.getDriveTechs(event.userId);
-        const speed = (await import('@ogame-clone/game-engine')).fleetSpeed(remainingShips, driveTechs);
+        const speed = (await import('@exilium/game-engine')).fleetSpeed(remainingShips, driveTechs);
         const originPlanet = await db
           .select()
           .from(planets)
@@ -1021,7 +1021,7 @@ Puis ajouter la méthode `processColonize` dans l'objet retourné par `createFle
         if (originPlanet[0] && speed > 0) {
           const origin = { galaxy: originPlanet[0].galaxy, system: originPlanet[0].system, position: originPlanet[0].position };
           const target = { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition };
-          const duration = (await import('@ogame-clone/game-engine')).travelTime(target, origin, speed, universeSpeed);
+          const duration = (await import('@exilium/game-engine')).travelTime(target, origin, speed, universeSpeed);
           const now = new Date();
           const returnTime = new Date(now.getTime() + duration * 1000);
 
@@ -1071,13 +1071,13 @@ Note : La méthode `processColonize` utilise des imports dynamiques pour `fleetS
 
 Version corrigée sans imports dynamiques (utiliser les imports déjà présents) :
 
-Remplacer les `(await import('@ogame-clone/game-engine')).fleetSpeed(...)` par `fleetSpeed(...)` et `(await import('@ogame-clone/game-engine')).travelTime(...)` par `travelTime(...)`.
+Remplacer les `(await import('@exilium/game-engine')).fleetSpeed(...)` par `fleetSpeed(...)` et `(await import('@exilium/game-engine')).travelTime(...)` par `travelTime(...)`.
 
 - [ ] **Step 2: Ajouter les imports nécessaires**
 
-Ajouter en haut de fleet.service.ts, avec les imports existants de `@ogame-clone/db` :
+Ajouter en haut de fleet.service.ts, avec les imports existants de `@exilium/db` :
 ```typescript
-import { planetDefenses } from '@ogame-clone/db';
+import { planetDefenses } from '@exilium/db';
 ```
 
 Et ajouter les imports game-engine manquants :
@@ -1087,10 +1087,10 @@ import {
   calculateMinTemp,
   calculateDiameter,
   calculateMaxFields,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 ```
 
-Fusionner avec l'import existant de `@ogame-clone/game-engine`.
+Fusionner avec l'import existant de `@exilium/game-engine`.
 
 - [ ] **Step 3: Commit**
 
@@ -1472,21 +1472,21 @@ git commit -m "feat(web): add Ranking page with pagination"
 - [ ] **Step 1: Turbo typecheck**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo typecheck
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo typecheck
 ```
 Expected: PASS
 
 - [ ] **Step 2: Turbo lint**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo lint
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo lint
 ```
 Expected: PASS (fix any issues)
 
 - [ ] **Step 3: Turbo test**
 
 ```bash
-export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/ogame-clone && pnpm turbo test
+export PATH="/usr/local/opt/node@22/bin:$PATH" && cd /Users/julienaubree/_projet/exilium && pnpm turbo test
 ```
 Expected: ALL PASS — tous les tests existants (92) + ranking tests (~10)
 

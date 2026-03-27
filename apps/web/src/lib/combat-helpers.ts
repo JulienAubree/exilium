@@ -4,7 +4,7 @@ import type {
   CombatMultipliers,
   ShipCombatConfig,
   ShipCategory,
-} from '@ogame-clone/game-engine';
+} from '@exilium/game-engine';
 
 /** Combat categories — mirrors apps/api/src/modules/fleet/handlers/attack.handler.ts */
 const COMBAT_CATEGORIES: ShipCategory[] = [

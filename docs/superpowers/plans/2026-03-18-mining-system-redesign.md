@@ -292,7 +292,7 @@ En haut de `fleet.service.ts` :
 import { eq, and, sql, inArray } from 'drizzle-orm';
 ```
 
-2. Ajouter `miningDuration` et `prospectionDuration` à l'import `@ogame-clone/game-engine` (chercher la ligne qui importe depuis ce package et ajouter ces 2 fonctions). Note : `userResearch` et `asteroidDeposits` sont déjà importés depuis `@ogame-clone/db`.
+2. Ajouter `miningDuration` et `prospectionDuration` à l'import `@exilium/game-engine` (chercher la ligne qui importe depuis ce package et ajouter ces 2 fonctions). Note : `userResearch` et `asteroidDeposits` sont déjà importés depuis `@exilium/db`.
 
 - [ ] **Step 3: Ajouter la méthode `processProspectDone`**
 

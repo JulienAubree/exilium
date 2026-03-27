@@ -1,8 +1,8 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users } from '@ogame-clone/db';
-import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity } from '@ogame-clone/game-engine';
-import type { Database } from '@ogame-clone/db';
+import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users } from '@exilium/db';
+import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity } from '@exilium/game-engine';
+import type { Database } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration, buildShipStatsMap } from '../fleet.types.js';
 import { findShipByRole } from '../../../lib/config-helpers.js';

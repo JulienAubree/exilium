@@ -1,6 +1,6 @@
 import { eq, and, asc } from 'drizzle-orm';
-import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions } from '@exilium/db';
+import type { Database } from '@exilium/db';
 import type { createPveService } from '../pve/pve.service.js';
 
 export interface TutorialQuest {

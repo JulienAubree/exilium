@@ -102,7 +102,7 @@ Expected: New migration file created in `packages/db/drizzle/`
 
 - [ ] **Step 5: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 6: Commit**
@@ -128,11 +128,11 @@ Read `apps/api/src/modules/user/user.service.ts`, then add these methods to the 
 
 ```ts
 import { eq, and, or, count } from 'drizzle-orm';
-import { users, planets, rankings, allianceMembers, alliances, friendships } from '@ogame-clone/db';
+import { users, planets, rankings, allianceMembers, alliances, friendships } from '@exilium/db';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { TRPCError } from '@trpc/server';
-import type { Database } from '@ogame-clone/db';
+import type { Database } from '@exilium/db';
 
 export function createUserService(db: Database, assetsDir: string) {
   return {
@@ -332,7 +332,7 @@ const userService = createUserService(db, env.ASSETS_DIR);
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 5: Commit**
@@ -360,8 +360,8 @@ Create `apps/api/src/modules/friend/friend.service.ts`:
 ```ts
 import { eq, and, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { friendships, users } from '@ogame-clone/db';
-import type { Database } from '@ogame-clone/db';
+import { friendships, users } from '@exilium/db';
+import type { Database } from '@exilium/db';
 
 export function createFriendService(db: Database) {
   return {
@@ -548,7 +548,7 @@ friend: friendRouter,
 
 - [ ] **Step 4: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 5: Commit**
@@ -639,7 +639,7 @@ export default function PlayerProfile() {
 
 - [ ] **Step 6: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 7: Commit**
@@ -708,7 +708,7 @@ export function AvatarPicker({ currentAvatarId, onSelect, onClose }: AvatarPicke
 
 - [ ] **Step 2: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -818,7 +818,7 @@ export function FriendRequests() {
 
 - [ ] **Step 3: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors (or minor import path adjustments needed for UserAvatar)
 
 - [ ] **Step 4: Commit**
@@ -858,7 +858,7 @@ The page is too large to include inline — the implementer should follow the tw
 
 - [ ] **Step 2: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -899,7 +899,7 @@ Replace the placeholder in `apps/web/src/pages/PlayerProfile.tsx`. The component
 
 - [ ] **Step 2: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -929,7 +929,7 @@ In the messages/conversation components, wrap the `otherUser.username` in a `<Li
 
 - [ ] **Step 3: TS check**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/web/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 4: Commit**
@@ -953,7 +953,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 - [ ] **Step 1: TS check all projects**
 
-Run: `cd /Users/julienaubree/_projet/ogame-clone && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
+Run: `cd /Users/julienaubree/_projet/exilium && npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && npx tsc --noEmit -p apps/admin/tsconfig.json`
 Expected: No errors
 
 - [ ] **Step 2: Run API tests**

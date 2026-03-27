@@ -1,4 +1,4 @@
-import { MissionType } from '@ogame-clone/shared';
+import { MissionType } from '@exilium/shared';
 
 export type Mission = `${MissionType}`;
 
