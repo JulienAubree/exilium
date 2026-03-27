@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useSSE } from './useSSE';
 import { trpc } from '@/trpc';
+import { usePushSubscription } from './usePushSubscription';
 import { useToastStore } from '@/stores/toast.store';
 import { useChatStore } from '@/stores/chat.store';
 import { getEntityName } from '@/lib/entity-names';
@@ -27,6 +28,7 @@ interface ShipyardBufferEntry {
 const SHIPYARD_DEBOUNCE_MS = 3_000;
 
 export function useNotifications() {
+  usePushSubscription();
   const utils = trpc.useUtils();
   const addToast = useToastStore((s) => s.addToast);
   const permissionRequested = useRef(false);
