@@ -1,5 +1,5 @@
 import { eq, and, asc } from 'drizzle-orm';
-import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions } from '@exilium/db';
+import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createPveService } from '../pve/pve.service.js';
 
@@ -9,7 +9,7 @@ export interface TutorialQuest {
   title: string;
   narrativeText: string;
   condition: {
-    type: 'building_level' | 'ship_count' | 'mission_complete' | 'research_level' | 'fleet_return';
+    type: 'building_level' | 'ship_count' | 'mission_complete' | 'research_level' | 'fleet_return' | 'flagship_named';
     targetId: string;
     targetValue: number;
   };
@@ -262,6 +262,15 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
           .limit(1);
 
         conditionMet = !!completedMission;
+      } else if (quest.condition.type === 'flagship_named') {
+        // flagship_named : verifie simplement que le flagship existe
+        const [flagship] = await db
+          .select({ id: flagships.id })
+          .from(flagships)
+          .where(eq(flagships.userId, userId))
+          .limit(1);
+
+        conditionMet = !!flagship;
       }
 
       if (!conditionMet) return null;
