@@ -4,7 +4,7 @@ import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { getShipName, getUnitName } from '@/lib/entity-names';
+import { getShipName } from '@/lib/entity-names';
 import { CombatReportDetail } from '@/components/reports/CombatReportDetail';
 import { MineReportDetail } from '@/components/reports/MineReportDetail';
 import { SpyReportDetail } from '@/components/reports/SpyReportDetail';
