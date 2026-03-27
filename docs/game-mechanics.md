@@ -25,7 +25,7 @@ Ce document detaille toutes les mecaniques de jeu, en particulier celles dont le
 
 ## 1. Systeme de combat
 
-Un combat se deroule en **6 rounds maximum**. Il s'arrete plus tot si un camp est entierement detruit.
+Un combat se deroule en **4 rounds maximum**. Il s'arrete plus tot si un camp est entierement detruit.
 
 ### Deroulement d'un round
 
@@ -98,7 +98,7 @@ Avec N = 6 : probabilite = 5/6 = 83%. Le de est relance a chaque tir supplementa
 
 - **Victoire attaquant** : tous les defenseurs detruits, au moins 1 attaquant survit
 - **Victoire defenseur** : tous les attaquants detruits, au moins 1 defenseur survit
-- **Match nul** : les deux camps ont encore des unites apres 6 rounds, ou les deux sont detruits
+- **Match nul** : les deux camps ont encore des unites apres 4 rounds, ou les deux sont detruits
 
 ---
 
