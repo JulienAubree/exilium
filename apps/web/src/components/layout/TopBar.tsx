@@ -145,7 +145,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-12 lg:h-14 items-center justify-between border-b border-white/10 bg-card/80 backdrop-blur-md px-4 lg:px-6">
+    <header className="sticky top-0 z-40 flex min-h-12 lg:min-h-14 items-center justify-between border-b border-white/10 bg-card/80 backdrop-blur-md px-4 pt-[env(safe-area-inset-top)] lg:px-6">
       <div className="flex items-center gap-4 lg:gap-6">
         {/* Planet selector */}
         <div className="relative" ref={dropdownRef}>
