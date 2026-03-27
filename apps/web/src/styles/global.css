@@ -112,4 +112,13 @@
     border-color: rgba(240, 192, 64, 0.35);
     box-shadow: 0 0 10px rgba(240, 192, 64, 0.1);
   }
+
+  /* Touch feedback for interactive elements on mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .touch-feedback {
+    @apply transition-transform duration-150 active:scale-[0.97] active:opacity-80;
+  }
 }

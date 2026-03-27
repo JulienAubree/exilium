@@ -99,6 +99,10 @@ export default {
         'glow-hydrogene': 'var(--glow-hydrogene)',
         'glow-energy': 'var(--glow-energy)',
       },
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-top': 'env(safe-area-inset-top)',
+      },
     },
   },
   plugins: [],
