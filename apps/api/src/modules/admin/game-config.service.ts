@@ -18,6 +18,8 @@ import {
   tutorialQuestDefinitions,
   missionDefinitions,
   uiLabels,
+  talentBranchDefinitions,
+  talentDefinitions,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
@@ -53,6 +55,28 @@ export interface MissionConfig {
   requiresPveMission: boolean;
 }
 
+export interface TalentBranchConfig {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  sortOrder: number;
+}
+
+export interface TalentConfig {
+  id: string;
+  branchId: string;
+  tier: number;
+  position: string;
+  name: string;
+  description: string;
+  maxRanks: number;
+  prerequisiteId: string | null;
+  effectType: string;
+  effectParams: Record<string, unknown>;
+  sortOrder: number;
+}
+
 export interface GameConfig {
   categories: CategoryConfig[];
   buildings: Record<string, BuildingConfig>;
@@ -67,6 +91,8 @@ export interface GameConfig {
   bonuses: BonusConfig[];
   missions: Record<string, MissionConfig>;
   labels: Record<string, string>;
+  talentBranches: TalentBranchConfig[];
+  talents: Record<string, TalentConfig>;
 }
 
 export interface BuildingConfig {
@@ -227,6 +253,8 @@ export function createGameConfigService(db: Database) {
       bonusRows,
       missionsRows,
       labelsRows,
+      talentBranchRows,
+      talentRows,
     ] = await Promise.all([
       db.select().from(entityCategories),
       db.select().from(buildingDefinitions),
@@ -245,6 +273,8 @@ export function createGameConfigService(db: Database) {
       db.select().from(bonusDefinitions),
       db.select().from(missionDefinitions).orderBy(missionDefinitions.sortOrder),
       db.select().from(uiLabels),
+      db.select().from(talentBranchDefinitions).orderBy(talentBranchDefinitions.sortOrder),
+      db.select().from(talentDefinitions),
     ]);
 
     // Categories
@@ -474,7 +504,34 @@ export function createGameConfigService(db: Database) {
       labels[l.key] = l.label;
     }
 
-    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels };
+    // Talent branches
+    const talentBranches: TalentBranchConfig[] = talentBranchRows.map(b => ({
+      id: b.id,
+      name: b.name,
+      description: b.description,
+      color: b.color,
+      sortOrder: b.sortOrder,
+    }));
+
+    // Talents
+    const talents: Record<string, TalentConfig> = {};
+    for (const t of talentRows) {
+      talents[t.id] = {
+        id: t.id,
+        branchId: t.branchId,
+        tier: t.tier,
+        position: t.position,
+        name: t.name,
+        description: t.description,
+        maxRanks: t.maxRanks,
+        prerequisiteId: t.prerequisiteId,
+        effectType: t.effectType,
+        effectParams: (t.effectParams ?? {}) as Record<string, unknown>,
+        sortOrder: t.sortOrder,
+      };
+    }
+
+    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels, talentBranches, talents };
     return cache;
   }
 
