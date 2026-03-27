@@ -148,6 +148,13 @@
       "when": 1774710000000,
       "tag": "0020_simplify_slag_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1774642800671,
+      "tag": "0021_faithful_banshee",
+      "breakpoints": true
     }
   ]
 }

@@ -23,3 +23,6 @@ export * from './ui-labels.js';
 export * from './friendships.js';
 export * from './market-offers.js';
 export * from './push-subscriptions.js';
+export * from './user-exilium.js';
+export * from './exilium-log.js';
+export * from './flagships.js';

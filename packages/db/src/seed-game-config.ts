@@ -440,6 +440,23 @@ const UNIVERSE_CONFIG = [
   { key: 'market_commission_percent', value: 5, label: 'Commission du marché galactique (%)' },
   { key: 'market_offer_duration_hours', value: 48, label: 'Durée de vie des offres du marché (heures)' },
   { key: 'market_reservation_minutes', value: 60, label: 'Temps de réservation avant expiration (minutes)' },
+
+  // ── Exilium ──
+  { key: 'exilium_daily_quest_reward', value: 1 },
+  { key: 'exilium_drop_amount', value: 1 },
+  { key: 'exilium_drop_rate_expedition', value: 0.05 },
+  { key: 'exilium_drop_rate_pvp', value: 0.03 },
+  { key: 'exilium_drop_rate_pve', value: 0.04 },
+  { key: 'exilium_drop_rate_market', value: 0.02 },
+  { key: 'exilium_drop_rate_recycling', value: 0.02 },
+
+  // ── Flagship ──
+  { key: 'flagship_repair_duration_seconds', value: 7200 },
+  { key: 'flagship_instant_repair_exilium_cost', value: 2 },
+
+  // ── Daily Quests ──
+  { key: 'daily_quest_count', value: 3 },
+  { key: 'daily_quest_miner_threshold', value: 5000 },
 ];
 
 async function seed() {
