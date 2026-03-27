@@ -1,4 +1,6 @@
 import { eq } from 'drizzle-orm';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 import { TRPCError } from '@trpc/server';
 import { flagships, planets } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -14,6 +16,7 @@ export function createFlagshipService(
   exiliumService: ReturnType<typeof createExiliumService>,
   gameConfigService: GameConfigService,
   talentService?: ReturnType<typeof createTalentService>,
+  assetsDir?: string,
 ) {
   function validateName(name: string) {
     if (!NAME_REGEX.test(name)) {
@@ -234,6 +237,37 @@ export function createFlagshipService(
         .update(flagships)
         .set({ status: 'active', planetId, updatedAt: new Date() })
         .where(eq(flagships.userId, userId));
+    },
+
+    listImages(): string[] {
+      if (!assetsDir) return [];
+      try {
+        const dir = join(assetsDir, 'flagships');
+        return readdirSync(dir)
+          .filter(f => f.endsWith('.webp'))
+          .map(f => f.replace('.webp', ''));
+      } catch {
+        return [];
+      }
+    },
+
+    async updateImage(userId: string, imageId: string) {
+      const available = this.listImages();
+      if (!available.includes(imageId)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Image invalide' });
+      }
+
+      const [updated] = await db
+        .update(flagships)
+        .set({ imageId, updatedAt: new Date() })
+        .where(eq(flagships.userId, userId))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucun vaisseau amiral' });
+      }
+
+      return updated;
     },
   };
 }

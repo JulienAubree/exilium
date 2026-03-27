@@ -44,5 +44,16 @@ export function createFlagshipRouter(
       .mutation(async ({ ctx }) => {
         return flagshipService.repair(ctx.userId!);
       }),
+
+    listImages: protectedProcedure
+      .query(async () => {
+        return flagshipService.listImages();
+      }),
+
+    updateImage: protectedProcedure
+      .input(z.object({ imageId: z.string().min(1).max(64) }))
+      .mutation(async ({ ctx, input }) => {
+        return flagshipService.updateImage(ctx.userId!, input.imageId);
+      }),
   });
 }

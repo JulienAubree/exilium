@@ -14,6 +14,7 @@ export const flagships = pgTable('flagships', {
   // Personnalisation
   name: varchar('name', { length: 32 }).notNull().default('Vaisseau amiral'),
   description: varchar('description', { length: 256 }).notNull().default(''),
+  imageId: varchar('image_id', { length: 64 }),
 
   // Stats de base (modifiables par les talents Phase 2)
   baseSpeed: integer('base_speed').notNull().default(80000),

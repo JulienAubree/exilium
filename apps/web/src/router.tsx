@@ -121,6 +121,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'flagship',
+        lazy: lazyLoad(() => import('./pages/FlagshipProfile')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'flagship/talents',
         lazy: lazyLoad(() => import('./pages/FlagshipTalents')),
         errorElement: <RouteErrorFallback />,
