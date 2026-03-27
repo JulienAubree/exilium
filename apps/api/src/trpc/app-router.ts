@@ -113,7 +113,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const exiliumRouter = createExiliumRouter(exiliumService);
   const flagshipRouter = createFlagshipRouter(flagshipService, tutorialService);
   const talentRouter = createTalentRouter(talentService);
-  const dailyQuestRouter = createDailyQuestRouter(dailyQuestService);
+  const dailyQuestRouter = createDailyQuestRouter(dailyQuestService, gameConfigService);
 
   return router({
     health: publicProcedure.query(() => ({

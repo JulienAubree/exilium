@@ -49,16 +49,16 @@ describe('quest-registry', () => {
     expect(warrior.check(noRoleEvent, config)).toBe(false);
   });
 
-  it('explorer.check() retourne true seulement si missionType === "expedition"', () => {
+  it('explorer.check() retourne true seulement si missionType === "mine"', () => {
     const explorer = DAILY_QUEST_REGISTRY['explorer'];
     const config = {};
 
-    const expeditionEvent: QuestEvent = {
+    const mineEvent: QuestEvent = {
       type: 'fleet:dispatched',
       userId: 'user1',
-      payload: { missionType: 'expedition' },
+      payload: { missionType: 'mine' },
     };
-    expect(explorer.check(expeditionEvent, config)).toBe(true);
+    expect(explorer.check(mineEvent, config)).toBe(true);
 
     const attackEvent: QuestEvent = {
       type: 'fleet:dispatched',

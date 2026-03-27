@@ -67,9 +67,9 @@ export const DAILY_QUEST_REGISTRY: Record<string, DailyQuestDefinition> = {
   explorer: {
     id: 'explorer',
     name: 'Explorateur',
-    description: 'Lancer 1 mission d\'expedition',
+    description: 'Lancer 1 mission de prospection',
     events: ['fleet:dispatched'],
-    check: (event) => event.payload.missionType === 'expedition',
+    check: (event) => event.payload.missionType === 'mine',
   },
   recycler: {
     id: 'recycler',
