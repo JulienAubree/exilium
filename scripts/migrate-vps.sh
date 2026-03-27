@@ -76,7 +76,8 @@ fi
 echo ""
 echo "==> Updating .env file..."
 if [ -f "$NEW_DIR/.env" ]; then
-  sed -i "s|$OLD_DB_USER|$NEW_DB_USER|g" "$NEW_DIR/.env"
+  # Replace only user and db name in DATABASE_URL, preserve password
+  sed -i "s|://$OLD_DB_USER:|://$NEW_DB_USER:|g" "$NEW_DIR/.env"
   sed -i "s|/$OLD_DB_NAME|/$NEW_DB_NAME|g" "$NEW_DIR/.env"
   if [ -n "$DB_PASSWORD" ]; then
     sed -i "s|$NEW_DB_USER:[^@]*@|$NEW_DB_USER:${DB_PASSWORD}@|g" "$NEW_DIR/.env"
