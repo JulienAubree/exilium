@@ -1,5 +1,5 @@
 // apps/web/src/components/combat-guide/RoundDisplay.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { CombatResult } from '@ogame-clone/game-engine';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -26,7 +26,10 @@ export function RoundDisplay({
   const [displayedRound, setDisplayedRound] = useState(0); // 0 = initial state
   const totalRounds = result.rounds.length;
 
-  const reset = useCallback(() => setDisplayedRound(0), []);
+  // Reset when result changes (defensive — consumers should also use key prop)
+  useEffect(() => {
+    setDisplayedRound(0);
+  }, [result]);
 
   useEffect(() => {
     if (autoPlayDelay <= 0 || displayedRound > totalRounds) return;
@@ -123,7 +126,7 @@ export function RoundDisplay({
           <button
             type="button"
             className="rounded bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-            onClick={reset}
+            onClick={() => setDisplayedRound(0)}
           >
             Réinitialiser
           </button>
