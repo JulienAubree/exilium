@@ -8,6 +8,7 @@ import {
   type CombatMultipliers,
   type CombatConfig,
   type CombatInput,
+  type CombatResult,
   type ShipCategory,
   type ShipCombatConfig,
   type UnitCombatStats,
@@ -21,6 +22,7 @@ interface PirateArrivalResult {
   loot: { minerai: number; silicium: number; hydrogene: number };
   bonusShips: Record<string, number>;
   attackerLosses: Record<string, number>;
+  combatResult: CombatResult;
 }
 
 export function createPirateService(db: Database, gameConfigService: GameConfigService) {
@@ -174,6 +176,7 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
         loot,
         bonusShips,
         attackerLosses: result.attackerLosses,
+        combatResult: result,
       };
     },
   };
