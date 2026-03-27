@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { cn } from '@/lib/utils';
 
 export default function FleetDashboard() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -25,6 +26,9 @@ export default function FleetDashboard() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+  const { data: flagship } = trpc.flagship.get.useQuery();
+
+  const flagshipOnPlanet = flagship && flagship.status === 'active' && flagship.planetId === planetId;
 
   const { data: fleetSlots } = trpc.fleet.slots.useQuery();
   const { data: movements, isLoading: movementsLoading } = trpc.fleet.movements.useQuery();
@@ -228,7 +232,7 @@ export default function FleetDashboard() {
             </Link>
           </div>
 
-          {availableShips.length === 0 ? (
+          {availableShips.length === 0 && !flagshipOnPlanet ? (
             <div className="rounded-lg border border-border bg-card p-8 text-center">
               <p className="text-sm text-muted-foreground">
                 Aucun vaisseau stationne.{' '}
@@ -238,6 +242,59 @@ export default function FleetDashboard() {
               </p>
             </div>
           ) : (
+            <>
+            {/* Flagship */}
+            {flagshipOnPlanet && flagship && (
+              <div className="mb-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                    Vaisseau amiral
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedShips((prev) => {
+                        if (prev['flagship'] !== undefined) {
+                          const next = { ...prev };
+                          delete next['flagship'];
+                          return next;
+                        }
+                        return { ...prev, flagship: 1 };
+                      });
+                    }}
+                    className={cn(
+                      'retro-card overflow-hidden flex flex-col text-left cursor-pointer',
+                      selectedIds.has('flagship') && 'border-primary',
+                    )}
+                  >
+                    <div className="relative h-24 overflow-hidden bg-gradient-to-br from-amber-950/50 to-amber-900/20 flex items-center justify-center">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-amber-400/60">
+                        <path d="M12 2L3 9l9 13 9-13-9-7z" fill="currentColor" opacity={0.3} />
+                        <path d="M12 2L3 9l9 13 9-13-9-7z" stroke="currentColor" strokeWidth={1.5} fill="none" />
+                      </svg>
+                      <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        x1
+                      </span>
+                      {selectedIds.has('flagship') && (
+                        <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                          <svg className="h-3 w-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5 flex flex-col gap-1.5">
+                      <span className="text-[13px] font-semibold text-amber-400 leading-tight line-clamp-2">
+                        {flagship.name}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ShipCategoryGrid
               ships={availableShips}
               hideEmpty
@@ -281,6 +338,7 @@ export default function FleetDashboard() {
                 );
               }}
             />
+            </>
           )}
         </div>
 
