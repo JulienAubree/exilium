@@ -5,6 +5,7 @@ import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { Toaster } from '@/components/ui/Toaster';
+import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { TutorialPanel } from '@/components/tutorial/TutorialPanel';
 import { trpc } from '@/trpc';
@@ -57,6 +58,7 @@ export function Layout() {
       <BottomTabBar />
       <ChatOverlay />
       <Toaster />
+      <UpdatePrompt />
     </div>
   );
 }
