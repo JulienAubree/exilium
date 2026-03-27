@@ -454,7 +454,7 @@ Les missions pirates permettent de combattre des flottes PNJ pour obtenir des re
 | Tier | Niveau centre requis | Recompenses typiques |
 |------|---------------------|----------------------|
 | Facile | 3+ | 3K-6K minerai, 1.5K-4K silicium, 0.5K-1.5K hydrogene |
-| Moyen | 4+ | 15K-20K minerai, 8K-12K silicium, 3K-5K hydrogene |
+| Moyen | 4+ | 10K-20K minerai, 5K-12K silicium, 2K-5K hydrogene |
 | Difficile | 6+ | 50K-100K minerai, 30K-60K silicium, 15K-30K hydrogene |
 
 ### Recompenses

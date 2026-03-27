@@ -188,40 +188,52 @@ const PIRATE_TEMPLATES = [
   },
   // ── Medium tier (center level 4-10) ──
   {
-    id: 'war_party_medium',
-    name: 'Bande de guerre pirate',
+    id: 'reinforced_scouts_medium',
+    name: 'Éclaireurs renforcés',
     tier: 'medium',
-    ships: { interceptor: 15, frigate: 5, cruiser: 2 },
-    techs: { weapons: 2, shielding: 1, armor: 2 },
+    ships: { interceptor: 12, frigate: 3 },
+    techs: { weapons: 1, shielding: 0, armor: 1 },
     rewards: {
-      minerai: 15000, silicium: 8000, hydrogene: 3000,
+      minerai: 10000, silicium: 5000, hydrogene: 2000,
       bonusShips: [{ shipId: 'interceptor', count: 2, chance: 0.3 }],
     },
     centerLevelMin: 4, centerLevelMax: 6,
   },
   {
+    id: 'war_party_medium',
+    name: 'Bande de guerre pirate',
+    tier: 'medium',
+    ships: { interceptor: 12, frigate: 4 },
+    techs: { weapons: 1, shielding: 1, armor: 1 },
+    rewards: {
+      minerai: 15000, silicium: 8000, hydrogene: 3000,
+      bonusShips: [{ shipId: 'interceptor', count: 2, chance: 0.3 }],
+    },
+    centerLevelMin: 5, centerLevelMax: 7,
+  },
+  {
     id: 'shield_wall_medium',
     name: 'Mur de boucliers pirate',
     tier: 'medium',
-    ships: { frigate: 12, cruiser: 3 },
-    techs: { weapons: 1, shielding: 3, armor: 2 },
+    ships: { frigate: 8, cruiser: 1 },
+    techs: { weapons: 1, shielding: 2, armor: 1 },
     rewards: {
       minerai: 18000, silicium: 10000, hydrogene: 4000,
       bonusShips: [{ shipId: 'interceptor', count: 3, chance: 0.3 }],
     },
-    centerLevelMin: 5, centerLevelMax: 8,
+    centerLevelMin: 6, centerLevelMax: 9,
   },
   {
     id: 'swarm_medium',
     name: 'Essaim pirate',
     tier: 'medium',
-    ships: { interceptor: 30, frigate: 8 },
-    techs: { weapons: 2, shielding: 1, armor: 1 },
+    ships: { interceptor: 20, frigate: 5 },
+    techs: { weapons: 1, shielding: 1, armor: 1 },
     rewards: {
       minerai: 20000, silicium: 12000, hydrogene: 5000,
       bonusShips: [{ shipId: 'interceptor', count: 3, chance: 0.3 }],
     },
-    centerLevelMin: 6, centerLevelMax: 10,
+    centerLevelMin: 7, centerLevelMax: 10,
   },
   // ── Hard tier (center level 6-10) ──
   {
