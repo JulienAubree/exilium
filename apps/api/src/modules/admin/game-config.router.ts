@@ -387,11 +387,6 @@ export function createGameConfigRouter(
         name: z.string().min(1),
         tier: z.enum(['easy', 'medium', 'hard']),
         ships: z.record(z.string(), z.number().int()),
-        techs: z.object({
-          weapons: z.number().int(),
-          shielding: z.number().int(),
-          armor: z.number().int(),
-        }),
         rewards: z.object({
           minerai: z.number().int(),
           silicium: z.number().int(),
@@ -402,8 +397,6 @@ export function createGameConfigRouter(
             chance: z.number(),
           })),
         }),
-        centerLevelMin: z.number().int(),
-        centerLevelMax: z.number().int(),
       }))
       .mutation(async ({ input }) => {
         await gameConfigService.createPirateTemplate(input);
@@ -417,11 +410,6 @@ export function createGameConfigRouter(
           name: z.string().optional(),
           tier: z.enum(['easy', 'medium', 'hard']).optional(),
           ships: z.record(z.string(), z.number().int()).optional(),
-          techs: z.object({
-            weapons: z.number().int(),
-            shielding: z.number().int(),
-            armor: z.number().int(),
-          }).optional(),
           rewards: z.object({
             minerai: z.number().int(),
             silicium: z.number().int(),
@@ -432,8 +420,6 @@ export function createGameConfigRouter(
               chance: z.number(),
             })),
           }).optional(),
-          centerLevelMin: z.number().int().optional(),
-          centerLevelMax: z.number().int().optional(),
         }),
       }))
       .mutation(async ({ input }) => {

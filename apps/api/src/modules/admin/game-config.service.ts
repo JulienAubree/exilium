@@ -181,10 +181,7 @@ export interface PirateTemplateConfig {
   name: string;
   tier: string;
   ships: Record<string, number>;
-  techs: { weapons: number; shielding: number; armor: number };
   rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
-  centerLevelMin: number;
-  centerLevelMax: number;
 }
 
 export interface TutorialQuestConfig {
@@ -424,10 +421,7 @@ export function createGameConfigService(db: Database) {
       name: pt.name,
       tier: pt.tier,
       ships: pt.ships as Record<string, number>,
-      techs: pt.techs as { weapons: number; shielding: number; armor: number },
       rewards: pt.rewards as { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] },
-      centerLevelMin: pt.centerLevelMin,
-      centerLevelMax: pt.centerLevelMax,
     }));
 
     // Tutorial quests
@@ -960,10 +954,7 @@ export function createGameConfigService(db: Database) {
       name: string;
       tier: string;
       ships: Record<string, number>;
-      techs: { weapons: number; shielding: number; armor: number };
       rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
-      centerLevelMin: number;
-      centerLevelMax: number;
     }) {
       await db.insert(pirateTemplates).values(data);
       invalidateCache();
@@ -973,10 +964,7 @@ export function createGameConfigService(db: Database) {
       name: string;
       tier: string;
       ships: Record<string, number>;
-      techs: { weapons: number; shielding: number; armor: number };
       rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] };
-      centerLevelMin: number;
-      centerLevelMax: number;
     }>) {
       await db.update(pirateTemplates).set(data).where(eq(pirateTemplates.id, id));
       invalidateCache();
