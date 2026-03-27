@@ -44,5 +44,11 @@ export function createReportRouter(reportService: ReturnType<typeof createReport
         const count = await reportService.countUnread(ctx.userId!);
         return { count };
       }),
+
+    markAllRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await reportService.markAllRead(ctx.userId!);
+        return { success: true };
+      }),
   });
 }
