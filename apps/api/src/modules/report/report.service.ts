@@ -38,7 +38,25 @@ export function createReportService(db: Database) {
       return report;
     },
 
+    async cleanupOldReports(userId: string) {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      await db
+        .delete(missionReports)
+        .where(
+          and(
+            eq(missionReports.userId, userId),
+            lt(missionReports.createdAt, threeDaysAgo),
+            sql`${missionReports.missionType}::text NOT IN ('attack', 'pirate')`,
+          ),
+        );
+    },
+
     async list(userId: string, options?: { cursor?: string; limit?: number; missionTypes?: string[] }) {
+      // Cleanup old non-combat reports on first page load
+      if (!options?.cursor) {
+        await this.cleanupOldReports(userId);
+      }
+
       const limit = options?.limit ?? 20;
       const conditions = [eq(missionReports.userId, userId)];
 
@@ -112,6 +130,13 @@ export function createReportService(db: Database) {
         .from(missionReports)
         .where(and(eq(missionReports.userId, userId), eq(missionReports.read, false)));
       return result?.count ?? 0;
+    },
+
+    async markAllRead(userId: string) {
+      await db
+        .update(missionReports)
+        .set({ read: true })
+        .where(and(eq(missionReports.userId, userId), eq(missionReports.read, false)));
     },
   };
 }
