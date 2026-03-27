@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
+import { FlagshipNamingModal } from '@/components/flagship/FlagshipNamingModal';
 
 export function TutorialPanel() {
   const { data, isLoading } = trpc.tutorial.getCurrent.useQuery();
   const [minimized, setMinimized] = useState(false);
+  const [showNamingModal, setShowNamingModal] = useState(false);
   const navigate = useNavigate();
 
   if (isLoading || !data || data.isComplete || !data.quest) return null;
@@ -95,6 +97,20 @@ export function TutorialPanel() {
           >
             Envoyer la flotte &rarr;
           </button>
+        )}
+        {quest.id === 'quest_11' && (
+          <>
+            <button
+              onClick={() => setShowNamingModal(true)}
+              className="mt-1.5 text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+            >
+              Nommer votre vaisseau &rarr;
+            </button>
+            <FlagshipNamingModal
+              open={showNamingModal}
+              onClose={() => setShowNamingModal(false)}
+            />
+          </>
         )}
 
         {/* Reward preview */}

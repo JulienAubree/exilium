@@ -49,6 +49,7 @@ export default function Fleet() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+  const { data: flagship } = trpc.flagship.get.useQuery();
   const { data: fleetSlots } = trpc.fleet.slots.useQuery();
 
   const { data: planets } = trpc.planet.list.useQuery();
@@ -272,6 +273,18 @@ export default function Fleet() {
 
   const validationError = getValidationError();
 
+  // Inject flagship as first "ship" if active and on the current planet
+  const allShips = (() => {
+    const base = ships ?? [];
+    if (flagship && flagship.status === 'active' && flagship.planetId === planetId) {
+      return [
+        { id: 'flagship', name: flagship.name, count: 1 },
+        ...base,
+      ];
+    }
+    return base;
+  })();
+
   if (isLoading) return <CardGridSkeleton />;
 
   return (
@@ -328,7 +341,7 @@ export default function Fleet() {
 
       {/* Fleet Composition */}
       <FleetComposition
-        ships={ships ?? []}
+        ships={allShips}
         mission={mission}
         selectedShips={selectedShips}
         onChange={handleShipChange}
