@@ -4,6 +4,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface PveMissionBannerProps {
   pveMissionId: string;
+  playerFleetFP?: number;
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -12,7 +13,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: 'bg-red-900/50 text-red-300 border-red-700',
 };
 
-export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
+export function PveMissionBanner({ pveMissionId, playerFleetFP }: PveMissionBannerProps) {
   const { data: gameConfig } = useGameConfig();
   const { data: mission } = trpc.pve.getMissionById.useQuery(
     { missionId: pveMissionId },
@@ -49,6 +50,7 @@ export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
   const minerai = (rewards.minerai as number) ?? 0;
   const silicium = (rewards.silicium as number) ?? 0;
   const hydrogene = (rewards.hydrogene as number) ?? 0;
+  const pirateFPValue = (params as { pirateFP?: number }).pirateFP ?? null;
   return (
     <div className="flex items-center gap-3 rounded-lg border border-red-800/60 bg-red-950/40 p-3">
       <span className="text-xl">☠</span>
@@ -60,6 +62,15 @@ export function PveMissionBanner({ pveMissionId }: PveMissionBannerProps) {
         <div className="text-xs text-red-400/80">
           {coords} — Récompense : {minerai.toLocaleString()} minerai, {silicium.toLocaleString()} silicium, {hydrogene.toLocaleString()} H₂
         </div>
+        {pirateFPValue != null && (
+          <div className="flex items-center gap-2 mt-1 text-xs">
+            <span className="text-muted-foreground">Ta flotte :</span>
+            <span className="font-bold text-blue-300">{playerFleetFP ?? 0} FP</span>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground">Pirates :</span>
+            <span className="font-bold text-rose-300">{pirateFPValue} FP</span>
+          </div>
+        )}
       </div>
     </div>
   );

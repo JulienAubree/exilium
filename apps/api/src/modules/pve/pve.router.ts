@@ -17,18 +17,12 @@ export function createPveRouter(
       }
       const missions = await pveService.getMissions(ctx.userId!);
       const discoveryState = await pveService.getDiscoveryState(ctx.userId!);
-      const config = await gameConfigService.getFullConfig();
-
-      // Build template lookup for pirate missions
-      const templateMap = new Map(config.pirateTemplates.map(t => [t.id, t]));
-
       const enrichedMissions = missions.map(m => {
         if (m.missionType === 'pirate') {
-          const params = m.parameters as { templateId?: string };
-          const template = params.templateId ? templateMap.get(params.templateId) : undefined;
-          return { ...m, enemyShips: template?.ships ?? null };
+          const params = m.parameters as { pirateFP?: number };
+          return { ...m, pirateFP: params.pirateFP ?? null, enemyShips: null };
         }
-        return { ...m, enemyShips: null };
+        return { ...m, pirateFP: null, enemyShips: null };
       });
 
       return {

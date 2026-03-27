@@ -5,6 +5,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Plus, Pencil, Trash2, Skull } from 'lucide-react';
+import { computeFleetFP, type UnitCombatStats, type FPConfig } from '@ogame-clone/game-engine';
 
 const TIER_COLORS: Record<string, string> = {
   easy: 'text-emerald-400 bg-emerald-900/20',
@@ -20,14 +21,11 @@ const FIELDS = [
     { value: 'medium', label: 'Moyen' },
     { value: 'hard', label: 'Difficile' },
   ]},
-  { key: 'ships', label: 'Vaisseaux (JSON, ex: {"lightFighter":5})', type: 'textarea' as const },
-  { key: 'techs', label: 'Techs (JSON, ex: {"weapons":1,"shielding":0,"armor":1})', type: 'textarea' as const },
-  { key: 'rewardMinerai', label: 'Recompense Minerai', type: 'number' as const },
-  { key: 'rewardSilicium', label: 'Recompense Silicium', type: 'number' as const },
-  { key: 'rewardHydrogene', label: 'Recompense Hydrogene', type: 'number' as const },
-  { key: 'bonusShips', label: 'Bonus Ships (JSON, ex: [{"shipId":"lightFighter","count":2,"chance":0.3}])', type: 'textarea' as const },
-  { key: 'centerLevelMin', label: 'Centre missions min', type: 'number' as const },
-  { key: 'centerLevelMax', label: 'Centre missions max', type: 'number' as const },
+  { key: 'ships', label: 'Vaisseaux — ratios (JSON, ex: {"interceptor":3,"frigate":1})', type: 'textarea' as const },
+  { key: 'rewardMinerai', label: 'Recompense Minerai (base)', type: 'number' as const },
+  { key: 'rewardSilicium', label: 'Recompense Silicium (base)', type: 'number' as const },
+  { key: 'rewardHydrogene', label: 'Recompense Hydrogene (base)', type: 'number' as const },
+  { key: 'bonusShips', label: 'Bonus Ships (JSON)', type: 'textarea' as const },
 ];
 
 const EDIT_FIELDS = FIELDS.filter((f) => f.key !== 'id');
@@ -38,13 +36,10 @@ function defaultForm(): Record<string, string | number> {
     name: '',
     tier: 'easy',
     ships: '{}',
-    techs: '{"weapons":0,"shielding":0,"armor":0}',
     rewardMinerai: 0,
     rewardSilicium: 0,
     rewardHydrogene: 0,
     bonusShips: '[]',
-    centerLevelMin: 3,
-    centerLevelMax: 10,
   };
 }
 
@@ -53,37 +48,29 @@ function templateToForm(t: any): Record<string, string | number> {
     name: t.name,
     tier: t.tier,
     ships: JSON.stringify(t.ships, null, 2),
-    techs: JSON.stringify(t.techs, null, 2),
     rewardMinerai: t.rewards?.minerai ?? 0,
     rewardSilicium: t.rewards?.silicium ?? 0,
     rewardHydrogene: t.rewards?.hydrogene ?? 0,
     bonusShips: JSON.stringify(t.rewards?.bonusShips ?? [], null, 2),
-    centerLevelMin: t.centerLevelMin,
-    centerLevelMax: t.centerLevelMax,
   };
 }
 
 function formToMutationData(values: Record<string, string | number>) {
   let ships: Record<string, number> = {};
-  let techs = { weapons: 0, shielding: 0, armor: 0 };
   let bonusShips: { shipId: string; count: number; chance: number }[] = [];
   try { ships = JSON.parse(String(values.ships)); } catch {}
-  try { techs = JSON.parse(String(values.techs)); } catch {}
   try { bonusShips = JSON.parse(String(values.bonusShips)); } catch {}
 
   return {
     name: String(values.name),
     tier: String(values.tier) as 'easy' | 'medium' | 'hard',
     ships,
-    techs,
     rewards: {
       minerai: Number(values.rewardMinerai),
       silicium: Number(values.rewardSilicium),
       hydrogene: Number(values.rewardHydrogene),
       bonusShips,
     },
-    centerLevelMin: Number(values.centerLevelMin),
-    centerLevelMax: Number(values.centerLevelMax),
   };
 }
 
@@ -110,9 +97,19 @@ export default function PveMissions() {
 
   const templates = [...(data.pirateTemplates ?? [])].sort((a, b) => {
     const tierOrder = { easy: 0, medium: 1, hard: 2 };
-    const tierDiff = (tierOrder[a.tier as keyof typeof tierOrder] ?? 0) - (tierOrder[b.tier as keyof typeof tierOrder] ?? 0);
-    return tierDiff || a.centerLevelMin - b.centerLevelMin;
+    return (tierOrder[a.tier as keyof typeof tierOrder] ?? 0) - (tierOrder[b.tier as keyof typeof tierOrder] ?? 0);
   });
+
+  const shipStats: Record<string, UnitCombatStats> = {};
+  if (data) {
+    for (const [id, ship] of Object.entries(data.ships)) {
+      shipStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
+    }
+  }
+  const fpConfig: FPConfig = {
+    shotcountExponent: Number(data?.universe?.fp_shotcount_exponent ?? 1.5),
+    divisor: Number(data?.universe?.fp_divisor ?? 100),
+  };
 
   const editingTemplate = editing ? templates.find((t) => t.id === editing) : null;
   const editValues = editingTemplate ? templateToForm(editingTemplate) : {};
@@ -141,10 +138,8 @@ export default function PveMissions() {
               <th>Nom</th>
               <th>Difficulte</th>
               <th>Vaisseaux</th>
-              <th>Techs</th>
+              <th>FP base</th>
               <th>Recompenses</th>
-              <th>Centre Min</th>
-              <th>Centre Max</th>
               <th></th>
             </tr>
           </thead>
@@ -153,7 +148,6 @@ export default function PveMissions() {
               const shipSummary = Object.entries(t.ships as Record<string, number>)
                 .map(([k, v]) => `${v}x ${k}`)
                 .join(', ');
-              const techs = t.techs as { weapons: number; shielding: number; armor: number };
               return (
                 <tr key={t.id}>
                   <td className="font-mono text-gray-400 text-xs">{t.id}</td>
@@ -166,8 +160,8 @@ export default function PveMissions() {
                   <td className="text-xs text-gray-400 max-w-[200px] truncate" title={shipSummary}>
                     {shipSummary}
                   </td>
-                  <td className="text-xs font-mono text-gray-400">
-                    W{techs.weapons} S{techs.shielding} A{techs.armor}
+                  <td className="text-center font-mono text-cyan-400">
+                    {computeFleetFP(t.ships as Record<string, number>, shipStats, fpConfig)} FP
                   </td>
                   <td className="text-xs">
                     <span className="text-orange-400">{(t.rewards as any).minerai?.toLocaleString('fr-FR')}</span>
@@ -176,8 +170,6 @@ export default function PveMissions() {
                     {' / '}
                     <span className="text-emerald-400">{(t.rewards as any).hydrogene?.toLocaleString('fr-FR')}</span>
                   </td>
-                  <td className="text-center">{t.centerLevelMin}</td>
-                  <td className="text-center">{t.centerLevelMax}</td>
                   <td>
                     <div className="flex gap-1">
                       <button onClick={() => setEditing(t.id)} className="admin-btn-ghost p-1.5">

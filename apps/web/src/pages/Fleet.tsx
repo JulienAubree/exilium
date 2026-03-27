@@ -16,7 +16,7 @@ import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
 import { TargetContactsDropdown } from '@/components/fleet/TargetContactsDropdown';
 import { getCargoCapacity, type Mission } from '@/config/mission-config';
 import { getShipName } from '@/lib/entity-names';
-import { computeSlagRate, miningDuration, resolveBonus } from '@ogame-clone/game-engine';
+import { computeSlagRate, miningDuration, resolveBonus, computeFleetFP } from '@ogame-clone/game-engine';
 import { cn } from '@/lib/utils';
 
 export default function Fleet() {
@@ -212,6 +212,20 @@ export default function Fleet() {
   const totalCargo = cargo.minerai + cargo.silicium + cargo.hydrogene;
   const cargoCapacity = getCargoCapacity(selectedShips, gameConfig?.ships ?? {});
 
+  // FP computation for pirate missions
+  const playerFleetFP = (() => {
+    if (mission !== 'pirate' || !gameConfig) return 0;
+    const shipStats: Record<string, { weapons: number; shotCount: number; shield: number; hull: number }> = {};
+    for (const [id, ship] of Object.entries(gameConfig.ships)) {
+      shipStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
+    }
+    const fpConfig = {
+      shotcountExponent: Number(gameConfig.universe?.fp_shotcount_exponent ?? 1.5),
+      divisor: Number(gameConfig.universe?.fp_divisor ?? 100),
+    };
+    return computeFleetFP(activeShips, shipStats, fpConfig);
+  })();
+
   // Mining-specific stats
   const { data: researchList } = trpc.research.list.useQuery(
     { planetId: planetId! },
@@ -284,7 +298,7 @@ export default function Fleet() {
       </div>
 
       {/* PvE Mission Banner */}
-      {pveMissionId && <PveMissionBanner pveMissionId={pveMissionId} />}
+      {pveMissionId && <PveMissionBanner pveMissionId={pveMissionId} playerFleetFP={playerFleetFP} />}
 
       {/* Mission Selector */}
       <MissionSelector

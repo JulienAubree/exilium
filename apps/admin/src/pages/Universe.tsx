@@ -38,6 +38,17 @@ const SECTIONS: { id: string; label: string; keys: string[] }[] = [
     ],
   },
   {
+    id: 'fp',
+    label: 'Facteur de Puissance (FP)',
+    keys: [
+      'fp_shotcount_exponent', 'fp_divisor',
+      'pirate_fp_easy_min', 'pirate_fp_easy_max',
+      'pirate_fp_medium_min', 'pirate_fp_medium_max',
+      'pirate_fp_hard_min', 'pirate_fp_hard_max',
+      'pirate_fp_player_cap_ratio',
+    ],
+  },
+  {
     id: 'fleet',
     label: 'Fleet',
     keys: [
