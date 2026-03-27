@@ -239,10 +239,12 @@ export function createFleetService(
           shipUpdates[shipId] = current - count;
         }
       }
-      await db
-        .update(planetShips)
-        .set(shipUpdates)
-        .where(eq(planetShips.planetId, input.originPlanetId));
+      if (Object.keys(shipUpdates).length > 0) {
+        await db
+          .update(planetShips)
+          .set(shipUpdates)
+          .where(eq(planetShips.planetId, input.originPlanetId));
+      }
 
       // Create fleet event
       const now = new Date();
@@ -971,10 +973,12 @@ export function createFleetService(
           shipUpdates[shipId] = (shipUpdates[shipId] ?? (originShips[shipId as keyof typeof originShips] ?? 0) as number) + count;
         }
       }
-      await db
-        .update(planetShips)
-        .set(shipUpdates)
-        .where(eq(planetShips.planetId, event.originPlanetId));
+      if (Object.keys(shipUpdates).length > 0) {
+        await db
+          .update(planetShips)
+          .set(shipUpdates)
+          .where(eq(planetShips.planetId, event.originPlanetId));
+      }
 
       const mineraiCargo = Number(event.mineraiCargo);
       const siliciumCargo = Number(event.siliciumCargo);

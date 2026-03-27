@@ -55,15 +55,17 @@ export class StationHandler implements MissionHandler {
     if (targetShips) {
       const shipUpdates: Record<string, number> = {};
       for (const [shipId, count] of Object.entries(fleetEvent.ships)) {
-        if (count > 0) {
+        if (count > 0 && shipId !== 'flagship') {
           const current = (targetShips[shipId as keyof typeof targetShips] ?? 0) as number;
           shipUpdates[shipId] = current + count;
         }
       }
-      await ctx.db
-        .update(planetShips)
-        .set(shipUpdates)
-        .where(eq(planetShips.planetId, targetPlanet.id));
+      if (Object.keys(shipUpdates).length > 0) {
+        await ctx.db
+          .update(planetShips)
+          .set(shipUpdates)
+          .where(eq(planetShips.planetId, targetPlanet.id));
+      }
     }
 
     if (ctx.messageService) {
