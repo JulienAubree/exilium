@@ -289,6 +289,13 @@ export default function FleetDashboard() {
                       <span className="text-[13px] font-semibold text-amber-400 leading-tight line-clamp-2">
                         {flagship.name}
                       </span>
+                      <Link
+                        to="/flagship/talents"
+                        className="text-[10px] text-amber-400/70 hover:text-amber-400 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Talents →
+                      </Link>
                     </div>
                   </button>
                 </div>
