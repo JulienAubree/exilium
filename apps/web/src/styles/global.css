@@ -45,6 +45,13 @@
     }
   }
 
+  /* Ensure form inputs are comfortable on mobile */
+  input[type="number"],
+  input[type="text"],
+  select {
+    @apply min-h-[44px];
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
