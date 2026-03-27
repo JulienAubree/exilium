@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { ProfileIcon, ReportsIcon, HistoryIcon } from '@/lib/icons';
+import { useExilium } from '@/hooks/useExilium';
+import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, eventNavigationTarget, groupEvents } from '@/lib/game-events';
 import { getPlanetImageUrl } from '@/lib/assets';
@@ -53,6 +55,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const user = useAuthStore((s) => s.user);
   const utils = trpc.useUtils();
+  const { data: exiliumData } = useExilium();
   const { data: unreadCount } = trpc.message.unreadCount.useQuery();
   const { data: eventUnreadCount } = trpc.gameEvent.unreadCount.useQuery();
   const { data: recentEvents } = trpc.gameEvent.recent.useQuery();
@@ -214,6 +217,16 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Exilium balance */}
+        {exiliumData && (
+          <div className="flex items-center gap-1">
+            <ExiliumIcon size={14} className="text-purple-400" />
+            <span className="text-sm font-medium tabular-nums text-purple-400">
+              {exiliumData.balance}
+            </span>
+          </div>
+        )}
+
         {/* Messages (envelope) */}
         <button
           onClick={() => navigate('/messages')}
