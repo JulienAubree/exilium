@@ -151,7 +151,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm touch-feedback hover:bg-accent"
           >
             {activePlanet?.planetClassId && activePlanet.planetImageIndex != null ? (
               <img
@@ -217,7 +217,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         {/* Messages (envelope) */}
         <button
           onClick={() => navigate('/messages')}
-          className="relative rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="relative rounded-lg p-2.5 text-muted-foreground touch-feedback hover:bg-accent hover:text-foreground"
           title="Messages"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -235,7 +235,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         <div className="relative" ref={bellRef}>
           <button
             onClick={handleBellOpen}
-            className="relative rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="relative rounded-lg p-2.5 text-muted-foreground touch-feedback hover:bg-accent hover:text-foreground"
             title="Notifications"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -261,7 +261,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
                       key={event.id}
                       onClick={() => { navigate(eventNavigationTarget(event.type, event.payload)); setBellOpen(false); }}
                       className={cn(
-                        'flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-accent',
+                        'flex w-full items-start gap-2 px-3 py-3 text-left text-sm touch-feedback hover:bg-accent',
                         !event.read && 'bg-primary/5 font-medium',
                       )}
                     >
