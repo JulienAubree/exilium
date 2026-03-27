@@ -24,6 +24,7 @@ export default function StationedFleet() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+  const { data: flagship } = trpc.flagship.get.useQuery();
 
   const { data: planets } = trpc.planet.list.useQuery();
   const firstPlanetId = planets?.[0]?.id;
@@ -37,10 +38,16 @@ export default function StationedFleet() {
     return Object.fromEntries(researchList.map((r) => [r.id, r.currentLevel]));
   }, [researchList]);
 
-  const availableShips = useMemo(
-    () => (ships ?? []).filter((s) => s.count > 0),
-    [ships],
-  );
+  const availableShips = useMemo(() => {
+    const base = (ships ?? []).filter((s) => s.count > 0);
+    if (flagship && flagship.status === 'active' && flagship.planetId === planetId) {
+      return [
+        { id: 'flagship', name: flagship.name, count: 1, categoryId: 'support' },
+        ...base,
+      ];
+    }
+    return base;
+  }, [ships, flagship, planetId]);
 
   function toggleShip(ship: ShipData) {
     setSelectedShips((prev) => {
