@@ -10,6 +10,8 @@ import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
 import type { createReportService } from '../report/report.service.js';
+import type { createExiliumService } from '../exilium/exilium.service.js';
+import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 import type { Queue } from 'bullmq';
 import type Redis from 'ioredis';
 
@@ -75,6 +77,8 @@ export interface MissionHandlerContext {
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>;
   pirateService?: ReturnType<typeof createPirateService>;
   reportService?: ReturnType<typeof createReportService>;
+  exiliumService?: ReturnType<typeof createExiliumService>;
+  dailyQuestService?: ReturnType<typeof createDailyQuestService>;
   fleetQueue: Queue;
   assetsDir: string;
   redis?: Redis;

@@ -6,6 +6,8 @@ import type { Database } from '@exilium/db';
 import { maxMarketOffers } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import type { createExiliumService } from '../exilium/exilium.service.js';
+import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 import { publishNotification } from '../notification/notification.publisher.js';
 import type Redis from 'ioredis';
 
@@ -15,6 +17,8 @@ export function createMarketService(
   gameConfigService: GameConfigService,
   marketQueue: Queue,
   redis: Redis,
+  dailyQuestService?: ReturnType<typeof createDailyQuestService>,
+  exiliumService?: ReturnType<typeof createExiliumService>,
 ) {
   async function getMarketLevel(planetId: string): Promise<number> {
     const [row] = await db
@@ -313,7 +317,7 @@ export function createMarketService(
     },
 
     // Called by trade handler on arrival to notify seller
-    async notifySold(offerId: string) {
+    async notifySold(offerId: string, buyerId?: string) {
       const [offer] = await db
         .select()
         .from(marketOffers)
@@ -335,6 +339,27 @@ export function createMarketService(
           },
         },
       });
+
+      // Hook: daily quest detection for market transaction
+      if (dailyQuestService) {
+        await dailyQuestService.processEvent({
+          type: 'market:transaction_completed',
+          userId: offer.sellerId,
+          payload: {},
+        }).catch(() => {});
+        if (buyerId) {
+          await dailyQuestService.processEvent({
+            type: 'market:transaction_completed',
+            userId: buyerId,
+            payload: {},
+          }).catch(() => {});
+        }
+      }
+
+      // Hook: Exilium drop for seller on market transaction
+      if (exiliumService) {
+        await exiliumService.tryDrop(offer.sellerId, 'market', { offerId }).catch(() => {});
+      }
     },
   };
 }

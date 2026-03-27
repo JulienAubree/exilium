@@ -85,6 +85,13 @@ export class RecycleHandler implements MissionHandler {
       );
     }
 
+    // Hook: Exilium drop on recycling
+    if (ctx.exiliumService) {
+      await ctx.exiliumService.tryDrop(fleetEvent.userId, 'recycling', {
+        fleetEventId: fleetEvent.id,
+      }).catch(() => {});
+    }
+
     return {
       scheduleReturn: true,
       cargo: {

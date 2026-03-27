@@ -435,6 +435,22 @@ export class AttackHandler implements MissionHandler {
       });
     }
 
+    // Hook: daily quest detection for PvP battle
+    if (ctx.dailyQuestService) {
+      await ctx.dailyQuestService.processEvent({
+        type: 'pvp:battle_resolved',
+        userId: fleetEvent.userId,
+        payload: { role: 'attacker', result: outcome },
+      }).catch(() => {});
+    }
+
+    // Hook: Exilium drop on PvP victory
+    if (outcome === 'attacker' && ctx.exiliumService) {
+      await ctx.exiliumService.tryDrop(fleetEvent.userId, 'pvp', {
+        coords: `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`,
+      }).catch(() => {});
+    }
+
     const hasShips = Object.values(survivingShips).some(v => v > 0);
     if (hasShips) {
       return {

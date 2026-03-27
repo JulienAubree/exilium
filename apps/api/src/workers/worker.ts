@@ -14,6 +14,8 @@ import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
 import { createReportService } from '../modules/report/report.service.js';
 import { createPushService } from '../modules/push/push.service.js';
+import { createExiliumService } from '../modules/exilium/exilium.service.js';
+import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
 import { buildCompletionQueue, fleetQueue, marketQueue } from '../queues/queues.js';
 import { startBuildCompletionWorker } from './build-completion.worker.js';
 import { startFleetWorker } from './fleet.worker.js';
@@ -28,7 +30,9 @@ import { eventCleanup } from '../cron/event-cleanup.js';
 const db = createDb(env.DATABASE_URL);
 const redis = new Redis(env.REDIS_URL);
 const gameConfigService = createGameConfigService(db);
-const resourceService = createResourceService(db, gameConfigService);
+const exiliumService = createExiliumService(db, gameConfigService);
+const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
+const resourceService = createResourceService(db, gameConfigService, dailyQuestService);
 const pushService = createPushService(db);
 const messageService = createMessageService(db, redis, pushService);
 const asteroidBeltService = createAsteroidBeltService(db);
@@ -43,14 +47,14 @@ const researchService = createResearchService(db, resourceService, buildCompleti
 const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService);
 
 // Fleet service (receives the unified fleet queue)
-const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService);
+const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService);
 
 // Market service
-const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis);
+const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);
 
 console.log('[worker] Starting workers...');
 
-startBuildCompletionWorker(db, redis, { buildingService, researchService, shipyardService, tutorialService, pushService });
+startBuildCompletionWorker(db, redis, { buildingService, researchService, shipyardService, tutorialService, pushService, dailyQuestService });
 console.log('[worker] Build completion worker started');
 
 startFleetWorker(db, redis, { fleetService, tutorialService, pushService });

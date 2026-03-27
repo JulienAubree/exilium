@@ -11,6 +11,7 @@ import {
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
 async function loadPlanetTypeBonus(db: Database, planetClassId: string | null): Promise<PlanetTypeBonus | undefined> {
   if (!planetClassId) return undefined;
@@ -85,7 +86,7 @@ async function buildPlanetLevels(
   };
 }
 
-export function createResourceService(db: Database, gameConfigService: GameConfigService) {
+export function createResourceService(db: Database, gameConfigService: GameConfigService, dailyQuestService?: ReturnType<typeof createDailyQuestService>) {
   async function getRoleMap() {
     const config = await gameConfigService.getFullConfig();
     return {
@@ -146,6 +147,20 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
         })
         .where(eq(planets.id, planetId))
         .returning();
+
+      // Hook: daily quest detection for resource collection
+      const totalCollected = Math.floor(
+        (resources.minerai - Number(planet.minerai)) +
+        (resources.silicium - Number(planet.silicium)) +
+        (resources.hydrogene - Number(planet.hydrogene))
+      );
+      if (dailyQuestService && totalCollected > 0) {
+        await dailyQuestService.processEvent({
+          type: 'resources:collected',
+          userId,
+          payload: { totalCollected },
+        }).catch(() => {});
+      }
 
       return updated;
     },

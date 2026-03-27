@@ -59,9 +59,11 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const adminProcedure = createAdminProcedure(db);
 
   const gameConfigService = createGameConfigService(db);
+  const exiliumService = createExiliumService(db, gameConfigService);
+  const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
   const authService = createAuthService(db);
   const planetService = createPlanetService(db, gameConfigService, env.ASSETS_DIR);
-  const resourceService = createResourceService(db, gameConfigService);
+  const resourceService = createResourceService(db, gameConfigService, dailyQuestService);
   const buildingService = createBuildingService(db, resourceService, buildCompletionQueue, gameConfigService);
   const researchService = createResearchService(db, resourceService, buildCompletionQueue, gameConfigService);
   const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService);
@@ -76,15 +78,13 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const userService = createUserService(db, env.ASSETS_DIR);
   const gameEventService = createGameEventService(db);
   const friendService = createFriendService(db, redis, gameEventService);
-  const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService);
+  const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService);
   const allianceService = createAllianceService(db, messageService);
   const contactService = createContactService(db, friendService, allianceService);
   const playerAdminService = createPlayerAdminService(db);
   const tutorialService = createTutorialService(db, pveService);
-  const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis);
-  const exiliumService = createExiliumService(db, gameConfigService);
+  const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);
   const flagshipService = createFlagshipService(db, exiliumService, gameConfigService);
-  const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
 
   const authRouter = createAuthRouter(authService, planetService);
   const planetRouter = createPlanetRouter(planetService);

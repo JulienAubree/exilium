@@ -10,6 +10,7 @@ import type { createResearchService } from '../modules/research/research.service
 import type { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import type { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import type { createPushService } from '../modules/push/push.service.js';
+import type { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
 
 type Services = {
   buildingService: ReturnType<typeof createBuildingService>;
@@ -17,6 +18,7 @@ type Services = {
   shipyardService: ReturnType<typeof createShipyardService>;
   tutorialService: ReturnType<typeof createTutorialService>;
   pushService: ReturnType<typeof createPushService>;
+  dailyQuestService?: ReturnType<typeof createDailyQuestService>;
 };
 
 export function startBuildCompletionWorker(db: Database, redis: Redis, services: Services) {
@@ -109,6 +111,15 @@ export function startBuildCompletionWorker(db: Database, redis: Redis, services:
             },
           });
         }
+      }
+
+      // Hook: daily quest detection for construction/research completion
+      if (services.dailyQuestService) {
+        await services.dailyQuestService.processEvent({
+          type: 'construction:completed',
+          userId: result.userId,
+          payload: { buildingId: result.notificationPayload.buildingId ?? result.notificationPayload.techId ?? result.notificationPayload.unitId },
+        }).catch(() => {});
       }
 
       console.log(`[build-completion] ${job.name} completed for ${buildQueueId}`);

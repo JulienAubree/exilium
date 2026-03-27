@@ -12,6 +12,8 @@ import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
 import type { createPirateService } from '../pve/pirate.service.js';
 import type { createReportService } from '../report/report.service.js';
+import type { createExiliumService } from '../exilium/exilium.service.js';
+import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 import type Redis from 'ioredis';
 import { publishNotification } from '../notification/notification.publisher.js';
 import { TransportHandler } from './handlers/transport.handler.js';
@@ -39,6 +41,8 @@ export function createFleetService(
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>,
   pirateService?: ReturnType<typeof createPirateService>,
   reportService?: ReturnType<typeof createReportService>,
+  exiliumService?: ReturnType<typeof createExiliumService>,
+  dailyQuestService?: ReturnType<typeof createDailyQuestService>,
 ) {
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
@@ -61,6 +65,8 @@ export function createFleetService(
     asteroidBeltService,
     pirateService,
     reportService,
+    exiliumService,
+    dailyQuestService,
     fleetQueue,
     assetsDir: env.ASSETS_DIR,
     redis,
@@ -265,6 +271,15 @@ export function createFleetService(
         { fleetEventId: event.id },
         { delay: duration * 1000, jobId: `fleet-arrive-${event.id}` },
       );
+
+      // Hook: daily quest detection for fleet dispatch
+      if (dailyQuestService) {
+        await dailyQuestService.processEvent({
+          type: 'fleet:dispatched',
+          userId,
+          payload: { missionType: input.mission },
+        }).catch(() => {});
+      }
 
       // Notify target planet owner for non-dangerous missions
       const missionDef = config.missions[input.mission];

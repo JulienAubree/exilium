@@ -192,6 +192,22 @@ export class PirateHandler implements MissionHandler {
       });
     }
 
+    // Hook: daily quest detection for PvE victory
+    if (result.outcome === 'attacker' && ctx.dailyQuestService) {
+      await ctx.dailyQuestService.processEvent({
+        type: 'pve:victory',
+        userId: fleetEvent.userId,
+        payload: { missionId: fleetEvent.pveMissionId },
+      }).catch(() => {});
+    }
+
+    // Hook: Exilium drop on PvE victory
+    if (result.outcome === 'attacker' && ctx.exiliumService) {
+      await ctx.exiliumService.tryDrop(fleetEvent.userId, 'pve', {
+        missionId: fleetEvent.pveMissionId,
+      }).catch(() => {});
+    }
+
     return {
       scheduleReturn: true,
       cargo: {
