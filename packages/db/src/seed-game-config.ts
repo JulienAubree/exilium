@@ -158,119 +158,99 @@ const PLANET_TYPES = [
 // ── Pirate templates data ──
 
 const PIRATE_TEMPLATES = [
-  // ── Easy tier (center level 3-10) ──
+  // ── Easy tier ──
   {
     id: 'scout_patrol_easy',
     name: 'Patrouille pirate',
     tier: 'easy',
     ships: { interceptor: 5 },
-    techs: { weapons: 0, shielding: 0, armor: 0 },
     rewards: { minerai: 3000, silicium: 1500, hydrogene: 500, bonusShips: [] },
-    centerLevelMin: 3, centerLevelMax: 4,
   },
   {
     id: 'raider_squad_easy',
     name: 'Escouade de pillards',
     tier: 'easy',
-    ships: { interceptor: 8, frigate: 2 },
-    techs: { weapons: 1, shielding: 0, armor: 1 },
+    ships: { interceptor: 4, frigate: 1 },
     rewards: { minerai: 5000, silicium: 2500, hydrogene: 1000, bonusShips: [] },
-    centerLevelMin: 4, centerLevelMax: 6,
   },
   {
     id: 'smuggler_convoy_easy',
     name: 'Convoi de contrebandiers',
     tier: 'easy',
     ships: { interceptor: 3, smallCargo: 5 },
-    techs: { weapons: 1, shielding: 1, armor: 0 },
     rewards: { minerai: 6000, silicium: 4000, hydrogene: 1500, bonusShips: [] },
-    centerLevelMin: 5, centerLevelMax: 10,
   },
-  // ── Medium tier (center level 4-10) ──
+  // ── Medium tier ──
   {
     id: 'reinforced_scouts_medium',
     name: 'Éclaireurs renforcés',
     tier: 'medium',
-    ships: { interceptor: 12, frigate: 3 },
-    techs: { weapons: 1, shielding: 0, armor: 1 },
+    ships: { interceptor: 4, frigate: 1 },
     rewards: {
       minerai: 10000, silicium: 5000, hydrogene: 2000,
       bonusShips: [{ shipId: 'interceptor', count: 2, chance: 0.3 }],
     },
-    centerLevelMin: 4, centerLevelMax: 6,
   },
   {
     id: 'war_party_medium',
     name: 'Bande de guerre pirate',
     tier: 'medium',
-    ships: { interceptor: 12, frigate: 4 },
-    techs: { weapons: 1, shielding: 1, armor: 1 },
+    ships: { interceptor: 3, frigate: 1 },
     rewards: {
       minerai: 15000, silicium: 8000, hydrogene: 3000,
       bonusShips: [{ shipId: 'interceptor', count: 2, chance: 0.3 }],
     },
-    centerLevelMin: 5, centerLevelMax: 7,
   },
   {
     id: 'shield_wall_medium',
     name: 'Mur de boucliers pirate',
     tier: 'medium',
     ships: { frigate: 8, cruiser: 1 },
-    techs: { weapons: 1, shielding: 2, armor: 1 },
     rewards: {
       minerai: 18000, silicium: 10000, hydrogene: 4000,
       bonusShips: [{ shipId: 'interceptor', count: 3, chance: 0.3 }],
     },
-    centerLevelMin: 6, centerLevelMax: 9,
   },
   {
     id: 'swarm_medium',
     name: 'Essaim pirate',
     tier: 'medium',
-    ships: { interceptor: 20, frigate: 5 },
-    techs: { weapons: 1, shielding: 1, armor: 1 },
+    ships: { interceptor: 4, frigate: 1 },
     rewards: {
       minerai: 20000, silicium: 12000, hydrogene: 5000,
       bonusShips: [{ shipId: 'interceptor', count: 3, chance: 0.3 }],
     },
-    centerLevelMin: 7, centerLevelMax: 10,
   },
-  // ── Hard tier (center level 6-10) ──
+  // ── Hard tier ──
   {
     id: 'battlegroup_hard',
     name: 'Groupe de combat pirate',
     tier: 'hard',
-    ships: { frigate: 15, cruiser: 8, battlecruiser: 3 },
-    techs: { weapons: 3, shielding: 2, armor: 3 },
+    ships: { frigate: 5, cruiser: 3, battlecruiser: 1 },
     rewards: {
       minerai: 50000, silicium: 30000, hydrogene: 15000,
       bonusShips: [{ shipId: 'cruiser', count: 1, chance: 0.2 }],
     },
-    centerLevelMin: 6, centerLevelMax: 8,
   },
   {
     id: 'heavy_assault_hard',
     name: 'Assaut lourd pirate',
     tier: 'hard',
-    ships: { cruiser: 12, battlecruiser: 5 },
-    techs: { weapons: 4, shielding: 3, armor: 4 },
+    ships: { cruiser: 2, battlecruiser: 1 },
     rewards: {
       minerai: 70000, silicium: 40000, hydrogene: 20000,
       bonusShips: [{ shipId: 'cruiser', count: 2, chance: 0.2 }],
     },
-    centerLevelMin: 7, centerLevelMax: 10,
   },
   {
     id: 'pirate_armada_hard',
     name: 'Armada pirate',
     tier: 'hard',
-    ships: { frigate: 20, cruiser: 15, battlecruiser: 8 },
-    techs: { weapons: 5, shielding: 4, armor: 5 },
+    ships: { frigate: 4, cruiser: 3, battlecruiser: 2 },
     rewards: {
       minerai: 100000, silicium: 60000, hydrogene: 30000,
       bonusShips: [{ shipId: 'battlecruiser', count: 1, chance: 0.2 }],
     },
-    centerLevelMin: 8, centerLevelMax: 10,
   },
 ];
 
@@ -420,6 +400,17 @@ const UNIVERSE_CONFIG = [
   { key: 'pve_tier_hard_unlock', value: 6 },
   { key: 'pve_deposit_variance_min', value: 0.6 },
   { key: 'pve_deposit_variance_max', value: 1.6 },
+
+  // ── FP (Facteur de Puissance) ──
+  { key: 'fp_shotcount_exponent', value: 1.5 },
+  { key: 'fp_divisor', value: 100 },
+  { key: 'pirate_fp_easy_min', value: 2 },
+  { key: 'pirate_fp_easy_max', value: 5 },
+  { key: 'pirate_fp_medium_min', value: 5 },
+  { key: 'pirate_fp_medium_max', value: 12 },
+  { key: 'pirate_fp_hard_min', value: 15 },
+  { key: 'pirate_fp_hard_max', value: 30 },
+  { key: 'pirate_fp_player_cap_ratio', value: 0.8 },
 
   // ── Fleet ──
   { key: 'fleet_distance_galaxy_factor', value: 20000 },
