@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, integer, real, jsonb, primaryKey, smallint, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, integer, real, jsonb, primaryKey, smallint, boolean, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 // ── Entity Categories ──
 
@@ -194,7 +194,7 @@ export const talentDefinitions = pgTable('talent_definitions', {
   name: varchar('name', { length: 128 }).notNull(),
   description: text('description').notNull().default(''),
   maxRanks: smallint('max_ranks').notNull().default(1),
-  prerequisiteId: varchar('prerequisite_id', { length: 64 }).references(() => talentDefinitions.id, { onDelete: 'set null' }),
+  prerequisiteId: varchar('prerequisite_id', { length: 64 }).references((): AnyPgColumn => talentDefinitions.id, { onDelete: 'set null' }),
   effectType: varchar('effect_type', { length: 32 }).notNull(), // 'modify_stat' | 'global_bonus' | 'planet_bonus' | 'timed_buff' | 'unlock'
   effectParams: jsonb('effect_params').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
