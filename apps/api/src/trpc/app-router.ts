@@ -49,6 +49,8 @@ import { createExiliumService } from '../modules/exilium/exilium.service.js';
 import { createExiliumRouter } from '../modules/exilium/exilium.router.js';
 import { createFlagshipService } from '../modules/flagship/flagship.service.js';
 import { createFlagshipRouter } from '../modules/flagship/flagship.router.js';
+import { createTalentService } from '../modules/flagship/talent.service.js';
+import { createTalentRouter } from '../modules/flagship/talent.router.js';
 import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
 import { createDailyQuestRouter } from '../modules/daily-quest/daily-quest.router.js';
 import { env } from '../config/env.js';
@@ -78,7 +80,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const userService = createUserService(db, env.ASSETS_DIR);
   const gameEventService = createGameEventService(db);
   const friendService = createFriendService(db, redis, gameEventService);
-  const flagshipService = createFlagshipService(db, exiliumService, gameConfigService);
+  const talentService = createTalentService(db, exiliumService, gameConfigService);
+  const flagshipService = createFlagshipService(db, exiliumService, gameConfigService, talentService);
   const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService);
   const allianceService = createAllianceService(db, messageService);
   const contactService = createContactService(db, friendService, allianceService);
@@ -109,6 +112,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const pushRouter = createPushRouter(pushService);
   const exiliumRouter = createExiliumRouter(exiliumService);
   const flagshipRouter = createFlagshipRouter(flagshipService, tutorialService);
+  const talentRouter = createTalentRouter(talentService);
   const dailyQuestRouter = createDailyQuestRouter(dailyQuestService);
 
   return router({
@@ -139,6 +143,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     push: pushRouter,
     exilium: exiliumRouter,
     flagship: flagshipRouter,
+    talent: talentRouter,
     dailyQuest: dailyQuestRouter,
   });
 }

@@ -4,6 +4,7 @@ import { flagships, planets } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import type { createTalentService } from './talent.service.js';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -12,6 +13,7 @@ export function createFlagshipService(
   db: Database,
   exiliumService: ReturnType<typeof createExiliumService>,
   gameConfigService: GameConfigService,
+  talentService?: ReturnType<typeof createTalentService>,
 ) {
   function validateName(name: string) {
     if (!NAME_REGEX.test(name)) {
@@ -48,8 +50,42 @@ export function createFlagshipService(
             .update(flagships)
             .set({ status: 'active', repairEndsAt: null, updatedAt: new Date() })
             .where(eq(flagships.id, flagship.id));
-          return { ...flagship, status: 'active' as const, repairEndsAt: null };
+          Object.assign(flagship, { status: 'active', repairEndsAt: null });
         }
+      }
+
+      // Appliquer les bonus de talents si le service est disponible
+      if (talentService) {
+        const config = await gameConfigService.getFullConfig();
+        const talentData = await talentService.list(userId);
+        const statBonuses = talentService.getStatBonuses(talentData.ranks, config.talents);
+
+        const effectiveStats = {
+          weapons: flagship.weapons + (statBonuses.weapons ?? 0),
+          shield: flagship.shield + (statBonuses.shield ?? 0),
+          hull: flagship.hull + (statBonuses.hull ?? 0),
+          baseArmor: flagship.baseArmor + (statBonuses.baseArmor ?? 0),
+          shotCount: flagship.shotCount + (statBonuses.shotCount ?? 0),
+          cargoCapacity: flagship.cargoCapacity + (statBonuses.cargoCapacity ?? 0),
+          fuelConsumption: Math.max(0, flagship.fuelConsumption + (statBonuses.fuelConsumption ?? 0)),
+          baseSpeed: Math.round(flagship.baseSpeed * (1 + (statBonuses.speedPercent ?? 0))),
+          driveType: flagship.driveType,
+        };
+
+        // Gestion des unlocks (propulsion)
+        for (const [talentId, rank] of Object.entries(talentData.ranks)) {
+          if (rank <= 0) continue;
+          const def = config.talents[talentId];
+          if (!def || def.effectType !== 'unlock') continue;
+          const params = def.effectParams as { key: string };
+          if (params.key === 'drive_impulse') {
+            effectiveStats.driveType = 'impulsion';
+          } else if (params.key === 'drive_hyperspace') {
+            effectiveStats.driveType = 'hyperespace';
+          }
+        }
+
+        return { ...flagship, talentBonuses: statBonuses, effectiveStats };
       }
 
       return flagship;
