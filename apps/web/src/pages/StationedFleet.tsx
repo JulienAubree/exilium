@@ -5,6 +5,7 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ShipCategoryGrid, type ShipData } from '@/components/fleet/ShipCategoryGrid';
+import { cn } from '@/lib/utils';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 
@@ -38,16 +39,12 @@ export default function StationedFleet() {
     return Object.fromEntries(researchList.map((r) => [r.id, r.currentLevel]));
   }, [researchList]);
 
-  const availableShips = useMemo(() => {
-    const base = (ships ?? []).filter((s) => s.count > 0);
-    if (flagship && flagship.status === 'active' && flagship.planetId === planetId) {
-      return [
-        { id: 'flagship', name: flagship.name, count: 1, categoryId: 'support' },
-        ...base,
-      ];
-    }
-    return base;
-  }, [ships, flagship, planetId]);
+  const flagshipOnPlanet = flagship && flagship.status === 'active' && flagship.planetId === planetId;
+
+  const availableShips = useMemo(
+    () => (ships ?? []).filter((s) => s.count > 0),
+    [ships],
+  );
 
   function toggleShip(ship: ShipData) {
     setSelectedShips((prev) => {
@@ -87,7 +84,7 @@ export default function StationedFleet() {
     );
   }
 
-  if (availableShips.length === 0) {
+  if (availableShips.length === 0 && !flagshipOnPlanet) {
     return (
       <div className="space-y-4 p-4 lg:p-6">
         <Breadcrumb segments={BREADCRUMB_SEGMENTS} />
@@ -110,6 +107,58 @@ export default function StationedFleet() {
     <div className="space-y-4 p-4 pb-28 lg:p-6 lg:pb-6">
       <Breadcrumb segments={BREADCRUMB_SEGMENTS} />
       <PageHeader title="Flotte stationnee" />
+
+      {/* Flagship */}
+      {flagshipOnPlanet && flagship && (
+        <div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+              Vaisseau amiral
+            </span>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedShips((prev) => {
+                  if (prev['flagship'] !== undefined) {
+                    const next = { ...prev };
+                    delete next['flagship'];
+                    return next;
+                  }
+                  return { ...prev, flagship: 1 };
+                });
+              }}
+              className={cn(
+                'retro-card overflow-hidden flex flex-col text-left cursor-pointer',
+                selectedIds.has('flagship') && 'border-primary',
+              )}
+            >
+              <div className="relative h-24 overflow-hidden bg-gradient-to-br from-amber-950/50 to-amber-900/20 flex items-center justify-center">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-amber-400/60">
+                  <path d="M12 2L3 9l9 13 9-13-9-7z" fill="currentColor" opacity={0.3} />
+                  <path d="M12 2L3 9l9 13 9-13-9-7z" stroke="currentColor" strokeWidth={1.5} fill="none" />
+                </svg>
+                <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                  x1
+                </span>
+                {selectedIds.has('flagship') && (
+                  <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                    <svg className="h-3 w-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="p-2.5 flex flex-col gap-1.5">
+                <span className="text-[13px] font-semibold text-amber-400 leading-tight line-clamp-2">
+                  {flagship.name}
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
 
       <ShipCategoryGrid
         ships={availableShips}
