@@ -571,6 +571,92 @@ export function createGameConfigRouter(
         return { success: true };
       }),
 
+    // ── Talent Branches ──
+
+    createTalentBranch: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        color: z.string().min(1),
+        sortOrder: z.number().int().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createTalentBranch(input);
+        return { success: true };
+      }),
+
+    updateTalentBranch: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          name: z.string().optional(),
+          description: z.string().optional(),
+          color: z.string().optional(),
+          sortOrder: z.number().int().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updateTalentBranch(input.id, input.data);
+        return { success: true };
+      }),
+
+    deleteTalentBranch: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteTalentBranch(input.id);
+        return { success: true };
+      }),
+
+    // ── Talents ──
+
+    createTalent: adminProcedure
+      .input(z.object({
+        id: z.string().min(1),
+        branchId: z.string().min(1),
+        tier: z.number().int().min(1),
+        position: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        maxRanks: z.number().int().min(1).default(1),
+        prerequisiteId: z.string().nullable().optional(),
+        effectType: z.string().min(1),
+        effectParams: z.record(z.unknown()),
+        sortOrder: z.number().int().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.createTalent(input);
+        return { success: true };
+      }),
+
+    updateTalent: adminProcedure
+      .input(z.object({
+        id: z.string(),
+        data: z.object({
+          branchId: z.string().optional(),
+          tier: z.number().int().optional(),
+          position: z.string().optional(),
+          name: z.string().optional(),
+          description: z.string().optional(),
+          maxRanks: z.number().int().optional(),
+          prerequisiteId: z.string().nullable().optional(),
+          effectType: z.string().optional(),
+          effectParams: z.unknown().optional(),
+          sortOrder: z.number().int().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.updateTalent(input.id, input.data);
+        return { success: true };
+      }),
+
+    deleteTalent: adminProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await gameConfigService.deleteTalent(input.id);
+        return { success: true };
+      }),
+
     // ── Labels ──
 
     createLabel: adminProcedure
