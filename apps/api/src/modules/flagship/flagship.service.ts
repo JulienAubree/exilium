@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { TRPCError } from '@trpc/server';
@@ -58,6 +58,7 @@ export function createFlagshipService(
             .select({ id: planets.id })
             .from(planets)
             .where(eq(planets.userId, userId))
+            .orderBy(asc(planets.createdAt))
             .limit(1);
           const repairedPlanetId = homePlanet?.id ?? flagship.planetId;
           console.log(`[flagship] lazy-repair: repairing flagship ${flagship.id}, planetId=${repairedPlanetId}`);
@@ -125,6 +126,7 @@ export function createFlagshipService(
         .select({ id: planets.id })
         .from(planets)
         .where(eq(planets.userId, userId))
+        .orderBy(asc(planets.createdAt))
         .limit(1);
 
       if (!homePlanet) {
@@ -219,6 +221,7 @@ export function createFlagshipService(
         .select({ id: planets.id })
         .from(planets)
         .where(eq(planets.userId, userId))
+        .orderBy(asc(planets.createdAt))
         .limit(1);
 
       if (!homePlanet) return;
