@@ -75,7 +75,12 @@ export interface ProductionRates {
   storageHydrogeneCapacity: number;
 }
 
-export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTypeBonus, prodConfig: ProductionConfig = DEFAULT_PRODUCTION_CONFIG): ProductionRates {
+export function calculateProductionRates(
+  planet: PlanetLevels,
+  bonus?: PlanetTypeBonus,
+  prodConfig: ProductionConfig = DEFAULT_PRODUCTION_CONFIG,
+  talentBonuses?: Record<string, number>,
+): ProductionRates {
   const mineraiPct = (planet.mineraiMinePercent ?? 100) / 100;
   const siliciumPct = (planet.siliciumMinePercent ?? 100) / 100;
   const hydrogenePct = (planet.hydrogeneSynthPercent ?? 100) / 100;
@@ -83,6 +88,10 @@ export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTyp
   const mBonus = bonus?.mineraiBonus ?? 1;
   const sBonus = bonus?.siliciumBonus ?? 1;
   const hBonus = bonus?.hydrogeneBonus ?? 1;
+
+  const tMinerai = 1 + (talentBonuses?.['production_minerai'] ?? 0);
+  const tSilicium = 1 + (talentBonuses?.['production_silicium'] ?? 0);
+  const tHydrogene = 1 + (talentBonuses?.['production_hydrogene'] ?? 0);
 
   const solarSatEnergy = solarSatelliteEnergy(planet.maxTemp, planet.isHomePlanet, prodConfig.satellite) * planet.solarSatelliteCount;
   const energyProduced = solarPlantEnergy(planet.solarPlantLevel, prodConfig.solar) + solarSatEnergy;
@@ -95,9 +104,9 @@ export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTyp
   const factor = calculateProductionFactor(energyProduced, energyConsumed);
 
   return {
-    mineraiPerHour: Math.floor(mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor, prodConfig.minerai) * mBonus),
-    siliciumPerHour: Math.floor(siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor, prodConfig.silicium) * sBonus),
-    hydrogenePerHour: Math.floor(hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor, prodConfig.hydrogene) * hBonus),
+    mineraiPerHour: Math.floor(mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor, prodConfig.minerai) * mBonus * tMinerai),
+    siliciumPerHour: Math.floor(siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor, prodConfig.silicium) * sBonus * tSilicium),
+    hydrogenePerHour: Math.floor(hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor, prodConfig.hydrogene) * hBonus * tHydrogene),
     productionFactor: factor,
     energyProduced,
     energyConsumed,
@@ -107,9 +116,9 @@ export function calculateProductionRates(planet: PlanetLevels, bonus?: PlanetTyp
     mineraiMinePercent: planet.mineraiMinePercent ?? 100,
     siliciumMinePercent: planet.siliciumMinePercent ?? 100,
     hydrogeneSynthPercent: planet.hydrogeneSynthPercent ?? 100,
-    storageMineraiCapacity: storageCapacity(planet.storageMineraiLevel, prodConfig.storage),
-    storageSiliciumCapacity: storageCapacity(planet.storageSiliciumLevel, prodConfig.storage),
-    storageHydrogeneCapacity: storageCapacity(planet.storageHydrogeneLevel, prodConfig.storage),
+    storageMineraiCapacity: Math.floor(storageCapacity(planet.storageMineraiLevel, prodConfig.storage) * (1 + (talentBonuses?.['storage_minerai'] ?? 0))),
+    storageSiliciumCapacity: Math.floor(storageCapacity(planet.storageSiliciumLevel, prodConfig.storage) * (1 + (talentBonuses?.['storage_silicium'] ?? 0))),
+    storageHydrogeneCapacity: Math.floor(storageCapacity(planet.storageHydrogeneLevel, prodConfig.storage) * (1 + (talentBonuses?.['storage_hydrogene'] ?? 0))),
   };
 }
 
@@ -129,8 +138,9 @@ export function calculateResources(
   now: Date,
   bonus?: PlanetTypeBonus,
   prodConfig?: ProductionConfig,
+  talentBonuses?: Record<string, number>,
 ): { minerai: number; silicium: number; hydrogene: number } {
-  const rates = calculateProductionRates(planet, bonus, prodConfig);
+  const rates = calculateProductionRates(planet, bonus, prodConfig, talentBonuses);
   const elapsedHours = Math.max(0, (now.getTime() - resourcesUpdatedAt.getTime()) / (3600 * 1000));
 
   const minerai = Math.min(

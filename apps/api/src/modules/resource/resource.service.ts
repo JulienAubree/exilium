@@ -86,7 +86,12 @@ async function buildPlanetLevels(
   };
 }
 
-export function createResourceService(db: Database, gameConfigService: GameConfigService, dailyQuestService?: ReturnType<typeof createDailyQuestService>) {
+export function createResourceService(
+  db: Database,
+  gameConfigService: GameConfigService,
+  dailyQuestService?: ReturnType<typeof createDailyQuestService>,
+  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
+) {
   async function getRoleMap() {
     const config = await gameConfigService.getFullConfig();
     return {
@@ -122,6 +127,7 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
+      const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
 
       const now = new Date();
       const resources = calculateResources(
@@ -135,6 +141,7 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
         now,
         bonus,
         prodConfig,
+        talentCtx,
       );
 
       const [updated] = await db
@@ -181,6 +188,7 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
+      const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
 
       const now = new Date();
       const produced = calculateResources(
@@ -194,6 +202,7 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
         now,
         bonus,
         prodConfig,
+        talentCtx,
       );
 
       if (produced.minerai < cost.minerai || produced.silicium < cost.silicium || produced.hydrogene < cost.hydrogene) {
@@ -245,12 +254,13 @@ export function createResourceService(db: Database, gameConfigService: GameConfi
       siliciumMinePercent: number;
       hydrogeneSynthPercent: number;
       planetClassId?: string | null;
-    }, bonus?: PlanetTypeBonus) {
+    }, bonus?: PlanetTypeBonus, userId?: string) {
       const roleMap = await getRoleMap();
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
-      return calculateProductionRates(levels, bonus, prodConfig);
+      const talentCtx = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
+      return calculateProductionRates(levels, bonus, prodConfig, talentCtx);
     },
   };
 }

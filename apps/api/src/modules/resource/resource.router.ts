@@ -43,7 +43,7 @@ export function createResourceRouter(
         const buildingLevels = await resourceService.getBuildingLevels(input.planetId);
         const [ships] = await db.select({ solarSatellite: planetShips.solarSatellite })
           .from(planetShips).where(eq(planetShips.planetId, input.planetId)).limit(1);
-        const rates = await resourceService.getProductionRates(input.planetId, planet, bonus);
+        const rates = await resourceService.getProductionRates(input.planetId, planet, bonus, ctx.userId!);
         return {
           rates,
           resourcesUpdatedAt: planet.resourcesUpdatedAt.toISOString(),
