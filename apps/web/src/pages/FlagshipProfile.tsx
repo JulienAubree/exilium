@@ -56,7 +56,7 @@ function IncapacitatedOverlay({
   }, [secondsLeft, onRepaired]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
+    <div className="relative flex flex-col items-center justify-center min-h-[80vh] p-4">
       {/* Animated background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-500/5 animate-pulse" />
