@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/common/Skeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { cn } from '@/lib/utils';
-import { getFlagshipImageUrl } from '@/lib/assets';
+import { getFlagshipImageUrl, getPlanetImageUrl } from '@/lib/assets';
 
 // ── Incapacitation Overlay ──
 
@@ -59,21 +60,18 @@ function IncapacitatedOverlay({
   useEffect(() => {
     if (secondsLeft <= 0 && !firedRef.current) {
       firedRef.current = true;
-      // Small delay to ensure server-side lazy repair has time to process
       setTimeout(() => onRepairedRef.current(), 500);
     }
   }, [secondsLeft]);
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[80vh] p-4">
-      {/* Animated background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-500/5 animate-pulse" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-red-500/8 animate-pulse" style={{ animationDelay: '0.5s' }} />
       </div>
 
       <div className="relative flex flex-col items-center gap-6 max-w-md mx-auto px-6 text-center">
-        {/* Damaged ship image */}
         <div className="relative">
           {flagshipImageIndex ? (
             <img
@@ -86,7 +84,6 @@ function IncapacitatedOverlay({
               VA
             </div>
           )}
-          {/* Damage icon overlay */}
           <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-red-500/30">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -96,7 +93,6 @@ function IncapacitatedOverlay({
           </div>
         </div>
 
-        {/* Title */}
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-black text-red-400 tracking-tight uppercase">
             Vaisseau incapacite
@@ -109,7 +105,6 @@ function IncapacitatedOverlay({
           </p>
         </div>
 
-        {/* Countdown */}
         <div className="w-full space-y-4">
           <div className="flex items-center justify-center gap-3">
             {[
@@ -131,7 +126,6 @@ function IncapacitatedOverlay({
             ))}
           </div>
 
-          {/* Progress bar */}
           <div className="w-full space-y-1.5">
             <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
               <div
@@ -146,7 +140,6 @@ function IncapacitatedOverlay({
           </div>
         </div>
 
-        {/* Repair end time */}
         <div className="text-xs text-muted-foreground/50">
           Retour operationnel : {repairEndsAt.toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit',
@@ -158,14 +151,15 @@ function IncapacitatedOverlay({
   );
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  active: { label: 'Actif', color: 'text-emerald-400' },
-  in_mission: { label: 'En mission', color: 'text-blue-400' },
-  incapacitated: { label: 'Incapacité', color: 'text-red-400' },
+const STATUS_LABELS: Record<string, { label: string; color: string; dot: string }> = {
+  active: { label: 'Operationnel', color: 'text-emerald-400', dot: 'bg-emerald-400' },
+  in_mission: { label: 'En mission', color: 'text-blue-400', dot: 'bg-blue-400' },
+  incapacitated: { label: 'Incapacite', color: 'text-red-400', dot: 'bg-red-400' },
 };
 
 const DRIVE_LABELS: Record<string, string> = {
   combustion: 'Combustion',
+  impulse: 'Impulsion',
   impulsion: 'Impulsion',
   hyperespace: 'Hyperespace',
 };
@@ -179,29 +173,51 @@ const BRANCH_COLORS: Record<string, { border: string; text: string; bg: string }
 const EFFECT_LABELS: Record<string, { label: string; color: string }> = {
   modify_stat: { label: 'Stat', color: 'text-blue-400' },
   global_bonus: { label: 'Global', color: 'text-amber-400' },
-  planet_bonus: { label: 'Planète', color: 'text-emerald-400' },
+  planet_bonus: { label: 'Planete', color: 'text-emerald-400' },
   timed_buff: { label: 'Actif', color: 'text-pink-400' },
-  unlock: { label: 'Déblocage', color: 'text-purple-400' },
+  unlock: { label: 'Deblocage', color: 'text-purple-400' },
 };
+
+// ── Stat display helpers ──
+
+function StatCard({ label, value, base, bonus, unit, accent }: {
+  label: string;
+  value: number | string;
+  base?: number;
+  bonus?: number;
+  unit?: string;
+  accent?: string;
+}) {
+  const hasBonus = bonus != null && bonus !== 0 && typeof bonus === 'number';
+  return (
+    <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+      <div className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1">{label}</div>
+      <div className={cn('text-xl font-bold tabular-nums', accent ?? 'text-foreground')}>
+        {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
+        {unit && <span className="text-xs font-normal text-muted-foreground/50 ml-0.5">{unit}</span>}
+      </div>
+      {hasBonus && (
+        <div className="text-[10px] text-emerald-400/80 mt-0.5">
+          {base?.toLocaleString('fr-FR')} {bonus > 0 ? '+' : ''}{bonus.toLocaleString('fr-FR')}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function FlagshipSkeleton() {
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <Skeleton className="h-8 w-48" />
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6">
-        <div className="space-y-4">
-          <div className="glass-card p-4 flex flex-col items-center gap-3">
-            <Skeleton className="h-32 w-32 rounded-lg" />
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-5 w-20" />
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="glass-card p-4 space-y-3">
-            <Skeleton className="h-5 w-20" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="glass-card p-6">
+        <div className="flex flex-col sm:flex-row gap-6">
+          <Skeleton className="h-48 w-48 rounded-xl flex-shrink-0 mx-auto sm:mx-0" />
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-32" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
               {Array.from({ length: 9 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
+                <Skeleton key={i} className="h-16 w-full rounded-lg" />
               ))}
             </div>
           </div>
@@ -217,6 +233,7 @@ export default function FlagshipProfile() {
   const { data: flagshipImages } = trpc.flagship.listImages.useQuery();
   const { data: talentTree } = trpc.talent.list.useQuery();
   const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
+  const { data: planets } = trpc.planet.list.useQuery();
   const balance = exiliumData?.balance ?? 0;
 
   const [showImagePicker, setShowImagePicker] = useState(false);
@@ -226,6 +243,7 @@ export default function FlagshipProfile() {
   const [confirmInvest, setConfirmInvest] = useState<string | null>(null);
   const [confirmRespec, setConfirmRespec] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [talentGuideOpen, setTalentGuideOpen] = useState(false);
 
   const renameMutation = trpc.flagship.rename.useMutation({
     onSuccess: () => {
@@ -269,12 +287,10 @@ export default function FlagshipProfile() {
     onSuccess: () => utils.talent.list.invalidate(),
   });
 
-  // Callback for incapacitation overlay — must be before early returns (Rules of Hooks)
   const handleRepaired = useCallback(() => {
     utils.flagship.get.invalidate();
   }, [utils.flagship.get]);
 
-  // Organiser les talents par branche et tier
   const branchData = useMemo(() => {
     if (!talentTree) return [];
     return talentTree.branches.map(branch => {
@@ -294,6 +310,12 @@ export default function FlagshipProfile() {
     });
   }, [talentTree]);
 
+  // Find planet where flagship is stationed
+  const stationedPlanet = useMemo(() => {
+    if (!flagship || !planets) return null;
+    return planets.find((p: any) => p.id === flagship.planetId) ?? null;
+  }, [flagship, planets]);
+
   if (isLoading) return <FlagshipSkeleton />;
 
   if (!flagship) {
@@ -307,7 +329,6 @@ export default function FlagshipProfile() {
     );
   }
 
-  // Full-screen overlay when incapacitated
   if (flagship.status === 'incapacitated' && flagship.repairEndsAt) {
     return (
       <IncapacitatedOverlay
@@ -319,7 +340,7 @@ export default function FlagshipProfile() {
     );
   }
 
-  const status = STATUS_LABELS[flagship.status] ?? { label: flagship.status, color: 'text-muted-foreground' };
+  const status = STATUS_LABELS[flagship.status] ?? { label: flagship.status, color: 'text-muted-foreground', dot: 'bg-muted-foreground' };
   const effectiveStats = 'effectiveStats' in flagship ? (flagship as any).effectiveStats : null;
   const talentBonuses = 'talentBonuses' in flagship ? (flagship as any).talentBonuses as Record<string, number> : {};
   const driveType = effectiveStats?.driveType ?? flagship.driveType;
@@ -358,57 +379,61 @@ export default function FlagshipProfile() {
     return true;
   }
 
-  const stats = [
-    { label: 'Armes', base: flagship.weapons, bonus: talentBonuses.weapons, value: effectiveStats?.weapons ?? flagship.weapons },
-    { label: 'Bouclier', base: flagship.shield, bonus: talentBonuses.shield, value: effectiveStats?.shield ?? flagship.shield },
-    { label: 'Coque', base: flagship.hull, bonus: talentBonuses.hull, value: effectiveStats?.hull ?? flagship.hull },
-    { label: 'Blindage', base: flagship.baseArmor, bonus: talentBonuses.baseArmor, value: effectiveStats?.baseArmor ?? flagship.baseArmor },
-    { label: 'Tirs', base: flagship.shotCount, bonus: talentBonuses.shotCount, value: effectiveStats?.shotCount ?? flagship.shotCount },
-    { label: 'Cargo', base: flagship.cargoCapacity, bonus: talentBonuses.cargoCapacity, value: effectiveStats?.cargoCapacity ?? flagship.cargoCapacity },
-    { label: 'Vitesse', base: flagship.baseSpeed, bonus: talentBonuses.speedPercent ? Math.round(flagship.baseSpeed * talentBonuses.speedPercent) : undefined, value: effectiveStats?.baseSpeed ?? flagship.baseSpeed },
-    { label: 'Carburant', base: flagship.fuelConsumption, bonus: talentBonuses.fuelConsumption, value: effectiveStats?.fuelConsumption ?? flagship.fuelConsumption },
-    { label: 'Propulsion', value: DRIVE_LABELS[driveType] ?? driveType },
-  ];
+  const totalTalentPoints = branchData.reduce((sum, b) => sum + b.totalPoints, 0);
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Vaisseau amiral" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6">
-        {/* ===== Left column — Identity ===== */}
-        <div className="space-y-4">
-          {/* Image + Name */}
-          <div className="glass-card p-4 flex flex-col items-center gap-3">
-            <div className="relative">
+      {/* ===== Hero Card — Image + Identity + Stats ===== */}
+      <div className="glass-card overflow-hidden">
+        <div className="flex flex-col sm:flex-row">
+          {/* Image section */}
+          <div className="relative flex-shrink-0 sm:w-52 lg:w-60">
+            <div className="aspect-square sm:h-full">
               {flagship.flagshipImageIndex ? (
                 <img
-                  src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'thumb')}
+                  src={getFlagshipImageUrl(flagship.flagshipImageIndex)}
                   alt={flagship.name}
-                  className="h-32 w-32 rounded-lg object-cover border-2 border-white/10"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="h-32 w-32 rounded-lg bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary border-2 border-white/10">
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center text-6xl font-black text-primary/20">
                   VA
                 </div>
               )}
             </div>
+            {/* Status badge overlay */}
+            <div className="absolute top-3 left-3">
+              <span className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm bg-black/50',
+                status.color,
+              )}>
+                <span className={cn('w-1.5 h-1.5 rounded-full animate-pulse', status.dot)} />
+                {status.label}
+              </span>
+            </div>
             {flagshipImages && flagshipImages.length > 0 && (
               <button
                 onClick={() => setShowImagePicker(true)}
-                className="text-xs text-primary hover:text-primary/80 transition-colors"
+                className="absolute bottom-3 right-3 rounded-full px-3 py-1.5 text-[10px] font-medium bg-black/60 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/80 transition-colors"
               >
-                Changer l'image
+                Changer
               </button>
             )}
+          </div>
 
+          {/* Identity + meta */}
+          <div className="flex-1 p-4 sm:p-5 lg:p-6 space-y-4">
+            {/* Name + description */}
             {editingName ? (
-              <div className="w-full space-y-2">
+              <div className="space-y-2">
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={32}
-                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm text-center"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-lg font-bold"
                   autoFocus
                 />
                 <div className="text-right text-xs text-muted-foreground">{name.length}/32</div>
@@ -438,45 +463,104 @@ export default function FlagshipProfile() {
                 </div>
               </div>
             ) : (
-              <>
-                <h2 className="text-lg font-bold text-center">{flagship.name}</h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl lg:text-2xl font-bold">{flagship.name}</h2>
+                  <button
+                    onClick={startEditName}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Renommer
+                  </button>
+                </div>
                 {flagship.description && (
-                  <p className="text-xs text-muted-foreground text-center">{flagship.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{flagship.description}</p>
                 )}
-                <button
-                  onClick={startEditName}
-                  className="text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  Renommer
-                </button>
-              </>
+              </div>
             )}
 
-            <span className={`inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold ${status.color}`}>
-              {status.label}
-            </span>
-          </div>
-
-        </div>
-
-        {/* ===== Right column — Stats ===== */}
-        <div className="space-y-4">
-          <div className="glass-card p-4 space-y-3">
-            <h3 className="text-sm font-semibold">Statistiques</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-lg bg-accent/50 p-3 text-center">
-                  <div className="text-lg font-bold text-primary">
-                    {typeof stat.value === 'number' ? stat.value.toLocaleString('fr-FR') : stat.value}
-                  </div>
-                  {stat.bonus != null && stat.bonus !== 0 && typeof stat.bonus === 'number' && (
-                    <div className="text-[10px] text-emerald-400">
-                      {stat.base?.toLocaleString('fr-FR')} {stat.bonus > 0 ? '+' : ''}{stat.bonus.toLocaleString('fr-FR')}
-                    </div>
+            {/* Meta row: planet + exilium + talents */}
+            <div className="flex flex-wrap gap-3">
+              {stationedPlanet && (
+                <Link
+                  to={`/overview`}
+                  className="flex items-center gap-2 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2 hover:bg-white/[0.06] transition-colors"
+                >
+                  {stationedPlanet.planetClassId && stationedPlanet.planetImageIndex != null ? (
+                    <img
+                      src={getPlanetImageUrl(stationedPlanet.planetClassId, stationedPlanet.planetImageIndex, 'icon')}
+                      alt={stationedPlanet.name}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-primary/20" />
                   )}
-                  <div className="text-xs text-muted-foreground">{stat.label}</div>
+                  <div className="text-left">
+                    <div className="text-xs font-medium leading-tight">{stationedPlanet.name}</div>
+                    <div className="text-[10px] text-muted-foreground/60">
+                      [{stationedPlanet.galaxy}:{stationedPlanet.system}:{stationedPlanet.position}]
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              <div className="flex items-center gap-2 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
+                <span className="text-base">✦</span>
+                <div className="text-left">
+                  <div className="text-xs font-bold text-primary leading-tight">{balance}</div>
+                  <div className="text-[10px] text-muted-foreground/60">Exilium</div>
                 </div>
-              ))}
+              </div>
+
+              {totalTalentPoints > 0 && (
+                <Link
+                  to="/flagship/talents"
+                  className="flex items-center gap-2 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2 hover:bg-white/[0.06] transition-colors"
+                >
+                  <span className="text-base">◆</span>
+                  <div className="text-left">
+                    <div className="text-xs font-bold leading-tight">{totalTalentPoints} pts</div>
+                    <div className="text-[10px] text-muted-foreground/60">Talents</div>
+                  </div>
+                </Link>
+              )}
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <StatCard label="Armes" value={effectiveStats?.weapons ?? flagship.weapons} base={flagship.weapons} bonus={talentBonuses.weapons} accent="text-red-400" />
+              <StatCard label="Bouclier" value={effectiveStats?.shield ?? flagship.shield} base={flagship.shield} bonus={talentBonuses.shield} accent="text-blue-400" />
+              <StatCard label="Coque" value={effectiveStats?.hull ?? flagship.hull} base={flagship.hull} bonus={talentBonuses.hull} accent="text-amber-400" />
+              <StatCard label="Blindage" value={effectiveStats?.baseArmor ?? flagship.baseArmor} base={flagship.baseArmor} bonus={talentBonuses.baseArmor} />
+              <StatCard label="Tirs" value={effectiveStats?.shotCount ?? flagship.shotCount} base={flagship.shotCount} bonus={talentBonuses.shotCount} />
+              <StatCard label="Soute" value={effectiveStats?.cargoCapacity ?? flagship.cargoCapacity} base={flagship.cargoCapacity} bonus={talentBonuses.cargoCapacity} />
+              <StatCard label="Vitesse" value={effectiveStats?.baseSpeed ?? flagship.baseSpeed} base={flagship.baseSpeed} bonus={talentBonuses.speedPercent ? Math.round(flagship.baseSpeed * talentBonuses.speedPercent) : undefined} />
+              <StatCard label="Carburant" value={effectiveStats?.fuelConsumption ?? flagship.fuelConsumption} base={flagship.fuelConsumption} bonus={talentBonuses.fuelConsumption} unit="/u" />
+              <StatCard label="Propulsion" value={DRIVE_LABELS[driveType] ?? driveType} accent="text-purple-400" />
+            </div>
+
+            {/* Quick links */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link
+                to="/flagship/talents"
+                className="text-xs text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+              >
+                Arbre de talents
+              </Link>
+              <span className="text-muted-foreground/30">|</span>
+              <Link
+                to="/fleet"
+                className="text-xs text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+              >
+                Ma flotte
+              </Link>
+              <span className="text-muted-foreground/30">|</span>
+              <Link
+                to="/fleet/movements"
+                className="text-xs text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+              >
+                Mouvements
+              </Link>
             </div>
           </div>
         </div>
@@ -491,8 +575,47 @@ export default function FlagshipProfile() {
               onClick={() => setConfirmReset(true)}
               className="text-xs text-red-400 hover:text-red-300 transition-colors"
             >
-              Réinitialiser tout
+              Reinitialiser tout
             </button>
+          </div>
+
+          {/* Collapsible guide */}
+          <div className="rounded-lg border border-white/[0.06] overflow-hidden">
+            <button
+              onClick={() => setTalentGuideOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="font-medium">Comment fonctionnent les talents ?</span>
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className={cn('transition-transform duration-200', talentGuideOpen && 'rotate-180')}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {talentGuideOpen && (
+              <div className="px-4 pb-4 text-xs text-muted-foreground/80 space-y-2 border-t border-white/[0.04] pt-3">
+                <p>
+                  Votre vaisseau amiral possede un arbre de talents reparti en <strong className="text-foreground">3 branches de specialisation</strong> :
+                  Combattant, Explorateur et Negociant. Chaque branche modifie votre style de jeu et offre des bonus uniques.
+                </p>
+                <p>
+                  Les talents sont repartis en <strong className="text-foreground">5 tiers</strong>. Pour debloquer un tier superieur,
+                  vous devez investir un certain nombre de points dans la branche. Le cout en Exilium augmente avec le tier (1 Exilium au tier 1, 5 au tier 5).
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
+                  {Object.entries(EFFECT_LABELS).map(([key, { label, color }]) => (
+                    <div key={key} className="flex items-center gap-1.5">
+                      <span className={cn('w-1.5 h-1.5 rounded-full', color.replace('text-', 'bg-'))} />
+                      <span className="text-[10px]">{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-muted-foreground/50">
+                  Vous pouvez reinitialiser un talent individuel (50% du cout rembourse) ou tout l'arbre (50 Exilium).
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
@@ -595,7 +718,7 @@ export default function FlagshipProfile() {
         onConfirm={() => { if (confirmInvest) investMutation.mutate({ talentId: confirmInvest }); }}
         onCancel={() => setConfirmInvest(null)}
         title="Investir dans ce talent ?"
-        description={`Coût : ${confirmInvest && talentTree ? getTierCost(talentTree.talents[confirmInvest]?.tier ?? 1) : 0} Exilium`}
+        description={`Cout : ${confirmInvest && talentTree ? getTierCost(talentTree.talents[confirmInvest]?.tier ?? 1) : 0} Exilium`}
         confirmLabel="Investir"
       />
 
@@ -603,20 +726,20 @@ export default function FlagshipProfile() {
         open={!!confirmRespec}
         onConfirm={() => { if (confirmRespec) respecMutation.mutate({ talentId: confirmRespec }); }}
         onCancel={() => setConfirmRespec(null)}
-        title="Réinitialiser ce talent ?"
-        description="Les talents dépendants seront aussi réinitialisés. Le coût est 50% de l'Exilium investi."
+        title="Reinitialiser ce talent ?"
+        description="Les talents dependants seront aussi reinitialises. Le cout est 50% de l'Exilium investi."
         variant="destructive"
-        confirmLabel="Réinitialiser"
+        confirmLabel="Reinitialiser"
       />
 
       <ConfirmDialog
         open={confirmReset}
         onConfirm={() => resetMutation.mutate()}
         onCancel={() => setConfirmReset(false)}
-        title="Réinitialiser tout l'arbre ?"
-        description="Coût : 50 Exilium. Tous vos talents seront réinitialisés."
+        title="Reinitialiser tout l'arbre ?"
+        description="Cout : 50 Exilium. Tous vos talents seront reinitialises."
         variant="destructive"
-        confirmLabel="Tout réinitialiser"
+        confirmLabel="Tout reinitialiser"
       />
 
       {/* Image picker modal */}
