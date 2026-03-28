@@ -192,7 +192,7 @@ export default function Fleet() {
     }
 
     if (config?.exclusive && config.requiredShipRoles) {
-      const hasDisallowed = selected.some(([id]) => !config.requiredShipRoles!.includes(id));
+      const hasDisallowed = selected.some(([id]) => id !== 'flagship' && !config.requiredShipRoles!.includes(id));
       if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShipRoles.map((id) => getShipName(id, gameConfig)).join(', ')}`;
     }
 
