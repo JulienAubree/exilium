@@ -751,7 +751,9 @@ export function createFleetService(
 
         if (!result.scheduleReturn && !result.schedulePhase && !result.createReturnEvent) {
           // Flagship stays on target planet for no-return missions (station, colonize)
-          if (ships['flagship'] && ships['flagship'] > 0 && flagshipService && event.targetPlanetId) {
+          // But NOT if it was destroyed in combat (shipsAfterArrival would exclude it)
+          const survivingShips = result.shipsAfterArrival ?? ships;
+          if (survivingShips['flagship'] && survivingShips['flagship'] > 0 && flagshipService && event.targetPlanetId) {
             await flagshipService.returnFromMission(event.userId, event.targetPlanetId);
           }
           await db.update(fleetEvents).set({ status: 'completed' }).where(eq(fleetEvents.id, event.id));

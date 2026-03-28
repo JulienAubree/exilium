@@ -527,7 +527,7 @@ export class AttackHandler implements MissionHandler {
     }
 
     // All ships destroyed — no return
-    // If flagship was incapacitated but all other ships destroyed, still no return
-    return { scheduleReturn: false, reportId };
+    // Pass empty shipsAfterArrival so fleet.service doesn't call returnFromMission on destroyed flagship
+    return { scheduleReturn: false, reportId, shipsAfterArrival: returnShips };
   }
 }

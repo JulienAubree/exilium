@@ -307,7 +307,7 @@ export class PirateHandler implements MissionHandler {
 
     const hasShips = Object.values(returnShips).some(v => v > 0);
     if (!hasShips) {
-      return { scheduleReturn: false };
+      return { scheduleReturn: false, shipsAfterArrival: returnShips };
     }
 
     return {
