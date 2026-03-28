@@ -135,8 +135,22 @@ export class AttackHandler implements MissionHandler {
       }
     }
 
-    const attackerMultipliers = await getCombatMultipliers(ctx.db, fleetEvent.userId, config.bonuses);
-    const defenderMultipliers = await getCombatMultipliers(ctx.db, targetPlanet.userId, config.bonuses);
+    // Compute talent contexts for combat bonuses
+    const attackerTalentCtx = ctx.talentService
+      ? await ctx.talentService.computeTalentContext(fleetEvent.userId)
+      : {};
+    const defenderTalentCtx = ctx.talentService
+      ? await ctx.talentService.computeTalentContext(targetPlanet.userId, targetPlanet.id)
+      : {};
+
+    const attackerMultipliers = await getCombatMultipliers(ctx.db, fleetEvent.userId, config.bonuses, attackerTalentCtx);
+    const defenderMultipliers = await getCombatMultipliers(ctx.db, targetPlanet.userId, config.bonuses, defenderTalentCtx);
+
+    // Additional defense strength bonus (planet_bonus — only when flagship stationed)
+    const defenseBonus = 1 + (defenderTalentCtx['defense_strength'] ?? 0);
+    defenderMultipliers.weapons *= defenseBonus;
+    defenderMultipliers.shielding *= defenseBonus;
+    defenderMultipliers.armor *= defenseBonus;
 
     const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
                          Object.values(defenderDefenses).some(v => v > 0);
@@ -283,9 +297,11 @@ export class AttackHandler implements MissionHandler {
         await ctx.resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
         const [updatedPlanet] = await ctx.db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
 
-        const availMinerai = Math.floor(Number(updatedPlanet.minerai));
-        const availSilicium = Math.floor(Number(updatedPlanet.silicium));
-        const availHydrogene = Math.floor(Number(updatedPlanet.hydrogene));
+        // Pillage protection: reduce available resources (capped at 90%)
+        const pillageProtection = 1 - Math.min(0.9, defenderTalentCtx['pillage_protection'] ?? 0);
+        const availMinerai = Math.floor(Number(updatedPlanet.minerai) * pillageProtection);
+        const availSilicium = Math.floor(Number(updatedPlanet.silicium) * pillageProtection);
+        const availHydrogene = Math.floor(Number(updatedPlanet.hydrogene) * pillageProtection);
 
         const thirdCargo = Math.floor(availableCargo / 3);
 
