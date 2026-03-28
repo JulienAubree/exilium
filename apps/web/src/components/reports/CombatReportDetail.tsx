@@ -1,5 +1,6 @@
 // apps/web/src/components/reports/CombatReportDetail.tsx
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
 import { getUnitName, getDefenseName } from '@/lib/entity-names';
 import { RoundDisplay } from '@/components/combat-guide/RoundDisplay';
@@ -17,9 +18,10 @@ interface CombatReportDetailProps {
   result: Record<string, any>;
   missionType: 'attack' | 'pirate';
   gameConfig: any;
+  coordinates?: { galaxy: number; system: number; position: number };
 }
 
-export function CombatReportDetail({ result, missionType, gameConfig }: CombatReportDetailProps) {
+export function CombatReportDetail({ result, missionType, gameConfig, coordinates }: CombatReportDetailProps) {
   const [replayOpen, setReplayOpen] = useState(false);
 
   const outcome = result.outcome as string;
@@ -147,7 +149,22 @@ export function CombatReportDetail({ result, missionType, gameConfig }: CombatRe
         )}
         {result.debris && (result.debris.minerai > 0 || result.debris.silicium > 0) && (
           <div className="glass-card p-4">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Débris</h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Débris</h4>
+              {coordinates && (
+                <Link
+                  to={`/fleet/send?mission=recycle&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:bg-cyan-500/30"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                  Envoyer des recycleurs
+                </Link>
+              )}
+            </div>
             <div className="flex flex-wrap gap-3">
               {result.debris.minerai > 0 && (
                 <div className="flex items-center gap-1.5">
