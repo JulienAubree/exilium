@@ -51,9 +51,9 @@ export function createFlagshipRouter(
       }),
 
     updateImage: protectedProcedure
-      .input(z.object({ imageId: z.string().min(1).max(64) }))
+      .input(z.object({ imageIndex: z.number().int().min(1) }))
       .mutation(async ({ ctx, input }) => {
-        return flagshipService.updateImage(ctx.userId!, input.imageId);
+        return flagshipService.updateImage(ctx.userId!, input.imageIndex);
       }),
   });
 }

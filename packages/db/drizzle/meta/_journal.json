@@ -162,6 +162,13 @@
       "when": 1774900000000,
       "tag": "0022_separate_pirate_timer",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1774986400000,
+      "tag": "0023_flagship_cargo_and_images",
+      "breakpoints": true
     }
   ]
 }

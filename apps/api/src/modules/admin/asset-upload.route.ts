@@ -3,8 +3,9 @@ import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
 import { users, type Database } from '@exilium/db';
-import { processImage, processPlanetImage, isValidCategory } from '../../lib/image-processing.js';
+import { processImage, processPlanetImage, processFlagshipImage, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
+import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
 import { env } from '../../config/env.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
@@ -46,9 +47,9 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const entityId = (data.fields.entityId as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
-      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets' });
+      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships' });
     }
-    if (!entityId) {
+    if (!entityId && category !== 'flagships') {
       return reply.status(400).send({ error: 'entityId is required' });
     }
     if (!ALLOWED_MIMES.includes(data.mimetype)) {
@@ -65,11 +66,14 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     try {
       let files: string[];
       if (category === 'planets') {
-        const planetClassId = entityId;
+        const planetClassId = entityId!;
         const nextIndex = getNextPlanetImageIndex(planetClassId, env.ASSETS_DIR);
         files = await processPlanetImage(buffer, planetClassId, nextIndex, env.ASSETS_DIR);
+      } else if (category === 'flagships') {
+        const nextIndex = getNextFlagshipImageIndex(env.ASSETS_DIR);
+        files = await processFlagshipImage(buffer, nextIndex, env.ASSETS_DIR);
       } else {
-        files = await processImage(buffer, category, entityId, env.ASSETS_DIR);
+        files = await processImage(buffer, category, entityId!, env.ASSETS_DIR);
       }
       return reply.send({ success: true, files });
     } catch (err) {
@@ -106,6 +110,38 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const images = indexes.map((index) => ({
       index,
       thumbUrl: `/assets/planets/${planetClassId}/${index}-thumb.webp`,
+    }));
+
+    return reply.send({ images });
+  });
+
+  server.get('/admin/flagship-images', async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    let userId: string;
+    try {
+      const { payload } = await jwtVerify(authHeader.slice(7), JWT_SECRET);
+      userId = payload.userId as string;
+    } catch {
+      return reply.status(401).send({ error: 'Invalid token' });
+    }
+
+    const [user] = await db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user?.isAdmin) {
+      return reply.status(401).send({ error: 'Admin access required' });
+    }
+
+    const indexes = listFlagshipImageIndexes(env.ASSETS_DIR);
+    const images = indexes.map((index) => ({
+      index,
+      thumbUrl: `/assets/flagships/${index}-thumb.webp`,
     }));
 
     return reply.send({ images });

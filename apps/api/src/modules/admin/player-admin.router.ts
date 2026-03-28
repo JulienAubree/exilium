@@ -96,7 +96,7 @@ export function createPlayerAdminRouter(
           status: z.string().optional(),
           name: z.string().optional(),
           description: z.string().optional(),
-          imageId: z.string().optional(),
+          flagshipImageIndex: z.number().int().optional(),
         }),
       }))
       .mutation(async ({ input }) => {

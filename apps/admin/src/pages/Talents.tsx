@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { trpc } from '@/trpc';
+import { trpc, fetchWithAuth } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Plus, Pencil, Trash2, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
+import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
+import { Plus, Pencil, Trash2, Sparkles, ChevronDown, ChevronRight, Ship } from 'lucide-react';
 
 // ── Branch CRUD ──
 
@@ -112,6 +113,57 @@ function effectParamsSummary(effectType: string, params: any): string {
   return JSON.stringify(params);
 }
 
+// ── Flagship Image Pool ──
+
+function FlagshipImagePool() {
+  const [images, setImages] = useState<{ index: number; thumbUrl: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadImages = async () => {
+    try {
+      const res = await fetchWithAuth('/admin/flagship-images');
+      if (res.ok) {
+        const data = await res.json();
+        setImages(data.images);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadImages(); }, []);
+
+  return (
+    <div className="admin-card mb-6">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-panel-border">
+        <Ship className="w-4 h-4 text-hull-400" />
+        <span className="font-semibold text-gray-100">Visuels du Flagship</span>
+        <span className="text-xs text-gray-500">({images.length} image{images.length > 1 ? 's' : ''})</span>
+      </div>
+      <div className="p-4">
+        <div className="flex flex-wrap gap-2 items-center">
+          {images.map((img) => (
+            <img
+              key={img.index}
+              src={`${img.thumbUrl}?t=${Date.now()}`}
+              alt={`Flagship ${img.index}`}
+              className="w-16 h-16 rounded border border-panel-border object-cover"
+            />
+          ))}
+          <AdminImageUpload
+            category="flagships"
+            entityId="flagship"
+            entityName="Flagship"
+            onUploadComplete={loadImages}
+          />
+        </div>
+        {!loading && images.length === 0 && (
+          <p className="text-xs text-gray-500 mt-2">Aucun visuel. Uploadez des images pour que les joueurs puissent choisir l'apparence de leur vaisseau amiral.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ──
 
 export default function Talents() {
@@ -188,6 +240,8 @@ export default function Talents() {
           Nouvelle branche
         </button>
       </div>
+
+      <FlagshipImagePool />
 
       {branches.length === 0 && (
         <div className="admin-card p-8 text-center text-gray-500">Aucune branche de talent configuree.</div>

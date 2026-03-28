@@ -23,3 +23,10 @@ export function getPlanetImageUrl(
 ): string {
   return `/assets/planets/${planetClassId}/${imageIndex}${SUFFIX[size]}.webp`;
 }
+
+export function getFlagshipImageUrl(
+  imageIndex: number,
+  size: AssetSize = 'full',
+): string {
+  return `/assets/flagships/${imageIndex}${SUFFIX[size]}.webp`;
+}

@@ -120,7 +120,7 @@ export function createPlayerAdminService(db: Database) {
       weapons: number; shield: number; hull: number; baseArmor: number;
       shotCount: number; baseSpeed: number; fuelConsumption: number;
       cargoCapacity: number; driveType: string; combatCategoryId: string;
-      status: string; name: string; description: string; imageId: string;
+      status: string; name: string; description: string; flagshipImageIndex: number;
     }>) {
       await db.update(flagships).set({ ...stats, updatedAt: new Date() }).where(eq(flagships.userId, userId));
     },

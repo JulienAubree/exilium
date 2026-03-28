@@ -1,12 +1,11 @@
 import { eq, asc } from 'drizzle-orm';
-import { readdirSync } from 'fs';
-import { join } from 'path';
 import { TRPCError } from '@trpc/server';
 import { flagships, planets } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createTalentService } from './talent.service.js';
+import { listFlagshipImageIndexes, getRandomFlagshipImageIndex } from '../../lib/flagship-image.util.js';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -135,6 +134,8 @@ export function createFlagshipService(
 
       const sanitizedDesc = description ? sanitizeText(description).slice(0, 256) : '';
 
+      const randomImage = assetsDir ? getRandomFlagshipImageIndex(assetsDir) : null;
+
       const [created] = await db
         .insert(flagships)
         .values({
@@ -142,6 +143,7 @@ export function createFlagshipService(
           planetId: homePlanet.id,
           name: sanitizeText(name),
           description: sanitizedDesc,
+          flagshipImageIndex: randomImage,
         })
         .returning();
 
@@ -256,27 +258,20 @@ export function createFlagshipService(
         .where(eq(flagships.userId, userId));
     },
 
-    listImages(): string[] {
+    listImages(): number[] {
       if (!assetsDir) return [];
-      try {
-        const dir = join(assetsDir, 'flagships');
-        return readdirSync(dir)
-          .filter(f => f.endsWith('.webp'))
-          .map(f => f.replace('.webp', ''));
-      } catch {
-        return [];
-      }
+      return listFlagshipImageIndexes(assetsDir);
     },
 
-    async updateImage(userId: string, imageId: string) {
+    async updateImage(userId: string, imageIndex: number) {
       const available = this.listImages();
-      if (!available.includes(imageId)) {
+      if (!available.includes(imageIndex)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Image invalide' });
       }
 
       const [updated] = await db
         .update(flagships)
-        .set({ imageId, updatedAt: new Date() })
+        .set({ flagshipImageIndex: imageIndex, updatedAt: new Date() })
         .where(eq(flagships.userId, userId))
         .returning();
 

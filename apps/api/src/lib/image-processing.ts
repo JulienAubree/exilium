@@ -2,9 +2,9 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-export type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets';
+export type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets' | 'flagships';
 
-const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets'];
+const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships'];
 
 // Must match toKebab in apps/web/src/lib/assets.ts
 function toKebab(id: string): string {
@@ -64,6 +64,40 @@ export async function processPlanetImage(
   assetsDir: string,
 ): Promise<string[]> {
   const outputDir = path.join(assetsDir, 'planets', planetClassId);
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const files: string[] = [];
+
+  for (const size of SIZES) {
+    const filename = `${imageIndex}${size.suffix}.webp`;
+    const outPath = path.join(outputDir, filename);
+
+    let pipeline = sharp(buffer);
+
+    if (size.height) {
+      pipeline = pipeline.resize({
+        width: size.width,
+        height: size.height,
+        fit: 'cover',
+        position: 'centre',
+      });
+    } else {
+      pipeline = pipeline.resize({ width: size.width });
+    }
+
+    await pipeline.webp({ quality: size.quality }).toFile(outPath);
+    files.push(filename);
+  }
+
+  return files;
+}
+
+export async function processFlagshipImage(
+  buffer: Buffer,
+  imageIndex: number,
+  assetsDir: string,
+): Promise<string[]> {
+  const outputDir = path.join(assetsDir, 'flagships');
   fs.mkdirSync(outputDir, { recursive: true });
 
   const files: string[] = [];

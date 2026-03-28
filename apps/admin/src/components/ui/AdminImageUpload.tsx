@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { fetchWithAuth } from '@/trpc';
 import { Loader2 } from 'lucide-react';
 
-type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets';
+type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets' | 'flagships';
 
 interface AdminImageUploadProps {
   category: AssetCategory;
@@ -22,8 +22,8 @@ export function AdminImageUpload({ category, entityId, entityName, onUploadCompl
   const [cacheBust, setCacheBust] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Planets use subdirectories (e.g., /assets/planets/temperate/1-icon.webp), no single icon preview
-  const iconUrl = category === 'planets'
+  // Planets and flagships use indexed images, no single icon preview
+  const iconUrl = (category === 'planets' || category === 'flagships')
     ? null
     : `/assets/${category}/${toKebab(entityId)}-icon.webp${cacheBust ? `?t=${cacheBust}` : ''}`;
 

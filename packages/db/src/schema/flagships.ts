@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, smallint, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { planets } from './planets.js';
 
@@ -14,12 +14,12 @@ export const flagships = pgTable('flagships', {
   // Personnalisation
   name: varchar('name', { length: 32 }).notNull().default('Vaisseau amiral'),
   description: varchar('description', { length: 256 }).notNull().default(''),
-  imageId: varchar('image_id', { length: 64 }),
+  flagshipImageIndex: smallint('flagship_image_index'),
 
-  // Stats de base (alignées sur la frégate, modifiables par les talents)
+  // Stats de base (combat frégate, soute petit cargo, modifiables par les talents)
   baseSpeed: integer('base_speed').notNull().default(10000),
   fuelConsumption: integer('fuel_consumption').notNull().default(75),
-  cargoCapacity: integer('cargo_capacity').notNull().default(100),
+  cargoCapacity: integer('cargo_capacity').notNull().default(5000),
   driveType: varchar('drive_type', { length: 32 }).notNull().default('impulse'),
   weapons: integer('weapons').notNull().default(12),
   shield: integer('shield').notNull().default(16),

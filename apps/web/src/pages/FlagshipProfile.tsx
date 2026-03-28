@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/common/Skeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { cn } from '@/lib/utils';
+import { getFlagshipImageUrl } from '@/lib/assets';
 
 // ── Incapacitation Overlay ──
 
@@ -38,12 +39,12 @@ function fmtCountdown(total: number) {
 function IncapacitatedOverlay({
   name,
   repairEndsAt,
-  imageId,
+  flagshipImageIndex,
   onRepaired,
 }: {
   name: string;
   repairEndsAt: Date;
-  imageId: string | null;
+  flagshipImageIndex: number | null;
   onRepaired: () => void;
 }) {
   const totalDuration = useMemo(() => Math.max(1, Math.floor((repairEndsAt.getTime() - Date.now()) / 1000 + 7200)), [repairEndsAt]);
@@ -74,9 +75,9 @@ function IncapacitatedOverlay({
       <div className="relative flex flex-col items-center gap-6 max-w-md mx-auto px-6 text-center">
         {/* Damaged ship image */}
         <div className="relative">
-          {imageId ? (
+          {flagshipImageIndex ? (
             <img
-              src={`/assets/flagships/${imageId}.webp`}
+              src={getFlagshipImageUrl(flagshipImageIndex, 'thumb')}
               alt={name}
               className="h-40 w-40 rounded-2xl object-cover border-2 border-red-500/30 grayscale opacity-60"
             />
@@ -312,7 +313,7 @@ export default function FlagshipProfile() {
       <IncapacitatedOverlay
         name={flagship.name}
         repairEndsAt={new Date(flagship.repairEndsAt)}
-        imageId={flagship.imageId}
+        flagshipImageIndex={flagship.flagshipImageIndex}
         onRepaired={handleRepaired}
       />
     );
@@ -334,8 +335,8 @@ export default function FlagshipProfile() {
     renameMutation.mutate({ name, description: description || undefined });
   }
 
-  function handleImageSelect(imageId: string) {
-    imageMutation.mutate({ imageId });
+  function handleImageSelect(imageIndex: number) {
+    imageMutation.mutate({ imageIndex });
     setShowImagePicker(false);
   }
 
@@ -379,9 +380,9 @@ export default function FlagshipProfile() {
           {/* Image + Name */}
           <div className="glass-card p-4 flex flex-col items-center gap-3">
             <div className="relative">
-              {flagship.imageId ? (
+              {flagship.flagshipImageIndex ? (
                 <img
-                  src={`/assets/flagships/${flagship.imageId}.webp`}
+                  src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'thumb')}
                   alt={flagship.name}
                   className="h-32 w-32 rounded-lg object-cover border-2 border-white/10"
                 />
@@ -627,15 +628,15 @@ export default function FlagshipProfile() {
               <div className="text-muted-foreground text-sm">Aucune image disponible</div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-80 overflow-y-auto">
-                {flagshipImages.map(id => (
+                {flagshipImages.map(idx => (
                   <button
-                    key={id}
-                    onClick={() => handleImageSelect(id)}
+                    key={idx}
+                    onClick={() => handleImageSelect(idx)}
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
-                      id === flagship!.imageId ? 'border-primary ring-2 ring-primary/50' : 'border-white/10 hover:border-white/30'
+                      idx === flagship!.flagshipImageIndex ? 'border-primary ring-2 ring-primary/50' : 'border-white/10 hover:border-white/30'
                     }`}
                   >
-                    <img src={`/assets/flagships/${id}.webp`} alt={id} className="w-full h-full object-cover" />
+                    <img src={getFlagshipImageUrl(idx, 'thumb')} alt={`Flagship ${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
