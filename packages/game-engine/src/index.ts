@@ -14,3 +14,4 @@ export * from './formulas/pve.js';
 export * from './formulas/bonus.js';
 export * from './formulas/attack-detection.js';
 export * from './formulas/fp.js';
+export * from './formulas/flagship-stats.js';
