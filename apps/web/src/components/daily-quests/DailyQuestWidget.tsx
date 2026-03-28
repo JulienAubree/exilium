@@ -6,11 +6,12 @@ export function DailyQuestWidget() {
   const { data, isLoading } = trpc.dailyQuest.getQuests.useQuery(undefined, {
     refetchInterval: 60_000,
   });
-  const [collapsed, setCollapsed] = useState(false);
+  const [userToggled, setUserToggled] = useState<boolean | null>(null);
 
   if (isLoading || !data) return null;
 
   const hasCompleted = data.quests.some(q => q.status === 'completed');
+  const isCollapsed = userToggled ?? hasCompleted;
   const pendingCount = data.quests.filter(q => q.status === 'pending').length;
 
   const now = new Date();
@@ -19,10 +20,10 @@ export function DailyQuestWidget() {
   const hoursRemaining = Math.floor(msRemaining / 3600000);
   const minutesRemaining = Math.floor((msRemaining % 3600000) / 60000);
 
-  if (collapsed) {
+  if (isCollapsed) {
     return (
       <button
-        onClick={() => setCollapsed(false)}
+        onClick={() => setUserToggled(false)}
         className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-card/95 px-3 py-2 text-xs backdrop-blur-sm"
       >
         <ExiliumIcon size={12} className="text-purple-400" />
@@ -43,7 +44,7 @@ export function DailyQuestWidget() {
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-muted-foreground">1 Exilium</span>
           <button
-            onClick={() => setCollapsed(true)}
+            onClick={() => setUserToggled(true)}
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
