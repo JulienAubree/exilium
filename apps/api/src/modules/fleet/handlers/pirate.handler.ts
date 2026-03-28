@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { fleetEvents, pveMissions, planets } from '@exilium/db';
+import { eq, and } from 'drizzle-orm';
+import { fleetEvents, pveMissions, planets, debrisFields } from '@exilium/db';
 import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, getCombatMultipliers, formatDuration } from '../fleet.types.js';
@@ -190,6 +190,41 @@ export class PirateHandler implements MissionHandler {
         completionTime: fleetEvent.arrivalTime,
         result: reportResult,
       });
+    }
+
+    // Create/accumulate debris field from combat
+    const debris = result.combatResult.debris;
+    if (debris && (debris.minerai > 0 || debris.silicium > 0)) {
+      const [existingDebris] = await ctx.db
+        .select()
+        .from(debrisFields)
+        .where(
+          and(
+            eq(debrisFields.galaxy, fleetEvent.targetGalaxy),
+            eq(debrisFields.system, fleetEvent.targetSystem),
+            eq(debrisFields.position, fleetEvent.targetPosition),
+          ),
+        )
+        .limit(1);
+
+      if (existingDebris) {
+        await ctx.db
+          .update(debrisFields)
+          .set({
+            minerai: String(Number(existingDebris.minerai) + debris.minerai),
+            silicium: String(Number(existingDebris.silicium) + debris.silicium),
+            updatedAt: new Date(),
+          })
+          .where(eq(debrisFields.id, existingDebris.id));
+      } else {
+        await ctx.db.insert(debrisFields).values({
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+          minerai: String(debris.minerai),
+          silicium: String(debris.silicium),
+        });
+      }
     }
 
     // Hook: daily quest detection for PvE victory
