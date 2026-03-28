@@ -6,6 +6,7 @@ import { GameImage } from '@/components/common/GameImage';
 import { MissionIcon } from './MissionIcon';
 import { Button } from '@/components/ui/button';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { trpc } from '@/trpc';
 import { getShipName } from '@/lib/entity-names';
 import { resolveBonus } from '@exilium/game-engine';
 
@@ -187,6 +188,8 @@ export function MovementCard({
   const progress = useProgress(event.departureTime, event.arrivalTime);
   const ships = event.ships as Record<string, number>;
   const shipEntries = Object.entries(ships).filter(([, v]) => v > 0);
+  const hasFlagship = !!ships['flagship'];
+  const { data: flagship } = trpc.flagship.get.useQuery(undefined, { enabled: hasFlagship });
   const shipCount = shipEntries.reduce((sum, [, n]) => sum + n, 0);
 
   const targetCoords = `[${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}]`;
@@ -214,11 +217,31 @@ export function MovementCard({
   const fromLabel = isReturn ? targetLabel : `${originLabel} ${originCoords}`;
   const toLabel = isReturn ? `${originLabel} ${originCoords}` : targetLabel;
 
-  // Ship stats for expanded panel
-  const shipStats = gameConfig?.ships as Record<string, {
-    baseSpeed: number; cargoCapacity: number; fuelConsumption: number;
-    driveType: string; miningExtraction: number; weapons: number; shield: number; armor: number;
-  }> | undefined;
+  // Ship stats for expanded panel — merge flagship stats from DB
+  const shipStats = useMemo(() => {
+    const base = gameConfig?.ships as Record<string, {
+      baseSpeed: number; cargoCapacity: number; fuelConsumption: number;
+      driveType: string; miningExtraction: number; weapons: number; shield: number; armor: number;
+    }> | undefined;
+    if (!base) return undefined;
+    if (!hasFlagship || !flagship) return base;
+    return {
+      ...base,
+      flagship: {
+        baseSpeed: flagship.baseSpeed,
+        cargoCapacity: flagship.cargoCapacity,
+        fuelConsumption: flagship.fuelConsumption,
+        driveType: flagship.driveType,
+        miningExtraction: 0,
+        weapons: flagship.weapons,
+        shield: flagship.shield,
+        armor: flagship.baseArmor ?? 0,
+      },
+    };
+  }, [gameConfig?.ships, hasFlagship, flagship]);
+
+  // Ship name helper — uses flagship DB name for 'flagship', gameConfig for others
+  const shipName = (id: string) => id === 'flagship' ? (flagship?.name ?? 'Vaisseau amiral') : getShipName(id, gameConfig);
 
   // Cargo capacity of the fleet
   const fleetCargoCapacity = shipEntries.reduce((sum, [id, count]) => {
@@ -325,9 +348,9 @@ export function MovementCard({
               key={id}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
             >
-              <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-5 w-5 rounded-sm" />
+              <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className="h-5 w-5 rounded-sm" />
               <span className="text-foreground font-semibold">{count}&times;</span>
-              <span className="text-muted-foreground">{getShipName(id, gameConfig)}</span>
+              <span className="text-muted-foreground">{shipName(id)}</span>
             </span>
           ))}
           {shipCount > 1 && (
@@ -423,8 +446,8 @@ export function MovementCard({
                           <tr key={id} className={i % 2 === 0 ? 'bg-white/[0.02]' : ''}>
                             <td className="px-2 py-1.5 text-foreground">
                               <span className="inline-flex items-center gap-1.5">
-                                <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-4 w-4 rounded-sm" />
-                                {getShipName(id, gameConfig)}
+                                <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className="h-4 w-4 rounded-sm" />
+                                {shipName(id)}
                               </span>
                             </td>
                             <td className="px-2 py-1.5 text-right text-foreground font-semibold">{count}</td>
