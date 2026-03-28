@@ -12,7 +12,7 @@ import { QueryError } from '@/components/common/QueryError';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, groupEvents } from '@/lib/game-events';
-import { getPlanetImageUrl } from '@/lib/assets';
+import { getPlanetImageUrl, getFlagshipImageUrl } from '@/lib/assets';
 import { getUnitName } from '@/lib/entity-names';
 import {
   HistoryIcon,
@@ -26,6 +26,7 @@ import {
   ResearchIcon,
   ShipyardIcon,
   GalaxyIcon,
+  FlagshipIcon,
 } from '@/lib/icons';
 
 // ── Circular gauge (inline, used only here) ──
@@ -186,6 +187,8 @@ export default function Overview() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+
+  const { data: flagship } = trpc.flagship.get.useQuery();
 
   const renameMutation = trpc.planet.rename.useMutation({
     onSuccess: () => {
@@ -839,6 +842,48 @@ export default function Overview() {
               </div>
             </div>
           </section>
+
+          {/* Vaisseau amiral */}
+          {flagship && (
+            <section
+              className="glass-card p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+              onClick={() => navigate('/flagship')}
+            >
+              <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <FlagshipIcon width={16} height={16} className="opacity-70" />
+                Vaisseau amiral
+              </h2>
+              <div className="flex items-center gap-3">
+                {flagship.flagshipImageIndex ? (
+                  <img
+                    src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'icon')}
+                    alt={flagship.name}
+                    className="w-10 h-10 rounded-lg object-cover border border-white/10 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-white/10 flex items-center justify-center text-xs font-bold text-primary/30 flex-shrink-0">
+                    VA
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{flagship.name}</div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      flagship.status === 'active' ? 'bg-emerald-400' :
+                      flagship.status === 'in_mission' ? 'bg-blue-400' : 'bg-red-400'
+                    }`} />
+                    <span className={`${
+                      flagship.status === 'active' ? 'text-emerald-400' :
+                      flagship.status === 'in_mission' ? 'text-blue-400' : 'text-red-400'
+                    }`}>
+                      {flagship.status === 'active' ? 'Operationnel' :
+                       flagship.status === 'in_mission' ? 'En mission' : 'Incapacite'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Actions rapides */}
           <section className="glass-card p-4">

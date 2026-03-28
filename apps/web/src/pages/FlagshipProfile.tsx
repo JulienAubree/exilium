@@ -42,12 +42,24 @@ function IncapacitatedOverlay({
   repairEndsAt,
   flagshipImageIndex,
   onRepaired,
+  balance,
 }: {
   name: string;
   repairEndsAt: Date;
   flagshipImageIndex: number | null;
   onRepaired: () => void;
+  balance: number;
 }) {
+  const utils = trpc.useUtils();
+  const [confirmRepair, setConfirmRepair] = useState(false);
+  const repairMutation = trpc.flagship.repair.useMutation({
+    onSuccess: () => {
+      utils.flagship.get.invalidate();
+      utils.exilium.getBalance.invalidate();
+      onRepaired();
+    },
+  });
+  const repairCost = 2;
   const totalDuration = useMemo(() => Math.max(1, Math.floor((repairEndsAt.getTime() - Date.now()) / 1000 + 7200)), [repairEndsAt]);
   const secondsLeft = useCountdown(repairEndsAt);
   const { h, m, s } = fmtCountdown(secondsLeft);
@@ -146,7 +158,27 @@ function IncapacitatedOverlay({
             hour: '2-digit', minute: '2-digit', second: '2-digit',
           })}
         </div>
+
+        <button
+          onClick={() => setConfirmRepair(true)}
+          disabled={balance < repairCost || repairMutation.isPending}
+          className="mt-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+        >
+          {repairMutation.isPending ? 'Reparation...' : `Reparer maintenant (${repairCost} Exilium)`}
+        </button>
+        {balance < repairCost && (
+          <p className="text-[10px] text-red-400/70">Solde insuffisant ({balance} Exilium)</p>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={confirmRepair}
+        onConfirm={() => repairMutation.mutate()}
+        onCancel={() => setConfirmRepair(false)}
+        title="Reparer immediatement ?"
+        description={`Cout : ${repairCost} Exilium. Votre vaisseau sera immediatement operationnel.`}
+        confirmLabel="Reparer"
+      />
     </div>
   );
 }
@@ -336,6 +368,7 @@ export default function FlagshipProfile() {
         repairEndsAt={new Date(flagship.repairEndsAt)}
         flagshipImageIndex={flagship.flagshipImageIndex}
         onRepaired={handleRepaired}
+        balance={balance}
       />
     );
   }

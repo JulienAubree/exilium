@@ -15,6 +15,7 @@ import {
   RankingIcon,
   AllianceIcon,
   AllianceRankingIcon,
+  FlagshipIcon,
 } from '@/lib/icons';
 import { useUIStore } from '@/stores/ui.store';
 import { trpc } from '@/trpc';
@@ -23,7 +24,7 @@ import { BottomSheet } from './BottomSheet';
 const TAB_GROUPS = {
   planete: ['/', '/resources', '/buildings', '/research'],
   production: ['/shipyard', '/command-center', '/defense'],
-  espace: ['/galaxy', '/fleet', '/missions', '/market'],
+  espace: ['/galaxy', '/fleet', '/missions', '/market', '/flagship'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
 };
 
@@ -46,6 +47,7 @@ const SHEET_ITEMS = {
     { label: 'Flotte', path: '/fleet', icon: FleetIcon },
     { label: 'Missions', path: '/missions', icon: MissionsIcon },
     { label: 'Marché', path: '/market', icon: MarketIcon },
+    { label: 'Vaisseau amiral', path: '/flagship', icon: FlagshipIcon },
   ],
   social: [
     { label: 'Messages', path: '/messages', icon: MessagesIcon },
