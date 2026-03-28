@@ -122,26 +122,30 @@ export function useNotifications() {
         shipyardBuffer.current.set(unitId, entry);
         break;
       }
-      case 'fleet-arrived':
+      case 'fleet-arrived': {
         utils.fleet.movements.invalidate();
         utils.fleet.inbound.invalidate();
         utils.fleet.slots.invalidate();
         utils.resource.production.invalidate();
         utils.report.list.invalidate();
         utils.report.unreadCount.invalidate();
-        addToast(`Flotte arrivée : mission ${event.payload.mission} en ${event.payload.targetCoords}`);
+        const arrivedLink = event.payload.reportId ? `/reports/${event.payload.reportId}` : undefined;
+        addToast(`Flotte arrivée : mission ${event.payload.mission} en ${event.payload.targetCoords}`, 'info', arrivedLink);
         showBrowserNotification('Flotte arrivée', `Mission ${event.payload.mission} en ${event.payload.targetCoords}`);
         break;
-      case 'fleet-returned':
+      }
+      case 'fleet-returned': {
         utils.fleet.movements.invalidate();
         utils.fleet.inbound.invalidate();
         utils.fleet.slots.invalidate();
         utils.resource.production.invalidate();
         utils.report.list.invalidate();
         utils.report.unreadCount.invalidate();
-        addToast(`Flotte de retour sur ${event.payload.originName}`);
+        const returnedLink = event.payload.reportId ? `/reports/${event.payload.reportId}` : undefined;
+        addToast(`Flotte de retour sur ${event.payload.originName}`, 'info', returnedLink);
         showBrowserNotification('Flotte de retour', `Flotte rentrée sur ${event.payload.originName}`);
         break;
+      }
       case 'tutorial-quest-complete':
         utils.tutorial.getCurrent.invalidate();
         utils.resource.production.invalidate();
@@ -174,16 +178,18 @@ export function useNotifications() {
         addToast(`Attaque détectée vers ${event.payload.targetCoords} !`);
         showBrowserNotification('Attaque détectée !', `Flotte hostile en approche vers ${event.payload.targetCoords}`);
         break;
-      case 'fleet-attack-landed':
+      case 'fleet-attack-landed': {
         utils.fleet.inbound.invalidate();
         utils.resource.production.invalidate();
         utils.shipyard.ships.invalidate();
         utils.shipyard.defenses.invalidate();
         utils.report.list.invalidate();
         utils.report.unreadCount.invalidate();
-        addToast(`Votre planète ${event.payload.targetCoords} a été attaquée !`);
+        const attackLink = event.payload.reportId ? `/reports/${event.payload.reportId}` : undefined;
+        addToast(`Votre planète ${event.payload.targetCoords} a été attaquée !`, 'error', attackLink);
         showBrowserNotification('Planète attaquée !', `Combat terminé en ${event.payload.targetCoords}`);
         break;
+      }
       case 'market-offer-reserved': {
         utils.market.myOffers.invalidate();
         const resLabel: Record<string, string> = { minerai: 'Minerai', silicium: 'Silicium', hydrogene: 'Hydrogène' };

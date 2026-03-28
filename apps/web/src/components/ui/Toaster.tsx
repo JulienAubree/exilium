@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router';
 import { useToastStore, type ToastVariant } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
 
@@ -17,8 +18,9 @@ const variantIcons: Record<ToastVariant, string> = {
   warning: '⚠',
 };
 
-function ToastItem({ id, message, variant }: { id: string; message: string; variant: ToastVariant; createdAt: number }) {
+function ToastItem({ id, message, variant, link }: { id: string; message: string; variant: ToastVariant; createdAt: number; link?: string }) {
   const removeToast = useToastStore((s) => s.removeToast);
+  const navigate = useNavigate();
 
   return (
     <div
@@ -26,7 +28,10 @@ function ToastItem({ id, message, variant }: { id: string; message: string; vari
         'relative max-w-sm cursor-pointer overflow-hidden rounded-md border px-4 py-3 text-sm shadow-lg animate-slide-in-right',
         variantStyles[variant],
       )}
-      onClick={() => removeToast(id)}
+      onClick={() => {
+        removeToast(id);
+        if (link) navigate(link);
+      }}
     >
       <div className="flex items-center gap-2">
         <span className="text-xs">{variantIcons[variant]}</span>
