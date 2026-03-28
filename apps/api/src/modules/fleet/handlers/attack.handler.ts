@@ -155,8 +155,6 @@ export class AttackHandler implements MissionHandler {
     const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
                          Object.values(defenderDefenses).some(v => v > 0);
 
-    const defenderCombined: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
-
     let outcome: 'attacker' | 'defender' | 'draw';
     let attackerLosses: Record<string, number> = {};
     let defenderLosses: Record<string, number> = {};

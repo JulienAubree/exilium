@@ -35,7 +35,7 @@ function createMockFlagshipRow(overrides: Record<string, unknown> = {}) {
  */
 function createMockDb() {
   let flagshipRow: ReturnType<typeof createMockFlagshipRow> | null = null;
-  const planetRow = { id: 'planet-1' };
+  const _planetRow = { id: 'planet-1' };
 
   // Queue of results for successive select().from().where().limit() chains
   let selectResults: unknown[][] = [];

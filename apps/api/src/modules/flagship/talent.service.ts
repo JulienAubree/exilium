@@ -318,7 +318,7 @@ export function createTalentService(
 
     // ── ACTIVE BUFFS ──
 
-    async getActiveBuffs(userId: string, planetId?: string): Promise<Array<{ talentId: string; key: string; multiplier: number; expiresAt: string }>> {
+    async getActiveBuffs(userId: string, _planetId?: string): Promise<Array<{ talentId: string; key: string; multiplier: number; expiresAt: string }>> {
       const [flagship] = await db.select({ id: flagships.id })
         .from(flagships).where(eq(flagships.userId, userId)).limit(1);
       if (!flagship) return [];

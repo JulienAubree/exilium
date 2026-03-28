@@ -157,19 +157,12 @@ export class TradeHandler implements MissionHandler {
       };
     }
 
-    const config = await ctx.gameConfigService.getFullConfig();
-    const commissionPercent = Number(config.universe.market_commission_percent) || 5;
-
-    // Apply talent bonus to reduce commission for buyer
-    const talentCtx = ctx.talentService ? await ctx.talentService.computeTalentContext(fleetEvent.userId) : {};
-    const adjustedCommission = commissionPercent / (1 + (talentCtx['market_fee'] ?? 0));
-
     const price = {
       minerai: Number(offer.priceMinerai),
       silicium: Number(offer.priceSilicium),
       hydrogene: Number(offer.priceHydrogene),
     };
-    const commission = calculateCommission(price, adjustedCommission);
+    // Commission was already deducted from buyer at purchase time (economic sink)
 
     // Credit seller's planet with price (NOT commission)
     const [sellerPlanet] = await ctx.db

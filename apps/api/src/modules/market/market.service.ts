@@ -19,7 +19,7 @@ export function createMarketService(
   redis: Redis,
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
   exiliumService?: ReturnType<typeof createExiliumService>,
-  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
+  _talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
 ) {
   async function getMarketLevel(planetId: string): Promise<number> {
     const [row] = await db
@@ -180,13 +180,6 @@ export function createMarketService(
       limit?: number;
     }) {
       const limit = options?.limit ?? 20;
-
-      // Get buyer's planet for distance calculation
-      const [buyerPlanet] = await db
-        .select({ galaxy: planets.galaxy, system: planets.system, position: planets.position })
-        .from(planets)
-        .where(eq(planets.id, planetId))
-        .limit(1);
 
       const conditions = [
         eq(marketOffers.status, 'active'),

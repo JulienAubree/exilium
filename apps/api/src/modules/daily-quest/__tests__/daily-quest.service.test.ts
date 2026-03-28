@@ -24,18 +24,6 @@ function resetRecord(userId = 'user-1') {
   };
 }
 
-/** Mini chainable query builder pour simuler drizzle */
-function chainable(returnValue: unknown = []) {
-  const chain: Record<string, unknown> = {};
-  const proxy: unknown = new Proxy(chain, {
-    get(_target, prop) {
-      if (prop === 'then') return undefined; // pas thenable
-      return (..._args: unknown[]) => proxy;
-    },
-  });
-  return proxy;
-}
-
 const mockTxUpdate = vi.fn().mockImplementation(() => {
   const obj = {
     set: vi.fn().mockReturnValue({

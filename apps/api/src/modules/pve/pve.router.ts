@@ -7,7 +7,7 @@ import type { GameConfigService } from '../admin/game-config.service.js';
 export function createPveRouter(
   pveService: ReturnType<typeof createPveService>,
   asteroidBeltService: ReturnType<typeof createAsteroidBeltService>,
-  gameConfigService: GameConfigService,
+  _gameConfigService: GameConfigService,
 ) {
   return router({
     getMissions: protectedProcedure.query(async ({ ctx }) => {

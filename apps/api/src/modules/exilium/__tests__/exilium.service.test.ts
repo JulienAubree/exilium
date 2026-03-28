@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { createExiliumService, type ExiliumSource } from '../exilium.service.js';
+import { createExiliumService } from '../exilium.service.js';
 
 // --- Helpers to build a mock DB ---
 
@@ -21,18 +21,6 @@ function createMockRow(overrides: Record<string, unknown> = {}) {
 function createMockDb() {
   const rows: Record<string, ReturnType<typeof createMockRow>> = {};
   const logs: Array<{ userId: string; amount: number; source: string; details: unknown; createdAt: Date }> = [];
-
-  // Build chainable query builder
-  function chainable(result: unknown) {
-    const chain: Record<string, unknown> = {};
-    const methods = ['select', 'from', 'where', 'limit', 'insert', 'values', 'returning', 'update', 'set', 'orderBy', 'for'];
-    for (const m of methods) {
-      chain[m] = vi.fn(() => chain);
-    }
-    // Make it thenable so await works
-    (chain as any).then = (resolve: (v: unknown) => void) => resolve(result);
-    return chain;
-  }
 
   // The mock tracks state and answers queries based on operation
   const db: any = {
