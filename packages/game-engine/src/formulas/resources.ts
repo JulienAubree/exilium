@@ -93,8 +93,9 @@ export function calculateProductionRates(
   const tSilicium = 1 + (talentBonuses?.['production_silicium'] ?? 0);
   const tHydrogene = 1 + (talentBonuses?.['production_hydrogene'] ?? 0);
 
+  const energyBonus = 1 + (talentBonuses?.['energy_production'] ?? 0);
   const solarSatEnergy = solarSatelliteEnergy(planet.maxTemp, planet.isHomePlanet, prodConfig.satellite) * planet.solarSatelliteCount;
-  const energyProduced = solarPlantEnergy(planet.solarPlantLevel, prodConfig.solar) + solarSatEnergy;
+  const energyProduced = Math.floor((solarPlantEnergy(planet.solarPlantLevel, prodConfig.solar) + solarSatEnergy) * energyBonus);
 
   const mineraiEnergy = Math.floor(mineraiMineEnergy(planet.mineraiMineLevel, prodConfig.mineraiEnergy) * mineraiPct);
   const siliciumEnergy = Math.floor(siliciumMineEnergy(planet.siliciumMineLevel, prodConfig.siliciumEnergy) * siliciumPct);

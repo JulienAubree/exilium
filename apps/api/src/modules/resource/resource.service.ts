@@ -1,10 +1,11 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetTypes, planetBuildings, planetShips } from '@exilium/db';
+import { planets, planetTypes, planetBuildings, planetShips, userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
   calculateProductionRates,
+  resolveBonus,
   type ResourceCost,
   type PlanetTypeBonus,
 } from '@exilium/game-engine';
@@ -259,7 +260,21 @@ export function createResourceService(
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
-      const talentCtx = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
+      const talentCtx: Record<string, number> = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
+
+      // Inject energy research bonus into context
+      if (userId) {
+        const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+        if (research) {
+          const researchLevels: Record<string, number> = {};
+          for (const [key, value] of Object.entries(research)) {
+            if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
+          }
+          const energyMult = resolveBonus('energy_production', null, researchLevels, config.bonuses);
+          if (energyMult > 1) talentCtx['energy_production'] = energyMult - 1;
+        }
+      }
+
       return calculateProductionRates(levels, bonus, prodConfig, talentCtx);
     },
   };
