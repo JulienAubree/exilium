@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/common/Skeleton';
@@ -51,9 +51,17 @@ function IncapacitatedOverlay({
   const { h, m, s } = fmtCountdown(secondsLeft);
   const progress = Math.min(100, ((totalDuration - secondsLeft) / totalDuration) * 100);
 
+  const onRepairedRef = useRef(onRepaired);
+  onRepairedRef.current = onRepaired;
+  const firedRef = useRef(false);
+
   useEffect(() => {
-    if (secondsLeft <= 0) onRepaired();
-  }, [secondsLeft, onRepaired]);
+    if (secondsLeft <= 0 && !firedRef.current) {
+      firedRef.current = true;
+      // Small delay to ensure server-side lazy repair has time to process
+      setTimeout(() => onRepairedRef.current(), 500);
+    }
+  }, [secondsLeft]);
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[80vh] p-4">
@@ -294,13 +302,17 @@ export default function FlagshipProfile() {
   }
 
   // Full-screen overlay when incapacitated
+  const handleRepaired = useCallback(() => {
+    utils.flagship.get.invalidate();
+  }, [utils.flagship.get]);
+
   if (flagship.status === 'incapacitated' && flagship.repairEndsAt) {
     return (
       <IncapacitatedOverlay
         name={flagship.name}
         repairEndsAt={new Date(flagship.repairEndsAt)}
         imageId={flagship.imageId}
-        onRepaired={() => utils.flagship.get.invalidate()}
+        onRepaired={handleRepaired}
       />
     );
   }
