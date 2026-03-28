@@ -6,6 +6,11 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { getFlagshipImageUrl, getPlanetImageUrl } from '@/lib/assets';
+import {
+  ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
+  SpeedIcon, PropulsionIcon, FuelIcon, CargoIcon,
+  SectionHeader,
+} from '@/components/entity-details/stat-components';
 
 // ── Incapacitation Overlay ──
 
@@ -212,27 +217,46 @@ const EFFECT_LABELS: Record<string, { label: string; color: string }> = {
 
 // ── Stat display helpers ──
 
-function StatCard({ label, value, base, bonus, unit, accent }: {
+const fmt = (n: number) => n.toLocaleString('fr-FR');
+
+const STAT_VARIANTS: Record<string, { iconBg: string; valueColor: string; iconColor: string }> = {
+  shield:  { iconBg: 'bg-sky-400/10',    valueColor: 'text-sky-400',    iconColor: 'text-sky-400' },
+  armor:   { iconBg: 'bg-amber-400/10',  valueColor: 'text-amber-400',  iconColor: 'text-amber-400' },
+  hull:    { iconBg: 'bg-slate-400/10',   valueColor: 'text-slate-200',  iconColor: 'text-slate-400' },
+  weapons: { iconBg: 'bg-red-400/10',     valueColor: 'text-red-400',    iconColor: 'text-red-400' },
+  shots:   { iconBg: 'bg-purple-400/10',  valueColor: 'text-purple-400', iconColor: 'text-purple-400' },
+};
+
+function FlagshipStat({ icon, label, value, base, bonus, variant, wide }: {
+  icon: React.ReactNode;
   label: string;
   value: number | string;
   base?: number;
   bonus?: number;
-  unit?: string;
-  accent?: string;
+  variant: string;
+  wide?: boolean;
 }) {
+  const v = STAT_VARIANTS[variant] ?? STAT_VARIANTS.hull;
   const hasBonus = bonus != null && bonus !== 0 && typeof bonus === 'number';
   return (
-    <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
-      <div className="text-[9px] text-muted-foreground/50 uppercase tracking-wider mb-0.5">{label}</div>
-      <div className={cn('text-base font-bold tabular-nums leading-tight', accent ?? 'text-foreground')}>
-        {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
-        {unit && <span className="text-[10px] font-normal text-muted-foreground/40 ml-0.5">{unit}</span>}
+    <div className={cn(
+      'flex items-center gap-2.5 bg-[#0f172a] rounded-lg p-2.5 border border-transparent hover:border-[#334155] transition-colors',
+      wide && 'col-span-2',
+    )}>
+      <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', v.iconBg)}>
+        <span className={v.iconColor}>{icon}</span>
       </div>
-      {hasBonus && (
-        <div className="text-[9px] text-emerald-400/70 mt-0.5 leading-tight">
-          {base?.toLocaleString('fr-FR')} {bonus > 0 ? '+' : ''}{bonus.toLocaleString('fr-FR')}
+      <div>
+        <div className="text-[10px] text-slate-500 uppercase tracking-wide">{label}</div>
+        <div className={cn('text-base font-bold font-mono leading-tight', v.valueColor)}>
+          {typeof value === 'number' ? fmt(value) : value}
         </div>
-      )}
+        {hasBonus && (
+          <div className="text-[9px] text-emerald-500">
+            base {fmt(base!)} · {bonus > 0 ? '+' : ''}{fmt(bonus)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -528,18 +552,125 @@ export default function FlagshipProfile() {
       </div>
 
       {/* ===== Stats Card ===== */}
-      <div className="glass-card p-4 lg:p-5">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Statistiques</h3>
-        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
-          <StatCard label="Armes" value={effectiveStats?.weapons ?? flagship.weapons} base={flagship.weapons} bonus={talentBonuses.weapons} accent="text-red-400" />
-          <StatCard label="Bouclier" value={effectiveStats?.shield ?? flagship.shield} base={flagship.shield} bonus={talentBonuses.shield} accent="text-blue-400" />
-          <StatCard label="Coque" value={effectiveStats?.hull ?? flagship.hull} base={flagship.hull} bonus={talentBonuses.hull} accent="text-amber-400" />
-          <StatCard label="Blindage" value={effectiveStats?.baseArmor ?? flagship.baseArmor} base={flagship.baseArmor} bonus={talentBonuses.baseArmor} />
-          <StatCard label="Tirs" value={effectiveStats?.shotCount ?? flagship.shotCount} base={flagship.shotCount} bonus={talentBonuses.shotCount} />
-          <StatCard label="Soute" value={effectiveStats?.cargoCapacity ?? flagship.cargoCapacity} base={flagship.cargoCapacity} bonus={talentBonuses.cargoCapacity} />
-          <StatCard label="Vitesse" value={effectiveStats?.baseSpeed ?? flagship.baseSpeed} base={flagship.baseSpeed} bonus={talentBonuses.speedPercent ? Math.round(flagship.baseSpeed * talentBonuses.speedPercent) : undefined} />
-          <StatCard label="Carburant" value={effectiveStats?.fuelConsumption ?? flagship.fuelConsumption} base={flagship.fuelConsumption} bonus={talentBonuses.fuelConsumption} unit="/u" />
-          <StatCard label="Propulsion" value={DRIVE_LABELS[driveType] ?? driveType} accent="text-purple-400" />
+      <div className="glass-card p-4 lg:p-5 space-y-4">
+        {/* Defense */}
+        <div>
+          <SectionHeader icon={<ShieldIcon size={14} className="text-sky-400" />} label="Defense" color="text-sky-400" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            <FlagshipStat
+              icon={<ShieldIcon />}
+              label="Bouclier"
+              value={effectiveStats?.shield ?? flagship.shield}
+              base={flagship.shield}
+              bonus={talentBonuses.shield}
+              variant="shield"
+            />
+            <FlagshipStat
+              icon={<ArmorIcon />}
+              label="Blindage"
+              value={effectiveStats?.baseArmor ?? flagship.baseArmor}
+              base={flagship.baseArmor}
+              bonus={talentBonuses.baseArmor}
+              variant="armor"
+            />
+            <FlagshipStat
+              icon={<HullIcon />}
+              label="Coque"
+              value={effectiveStats?.hull ?? flagship.hull}
+              base={flagship.hull}
+              bonus={talentBonuses.hull}
+              variant="hull"
+            />
+          </div>
+        </div>
+
+        <div className="h-px bg-[#334155]" />
+
+        {/* Attaque */}
+        <div>
+          <SectionHeader icon={<WeaponsIcon size={14} className="text-red-400" />} label="Attaque" color="text-red-400" />
+          <div className="grid grid-cols-2 gap-1.5">
+            <FlagshipStat
+              icon={<WeaponsIcon />}
+              label="Armement"
+              value={effectiveStats?.weapons ?? flagship.weapons}
+              base={flagship.weapons}
+              bonus={talentBonuses.weapons}
+              variant="weapons"
+            />
+            <FlagshipStat
+              icon={<ShotsIcon />}
+              label="Tirs / round"
+              value={effectiveStats?.shotCount ?? flagship.shotCount}
+              base={flagship.shotCount}
+              bonus={talentBonuses.shotCount}
+              variant="shots"
+            />
+          </div>
+        </div>
+
+        <div className="h-px bg-[#334155]" />
+
+        {/* Deplacement */}
+        <div>
+          <SectionHeader
+            icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><polygon points="3,11 22,2 13,21 11,13" /></svg>}
+            label="Deplacement"
+            color="text-slate-500"
+          />
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="flex items-center gap-2">
+              <SpeedIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Vitesse</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">
+                  {fmt(effectiveStats?.baseSpeed ?? flagship.baseSpeed)}
+                  {talentBonuses.speedPercent ? (
+                    <span className="text-[9px] text-emerald-500 ml-1">
+                      base {fmt(flagship.baseSpeed)} · +{fmt(Math.round(flagship.baseSpeed * talentBonuses.speedPercent))}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <PropulsionIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Propulsion</div>
+                <div className="text-xs text-purple-400 font-mono font-semibold">
+                  {DRIVE_LABELS[driveType] ?? driveType}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FuelIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Consommation</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">
+                  {fmt(effectiveStats?.fuelConsumption ?? flagship.fuelConsumption)}
+                  {talentBonuses.fuelConsumption ? (
+                    <span className="text-[9px] text-emerald-500 ml-1">
+                      base {fmt(flagship.fuelConsumption)} · {talentBonuses.fuelConsumption > 0 ? '+' : ''}{fmt(talentBonuses.fuelConsumption)}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CargoIcon size={14} className="text-slate-500 shrink-0" />
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Soute</div>
+                <div className="text-xs text-slate-200 font-mono font-semibold">
+                  {fmt(effectiveStats?.cargoCapacity ?? flagship.cargoCapacity)}
+                  {talentBonuses.cargoCapacity ? (
+                    <span className="text-[9px] text-emerald-500 ml-1">
+                      base {fmt(flagship.cargoCapacity)} · +{fmt(talentBonuses.cargoCapacity)}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
