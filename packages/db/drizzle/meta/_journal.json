@@ -176,6 +176,13 @@
       "when": 1775000000000,
       "tag": "0024_energy_tech_bonus",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1775100000000,
+      "tag": "0025_flagship_dynamic_stats",
+      "breakpoints": true
     }
   ]
 }

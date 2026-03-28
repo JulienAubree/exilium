@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, smallint, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, smallint, timestamp, uniqueIndex, text } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { planets } from './planets.js';
 
@@ -26,6 +26,7 @@ export const flagships = pgTable('flagships', {
   hull: integer('hull').notNull().default(30),
   baseArmor: integer('base_armor').notNull().default(2),
   shotCount: integer('shot_count').notNull().default(2),
+  unlockedShips: text('unlocked_ships').array().notNull().default([]),
   combatCategoryId: varchar('combat_category_id', { length: 32 }).notNull().default('medium'),
 
   // Etat
