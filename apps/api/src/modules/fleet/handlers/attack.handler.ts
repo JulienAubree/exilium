@@ -5,6 +5,7 @@ import { simulateCombat, totalCargoCapacity, computeFleetFP } from '@exilium/gam
 import type { CombatConfig, ShipCategory, CombatInput, RoundResult, UnitCombatStats, FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers, formatDuration } from '../fleet.types.js';
+import { publishNotification } from '../../notification/notification.publisher.js';
 
 export class AttackHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -187,6 +188,12 @@ export class AttackHandler implements MissionHandler {
         if (ctx.flagshipService) {
           await ctx.flagshipService.incapacitate(fleetEvent.userId);
         }
+        if (ctx.redis) {
+          publishNotification(ctx.redis, fleetEvent.userId, {
+            type: 'flagship-incapacitated',
+            payload: { coords, mission: 'attack' },
+          });
+        }
         flagshipDestroyed = true;
         delete survivingShips['flagship'];
         continue;
@@ -319,15 +326,23 @@ export class AttackHandler implements MissionHandler {
                         outcome === 'defender' ? 'Défaite' : 'Match nul';
 
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+    const formatLosses = (losses: Record<string, number>) => {
+      const entries = Object.entries(losses).filter(([, v]) => v > 0);
+      if (entries.length === 0) return 'Aucune';
+      return entries.map(([id, count]) => {
+        const name = id === 'flagship' ? 'Vaisseau amiral' : config.ships[id]?.name ?? config.defenses[id]?.name ?? id;
+        return `${count}x ${name}`;
+      }).join(', ');
+    };
     const reportBody = `Combat ${coords} — ${outcomeText}\n\n` +
       `Durée du trajet : ${duration}\n` +
       `Rounds : ${roundCount}\n` +
-      `Pertes attaquant : ${JSON.stringify(attackerLosses)}\n` +
-      `Pertes défenseur : ${JSON.stringify(defenderLosses)}\n` +
-      `Défenses réparées : ${JSON.stringify(repairedDefenses)}\n` +
-      `Débris : ${debris.minerai} minerai, ${debris.silicium} silicium\n` +
+      `Pertes attaquant : ${formatLosses(attackerLosses)}\n` +
+      `Pertes défenseur : ${formatLosses(defenderLosses)}\n` +
+      (Object.values(repairedDefenses).some(v => v > 0) ? `Défenses réparées : ${formatLosses(repairedDefenses)}\n` : '') +
+      `Débris : ${debris.minerai.toLocaleString('fr-FR')} minerai, ${debris.silicium.toLocaleString('fr-FR')} silicium\n` +
       (outcome === 'attacker' ?
-        `Pillage : ${pillagedMinerai} minerai, ${pillagedSilicium} silicium, ${pillagedHydrogene} hydrogène\n` : '');
+        `Pillage : ${pillagedMinerai.toLocaleString('fr-FR')} minerai, ${pillagedSilicium.toLocaleString('fr-FR')} silicium, ${pillagedHydrogene.toLocaleString('fr-FR')} hydrogène\n` : '');
 
     let messageId: string | undefined;
     let defenderMsgId: string | undefined;

@@ -66,6 +66,7 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
       pirateFleet: Record<string, number>,
       fleetCargoCapacity: number,
       rewards: { minerai: number; silicium: number; hydrogene: number; bonusShips: { shipId: string; count: number; chance: number }[] },
+      flagshipCombatConfig?: ShipCombatConfig,
     ): Promise<PirateArrivalResult> {
       const pirateShips = pirateFleet;
       const config = await gameConfigService.getFullConfig();
@@ -100,11 +101,18 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
         };
       }
 
+      // Inject flagship combat config if present
+      if (flagshipCombatConfig) {
+        shipCombatConfigs['flagship'] = flagshipCombatConfig;
+      }
+
       const shipIds = new Set(Object.keys(config.ships));
+      if (flagshipCombatConfig) shipIds.add('flagship');
       const shipCosts: Record<string, { minerai: number; silicium: number }> = {};
       for (const [id, ship] of Object.entries(config.ships)) {
         shipCosts[id] = { minerai: ship.cost.minerai, silicium: ship.cost.silicium };
       }
+      if (flagshipCombatConfig) shipCosts['flagship'] = { minerai: 0, silicium: 0 };
 
       const categories: ShipCategory[] = [
         { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },

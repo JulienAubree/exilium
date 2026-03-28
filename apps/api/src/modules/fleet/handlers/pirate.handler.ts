@@ -1,8 +1,9 @@
 import { eq, and } from 'drizzle-orm';
 import { fleetEvents, pveMissions, planets, debrisFields } from '@exilium/db';
-import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
+import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig, type ShipCombatConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, getCombatMultipliers, formatDuration } from '../fleet.types.js';
+import { publishNotification } from '../../notification/notification.publisher.js';
 
 export class PirateHandler implements MissionHandler {
   async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -27,14 +28,56 @@ export class PirateHandler implements MissionHandler {
     const config = await ctx.gameConfigService.getFullConfig();
     const playerMultipliers = await getCombatMultipliers(ctx.db, fleetEvent.userId, config.bonuses);
     const shipStatsMap = buildShipStatsMap(config);
+
+    // Inject flagship combat config if flagship is in the fleet
+    let flagshipCombatConfig: ShipCombatConfig | undefined;
+    if (ships['flagship'] && ships['flagship'] > 0 && ctx.flagshipService) {
+      const flagship = await ctx.flagshipService.get(fleetEvent.userId);
+      if (flagship) {
+        shipStatsMap['flagship'] = {
+          baseSpeed: flagship.baseSpeed,
+          fuelConsumption: flagship.fuelConsumption,
+          cargoCapacity: flagship.cargoCapacity,
+          driveType: flagship.driveType as import('@exilium/game-engine').ShipStats['driveType'],
+          miningExtraction: 0,
+        };
+        flagshipCombatConfig = {
+          shipType: 'flagship',
+          categoryId: flagship.combatCategoryId ?? 'support',
+          baseShield: flagship.shield,
+          baseArmor: flagship.baseArmor ?? 0,
+          baseHull: flagship.hull,
+          baseWeaponDamage: flagship.weapons,
+          baseShotCount: flagship.shotCount ?? 1,
+        };
+      }
+    }
+
     const preCargoCapacity = totalCargoCapacity(ships, shipStatsMap);
     const missionRewards = mission.rewards as {
       minerai: number; silicium: number; hydrogene: number;
       bonusShips: { shipId: string; count: number; chance: number }[];
     };
     const result = await ctx.pirateService.processPirateArrival(
-      ships, playerMultipliers, params.scaledFleet, preCargoCapacity, missionRewards,
+      ships, playerMultipliers, params.scaledFleet, preCargoCapacity, missionRewards, flagshipCombatConfig,
     );
+
+    // Handle flagship incapacitation if destroyed in combat
+    let flagshipDestroyed = false;
+    if (result.attackerLosses['flagship'] && result.attackerLosses['flagship'] > 0) {
+      if (ctx.flagshipService) {
+        await ctx.flagshipService.incapacitate(fleetEvent.userId);
+      }
+      const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+      if (ctx.redis) {
+        publishNotification(ctx.redis, fleetEvent.userId, {
+          type: 'flagship-incapacitated',
+          payload: { coords, mission: 'pirate' },
+        });
+      }
+      flagshipDestroyed = true;
+      delete result.survivingShips['flagship'];
+    }
 
     // Re-cap loot to surviving fleet's actual cargo capacity
     if (result.outcome === 'attacker') {
@@ -48,9 +91,13 @@ export class PirateHandler implements MissionHandler {
       }
     }
 
+    // Remove flagship from returning fleet (already incapacitated at home)
+    const returnShips = { ...result.survivingShips };
+    if (flagshipDestroyed) delete returnShips['flagship'];
+
     // Update fleet event with combat results
     await ctx.db.update(fleetEvents).set({
-      ships: result.survivingShips,
+      ships: returnShips,
       mineraiCargo: String(result.loot.minerai),
       siliciumCargo: String(result.loot.silicium),
       hydrogeneCargo: String(result.loot.hydrogene),
@@ -72,9 +119,12 @@ export class PirateHandler implements MissionHandler {
       const parts = [`Mission pirate ${coords} — ${outcomeText}\n`];
       parts.push(`Durée du trajet : ${duration}`);
       if (result.outcome === 'attacker') {
-        parts.push(`Butin : ${result.loot.minerai} minerai, ${result.loot.silicium} silicium, ${result.loot.hydrogene} hydrogène`);
+        parts.push(`Butin : ${result.loot.minerai.toLocaleString('fr-FR')} minerai, ${result.loot.silicium.toLocaleString('fr-FR')} silicium, ${result.loot.hydrogene.toLocaleString('fr-FR')} hydrogène`);
         if (Object.keys(result.bonusShips).length > 0) {
-          const bonusList = Object.entries(result.bonusShips).map(([id, count]) => `${id}: ${count}`).join(', ');
+          const bonusList = Object.entries(result.bonusShips).map(([id, count]) => {
+            const name = config.ships[id]?.name ?? id;
+            return `${count}x ${name}`;
+          }).join(', ');
           parts.push(`Vaisseaux bonus : ${bonusList}`);
         }
       }
@@ -83,7 +133,10 @@ export class PirateHandler implements MissionHandler {
       for (const [shipId, count] of Object.entries(ships)) {
         const surviving = result.survivingShips[shipId] ?? 0;
         const lost = count - surviving;
-        if (lost > 0) losses.push(`${shipId}: ${lost}`);
+        if (lost > 0) {
+          const name = shipId === 'flagship' ? 'Vaisseau amiral' : config.ships[shipId]?.name ?? shipId;
+          losses.push(`${lost}x ${name}`);
+        }
       }
       if (losses.length > 0) {
         parts.push(`Vaisseaux perdus : ${losses.join(', ')}`);
@@ -108,6 +161,15 @@ export class PirateHandler implements MissionHandler {
         shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
         divisor: Number(config.universe.fp_divisor) || 100,
       };
+      // Include flagship in FP calculation if present
+      if (flagshipCombatConfig) {
+        shipStats['flagship'] = {
+          weapons: flagshipCombatConfig.baseWeaponDamage,
+          shotCount: flagshipCombatConfig.baseShotCount,
+          shield: flagshipCombatConfig.baseShield,
+          hull: flagshipCombatConfig.baseHull,
+        };
+      }
       const attackerFP = computeFleetFP(ships, shipStats, fpConfig);
       const defenderFP = params.pirateFP ?? computeFleetFP(params.scaledFleet, shipStats, fpConfig);
 
@@ -243,6 +305,11 @@ export class PirateHandler implements MissionHandler {
       }).catch(() => {});
     }
 
+    const hasShips = Object.values(returnShips).some(v => v > 0);
+    if (!hasShips) {
+      return { scheduleReturn: false };
+    }
+
     return {
       scheduleReturn: true,
       cargo: {
@@ -250,7 +317,7 @@ export class PirateHandler implements MissionHandler {
         silicium: result.loot.silicium,
         hydrogene: result.loot.hydrogene,
       },
-      shipsAfterArrival: result.survivingShips,
+      shipsAfterArrival: returnShips,
     };
   }
 }

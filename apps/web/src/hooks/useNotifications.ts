@@ -218,6 +218,11 @@ export function useNotifications() {
         addToast(`Quete completee : ${event.payload.questName}`, 'success');
         showBrowserNotification('Quete completee', `+${event.payload.reward} Exilium`);
         break;
+      case 'flagship-incapacitated':
+        utils.flagship.get.invalidate();
+        addToast('Votre vaisseau amiral a été mis hors service !', 'error', '/flagship');
+        showBrowserNotification('Vaisseau amiral détruit !', `Combat en ${event.payload.coords} — réparation en cours`);
+        break;
       case 'new-alliance-message': {
         const allianceId = String(event.payload.allianceId);
         utils.message.allianceChat.invalidate({ allianceId });
