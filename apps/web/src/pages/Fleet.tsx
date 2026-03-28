@@ -353,7 +353,7 @@ export default function Fleet() {
               delete next[shipId];
               return next;
             }
-            const ship = ships?.find((s) => s.id === shipId);
+            const ship = allShips.find((s) => s.id === shipId);
             return ship ? { ...prev, [shipId]: ship.count } : prev;
           });
         }}
