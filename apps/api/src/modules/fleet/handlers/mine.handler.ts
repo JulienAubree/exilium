@@ -229,28 +229,6 @@ export class MineHandler implements PhasedMissionHandler {
       });
     }
 
-    // Create system message
-    let messageId: string | undefined;
-    if (ctx.messageService) {
-      const parts = [`Extraction terminee en ${coords}\n`];
-      parts.push(`Duree totale : ${totalDuration}`);
-      const resLines: string[] = [];
-      if (cargo.minerai > 0) resLines.push(`Minerai: +${cargo.minerai.toLocaleString('fr-FR')}`);
-      if (cargo.silicium > 0) resLines.push(`Silicium: +${cargo.silicium.toLocaleString('fr-FR')}`);
-      if (cargo.hydrogene > 0) resLines.push(`Hydrogene: +${cargo.hydrogene.toLocaleString('fr-FR')}`);
-      parts.push(resLines.join(' | '));
-      if (slagRate > 0) {
-        parts.push(`Pertes (scories) : ${Math.round(slagRate * 100)}%`);
-      }
-      const msg = await ctx.messageService.createSystemMessage(
-        fleetEvent.userId,
-        'mission',
-        `Extraction terminee ${coords}`,
-        parts.join('\n'),
-      );
-      messageId = msg.id;
-    }
-
     // Create mission report
     let reportId: string | undefined;
     if (ctx.reportService) {
@@ -258,7 +236,6 @@ export class MineHandler implements PhasedMissionHandler {
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         pveMissionId: pveMissionId ?? undefined,
-        messageId,
         missionType: 'mine',
         title: `Rapport de minage ${coords}`,
         coordinates: {
