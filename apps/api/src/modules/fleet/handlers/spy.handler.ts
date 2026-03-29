@@ -1,13 +1,27 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users, debrisFields } from '@exilium/db';
-import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat, computeFleetFP } from '@exilium/game-engine';
+import { planets, planetShips, planetDefenses, planetBuildings, userResearch } from '@exilium/db';
+import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
-import type { CombatConfig, ShipCategory, CombatInput, RoundResult, UnitCombatStats, FPConfig } from '@exilium/game-engine';
+import type { CombatInput } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers } from '../fleet.types.js';
+import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
 import { findShipByRole } from '../../../lib/config-helpers.js';
 import { publishNotification } from '../../notification/notification.publisher.js';
+import {
+  buildCombatConfig,
+  parseUnitRow,
+  computeCombatMultipliers,
+  computeAttackerSurvivors,
+  applyDefenderLosses,
+  upsertDebris,
+  computeBothFP,
+  computeShotsPerRound,
+  fetchUsernames,
+  buildCombatReportData,
+  outcomeText,
+  defenderOutcome,
+} from '../combat.helpers.js';
 
 export class SpyHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -197,21 +211,8 @@ export class SpyHandler implements MissionHandler {
 
     if (detected) {
       // Build defender maps from already-fetched rows
-      const defenderFleet: Record<string, number> = {};
-      const defenderDefenses: Record<string, number> = {};
-
-      if (targetShipsRow) {
-        for (const [key, val] of Object.entries(targetShipsRow)) {
-          if (key === 'planetId') continue;
-          if (typeof val === 'number' && val > 0) defenderFleet[key] = val;
-        }
-      }
-      if (targetDefsRow) {
-        for (const [key, val] of Object.entries(targetDefsRow)) {
-          if (key === 'planetId') continue;
-          if (typeof val === 'number' && val > 0) defenderDefenses[key] = val;
-        }
-      }
+      const defenderFleet = parseUnitRow(targetShipsRow);
+      const defenderDefenses = parseUnitRow(targetDefsRow);
 
       const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
                            Object.values(defenderDefenses).some(v => v > 0);
@@ -227,39 +228,12 @@ export class SpyHandler implements MissionHandler {
       const shipIdSet = new Set(Object.keys(config.ships));
       const defenseIdSet = new Set(Object.keys(config.defenses));
 
-      const categories: ShipCategory[] = [
-        { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
-        { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
-        { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
-        { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
-      ];
-
-      const combatConfig: CombatConfig = {
-        maxRounds: Number(config.universe['combat_max_rounds']) || 4,
-        debrisRatio: Number(config.universe['combat_debris_ratio']) || 0.3,
-        defenseRepairRate: Number(config.universe['combat_defense_repair_rate']) || 0.7,
-        pillageRatio: 0, // No pillage for spy combat
-        minDamagePerHit: Number(config.universe['combat_min_damage_per_hit']) || 1,
-        researchBonusPerLevel: Number(config.universe['combat_research_bonus_per_level']) || 0.1,
-        categories,
-      };
+      const combatConfig = buildCombatConfig(config, { pillageRatio: 0 });
 
       // Combat multipliers
-      const attackerTalentCtx = ctx.talentService
-        ? await ctx.talentService.computeTalentContext(fleetEvent.userId)
-        : {};
-      const defenderTalentCtx = ctx.talentService
-        ? await ctx.talentService.computeTalentContext(targetPlanet.userId, targetPlanet.id)
-        : {};
-
-      const attackerMultipliers = await getCombatMultipliers(ctx.db, fleetEvent.userId, config.bonuses, attackerTalentCtx);
-      const defenderMultipliers = await getCombatMultipliers(ctx.db, targetPlanet.userId, config.bonuses, defenderTalentCtx);
-
-      // Defense strength bonus
-      const defenseBonus = 1 + (defenderTalentCtx['defense_strength'] ?? 0);
-      defenderMultipliers.weapons *= defenseBonus;
-      defenderMultipliers.shielding *= defenseBonus;
-      defenderMultipliers.armor *= defenseBonus;
+      const { attackerMultipliers, defenderMultipliers } = await computeCombatMultipliers(
+        ctx, config, fleetEvent.userId, targetPlanet.userId, targetPlanet.id,
+      );
 
       // Run combat simulation
       const combatInput: CombatInput = {
@@ -280,102 +254,25 @@ export class SpyHandler implements MissionHandler {
       const { outcome, attackerLosses, defenderLosses, debris, repairedDefenses, rounds } = combatResult;
 
       // Apply attacker losses (probes)
-      const survivingShips: Record<string, number> = { ...ships };
-      for (const [type, lost] of Object.entries(attackerLosses)) {
-        survivingShips[type] = (survivingShips[type] ?? 0) - (lost as number);
-        if (survivingShips[type] <= 0) delete survivingShips[type];
-      }
+      const survivingShips = computeAttackerSurvivors(ships, attackerLosses);
 
-      // Apply defender ship losses
-      if (targetShipsRow) {
-        const shipUpdates: Record<string, number> = {};
-        for (const [key, val] of Object.entries(targetShipsRow)) {
-          if (key === 'planetId') continue;
-          const lost = defenderLosses[key] ?? 0;
-          if (lost > 0) shipUpdates[key] = Math.max(0, Number(val) - lost);
-        }
-        if (Object.keys(shipUpdates).length > 0) {
-          await ctx.db.update(planetShips).set(shipUpdates).where(eq(planetShips.planetId, targetPlanet.id));
-        }
-      }
-
-      // Apply defender defense losses (minus repairs)
-      if (targetDefsRow) {
-        const defUpdates: Record<string, number> = {};
-        for (const [key, val] of Object.entries(targetDefsRow)) {
-          if (key === 'planetId') continue;
-          const lost = defenderLosses[key] ?? 0;
-          const repaired = repairedDefenses[key] ?? 0;
-          const netLoss = lost - repaired;
-          if (netLoss > 0) defUpdates[key] = Math.max(0, Number(val) - netLoss);
-        }
-        if (Object.keys(defUpdates).length > 0) {
-          await ctx.db.update(planetDefenses).set(defUpdates).where(eq(planetDefenses.planetId, targetPlanet.id));
-        }
-      }
+      // Apply defender losses (ships + defenses)
+      await applyDefenderLosses(ctx.db, targetPlanet.id, targetShipsRow, targetDefsRow, defenderLosses, repairedDefenses);
 
       // Create/accumulate debris field (atomic upsert)
-      if (debris.minerai > 0 || debris.silicium > 0) {
-        await ctx.db.insert(debrisFields).values({
-          galaxy: fleetEvent.targetGalaxy,
-          system: fleetEvent.targetSystem,
-          position: fleetEvent.targetPosition,
-          minerai: String(debris.minerai),
-          silicium: String(debris.silicium),
-        }).onConflictDoUpdate({
-          target: [debrisFields.galaxy, debrisFields.system, debrisFields.position],
-          set: {
-            minerai: sql`${debrisFields.minerai}::numeric + ${String(debris.minerai)}::numeric`,
-            silicium: sql`${debrisFields.silicium}::numeric + ${String(debris.silicium)}::numeric`,
-            updatedAt: new Date(),
-          },
-        });
-      }
+      await upsertDebris(ctx.db, fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, debris);
 
       // Compute FP for both sides
-      const unitCombatStats: Record<string, UnitCombatStats> = {};
-      for (const [id, ship] of Object.entries(config.ships)) {
-        unitCombatStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
-      }
-      for (const [id, def] of Object.entries(config.defenses)) {
-        unitCombatStats[id] = { weapons: def.weapons, shotCount: def.shotCount ?? 1, shield: def.shield, hull: def.hull };
-      }
-      const fpConfig: FPConfig = {
-        shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
-        divisor: Number(config.universe.fp_divisor) || 100,
-      };
-      const attackerFP = computeFleetFP(ships, unitCombatStats, fpConfig);
-      const defenderCombinedForFP: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
-      const defenderFP = computeFleetFP(defenderCombinedForFP, unitCombatStats, fpConfig);
+      const { attackerFP, defenderFP } = computeBothFP(config, ships, defenderFleet, defenderDefenses, shipCombatConfigs);
 
       // Compute shots per round
-      const shotsPerRound = rounds.map((_round: RoundResult, i: number) => {
-        const attFleet = i === 0 ? ships : rounds[i - 1].attackerShips;
-        const defFleetRound = i === 0 ? { ...defenderFleet, ...defenderDefenses } : rounds[i - 1].defenderShips;
-        const attShots = Object.entries(attFleet).reduce((sum, [id, count]) => {
-          const sc = config.ships[id]?.shotCount ?? config.defenses[id]?.shotCount ?? 1;
-          return sum + count * sc;
-        }, 0);
-        const defShots = Object.entries(defFleetRound).reduce((sum, [id, count]) => {
-          const sc = config.ships[id]?.shotCount ?? config.defenses[id]?.shotCount ?? 1;
-          return sum + count * sc;
-        }, 0);
-        return { attacker: attShots, defender: defShots };
-      });
+      const shotsPerRound = computeShotsPerRound(config, ships, defenderFleet, defenderDefenses, rounds);
 
       // Fetch usernames for combat reports
-      const [[attackerUser], [defenderUser]] = await Promise.all([
-        ctx.db.select({ username: users.username }).from(users).where(eq(users.id, fleetEvent.userId)).limit(1),
-        ctx.db.select({ username: users.username }).from(users).where(eq(users.id, targetPlanet.userId)).limit(1),
-      ]);
-      const attackerUsername = attackerUser?.username ?? 'Inconnu';
-      const defenderUsername = defenderUser?.username ?? 'Inconnu';
-      const targetPlanetName = targetPlanet.name;
+      const { attackerUsername, defenderUsername } = await fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId);
 
-      const outcomeText = outcome === 'attacker' ? 'Victoire' :
-                          outcome === 'defender' ? 'Défaite' : 'Match nul';
-      const defenderOutcomeText = outcome === 'attacker' ? 'Défaite' :
-                                  outcome === 'defender' ? 'Victoire' : 'Match nul';
+      const outcomeLabel = outcomeText(outcome);
+      const defenderOutcomeText = defenderOutcome(outcome);
 
       const probesSurvived = Object.values(survivingShips).some(v => v > 0);
 
@@ -383,28 +280,17 @@ export class SpyHandler implements MissionHandler {
       let combatReportId: string | undefined;
       let defenderReportId: string | undefined;
       if (ctx.reportService) {
-        const combatReportResult: Record<string, unknown> = {
+        const combatReportResult = buildCombatReportData({
           outcome,
-          perspective: 'attacker' as const,
           attackerUsername,
           defenderUsername,
-          targetPlanetName,
-          roundCount: rounds.length,
+          targetPlanetName: targetPlanet.name,
           attackerFleet: ships,
-          attackerLosses,
-          attackerSurvivors: survivingShips,
           defenderFleet,
           defenderDefenses,
+          attackerLosses,
           defenderLosses,
-          defenderSurvivors: (() => {
-            const combined: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
-            const survivors: Record<string, number> = {};
-            for (const [type, count] of Object.entries(combined)) {
-              const remaining = count - (defenderLosses[type] ?? 0) + (repairedDefenses[type] ?? 0);
-              if (remaining > 0) survivors[type] = remaining;
-            }
-            return survivors;
-          })(),
+          attackerSurvivors: survivingShips,
           repairedDefenses,
           debris,
           rounds,
@@ -413,14 +299,14 @@ export class SpyHandler implements MissionHandler {
           attackerFP,
           defenderFP,
           shotsPerRound,
-          spyCombat: true,
-        };
+          extra: { spyCombat: true },
+        });
 
         const attackerReport = await ctx.reportService.create({
           userId: fleetEvent.userId,
           fleetEventId: fleetEvent.id,
           missionType: 'spy',
-          title: `Espionnage ${coords} — Combat ${outcomeText}`,
+          title: `Espionnage ${coords} — Combat ${outcomeLabel}`,
           coordinates: {
             galaxy: fleetEvent.targetGalaxy,
             system: fleetEvent.targetSystem,
