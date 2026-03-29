@@ -113,43 +113,6 @@ export class PirateHandler implements MissionHandler {
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
     const outcomeText = result.outcome === 'attacker' ? 'Victoire' : 'Défaite';
 
-    let messageId: string | undefined;
-
-    if (ctx.messageService) {
-      const parts = [`Mission pirate ${coords} — ${outcomeText}\n`];
-      parts.push(`Durée du trajet : ${duration}`);
-      if (result.outcome === 'attacker') {
-        parts.push(`Butin : ${result.loot.minerai.toLocaleString('fr-FR')} minerai, ${result.loot.silicium.toLocaleString('fr-FR')} silicium, ${result.loot.hydrogene.toLocaleString('fr-FR')} hydrogène`);
-        if (Object.keys(result.bonusShips).length > 0) {
-          const bonusList = Object.entries(result.bonusShips).map(([id, count]) => {
-            const name = config.ships[id]?.name ?? id;
-            return `${count}x ${name}`;
-          }).join(', ');
-          parts.push(`Vaisseaux bonus : ${bonusList}`);
-        }
-      }
-      // Ship losses
-      const losses: string[] = [];
-      for (const [shipId, count] of Object.entries(ships)) {
-        const surviving = result.survivingShips[shipId] ?? 0;
-        const lost = count - surviving;
-        if (lost > 0) {
-          const name = shipId === 'flagship' ? 'Vaisseau amiral' : config.ships[shipId]?.name ?? shipId;
-          losses.push(`${lost}x ${name}`);
-        }
-      }
-      if (losses.length > 0) {
-        parts.push(`Vaisseaux perdus : ${losses.join(', ')}`);
-      }
-      const msg = await ctx.messageService.createSystemMessage(
-        fleetEvent.userId,
-        'mission',
-        `Mission pirate ${coords} — ${outcomeText}`,
-        parts.join('\n'),
-      );
-      messageId = msg.id;
-    }
-
     // Create structured combat report
     if (ctx.reportService) {
       // Compute FP
@@ -230,7 +193,6 @@ export class PirateHandler implements MissionHandler {
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         pveMissionId: pveMissionId ?? undefined,
-        messageId,
         missionType: 'pirate',
         title: `Mission pirate ${coords} — ${outcomeText}`,
         coordinates: {
