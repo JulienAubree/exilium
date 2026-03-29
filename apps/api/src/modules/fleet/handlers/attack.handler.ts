@@ -102,17 +102,38 @@ export class AttackHandler implements MissionHandler {
       .limit(1);
 
     if (!targetPlanet) {
-      if (ctx.messageService) {
-        await ctx.messageService.createSystemMessage(
-          fleetEvent.userId,
-          'combat',
-          `Attaque ${coords}`,
-          `Aucune planète trouvée à la position ${coords}. Votre flotte fait demi-tour.`,
-        );
+      let reportId: string | undefined;
+      if (ctx.reportService) {
+        const [originPlanet] = await ctx.db.select({
+          galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+        }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+        const report = await ctx.reportService.create({
+          userId: fleetEvent.userId,
+          fleetEventId: fleetEvent.id,
+          missionType: 'attack',
+          title: `Attaque ${coords} — Avortée`,
+          coordinates: {
+            galaxy: fleetEvent.targetGalaxy,
+            system: fleetEvent.targetSystem,
+            position: fleetEvent.targetPosition,
+          },
+          originCoordinates: originPlanet ? {
+            galaxy: originPlanet.galaxy,
+            system: originPlanet.system,
+            position: originPlanet.position,
+            planetName: originPlanet.name,
+          } : undefined,
+          fleet: { ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+          departureTime: fleetEvent.departureTime,
+          completionTime: fleetEvent.arrivalTime,
+          result: { aborted: true, reason: 'no_planet' },
+        });
+        reportId = report.id;
       }
       return {
         scheduleReturn: true,
         cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+        reportId,
       };
     }
 
