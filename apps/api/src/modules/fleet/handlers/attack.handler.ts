@@ -1,11 +1,24 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, debrisFields, users } from '@exilium/db';
-import { simulateCombat, totalCargoCapacity, computeFleetFP } from '@exilium/game-engine';
-import type { CombatConfig, ShipCategory, CombatInput, RoundResult, UnitCombatStats, FPConfig } from '@exilium/game-engine';
+import { planets, planetShips, planetDefenses } from '@exilium/db';
+import { simulateCombat, totalCargoCapacity } from '@exilium/game-engine';
+import type { CombatInput, RoundResult } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers } from '../fleet.types.js';
+import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
 import { publishNotification } from '../../notification/notification.publisher.js';
+import {
+  buildCombatConfig,
+  parseUnitRow,
+  computeCombatMultipliers,
+  applyDefenderLosses,
+  upsertDebris,
+  computeBothFP,
+  computeShotsPerRound,
+  fetchUsernames,
+  buildCombatReportData,
+  outcomeText,
+  defenderOutcome,
+} from '../combat.helpers.js';
 
 export class AttackHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -71,23 +84,7 @@ export class AttackHandler implements MissionHandler {
       }
     }
 
-    // Build CombatConfig from universe config
-    const categories: ShipCategory[] = [
-      { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
-      { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
-      { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
-      { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
-    ];
-
-    const combatConfig: CombatConfig = {
-      maxRounds: Number(config.universe['combat_max_rounds']) || 4,
-      debrisRatio: Number(config.universe['combat_debris_ratio']) || 0.3,
-      defenseRepairRate: Number(config.universe['combat_defense_repair_rate']) || 0.7,
-      pillageRatio: Number(config.universe['combat_pillage_ratio']) || 0.33,
-      minDamagePerHit: Number(config.universe['combat_min_damage_per_hit']) || 1,
-      researchBonusPerLevel: Number(config.universe['combat_research_bonus_per_level']) || 0.1,
-      categories,
-    };
+    const combatConfig = buildCombatConfig(config);
 
     const [targetPlanet] = await ctx.db
       .select()
@@ -137,50 +134,18 @@ export class AttackHandler implements MissionHandler {
       };
     }
 
-    // Fetch attacker & defender usernames for combat reports
-    const [[attackerUser], [defenderUser]] = await Promise.all([
-      ctx.db.select({ username: users.username }).from(users).where(eq(users.id, fleetEvent.userId)).limit(1),
-      ctx.db.select({ username: users.username }).from(users).where(eq(users.id, targetPlanet.userId)).limit(1),
-    ]);
-    const attackerUsername = attackerUser?.username ?? 'Inconnu';
-    const defenderUsername = defenderUser?.username ?? 'Inconnu';
+    const { attackerUsername, defenderUsername } = await fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId);
     const targetPlanetName = targetPlanet.name;
 
-    const [defShips] = await ctx.db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
-    const [defDefs] = await ctx.db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
+    const [defShipsRow] = await ctx.db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
+    const [defDefsRow] = await ctx.db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
 
-    const defenderFleet: Record<string, number> = {};
-    const defenderDefenses: Record<string, number> = {};
+    const defenderFleet = parseUnitRow(defShipsRow);
+    const defenderDefenses = parseUnitRow(defDefsRow);
 
-    if (defShips) {
-      for (const [key, val] of Object.entries(defShips)) {
-        if (key === 'planetId') continue;
-        if (typeof val === 'number' && val > 0) defenderFleet[key] = val;
-      }
-    }
-    if (defDefs) {
-      for (const [key, val] of Object.entries(defDefs)) {
-        if (key === 'planetId') continue;
-        if (typeof val === 'number' && val > 0) defenderDefenses[key] = val;
-      }
-    }
-
-    // Compute talent contexts for combat bonuses
-    const attackerTalentCtx = ctx.talentService
-      ? await ctx.talentService.computeTalentContext(fleetEvent.userId)
-      : {};
-    const defenderTalentCtx = ctx.talentService
-      ? await ctx.talentService.computeTalentContext(targetPlanet.userId, targetPlanet.id)
-      : {};
-
-    const attackerMultipliers = await getCombatMultipliers(ctx.db, fleetEvent.userId, config.bonuses, attackerTalentCtx);
-    const defenderMultipliers = await getCombatMultipliers(ctx.db, targetPlanet.userId, config.bonuses, defenderTalentCtx);
-
-    // Additional defense strength bonus (planet_bonus — only when flagship stationed)
-    const defenseBonus = 1 + (defenderTalentCtx['defense_strength'] ?? 0);
-    defenderMultipliers.weapons *= defenseBonus;
-    defenderMultipliers.shielding *= defenseBonus;
-    defenderMultipliers.armor *= defenseBonus;
+    const { attackerMultipliers, defenderMultipliers, defenderTalentCtx } = await computeCombatMultipliers(
+      ctx, config, fleetEvent.userId, targetPlanet.userId, targetPlanet.id,
+    );
 
     const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
                          Object.values(defenderDefenses).some(v => v > 0);
@@ -190,7 +155,6 @@ export class AttackHandler implements MissionHandler {
     let defenderLosses: Record<string, number> = {};
     let debris = { minerai: 0, silicium: 0 };
     let repairedDefenses: Record<string, number> = {};
-    let roundCount = 0;
     let rounds: RoundResult[] = [];
     let result: ReturnType<typeof simulateCombat> | undefined;
 
@@ -217,7 +181,6 @@ export class AttackHandler implements MissionHandler {
       defenderLosses = result.defenderLosses;
       debris = result.debris;
       repairedDefenses = result.repairedDefenses;
-      roundCount = result.rounds.length;
       rounds = result.rounds;
     }
 
@@ -250,51 +213,9 @@ export class AttackHandler implements MissionHandler {
       delete returnShips['flagship'];
     }
 
-    // Apply defender ship losses
-    if (defShips) {
-      const shipUpdates: Record<string, number> = {};
-      for (const [key, val] of Object.entries(defShips)) {
-        if (key === 'planetId') continue;
-        const lost = defenderLosses[key] ?? 0;
-        if (lost > 0) shipUpdates[key] = (val as number) - lost;
-      }
-      if (Object.keys(shipUpdates).length > 0) {
-        await ctx.db.update(planetShips).set(shipUpdates).where(eq(planetShips.planetId, targetPlanet.id));
-      }
-    }
+    await applyDefenderLosses(ctx.db, targetPlanet.id, defShipsRow, defDefsRow, defenderLosses, repairedDefenses);
 
-    // Apply defender defense losses (minus repairs)
-    if (defDefs) {
-      const defUpdates: Record<string, number> = {};
-      for (const [key, val] of Object.entries(defDefs)) {
-        if (key === 'planetId') continue;
-        const lost = defenderLosses[key] ?? 0;
-        const repaired = repairedDefenses[key] ?? 0;
-        const netLoss = lost - repaired;
-        if (netLoss > 0) defUpdates[key] = (val as number) - netLoss;
-      }
-      if (Object.keys(defUpdates).length > 0) {
-        await ctx.db.update(planetDefenses).set(defUpdates).where(eq(planetDefenses.planetId, targetPlanet.id));
-      }
-    }
-
-    // Create/accumulate debris field (atomic upsert)
-    if (debris.minerai > 0 || debris.silicium > 0) {
-      await ctx.db.insert(debrisFields).values({
-        galaxy: fleetEvent.targetGalaxy,
-        system: fleetEvent.targetSystem,
-        position: fleetEvent.targetPosition,
-        minerai: String(debris.minerai),
-        silicium: String(debris.silicium),
-      }).onConflictDoUpdate({
-        target: [debrisFields.galaxy, debrisFields.system, debrisFields.position],
-        set: {
-          minerai: sql`${debrisFields.minerai}::numeric + ${String(debris.minerai)}::numeric`,
-          silicium: sql`${debrisFields.silicium}::numeric + ${String(debris.silicium)}::numeric`,
-          updatedAt: new Date(),
-        },
-      });
-    }
+    await upsertDebris(ctx.db, fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, debris);
 
     // Pillage resources if attacker wins
     let pillagedMinerai = 0;
@@ -350,10 +271,6 @@ export class AttackHandler implements MissionHandler {
       }
     }
 
-    // Send combat reports
-    const outcomeText = outcome === 'attacker' ? 'Victoire' :
-                        outcome === 'defender' ? 'Défaite' : 'Match nul';
-
     // Fetch origin planet for report
     const [originPlanet] = await ctx.db.select({
       galaxy: planets.galaxy,
@@ -363,80 +280,34 @@ export class AttackHandler implements MissionHandler {
     }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
 
     // Compute FP for both sides
-    const unitCombatStats: Record<string, UnitCombatStats> = {};
-    for (const [id, ship] of Object.entries(config.ships)) {
-      unitCombatStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
-    }
-    for (const [id, def] of Object.entries(config.defenses)) {
-      unitCombatStats[id] = { weapons: def.weapons, shotCount: def.shotCount ?? 1, shield: def.shield, hull: def.hull };
-    }
-    // Include flagship in FP calculation if present
-    if (shipCombatConfigs['flagship']) {
-      const fc = shipCombatConfigs['flagship'];
-      unitCombatStats['flagship'] = { weapons: fc.baseWeaponDamage, shotCount: fc.baseShotCount, shield: fc.baseShield, hull: fc.baseHull };
-    }
-    const fpConfig: FPConfig = {
-      shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
-      divisor: Number(config.universe.fp_divisor) || 100,
-    };
-    const attackerFP = computeFleetFP(ships, unitCombatStats, fpConfig);
-    const defenderCombinedForFP: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
-    const defenderFP = computeFleetFP(defenderCombinedForFP, unitCombatStats, fpConfig);
+    const { attackerFP, defenderFP } = computeBothFP(config, ships, defenderFleet, defenderDefenses, shipCombatConfigs);
 
     // Compute shots per round
-    const shotsPerRound = rounds.map((round, i) => {
-      const attFleet = i === 0 ? ships : rounds[i - 1].attackerShips;
-      const defFleetRound = i === 0 ? { ...defenderFleet, ...defenderDefenses } : rounds[i - 1].defenderShips;
-      const attShots = Object.entries(attFleet).reduce((sum, [id, count]) => {
-        const sc = config.ships[id]?.shotCount ?? config.defenses[id]?.shotCount ?? 1;
-        return sum + count * sc;
-      }, 0);
-      const defShots = Object.entries(defFleetRound).reduce((sum, [id, count]) => {
-        const sc = config.ships[id]?.shotCount ?? config.defenses[id]?.shotCount ?? 1;
-        return sum + count * sc;
-      }, 0);
-      return { attacker: attShots, defender: defShots };
-    });
-
-    // Create structured mission report
-    const defenderOutcomeText = outcome === 'attacker' ? 'Défaite' :
-                                outcome === 'defender' ? 'Victoire' : 'Match nul';
+    const shotsPerRound = computeShotsPerRound(config, ships, defenderFleet, defenderDefenses, rounds);
 
     let reportId: string | undefined;
     let defenderReportId: string | undefined;
     if (ctx.reportService) {
-      const reportResult: Record<string, unknown> = {
+      const reportResult = buildCombatReportData({
         outcome,
-        perspective: 'attacker' as const,
         attackerUsername,
         defenderUsername,
         targetPlanetName,
-        roundCount,
         attackerFleet: ships,
-        attackerLosses,
-        attackerSurvivors: survivingShips,
         defenderFleet,
         defenderDefenses,
+        attackerLosses,
         defenderLosses,
-        defenderSurvivors: (() => {
-          const combined: Record<string, number> = { ...defenderFleet, ...defenderDefenses };
-          const survivors: Record<string, number> = {};
-          for (const [type, count] of Object.entries(combined)) {
-            const remaining = count - (defenderLosses[type] ?? 0) + (repairedDefenses[type] ?? 0);
-            if (remaining > 0) survivors[type] = remaining;
-          }
-          return survivors;
-        })(),
+        attackerSurvivors: survivingShips,
         repairedDefenses,
         debris,
         rounds,
-        // New combat stats
         attackerStats: result?.attackerStats,
         defenderStats: result?.defenderStats,
         attackerFP,
         defenderFP,
         shotsPerRound,
-      };
+      });
       if (outcome === 'attacker') {
         reportResult.pillage = {
           minerai: pillagedMinerai,
@@ -448,7 +319,7 @@ export class AttackHandler implements MissionHandler {
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         missionType: 'attack',
-        title: `Rapport de combat ${coords} — ${outcomeText}`,
+        title: `Rapport de combat ${coords} — ${outcomeText(outcome)}`,
         coordinates: {
           galaxy: fleetEvent.targetGalaxy,
           system: fleetEvent.targetSystem,
@@ -473,7 +344,7 @@ export class AttackHandler implements MissionHandler {
       const defenderReport = await ctx.reportService.create({
         userId: targetPlanet.userId,
         missionType: 'attack',
-        title: `Rapport de combat ${coords} — ${defenderOutcomeText}`,
+        title: `Rapport de combat ${coords} — ${defenderOutcome(outcome)}`,
         coordinates: {
           galaxy: fleetEvent.targetGalaxy,
           system: fleetEvent.targetSystem,
@@ -522,12 +393,12 @@ export class AttackHandler implements MissionHandler {
         reportId,
         defenderReportId,
         attackerUsername,
-        defenderOutcomeText,
+        defenderOutcomeText: defenderOutcome(outcome),
       };
     }
 
     // All ships destroyed — no return
     // Pass empty shipsAfterArrival so fleet.service doesn't call returnFromMission on destroyed flagship
-    return { scheduleReturn: false, reportId, defenderReportId, shipsAfterArrival: returnShips, attackerUsername, defenderOutcomeText };
+    return { scheduleReturn: false, reportId, defenderReportId, shipsAfterArrival: returnShips, attackerUsername, defenderOutcomeText: defenderOutcome(outcome) };
   }
 }
