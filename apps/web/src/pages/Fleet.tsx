@@ -296,7 +296,7 @@ export default function Fleet() {
     const base = ships ?? [];
     if (flagship && flagship.status === 'active' && flagship.planetId === planetId) {
       return [
-        { id: 'flagship', name: flagship.name, count: 1 },
+        { id: 'flagship', name: flagship.name, count: 1, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
         ...base,
       ];
     }

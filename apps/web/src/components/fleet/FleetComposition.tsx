@@ -1,6 +1,7 @@
 import { categorizeShip, type Mission, type ShipCategory } from '@/config/mission-config';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
+import { getFlagshipImageUrl } from '@/lib/assets';
 import { cn } from '@/lib/utils';
 
 interface Ship {
@@ -8,6 +9,7 @@ interface Ship {
   name: string;
   count: number;
   isStationary?: boolean;
+  flagshipImageIndex?: number;
 }
 
 interface FleetCompositionProps {
@@ -41,13 +43,22 @@ function ShipCard({ ship, value, onChange, onToggle, disabled }: {
       )}
     >
       <div className="relative h-24 overflow-hidden">
-        <GameImage
-          category="ships"
-          id={ship.id}
-          size="full"
-          alt={ship.name}
-          className="w-full h-full object-cover"
-        />
+        {ship.id === 'flagship' && ship.flagshipImageIndex != null ? (
+          <img
+            src={getFlagshipImageUrl(ship.flagshipImageIndex, 'full')}
+            alt={ship.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <GameImage
+            category="ships"
+            id={ship.id}
+            size="full"
+            alt={ship.name}
+            className="w-full h-full object-cover"
+          />
+        )}
         <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
           x{ship.count.toLocaleString()}
         </span>

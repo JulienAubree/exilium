@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
+import { getFlagshipImageUrl } from '@/lib/assets';
 import { MissionIcon } from './MissionIcon';
 import { Button } from '@/components/ui/button';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -243,6 +244,14 @@ export function MovementCard({
   // Ship name helper — uses flagship DB name for 'flagship', gameConfig for others
   const shipName = (id: string) => id === 'flagship' ? (flagship?.name ?? 'Vaisseau amiral') : getShipName(id, gameConfig);
 
+  // Ship icon helper — uses personalized flagship image when available
+  const ShipIcon = ({ id, className }: { id: string; className: string }) => {
+    if (id === 'flagship' && flagship?.flagshipImageIndex != null) {
+      return <img src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'icon')} alt={shipName(id)} className={className} loading="lazy" />;
+    }
+    return <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className={className} />;
+  };
+
   // Cargo capacity of the fleet
   const fleetCargoCapacity = shipEntries.reduce((sum, [id, count]) => {
     return sum + (shipStats?.[id]?.cargoCapacity ?? 0) * count;
@@ -348,7 +357,7 @@ export function MovementCard({
               key={id}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
             >
-              <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className="h-5 w-5 rounded-sm" />
+              <ShipIcon id={id} className="h-5 w-5 rounded-sm" />
               <span className="text-foreground font-semibold">{count}&times;</span>
               <span className="text-muted-foreground">{shipName(id)}</span>
             </span>
@@ -446,7 +455,7 @@ export function MovementCard({
                           <tr key={id} className={i % 2 === 0 ? 'bg-white/[0.02]' : ''}>
                             <td className="px-2 py-1.5 text-foreground">
                               <span className="inline-flex items-center gap-1.5">
-                                <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className="h-4 w-4 rounded-sm" />
+                                <ShipIcon id={id} className="h-4 w-4 rounded-sm" />
                                 {shipName(id)}
                               </span>
                             </td>
