@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
+import { PrerequisiteList, type PrerequisiteItem } from '@/components/common/PrerequisiteList';
 import { getDefenseDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
 import { resolveBonus } from '@exilium/game-engine';
 import {
@@ -11,9 +12,10 @@ import {
 interface Props {
   defenseId: string;
   researchLevels: Record<string, number>;
+  buildingLevels?: Record<string, number>;
 }
 
-export function DefenseDetailContent({ defenseId, researchLevels }: Props) {
+export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels }: Props) {
   const { data: gameConfig } = useGameConfig();
   const details = getDefenseDetails(defenseId, gameConfig ?? undefined);
 
@@ -123,27 +125,32 @@ export function DefenseDetailContent({ defenseId, researchLevels }: Props) {
       )}
 
       {/* Prerequisites */}
-      {(hasBuildingPrereqs || hasResearchPrereqs) && (
-        <div>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
-            Prérequis
+      {(hasBuildingPrereqs || hasResearchPrereqs) && (() => {
+        const prereqItems: PrerequisiteItem[] = [
+          ...(details.prerequisites.buildings?.map(p => ({
+            id: p.buildingId,
+            type: 'building' as const,
+            requiredLevel: p.level,
+            currentLevel: buildingLevels?.[p.buildingId] ?? 0,
+            name: resolveBuildingName(p.buildingId, gameConfig ?? undefined),
+          })) ?? []),
+          ...(details.prerequisites.research?.map(p => ({
+            id: p.researchId,
+            type: 'research' as const,
+            requiredLevel: p.level,
+            currentLevel: researchLevels?.[p.researchId] ?? 0,
+            name: resolveResearchName(p.researchId, gameConfig ?? undefined),
+          })) ?? []),
+        ];
+        return (
+          <div>
+            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              Prérequis
+            </div>
+            <PrerequisiteList items={prereqItems} />
           </div>
-          <div className="space-y-1">
-            {details.prerequisites.buildings?.map((p) => (
-              <div key={p.buildingId} className="text-[11px] flex items-center gap-1.5 text-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-                {resolveBuildingName(p.buildingId, gameConfig ?? undefined)} niveau {p.level}
-              </div>
-            ))}
-            {details.prerequisites.research?.map((p) => (
-              <div key={p.researchId} className="text-[11px] flex items-center gap-1.5 text-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
-                {resolveResearchName(p.researchId, gameConfig ?? undefined)} niveau {p.level}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }

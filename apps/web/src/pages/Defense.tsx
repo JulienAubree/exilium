@@ -15,6 +15,7 @@ import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { DefenseDetailContent } from '@/components/entity-details/DefenseDetailContent';
 import { getDefenseName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 
 
 export default function Defense() {
@@ -78,6 +79,12 @@ export default function Defense() {
     researchList?.forEach((r) => { levels[r.id] = r.currentLevel; });
     return levels;
   }, [researchList]);
+
+  const buildingLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    return levels;
+  }, [buildings]);
 
   const buildMutation = trpc.shipyard.buildDefense.useMutation({
     onSuccess: () => {
@@ -346,9 +353,7 @@ export default function Defense() {
                                 {formatDuration(defense.timePerUnit)}
                               </div>
                               {!defense.prerequisitesMet ? (
-                                <div className="text-[10px] text-destructive">
-                                  Prérequis manquants
-                                </div>
+                                <PrerequisiteList items={buildPrerequisiteItems(gameConfig?.defenses[defense.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)} missingOnly />
                               ) : maxQty > 0 ? (
                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                   <Input
@@ -400,7 +405,7 @@ export default function Defense() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.defenses[detailId]?.name ?? '' : ''}
       >
-        {detailId && <DefenseDetailContent defenseId={detailId} researchLevels={researchLevels} />}
+        {detailId && <DefenseDetailContent defenseId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog

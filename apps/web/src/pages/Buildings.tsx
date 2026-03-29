@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 import { buildProductionConfig } from '../lib/production-config';
 import { cn } from '@/lib/utils';
 import {
@@ -141,6 +142,12 @@ export default function Buildings() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
+
+  const buildingLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    return levels;
+  }, [buildings]);
 
   const { data: resourceData } = trpc.resource.production.useQuery(
     { planetId: planetId! },
@@ -432,9 +439,7 @@ export default function Buildings() {
                                 {formatDuration(building.nextLevelTime)}
                               </div>
                               {!prereqsMet ? (
-                                <div className="text-[10px] text-destructive">
-                                  Prérequis manquants
-                                </div>
+                                <PrerequisiteList items={buildPrerequisiteItems({ buildings: building.prerequisites }, buildingLevels, {}, gameConfig)} missingOnly />
                               ) : (
                                 <Button
                                   variant="retro"

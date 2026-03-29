@@ -15,6 +15,7 @@ import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { getShipName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 
 
 export default function Shipyard() {
@@ -78,6 +79,12 @@ export default function Shipyard() {
     researchList?.forEach((r) => { levels[r.id] = r.currentLevel; });
     return levels;
   }, [researchList]);
+
+  const buildingLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    return levels;
+  }, [buildings]);
 
   const buildMutation = trpc.shipyard.buildShip.useMutation({
     onSuccess: () => {
@@ -313,9 +320,7 @@ export default function Shipyard() {
                             {formatDuration(ship.timePerUnit)}
                           </div>
                           {!ship.prerequisitesMet ? (
-                            <div className="text-[10px] text-destructive">
-                              Prérequis manquants
-                            </div>
+                            <PrerequisiteList items={buildPrerequisiteItems(gameConfig?.ships[ship.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)} missingOnly />
                           ) : (
                             <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <Input
@@ -358,7 +363,7 @@ export default function Shipyard() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} maxTemp={resourceData?.maxTemp} isHomePlanet={resourceData?.planetClassId === 'homeworld'} />}
+        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} maxTemp={resourceData?.maxTemp} isHomePlanet={resourceData?.planetClassId === 'homeworld'} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog

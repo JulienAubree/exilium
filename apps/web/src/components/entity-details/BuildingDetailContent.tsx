@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
+import { PrerequisiteList, type PrerequisiteItem } from '@/components/common/PrerequisiteList';
 import { type PlanetContext } from '@/lib/entity-details';
 import { getBuildingName } from '@/lib/entity-names';
 import { buildProductionConfig } from '@/lib/production-config';
@@ -388,27 +389,23 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
       )}
 
       {/* 6. Prerequisites */}
-      {prerequisites.length > 0 && (
-        <div>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
-            Prérequis
+      {prerequisites.length > 0 && (() => {
+        const prereqItems: PrerequisiteItem[] = prerequisites.map(p => ({
+          id: p.buildingId,
+          type: 'building' as const,
+          requiredLevel: p.level,
+          currentLevel: buildings.find(b => b.id === p.buildingId)?.currentLevel ?? 0,
+          name: getBuildingName(p.buildingId, gameConfig),
+        }));
+        return (
+          <div>
+            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              Prérequis
+            </div>
+            <PrerequisiteList items={prereqItems} />
           </div>
-          <div className="space-y-1">
-            {prerequisites.map((p) => {
-              const met = (buildings.find((b) => b.id === p.buildingId)?.currentLevel ?? 0) >= p.level;
-              const prereqName = getBuildingName(p.buildingId, gameConfig);
-              return (
-                <div
-                  key={p.buildingId}
-                  className={`text-[11px] flex items-center gap-1.5 ${met ? 'text-emerald-500' : 'text-red-500'}`}
-                >
-                  {met ? '\u2713' : '\u2717'} {prereqName} niveau {p.level}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }

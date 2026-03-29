@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ResearchDetailContent } from '@/components/entity-details/ResearchDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 
 
 export default function Research() {
@@ -81,6 +82,12 @@ export default function Research() {
     techs?.forEach((t) => { levels[t.id] = t.currentLevel; });
     return levels;
   }, [techs]);
+
+  const buildingLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    return levels;
+  }, [buildings]);
 
   if (isLoading || !techs) {
     return (
@@ -258,9 +265,7 @@ export default function Research() {
                                 {formatDuration(tech.nextLevelTime)}
                               </div>
                               {!tech.prerequisitesMet ? (
-                                <div className="text-[10px] text-destructive">
-                                  Prérequis manquants
-                                </div>
+                                <PrerequisiteList items={buildPrerequisiteItems(gameConfig?.research[tech.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)} missingOnly />
                               ) : (
                                 <Button
                                   variant="retro"
@@ -293,7 +298,7 @@ export default function Research() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.research[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ResearchDetailContent researchId={detailId} researchLevels={researchLevels} />}
+        {detailId && <ResearchDetailContent researchId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog
