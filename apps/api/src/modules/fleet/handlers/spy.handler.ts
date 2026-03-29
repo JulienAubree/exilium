@@ -1,11 +1,13 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users } from '@exilium/db';
-import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity } from '@exilium/game-engine';
+import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users, debrisFields } from '@exilium/db';
+import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat, computeFleetFP } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
+import type { CombatConfig, ShipCategory, CombatInput, UnitCombatStats, FPConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap } from '../fleet.types.js';
+import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts, getCombatMultipliers } from '../fleet.types.js';
 import { findShipByRole } from '../../../lib/config-helpers.js';
+import { publishNotification } from '../../notification/notification.publisher.js';
 
 export class SpyHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -40,15 +42,36 @@ export class SpyHandler implements MissionHandler {
       .limit(1);
 
     if (!targetPlanet) {
-      if (ctx.messageService) {
-        await ctx.messageService.createSystemMessage(
-          fleetEvent.userId,
-          'espionage',
-          `Espionnage ${coords}`,
-          `Aucune planète trouvée à la position ${coords}.`,
-        );
+      let reportId: string | undefined;
+      if (ctx.reportService) {
+        const shipStatsMap = buildShipStatsMap(config);
+        const [originPlanet] = await ctx.db.select({
+          galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+        }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+        const report = await ctx.reportService.create({
+          userId: fleetEvent.userId,
+          fleetEventId: fleetEvent.id,
+          missionType: 'spy',
+          title: `Espionnage ${coords} — Avortée`,
+          coordinates: {
+            galaxy: fleetEvent.targetGalaxy,
+            system: fleetEvent.targetSystem,
+            position: fleetEvent.targetPosition,
+          },
+          originCoordinates: originPlanet ? {
+            galaxy: originPlanet.galaxy,
+            system: originPlanet.system,
+            position: originPlanet.position,
+            planetName: originPlanet.name,
+          } : undefined,
+          fleet: { ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+          departureTime: fleetEvent.departureTime,
+          completionTime: fleetEvent.arrivalTime,
+          result: { aborted: true, reason: 'no_planet' },
+        });
+        reportId = report.id;
       }
-      return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 } };
+      return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
     }
 
     const defenderTech = await this.getEspionageTech(ctx.db, targetPlanet.userId);
