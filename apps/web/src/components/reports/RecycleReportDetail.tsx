@@ -10,6 +10,17 @@ interface RecycleReportDetailProps {
 }
 
 export function RecycleReportDetail({ result }: RecycleReportDetailProps) {
+  if (result.empty) {
+    return (
+      <div className="space-y-4">
+        <div className="glass-card border-amber-500/20 bg-amber-500/5 px-4 py-6 text-center space-y-2">
+          <div className="text-amber-400 text-sm font-semibold">Rien trouvé sur place</div>
+          <div className="text-xs text-muted-foreground">Aucun champ de débris à ces coordonnées. Les recycleurs sont rentrés à vide.</div>
+        </div>
+      </div>
+    );
+  }
+
   const collected = result.collected ?? {};
   const available = result.debrisAvailable ?? {};
   const remaining = result.debrisRemaining;

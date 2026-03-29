@@ -95,8 +95,10 @@ export function ReportCard({ report, gameConfig }: ReportCardProps) {
           </span>
         )}
         {isRecycle && (
-          <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase bg-cyan-500/20 text-cyan-400">
-            {result.debrisRemaining ? 'Partiel' : 'Complet'}
+          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
+            result.empty ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+          )}>
+            {result.empty ? 'Vide' : result.debrisRemaining ? 'Partiel' : 'Complet'}
           </span>
         )}
       </div>

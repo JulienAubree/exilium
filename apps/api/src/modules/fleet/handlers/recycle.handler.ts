@@ -35,9 +35,49 @@ export class RecycleHandler implements MissionHandler {
       .limit(1);
 
     if (!debris || (Number(debris.minerai) <= 0 && Number(debris.silicium) <= 0)) {
+      const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+      let reportId: string | undefined;
+      if (ctx.reportService) {
+        const config = await ctx.gameConfigService.getFullConfig();
+        const shipStatsMap = buildShipStatsMap(config);
+        const [originPlanet] = await ctx.db.select({
+          galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+        }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+        const report = await ctx.reportService.create({
+          userId: fleetEvent.userId,
+          fleetEventId: fleetEvent.id,
+          missionType: 'recycle',
+          title: `Rapport de recyclage ${coords} — Rien trouvé`,
+          coordinates: {
+            galaxy: fleetEvent.targetGalaxy,
+            system: fleetEvent.targetSystem,
+            position: fleetEvent.targetPosition,
+          },
+          originCoordinates: originPlanet ? {
+            galaxy: originPlanet.galaxy,
+            system: originPlanet.system,
+            position: originPlanet.position,
+            planetName: originPlanet.name,
+          } : undefined,
+          fleet: {
+            ships: fleetEvent.ships,
+            totalCargo: totalCargoCapacity(fleetEvent.ships, shipStatsMap),
+          },
+          departureTime: fleetEvent.departureTime,
+          completionTime: new Date(),
+          result: {
+            collected: { minerai: 0, silicium: 0 },
+            debrisRemaining: null,
+            debrisAvailable: { minerai: 0, silicium: 0 },
+            empty: true,
+          },
+        });
+        reportId = report.id;
+      }
       return {
         scheduleReturn: true,
         cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+        reportId,
       };
     }
 
