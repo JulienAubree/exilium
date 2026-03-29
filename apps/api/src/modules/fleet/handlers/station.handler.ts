@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { planets, planetShips } from '@exilium/db';
+import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { formatDuration } from '../fleet.types.js';
+import { buildShipStatsMap } from '../fleet.types.js';
 
 export class StationHandler implements MissionHandler {
   async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
@@ -13,7 +14,38 @@ export class StationHandler implements MissionHandler {
     const siliciumCargo = Number(fleetEvent.siliciumCargo);
     const hydrogeneCargo = Number(fleetEvent.hydrogeneCargo);
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
-    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
+    const ships = fleetEvent.ships;
+    const config = await ctx.gameConfigService.getFullConfig();
+    const shipStatsMap = buildShipStatsMap(config);
+
+    const createStationReport = async (title: string, result: Record<string, unknown>) => {
+      if (!ctx.reportService) return undefined;
+      const [originPlanet] = await ctx.db.select({
+        galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+      }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+      const report = await ctx.reportService.create({
+        userId: fleetEvent.userId,
+        fleetEventId: fleetEvent.id,
+        missionType: 'station',
+        title,
+        coordinates: {
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+        },
+        originCoordinates: originPlanet ? {
+          galaxy: originPlanet.galaxy,
+          system: originPlanet.system,
+          position: originPlanet.position,
+          planetName: originPlanet.name,
+        } : undefined,
+        fleet: { ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+        departureTime: fleetEvent.departureTime,
+        completionTime: fleetEvent.arrivalTime,
+        result,
+      });
+      return report.id;
+    };
 
     // Check target planet exists
     const [targetPlanet] = fleetEvent.targetPlanetId
@@ -21,17 +53,14 @@ export class StationHandler implements MissionHandler {
       : [];
 
     if (!targetPlanet) {
-      if (ctx.messageService) {
-        await ctx.messageService.createSystemMessage(
-          fleetEvent.userId,
-          'mission',
-          `Stationnement echoue ${coords}`,
-          `Planete deserte trouvee en ${coords}. Impossible de stationner en zone hostile.\nDuree du trajet : ${duration}\nVotre flotte fait demi-tour avec son cargo.`,
-        );
-      }
+      const reportId = await createStationReport(
+        `Stationnement échoué ${coords}`,
+        { aborted: true, reason: 'no_planet' },
+      );
       return {
         scheduleReturn: true,
         cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+        reportId,
       };
     }
 
@@ -52,7 +81,6 @@ export class StationHandler implements MissionHandler {
       .where(eq(planetShips.planetId, targetPlanet.id))
       .limit(1);
 
-    // Transfer regular ships (flagship handled centrally in processArrival)
     if (targetShips) {
       const shipUpdates: Record<string, number> = {};
       for (const [shipId, count] of Object.entries(fleetEvent.ships)) {
@@ -69,26 +97,17 @@ export class StationHandler implements MissionHandler {
       }
     }
 
-    if (ctx.messageService) {
-      const shipList = Object.entries(fleetEvent.ships)
-        .filter(([, count]) => count > 0)
-        .map(([id, count]) => `${id}: ${count}`)
-        .join(', ');
-      const parts = [`Flotte stationnée en ${coords}\n`];
-      parts.push(`Durée du trajet : ${duration}`);
-      parts.push(`Vaisseaux stationnés : ${shipList}`);
-      if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
-        parts.push(`Cargo déposé : ${mineraiCargo} minerai, ${siliciumCargo} silicium, ${hydrogeneCargo} hydrogène`);
-      }
-      await ctx.messageService.createSystemMessage(
-        fleetEvent.userId,
-        'mission',
-        `Flotte stationnée ${coords}`,
-        parts.join('\n'),
-      );
-    }
+    const reportId = await createStationReport(
+      `Flotte stationnée ${coords}`,
+      {
+        stationed: Object.fromEntries(
+          Object.entries(fleetEvent.ships).filter(([, count]) => count > 0),
+        ),
+        deposited: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+      },
+    );
 
-    // Station: no return trip, dispatcher will mark completed
-    return { scheduleReturn: false };
+    // Station: no return trip
+    return { scheduleReturn: false, reportId };
   }
 }
