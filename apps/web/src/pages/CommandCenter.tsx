@@ -363,7 +363,7 @@ export default function CommandCenter() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} maxTemp={resourceData?.maxTemp} isHomePlanet={resourceData?.planetClassId === 'homeworld'} />}
+        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} maxTemp={resourceData?.maxTemp} isHomePlanet={resourceData?.planetClassId === 'homeworld'} timePerUnit={ships?.find(s => s.id === detailId)?.timePerUnit} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog

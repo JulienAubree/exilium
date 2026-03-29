@@ -3,6 +3,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { PrerequisiteList, type PrerequisiteItem } from '@/components/common/PrerequisiteList';
 import { getShipDetails, resolveBuildingName, resolveResearchName } from '@/lib/entity-details';
+import { formatDuration } from '@/lib/format';
 import { EnergieIcon } from '@/components/common/ResourceIcons';
 import { buildProductionConfig } from '@/lib/production-config';
 import { resolveBonus, solarSatelliteEnergy } from '@exilium/game-engine';
@@ -20,9 +21,10 @@ interface Props {
   buildingLevels?: Record<string, number>;
   maxTemp?: number;
   isHomePlanet?: boolean;
+  timePerUnit?: number;
 }
 
-export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxTemp, isHomePlanet }: Props) {
+export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxTemp, isHomePlanet, timePerUnit }: Props) {
   const { data: gameConfig } = useGameConfig();
   const details = getShipDetails(shipId, gameConfig ?? undefined);
   const prodConfig = useMemo(
@@ -218,6 +220,12 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
           color="text-slate-500"
         />
         <CostPills cost={details.cost} />
+        {timePerUnit != null && (
+          <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400">
+            <svg className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+            {formatDuration(timePerUnit)}
+          </div>
+        )}
       </div>
 
       {/* Prerequisites */}

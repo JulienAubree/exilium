@@ -405,7 +405,7 @@ export default function Defense() {
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.defenses[detailId]?.name ?? '' : ''}
       >
-        {detailId && <DefenseDetailContent defenseId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} />}
+        {detailId && <DefenseDetailContent defenseId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} timePerUnit={defenses?.find(d => d.id === detailId)?.timePerUnit} />}
       </EntityDetailOverlay>
 
       <ConfirmDialog
