@@ -146,6 +146,14 @@ export function useNotifications() {
         showBrowserNotification('Flotte de retour', `Flotte rentrée sur ${event.payload.originName}`);
         break;
       }
+      case 'pve-mission-done': {
+        utils.report.list.invalidate();
+        utils.report.unreadCount.invalidate();
+        const pveLink = event.payload.reportId ? `/reports/${event.payload.reportId}` : '/missions';
+        addToast(`Mission ${event.payload.missionType} terminée en ${event.payload.targetCoords}`, 'success', pveLink);
+        showBrowserNotification('Mission terminée', `${event.payload.missionType} en ${event.payload.targetCoords}`);
+        break;
+      }
       case 'tutorial-quest-complete':
         utils.tutorial.getCurrent.invalidate();
         utils.resource.production.invalidate();

@@ -94,6 +94,10 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
         // Extra events (e.g. pve-mission-done)
         if (result.extraEvents) {
           for (const extra of result.extraEvents) {
+            publishNotification(redis, result.userId, {
+              type: extra.type,
+              payload: extra.payload,
+            });
             await db.insert(gameEvents).values({
               userId: result.userId,
               planetId: result.planetId,
