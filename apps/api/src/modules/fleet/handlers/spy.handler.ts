@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, planetBuildings, userResearch, users, debrisFields } from '@exilium/db';
 import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat, computeFleetFP } from '@exilium/game-engine';
@@ -314,38 +314,22 @@ export class SpyHandler implements MissionHandler {
         }
       }
 
-      // Create/accumulate debris field
+      // Create/accumulate debris field (atomic upsert)
       if (debris.minerai > 0 || debris.silicium > 0) {
-        const [existingDebris] = await ctx.db
-          .select()
-          .from(debrisFields)
-          .where(
-            and(
-              eq(debrisFields.galaxy, fleetEvent.targetGalaxy),
-              eq(debrisFields.system, fleetEvent.targetSystem),
-              eq(debrisFields.position, fleetEvent.targetPosition),
-            ),
-          )
-          .limit(1);
-
-        if (existingDebris) {
-          await ctx.db
-            .update(debrisFields)
-            .set({
-              minerai: String(Number(existingDebris.minerai) + debris.minerai),
-              silicium: String(Number(existingDebris.silicium) + debris.silicium),
-              updatedAt: new Date(),
-            })
-            .where(eq(debrisFields.id, existingDebris.id));
-        } else {
-          await ctx.db.insert(debrisFields).values({
-            galaxy: fleetEvent.targetGalaxy,
-            system: fleetEvent.targetSystem,
-            position: fleetEvent.targetPosition,
-            minerai: String(debris.minerai),
-            silicium: String(debris.silicium),
-          });
-        }
+        await ctx.db.insert(debrisFields).values({
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+          minerai: String(debris.minerai),
+          silicium: String(debris.silicium),
+        }).onConflictDoUpdate({
+          target: [debrisFields.galaxy, debrisFields.system, debrisFields.position],
+          set: {
+            minerai: sql`${debrisFields.minerai}::numeric + ${String(debris.minerai)}::numeric`,
+            silicium: sql`${debrisFields.silicium}::numeric + ${String(debris.silicium)}::numeric`,
+            updatedAt: new Date(),
+          },
+        });
       }
 
       // Compute FP for both sides
