@@ -122,25 +122,6 @@ export class RecycleHandler implements MissionHandler {
       name: planets.name,
     }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
 
-    let messageId: string | undefined;
-    if (ctx.messageService) {
-      const parts = [`Recyclage effectué en ${coords}\n`];
-      parts.push(`Durée du trajet : ${duration}`);
-      parts.push(`Débris collectés : ${collectedMinerai.toLocaleString('fr-FR')} minerai, ${collectedSilicium.toLocaleString('fr-FR')} silicium`);
-      if (newMinerai > 0 || newSilicium > 0) {
-        parts.push(`Débris restants : ${newMinerai.toLocaleString('fr-FR')} minerai, ${newSilicium.toLocaleString('fr-FR')} silicium`);
-      } else {
-        parts.push('Champ de débris entièrement recyclé');
-      }
-      const msg = await ctx.messageService.createSystemMessage(
-        fleetEvent.userId,
-        'mission',
-        `Recyclage effectué ${coords}`,
-        parts.join('\n'),
-      );
-      messageId = msg.id;
-    }
-
     // Create mission report
     let reportId: string | undefined;
     if (ctx.reportService) {
@@ -148,7 +129,6 @@ export class RecycleHandler implements MissionHandler {
       const report = await ctx.reportService.create({
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
-        messageId,
         missionType: 'recycle',
         title: `Rapport de recyclage ${coords}`,
         coordinates: {
