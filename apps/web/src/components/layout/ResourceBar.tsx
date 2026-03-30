@@ -33,11 +33,7 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
       : undefined,
   );
 
-  const energyPercent = data
-    ? data.rates.energyConsumed > 0
-      ? Math.min(100, Math.round((data.rates.energyProduced / data.rates.energyConsumed) * 100))
-      : 100
-    : 0;
+  const energyBalance = data ? data.rates.energyProduced - data.rates.energyConsumed : 0;
 
   return (
     <>
@@ -48,7 +44,7 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
         <ResourceCounter icon={<MineraiIcon size={14} className="text-minerai" />} value={resources.minerai} colorClass="text-minerai" />
         <ResourceCounter icon={<SiliciumIcon size={14} className="text-silicium" />} value={resources.silicium} colorClass="text-silicium" />
         <ResourceCounter icon={<HydrogeneIcon size={14} className="text-hydrogene" />} value={resources.hydrogene} colorClass="text-hydrogene" />
-        <ResourceCounter icon={<EnergieIcon size={14} className="text-energy" />} value={energyPercent} colorClass="text-energy" suffix="%" />
+        <ResourceCounter icon={<EnergieIcon size={14} className="text-energy" />} value={energyBalance} colorClass={energyBalance < 0 ? 'text-red-400' : 'text-energy'} />
       </div>
 
       {detailOpen && (
