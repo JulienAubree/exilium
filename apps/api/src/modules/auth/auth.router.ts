@@ -12,7 +12,7 @@ export function createAuthRouter(
       .input(
         z.object({
           email: z.string().email(),
-          username: z.string().min(3).max(32),
+          username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_-]+$/, 'Le pseudo ne peut contenir que des lettres, chiffres, tirets et underscores'),
           password: z.string().min(8).max(128),
         }),
       )
