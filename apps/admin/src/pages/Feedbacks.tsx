@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Search, Trash2, MessageSquare } from 'lucide-react';
+import { Search, Trash2, MessageSquare, Download } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { label: 'Tous', value: undefined },
@@ -63,6 +63,41 @@ export default function Feedbacks() {
     onSuccess: () => { refetch(); setDeleteId(null); },
   });
 
+  const exportQuery = trpc.feedback.admin.export.useQuery(
+    { status: statusFilter, type: typeFilter },
+    { enabled: false },
+  );
+
+  const handleExportCsv = async () => {
+    const result = await exportQuery.refetch();
+    const rows = result.data;
+    if (!rows || rows.length === 0) return;
+
+    const headers = ['Type', 'Titre', 'Description', 'Auteur', 'Statut', 'Votes', 'Commentaires', 'Note admin', 'Date'];
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((r: any) => [
+        r.type,
+        `"${(r.title ?? '').replace(/"/g, '""')}"`,
+        `"${(r.description ?? '').replace(/"/g, '""')}"`,
+        `"${(r.username ?? '').replace(/"/g, '""')}"`,
+        r.status,
+        r.upvoteCount,
+        r.commentCount,
+        `"${(r.adminNote ?? '').replace(/"/g, '""')}"`,
+        new Date(r.createdAt).toISOString(),
+      ].join(',')),
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feedbacks-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) return <PageSkeleton />;
 
   const items = data?.items ?? [];
@@ -73,7 +108,18 @@ export default function Feedbacks() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-semibold text-gray-100">Feedback</h1>
-        <span className="text-sm text-gray-500">{total} entrée{total > 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">{total} entrée{total > 1 ? 's' : ''}</span>
+          <button
+            onClick={handleExportCsv}
+            disabled={exportQuery.isFetching}
+            className="admin-btn-ghost flex items-center gap-1.5 text-xs"
+            title="Exporter en CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {exportQuery.isFetching ? 'Export...' : 'CSV'}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">

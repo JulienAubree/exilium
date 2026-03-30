@@ -19,6 +19,15 @@ export function createFeedbackRouter(
         return feedbackService.adminList(input);
       }),
 
+    export: adminProcedure
+      .input(z.object({
+        type: z.enum(['bug', 'idea', 'feedback']).optional(),
+        status: z.enum(['new', 'in_progress', 'resolved', 'rejected']).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return feedbackService.adminExport(input);
+      }),
+
     updateStatus: adminProcedure
       .input(z.object({
         id: z.string().uuid(),

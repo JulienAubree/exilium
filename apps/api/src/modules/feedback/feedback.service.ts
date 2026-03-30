@@ -253,6 +253,33 @@ export function createFeedbackService(db: Database) {
       return { success: true };
     },
 
+    async adminExport(options?: {
+      type?: 'bug' | 'idea' | 'feedback';
+      status?: 'new' | 'in_progress' | 'resolved' | 'rejected';
+    }) {
+      const conditions = [];
+      if (options?.type) conditions.push(eq(feedbacks.type, options.type));
+      if (options?.status) conditions.push(eq(feedbacks.status, options.status));
+
+      return db
+        .select({
+          id: feedbacks.id,
+          username: users.username,
+          type: feedbacks.type,
+          title: feedbacks.title,
+          description: feedbacks.description,
+          status: feedbacks.status,
+          upvoteCount: feedbacks.upvoteCount,
+          commentCount: feedbacks.commentCount,
+          adminNote: feedbacks.adminNote,
+          createdAt: feedbacks.createdAt,
+        })
+        .from(feedbacks)
+        .leftJoin(users, eq(users.id, feedbacks.userId))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(feedbacks.createdAt));
+    },
+
     async adminList(options?: {
       type?: 'bug' | 'idea' | 'feedback';
       status?: 'new' | 'in_progress' | 'resolved' | 'rejected';
