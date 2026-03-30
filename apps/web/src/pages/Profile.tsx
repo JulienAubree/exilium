@@ -5,6 +5,8 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { AvatarPicker } from '@/components/profile/AvatarPicker';
 import { FriendList } from '@/components/profile/FriendList';
 import { FriendRequests } from '@/components/profile/FriendRequests';
+import { NotificationPreferences } from '@/components/profile/NotificationPreferences';
+import { useSearchParams } from 'react-router';
 
 const PLAYSTYLE_LABELS: Record<string, string> = {
   miner: 'Mineur',
@@ -54,6 +56,10 @@ export default function Profile() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [bio, setBio] = useState<string | null>(null);
   const [showFriendRequests, setShowFriendRequests] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>(
+    searchParams.get('tab') === 'notifications' ? 'notifications' : 'profile',
+  );
 
   const updateMutation = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
@@ -102,6 +108,22 @@ export default function Profile() {
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Profil" />
 
+      <div className="flex gap-1 border-b border-border/50 pb-0">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'profile' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Profil
+        </button>
+        <button
+          onClick={() => setActiveTab('notifications')}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'notifications' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Notifications
+        </button>
+      </div>
+
+      {activeTab === 'profile' && (
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6">
         {/* ===== Left column ===== */}
         <div className="space-y-4">
@@ -305,6 +327,16 @@ export default function Profile() {
           </div>
         </div>
       </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div className="max-w-2xl">
+          <div className="glass-card p-4 lg:p-6">
+            <h2 className="text-lg font-semibold mb-4">Préférences de notifications</h2>
+            <NotificationPreferences />
+          </div>
+        </div>
+      )}
 
       {/* Avatar picker modal */}
       {showAvatarPicker && (
