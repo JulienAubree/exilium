@@ -13,6 +13,8 @@ interface RoundDisplayProps {
   autoPlayDelay?: number;
   /** Called when animation finishes all rounds */
   onComplete?: () => void;
+  /** Player perspective — swaps left/right sides when 'defender' */
+  perspective?: 'attacker' | 'defender';
 }
 
 export function RoundDisplay({
@@ -21,6 +23,7 @@ export function RoundDisplay({
   initialDefender,
   autoPlayDelay = 1500,
   onComplete,
+  perspective,
 }: RoundDisplayProps) {
   const { data: gameConfig } = useGameConfig();
   const [displayedRound, setDisplayedRound] = useState(0); // 0 = initial state
@@ -51,6 +54,19 @@ export function RoundDisplay({
   const allDefenderTypes = Object.keys(initialDefender);
 
   const isFinished = displayedRound >= totalRounds;
+  const isDefPerspective = perspective === 'defender';
+
+  // Determine outcome label from player perspective
+  const outcomeLabel = result.outcome === 'draw'
+    ? 'Match nul'
+    : (result.outcome === 'attacker') !== isDefPerspective
+      ? 'Victoire'
+      : 'Défaite';
+  const outcomeColor = result.outcome === 'draw'
+    ? 'text-yellow-400'
+    : (result.outcome === 'attacker') !== isDefPerspective
+      ? 'text-green-400'
+      : 'text-red-400';
 
   return (
     <div className="space-y-3">
@@ -64,40 +80,28 @@ export function RoundDisplay({
               : `Round ${displayedRound}/${totalRounds}`}
         </span>
         {isFinished && (
-          <span
-            className={`font-bold ${
-              result.outcome === 'attacker'
-                ? 'text-green-400'
-                : result.outcome === 'defender'
-                  ? 'text-red-400'
-                  : 'text-yellow-400'
-            }`}
-          >
-            {result.outcome === 'attacker'
-              ? 'Victoire attaquant'
-              : result.outcome === 'defender'
-                ? 'Victoire défenseur'
-                : 'Match nul'}
+          <span className={`font-bold ${outcomeColor}`}>
+            {outcomeLabel}
           </span>
         )}
       </div>
 
-      {/* Two columns */}
+      {/* Two columns — left = you (blue), right = enemy (rose) */}
       <div className="grid grid-cols-2 gap-4">
         <FleetColumn
-          title="Attaquant"
-          types={allAttackerTypes}
-          initial={initialAttacker}
-          current={attackerShips}
+          title={isDefPerspective ? 'Défenseur (vous)' : 'Attaquant (vous)'}
+          types={isDefPerspective ? allDefenderTypes : allAttackerTypes}
+          initial={isDefPerspective ? initialDefender : initialAttacker}
+          current={isDefPerspective ? defenderShips : attackerShips}
           gameConfig={gameConfig}
           color="text-blue-400"
           barColor="bg-blue-500"
         />
         <FleetColumn
-          title="Défenseur"
-          types={allDefenderTypes}
-          initial={initialDefender}
-          current={defenderShips}
+          title={isDefPerspective ? 'Attaquant' : 'Défenseur'}
+          types={isDefPerspective ? allAttackerTypes : allDefenderTypes}
+          initial={isDefPerspective ? initialAttacker : initialDefender}
+          current={isDefPerspective ? attackerShips : defenderShips}
           gameConfig={gameConfig}
           color="text-rose-400"
           barColor="bg-rose-500"
@@ -136,8 +140,8 @@ export function RoundDisplay({
       {/* Losses summary when finished */}
       {isFinished && (
         <div className="grid grid-cols-2 gap-4 text-xs">
-          <LossesSummary label="Pertes attaquant" losses={result.attackerLosses} gameConfig={gameConfig} />
-          <LossesSummary label="Pertes défenseur" losses={result.defenderLosses} gameConfig={gameConfig} />
+          <LossesSummary label="Vos pertes" losses={isDefPerspective ? result.defenderLosses : result.attackerLosses} gameConfig={gameConfig} />
+          <LossesSummary label="Pertes ennemies" losses={isDefPerspective ? result.attackerLosses : result.defenderLosses} gameConfig={gameConfig} />
         </div>
       )}
 

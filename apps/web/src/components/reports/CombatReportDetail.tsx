@@ -329,6 +329,7 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
                 initialAttacker={result.attackerFleet ?? {}}
                 initialDefender={{ ...(result.defenderFleet ?? {}), ...(result.defenderDefenses ?? {}) }}
                 autoPlayDelay={0}
+                perspective={perspective}
               />
             </div>
           )}
