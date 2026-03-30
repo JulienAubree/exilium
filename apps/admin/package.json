@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@exilium/shared": "workspace:*",
     "@exilium/game-engine": "workspace:*",
     "@trpc/client": "^11.0.0-rc.682",
     "@trpc/react-query": "^11.0.0-rc.682",

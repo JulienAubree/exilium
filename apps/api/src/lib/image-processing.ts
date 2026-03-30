@@ -2,14 +2,9 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-export type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets' | 'flagships';
+import { toKebab, type AssetCategory } from '@exilium/shared';
 
 const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships'];
-
-// Must match toKebab in apps/web/src/lib/assets.ts
-function toKebab(id: string): string {
-  return id.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-}
 
 const SIZES: readonly { suffix: string; width: number; height?: number; quality: number; label: string }[] = [
   { suffix: '', width: 1200, quality: 85, label: 'hero' },
