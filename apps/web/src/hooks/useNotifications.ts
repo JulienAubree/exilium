@@ -5,7 +5,6 @@ import { usePushSubscription } from './usePushSubscription';
 import { useToastStore } from '@/stores/toast.store';
 import { useChatStore } from '@/stores/chat.store';
 import { getEntityName } from '@/lib/entity-names';
-import { EVENT_TYPE_TO_CATEGORY } from '@exilium/shared';
 
 function showBrowserNotification(title: string, body: string) {
   if (typeof Notification === 'undefined') return;
@@ -48,9 +47,7 @@ export function useNotifications() {
 
   function isToastEnabled(eventType: string): boolean {
     if (!notifPrefs) return true;
-    const category = EVENT_TYPE_TO_CATEGORY[eventType];
-    if (!category) return true;
-    return !notifPrefs.toastDisabled.includes(category);
+    return !notifPrefs.toastDisabled.includes(eventType);
   }
 
   useSSE((event) => {
