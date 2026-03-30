@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch } from '@exilium/db';
+import { planets, planetShips, planetDefenses, planetBuildings, userResearch, flagships } from '@exilium/db';
 import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
 import type { CombatInput } from '@exilium/game-engine';
@@ -132,6 +132,36 @@ export class SpyHandler implements MissionHandler {
         }
       }
       reportResult.fleet = fleetData;
+
+      // Check if defender's flagship is stationed on this planet
+      const [defenderFlagship] = await ctx.db
+        .select({
+          name: flagships.name,
+          status: flagships.status,
+          weapons: flagships.weapons,
+          shield: flagships.shield,
+          hull: flagships.hull,
+          cargoCapacity: flagships.cargoCapacity,
+        })
+        .from(flagships)
+        .where(
+          and(
+            eq(flagships.userId, targetPlanet.userId),
+            eq(flagships.planetId, targetPlanet.id),
+            eq(flagships.status, 'active'),
+          ),
+        )
+        .limit(1);
+
+      if (defenderFlagship) {
+        reportResult.flagship = {
+          name: defenderFlagship.name,
+          weapons: defenderFlagship.weapons,
+          shield: defenderFlagship.shield,
+          hull: defenderFlagship.hull,
+          cargoCapacity: defenderFlagship.cargoCapacity,
+        };
+      }
     }
 
     if (visibility.defenses && targetDefsRow) {

@@ -181,6 +181,23 @@ export function SpyReportDetail({ result, gameConfig }: SpyReportDetailProps) {
         </div>
       )}
 
+      {result.flagship && (
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Vaisseau amiral</h3>
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-amber-400">{result.flagship.name}</span>
+            </div>
+            <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
+              <span>Armes : <span className="text-red-400 font-medium">{result.flagship.weapons}</span></span>
+              <span>Bouclier : <span className="text-blue-400 font-medium">{result.flagship.shield}</span></span>
+              <span>Coque : <span className="text-foreground font-medium">{result.flagship.hull}</span></span>
+              <span>Soute : <span className="text-foreground font-medium">{result.flagship.cargoCapacity?.toLocaleString('fr-FR')}</span></span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {result.fleet && Object.keys(result.fleet).length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Flotte ennemie</h3>
