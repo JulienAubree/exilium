@@ -1,15 +1,11 @@
+import type { Coordinates } from '@exilium/shared';
+
 export interface ShipStats {
   baseSpeed: number;
   fuelConsumption: number;
   cargoCapacity: number;
   driveType: 'combustion' | 'impulse' | 'hyperspaceDrive';
   miningExtraction: number;
-}
-
-interface Coordinates {
-  galaxy: number;
-  system: number;
-  position: number;
 }
 
 export interface FleetConfig {

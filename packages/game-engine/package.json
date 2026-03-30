@@ -18,6 +18,9 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@exilium/shared": "workspace:*"
+  },
   "devDependencies": {
     "vitest": "^3.0.4",
     "typescript": "^5.7.3"
