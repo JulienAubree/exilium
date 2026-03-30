@@ -9,16 +9,3 @@ export enum MissionType {
   Pirate = 'pirate',
   Trade = 'trade',
 }
-
-export enum FleetPhase {
-  Outbound = 'outbound',
-  Prospecting = 'prospecting',
-  Mining = 'mining',
-  Return = 'return',
-}
-
-export enum FleetStatus {
-  Active = 'active',
-  Completed = 'completed',
-  Recalled = 'recalled',
-}
