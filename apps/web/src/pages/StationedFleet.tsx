@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ShipCategoryGrid, type ShipData } from '@/components/fleet/ShipCategoryGrid';
 import { cn } from '@/lib/utils';
+import { getFlagshipImageUrl } from '@/lib/assets';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 
@@ -135,10 +136,19 @@ export default function StationedFleet() {
               )}
             >
               <div className="relative h-24 overflow-hidden bg-gradient-to-br from-amber-950/50 to-amber-900/20 flex items-center justify-center">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-amber-400/60">
-                  <path d="M12 2L3 9l9 13 9-13-9-7z" fill="currentColor" opacity={0.3} />
-                  <path d="M12 2L3 9l9 13 9-13-9-7z" stroke="currentColor" strokeWidth={1.5} fill="none" />
-                </svg>
+                {flagship.flagshipImageIndex != null ? (
+                  <img
+                    src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'full')}
+                    alt={flagship.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-amber-400/60">
+                    <path d="M12 2L3 9l9 13 9-13-9-7z" fill="currentColor" opacity={0.3} />
+                    <path d="M12 2L3 9l9 13 9-13-9-7z" stroke="currentColor" strokeWidth={1.5} fill="none" />
+                  </svg>
+                )}
                 <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
                   x1
                 </span>
