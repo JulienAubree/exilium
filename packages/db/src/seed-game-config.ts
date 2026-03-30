@@ -471,8 +471,8 @@ const UNIVERSE_CONFIG = [
   { key: 'talent_tier_3_threshold', value: 10 },
   { key: 'talent_tier_4_threshold', value: 15 },
   { key: 'talent_tier_5_threshold', value: 20 },
-  { key: 'talent_respec_ratio', value: 0.5 },
-  { key: 'talent_full_reset_cost', value: 50 },
+  { key: 'talent_respec_ratio', value: 0 },       // TODO: remettre à 0.5 quand les talents seront finalisés
+  { key: 'talent_full_reset_cost', value: 0 },    // TODO: remettre à 50 quand les talents seront finalisés
 ];
 
 // ── Talent Branches ──
