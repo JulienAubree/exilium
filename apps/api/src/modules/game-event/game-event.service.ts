@@ -16,7 +16,7 @@ export function createGameEventService(db: Database) {
           .from(notificationPreferences)
           .where(eq(notificationPreferences.userId, userId))
           .limit(1);
-        if (prefs?.bellDisabled?.includes(category)) return;
+        if (prefs?.bellDisabled?.includes(type)) return;
       }
       await db.insert(gameEvents).values({ userId, planetId, type, payload });
     },

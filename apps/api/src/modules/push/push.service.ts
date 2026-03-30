@@ -68,7 +68,7 @@ export function createPushService(db: Database) {
       }) as Record<PushCategory, boolean>;
     },
 
-    async sendToUser(userId: string, category: PushCategory, payload: { title: string; body: string; url?: string }) {
+    async sendToUser(userId: string, category: PushCategory, payload: { title: string; body: string; url?: string }, eventType?: string) {
       if (!env.VAPID_PUBLIC_KEY) return;
 
       // Check user notification preferences
@@ -77,7 +77,8 @@ export function createPushService(db: Database) {
         .from(notificationPreferences)
         .where(eq(notificationPreferences.userId, userId))
         .limit(1);
-      if (prefs?.pushDisabled?.includes(category)) return;
+      if (eventType && prefs?.pushDisabled?.includes(eventType)) return;
+      if (!eventType && prefs?.pushDisabled?.includes(category)) return;
 
       const subs = await db
         .select()

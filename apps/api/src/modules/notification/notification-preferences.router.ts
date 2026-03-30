@@ -1,9 +1,8 @@
 import { z } from 'zod';
 import { protectedProcedure, router } from '../../trpc/router.js';
-import { NOTIFICATION_CATEGORIES } from '@exilium/shared';
 import type { createNotificationPreferencesService } from './notification-preferences.service.js';
 
-const categoryEnum = z.enum(NOTIFICATION_CATEGORIES as unknown as [string, ...string[]]);
+const disabledArray = z.array(z.string().min(1).max(64));
 
 export function createNotificationPreferencesRouter(
   service: ReturnType<typeof createNotificationPreferencesService>,
@@ -15,9 +14,9 @@ export function createNotificationPreferencesRouter(
 
     updatePreferences: protectedProcedure
       .input(z.object({
-        toastDisabled: z.array(categoryEnum),
-        pushDisabled: z.array(categoryEnum),
-        bellDisabled: z.array(categoryEnum),
+        toastDisabled: disabledArray,
+        pushDisabled: disabledArray,
+        bellDisabled: disabledArray,
       }))
       .mutation(async ({ ctx, input }) => {
         return service.updatePreferences(ctx.userId!, input);
