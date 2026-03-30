@@ -1,13 +1,23 @@
 // apps/api/src/modules/game-event/game-event.service.ts
 import { eq, and, desc, lt, sql, inArray } from 'drizzle-orm';
-import { gameEvents } from '@exilium/db';
+import { gameEvents, notificationPreferences } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { EVENT_TYPE_TO_CATEGORY } from '@exilium/shared';
 
 export type GameEventType = 'building-done' | 'research-done' | 'shipyard-done' | 'fleet-arrived' | 'fleet-returned' | 'pve-mission-done' | 'tutorial-quest-done' | 'friend-request' | 'friend-accepted' | 'friend-declined';
 
 export function createGameEventService(db: Database) {
   return {
     async insert(userId: string, planetId: string | null, type: GameEventType, payload: Record<string, unknown>) {
+      const category = EVENT_TYPE_TO_CATEGORY[type];
+      if (category) {
+        const [prefs] = await db
+          .select({ bellDisabled: notificationPreferences.bellDisabled })
+          .from(notificationPreferences)
+          .where(eq(notificationPreferences.userId, userId))
+          .limit(1);
+        if (prefs?.bellDisabled?.includes(category)) return;
+      }
       await db.insert(gameEvents).values({ userId, planetId, type, payload });
     },
 

@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { eq } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
-import { pushSubscriptions } from '@exilium/db';
+import { pushSubscriptions, notificationPreferences } from '@exilium/db';
 import { env } from '../../config/env.js';
 
 export type PushCategory = 'building' | 'research' | 'shipyard' | 'fleet' | 'combat' | 'message';
@@ -70,6 +70,14 @@ export function createPushService(db: Database) {
 
     async sendToUser(userId: string, category: PushCategory, payload: { title: string; body: string; url?: string }) {
       if (!env.VAPID_PUBLIC_KEY) return;
+
+      // Check user notification preferences
+      const [prefs] = await db
+        .select({ pushDisabled: notificationPreferences.pushDisabled })
+        .from(notificationPreferences)
+        .where(eq(notificationPreferences.userId, userId))
+        .limit(1);
+      if (prefs?.pushDisabled?.includes(category)) return;
 
       const subs = await db
         .select()
