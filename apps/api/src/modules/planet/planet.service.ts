@@ -5,7 +5,6 @@ import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
   calculateMinTemp,
-  calculateMaxFields,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getRandomPlanetImageIndex } from '../../lib/planet-image.util.js';
@@ -35,7 +34,6 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
       const maxTemp = calculateMaxTemp(position, randomOffset);
       const minTemp = calculateMinTemp(maxTemp);
       const diameter = Number(universe.homePlanetDiameter) || 12000;
-      const maxFields = calculateMaxFields(diameter);
 
       const startingMinerai = Number(universe.startingMinerai) || 500;
       const startingSilicium = Number(universe.startingSilicium) || 300;
@@ -52,7 +50,6 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
           planetType: 'planet',
           planetClassId: homeworldType.id,
           diameter,
-          maxFields,
           minTemp,
           maxTemp,
           minerai: String(startingMinerai),

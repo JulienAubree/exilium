@@ -341,7 +341,6 @@ export function createGameConfigRouter(
         hydrogeneBonus: z.number().optional(),
         diameterMin: z.number().int(),
         diameterMax: z.number().int(),
-        fieldsBonus: z.number().optional(),
         sortOrder: z.number().int().optional(),
         role: z.string().nullable().optional(),
       }))
@@ -362,7 +361,6 @@ export function createGameConfigRouter(
           hydrogeneBonus: z.number().optional(),
           diameterMin: z.number().int().optional(),
           diameterMax: z.number().int().optional(),
-          fieldsBonus: z.number().optional(),
           sortOrder: z.number().int().optional(),
           role: z.string().nullable().optional(),
         }),

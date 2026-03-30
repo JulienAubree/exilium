@@ -17,7 +17,6 @@ const FIELDS = [
   { key: 'hydrogeneBonus', label: 'Bonus Hydrogene', type: 'number' as const, step: '0.1' },
   { key: 'diameterMin', label: 'Diametre Min', type: 'number' as const },
   { key: 'diameterMax', label: 'Diametre Max', type: 'number' as const },
-  { key: 'fieldsBonus', label: 'Bonus Cases', type: 'number' as const, step: '0.1' },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
   { key: 'role', label: 'Rôle', type: 'text' as const },
 ];
@@ -35,7 +34,6 @@ function defaultForm(): Record<string, string | number> {
     hydrogeneBonus: 1.0,
     diameterMin: 5000,
     diameterMax: 15000,
-    fieldsBonus: 1.0,
     sortOrder: 0,
     role: '',
   };
@@ -115,7 +113,6 @@ export default function PlanetTypes() {
         hydrogeneBonus: editingType.hydrogeneBonus,
         diameterMin: editingType.diameterMin,
         diameterMax: editingType.diameterMax,
-        fieldsBonus: editingType.fieldsBonus,
         sortOrder: editingType.sortOrder,
         role: editingType.role ?? '',
       }
@@ -146,7 +143,6 @@ export default function PlanetTypes() {
               <th>H2</th>
               <th>Diam. Min</th>
               <th>Diam. Max</th>
-              <th>Cases</th>
               <th>Ordre</th>
               <th>Rôle</th>
               <th></th>
@@ -170,9 +166,6 @@ export default function PlanetTypes() {
                   </td>
                   <td>{pt.diameterMin.toLocaleString('fr-FR')}</td>
                   <td>{pt.diameterMax.toLocaleString('fr-FR')}</td>
-                  <td className={pt.fieldsBonus !== 1 ? (pt.fieldsBonus > 1 ? 'text-emerald-400' : 'text-red-400') : ''}>
-                    x{pt.fieldsBonus}
-                  </td>
                   <td>{pt.sortOrder}</td>
                   <td className="text-xs text-gray-500">{pt.role ?? '-'}</td>
                   <td>
@@ -193,7 +186,7 @@ export default function PlanetTypes() {
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={12} className="px-2 pb-2">
+                  <td colSpan={11} className="px-2 pb-2">
                     <PlanetImagePool planetClassId={pt.id} />
                   </td>
                 </tr>
@@ -228,7 +221,6 @@ export default function PlanetTypes() {
             hydrogeneBonus: Number(values.hydrogeneBonus),
             diameterMin: Number(values.diameterMin),
             diameterMax: Number(values.diameterMax),
-            fieldsBonus: Number(values.fieldsBonus),
             sortOrder: Number(values.sortOrder),
             role: (String(values.role)) || null,
           });
@@ -264,7 +256,6 @@ export default function PlanetTypes() {
               hydrogeneBonus: Number(values.hydrogeneBonus),
               diameterMin: Number(values.diameterMin),
               diameterMax: Number(values.diameterMax),
-              fieldsBonus: Number(values.fieldsBonus),
               sortOrder: Number(values.sortOrder),
               role: (String(values.role)) || null,
             },

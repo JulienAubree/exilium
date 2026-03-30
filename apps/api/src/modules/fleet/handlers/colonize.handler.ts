@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, fleetEvents } from '@exilium/db';
-import { calculateMaxTemp, calculateMinTemp, calculateDiameter, calculateMaxFields, totalCargoCapacity } from '@exilium/game-engine';
+import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
@@ -127,15 +127,12 @@ export class ColonizeHandler implements MissionHandler {
     const minTemp = calculateMinTemp(maxTemp);
 
     let diameter: number;
-    let fieldsBonus = 1;
     if (planetTypeForPos) {
       const { diameterMin, diameterMax } = planetTypeForPos;
       diameter = Math.floor(diameterMin + (diameterMax - diameterMin) * Math.random());
-      fieldsBonus = planetTypeForPos.fieldsBonus;
     } else {
       diameter = calculateDiameter(fleetEvent.targetPosition, Math.random());
     }
-    const maxFields = calculateMaxFields(diameter, fieldsBonus);
     const planetImageIndex = getRandomPlanetImageIndex(planetTypeForPos?.id ?? homeworldType.id, ctx.assetsDir);
 
     const [newPlanet] = await ctx.db
@@ -149,7 +146,6 @@ export class ColonizeHandler implements MissionHandler {
         planetType: 'planet',
         planetClassId: planetTypeForPos?.id ?? null,
         diameter,
-        maxFields,
         minTemp,
         maxTemp,
         planetImageIndex,
@@ -185,7 +181,7 @@ export class ColonizeHandler implements MissionHandler {
 
     const reportId = await createColonizeReport(
       `Colonisation réussie ${coords}`,
-      { success: true, diameter, maxFields, planetId: newPlanet.id },
+      { success: true, diameter, planetId: newPlanet.id },
     );
 
     // Return remaining ships in a new fleet event (cargo already transferred to planet)

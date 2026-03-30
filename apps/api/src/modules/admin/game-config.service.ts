@@ -187,7 +187,6 @@ export interface PlanetTypeConfig {
   hydrogeneBonus: number;
   diameterMin: number;
   diameterMax: number;
-  fieldsBonus: number;
   sortOrder: number;
   role: string | null;
 }
@@ -440,7 +439,6 @@ export function createGameConfigService(db: Database) {
       hydrogeneBonus: pt.hydrogeneBonus,
       diameterMin: pt.diameterMin,
       diameterMax: pt.diameterMax,
-      fieldsBonus: pt.fieldsBonus,
       sortOrder: pt.sortOrder,
       role: pt.role ?? null,
     }));
@@ -953,7 +951,6 @@ export function createGameConfigService(db: Database) {
       hydrogeneBonus?: number;
       diameterMin: number;
       diameterMax: number;
-      fieldsBonus?: number;
       sortOrder?: number;
       role?: string | null;
     }) {
@@ -967,7 +964,6 @@ export function createGameConfigService(db: Database) {
         hydrogeneBonus: data.hydrogeneBonus ?? 1.0,
         diameterMin: data.diameterMin,
         diameterMax: data.diameterMax,
-        fieldsBonus: data.fieldsBonus ?? 1.0,
         sortOrder: data.sortOrder ?? 0,
         role: data.role ?? null,
       });
@@ -983,7 +979,6 @@ export function createGameConfigService(db: Database) {
       hydrogeneBonus: number;
       diameterMin: number;
       diameterMax: number;
-      fieldsBonus: number;
       sortOrder: number;
       role: string | null;
     }>) {

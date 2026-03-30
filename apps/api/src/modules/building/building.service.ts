@@ -115,13 +115,6 @@ export function createBuildingService(
         }
       }
 
-      // Check building slots
-      const totalLevels = Object.values(buildingLevels).reduce((sum, lvl) => sum + lvl, 0);
-
-      if (totalLevels >= planet.maxFields) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plus de champs disponibles' });
-      }
-
       const phaseMap = config.universe.phase_multiplier
         ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
         : undefined;
