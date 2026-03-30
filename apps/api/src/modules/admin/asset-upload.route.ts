@@ -34,7 +34,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       .where(eq(users.id, userId))
       .limit(1);
     if (!user?.isAdmin) {
-      return reply.status(401).send({ error: 'Admin access required' });
+      return reply.status(403).send({ error: 'Admin access required' });
     }
 
     // 2. Parse multipart — field types from @fastify/multipart are Multipart | Multipart[] | undefined
@@ -102,7 +102,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       .where(eq(users.id, userId))
       .limit(1);
     if (!user?.isAdmin) {
-      return reply.status(401).send({ error: 'Admin access required' });
+      return reply.status(403).send({ error: 'Admin access required' });
     }
 
     const { planetClassId } = request.params as { planetClassId: string };
@@ -135,7 +135,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       .where(eq(users.id, userId))
       .limit(1);
     if (!user?.isAdmin) {
-      return reply.status(401).send({ error: 'Admin access required' });
+      return reply.status(403).send({ error: 'Admin access required' });
     }
 
     const indexes = listFlagshipImageIndexes(env.ASSETS_DIR);
