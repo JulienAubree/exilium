@@ -41,6 +41,7 @@ export default function StationedFleet() {
   }, [researchList]);
 
   const flagshipOnPlanet = flagship && flagship.status === 'active' && flagship.planetId === planetId;
+  const flagshipInFlight = flagship && flagship.status === 'in_mission';
 
   const availableShips = useMemo(
     () => (ships ?? []).filter((s) => s.count > 0),
@@ -110,17 +111,24 @@ export default function StationedFleet() {
       <PageHeader title="Flotte stationnee" />
 
       {/* Flagship */}
-      {flagshipOnPlanet && flagship && (
+      {(flagshipOnPlanet || flagshipInFlight) && flagship && (
         <div>
           <div className="flex items-center gap-1.5 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
               Vaisseau amiral
             </span>
+            {flagshipInFlight && (
+              <span className="text-[10px] font-medium text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded-full">
+                En vol
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
             <button
               type="button"
+              disabled={!!flagshipInFlight}
               onClick={() => {
+                if (flagshipInFlight) return;
                 setSelectedShips((prev) => {
                   if (prev['flagship'] !== undefined) {
                     const next = { ...prev };
@@ -131,7 +139,8 @@ export default function StationedFleet() {
                 });
               }}
               className={cn(
-                'retro-card overflow-hidden flex flex-col text-left cursor-pointer',
+                'retro-card overflow-hidden flex flex-col text-left',
+                flagshipInFlight ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
                 selectedIds.has('flagship') && 'border-primary',
               )}
             >
