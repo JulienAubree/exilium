@@ -84,7 +84,7 @@ export class AttackHandler implements MissionHandler {
       }
     }
 
-    const combatConfig = buildCombatConfig(config);
+    const combatConfig = buildCombatConfig(config.universe);
 
     const [targetPlanet] = await ctx.db
       .select()

@@ -1,34 +1,12 @@
 import { eq, sql } from 'drizzle-orm';
 import { planetShips, planetDefenses, debrisFields, users } from '@exilium/db';
-import { computeFleetFP } from '@exilium/game-engine';
-import type { CombatConfig, ShipCategory, RoundResult, UnitCombatStats, FPConfig, ShipCombatConfig } from '@exilium/game-engine';
+import { computeFleetFP, COMBAT_CATEGORIES, buildCombatConfig } from '@exilium/game-engine';
+import type { RoundResult, UnitCombatStats, FPConfig, ShipCombatConfig } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
 import type { GameConfig, MissionHandlerContext } from './fleet.types.js';
 import { buildShipCombatConfigs, buildShipCosts, getCombatMultipliers } from './fleet.types.js';
 
-// ── Shared combat categories ──
-
-export const COMBAT_CATEGORIES: ShipCategory[] = [
-  { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
-  { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
-  { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
-  { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
-];
-
-// ── Build CombatConfig from universe config with optional overrides ──
-
-export function buildCombatConfig(config: GameConfig, overrides?: Partial<CombatConfig>): CombatConfig {
-  return {
-    maxRounds: Number(config.universe['combat_max_rounds']) || 4,
-    debrisRatio: Number(config.universe['combat_debris_ratio']) || 0.3,
-    defenseRepairRate: Number(config.universe['combat_defense_repair_rate']) || 0.7,
-    pillageRatio: Number(config.universe['combat_pillage_ratio']) || 0.33,
-    minDamagePerHit: Number(config.universe['combat_min_damage_per_hit']) || 1,
-    researchBonusPerLevel: Number(config.universe['combat_research_bonus_per_level']) || 0.1,
-    categories: COMBAT_CATEGORIES,
-    ...overrides,
-  };
-}
+export { COMBAT_CATEGORIES, buildCombatConfig };
 
 // ── Parse DB row to unit map (skip planetId, keep only positive numbers) ──
 

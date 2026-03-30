@@ -1,18 +1,9 @@
 import type {
   CombatInput,
-  CombatConfig,
   CombatMultipliers,
   ShipCombatConfig,
-  ShipCategory,
 } from '@exilium/game-engine';
-
-/** Combat categories — mirrors apps/api/src/modules/fleet/handlers/attack.handler.ts */
-const COMBAT_CATEGORIES: ShipCategory[] = [
-  { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
-  { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
-  { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
-  { id: 'support', name: 'Support', targetable: false, targetOrder: 4 },
-];
+import { buildCombatConfig } from '@exilium/game-engine';
 
 const NEUTRAL_MULTIPLIERS: CombatMultipliers = { weapons: 1, shielding: 1, armor: 1 };
 
@@ -63,18 +54,6 @@ export function buildShipCombatConfigs(
   return configs;
 }
 
-export function buildCombatConfig(gameConfig: GameConfigLike): CombatConfig {
-  const u = gameConfig.universe;
-  return {
-    maxRounds: Number(u['combat_max_rounds']) || 4,
-    debrisRatio: Number(u['combat_debris_ratio']) || 0.3,
-    defenseRepairRate: Number(u['combat_defense_repair_rate']) || 0.7,
-    pillageRatio: Number(u['combat_pillage_ratio']) || 0.33,
-    minDamagePerHit: Number(u['combat_min_damage_per_hit']) || 1,
-    researchBonusPerLevel: Number(u['combat_research_bonus_per_level']) || 0.1,
-    categories: COMBAT_CATEGORIES,
-  };
-}
 
 function getShipCosts(
   gameConfig: GameConfigLike,
@@ -118,7 +97,7 @@ export function buildCombatInput(
     defenderMultipliers: NEUTRAL_MULTIPLIERS,
     attackerTargetPriority: 'light',
     defenderTargetPriority: 'light',
-    combatConfig: buildCombatConfig(gameConfig),
+    combatConfig: buildCombatConfig(gameConfig.universe),
     shipConfigs,
     shipCosts,
     shipIds,

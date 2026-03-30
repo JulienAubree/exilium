@@ -258,7 +258,7 @@ export class SpyHandler implements MissionHandler {
       const shipIdSet = new Set(Object.keys(config.ships));
       const defenseIdSet = new Set(Object.keys(config.defenses));
 
-      const combatConfig = buildCombatConfig(config, { pillageRatio: 0 });
+      const combatConfig = buildCombatConfig(config.universe, { pillageRatio: 0 });
 
       // Combat multipliers
       const { attackerMultipliers, defenderMultipliers } = await computeCombatMultipliers(

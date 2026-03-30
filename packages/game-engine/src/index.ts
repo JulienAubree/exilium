@@ -9,6 +9,7 @@ export * from './formulas/market.js';
 export * from './prerequisites/prerequisites.js';
 export * from './formulas/ranking.js';
 export * from './formulas/combat.js';
+export * from './formulas/combat-config.js';
 export * from './formulas/espionage.js';
 export * from './formulas/pve.js';
 export * from './formulas/bonus.js';
