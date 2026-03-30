@@ -169,10 +169,15 @@ export function createShipyardService(
         if (defenseDef?.maxPerPlanet) {
           const defenses = await this.getOrCreateDefenses(planetId);
           const current = (defenses[defenseDef.countColumn as keyof typeof defenses] ?? 0) as number;
-          if (current + quantity > defenseDef.maxPerPlanet) {
+          // Also count units already in the build queue
+          const queue = await this.getShipyardQueue(planetId);
+          const queuedCount = queue
+            .filter((e) => e.itemId === itemId)
+            .reduce((sum, e) => sum + e.quantity, 0);
+          if (current + queuedCount + quantity > defenseDef.maxPerPlanet) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
-              message: `Maximum ${defenseDef.maxPerPlanet} ${defenseDef.name} par planète`,
+              message: `Maximum ${defenseDef.maxPerPlanet} ${defenseDef.name} par planète (${current} construit${current > 1 ? 's' : ''}, ${queuedCount} en file)`,
             });
           }
         }

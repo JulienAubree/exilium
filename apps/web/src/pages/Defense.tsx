@@ -208,8 +208,11 @@ export default function Defense() {
                 <div className="space-y-1 lg:hidden">
                   {categoryDefenses.map((defense) => {
                     const qty = quantities[defense.id] || 1;
+                    const queuedCount = defenseQueue
+                      .filter((q) => q.itemId === defense.id)
+                      .reduce((sum, q) => sum + q.quantity, 0);
                     const maxPerPlanetQty = defense.maxPerPlanet
-                      ? Math.max(0, defense.maxPerPlanet - defense.count)
+                      ? Math.max(0, defense.maxPerPlanet - defense.count - queuedCount)
                       : 9999;
                     const maxAffordable = Math.max(1, Math.min(
                       defense.cost.minerai > 0 ? Math.floor(resources.minerai / defense.cost.minerai) : 9999,
@@ -244,8 +247,8 @@ export default function Defense() {
                               {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
                             </span>
                           </div>
-                          {defense.maxPerPlanet && defense.count >= defense.maxPerPlanet ? (
-                            <p className="text-xs text-muted-foreground mt-0.5">Maximum atteint</p>
+                          {defense.maxPerPlanet && defense.count + queuedCount >= defense.maxPerPlanet ? (
+                            <p className="text-xs text-muted-foreground mt-0.5">{queuedCount > 0 ? 'En construction' : 'Maximum atteint'}</p>
                           ) : (
                             <div className="text-xs text-muted-foreground mt-0.5">
                               <ResourceCost
@@ -292,8 +295,11 @@ export default function Defense() {
                 <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                   {categoryDefenses.map((defense) => {
                     const qty = quantities[defense.id] || 1;
+                    const queuedCount = defenseQueue
+                      .filter((q) => q.itemId === defense.id)
+                      .reduce((sum, q) => sum + q.quantity, 0);
                     const maxPerPlanetQty = defense.maxPerPlanet
-                      ? Math.max(0, defense.maxPerPlanet - defense.count)
+                      ? Math.max(0, defense.maxPerPlanet - defense.count - queuedCount)
                       : 9999;
                     const maxAffordable = Math.max(1, Math.min(
                       defense.cost.minerai > 0 ? Math.floor(resources.minerai / defense.cost.minerai) : 9999,
