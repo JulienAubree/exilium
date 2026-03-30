@@ -2,6 +2,7 @@ import { categorizeShip, type Mission, type ShipCategory } from '@/config/missio
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { GameImage } from '@/components/common/GameImage';
 import { getFlagshipImageUrl } from '@/lib/assets';
+import { QuantityStepper } from '@/components/common/QuantityStepper';
 import { cn } from '@/lib/utils';
 
 interface Ship {
@@ -87,22 +88,12 @@ function ShipCard({ ship, value, onChange, onToggle, disabled }: {
         ) : disabled ? (
           <span className="text-[10px] text-muted-foreground/60">non disponible</span>
         ) : isSelected ? (
-          <div className="flex items-center gap-1.5 w-full">
-            <button
-              onClick={() => onChange(ship.count)}
-              className="text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 shrink-0"
-            >
-              MAX
-            </button>
-            <input
-              type="number"
-              min={1}
-              max={ship.count}
-              value={value}
-              onChange={(e) => onChange(Math.min(Number(e.target.value) || 1, ship.count))}
-              className="flex-1 min-w-0 rounded border border-border bg-background px-1 py-0.5 text-center text-xs font-mono tabular-nums focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+          <QuantityStepper
+            value={value}
+            onChange={onChange}
+            min={1}
+            max={ship.count}
+          />
         ) : null}
       </div>
     </div>
