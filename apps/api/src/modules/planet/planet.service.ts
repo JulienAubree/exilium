@@ -1,4 +1,4 @@
-import { eq, asc, and, sql } from 'drizzle-orm';
+import { eq, asc, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetBuildings, planetTypes, buildQueue, fleetEvents, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -151,14 +151,21 @@ export function createPlanetService(
               itemId: buildQueue.itemId,
               quantity: buildQueue.quantity,
               endTime: buildQueue.endTime,
+              status: buildQueue.status,
             })
             .from(buildQueue)
-            .where(and(eq(buildQueue.planetId, planet.id), eq(buildQueue.status, 'active')));
+            .where(and(eq(buildQueue.planetId, planet.id), inArray(buildQueue.status, ['active', 'queued'])));
 
-          const activeBuild = activeBuilds.find(b => b.type === 'building') ?? null;
-          const activeResearch = activeBuilds.find(b => b.type === 'research') ?? null;
-          const activeShipyard = activeBuilds.find(b => b.type === 'ship') ?? null;
-          const activeDefense = activeBuilds.find(b => b.type === 'defense') ?? null;
+          // For each type, prefer the 'active' entry, fallback to first 'queued'
+          const findEntry = (type: string) =>
+            activeBuilds.find(b => b.type === type && b.status === 'active')
+            ?? activeBuilds.find(b => b.type === type)
+            ?? null;
+
+          const activeBuild = findEntry('building');
+          const activeResearch = findEntry('research');
+          const activeShipyard = findEntry('ship');
+          const activeDefense = findEntry('defense');
 
           const [outbound] = await db
             .select({ count: sql<number>`count(*)::int` })
