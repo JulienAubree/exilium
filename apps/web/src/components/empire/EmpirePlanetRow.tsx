@@ -15,6 +15,9 @@ interface EmpirePlanet {
   position: number;
   planetClassId: string | null;
   planetImageIndex: number | null;
+  minerai: number;
+  silicium: number;
+  hydrogene: number;
   mineraiPerHour: number;
   siliciumPerHour: number;
   hydrogenePerHour: number;
@@ -84,10 +87,10 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
           </div>
         )}
       </div>
-      <div className="flex flex-col items-end gap-0.5 text-xs font-medium">
-        <span className="text-minerai">+{formatRate(planet.mineraiPerHour)}</span>
-        <span className="text-silicium">+{formatRate(planet.siliciumPerHour)}</span>
-        <span className="text-hydrogene">+{formatRate(planet.hydrogenePerHour)}</span>
+      <div className="flex flex-col items-end gap-0.5 text-xs">
+        <span className="text-minerai font-semibold">{formatRate(planet.minerai)}</span>
+        <span className="text-silicium font-semibold">{formatRate(planet.silicium)}</span>
+        <span className="text-hydrogene font-semibold">{formatRate(planet.hydrogene)}</span>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
     </button>

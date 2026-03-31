@@ -104,15 +104,21 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
           const pct = r.max > 0 ? Math.min(100, (r.value / r.max) * 100) : 0;
           const isFull = pct > 95;
           return (
-            <div key={r.label} className="flex items-center gap-2">
-              <span className={cn('w-4 text-center text-[10px] font-bold', r.color)}>{r.label}</span>
-              <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-muted">
+            <div key={r.label} className="flex flex-col gap-0.5">
+              <div className="flex items-center justify-between">
+                <span className={cn('text-[10px] font-bold', r.color)}>{r.label}</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className={cn('text-xs font-semibold', r.color)}>{formatRate(r.value)}</span>
+                  <span className="text-[10px] text-muted-foreground">/ {formatRate(r.max)}</span>
+                  <span className={cn('text-[10px]', r.color)}>+{formatRate(r.rate)}/h</span>
+                </div>
+              </div>
+              <div className="h-[4px] overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn('h-full rounded-full transition-all', r.fill, isFull && 'animate-pulse')}
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className={cn('w-16 text-right text-xs', r.color)}>+{formatRate(r.rate)}/h</span>
             </div>
           );
         })}
