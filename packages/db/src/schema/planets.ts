@@ -29,6 +29,7 @@ export const planets = pgTable('planets', {
   mineraiMinePercent: smallint('minerai_mine_percent').notNull().default(100),
   siliciumMinePercent: smallint('silicium_mine_percent').notNull().default(100),
   hydrogeneSynthPercent: smallint('hydrogene_synth_percent').notNull().default(100),
+  shieldPercent: smallint('shield_percent').notNull().default(100),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
