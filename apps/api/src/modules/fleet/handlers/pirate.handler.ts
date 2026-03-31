@@ -107,8 +107,12 @@ export class PirateHandler implements MissionHandler {
         : null,
     }).where(eq(fleetEvents.id, fleetEvent.id));
 
-    // Complete PvE mission at arrival (not return)
-    await ctx.pveService.completeMission(mission.id);
+    // Complete PvE mission on victory, release back to available on defeat/draw
+    if (result.outcome === 'attacker') {
+      await ctx.pveService.completeMission(mission.id);
+    } else {
+      await ctx.pveService.releaseMission(mission.id);
+    }
 
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
