@@ -78,6 +78,13 @@ export interface UnitTypeDamageReceived {
   destroyed: number;
 }
 
+export interface UnitTypeHP {
+  shieldRemaining: number;
+  shieldMax: number;
+  hullRemaining: number;
+  hullMax: number;
+}
+
 export interface RoundResult {
   round: number;
   attackerShips: Record<string, number>;
@@ -89,6 +96,10 @@ export interface RoundResult {
   attackerDamageByType?: Record<string, UnitTypeDamageReceived>;
   /** Damage received by each unit type on defender side this round */
   defenderDamageByType?: Record<string, UnitTypeDamageReceived>;
+  /** HP remaining/max per unit type on attacker side after this round */
+  attackerHPByType?: Record<string, UnitTypeHP>;
+  /** HP remaining/max per unit type on defender side after this round */
+  defenderHPByType?: Record<string, UnitTypeHP>;
 }
 
 export interface CombatResult {
@@ -302,6 +313,19 @@ function applyDamage(originals: CombatUnit[], damaged: CombatUnit[]): void {
   }
 }
 
+function aggregateHPByType(units: CombatUnit[]): Record<string, UnitTypeHP> {
+  const result: Record<string, UnitTypeHP> = {};
+  for (const unit of units) {
+    if (unit.destroyed) continue;
+    const entry = result[unit.shipType] ??= { shieldRemaining: 0, shieldMax: 0, hullRemaining: 0, hullMax: 0 };
+    entry.shieldRemaining += unit.shield;
+    entry.shieldMax += unit.maxShield;
+    entry.hullRemaining += unit.hull;
+    entry.hullMax += unit.maxHull;
+  }
+  return result;
+}
+
 // ── Exports ──
 
 export function simulateCombat(input: CombatInput): CombatResult {
@@ -404,6 +428,9 @@ export function simulateCombat(input: CombatInput): CombatResult {
     mergeStats(totalAttackerStats, roundAttackerStats);
     mergeStats(totalDefenderStats, roundDefenderStats);
 
+    const attackerHPByType = aggregateHPByType(attackers);
+    const defenderHPByType = aggregateHPByType(defenders);
+
     const roundResult: RoundResult = {
       round,
       attackerShips: countSurvivingByType(attackers),
@@ -412,6 +439,8 @@ export function simulateCombat(input: CombatInput): CombatResult {
       defenderStats: roundDefenderStats,
       attackerDamageByType,
       defenderDamageByType,
+      attackerHPByType,
+      defenderHPByType,
     };
     if (roundShieldAbsorbed !== undefined) {
       roundResult.shieldAbsorbed = roundShieldAbsorbed;

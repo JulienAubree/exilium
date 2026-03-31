@@ -87,26 +87,37 @@ export function RoundDisplay({
       </div>
 
       {/* Two columns — left = you (blue), right = enemy (rose) */}
-      <div className="grid grid-cols-2 gap-4">
-        <FleetColumn
-          title={isDefPerspective ? 'Défenseur (vous)' : 'Attaquant (vous)'}
-          types={isDefPerspective ? allDefenderTypes : allAttackerTypes}
-          initial={isDefPerspective ? initialDefender : initialAttacker}
-          current={isDefPerspective ? defenderShips : attackerShips}
-          gameConfig={gameConfig}
-          color="text-blue-400"
-          barColor="bg-blue-500"
-        />
-        <FleetColumn
-          title={isDefPerspective ? 'Attaquant' : 'Défenseur'}
-          types={isDefPerspective ? allAttackerTypes : allDefenderTypes}
-          initial={isDefPerspective ? initialAttacker : initialDefender}
-          current={isDefPerspective ? attackerShips : defenderShips}
-          gameConfig={gameConfig}
-          color="text-rose-400"
-          barColor="bg-rose-500"
-        />
-      </div>
+      {(() => {
+        const currentRound = displayedRound > 0 ? result.rounds[displayedRound - 1] : null;
+        const defenderHP = currentRound?.defenderHPByType;
+        const attackerHP = currentRound?.attackerHPByType;
+        const shieldHP = defenderHP?.['__planetaryShield__'];
+
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <FleetColumn
+              title={isDefPerspective ? 'Défenseur (vous)' : 'Attaquant (vous)'}
+              types={isDefPerspective ? allDefenderTypes : allAttackerTypes}
+              initial={isDefPerspective ? initialDefender : initialAttacker}
+              current={isDefPerspective ? defenderShips : attackerShips}
+              gameConfig={gameConfig}
+              color="text-blue-400"
+              hpByType={isDefPerspective ? defenderHP : attackerHP}
+              planetaryShield={isDefPerspective ? shieldHP : undefined}
+            />
+            <FleetColumn
+              title={isDefPerspective ? 'Attaquant' : 'Défenseur'}
+              types={isDefPerspective ? allAttackerTypes : allDefenderTypes}
+              initial={isDefPerspective ? initialAttacker : initialDefender}
+              current={isDefPerspective ? attackerShips : defenderShips}
+              gameConfig={gameConfig}
+              color="text-rose-400"
+              hpByType={isDefPerspective ? attackerHP : defenderHP}
+              planetaryShield={isDefPerspective ? undefined : shieldHP}
+            />
+          </div>
+        );
+      })()}
 
       {/* Per-unit-type damage summary for current round */}
       {displayedRound > 0 && (() => {
@@ -178,7 +189,8 @@ function FleetColumn({
   current,
   gameConfig,
   color,
-  barColor,
+  hpByType,
+  planetaryShield,
 }: {
   title: string;
   types: string[];
@@ -186,7 +198,8 @@ function FleetColumn({
   current: Record<string, number>;
   gameConfig: any;
   color: string;
-  barColor: string;
+  hpByType?: Record<string, { shieldRemaining: number; shieldMax: number; hullRemaining: number; hullMax: number }>;
+  planetaryShield?: { shieldRemaining: number; shieldMax: number };
 }) {
   return (
     <div className="space-y-2">
@@ -194,7 +207,6 @@ function FleetColumn({
       {types.map((type) => {
         const init = initial[type] ?? 0;
         const curr = current[type] ?? 0;
-        const pct = init > 0 ? (curr / init) * 100 : 0;
         return (
           <div key={type} className="space-y-0.5">
             <div className="flex items-center justify-between text-xs">
@@ -205,15 +217,31 @@ function FleetColumn({
                 {curr}/{init}
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
-                style={{ width: `${pct}%` }}
-              />
+            <div className="space-y-0.5">
+              <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700 ease-out bg-cyan-500"
+                  style={{ width: `${hpByType?.[type] ? (hpByType[type].shieldMax > 0 ? (hpByType[type].shieldRemaining / hpByType[type].shieldMax) * 100 : 0) : 100}%` }} />
+              </div>
+              <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700 ease-out bg-orange-500"
+                  style={{ width: `${hpByType?.[type] ? (hpByType[type].hullMax > 0 ? (hpByType[type].hullRemaining / hpByType[type].hullMax) * 100 : 0) : 100}%` }} />
+              </div>
             </div>
           </div>
         );
       })}
+      {planetaryShield && planetaryShield.shieldMax > 0 && (
+        <div className="space-y-0.5 border-t border-border/20 pt-2 mt-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-cyan-400 font-medium">Bouclier planétaire</span>
+            <span className="text-muted-foreground">{Math.floor(planetaryShield.shieldRemaining)}/{Math.floor(planetaryShield.shieldMax)}</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700 ease-out bg-cyan-500"
+              style={{ width: `${(planetaryShield.shieldRemaining / planetaryShield.shieldMax) * 100}%` }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
