@@ -83,7 +83,7 @@ const BUILDINGS = [
     flavorText: 'Le marché galactique met en relation acheteurs et vendeurs à travers l\'univers.',
     prerequisites: [{ buildingId: 'shipyard', level: 2 }],
   },
-  { id: 'planetaryShield', name: 'Bouclier planétaire', description: "Génère un champ de force protégeant la planète. Sa puissance est réglable pour économiser l'énergie.", baseCostMinerai: 2000, baseCostSilicium: 2000, baseCostHydrogene: 0, costFactor: 1.5, baseTime: 7200, categoryId: 'building_defense', sortOrder: 20, role: 'planetaryShield', flavorText: "Un dôme d'énergie pure enveloppe la planète, absorbant les assauts ennemis tant que son générateur est alimenté.", prerequisites: [] as { buildingId: string; level: number }[] },
+  { id: 'planetaryShield', name: 'Bouclier planétaire', description: "Génère un champ de force protégeant la planète. Sa puissance est réglable pour économiser l'énergie.", baseCostMinerai: 2000, baseCostSilicium: 2000, baseCostHydrogene: 0, costFactor: 1.5, baseTime: 7200, categoryId: 'building_defense', sortOrder: 20, role: 'planetaryShield', flavorText: "Un dôme d'énergie pure enveloppe la planète. En combat, le bouclier est indestructible et se régénère à chaque round. Il ne protège pas votre flotte, mais tant qu'il n'est pas percé, vos défenses planétaires sont intouchables. Sa puissance est réglable dans les paramètres d'énergie.", prerequisites: [] as { buildingId: string; level: number }[] },
 ];
 
 // ── Research data ──

@@ -227,6 +227,20 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         <p className="text-xs italic text-[#888] leading-relaxed">{flavorText}</p>
       )}
 
+      {/* 3b. Shield combat explanation */}
+      {buildingId === 'planetaryShield' && (
+        <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 space-y-1.5">
+          <div className="text-[10px] uppercase text-cyan-400 font-semibold tracking-wider">Comportement en combat</div>
+          <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+            <li>Le bouclier est <span className="text-cyan-400 font-medium">indestructible</span> et se <span className="text-cyan-400 font-medium">régénère à chaque round</span></li>
+            <li>Il <span className="text-red-400">ne protège pas la flotte</span> stationnée sur la planète</li>
+            <li>Tant que le bouclier n'est pas percé dans un round, les <span className="text-cyan-400 font-medium">défenses planétaires sont intouchables</span></li>
+            <li>L'attaquant doit infliger assez de dégâts en un seul round pour le percer</li>
+            <li>Puissance réglable de 0% à 100% dans les paramètres d'énergie</li>
+          </ul>
+        </div>
+      )}
+
       {/* 4. Bonus de ce bâtiment */}
       {buildingBonus && (
         <div>
