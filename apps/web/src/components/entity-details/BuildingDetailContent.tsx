@@ -12,6 +12,7 @@ import {
   buildingBonusAtLevel,
   discoveryCooldown, depositSize,
   maxMarketOffers,
+  calculateShieldCapacity, calculateShieldEnergy,
 } from '@exilium/game-engine';
 
 interface BuildingListItem {
@@ -35,13 +36,15 @@ interface SolarRow { level: number; production: number; gain: number | null }
 interface StorageRow { level: number; capacity: number; gain: number | null }
 interface MissionCenterRow { level: number; cooldown: number; depositSize: number }
 interface MarketRow { level: number; maxOffers: number }
+interface ShieldRow { level: number; shield: number; energy: number }
 
 type TableData =
   | { type: 'mine'; title: string; rows: MineRow[] }
   | { type: 'solar'; title: string; rows: SolarRow[] }
   | { type: 'storage'; title: string; rows: StorageRow[] }
   | { type: 'missionCenter'; title: string; rows: MissionCenterRow[] }
-  | { type: 'market'; title: string; rows: MarketRow[] };
+  | { type: 'market'; title: string; rows: MarketRow[] }
+  | { type: 'shield'; title: string; rows: ShieldRow[] };
 
 function getContextualTable(
   buildingId: string,
@@ -131,6 +134,16 @@ function getContextualTable(
         rows: levels.map((level) => ({
           level,
           maxOffers: maxMarketOffers(level),
+        })),
+      };
+    case 'planetaryShield':
+      return {
+        type: 'shield',
+        title: 'Bouclier & Énergie',
+        rows: levels.map((level) => ({
+          level,
+          shield: calculateShieldCapacity(level),
+          energy: -calculateShieldEnergy(level),
         })),
       };
     default:
@@ -309,6 +322,16 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                     Offres max
                   </th>
                 )}
+                {tableData.type === 'shield' && (
+                  <>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">
+                      Bouclier
+                    </th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-yellow-400">
+                      Énergie
+                    </th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="text-slate-300">
@@ -381,6 +404,19 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                       {row.level}{i === 0 ? ' \u25C4' : ''}
                     </td>
                     <td className="px-2 py-1.5 text-right text-amber-400">{row.maxOffers}</td>
+                  </tr>
+                ))}
+              {tableData.type === 'shield' &&
+                tableData.rows.map((row, i) => (
+                  <tr
+                    key={row.level}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                  >
+                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
+                      {row.level}{i === 0 ? ' \u25C4' : ''}
+                    </td>
+                    <td className="px-2 py-1.5 text-right text-cyan-400">{fmt(row.shield)}</td>
+                    <td className="px-2 py-1.5 text-right text-red-500">{fmt(row.energy)}</td>
                   </tr>
                 ))}
             </tbody>
