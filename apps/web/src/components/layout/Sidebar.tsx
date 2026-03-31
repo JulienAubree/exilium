@@ -31,7 +31,7 @@ const sections: { title: string; items: NavItem[] }[] = [
     title: 'Planète',
     items: [
       { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-      { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
+      { label: 'Énergie', path: '/energy', icon: ResourcesIcon },
       { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
       { label: 'Recherche', path: '/research', icon: ResearchIcon },
     ],

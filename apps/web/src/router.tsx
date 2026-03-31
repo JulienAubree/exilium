@@ -66,9 +66,13 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
-        path: 'resources',
-        lazy: lazyLoad(() => import('./pages/Resources')),
+        path: 'energy',
+        lazy: lazyLoad(() => import('./pages/Energy')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
+        path: 'resources',
+        element: <Navigate to="/energy" replace />,
       },
       {
         path: 'buildings',

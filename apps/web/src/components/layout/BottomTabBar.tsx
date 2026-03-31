@@ -22,7 +22,7 @@ import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
-  planete: ['/', '/resources', '/buildings', '/research'],
+  planete: ['/', '/energy', '/buildings', '/research'],
   production: ['/shipyard', '/command-center', '/defense'],
   espace: ['/galaxy', '/fleet', '/missions', '/market', '/flagship'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
@@ -33,7 +33,7 @@ type TabGroup = keyof typeof TAB_GROUPS;
 const SHEET_ITEMS = {
   planete: [
     { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-    { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
+    { label: 'Énergie', path: '/energy', icon: ResourcesIcon },
     { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
   ],
