@@ -1,6 +1,6 @@
 import { eq, asc, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetTypes, buildQueue, fleetEvents } from '@exilium/db';
+import { planets, planetBuildings, planetTypes, buildQueue, fleetEvents, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -123,6 +123,14 @@ export function createPlanetService(
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'resourceService required for empire' });
       }
 
+      // Get flagship location
+      const [flagship] = await db
+        .select({ planetId: flagships.planetId })
+        .from(flagships)
+        .where(eq(flagships.userId, userId))
+        .limit(1);
+      const flagshipPlanetId = flagship?.planetId ?? null;
+
       const planetData = await Promise.all(
         planetList.map(async (planet) => {
           const updated = await resourceService.materializeResources(planet.id, userId);
@@ -195,6 +203,7 @@ export function createPlanetService(
             storageHydrogeneCapacity: rates.storageHydrogeneCapacity,
             energyProduced: rates.energyProduced,
             energyConsumed: rates.energyConsumed,
+            hasFlagship: flagshipPlanetId === planet.id,
             activeBuild: activeBuild
               ? { buildingId: activeBuild.itemId, level: activeBuild.quantity, endTime: activeBuild.endTime.toISOString() }
               : null,

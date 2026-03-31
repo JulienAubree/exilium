@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, Anchor, ShieldPlus } from 'lucide-react';
+import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, ShieldPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
+import { ShipyardIcon, FlagshipIcon } from '@/lib/icons';
 import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
@@ -27,6 +28,7 @@ interface EmpirePlanet {
   storageHydrogeneCapacity: number;
   energyProduced: number;
   energyConsumed: number;
+  hasFlagship: boolean;
   activeBuild: { buildingId: string; level: number; endTime: string } | null;
   activeResearch: { researchId: string; level: number; endTime: string } | null;
   activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
@@ -83,9 +85,14 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
           )}
         </button>
         <div className="min-w-0 flex-1">
-          <button onClick={() => goTo('/')} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
-            {planet.name}
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => goTo('/')} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
+              {planet.name}
+            </button>
+            {planet.hasFlagship && (
+              <FlagshipIcon width={14} height={14} className="shrink-0 text-energy" />
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">
             [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
           </div>
@@ -142,7 +149,7 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
         )}
         {planet.activeShipyard && (
           <div className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary">
-            <Anchor className="h-3 w-3" />
+            <ShipyardIcon width={12} height={12} />
             <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} ×{planet.activeShipyard.quantity}</span>
             <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />
           </div>

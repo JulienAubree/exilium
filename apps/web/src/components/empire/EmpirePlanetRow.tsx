@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, ShieldAlert, ChevronRight, Anchor, ShieldPlus } from 'lucide-react';
+import { Hammer, FlaskConical, ShieldAlert, ChevronRight, ShieldPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
+import { ShipyardIcon, FlagshipIcon } from '@/lib/icons';
 import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
@@ -21,6 +22,7 @@ interface EmpirePlanet {
   mineraiPerHour: number;
   siliciumPerHour: number;
   hydrogenePerHour: number;
+  hasFlagship: boolean;
   activeBuild: { buildingId: string; level: number; endTime: string } | null;
   activeResearch: { researchId: string; level: number; endTime: string } | null;
   activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
@@ -51,7 +53,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
       : planet.activeResearch
         ? { icon: FlaskConical, label: getResearchName(planet.activeResearch.researchId, gameConfig), endTime: planet.activeResearch.endTime, className: 'text-purple-400' }
         : planet.activeShipyard
-          ? { icon: Anchor, label: getShipName(planet.activeShipyard.shipId, gameConfig), endTime: planet.activeShipyard.endTime, className: 'text-primary' }
+          ? { icon: ShipyardIcon, label: getShipName(planet.activeShipyard.shipId, gameConfig), endTime: planet.activeShipyard.endTime, className: 'text-primary' }
           : planet.activeDefense
             ? { icon: ShieldPlus, label: getDefenseName(planet.activeDefense.defenseId, gameConfig), endTime: planet.activeDefense.endTime, className: 'text-cyan-400' }
             : null;
@@ -78,11 +80,14 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-foreground">{planet.name}</div>
+        <div className="flex items-center gap-1">
+          <span className="truncate text-sm font-semibold text-foreground">{planet.name}</span>
+          {planet.hasFlagship && <FlagshipIcon width={12} height={12} className="shrink-0 text-energy" />}
+        </div>
         <div className="text-xs text-muted-foreground">[{planet.galaxy}:{planet.system}:{planet.position}]</div>
         {badge && (
           <div className={cn('mt-0.5 flex items-center gap-1 text-[11px]', badge.className)}>
-            <badge.icon className="h-3 w-3" />
+            <badge.icon className="h-3 w-3" width={12} height={12} />
             <Timer endTime={new Date(badge.endTime)} className="inline" />
           </div>
         )}
