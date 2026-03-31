@@ -102,14 +102,25 @@ export function eventNavigationTarget(type: string, payload?: unknown): string {
   switch (type) {
     case 'building-done': return '/buildings';
     case 'research-done': return '/research';
-    case 'shipyard-done': return '/shipyard';
+    case 'shipyard-done':
+      return p?.buildType === 'defense' ? '/defense' : '/fleet';
     case 'fleet-arrived':
-    case 'fleet-returned': return '/fleet/movements';
+    case 'fleet-returned':
+    case 'fleet-inbound':
+    case 'fleet-hostile-inbound': return '/fleet/movements';
+    case 'fleet-attack-landed': return '/reports';
     case 'pve-mission-done': return '/missions';
     case 'tutorial-quest-done': return '/';
     case 'friend-request': return '/profile';
     case 'friend-accepted': return p?.fromUserId ? `/player/${p.fromUserId}` : '/profile';
     case 'friend-declined': return '/profile';
+    case 'flagship-incapacitated': return '/flagship';
+    case 'market-offer-reserved':
+    case 'market-offer-sold':
+    case 'market-offer-expired': return '/market';
+    case 'daily-quest-completed': return '/overview';
+    case 'alliance-activity':
+    case 'new-alliance-message': return '/alliance';
     default: return '/';
   }
 }

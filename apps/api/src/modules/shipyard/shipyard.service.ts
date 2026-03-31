@@ -316,11 +316,13 @@ export function createShipyardService(
             unitId: entry.itemId,
             name: unitName,
             count: newCompletedCount,
+            buildType: entry.type,
           },
           eventPayload: {
             unitId: entry.itemId,
             name: unitName,
             count: newCompletedCount,
+            buildType: entry.type,
             planetName: planet?.name ?? 'Planète',
           },
           tutorialCheck: entry.type === 'ship' ? {
