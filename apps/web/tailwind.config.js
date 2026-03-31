@@ -42,6 +42,7 @@ export default {
         silicium: '#34d399',
         hydrogene: '#60a5fa',
         energy: '#f0c040',
+        shield: '#22d3ee',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -52,6 +53,7 @@ export default {
         'fade-in': 'fadeIn 0.2s ease-out',
         'slide-up-sheet': 'slide-up-sheet 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
         'slide-down-sheet': 'slide-down-sheet 0.25s ease-out',
+        'flow-pulse': 'flow-pulse 2s ease-in-out infinite',
         'slide-up': 'slideUp 0.3s ease-out',
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
         'skeleton-shimmer': 'skeletonShimmer 1.5s ease-in-out infinite',
@@ -85,6 +87,10 @@ export default {
         'slide-down-sheet': {
           '0%': { transform: 'translateY(-100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        'flow-pulse': {
+          '0%, 100%': { opacity: '0.3' },
+          '50%': { opacity: '0.8' },
         },
       },
       spacing: {
