@@ -1,6 +1,6 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings } from '@exilium/db';
+import { planets, planetBuildings, planetTypes, buildQueue, fleetEvents } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -14,7 +14,15 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function createPlanetService(db: Database, gameConfigService: GameConfigService, assetsDir: string) {
+export function createPlanetService(
+  db: Database,
+  gameConfigService: GameConfigService,
+  assetsDir: string,
+  resourceService?: {
+    materializeResources(planetId: string, userId: string): Promise<any>;
+    getProductionRates(planetId: string, planet: any, bonus?: any, userId?: string): Promise<any>;
+  },
+) {
   return {
     async createHomePlanet(userId: string) {
       const config = await gameConfigService.getFullConfig();
@@ -106,6 +114,118 @@ export function createPlanetService(db: Database, gameConfigService: GameConfigS
         .where(eq(planets.id, planetId));
 
       return { ok: true };
+    },
+
+    async getEmpireOverview(userId: string) {
+      const planetList = await this.listPlanets(userId);
+
+      if (!resourceService) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'resourceService required for empire' });
+      }
+
+      const planetData = await Promise.all(
+        planetList.map(async (planet) => {
+          const updated = await resourceService.materializeResources(planet.id, userId);
+
+          const bonus = planet.planetClassId
+            ? await db.select({
+                mineraiBonus: planetTypes.mineraiBonus,
+                siliciumBonus: planetTypes.siliciumBonus,
+                hydrogeneBonus: planetTypes.hydrogeneBonus,
+              }).from(planetTypes).where(eq(planetTypes.id, planet.planetClassId)).limit(1).then(r => r[0])
+            : undefined;
+
+          const rates = await resourceService.getProductionRates(planet.id, planet, bonus, userId);
+
+          const activeBuilds = await db
+            .select({
+              type: buildQueue.type,
+              itemId: buildQueue.itemId,
+              quantity: buildQueue.quantity,
+              endTime: buildQueue.endTime,
+            })
+            .from(buildQueue)
+            .where(and(eq(buildQueue.planetId, planet.id), eq(buildQueue.status, 'active')));
+
+          const activeBuild = activeBuilds.find(b => b.type === 'building') ?? null;
+          const activeResearch = activeBuilds.find(b => b.type === 'research') ?? null;
+
+          const [outbound] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(fleetEvents)
+            .where(and(
+              eq(fleetEvents.originPlanetId, planet.id),
+              eq(fleetEvents.userId, userId),
+              eq(fleetEvents.status, 'active'),
+            ));
+
+          const inboundAttacks = await db
+            .select({ arrivalTime: fleetEvents.arrivalTime })
+            .from(fleetEvents)
+            .where(and(
+              eq(fleetEvents.targetPlanetId, planet.id),
+              eq(fleetEvents.status, 'active'),
+              eq(fleetEvents.mission, 'attack'),
+              sql`${fleetEvents.userId} != ${userId}`,
+            ))
+            .orderBy(asc(fleetEvents.arrivalTime))
+            .limit(1);
+
+          return {
+            id: planet.id,
+            name: planet.name,
+            galaxy: planet.galaxy,
+            system: planet.system,
+            position: planet.position,
+            planetClassId: planet.planetClassId,
+            planetImageIndex: planet.planetImageIndex,
+            diameter: planet.diameter,
+            minTemp: planet.minTemp,
+            maxTemp: planet.maxTemp,
+            minerai: Number(updated.minerai),
+            silicium: Number(updated.silicium),
+            hydrogene: Number(updated.hydrogene),
+            mineraiPerHour: rates.mineraiPerHour,
+            siliciumPerHour: rates.siliciumPerHour,
+            hydrogenePerHour: rates.hydrogenePerHour,
+            storageMineraiCapacity: rates.storageMineraiCapacity,
+            storageSiliciumCapacity: rates.storageSiliciumCapacity,
+            storageHydrogeneCapacity: rates.storageHydrogeneCapacity,
+            energyProduced: rates.energyProduced,
+            energyConsumed: rates.energyConsumed,
+            activeBuild: activeBuild
+              ? { buildingId: activeBuild.itemId, level: activeBuild.quantity, endTime: activeBuild.endTime.toISOString() }
+              : null,
+            activeResearch: activeResearch
+              ? { researchId: activeResearch.itemId, level: activeResearch.quantity, endTime: activeResearch.endTime.toISOString() }
+              : null,
+            outboundFleetCount: outbound?.count ?? 0,
+            inboundAttack: inboundAttacks[0]
+              ? { arrivalTime: inboundAttacks[0].arrivalTime.toISOString() }
+              : null,
+          };
+        }),
+      );
+
+      const totalRates = {
+        mineraiPerHour: planetData.reduce((sum, p) => sum + p.mineraiPerHour, 0),
+        siliciumPerHour: planetData.reduce((sum, p) => sum + p.siliciumPerHour, 0),
+        hydrogenePerHour: planetData.reduce((sum, p) => sum + p.hydrogenePerHour, 0),
+      };
+
+      const [fleetCount] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(fleetEvents)
+        .where(and(eq(fleetEvents.userId, userId), eq(fleetEvents.status, 'active')));
+
+      const inboundAttackCount = planetData.filter(p => p.inboundAttack !== null).length;
+
+      return {
+        planets: planetData,
+        totalRates,
+        activeFleetCount: fleetCount?.count ?? 0,
+        inboundAttackCount,
+      };
     },
   };
 }

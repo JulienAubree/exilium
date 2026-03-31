@@ -22,5 +22,9 @@ export function createPlanetRouter(planetService: ReturnType<typeof createPlanet
       .mutation(async ({ ctx, input }) => {
         return planetService.rename(ctx.userId!, input.planetId, input.name);
       }),
+
+    empire: protectedProcedure.query(async ({ ctx }) => {
+      return planetService.getEmpireOverview(ctx.userId!);
+    }),
   });
 }
