@@ -16,11 +16,10 @@ export function Gauge({ value, onChange, onChangeEnd, color, disabled = false }:
 
   const calcValue = useCallback((clientX: number) => {
     const track = trackRef.current;
-    if (!track) return value;
+    if (!track) return 0;
     const rect = track.getBoundingClientRect();
-    const pct = Math.round(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)));
-    return pct;
-  }, [value]);
+    return Math.round(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)));
+  }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled || editing) return;
@@ -63,7 +62,7 @@ export function Gauge({ value, onChange, onChangeEnd, color, disabled = false }:
       >
         {/* Fill */}
         <div
-          className="absolute inset-y-0 left-0 rounded-md transition-[width] duration-75"
+          className={`absolute inset-y-0 left-0 rounded-md ${dragging ? '' : 'transition-[width] duration-150'}`}
           style={{
             width: `${value}%`,
             background: `linear-gradient(90deg, ${color}26, ${color}80)`,
