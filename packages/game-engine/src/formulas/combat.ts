@@ -72,6 +72,12 @@ export interface CombatSideStats {
   overkillWasted: number;
 }
 
+export interface UnitTypeDamageReceived {
+  shieldDamage: number;
+  hullDamage: number;
+  destroyed: number;
+}
+
 export interface RoundResult {
   round: number;
   attackerShips: Record<string, number>;
@@ -79,6 +85,10 @@ export interface RoundResult {
   attackerStats: CombatSideStats;
   defenderStats: CombatSideStats;
   shieldAbsorbed?: number;
+  /** Damage received by each unit type on attacker side this round */
+  attackerDamageByType?: Record<string, UnitTypeDamageReceived>;
+  /** Damage received by each unit type on defender side this round */
+  defenderDamageByType?: Record<string, UnitTypeDamageReceived>;
 }
 
 export interface CombatResult {
@@ -186,13 +196,18 @@ function fireShot(
   minDamage: number,
   attackerStats: CombatSideStats,
   defenderStats: CombatSideStats,
+  targetDamageByType: Record<string, UnitTypeDamageReceived>,
 ): void {
   const damage = attacker.weaponDamage;
+
+  // Track per-type damage
+  const entry = targetDamageByType[target.shipType] ??= { shieldDamage: 0, hullDamage: 0, destroyed: 0 };
 
   // Shield absorbs first
   if (target.shield >= damage) {
     target.shield -= damage;
     defenderStats.shieldAbsorbed += damage;
+    entry.shieldDamage += damage;
     return;
   }
 
@@ -200,6 +215,7 @@ function fireShot(
   if (target.shield > 0) {
     surplus = damage - target.shield;
     defenderStats.shieldAbsorbed += target.shield;
+    entry.shieldDamage += target.shield;
     target.shield = 0;
   }
 
@@ -208,6 +224,7 @@ function fireShot(
   defenderStats.armorBlocked += surplus - hullDamage;
 
   target.hull -= hullDamage;
+  entry.hullDamage += hullDamage;
 
   // Track damage by category
   attackerStats.damageDealtByCategory[target.category] =
@@ -219,6 +236,7 @@ function fireShot(
     if (target.hull < 0) attackerStats.overkillWasted += Math.abs(target.hull);
     target.hull = 0;
     target.destroyed = true;
+    entry.destroyed += 1;
   }
 }
 
@@ -231,11 +249,12 @@ function fireSalvo(
   attackerStats: CombatSideStats,
   defenderStats: CombatSideStats,
   rng: () => number,
+  targetDamageByType: Record<string, UnitTypeDamageReceived>,
 ): void {
   for (let shot = 0; shot < attacker.shotCount; shot++) {
     const target = selectTarget(enemies, priorityCategoryId, categories, rng);
     if (!target) return;
-    fireShot(attacker, target, minDamage, attackerStats, defenderStats);
+    fireShot(attacker, target, minDamage, attackerStats, defenderStats, targetDamageByType);
   }
 }
 
@@ -337,6 +356,8 @@ export function simulateCombat(input: CombatInput): CombatResult {
 
     const roundAttackerStats = emptySideStats();
     const roundDefenderStats = emptySideStats();
+    const defenderDamageByType: Record<string, UnitTypeDamageReceived> = {};
+    const attackerDamageByType: Record<string, UnitTypeDamageReceived> = {};
 
     // SIMULTANEOUS: both sides fire on clones of start-of-round state
     const defendersForAttackerFire = cloneUnits(defenders);
@@ -345,7 +366,7 @@ export function simulateCombat(input: CombatInput): CombatResult {
     // Attackers fire at defender clones
     for (const attacker of aliveAttackers) {
       fireSalvo(attacker, defendersForAttackerFire, attackerTargetPriority,
-        sortedCategories, combatConfig.minDamagePerHit, roundAttackerStats, roundDefenderStats, rng);
+        sortedCategories, combatConfig.minDamagePerHit, roundAttackerStats, roundDefenderStats, rng, defenderDamageByType);
     }
 
     // Track planetary shield absorption before defenders fire
@@ -359,7 +380,7 @@ export function simulateCombat(input: CombatInput): CombatResult {
     // Defenders fire at attacker clones
     for (const defender of aliveDefenders) {
       fireSalvo(defender, attackersForDefenderFire, defenderTargetPriority,
-        sortedCategories, combatConfig.minDamagePerHit, roundDefenderStats, roundAttackerStats, rng);
+        sortedCategories, combatConfig.minDamagePerHit, roundDefenderStats, roundAttackerStats, rng, attackerDamageByType);
     }
 
     // Apply damage from both phases back to real units
@@ -389,6 +410,8 @@ export function simulateCombat(input: CombatInput): CombatResult {
       defenderShips: countSurvivingByType(defenders.filter(isNotShield)),
       attackerStats: roundAttackerStats,
       defenderStats: roundDefenderStats,
+      attackerDamageByType,
+      defenderDamageByType,
     };
     if (roundShieldAbsorbed !== undefined) {
       roundResult.shieldAbsorbed = roundShieldAbsorbed;

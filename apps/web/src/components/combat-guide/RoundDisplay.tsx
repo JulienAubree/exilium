@@ -108,6 +108,20 @@ export function RoundDisplay({
         />
       </div>
 
+      {/* Per-unit-type damage summary for current round */}
+      {displayedRound > 0 && (() => {
+        const round = result.rounds[displayedRound - 1];
+        const myDamage = isDefPerspective ? round.defenderDamageByType : round.attackerDamageByType;
+        const enemyDamage = isDefPerspective ? round.attackerDamageByType : round.defenderDamageByType;
+
+        return (
+          <div className="grid grid-cols-2 gap-4 text-[11px]">
+            <DamageRoundSummary title="Dégâts subis" damageByType={myDamage} gameConfig={gameConfig} />
+            <DamageRoundSummary title="Dégâts infligés" damageByType={enemyDamage} gameConfig={gameConfig} />
+          </div>
+        );
+      })()}
+
       {/* Manual controls if no auto-play */}
       {autoPlayDelay === 0 && (
         <div className="flex gap-2">
@@ -224,6 +238,52 @@ function LossesSummary({
           {count}× {getUnitName(type, gameConfig)}
         </span>
       ))}
+    </div>
+  );
+}
+
+function DamageRoundSummary({
+  title,
+  damageByType,
+  gameConfig,
+}: {
+  title: string;
+  damageByType?: Record<string, { shieldDamage: number; hullDamage: number; destroyed: number }>;
+  gameConfig: any;
+}) {
+  if (!damageByType) return null;
+  const entries = Object.entries(damageByType).filter(([, d]) => d.shieldDamage > 0 || d.hullDamage > 0);
+  if (entries.length === 0) return <div className="text-muted-foreground/60">{title} : aucun</div>;
+
+  const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+
+  return (
+    <div className="space-y-1">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</div>
+      {entries.map(([type, d]) => {
+        const name = type === '__planetaryShield__' ? 'Bouclier planétaire' : getUnitName(type, gameConfig);
+        const isShieldOnly = type === '__planetaryShield__';
+        return (
+          <div key={type} className="text-xs">
+            <span className="text-foreground font-medium">{name}</span>
+            <span className="text-muted-foreground">
+              {isShieldOnly
+                ? ` : ${fmt(d.shieldDamage)} absorbés`
+                : ` : ${fmt(d.shieldDamage + d.hullDamage)} dégâts`}
+              {!isShieldOnly && d.shieldDamage > 0 && (
+                <span className="text-cyan-400"> ({fmt(d.shieldDamage)} bouclier</span>
+              )}
+              {!isShieldOnly && d.hullDamage > 0 && (
+                <span className="text-orange-400">{d.shieldDamage > 0 ? ', ' : ' ('}{fmt(d.hullDamage)} coque</span>
+              )}
+              {!isShieldOnly && (d.shieldDamage > 0 || d.hullDamage > 0) && ')'}
+            </span>
+            {d.destroyed > 0 && (
+              <span className="text-red-400"> — {d.destroyed} détruit{d.destroyed > 1 ? 's' : ''}</span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
