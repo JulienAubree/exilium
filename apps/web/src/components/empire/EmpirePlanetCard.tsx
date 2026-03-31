@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
 import { Timer } from '@/components/common/Timer';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { getBuildingName, getResearchName } from '@/lib/entity-names';
 
 interface EmpirePlanet {
   id: string;
@@ -40,6 +42,7 @@ function formatRate(value: number): string {
 export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; isFirst: boolean }) {
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
+  const { data: gameConfig } = useGameConfig();
   const hasAttack = !!planet.inboundAttack;
 
   const goTo = (path: string) => {
@@ -64,19 +67,23 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
     )}>
       {/* Header */}
       <div className="flex items-center gap-3 p-3.5 pb-2.5">
-        {planet.planetClassId && planet.planetImageIndex != null ? (
-          <img
-            src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
-            alt={planet.name}
-            className={cn('h-11 w-11 rounded-full border-2 object-cover', hasAttack ? 'border-destructive/40' : 'border-border/50')}
-          />
-        ) : (
-          <div className={cn('flex h-11 w-11 items-center justify-center rounded-full border-2 bg-muted font-semibold text-muted-foreground', hasAttack ? 'border-destructive/40' : 'border-border/50')}>
-            {planet.name.charAt(0)}
-          </div>
-        )}
+        <button onClick={() => goTo('/')} className="shrink-0">
+          {planet.planetClassId && planet.planetImageIndex != null ? (
+            <img
+              src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
+              alt={planet.name}
+              className={cn('h-11 w-11 rounded-full border-2 object-cover cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border/50')}
+            />
+          ) : (
+            <div className={cn('flex h-11 w-11 items-center justify-center rounded-full border-2 bg-muted font-semibold text-muted-foreground cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border/50')}>
+              {planet.name.charAt(0)}
+            </div>
+          )}
+        </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-foreground">{planet.name}</div>
+          <button onClick={() => goTo('/')} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
+            {planet.name}
+          </button>
           <div className="text-xs text-muted-foreground">
             [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
           </div>
@@ -114,14 +121,14 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
         {planet.activeBuild && (
           <div className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
             <Hammer className="h-3 w-3" />
-            <span>{planet.activeBuild.buildingId} Nv.{planet.activeBuild.level}</span>
+            <span>{getBuildingName(planet.activeBuild.buildingId, gameConfig)} Nv.{planet.activeBuild.level}</span>
             <Timer endTime={new Date(planet.activeBuild.endTime)} className="inline [&>span]:text-energy" />
           </div>
         )}
         {planet.activeResearch && (
           <div className="flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-1 text-[11px] text-purple-400">
             <FlaskConical className="h-3 w-3" />
-            <span>Recherche</span>
+            <span>{getResearchName(planet.activeResearch.researchId, gameConfig)}</span>
             <Timer endTime={new Date(planet.activeResearch.endTime)} className="inline [&>span]:text-purple-400" />
           </div>
         )}

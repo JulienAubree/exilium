@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
 import { Timer } from '@/components/common/Timer';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { getBuildingName, getResearchName } from '@/lib/entity-names';
 
 interface EmpirePlanet {
   id: string;
@@ -30,6 +32,7 @@ function formatRate(value: number): string {
 export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePlanet; isFirst: boolean; isLast: boolean }) {
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
+  const { data: gameConfig } = useGameConfig();
 
   const handleClick = () => {
     setActivePlanet(planet.id);
@@ -39,9 +42,9 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
   const badge = planet.inboundAttack
     ? { icon: ShieldAlert, label: 'Attaque', endTime: planet.inboundAttack.arrivalTime, className: 'text-destructive' }
     : planet.activeBuild
-      ? { icon: Hammer, label: planet.activeBuild.buildingId, endTime: planet.activeBuild.endTime, className: 'text-energy' }
+      ? { icon: Hammer, label: getBuildingName(planet.activeBuild.buildingId, gameConfig), endTime: planet.activeBuild.endTime, className: 'text-energy' }
       : planet.activeResearch
-        ? { icon: FlaskConical, label: 'Recherche', endTime: planet.activeResearch.endTime, className: 'text-purple-400' }
+        ? { icon: FlaskConical, label: getResearchName(planet.activeResearch.researchId, gameConfig), endTime: planet.activeResearch.endTime, className: 'text-purple-400' }
         : null;
 
   return (
