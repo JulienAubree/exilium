@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
-import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { buildProductionConfig } from '@/lib/production-config';
 import { solarSatelliteEnergy, calculateShieldCapacity } from '@exilium/game-engine';
@@ -25,23 +24,6 @@ export default function Energy() {
   const { data, isLoading } = trpc.resource.production.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
-  );
-
-  const resources = useResourceCounter(
-    data
-      ? {
-          minerai: data.minerai,
-          silicium: data.silicium,
-          hydrogene: data.hydrogene,
-          resourcesUpdatedAt: data.resourcesUpdatedAt,
-          mineraiPerHour: data.rates.mineraiPerHour,
-          siliciumPerHour: data.rates.siliciumPerHour,
-          hydrogenePerHour: data.rates.hydrogenePerHour,
-          storageMineraiCapacity: data.rates.storageMineraiCapacity,
-          storageSiliciumCapacity: data.rates.storageSiliciumCapacity,
-          storageHydrogeneCapacity: data.rates.storageHydrogeneCapacity,
-        }
-      : undefined,
   );
 
   const { data: buildings } = trpc.building.list.useQuery(
