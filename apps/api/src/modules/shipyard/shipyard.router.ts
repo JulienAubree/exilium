@@ -53,5 +53,15 @@ export function createShipyardRouter(shipyardService: ReturnType<typeof createSh
       .mutation(async ({ ctx, input }) => {
         return shipyardService.cancelBatch(ctx.userId!, input.planetId, input.batchId);
       }),
+
+    reduceQuantity: protectedProcedure
+      .input(z.object({
+        planetId: z.string().uuid(),
+        batchId: z.string().uuid(),
+        removeCount: z.number().int().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return shipyardService.reduceQuantity(ctx.userId!, input.planetId, input.batchId, input.removeCount);
+      }),
   });
 }

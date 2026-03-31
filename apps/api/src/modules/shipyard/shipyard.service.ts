@@ -504,6 +504,71 @@ export function createShipyardService(
       return { cancelled: true, refund };
     },
 
+    async reduceQuantity(userId: string, planetId: string, batchId: string, removeCount: number) {
+      const [entry] = await db
+        .select()
+        .from(buildQueue)
+        .where(
+          and(
+            eq(buildQueue.id, batchId),
+            eq(buildQueue.userId, userId),
+            eq(buildQueue.planetId, planetId),
+          ),
+        )
+        .limit(1);
+
+      if (!entry || entry.status === 'completed') {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Batch non trouvé ou déjà terminé' });
+      }
+
+      if (entry.type !== 'ship' && entry.type !== 'defense') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Type non modifiable' });
+      }
+
+      const remaining = entry.quantity - entry.completedCount;
+      if (removeCount <= 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Quantité invalide' });
+      }
+
+      // If removing all remaining, just cancel the whole batch
+      if (removeCount >= remaining) {
+        return this.cancelBatch(userId, planetId, batchId);
+      }
+
+      // Refund the removed units at 70% (they haven't started building)
+      const config = await gameConfigService.getFullConfig();
+      const cancelRefundRatio = Number(config.universe.cancel_refund_ratio) || 0.7;
+      const def = entry.type === 'ship' ? config.ships[entry.itemId] : config.defenses[entry.itemId];
+      const unitCost = def ? (entry.type === 'ship' ? shipCost(def) : defenseCost(def)) : { minerai: 0, silicium: 0, hydrogene: 0 };
+
+      const refund = {
+        minerai: Math.floor(unitCost.minerai * cancelRefundRatio) * removeCount,
+        silicium: Math.floor(unitCost.silicium * cancelRefundRatio) * removeCount,
+        hydrogene: Math.floor(unitCost.hydrogene * cancelRefundRatio) * removeCount,
+      };
+
+      // Refund resources
+      const [planet] = await db.select().from(planets).where(eq(planets.id, planetId)).limit(1);
+      if (planet) {
+        await db
+          .update(planets)
+          .set({
+            minerai: String(Number(planet.minerai) + refund.minerai),
+            silicium: String(Number(planet.silicium) + refund.silicium),
+            hydrogene: String(Number(planet.hydrogene) + refund.hydrogene),
+          })
+          .where(eq(planets.id, planetId));
+      }
+
+      // Reduce quantity in the batch
+      await db
+        .update(buildQueue)
+        .set({ quantity: entry.quantity - removeCount })
+        .where(eq(buildQueue.id, batchId));
+
+      return { reduced: true, removedCount: removeCount, refund };
+    },
+
     async getOrCreateShips(planetId: string) {
       const [existing] = await db.select().from(planetShips).where(eq(planetShips.planetId, planetId)).limit(1);
       if (existing) return existing;
