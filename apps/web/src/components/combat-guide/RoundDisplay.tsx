@@ -93,6 +93,10 @@ export function RoundDisplay({
         const attackerHP = currentRound?.attackerHPByType;
         const shieldHP = defenderHP?.['__planetaryShield__'];
 
+        // Show planetary shield at deployment (round 0) with full capacity from first round data
+        const firstRoundShield = result.rounds[0]?.defenderHPByType?.['__planetaryShield__'];
+        const effectiveShieldHP = shieldHP ?? (firstRoundShield ? { shieldRemaining: firstRoundShield.shieldMax, shieldMax: firstRoundShield.shieldMax } : undefined);
+
         return (
           <div className="grid grid-cols-2 gap-4">
             <FleetColumn
@@ -103,7 +107,7 @@ export function RoundDisplay({
               gameConfig={gameConfig}
               color="text-blue-400"
               hpByType={isDefPerspective ? defenderHP : attackerHP}
-              planetaryShield={isDefPerspective ? shieldHP : undefined}
+              planetaryShield={isDefPerspective ? effectiveShieldHP : undefined}
             />
             <FleetColumn
               title={isDefPerspective ? 'Attaquant' : 'Défenseur'}
@@ -113,7 +117,7 @@ export function RoundDisplay({
               gameConfig={gameConfig}
               color="text-rose-400"
               hpByType={isDefPerspective ? attackerHP : defenderHP}
-              planetaryShield={isDefPerspective ? undefined : shieldHP}
+              planetaryShield={isDefPerspective ? undefined : effectiveShieldHP}
             />
           </div>
         );
@@ -219,29 +223,39 @@ function FleetColumn({
             </div>
             <div className="space-y-0.5">
               <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-700 ease-out bg-cyan-500"
+                <div className="h-full rounded-full transition-all duration-1000 ease-in-out bg-cyan-500"
                   style={{ width: `${hpByType?.[type] ? (hpByType[type].shieldMax > 0 ? (hpByType[type].shieldRemaining / hpByType[type].shieldMax) * 100 : 0) : 100}%` }} />
               </div>
               <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-700 ease-out bg-orange-500"
+                <div className="h-full rounded-full transition-all duration-1000 ease-in-out bg-orange-500"
                   style={{ width: `${hpByType?.[type] ? (hpByType[type].hullMax > 0 ? (hpByType[type].hullRemaining / hpByType[type].hullMax) * 100 : 0) : 100}%` }} />
               </div>
             </div>
           </div>
         );
       })}
-      {planetaryShield && planetaryShield.shieldMax > 0 && (
-        <div className="space-y-0.5 border-t border-border/20 pt-2 mt-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-cyan-400 font-medium">Bouclier planétaire</span>
-            <span className="text-muted-foreground">{Math.floor(planetaryShield.shieldRemaining)}/{Math.floor(planetaryShield.shieldMax)}</span>
+      {planetaryShield && planetaryShield.shieldMax > 0 && (() => {
+        const pct = (planetaryShield.shieldRemaining / planetaryShield.shieldMax) * 100;
+        const pierced = planetaryShield.shieldRemaining <= 0;
+        return (
+          <div className={`space-y-1 border-t border-cyan-500/20 pt-2 mt-1 transition-colors duration-500 ${pierced ? 'bg-red-500/5 -mx-2 px-2 rounded' : ''}`}>
+            <div className="flex items-center justify-between text-xs">
+              <span className={`font-medium transition-colors duration-500 ${pierced ? 'text-red-400' : 'text-cyan-400'}`}>
+                {pierced ? '\u26A0 ' : '\uD83D\uDEE1 '}Bouclier planétaire
+              </span>
+              <span className={`font-mono tabular-nums transition-colors duration-500 ${pierced ? 'text-red-400' : 'text-muted-foreground'}`}>
+                {Math.floor(planetaryShield.shieldRemaining)}/{Math.floor(planetaryShield.shieldMax)}
+              </span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted/30 overflow-hidden border border-cyan-500/10">
+              <div
+                className={`h-full rounded-full transition-all duration-1000 ease-in-out ${pierced ? 'bg-red-500' : 'bg-gradient-to-r from-cyan-600 to-cyan-400'}`}
+                style={{ width: `${Math.max(0, pct)}%` }}
+              />
+            </div>
           </div>
-          <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700 ease-out bg-cyan-500"
-              style={{ width: `${(planetaryShield.shieldRemaining / planetaryShield.shieldMax) * 100}%` }} />
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
