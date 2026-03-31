@@ -6,7 +6,6 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
-import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 import { GameImage } from '@/components/common/GameImage';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName } from '@/lib/entity-names';
@@ -451,12 +450,6 @@ export default function Movements() {
           </div>
         </div>
       )}
-
-      {/* Hostile alert banner */}
-      {(() => {
-        const hostileFleets = (inboundFleets ?? []).filter((f: any) => f.hostile);
-        return hostileFleets.length > 0 ? <HostileAlertBanner hostileFleets={hostileFleets} hideLink /> : null;
-      })()}
 
       {/* Inbound fleets */}
       {sortedInbound.length > 0 && (() => {
