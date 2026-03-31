@@ -23,6 +23,8 @@ interface ShipyardBufferEntry {
   name: string;
   count: number;
   timer: ReturnType<typeof setTimeout>;
+  planetId?: string;
+  buildType?: string;
 }
 
 const SHIPYARD_DEBOUNCE_MS = 3_000;
@@ -96,14 +98,14 @@ export function useNotifications() {
         utils.building.list.invalidate();
         utils.resource.production.invalidate();
         if (isToastEnabled(event.type)) {
-          addToast(`Construction terminée : ${event.payload.name ?? getEntityName(String(event.payload.buildingId))} niv. ${event.payload.level}`);
+          addToast(`Construction terminée : ${event.payload.name ?? getEntityName(String(event.payload.buildingId))} niv. ${event.payload.level}`, 'info', '/buildings', event.payload.planetId as string | undefined);
           showBrowserNotification('Construction terminée', `${event.payload.name ?? getEntityName(String(event.payload.buildingId))} niveau ${event.payload.level}`);
         }
         break;
       case 'research-done':
         utils.research.list.invalidate();
         if (isToastEnabled(event.type)) {
-          addToast(`Recherche terminée : ${event.payload.name ?? getEntityName(String(event.payload.techId))} niv. ${event.payload.level}`);
+          addToast(`Recherche terminée : ${event.payload.name ?? getEntityName(String(event.payload.techId))} niv. ${event.payload.level}`, 'info', '/research', event.payload.planetId as string | undefined);
           showBrowserNotification('Recherche terminée', `${event.payload.name ?? getEntityName(String(event.payload.techId))} niveau ${event.payload.level}`);
         }
         break;
@@ -116,6 +118,8 @@ export function useNotifications() {
         const unitId = String(event.payload.unitId);
         const name = String(event.payload.name ?? getEntityName(String(event.payload.unitId)));
         const count = Number(event.payload.count) || 1;
+        const shipPlanetId = event.payload.planetId as string | undefined;
+        const buildType = event.payload.buildType as string | undefined;
 
         const existing = shipyardBuffer.current.get(unitId);
         if (existing) {
@@ -124,12 +128,13 @@ export function useNotifications() {
           existing.name = name;
         }
 
-        const entry = existing ?? { name, count, timer: undefined as any };
+        const entry = existing ?? { name, count, timer: undefined as any, planetId: shipPlanetId, buildType };
 
         entry.timer = setTimeout(() => {
           shipyardBuffer.current.delete(unitId);
           if (isToastEnabled('shipyard-done')) {
-            addToast(`Chantier terminé : ${entry.count}x ${entry.name}`);
+            const link = entry.buildType === 'defense' ? '/defense' : '/fleet';
+            addToast(`Chantier terminé : ${entry.count}x ${entry.name}`, 'info', link, entry.planetId);
             showBrowserNotification('Production terminée', `${entry.count}x ${entry.name}`);
           }
         }, SHIPYARD_DEBOUNCE_MS);

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
 import { useToastStore, type ToastVariant } from '@/stores/toast.store';
+import { usePlanetStore } from '@/stores/planet.store';
 import { cn } from '@/lib/utils';
 
 const TOAST_DURATION_MS = 5000;
@@ -18,7 +19,7 @@ const variantIcons: Record<ToastVariant, string> = {
   warning: '⚠',
 };
 
-function ToastItem({ id, message, variant, link }: { id: string; message: string; variant: ToastVariant; createdAt: number; link?: string }) {
+function ToastItem({ id, message, variant, link, planetId }: { id: string; message: string; variant: ToastVariant; createdAt: number; link?: string; planetId?: string }) {
   const removeToast = useToastStore((s) => s.removeToast);
   const navigate = useNavigate();
 
@@ -30,6 +31,7 @@ function ToastItem({ id, message, variant, link }: { id: string; message: string
       )}
       onClick={() => {
         removeToast(id);
+        if (planetId) usePlanetStore.getState().setActivePlanet(planetId);
         if (link) navigate(link);
       }}
     >

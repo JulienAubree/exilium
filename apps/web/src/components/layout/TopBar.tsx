@@ -352,7 +352,11 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
                   groupEvents(recentEvents).map((event) => (
                     <button
                       key={event.id}
-                      onClick={() => { navigate(eventNavigationTarget(event.type, event.payload)); setBellOpen(false); }}
+                      onClick={() => {
+                        if (event.planetId) usePlanetStore.getState().setActivePlanet(event.planetId);
+                        navigate(eventNavigationTarget(event.type, event.payload));
+                        setBellOpen(false);
+                      }}
                       className={cn(
                         'flex w-full items-start gap-2 px-3 py-3 text-left text-sm touch-feedback hover:bg-accent',
                         !event.read && 'bg-primary/5 font-medium',
