@@ -9,9 +9,7 @@ import type { createPlanetService } from '../planet/planet.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { findBuildingByRole } from '../../lib/config-helpers.js';
 
-const percentSchema = z.number().int().min(0).max(100).refine((v) => v % 10 === 0, {
-  message: 'Le pourcentage doit etre un multiple de 10',
-});
+const percentSchema = z.number().int().min(0).max(100);
 
 export function createResourceRouter(
   resourceService: ReturnType<typeof createResourceService>,
@@ -26,13 +24,16 @@ export function createResourceRouter(
         const planet = await planetService.getPlanet(ctx.userId!, input.planetId);
 
         let bonus: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number } | undefined;
+        let planetTypeName: string | undefined;
         if (planet.planetClassId) {
           const [pt] = await db.select({
             mineraiBonus: planetTypes.mineraiBonus,
             siliciumBonus: planetTypes.siliciumBonus,
             hydrogeneBonus: planetTypes.hydrogeneBonus,
+            name: planetTypes.name,
           }).from(planetTypes).where(eq(planetTypes.id, planet.planetClassId)).limit(1);
           bonus = pt ?? undefined;
+          planetTypeName = pt?.name;
         }
 
         const config = await gameConfigService.getFullConfig();
@@ -53,6 +54,9 @@ export function createResourceRouter(
           hydrogene: Number(planet.hydrogene),
           maxTemp: planet.maxTemp,
           planetClassId: planet.planetClassId,
+          planetName: planet.name,
+          planetTypeName,
+          planetTypeBonus: bonus,
           levels: {
             mineraiMine: buildingLevels[mineraiMineId] ?? 0,
             siliciumMine: buildingLevels[siliciumMineId] ?? 0,
@@ -83,7 +87,7 @@ export function createResourceRouter(
     setShieldPercent: protectedProcedure
       .input(z.object({
         planetId: z.string().uuid(),
-        percent: z.number().int().min(0).max(100).multipleOf(10),
+        percent: z.number().int().min(0).max(100),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify ownership

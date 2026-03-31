@@ -25,7 +25,7 @@ export const planets = pgTable('planets', {
   hydrogene: numeric('hydrogene', { precision: 20, scale: 2 }).notNull().default('0'),
   resourcesUpdatedAt: timestamp('resources_updated_at', { withTimezone: true }).notNull().defaultNow(),
 
-  // Production percentages (0-100, step 10)
+  // Production percentages (0-100)
   mineraiMinePercent: smallint('minerai_mine_percent').notNull().default(100),
   siliciumMinePercent: smallint('silicium_mine_percent').notNull().default(100),
   hydrogeneSynthPercent: smallint('hydrogene_synth_percent').notNull().default(100),
