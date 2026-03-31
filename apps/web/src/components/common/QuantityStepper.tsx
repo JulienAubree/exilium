@@ -29,6 +29,12 @@ export function QuantityStepper({
     }
   }, [editing]);
 
+  // Clamp value when max changes (e.g. resources spent elsewhere)
+  useEffect(() => {
+    if (value > max) onChange(max);
+    else if (value < min) onChange(min);
+  }, [max, min]);
+
   function clamp(v: number) {
     return Math.max(min, Math.min(max, v));
   }
