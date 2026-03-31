@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -22,6 +22,8 @@ export default function Shipyard() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  // Reset quantities when switching planets
+  useEffect(() => { setQuantities({}); }, [planetId]);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
