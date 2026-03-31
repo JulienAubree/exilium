@@ -28,9 +28,10 @@ export function EnergyBar({ totalProduced, totalConsumed, segments, productionFa
 
       {/* Segmented bar */}
       <div className="relative h-2.5 bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.06]">
-        <div className="absolute inset-y-0 left-0 flex">
+        <div className="absolute inset-y-0 left-0 flex w-full">
           {segments.map((seg) => {
-            const widthPct = totalProduced > 0 ? (seg.value / totalProduced) * 100 : 0;
+            const base = Math.max(totalProduced, totalConsumed);
+            const widthPct = base > 0 ? (seg.value / base) * 100 : 0;
             return (
               <div
                 key={seg.label}
