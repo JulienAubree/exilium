@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, ShieldAlert, ChevronRight } from 'lucide-react';
+import { Hammer, FlaskConical, ShieldAlert, ChevronRight, Anchor, ShieldPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
 import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { getBuildingName, getResearchName } from '@/lib/entity-names';
+import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 
 interface EmpirePlanet {
   id: string;
@@ -20,6 +20,8 @@ interface EmpirePlanet {
   hydrogenePerHour: number;
   activeBuild: { buildingId: string; level: number; endTime: string } | null;
   activeResearch: { researchId: string; level: number; endTime: string } | null;
+  activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
+  activeDefense: { defenseId: string; quantity: number; endTime: string } | null;
   inboundAttack: { arrivalTime: string } | null;
 }
 
@@ -45,7 +47,11 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
       ? { icon: Hammer, label: getBuildingName(planet.activeBuild.buildingId, gameConfig), endTime: planet.activeBuild.endTime, className: 'text-energy' }
       : planet.activeResearch
         ? { icon: FlaskConical, label: getResearchName(planet.activeResearch.researchId, gameConfig), endTime: planet.activeResearch.endTime, className: 'text-purple-400' }
-        : null;
+        : planet.activeShipyard
+          ? { icon: Anchor, label: getShipName(planet.activeShipyard.shipId, gameConfig), endTime: planet.activeShipyard.endTime, className: 'text-primary' }
+          : planet.activeDefense
+            ? { icon: ShieldPlus, label: getDefenseName(planet.activeDefense.defenseId, gameConfig), endTime: planet.activeDefense.endTime, className: 'text-cyan-400' }
+            : null;
 
   return (
     <button

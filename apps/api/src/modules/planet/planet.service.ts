@@ -149,6 +149,8 @@ export function createPlanetService(
 
           const activeBuild = activeBuilds.find(b => b.type === 'building') ?? null;
           const activeResearch = activeBuilds.find(b => b.type === 'research') ?? null;
+          const activeShipyard = activeBuilds.find(b => b.type === 'ship') ?? null;
+          const activeDefense = activeBuilds.find(b => b.type === 'defense') ?? null;
 
           const [outbound] = await db
             .select({ count: sql<number>`count(*)::int` })
@@ -198,6 +200,12 @@ export function createPlanetService(
               : null,
             activeResearch: activeResearch
               ? { researchId: activeResearch.itemId, level: activeResearch.quantity, endTime: activeResearch.endTime.toISOString() }
+              : null,
+            activeShipyard: activeShipyard
+              ? { shipId: activeShipyard.itemId, quantity: activeShipyard.quantity, endTime: activeShipyard.endTime.toISOString() }
+              : null,
+            activeDefense: activeDefense
+              ? { defenseId: activeDefense.itemId, quantity: activeDefense.quantity, endTime: activeDefense.endTime.toISOString() }
               : null,
             outboundFleetCount: outbound?.count ?? 0,
             inboundAttack: inboundAttacks[0]

@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield } from 'lucide-react';
+import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, Anchor, ShieldPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
 import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { getBuildingName, getResearchName } from '@/lib/entity-names';
+import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 
 interface EmpirePlanet {
   id: string;
@@ -29,6 +29,8 @@ interface EmpirePlanet {
   energyConsumed: number;
   activeBuild: { buildingId: string; level: number; endTime: string } | null;
   activeResearch: { researchId: string; level: number; endTime: string } | null;
+  activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
+  activeDefense: { defenseId: string; quantity: number; endTime: string } | null;
   outboundFleetCount: number;
   inboundAttack: { arrivalTime: string } | null;
 }
@@ -56,7 +58,7 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
     { label: 'H', value: planet.hydrogene, max: planet.storageHydrogeneCapacity, rate: planet.hydrogenePerHour, color: 'text-hydrogene', fill: 'bg-hydrogene' },
   ];
 
-  const hasActivity = planet.activeBuild || planet.activeResearch || planet.outboundFleetCount > 0 || hasAttack;
+  const hasActivity = planet.activeBuild || planet.activeResearch || planet.activeShipyard || planet.activeDefense || planet.outboundFleetCount > 0 || hasAttack;
 
   return (
     <div className={cn(
@@ -130,6 +132,20 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
             <FlaskConical className="h-3 w-3" />
             <span>{getResearchName(planet.activeResearch.researchId, gameConfig)}</span>
             <Timer endTime={new Date(planet.activeResearch.endTime)} className="inline [&>span]:text-purple-400" />
+          </div>
+        )}
+        {planet.activeShipyard && (
+          <div className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary">
+            <Anchor className="h-3 w-3" />
+            <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} ×{planet.activeShipyard.quantity}</span>
+            <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />
+          </div>
+        )}
+        {planet.activeDefense && (
+          <div className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400">
+            <ShieldPlus className="h-3 w-3" />
+            <span>{getDefenseName(planet.activeDefense.defenseId, gameConfig)} ×{planet.activeDefense.quantity}</span>
+            <Timer endTime={new Date(planet.activeDefense.endTime)} className="inline [&>span]:text-cyan-400" />
           </div>
         )}
         {planet.outboundFleetCount > 0 && (
