@@ -61,6 +61,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
   const { data: dailyQuests } = trpc.dailyQuest.getQuests.useQuery(undefined, { refetchInterval: 60_000 });
   const { data: unreadCount } = trpc.message.unreadCount.useQuery();
   const { data: eventUnreadCount } = trpc.gameEvent.unreadCount.useQuery();
+  const { data: reportUnreadCount } = trpc.report.unreadCount.useQuery();
   const { data: recentEvents } = trpc.gameEvent.recent.useQuery();
   const markAllRead = trpc.gameEvent.markAllRead.useMutation({
     onSuccess: () => {
@@ -386,14 +387,16 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
         </div>
 
               <Link
-                to="/profile?tab=notifications"
-                className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                title="Réglages notifications"
+                to="/reports"
+                className="relative rounded-lg p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                title="Rapports"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
+                <ReportsIcon width={18} height={18} />
+                {(reportUnreadCount?.count ?? 0) > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                    {reportUnreadCount!.count}
+                  </span>
+                )}
               </Link>
 
         {/* Profile menu */}
@@ -428,11 +431,11 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
                   Profil
                 </button>
                 <button
-                  onClick={() => { navigate('/reports'); setProfileOpen(false); }}
+                  onClick={() => { navigate('/profile?tab=notifications'); setProfileOpen(false); }}
                   className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
-                  <ReportsIcon width={16} height={16} />
-                  Rapports
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Notifications
                 </button>
                 <button
                   onClick={() => { navigate('/history'); setProfileOpen(false); }}
