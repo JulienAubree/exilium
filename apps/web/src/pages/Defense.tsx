@@ -103,6 +103,15 @@ export default function Defense() {
     },
   });
 
+  const reduceMutation = trpc.shipyard.reduceQuantity.useMutation({
+    onSuccess: () => {
+      utils.shipyard.queue.invalidate();
+      utils.shipyard.ships.invalidate();
+      utils.shipyard.defenses.invalidate();
+      utils.resource.production.invalidate();
+    },
+  });
+
   const defenseQueue = (queue ?? []).filter((q) => q.type === 'defense');
 
   if (isLoading || !defenses) {
@@ -144,16 +153,29 @@ export default function Defense() {
               return (
                 <div key={item.id} className="space-y-1 border-l-4 border-l-orange-500 pl-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span>{remaining}x {name}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                      onClick={() => setCancelConfirm(item.id)}
-                      disabled={cancelMutation.isPending}
-                    >
-                      Annuler
-                    </Button>
+                    <span className="font-medium">{remaining}x {name}</span>
+                    <div className="flex items-center gap-1">
+                      {remaining > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => reduceMutation.mutate({ planetId: planetId!, batchId: item.id, removeCount: 1 })}
+                          disabled={reduceMutation.isPending}
+                        >
+                          -1
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                        onClick={() => setCancelConfirm(item.id)}
+                        disabled={cancelMutation.isPending}
+                      >
+                        Annuler
+                      </Button>
+                    </div>
                   </div>
                   {item.status === 'active' && item.endTime && (
                     <Timer
