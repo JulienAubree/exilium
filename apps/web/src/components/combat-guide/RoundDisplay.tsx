@@ -128,34 +128,27 @@ export function RoundDisplay({
               <span className="text-cyan-400 font-semibold uppercase tracking-wider text-[10px]">Bouclier planétaire</span>
               <span className="text-muted-foreground font-mono text-[10px]">{Math.floor(shieldMax)} pts</span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {result.rounds.map((round, i) => {
-                const hp = round.defenderHPByType?.['__planetaryShield__'];
-                const remaining = hp?.shieldRemaining ?? shieldMax;
-                const pct = (remaining / shieldMax) * 100;
-                const pierced = remaining <= 0;
-                const absorbed = round.shieldAbsorbed ?? 0;
+                const pierced = (round.shieldAbsorbed ?? 0) >= shieldMax;
                 const isCurrentRound = displayedRound === i + 1;
                 const isFutureRound = displayedRound > 0 && displayedRound <= i;
                 const isDeployment = displayedRound === 0;
+                // Shield is LIT when it holds, DARK when pierced
+                const held = isDeployment || !pierced;
 
                 return (
                   <div
                     key={i}
-                    className={`flex-1 transition-opacity duration-300 ${isFutureRound ? 'opacity-30' : ''}`}
-                    title={`Round ${i + 1}: ${absorbed > 0 ? `${Math.floor(absorbed)} absorbés` : 'aucun dégât'}${pierced ? ' — PERCÉ' : ''}`}
-                  >
-                    <div className="text-[9px] text-center text-muted-foreground mb-0.5">R{i + 1}</div>
-                    <div className={`h-6 rounded bg-muted/20 overflow-hidden border transition-all duration-300 ${isCurrentRound ? 'border-white/30 ring-1 ring-cyan-500/30' : 'border-white/5'}`}>
-                      <div
-                        className={`h-full transition-all duration-1000 ease-in-out ${pierced ? 'bg-red-500/80' : 'bg-gradient-to-t from-cyan-600 to-cyan-400'}`}
-                        style={{ width: '100%', height: isDeployment ? '100%' : `${Math.max(0, pct)}%` }}
-                      />
-                    </div>
-                    <div className={`text-[8px] text-center mt-0.5 font-mono transition-colors duration-300 ${pierced ? 'text-red-400' : absorbed > 0 ? 'text-cyan-400' : 'text-muted-foreground/40'}`}>
-                      {isDeployment ? '' : pierced ? 'PERCÉ' : absorbed > 0 ? `-${Math.floor(absorbed)}` : '—'}
-                    </div>
-                  </div>
+                    className={`flex-1 h-5 rounded transition-all duration-700 ease-in-out ${
+                      isFutureRound
+                        ? 'bg-muted/10 border border-white/5'
+                        : held
+                          ? 'bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.3)]'
+                          : 'bg-muted/20 border border-red-500/30'
+                    } ${isCurrentRound ? 'ring-1 ring-white/40' : ''}`}
+                    title={`Round ${i + 1}${pierced ? ' — Percé' : ' — Tenu'}`}
+                  />
                 );
               })}
             </div>

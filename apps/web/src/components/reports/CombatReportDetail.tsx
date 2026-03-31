@@ -109,51 +109,73 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
         );
       })()}
 
-      {/* Planetary Shield info */}
-      {result.planetaryShield && (() => {
-        const ps = result.planetaryShield as { level: number; capacity: number };
-        const rounds = result.rounds as { shieldAbsorbed?: number }[] | undefined;
-        const totalAbsorbed = rounds?.reduce((sum, r) => sum + (r.shieldAbsorbed ?? 0), 0) ?? 0;
-        const roundsHeld = rounds?.filter(r => (r.shieldAbsorbed ?? 0) > 0 && (r.shieldAbsorbed ?? 0) < ps.capacity).length ?? 0;
-        const roundsPierced = rounds?.filter(r => (r.shieldAbsorbed ?? 0) >= ps.capacity).length ?? 0;
-        return (
-          <div className="glass-card border-cyan-500/20 bg-cyan-500/5 p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Bouclier planétaire</h4>
-              <span className="text-xs text-muted-foreground">Niv. {ps.level} — {fmt(ps.capacity)} pts</span>
-            </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <div className="text-lg font-bold text-cyan-400">{fmt(totalAbsorbed)}</div>
-                <div className="text-[10px] text-muted-foreground">Dégâts absorbés</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-emerald-400">{roundsHeld}</div>
-                <div className="text-[10px] text-muted-foreground">Rounds tenus</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-red-400">{roundsPierced}</div>
-                <div className="text-[10px] text-muted-foreground">Rounds percés</div>
-              </div>
-            </div>
-            {rounds && rounds.some(r => (r.shieldAbsorbed ?? 0) > 0) && (
-              <div className="flex gap-1 items-end h-8">
-                {rounds.map((r, i) => {
-                  const absorbed = r.shieldAbsorbed ?? 0;
-                  const pct = ps.capacity > 0 ? Math.min(100, (absorbed / ps.capacity) * 100) : 0;
-                  const pierced = absorbed >= ps.capacity;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`Round ${i + 1}: ${fmt(absorbed)} absorbés`}>
-                      <div
-                        className={`w-full rounded-sm ${pierced ? 'bg-red-500' : 'bg-cyan-500'}`}
-                        style={{ height: `${Math.max(2, (pct / 100) * 28)}px` }}
-                      />
-                      <span className="text-[8px] text-muted-foreground">{i + 1}</span>
+      {/* Forces en présence */}
+      {(() => {
+        const attackerFleet = result.attackerFleet as Record<string, number> | undefined;
+        const defenderFleet = result.defenderFleet as Record<string, number> | undefined;
+        const defenderDefs = result.defenderDefenses as Record<string, number> | undefined;
+        const ps = result.planetaryShield as { level: number; capacity: number } | undefined;
+        if (!attackerFleet && !defenderFleet) return null;
+
+        const myFleet = isDefender ? defenderFleet : attackerFleet;
+        const enemyFleet = isDefender ? attackerFleet : defenderFleet;
+        const myLabel = isDefender ? 'Vos forces' : 'Votre flotte';
+        const enemyLabel = isDefender
+          ? (missionType === 'pirate' ? 'Pirates' : 'Flotte attaquante')
+          : 'Forces du défenseur';
+
+        const renderForces = (fleet: Record<string, number> | undefined, defs?: Record<string, number> | undefined, shield?: { level: number; capacity: number } | undefined) => {
+          const entries = Object.entries(fleet ?? {}).filter(([, n]) => n > 0);
+          const defEntries = Object.entries(defs ?? {}).filter(([, n]) => n > 0);
+          return (
+            <div className="space-y-1">
+              {entries.map(([id, count]) => (
+                <div key={id} className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{getUnitName(id, gameConfig)}</span>
+                  <span className="text-foreground font-mono">{fmt(count)}</span>
+                </div>
+              ))}
+              {defEntries.length > 0 && (
+                <>
+                  <div className="border-t border-border/20 mt-1 pt-1" />
+                  {defEntries.map(([id, count]) => (
+                    <div key={id} className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">{getDefenseName(id, gameConfig)}</span>
+                      <span className="text-foreground font-mono">{fmt(count)}</span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                </>
+              )}
+              {shield && shield.capacity > 0 && (
+                <>
+                  <div className="border-t border-cyan-500/20 mt-1 pt-1" />
+                  <div className="flex justify-between text-xs">
+                    <span className="text-cyan-400">Bouclier planétaire niv. {shield.level}</span>
+                    <span className="text-cyan-400 font-mono">{fmt(shield.capacity)} pts</span>
+                  </div>
+                </>
+              )}
+              {entries.length === 0 && defEntries.length === 0 && !shield && (
+                <div className="text-xs text-muted-foreground/60">Aucune</div>
+              )}
+            </div>
+          );
+        };
+
+        return (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="glass-card p-4">
+              <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">{myLabel}</h4>
+              {isDefender
+                ? renderForces(myFleet, defenderDefs, ps)
+                : renderForces(myFleet)}
+            </div>
+            <div className="glass-card p-4">
+              <h4 className="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-2">{enemyLabel}</h4>
+              {isDefender
+                ? renderForces(enemyFleet)
+                : renderForces(enemyFleet, defenderDefs, ps)}
+            </div>
           </div>
         );
       })()}
