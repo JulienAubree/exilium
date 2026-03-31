@@ -43,7 +43,7 @@ function fmtCountdown(total: number) {
   return { h, m, s };
 }
 
-function IncapacitatedOverlay({
+function IncapacitatedBanner({
   name,
   repairEndsAt,
   flagshipImageIndex,
@@ -83,98 +83,74 @@ function IncapacitatedOverlay({
   }, [secondsLeft]);
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[80vh] p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-500/5 animate-pulse" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-red-500/8 animate-pulse" style={{ animationDelay: '0.5s' }} />
-      </div>
-
-      <div className="relative flex flex-col items-center gap-6 max-w-md mx-auto px-6 text-center">
-        <div className="relative">
-          {flagshipImageIndex ? (
-            <img
-              src={getFlagshipImageUrl(flagshipImageIndex, 'thumb')}
-              alt={name}
-              className="h-40 w-40 rounded-2xl object-cover border-2 border-red-500/30 grayscale opacity-60"
-            />
-          ) : (
-            <div className="h-40 w-40 rounded-2xl bg-red-950/40 flex items-center justify-center text-5xl font-bold text-red-500/40 border-2 border-red-500/30">
-              VA
-            </div>
-          )}
-          <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-red-500/30">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </div>
+    <>
+      <div className="relative overflow-hidden rounded-lg border border-red-500/30 bg-red-950/20">
+        {/* Subtle pulse background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-red-500/5 animate-pulse" />
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-black text-red-400 tracking-tight uppercase">
-            Vaisseau incapacite
-          </h1>
-          <p className="text-sm text-red-300/60">
-            <span className="font-semibold text-red-300/80">{name}</span> a ete mis hors service au combat.
-          </p>
-          <p className="text-xs text-muted-foreground/60">
-            Reparation automatique en cours...
-          </p>
-        </div>
-
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            {[
-              { value: h, label: 'h' },
-              { value: m, label: 'min' },
-              { value: s, label: 'sec' },
-            ].map((unit, i) => (
-              <div key={unit.label} className="flex items-center gap-3">
-                {i > 0 && <span className="text-2xl text-red-500/40 font-light -mt-4">:</span>}
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl font-mono font-black tabular-nums text-red-400 leading-none">
-                    {String(unit.value).padStart(2, '0')}
-                  </span>
-                  <span className="text-[10px] text-red-400/40 uppercase tracking-widest mt-1">
-                    {unit.label}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full space-y-1.5">
-            <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-[width] duration-1000 ease-linear bg-gradient-to-r from-red-600 to-red-400"
-                style={{ width: `${progress}%` }}
+        <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 lg:p-5">
+          {/* Flagship image */}
+          <div className="relative shrink-0">
+            {flagshipImageIndex ? (
+              <img
+                src={getFlagshipImageUrl(flagshipImageIndex, 'thumb')}
+                alt={name}
+                className="h-20 w-20 rounded-xl object-cover border border-red-500/30 grayscale opacity-60"
               />
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground/40">
-              <span>Reparation</span>
-              <span>{Math.round(progress)}%</span>
+            ) : (
+              <div className="h-20 w-20 rounded-xl bg-red-950/40 flex items-center justify-center text-2xl font-bold text-red-500/40 border border-red-500/30">
+                VA
+              </div>
+            )}
+            <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-red-500/30">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
             </div>
           </div>
-        </div>
 
-        <div className="text-xs text-muted-foreground/50">
-          Retour operationnel : {repairEndsAt.toLocaleString('fr-FR', {
-            day: '2-digit', month: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-          })}
-        </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
+            <div>
+              <h2 className="text-lg font-black text-red-400 uppercase tracking-tight">Vaisseau incapacite</h2>
+              <p className="text-xs text-red-300/60">
+                <span className="font-semibold text-red-300/80">{name}</span> a ete mis hors service au combat.
+              </p>
+            </div>
 
-        <button
-          onClick={() => setConfirmRepair(true)}
-          disabled={balance < repairCost || repairMutation.isPending}
-          className="mt-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
-        >
-          {repairMutation.isPending ? 'Reparation...' : `Reparer maintenant (${repairCost} Exilium)`}
-        </button>
-        {balance < repairCost && (
-          <p className="text-[10px] text-red-400/70">Solde insuffisant ({balance} Exilium)</p>
-        )}
+            {/* Progress bar */}
+            <div className="space-y-1">
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-[width] duration-1000 ease-linear bg-gradient-to-r from-red-600 to-red-400"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-muted-foreground/40">
+                <span>Reparation {Math.round(progress)}%</span>
+                <span>{String(h).padStart(2, '0')}h {String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Repair button */}
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <button
+              onClick={() => setConfirmRepair(true)}
+              disabled={balance < repairCost || repairMutation.isPending}
+              className="px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-primary/20 whitespace-nowrap"
+            >
+              {repairMutation.isPending ? 'Reparation...' : `Reparer (${repairCost} Exilium)`}
+            </button>
+            {balance < repairCost && (
+              <p className="text-[10px] text-red-400/70">Solde insuffisant</p>
+            )}
+          </div>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -185,7 +161,7 @@ function IncapacitatedOverlay({
         description={`Cout : ${repairCost} Exilium. Votre vaisseau sera immediatement operationnel.`}
         confirmLabel="Reparer"
       />
-    </div>
+    </>
   );
 }
 
@@ -322,17 +298,7 @@ export default function FlagshipProfile() {
     );
   }
 
-  if (flagship.status === 'incapacitated' && flagship.repairEndsAt) {
-    return (
-      <IncapacitatedOverlay
-        name={flagship.name}
-        repairEndsAt={new Date(flagship.repairEndsAt)}
-        flagshipImageIndex={flagship.flagshipImageIndex}
-        onRepaired={handleRepaired}
-        balance={balance}
-      />
-    );
-  }
+  const isIncapacitated = flagship.status === 'incapacitated' && flagship.repairEndsAt;
 
   const status = STATUS_LABELS[flagship.status] ?? { label: flagship.status, color: 'text-muted-foreground', dot: 'bg-muted-foreground' };
   const effectiveStats = 'effectiveStats' in flagship ? (flagship as any).effectiveStats : null;
@@ -358,6 +324,16 @@ export default function FlagshipProfile() {
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Vaisseau amiral" />
+
+      {isIncapacitated && (
+        <IncapacitatedBanner
+          name={flagship.name}
+          repairEndsAt={new Date(flagship.repairEndsAt!)}
+          flagshipImageIndex={flagship.flagshipImageIndex}
+          onRepaired={handleRepaired}
+          balance={balance}
+        />
+      )}
 
       {/* ===== Identity Card ===== */}
       <div className="glass-card p-4 lg:p-5">
