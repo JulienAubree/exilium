@@ -176,12 +176,16 @@ export function createFleetService(
           });
         }
         // Inject flagship stats into shipStatsMap for speed/fuel/cargo calculations
+        // Use effective stats (after talent + hull bonuses) when available
+        const efs = flagship.effectiveStats;
+        const effectiveCargo = efs?.cargoCapacity ?? flagship.cargoCapacity;
         shipStatsMap['flagship'] = {
-          baseSpeed: flagship.baseSpeed,
-          fuelConsumption: flagship.fuelConsumption,
-          cargoCapacity: flagship.cargoCapacity,
-          driveType: flagship.driveType as ShipStats['driveType'],
-          miningExtraction: 0,
+          baseSpeed: efs?.baseSpeed ?? flagship.baseSpeed,
+          fuelConsumption: efs?.fuelConsumption ?? flagship.fuelConsumption,
+          cargoCapacity: effectiveCargo,
+          driveType: (efs?.driveType ?? flagship.driveType) as ShipStats['driveType'],
+          // Industrial hull: mining extraction equals cargo capacity
+          miningExtraction: flagship.hullId === 'industrial' ? effectiveCargo : 0,
         };
       }
 
