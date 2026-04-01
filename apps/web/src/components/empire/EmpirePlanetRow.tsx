@@ -27,6 +27,8 @@ interface EmpirePlanet {
   activeResearch: { researchId: string; level: number; endTime: string } | null;
   activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
   activeDefense: { defenseId: string; quantity: number; endTime: string } | null;
+  outboundFleets: { count: number; earliestArrival: string } | null;
+  inboundFriendlyFleets: { count: number; earliestArrival: string } | null;
   inboundAttack: { arrivalTime: string } | null;
 }
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, ShieldPlus } from 'lucide-react';
+import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, ShieldPlus, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -33,7 +33,8 @@ interface EmpirePlanet {
   activeResearch: { researchId: string; level: number; endTime: string } | null;
   activeShipyard: { shipId: string; quantity: number; endTime: string } | null;
   activeDefense: { defenseId: string; quantity: number; endTime: string } | null;
-  outboundFleetCount: number;
+  outboundFleets: { count: number; earliestArrival: string } | null;
+  inboundFriendlyFleets: { count: number; earliestArrival: string } | null;
   inboundAttack: { arrivalTime: string } | null;
 }
 
@@ -60,7 +61,7 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
     { label: 'H', value: planet.hydrogene, max: planet.storageHydrogeneCapacity, rate: planet.hydrogenePerHour, color: 'text-hydrogene', fill: 'bg-hydrogene' },
   ];
 
-  const hasActivity = planet.activeBuild || planet.activeResearch || planet.activeShipyard || planet.activeDefense || planet.outboundFleetCount > 0 || hasAttack;
+  const hasActivity = planet.activeBuild || planet.activeResearch || planet.activeShipyard || planet.activeDefense || planet.outboundFleets || planet.inboundFriendlyFleets || hasAttack;
 
   return (
     <div className={cn(
@@ -161,10 +162,18 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
             <Timer endTime={new Date(planet.activeDefense.endTime)} className="inline [&>span]:text-cyan-400" />
           </div>
         )}
-        {planet.outboundFleetCount > 0 && (
+        {planet.outboundFleets && (
           <div className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
-            <Rocket className="h-3 w-3" />
-            <span>{planet.outboundFleetCount} flotte{planet.outboundFleetCount > 1 ? 's' : ''}</span>
+            <ArrowUpRight className="h-3 w-3" />
+            <span>{planet.outboundFleets.count} sortie{planet.outboundFleets.count > 1 ? 's' : ''}</span>
+            <Timer endTime={new Date(planet.outboundFleets.earliestArrival)} className="inline [&>span]:text-muted-foreground" />
+          </div>
+        )}
+        {planet.inboundFriendlyFleets && (
+          <div className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary">
+            <ArrowDownLeft className="h-3 w-3" />
+            <span>{planet.inboundFriendlyFleets.count} arrivée{planet.inboundFriendlyFleets.count > 1 ? 's' : ''}</span>
+            <Timer endTime={new Date(planet.inboundFriendlyFleets.earliestArrival)} className="inline [&>span]:text-primary" />
           </div>
         )}
         {hasAttack && (

@@ -167,8 +167,12 @@ export function createPlanetService(
           const activeShipyard = findEntry('ship');
           const activeDefense = findEntry('defense');
 
+          // Outbound fleets from this planet (count + earliest arrival)
           const [outbound] = await db
-            .select({ count: sql<number>`count(*)::int` })
+            .select({
+              count: sql<number>`count(*)::int`,
+              earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
+            })
             .from(fleetEvents)
             .where(and(
               eq(fleetEvents.originPlanetId, planet.id),
@@ -176,13 +180,32 @@ export function createPlanetService(
               eq(fleetEvents.status, 'active'),
             ));
 
-          const inboundAttacks = await db
-            .select({ arrivalTime: fleetEvents.arrivalTime })
+          // Inbound friendly fleets to this planet (not from this user = could be ally transport, etc.)
+          // Actually, inbound friendly = own fleets returning OR other players' non-attack missions
+          // Simplification: inbound from self (return legs) + inbound non-attack from others
+          const [inboundFriendly] = await db
+            .select({
+              count: sql<number>`count(*)::int`,
+              earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
+            })
             .from(fleetEvents)
             .where(and(
               eq(fleetEvents.targetPlanetId, planet.id),
               eq(fleetEvents.status, 'active'),
-              eq(fleetEvents.mission, 'attack'),
+              sql`(${fleetEvents.userId} = ${userId} OR ${fleetEvents.mission} NOT IN ('attack', 'spy'))`,
+            ));
+
+          // Inbound hostile fleets
+          const inboundAttacks = await db
+            .select({
+              arrivalTime: fleetEvents.arrivalTime,
+              mission: fleetEvents.mission,
+            })
+            .from(fleetEvents)
+            .where(and(
+              eq(fleetEvents.targetPlanetId, planet.id),
+              eq(fleetEvents.status, 'active'),
+              inArray(fleetEvents.mission, ['attack', 'spy']),
               sql`${fleetEvents.userId} != ${userId}`,
             ))
             .orderBy(asc(fleetEvents.arrivalTime))
@@ -223,7 +246,12 @@ export function createPlanetService(
             activeDefense: activeDefense
               ? { defenseId: activeDefense.itemId, quantity: activeDefense.quantity, endTime: activeDefense.endTime.toISOString() }
               : null,
-            outboundFleetCount: outbound?.count ?? 0,
+            outboundFleets: (outbound?.count ?? 0) > 0
+              ? { count: outbound!.count, earliestArrival: outbound!.earliestArrival }
+              : null,
+            inboundFriendlyFleets: (inboundFriendly?.count ?? 0) > 0
+              ? { count: inboundFriendly!.count, earliestArrival: inboundFriendly!.earliestArrival }
+              : null,
             inboundAttack: inboundAttacks[0]
               ? { arrivalTime: inboundAttacks[0].arrivalTime.toISOString() }
               : null,
