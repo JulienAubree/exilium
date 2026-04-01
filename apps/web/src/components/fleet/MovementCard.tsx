@@ -249,7 +249,7 @@ export function MovementCard({
   // Ship icon helper — uses personalized flagship image when available
   const ShipIcon = ({ id, className }: { id: string; className: string }) => {
     if (id === 'flagship' && flagship?.flagshipImageIndex != null) {
-      return <img src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'icon')} alt={shipName(id)} className={className} loading="lazy" />;
+      return <img src={getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'icon')} alt={shipName(id)} className={className} loading="lazy" />;
     }
     return <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className={className} />;
   };

@@ -80,11 +80,6 @@ export default function Profile() {
     }
   }
 
-  function handlePlaystyleChange(value: string) {
-    const playstyle = value === '' ? null : (value as 'miner' | 'warrior' | 'explorer');
-    updateMutation.mutate({ playstyle });
-  }
-
   function handleSeekingAllianceToggle() {
     updateMutation.mutate({ seekingAlliance: !profile!.seekingAlliance });
   }
@@ -234,22 +229,6 @@ export default function Profile() {
           {/* Preferences */}
           <div className="glass-card p-4 space-y-4">
             <h3 className="text-sm font-semibold">Préférences</h3>
-
-            {/* Playstyle select */}
-            <div className="flex items-center justify-between gap-4">
-              <label htmlFor="profile-playstyle" className="text-sm text-muted-foreground">Style de jeu</label>
-              <select
-                id="profile-playstyle"
-                value={profile.playstyle ?? ''}
-                onChange={(e) => handlePlaystyleChange(e.target.value)}
-                className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-              >
-                <option value="">Aucun</option>
-                <option value="miner">Mineur</option>
-                <option value="warrior">Guerrier</option>
-                <option value="explorer">Explorateur</option>
-              </select>
-            </div>
 
             {/* Seeking alliance toggle */}
             <div className="flex items-center justify-between gap-4">

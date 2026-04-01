@@ -47,12 +47,14 @@ function IncapacitatedBanner({
   name,
   repairEndsAt,
   flagshipImageIndex,
+  hullId,
   onRepaired,
   balance,
 }: {
   name: string;
   repairEndsAt: Date;
   flagshipImageIndex: number | null;
+  hullId: string;
   onRepaired: () => void;
   balance: number;
 }) {
@@ -95,7 +97,7 @@ function IncapacitatedBanner({
           <div className="relative shrink-0">
             {flagshipImageIndex ? (
               <img
-                src={getFlagshipImageUrl(flagshipImageIndex, 'thumb')}
+                src={getFlagshipImageUrl(hullId, flagshipImageIndex, 'thumb')}
                 alt={name}
                 className="h-20 w-20 rounded-xl object-cover border border-red-500/30 grayscale opacity-60"
               />
@@ -165,10 +167,77 @@ function IncapacitatedBanner({
   );
 }
 
+function HullRefitBanner({
+  name,
+  refitEndsAt,
+  onComplete,
+}: {
+  name: string;
+  refitEndsAt: Date;
+  onComplete: () => void;
+}) {
+  const totalDuration = useMemo(() => Math.max(1, Math.floor((refitEndsAt.getTime() - Date.now()) / 1000 + 3600)), [refitEndsAt]);
+  const secondsLeft = useCountdown(refitEndsAt);
+  const { h, m, s } = fmtCountdown(secondsLeft);
+  const progress = Math.min(100, ((totalDuration - secondsLeft) / totalDuration) * 100);
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (secondsLeft <= 0 && !firedRef.current) {
+      firedRef.current = true;
+      setTimeout(() => onCompleteRef.current(), 500);
+    }
+  }, [secondsLeft]);
+
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-amber-500/30 bg-amber-950/20">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-amber-500/5 animate-pulse" />
+      </div>
+
+      <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 lg:p-5">
+        <div className="relative shrink-0">
+          <div className="h-20 w-20 rounded-xl bg-amber-950/40 flex items-center justify-center text-2xl font-bold text-amber-500/40 border border-amber-500/30">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400/60">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
+          <div>
+            <h2 className="text-lg font-black text-amber-400 uppercase tracking-tight">Changement de coque</h2>
+            <p className="text-xs text-amber-300/60">
+              <span className="font-semibold text-amber-300/80">{name}</span> est en cours de modification.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full transition-[width] duration-1000 ease-linear bg-gradient-to-r from-amber-600 to-amber-400"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground/40">
+              <span>Modification {Math.round(progress)}%</span>
+              <span>{String(h).padStart(2, '0')}h {String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_LABELS: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Operationnel', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   in_mission: { label: 'En mission', color: 'text-blue-400', dot: 'bg-blue-400' },
   incapacitated: { label: 'Incapacite', color: 'text-red-400', dot: 'bg-red-400' },
+  hull_refit: { label: 'Changement de coque', color: 'text-amber-400', dot: 'bg-amber-400' },
 };
 
 const DRIVE_LABELS: Record<string, string> = {
@@ -249,7 +318,10 @@ function FlagshipSkeleton() {
 export default function FlagshipProfile() {
   const utils = trpc.useUtils();
   const { data: flagship, isLoading } = trpc.flagship.get.useQuery();
-  const { data: flagshipImages } = trpc.flagship.listImages.useQuery();
+  const { data: flagshipImages } = trpc.flagship.listImages.useQuery(
+    { hullId: (flagship?.hullId ?? 'industrial') as 'combat' | 'industrial' | 'scientific' },
+    { enabled: !!flagship },
+  );
   const { data: talentTree } = trpc.talent.list.useQuery();
   const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
@@ -299,10 +371,12 @@ export default function FlagshipProfile() {
   }
 
   const isIncapacitated = flagship.status === 'incapacitated' && flagship.repairEndsAt;
+  const isHullRefit = flagship.status === 'hull_refit' && (flagship as any).refitEndsAt;
 
   const status = STATUS_LABELS[flagship.status] ?? { label: flagship.status, color: 'text-muted-foreground', dot: 'bg-muted-foreground' };
   const effectiveStats = 'effectiveStats' in flagship ? (flagship as any).effectiveStats : null;
   const talentBonuses = 'talentBonuses' in flagship ? (flagship as any).talentBonuses as Record<string, number> : {};
+  const hullConfig = 'hullConfig' in flagship ? (flagship as any).hullConfig as { id: string; name: string; description: string } | null : null;
   const driveType = effectiveStats?.driveType ?? flagship.driveType;
 
   function startEditName() {
@@ -330,8 +404,17 @@ export default function FlagshipProfile() {
           name={flagship.name}
           repairEndsAt={new Date(flagship.repairEndsAt!)}
           flagshipImageIndex={flagship.flagshipImageIndex}
+          hullId={flagship.hullId ?? 'industrial'}
           onRepaired={handleRepaired}
           balance={balance}
+        />
+      )}
+
+      {isHullRefit && (
+        <HullRefitBanner
+          name={flagship.name}
+          refitEndsAt={new Date((flagship as any).refitEndsAt)}
+          onComplete={handleRepaired}
         />
       )}
 
@@ -342,7 +425,7 @@ export default function FlagshipProfile() {
           <div className="relative flex-shrink-0">
             {flagship.flagshipImageIndex ? (
               <img
-                src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'thumb')}
+                src={getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'thumb')}
                 alt={flagship.name}
                 className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-xl object-cover border border-white/10"
               />
@@ -397,6 +480,9 @@ export default function FlagshipProfile() {
                     Renommer
                   </button>
                 </div>
+                {hullConfig && (
+                  <p className="text-[11px] text-amber-400/70 mt-0.5">{hullConfig.name}</p>
+                )}
                 {flagship.description && (
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{flagship.description}</p>
                 )}
@@ -587,7 +673,7 @@ export default function FlagshipProfile() {
                       idx === flagship!.flagshipImageIndex ? 'border-primary ring-2 ring-primary/50' : 'border-white/10 hover:border-white/30'
                     }`}
                   >
-                    <img src={getFlagshipImageUrl(idx, 'thumb')} alt={`Flagship ${idx}`} className="w-full h-full object-cover" />
+                    <img src={getFlagshipImageUrl(flagship!.hullId ?? 'industrial', idx, 'thumb')} alt={`Flagship ${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

@@ -861,7 +861,7 @@ export default function Overview() {
               <div className="flex items-center gap-3">
                 {flagship.flagshipImageIndex ? (
                   <img
-                    src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'icon')}
+                    src={getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'icon')}
                     alt={flagship.name}
                     className="w-10 h-10 rounded-lg object-cover border border-white/10 flex-shrink-0"
                   />

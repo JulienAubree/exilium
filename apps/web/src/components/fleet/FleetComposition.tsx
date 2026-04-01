@@ -12,6 +12,7 @@ interface Ship {
   isStationary?: boolean;
   role?: string | null;
   flagshipImageIndex?: number;
+  hullId?: string;
 }
 
 interface FleetCompositionProps {
@@ -47,7 +48,7 @@ function ShipCard({ ship, value, onChange, onToggle, disabled }: {
       <div className="relative h-24 overflow-hidden">
         {ship.id === 'flagship' && ship.flagshipImageIndex != null ? (
           <img
-            src={getFlagshipImageUrl(ship.flagshipImageIndex, 'full')}
+            src={getFlagshipImageUrl(ship.hullId ?? 'industrial', ship.flagshipImageIndex, 'full')}
             alt={ship.name}
             className="w-full h-full object-cover"
             loading="lazy"

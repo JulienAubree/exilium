@@ -285,7 +285,7 @@ export default function FleetDashboard() {
                     <div className="relative h-24 overflow-hidden bg-gradient-to-br from-amber-950/50 to-amber-900/20 flex items-center justify-center">
                       {flagship.flagshipImageIndex != null ? (
                         <img
-                          src={getFlagshipImageUrl(flagship.flagshipImageIndex, 'full')}
+                          src={getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'full')}
                           alt={flagship.name}
                           className="w-full h-full object-cover"
                           loading="lazy"
