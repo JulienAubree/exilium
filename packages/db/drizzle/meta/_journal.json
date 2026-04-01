@@ -183,6 +183,13 @@
       "when": 1775100000000,
       "tag": "0025_flagship_dynamic_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1775200000000,
+      "tag": "0026_hull_columns_and_migration",
+      "breakpoints": true
     }
   ]
 }
