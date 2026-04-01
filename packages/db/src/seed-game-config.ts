@@ -516,6 +516,55 @@ const TALENT_BRANCHES = [
   { id: 'negociant', name: 'Négociant', description: 'Cargo, commerce & économie', color: '#ffd93d', sortOrder: 2 },
 ];
 
+// ── Hull Definitions ──
+
+const HULLS = [
+  {
+    id: 'combat',
+    name: 'Coque de combat',
+    description: 'Vaisseau taillé pour la guerre. Bonus de stats de combat et réduction du temps de construction des vaisseaux militaires.',
+    playstyle: 'warrior',
+    passiveBonuses: {
+      combat_build_time_reduction: 0.20,
+      bonus_armor: 6,
+      bonus_shot_count: 2,
+      bonus_weapons: 8,
+    },
+    abilities: [],
+    changeCost: { baseMultiplier: 500, resourceRatio: { minerai: 3, silicium: 2, hydrogene: 1 } },
+    unavailabilitySeconds: 7200,
+    cooldownSeconds: 604800,
+  },
+  {
+    id: 'industrial',
+    name: 'Coque industrielle',
+    description: 'Vaisseau optimisé pour l\'extraction et le recyclage. Réduction du temps de construction des vaisseaux industriels.',
+    playstyle: 'miner',
+    passiveBonuses: {
+      industrial_build_time_reduction: 0.20,
+    },
+    abilities: ['mine_mission', 'recycle_mission'],
+    changeCost: { baseMultiplier: 500, resourceRatio: { minerai: 3, silicium: 2, hydrogene: 1 } },
+    unavailabilitySeconds: 7200,
+    cooldownSeconds: 604800,
+  },
+  {
+    id: 'scientific',
+    name: 'Coque scientifique',
+    description: 'Vaisseau orienté recherche et renseignement. Réduction du temps de recherche et capacité de scan.',
+    playstyle: 'explorer',
+    passiveBonuses: {
+      research_time_reduction: 0.20,
+    },
+    abilities: ['scan_mission'],
+    changeCost: { baseMultiplier: 500, resourceRatio: { minerai: 3, silicium: 2, hydrogene: 1 } },
+    unavailabilitySeconds: 7200,
+    cooldownSeconds: 604800,
+    scanCooldownSeconds: 3600,
+    scanEspionageBonus: 2,
+  },
+];
+
 // ── Talent Definitions ──
 
 const TALENT_DEFINITIONS = [
@@ -789,6 +838,11 @@ async function seed() {
   // 17. Talent definitions
   await db.insert(talentDefinitions).values(TALENT_DEFINITIONS);
   console.log(`  ✓ ${TALENT_DEFINITIONS.length} talent definitions`);
+
+  // 18. Hull definitions (stored as JSON in universe_config)
+  await db.insert(universeConfig).values({ key: 'hulls', value: HULLS })
+    .onConflictDoUpdate({ target: universeConfig.key, set: { value: HULLS } });
+  console.log(`  ✓ ${HULLS.length} hull definitions`);
 
   console.log('Seed complete!');
   await client.end();

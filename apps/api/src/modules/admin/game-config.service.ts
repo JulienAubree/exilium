@@ -77,6 +77,23 @@ export interface TalentConfig {
   sortOrder: number;
 }
 
+export interface HullConfig {
+  id: string;
+  name: string;
+  description: string;
+  playstyle: 'warrior' | 'miner' | 'explorer';
+  passiveBonuses: Record<string, number>;
+  abilities: string[];
+  changeCost: {
+    baseMultiplier: number;
+    resourceRatio: { minerai: number; silicium: number; hydrogene: number };
+  };
+  unavailabilitySeconds: number;
+  cooldownSeconds: number;
+  scanCooldownSeconds?: number;
+  scanEspionageBonus?: number;
+}
+
 export interface GameConfig {
   categories: CategoryConfig[];
   buildings: Record<string, BuildingConfig>;
@@ -93,6 +110,7 @@ export interface GameConfig {
   labels: Record<string, string>;
   talentBranches: TalentBranchConfig[];
   talents: Record<string, TalentConfig>;
+  hulls: Record<string, HullConfig>;
 }
 
 export interface BuildingConfig {
@@ -529,7 +547,16 @@ export function createGameConfigService(db: Database) {
       };
     }
 
-    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels, talentBranches, talents };
+    // Hulls (stored as JSON array in universe_config with key 'hulls')
+    const hulls: Record<string, HullConfig> = {};
+    const hullsRaw = universe['hulls'] as HullConfig[] | undefined;
+    if (hullsRaw && Array.isArray(hullsRaw)) {
+      for (const h of hullsRaw) {
+        hulls[h.id] = h;
+      }
+    }
+
+    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels, talentBranches, talents, hulls };
     return cache;
   }
 

@@ -33,6 +33,12 @@ export const flagships = pgTable('flagships', {
   status: varchar('status', { length: 16 }).notNull().default('active'),
   repairEndsAt: timestamp('repair_ends_at', { withTimezone: true }),
 
+  // Coque
+  hullId: varchar('hull_id', { length: 32 }),
+  hullChangedAt: timestamp('hull_changed_at', { withTimezone: true }),
+  hullChangeAvailableAt: timestamp('hull_change_available_at', { withTimezone: true }),
+  refitEndsAt: timestamp('refit_ends_at', { withTimezone: true }),
+
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

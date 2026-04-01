@@ -19,6 +19,7 @@ function makeConfig(overrides: Partial<GameConfig> = {}): GameConfig {
     labels: {},
     talentBranches: [],
     talents: {},
+    hulls: {},
     ...overrides,
   };
 }
