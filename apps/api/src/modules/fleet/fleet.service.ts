@@ -177,7 +177,7 @@ export function createFleetService(
         }
         // Inject flagship stats into shipStatsMap for speed/fuel/cargo calculations
         // Use effective stats (after talent + hull bonuses) when available
-        const efs = flagship.effectiveStats;
+        const efs = 'effectiveStats' in flagship ? flagship.effectiveStats : null;
         const effectiveCargo = efs?.cargoCapacity ?? flagship.cargoCapacity;
         shipStatsMap['flagship'] = {
           baseSpeed: efs?.baseSpeed ?? flagship.baseSpeed,
