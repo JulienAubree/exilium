@@ -27,15 +27,17 @@ mkdir -p "$UPLOADS_DIR"/{buildings,research,ships,defenses,planets,flagships}
 
 # Sync assets from web public to uploads (copies missing files, keeps existing)
 echo "    Syncing assets from web/public to uploads..."
-for cat in buildings research ships defenses flagships; do
+for cat in buildings research ships defenses; do
   if [ -d "apps/web/public/assets/$cat" ] && [ -n "$(ls -A apps/web/public/assets/$cat/ 2>/dev/null)" ]; then
     cp -n apps/web/public/assets/$cat/* "$UPLOADS_DIR/$cat/" 2>/dev/null || true
   fi
 done
-# Planets have subdirectories per class — use recursive copy
-if [ -d "apps/web/public/assets/planets" ]; then
-  cp -rn apps/web/public/assets/planets/* "$UPLOADS_DIR/planets/" 2>/dev/null || true
-fi
+# Planets and flagships have subdirectories — use recursive copy
+for cat in planets flagships; do
+  if [ -d "apps/web/public/assets/$cat" ]; then
+    cp -rn apps/web/public/assets/$cat/* "$UPLOADS_DIR/$cat/" 2>/dev/null || true
+  fi
+done
 
 echo "==> Pushing database schema..."
 pnpm --filter @exilium/db db:push

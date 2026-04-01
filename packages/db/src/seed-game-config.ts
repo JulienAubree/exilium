@@ -858,6 +858,17 @@ async function seed() {
     .onConflictDoUpdate({ target: universeConfig.key, set: { value: HULLS } });
   console.log(`  ✓ ${HULLS.length} hull definitions`);
 
+  // 19. Migrate existing flagships to industrial hull (idempotent)
+  await db.execute(sql`
+    UPDATE flagships SET hull_id = 'industrial' WHERE hull_id IS NULL
+  `);
+  await db.execute(sql`
+    UPDATE users SET playstyle = 'miner'
+    WHERE id IN (SELECT user_id FROM flagships WHERE hull_id = 'industrial')
+    AND (playstyle IS NULL OR playstyle != 'miner')
+  `);
+  console.log(`  ✓ Migrated existing flagships to industrial hull`);
+
   console.log('Seed complete!');
   await client.end();
 }
