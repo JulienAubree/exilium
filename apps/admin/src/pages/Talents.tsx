@@ -113,15 +113,21 @@ function effectParamsSummary(effectType: string, params: any): string {
   return JSON.stringify(params);
 }
 
-// ── Flagship Image Pool ──
+// ── Flagship Image Pool (per hull) ──
 
-function FlagshipImagePool() {
+const HULL_TYPES = [
+  { id: 'combat', label: 'Combat', color: 'text-red-400' },
+  { id: 'industrial', label: 'Industrielle', color: 'text-amber-400' },
+  { id: 'scientific', label: 'Scientifique', color: 'text-cyan-400' },
+];
+
+function FlagshipHullImages({ hullId, label, color }: { hullId: string; label: string; color: string }) {
   const [images, setImages] = useState<{ index: number; thumbUrl: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadImages = async () => {
     try {
-      const res = await fetchWithAuth('/admin/flagship-images');
+      const res = await fetchWithAuth(`/admin/flagship-images/${hullId}`);
       if (res.ok) {
         const data = await res.json();
         setImages(data.images);
@@ -130,35 +136,48 @@ function FlagshipImagePool() {
     setLoading(false);
   };
 
-  useEffect(() => { loadImages(); }, []);
+  useEffect(() => { loadImages(); }, [hullId]);
 
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className={`text-sm font-medium ${color}`}>{label}</span>
+        <span className="text-xs text-gray-500">({images.length})</span>
+      </div>
+      <div className="flex flex-wrap gap-2 items-center">
+        {images.map((img) => (
+          <img
+            key={img.index}
+            src={`${img.thumbUrl}?t=${Date.now()}`}
+            alt={`${label} ${img.index}`}
+            className="w-16 h-16 rounded border border-panel-border object-cover"
+          />
+        ))}
+        <AdminImageUpload
+          category="flagships"
+          entityId={hullId}
+          entityName={`Flagship ${label}`}
+          onUploadComplete={loadImages}
+        />
+      </div>
+      {!loading && images.length === 0 && (
+        <p className="text-xs text-gray-500">Aucun visuel pour cette coque.</p>
+      )}
+    </div>
+  );
+}
+
+function FlagshipImagePool() {
   return (
     <div className="admin-card mb-6">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-panel-border">
         <Ship className="w-4 h-4 text-hull-400" />
         <span className="font-semibold text-gray-100">Visuels du Flagship</span>
-        <span className="text-xs text-gray-500">({images.length} image{images.length > 1 ? 's' : ''})</span>
       </div>
-      <div className="p-4">
-        <div className="flex flex-wrap gap-2 items-center">
-          {images.map((img) => (
-            <img
-              key={img.index}
-              src={`${img.thumbUrl}?t=${Date.now()}`}
-              alt={`Flagship ${img.index}`}
-              className="w-16 h-16 rounded border border-panel-border object-cover"
-            />
-          ))}
-          <AdminImageUpload
-            category="flagships"
-            entityId="flagship"
-            entityName="Flagship"
-            onUploadComplete={loadImages}
-          />
-        </div>
-        {!loading && images.length === 0 && (
-          <p className="text-xs text-gray-500 mt-2">Aucun visuel. Uploadez des images pour que les joueurs puissent choisir l'apparence de leur vaisseau amiral.</p>
-        )}
+      <div className="p-4 space-y-4">
+        {HULL_TYPES.map((hull) => (
+          <FlagshipHullImages key={hull.id} hullId={hull.id} label={hull.label} color={hull.color} />
+        ))}
       </div>
     </div>
   );
