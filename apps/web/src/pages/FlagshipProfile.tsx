@@ -234,6 +234,33 @@ function HullRefitBanner({
   );
 }
 
+function HullCooldownButton({ hullChangeAvailableAt, disabled, onClick }: {
+  hullChangeAvailableAt: string | Date | null;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const endTime = hullChangeAvailableAt ? new Date(hullChangeAvailableAt) : null;
+  const secondsLeft = useCountdown(endTime);
+  const onCooldown = secondsLeft > 0;
+
+  let label = 'Changer de coque';
+  if (onCooldown) {
+    const d = Math.floor(secondsLeft / 86400);
+    const h = Math.floor((secondsLeft % 86400) / 3600);
+    label = `Changement dans ${d}j ${h}h`;
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || onCooldown}
+      className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      {label}
+    </button>
+  );
+}
+
 const STATUS_LABELS: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Operationnel', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   in_mission: { label: 'En mission', color: 'text-blue-400', dot: 'bg-blue-400' },
@@ -485,20 +512,11 @@ export default function FlagshipProfile() {
                 {hullConfig && (
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[11px] text-amber-400/70">{hullConfig.name}</p>
-                    <button
+                    <HullCooldownButton
+                      hullChangeAvailableAt={flagship.hullChangeAvailableAt}
+                      disabled={flagship.status !== 'active'}
                       onClick={() => setShowHullChange(true)}
-                      disabled={flagship.status !== 'active' || (flagship.hullChangeAvailableAt != null && new Date(flagship.hullChangeAvailableAt) > new Date())}
-                      className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      {flagship.hullChangeAvailableAt != null && new Date(flagship.hullChangeAvailableAt) > new Date()
-                        ? (() => {
-                            const secs = Math.max(0, Math.floor((new Date(flagship.hullChangeAvailableAt!).getTime() - Date.now()) / 1000));
-                            const d = Math.floor(secs / 86400);
-                            const h = Math.floor((secs % 86400) / 3600);
-                            return `Changement dans ${d}j ${h}h`;
-                          })()
-                        : 'Changer de coque'}
-                    </button>
+                    />
                   </div>
                 )}
                 {flagship.description && (

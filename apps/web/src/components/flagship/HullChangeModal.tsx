@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { useGameConfig } from '../../hooks/useGameConfig';
@@ -54,7 +54,12 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
   const hulls = config?.hulls ? Object.values(config.hulls) : [];
 
   const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
-  const totalEarned = (exiliumData as any)?.totalEarned ?? 0;
+  const totalEarned = exiliumData?.totalEarned ?? 0;
+
+  // Reset state when modal closes/reopens
+  useEffect(() => {
+    if (!open) { setSelectedHull(null); setShowConfirm(false); }
+  }, [open]);
 
   const utils = trpc.useUtils();
   const changeHullMutation = trpc.flagship.changeHull.useMutation({
