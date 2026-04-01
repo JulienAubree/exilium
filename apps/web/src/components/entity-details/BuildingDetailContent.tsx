@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { useOutletContext } from 'react-router';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { trpc } from '@/trpc';
 import { GameImage } from '@/components/common/GameImage';
 import { PrerequisiteList, type PrerequisiteItem } from '@/components/common/PrerequisiteList';
 import { type PlanetContext } from '@/lib/entity-details';
-import { getBuildingName } from '@/lib/entity-names';
+import { getBuildingName, getResearchName } from '@/lib/entity-names';
 import { buildProductionConfig } from '@/lib/production-config';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
@@ -53,6 +55,7 @@ function getContextualTable(
   productionFactor: number,
   prodConfig?: ReturnType<typeof buildProductionConfig>,
   protectedBaseRatio?: number,
+  armoredMultiplier?: number,
 ): TableData | null {
   const pf = productionFactor;
   const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
@@ -110,6 +113,7 @@ function getContextualTable(
     case 'storageSilicium':
     case 'storageHydrogene': {
       const baseRatio = protectedBaseRatio ?? 0.05;
+      const armoredMult = armoredMultiplier ?? 1;
       return {
         type: 'storage',
         title: 'Capacité de stockage',
@@ -117,7 +121,7 @@ function getContextualTable(
           level,
           capacity: storageCapacity(level, prodConfig?.storage),
           gain: i === 0 ? null : storageCapacity(level, prodConfig?.storage) - storageCapacity(level - 1, prodConfig?.storage),
-          armored: Math.floor(storageCapacity(level, prodConfig?.storage) * baseRatio),
+          armored: Math.floor(storageCapacity(level, prodConfig?.storage) * baseRatio * armoredMult),
         })),
       };
     }
@@ -194,7 +198,24 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
     [gameConfig],
   );
 
+  const isStorageBuilding = buildingId === 'storageMinerai' || buildingId === 'storageSilicium' || buildingId === 'storageHydrogene';
   const protectedBaseRatio = gameConfig ? Number(gameConfig.universe?.['protected_storage_base_ratio']) || 0.05 : 0.05;
+
+  // Fetch research level for armored storage display (only for storage buildings)
+  const { planetId } = useOutletContext<{ planetId?: string }>() ?? {};
+  const { data: researchList } = trpc.research.list.useQuery(
+    { planetId: planetId! },
+    { enabled: isStorageBuilding && !!planetId },
+  );
+  const armoredResearch = researchList?.find((r: any) => r.id === 'armoredStorage');
+  const armoredLevel = armoredResearch?.currentLevel ?? 0;
+
+  // Resolve the bonus multiplier: research gives percentPerLevel (default 5) per level
+  const armoredBonusPerLevel = gameConfig?.bonuses?.find((b: any) => b.stat === 'armored_storage')?.percentPerLevel ?? 5;
+  const armoredMultiplier = 1 + (armoredBonusPerLevel / 100) * armoredLevel;
+  const effectiveRatio = protectedBaseRatio * armoredMultiplier;
+  const currentStorageCap = storageCapacity(currentLevel, prodConfig?.storage);
+  const currentProtected = Math.floor(currentStorageCap * effectiveRatio);
 
   // Contextual table
   const tableData = useMemo(
@@ -206,8 +227,9 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         planetContext?.productionFactor ?? 1,
         prodConfig,
         protectedBaseRatio,
+        armoredMultiplier,
       ),
-    [buildingId, currentLevel, planetContext, prodConfig, protectedBaseRatio],
+    [buildingId, currentLevel, planetContext, prodConfig, protectedBaseRatio, armoredMultiplier],
   );
 
   return (
@@ -249,15 +271,24 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
       )}
 
       {/* 3c. Storage armored explanation */}
-      {(buildingId === 'storageMinerai' || buildingId === 'storageSilicium' || buildingId === 'storageHydrogene') && (
-        <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3 space-y-1.5">
+      {isStorageBuilding && (
+        <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3 space-y-2">
           <div className="text-[10px] uppercase text-green-400 font-semibold tracking-wider">Protection blindée</div>
-          <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-            <li>Une partie du stockage est <span className="text-green-400 font-medium">blindée</span> et <span className="text-green-400 font-medium">impossible à piller</span></li>
-            <li>La capacité blindée de base est de <span className="text-green-400 font-medium">{Math.round(protectedBaseRatio * 100)}%</span> de la capacité totale</li>
-            <li>La recherche <span className="text-green-400 font-medium">Blindage des hangars</span> augmente cette protection de 5% par niveau</li>
-            <li>En cas d'attaque, les ressources sous le seuil blindé sont intouchables</li>
-          </ul>
+          <div className="text-xs text-slate-300 space-y-1.5">
+            <p>En cas d'attaque, <span className="text-green-400 font-medium">{fmt(currentProtected)}</span> ressources sont protégées et <span className="text-green-400 font-medium">impossibles à piller</span>.</p>
+            <div className="rounded bg-[#0d1628] px-2.5 py-2 text-[11px] font-mono text-slate-400 space-y-0.5">
+              <div>Capacité stockage : <span className="text-slate-200">{fmt(currentStorageCap)}</span></div>
+              <div>Ratio de base : <span className="text-slate-200">{Math.round(protectedBaseRatio * 100)}%</span></div>
+              <div>
+                Recherche Blindage : <span className="text-slate-200">Nv.{armoredLevel}</span>
+                {armoredLevel > 0 && <span className="text-green-400"> (×{armoredMultiplier.toFixed(2)})</span>}
+              </div>
+              <div className="border-t border-slate-700 pt-1 mt-1">
+                = {fmt(currentStorageCap)} × {Math.round(protectedBaseRatio * 100)}%{armoredLevel > 0 ? ` × ${armoredMultiplier.toFixed(2)}` : ''} = <span className="text-green-400 font-semibold">{fmt(currentProtected)}</span>
+              </div>
+            </div>
+            <p className="text-slate-500">Améliorez ce hangar ou la recherche <span className="text-green-400/80">Blindage des hangars</span> pour augmenter la protection.</p>
+          </div>
         </div>
       )}
 
