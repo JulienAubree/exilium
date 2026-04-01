@@ -1,12 +1,34 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 import { planets, planetShips } from '@exilium/db';
 import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
 
 export class StationHandler implements MissionHandler {
-  async validateFleet(_input: SendFleetInput, _config: GameConfig, _ctx: MissionHandlerContext): Promise<void> {
-    // No station-specific validation
+  async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
+    // Station only allowed on own planets
+    const [target] = await ctx.db
+      .select({ userId: planets.userId })
+      .from(planets)
+      .where(
+        and(
+          eq(planets.galaxy, input.targetGalaxy),
+          eq(planets.system, input.targetSystem),
+          eq(planets.position, input.targetPosition),
+        ),
+      )
+      .limit(1);
+
+    const [origin] = await ctx.db
+      .select({ userId: planets.userId })
+      .from(planets)
+      .where(eq(planets.id, input.originPlanetId))
+      .limit(1);
+
+    if (!target || !origin || target.userId !== origin.userId) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le stationnement n\'est possible que sur vos propres planètes' });
+    }
   }
 
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
