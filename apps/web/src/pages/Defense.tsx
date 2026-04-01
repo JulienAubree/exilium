@@ -92,6 +92,7 @@ export default function Defense() {
       utils.shipyard.defenses.invalidate({ planetId: planetId! });
       utils.shipyard.queue.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
     },
   });
 
@@ -100,6 +101,7 @@ export default function Defense() {
       utils.shipyard.queue.invalidate({ planetId: planetId! });
       utils.shipyard.defenses.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
       setCancelConfirm(null);
     },
   });
@@ -110,6 +112,7 @@ export default function Defense() {
       utils.shipyard.ships.invalidate();
       utils.shipyard.defenses.invalidate();
       utils.resource.production.invalidate();
+      utils.planet.empire.invalidate();
     },
   });
 

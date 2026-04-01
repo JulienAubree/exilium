@@ -93,6 +93,7 @@ export default function Shipyard() {
       utils.shipyard.ships.invalidate({ planetId: planetId! });
       utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
     },
   });
 
@@ -101,6 +102,7 @@ export default function Shipyard() {
       utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
       utils.shipyard.ships.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
       setCancelConfirm(null);
     },
   });
@@ -111,6 +113,7 @@ export default function Shipyard() {
       utils.shipyard.ships.invalidate();
       utils.shipyard.defenses.invalidate();
       utils.resource.production.invalidate();
+      utils.planet.empire.invalidate();
     },
   });
 

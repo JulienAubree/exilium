@@ -49,6 +49,7 @@ export default function FleetDashboard() {
   const recallMutation = trpc.fleet.recall.useMutation({
     onSuccess: () => {
       utils.fleet.movements.invalidate();
+      utils.planet.empire.invalidate();
       setRecallConfirm(null);
     },
   });

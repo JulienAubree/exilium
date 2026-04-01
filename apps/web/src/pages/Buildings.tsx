@@ -186,6 +186,7 @@ export default function Buildings() {
     onSuccess: () => {
       utils.building.list.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
     },
   });
 
@@ -193,6 +194,7 @@ export default function Buildings() {
     onSuccess: () => {
       utils.building.list.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
       setCancelConfirm(false);
     },
   });
