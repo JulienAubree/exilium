@@ -380,7 +380,7 @@ export function createTalentService(
     async computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> {
       // 1. Fetch flagship — return {} if none exists
       const [flagship] = await db
-        .select({ id: flagships.id, planetId: flagships.planetId, status: flagships.status })
+        .select({ id: flagships.id, planetId: flagships.planetId, status: flagships.status, hullId: flagships.hullId })
         .from(flagships)
         .where(eq(flagships.userId, userId))
         .limit(1);
@@ -444,6 +444,18 @@ export function createTalentService(
           }
 
           // modify_stat: skip — already handled by getStatBonuses()
+        }
+      }
+
+      // Inject hull passive bonuses (only when stationed on the planet)
+      if (flagship.hullId && flagship.status === 'active' && planetId && flagship.planetId === planetId) {
+        const hullConfig = config.hulls[flagship.hullId];
+        if (hullConfig) {
+          for (const [key, value] of Object.entries(hullConfig.passiveBonuses)) {
+            if (key.endsWith('_time_reduction') || key.endsWith('_build_time_reduction')) {
+              ctx[`hull_${key}`] = value as number;
+            }
+          }
         }
       }
 

@@ -116,7 +116,18 @@ export function createFlagshipService(
           }
         }
 
-        return { ...flagship, talentBonuses: statBonuses, effectiveStats };
+        // Apply hull combat bonuses (only when stationed)
+        let hullConfig = null;
+        if (flagship.hullId && flagship.status === 'active') {
+          hullConfig = config.hulls[flagship.hullId] ?? null;
+          if (hullConfig) {
+            effectiveStats.weapons += (hullConfig.passiveBonuses.bonus_weapons ?? 0);
+            effectiveStats.baseArmor += (hullConfig.passiveBonuses.bonus_armor ?? 0);
+            effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);
+          }
+        }
+
+        return { ...flagship, talentBonuses: statBonuses, effectiveStats, hullConfig };
       }
 
       return flagship;
