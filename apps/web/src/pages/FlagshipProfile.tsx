@@ -261,6 +261,12 @@ function HullCooldownButton({ hullChangeAvailableAt, disabled, onClick }: {
   );
 }
 
+const HULL_CARD_STYLES: Record<string, { border: string; glow: string }> = {
+  combat: { border: 'border-red-500/30', glow: 'shadow-[0_0_15px_-3px_rgba(239,68,68,0.15)]' },
+  industrial: { border: 'border-amber-500/30', glow: 'shadow-[0_0_15px_-3px_rgba(245,158,11,0.15)]' },
+  scientific: { border: 'border-cyan-500/30', glow: 'shadow-[0_0_15px_-3px_rgba(6,182,212,0.15)]' },
+};
+
 const STATUS_LABELS: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Operationnel', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   in_mission: { label: 'En mission', color: 'text-blue-400', dot: 'bg-blue-400' },
@@ -448,7 +454,7 @@ export default function FlagshipProfile() {
       )}
 
       {/* ===== Identity Card ===== */}
-      <div className="glass-card p-4 lg:p-5">
+      <div className={cn('glass-card p-4 lg:p-5 border', HULL_CARD_STYLES[flagship.hullId ?? 'industrial']?.border ?? '', HULL_CARD_STYLES[flagship.hullId ?? 'industrial']?.glow ?? '')}>
         <div className="flex gap-4 lg:gap-5">
           {/* Image — fixed size */}
           <div className="relative flex-shrink-0">
@@ -567,7 +573,7 @@ export default function FlagshipProfile() {
       </div>
 
       {/* ===== Stats Card ===== */}
-      <div className="glass-card p-4 lg:p-5 space-y-4">
+      <div className={cn('glass-card p-4 lg:p-5 space-y-4 border', HULL_CARD_STYLES[flagship.hullId ?? 'industrial']?.border ?? '')}>
         {/* Defense */}
         <div>
           <SectionHeader icon={<ShieldIcon size={14} className="text-sky-400" />} label="Defense" color="text-sky-400" />
