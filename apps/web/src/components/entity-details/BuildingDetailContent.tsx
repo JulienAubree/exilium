@@ -33,7 +33,7 @@ interface Props {
 
 interface MineRow { level: number; production: number; gain: number | null; energy: number }
 interface SolarRow { level: number; production: number; gain: number | null }
-interface StorageRow { level: number; capacity: number; gain: number | null }
+interface StorageRow { level: number; capacity: number; gain: number | null; armored: number }
 interface MissionCenterRow { level: number; cooldown: number; depositSize: number }
 interface MarketRow { level: number; maxOffers: number }
 interface ShieldRow { level: number; shield: number; energy: number }
@@ -52,6 +52,7 @@ function getContextualTable(
   maxTemp: number,
   productionFactor: number,
   prodConfig?: ReturnType<typeof buildProductionConfig>,
+  protectedBaseRatio?: number,
 ): TableData | null {
   const pf = productionFactor;
   const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
@@ -107,7 +108,8 @@ function getContextualTable(
       };
     case 'storageMinerai':
     case 'storageSilicium':
-    case 'storageHydrogene':
+    case 'storageHydrogene': {
+      const baseRatio = protectedBaseRatio ?? 0.05;
       return {
         type: 'storage',
         title: 'Capacité de stockage',
@@ -115,8 +117,10 @@ function getContextualTable(
           level,
           capacity: storageCapacity(level, prodConfig?.storage),
           gain: i === 0 ? null : storageCapacity(level, prodConfig?.storage) - storageCapacity(level - 1, prodConfig?.storage),
+          armored: Math.floor(storageCapacity(level, prodConfig?.storage) * baseRatio),
         })),
       };
+    }
     case 'missionCenter':
       return {
         type: 'missionCenter',
@@ -190,6 +194,8 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
     [gameConfig],
   );
 
+  const protectedBaseRatio = gameConfig ? Number(gameConfig.universe?.['protected_storage_base_ratio']) || 0.05 : 0.05;
+
   // Contextual table
   const tableData = useMemo(
     () =>
@@ -199,8 +205,9 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         planetContext?.maxTemp ?? 50,
         planetContext?.productionFactor ?? 1,
         prodConfig,
+        protectedBaseRatio,
       ),
-    [buildingId, currentLevel, planetContext, prodConfig],
+    [buildingId, currentLevel, planetContext, prodConfig, protectedBaseRatio],
   );
 
   return (
@@ -237,6 +244,19 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
             <li>Tant que le bouclier n'est pas percé dans un round, les <span className="text-cyan-400 font-medium">défenses planétaires sont intouchables</span></li>
             <li>L'attaquant doit infliger assez de dégâts en un seul round pour le percer</li>
             <li>Puissance réglable de 0% à 100% dans les paramètres d'énergie</li>
+          </ul>
+        </div>
+      )}
+
+      {/* 3c. Storage armored explanation */}
+      {(buildingId === 'storageMinerai' || buildingId === 'storageSilicium' || buildingId === 'storageHydrogene') && (
+        <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3 space-y-1.5">
+          <div className="text-[10px] uppercase text-green-400 font-semibold tracking-wider">Protection blindée</div>
+          <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+            <li>Une partie du stockage est <span className="text-green-400 font-medium">blindée</span> et <span className="text-green-400 font-medium">impossible à piller</span></li>
+            <li>La capacité blindée de base est de <span className="text-green-400 font-medium">{Math.round(protectedBaseRatio * 100)}%</span> de la capacité totale</li>
+            <li>La recherche <span className="text-green-400 font-medium">Blindage des hangars</span> augmente cette protection de 5% par niveau</li>
+            <li>En cas d'attaque, les ressources sous le seuil blindé sont intouchables</li>
           </ul>
         </div>
       )}
@@ -319,6 +339,9 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                     <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-emerald-500">
                       Gain
                     </th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-green-500">
+                      Blindée
+                    </th>
                   </>
                 )}
                 {tableData.type === 'missionCenter' && (
@@ -393,6 +416,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                     <td className="px-2 py-1.5 text-right text-emerald-500">
                       {row.gain != null ? `+${fmt(row.gain)}` : '\u2014'}
                     </td>
+                    <td className="px-2 py-1.5 text-right text-green-500">{fmt(row.armored)}</td>
                   </tr>
                 ))}
               {tableData.type === 'missionCenter' &&
