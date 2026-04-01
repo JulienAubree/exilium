@@ -89,13 +89,11 @@ export async function processPlanetImage(
 
 export async function processFlagshipImage(
   buffer: Buffer,
+  hullId: string,
   imageIndex: number,
   assetsDir: string,
-  hullId?: string,
 ): Promise<string[]> {
-  const outputDir = hullId
-    ? path.join(assetsDir, 'flagships', hullId)
-    : path.join(assetsDir, 'flagships');
+  const outputDir = path.join(assetsDir, 'flagships', hullId);
   fs.mkdirSync(outputDir, { recursive: true });
 
   const files: string[] = [];

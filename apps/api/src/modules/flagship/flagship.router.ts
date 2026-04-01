@@ -47,7 +47,7 @@ export function createFlagshipRouter(
       }),
 
     listImages: protectedProcedure
-      .input(z.object({ hullId: z.string() }))
+      .input(z.object({ hullId: z.enum(['combat', 'industrial', 'scientific']) }))
       .query(async ({ input }) => {
         return flagshipService.listImages(input.hullId);
       }),

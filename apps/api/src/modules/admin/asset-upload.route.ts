@@ -72,7 +72,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       } else if (category === 'flagships') {
         const hullId = entityId!;
         const nextIndex = getNextFlagshipImageIndex(hullId, env.ASSETS_DIR);
-        files = await processFlagshipImage(buffer, nextIndex, env.ASSETS_DIR, hullId);
+        files = await processFlagshipImage(buffer, hullId, nextIndex, env.ASSETS_DIR);
       } else {
         files = await processImage(buffer, category, entityId!, env.ASSETS_DIR);
       }
