@@ -117,27 +117,10 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
             });
             if (tutorialResult) {
               publishNotification(redis, result.userId, {
-                type: 'tutorial-quest-complete',
+                type: 'tutorial-quest-pending',
                 payload: {
-                  questId: tutorialResult.completedQuest.id,
-                  questTitle: tutorialResult.completedQuest.title,
-                  reward: tutorialResult.reward,
-                  nextQuest: tutorialResult.nextQuest
-                    ? { id: tutorialResult.nextQuest.id, title: tutorialResult.nextQuest.title }
-                    : null,
-                  tutorialComplete: tutorialResult.tutorialComplete,
-                },
-              });
-
-              await db.insert(gameEvents).values({
-                userId: result.userId,
-                planetId: result.planetId,
-                type: 'tutorial-quest-done',
-                payload: {
-                  questId: tutorialResult.completedQuest.id,
-                  questTitle: tutorialResult.completedQuest.title,
-                  reward: tutorialResult.reward,
-                  tutorialComplete: tutorialResult.tutorialComplete,
+                  questId: tutorialResult.questId,
+                  pendingCompletion: true,
                 },
               });
             }

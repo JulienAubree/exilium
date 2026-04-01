@@ -1,5 +1,5 @@
 import { eq, and, asc } from 'drizzle-orm';
-import { tutorialProgress, planets, planetBuildings, planetShips, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions, flagships } from '@exilium/db';
+import { tutorialProgress, tutorialChapters, planets, planetBuildings, planetShips, planetDefenses, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createPveService } from '../pve/pve.service.js';
 
@@ -8,8 +8,11 @@ export interface TutorialQuest {
   order: number;
   title: string;
   narrativeText: string;
+  chapterId: string;
+  journalEntry: string;
+  objectiveLabel: string;
   condition: {
-    type: 'building_level' | 'ship_count' | 'mission_complete' | 'research_level' | 'fleet_return' | 'flagship_named';
+    type: 'building_level' | 'ship_count' | 'mission_complete' | 'research_level' | 'fleet_return' | 'flagship_named' | 'defense_count';
     targetId: string;
     targetValue: number;
   };
@@ -21,7 +24,11 @@ export interface CompletedQuestEntry {
   completedAt: string;
 }
 
-export function createTutorialService(db: Database, pveService?: ReturnType<typeof createPveService>) {
+export function createTutorialService(
+  db: Database,
+  pveService?: ReturnType<typeof createPveService>,
+  exiliumService?: { earn(userId: string, amount: number, source: string, details?: unknown): Promise<void> },
+) {
   async function loadQuests(): Promise<TutorialQuest[]> {
     const rows = await db
       .select()
@@ -32,6 +39,9 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
       order: r.order,
       title: r.title,
       narrativeText: r.narrativeText,
+      chapterId: r.chapterId,
+      journalEntry: r.journalEntry,
+      objectiveLabel: r.objectiveLabel,
       condition: {
         type: r.conditionType as TutorialQuest['condition']['type'],
         targetId: r.conditionTargetId,
@@ -43,6 +53,98 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
         hydrogene: r.rewardHydrogene,
       },
     }));
+  }
+
+  async function loadChapters() {
+    return db.select().from(tutorialChapters).orderBy(asc(tutorialChapters.order));
+  }
+
+  /** Query the actual current progress value toward a quest condition */
+  async function getCurrentProgress(userId: string, condition: TutorialQuest['condition']): Promise<number> {
+    if (condition.type === 'building_level') {
+      const levels = await db
+        .select({ level: planetBuildings.level })
+        .from(planetBuildings)
+        .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
+        .where(
+          and(
+            eq(planets.userId, userId),
+            eq(planetBuildings.buildingId, condition.targetId),
+          ),
+        )
+        .limit(1);
+      return levels[0]?.level ?? 0;
+
+    } else if (condition.type === 'research_level') {
+      const [research] = await db
+        .select()
+        .from(userResearch)
+        .where(eq(userResearch.userId, userId))
+        .limit(1);
+      if (research) {
+        return (research[condition.targetId as keyof typeof research] ?? 0) as number;
+      }
+      return 0;
+
+    } else if (condition.type === 'ship_count') {
+      const col = condition.targetId;
+      const ships = await db
+        .select()
+        .from(planetShips)
+        .innerJoin(planets, eq(planets.id, planetShips.planetId))
+        .where(eq(planets.userId, userId));
+      return ships.reduce((sum, row) => {
+        return sum + ((row.planet_ships[col as keyof typeof row.planet_ships] ?? 0) as number);
+      }, 0);
+
+    } else if (condition.type === 'defense_count') {
+      const col = condition.targetId;
+      const defenses = await db
+        .select()
+        .from(planetDefenses)
+        .innerJoin(planets, eq(planets.id, planetDefenses.planetId))
+        .where(eq(planets.userId, userId));
+      return defenses.reduce((sum, row) => {
+        return sum + ((row.planet_defenses[col as keyof typeof row.planet_defenses] ?? 0) as number);
+      }, 0);
+
+    } else if (condition.type === 'fleet_return') {
+      const [completedFleet] = await db
+        .select({ id: fleetEvents.id })
+        .from(fleetEvents)
+        .where(
+          and(
+            eq(fleetEvents.userId, userId),
+            eq(fleetEvents.status, 'completed'),
+          ),
+        )
+        .limit(1);
+      return completedFleet ? 1 : 0;
+
+    } else if (condition.type === 'mission_complete') {
+      const [completedMission] = await db
+        .select({ id: pveMissions.id })
+        .from(pveMissions)
+        .where(
+          and(
+            eq(pveMissions.userId, userId),
+            eq(pveMissions.missionType, condition.targetId),
+            eq(pveMissions.status, 'completed'),
+          ),
+        )
+        .limit(1);
+      return completedMission ? 1 : 0;
+
+    } else if (condition.type === 'flagship_named') {
+      const [flagship] = await db
+        .select({ id: flagships.id })
+        .from(flagships)
+        .where(eq(flagships.userId, userId))
+        .limit(1);
+      return flagship ? 1 : 0;
+    }
+
+    return 0;
   }
 
   return {
@@ -63,11 +165,8 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
     },
 
     async getCurrent(userId: string) {
-      // Catch-up loop: auto-complete quests that are already satisfied
-      let catchUpResult = await this.checkCompletion(userId);
-      while (catchUpResult) {
-        catchUpResult = await this.checkCompletion(userId);
-      }
+      // Single check: if quest condition is met, set pendingCompletion
+      await this.checkCompletion(userId);
 
       const progress = await this.getOrCreateProgress(userId);
 
@@ -84,17 +183,69 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
       const tutorialMiningMissionId = metadata?.tutorialMiningMissionId ?? null;
 
       if (progress.isComplete) {
-        return { isComplete: true, quest: null, completedQuests: progress.completedQuests as CompletedQuestEntry[], playerCoords, tutorialMiningMissionId: null };
+        return {
+          isComplete: true,
+          quest: null,
+          completedQuests: progress.completedQuests as CompletedQuestEntry[],
+          playerCoords,
+          tutorialMiningMissionId: null,
+          pendingCompletion: false,
+          chapter: null,
+          currentProgress: 0,
+          targetValue: 0,
+          objectiveLabel: null,
+          journalEntry: null,
+        };
       }
 
       const quests = await loadQuests();
       const quest = quests.find(q => q.id === progress.currentQuestId);
+      if (!quest) {
+        return {
+          isComplete: false,
+          quest: null,
+          completedQuests: progress.completedQuests as CompletedQuestEntry[],
+          playerCoords,
+          tutorialMiningMissionId,
+          pendingCompletion: false,
+          chapter: null,
+          currentProgress: 0,
+          targetValue: 0,
+          objectiveLabel: null,
+          journalEntry: null,
+        };
+      }
+
+      // Load chapter info
+      const chapters = await loadChapters();
+      const chapter = chapters.find(c => c.id === quest.chapterId);
+      const questsInChapter = quests.filter(q => q.chapterId === quest.chapterId);
+      const completedQuests = (progress.completedQuests as CompletedQuestEntry[]) || [];
+      const completedInChapter = questsInChapter.filter(q =>
+        completedQuests.some(cq => cq.questId === q.id),
+      ).length;
+
+      // Get current progress toward objective
+      const currentProgress = await getCurrentProgress(userId, quest.condition);
+
       return {
         isComplete: false,
-        quest: quest ?? null,
-        completedQuests: progress.completedQuests as CompletedQuestEntry[],
+        quest,
+        completedQuests,
         playerCoords,
         tutorialMiningMissionId,
+        pendingCompletion: progress.pendingCompletion,
+        chapter: chapter ? {
+          id: chapter.id,
+          title: chapter.title,
+          journalIntro: chapter.journalIntro,
+          questCount: questsInChapter.length,
+          completedInChapter,
+        } : null,
+        currentProgress,
+        targetValue: quest.condition.targetValue,
+        objectiveLabel: quest.objectiveLabel,
+        journalEntry: quest.journalEntry,
       };
     },
 
@@ -115,20 +266,63 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
       if (quest.condition.targetId !== 'any' && quest.condition.targetId !== event.targetId) return null;
       if (event.targetValue < quest.condition.targetValue) return null;
 
-      // Quest is complete — award resources and advance
-      const completedQuests = (progress.completedQuests as CompletedQuestEntry[]) || [];
-      completedQuests.push({ questId: quest.id, completedAt: new Date().toISOString() });
+      // Condition met: set pendingCompletion instead of auto-completing
+      if (!progress.pendingCompletion) {
+        await db
+          .update(tutorialProgress)
+          .set({ pendingCompletion: true, updatedAt: new Date() })
+          .where(eq(tutorialProgress.id, progress.id));
+      }
 
-      const nextQuest = quests.find(q => q.order === quest.order + 1);
+      return { pendingCompletion: true, questId: quest.id };
+    },
 
-      // Award resources to user's first planet
+    async checkCompletion(userId: string) {
+      const progress = await this.getOrCreateProgress(userId);
+      if (progress.isComplete) return null;
+
+      const quests = await loadQuests();
+      const quest = quests.find(q => q.id === progress.currentQuestId);
+      if (!quest) return null;
+
+      // If already pending, no need to re-check
+      if (progress.pendingCompletion) return true;
+
+      // Check if current quest condition is met
+      const currentValue = await getCurrentProgress(userId, quest.condition);
+      const conditionMet = currentValue >= quest.condition.targetValue;
+
+      if (!conditionMet) return null;
+
+      // Condition met: set pendingCompletion
+      await db
+        .update(tutorialProgress)
+        .set({ pendingCompletion: true, updatedAt: new Date() })
+        .where(eq(tutorialProgress.id, progress.id));
+
+      return true;
+    },
+
+    async completeCurrentQuest(userId: string) {
+      const progress = await this.getOrCreateProgress(userId);
+      if (progress.isComplete) return { error: 'tutorial_already_complete' };
+      if (!progress.pendingCompletion) return { error: 'quest_not_ready' };
+
+      const quests = await loadQuests();
+      const chapters = await loadChapters();
+      const quest = quests.find(q => q.id === progress.currentQuestId);
+      if (!quest) return { error: 'quest_not_found' };
+
+      const chapter = chapters.find(c => c.id === quest.chapterId);
+
+      // Award quest resources to user's first planet
       const [planet] = await db
         .select()
         .from(planets)
         .where(eq(planets.userId, userId))
         .limit(1);
 
-      if (planet) {
+      if (planet && (quest.reward.minerai > 0 || quest.reward.silicium > 0 || quest.reward.hydrogene > 0)) {
         await db
           .update(planets)
           .set({
@@ -139,13 +333,91 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
           .where(eq(planets.id, planet.id));
       }
 
-      // Update progress
+      // Update completed quests
+      const completedQuests = (progress.completedQuests as CompletedQuestEntry[]) || [];
+      completedQuests.push({ questId: quest.id, completedAt: new Date().toISOString() });
+
+      // Check if this is the last quest of the chapter
+      const questsInChapter = quests.filter(q => q.chapterId === quest.chapterId);
+      const completedInChapter = questsInChapter.filter(q =>
+        completedQuests.some(cq => cq.questId === q.id),
+      ).length;
+      const isLastQuestOfChapter = completedInChapter >= questsInChapter.length;
+
+      let chapterReward = null;
+      if (isLastQuestOfChapter && chapter && planet) {
+        // Award chapter resource rewards
+        if (chapter.rewardMinerai > 0 || chapter.rewardSilicium > 0 || chapter.rewardHydrogene > 0) {
+          // Re-read planet to get fresh values after quest reward
+          const [freshPlanet] = await db
+            .select()
+            .from(planets)
+            .where(eq(planets.id, planet.id))
+            .limit(1);
+          if (freshPlanet) {
+            await db
+              .update(planets)
+              .set({
+                minerai: String(Number(freshPlanet.minerai) + chapter.rewardMinerai),
+                silicium: String(Number(freshPlanet.silicium) + chapter.rewardSilicium),
+                hydrogene: String(Number(freshPlanet.hydrogene) + chapter.rewardHydrogene),
+              })
+              .where(eq(planets.id, planet.id));
+          }
+        }
+
+        // Award chapter unit rewards
+        const rewardUnits = (chapter.rewardUnits ?? []) as Array<{ shipId: string; quantity: number }>;
+        for (const unit of rewardUnits) {
+          if (unit.quantity > 0) {
+            // Ensure planetShips row exists
+            await db
+              .insert(planetShips)
+              .values({ planetId: planet.id })
+              .onConflictDoNothing();
+
+            // Increment ship count
+            const ships = await db
+              .select()
+              .from(planetShips)
+              .where(eq(planetShips.planetId, planet.id))
+              .limit(1);
+            if (ships[0]) {
+              const col = unit.shipId as keyof typeof ships[0];
+              const current = (ships[0][col] ?? 0) as number;
+              await db
+                .update(planetShips)
+                .set({ [unit.shipId]: current + unit.quantity })
+                .where(eq(planetShips.planetId, planet.id));
+            }
+          }
+        }
+
+        // Award chapter Exilium
+        if (chapter.rewardExilium > 0 && exiliumService) {
+          await exiliumService.earn(userId, chapter.rewardExilium, 'tutorial');
+        }
+
+        chapterReward = {
+          minerai: chapter.rewardMinerai,
+          silicium: chapter.rewardSilicium,
+          hydrogene: chapter.rewardHydrogene,
+          exilium: chapter.rewardExilium,
+          units: rewardUnits,
+        };
+      }
+
+      // Advance to next quest
+      const nextQuest = quests.find(q => q.order === quest.order + 1);
+      const tutorialComplete = !nextQuest;
+
       await db
         .update(tutorialProgress)
         .set({
           currentQuestId: nextQuest ? nextQuest.id : quest.id,
           completedQuests,
-          isComplete: !nextQuest,
+          isComplete: tutorialComplete,
+          pendingCompletion: false,
           updatedAt: new Date(),
         })
         .where(eq(tutorialProgress.id, progress.id));
@@ -154,7 +426,6 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
       if (quest.id === 'quest_14' && pveService && planet) {
         try {
           await pveService.generateDiscoveredMission(userId, planet.galaxy, planet.system, 1);
-          // Query the PvE mission that was just created to store its ID
           const missions = await pveService.getMissions(userId);
           const tutorialMission = missions.find(m =>
             (m.parameters as { position?: number })?.position === 8
@@ -178,108 +449,25 @@ export function createTutorialService(db: Database, pveService?: ReturnType<type
           .where(eq(tutorialProgress.id, progress.id));
       }
 
-      return {
-        completedQuest: quest,
-        reward: quest.reward,
-        nextQuest: nextQuest ?? null,
-        tutorialComplete: !nextQuest,
-      };
-    },
-
-    async checkCompletion(userId: string) {
-      const progress = await this.getOrCreateProgress(userId);
-      if (progress.isComplete) return null;
-
-      const quests = await loadQuests();
-      const quest = quests.find(q => q.id === progress.currentQuestId);
-      if (!quest) return null;
-
-      // Check if current quest condition is met
-      let conditionMet = false;
-
-      if (quest.condition.type === 'building_level') {
-        const levels = await db
-          .select({ level: planetBuildings.level })
-          .from(planetBuildings)
-          .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
-          .where(
-            and(
-              eq(planets.userId, userId),
-              eq(planetBuildings.buildingId, quest.condition.targetId),
-            ),
-          )
-          .limit(1);
-
-        conditionMet = (levels[0]?.level ?? 0) >= quest.condition.targetValue;
-      } else if (quest.condition.type === 'ship_count') {
-        const col = quest.condition.targetId;
-        const ships = await db
-          .select()
-          .from(planetShips)
-          .innerJoin(planets, eq(planets.id, planetShips.planetId))
-          .where(eq(planets.userId, userId));
-
-        const totalCount = ships.reduce((sum, row) => {
-          return sum + ((row.planet_ships[col as keyof typeof row.planet_ships] ?? 0) as number);
-        }, 0);
-
-        conditionMet = totalCount >= quest.condition.targetValue;
-      } else if (quest.condition.type === 'research_level') {
-        const [research] = await db
-          .select()
-          .from(userResearch)
-          .where(eq(userResearch.userId, userId))
-          .limit(1);
-
-        if (research) {
-          const level = (research[quest.condition.targetId as keyof typeof research] ?? 0) as number;
-          conditionMet = level >= quest.condition.targetValue;
+      // Check if the NEW quest is already satisfied -> set pendingCompletion
+      if (nextQuest) {
+        const nextValue = await getCurrentProgress(userId, nextQuest.condition);
+        if (nextValue >= nextQuest.condition.targetValue) {
+          await db
+            .update(tutorialProgress)
+            .set({ pendingCompletion: true, updatedAt: new Date() })
+            .where(eq(tutorialProgress.id, progress.id));
         }
-      } else if (quest.condition.type === 'fleet_return') {
-        const [completedFleet] = await db
-          .select({ id: fleetEvents.id })
-          .from(fleetEvents)
-          .where(
-            and(
-              eq(fleetEvents.userId, userId),
-              eq(fleetEvents.status, 'completed'),
-            ),
-          )
-          .limit(1);
-
-        conditionMet = !!completedFleet;
-      } else if (quest.condition.type === 'mission_complete') {
-        const [completedMission] = await db
-          .select({ id: pveMissions.id })
-          .from(pveMissions)
-          .where(
-            and(
-              eq(pveMissions.userId, userId),
-              eq(pveMissions.missionType, quest.condition.targetId),
-              eq(pveMissions.status, 'completed'),
-            ),
-          )
-          .limit(1);
-
-        conditionMet = !!completedMission;
-      } else if (quest.condition.type === 'flagship_named') {
-        // flagship_named : verifie simplement que le flagship existe
-        const [flagship] = await db
-          .select({ id: flagships.id })
-          .from(flagships)
-          .where(eq(flagships.userId, userId))
-          .limit(1);
-
-        conditionMet = !!flagship;
       }
 
-      if (!conditionMet) return null;
-
-      return this.checkAndComplete(userId, {
-        type: quest.condition.type,
-        targetId: quest.condition.targetId,
-        targetValue: quest.condition.targetValue,
-      });
+      // Return updated state (same shape as getCurrent)
+      return this.getCurrent(userId).then(state => ({
+        ...state,
+        completedQuest: quest,
+        questReward: quest.reward,
+        chapterReward,
+        tutorialComplete,
+      }));
     },
   };
 }

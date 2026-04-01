@@ -1,4 +1,4 @@
-export type TutorialCheckType = 'building_level' | 'research_level' | 'ship_count' | 'fleet_return' | 'mission_complete';
+export type TutorialCheckType = 'building_level' | 'research_level' | 'ship_count' | 'defense_count' | 'fleet_return' | 'mission_complete';
 
 export type BuildCompletionResult = {
   userId: string;

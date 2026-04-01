@@ -326,11 +326,11 @@ export function createShipyardService(
             buildType: entry.type,
             planetName: planet?.name ?? 'Planète',
           },
-          tutorialCheck: entry.type === 'ship' ? {
-            type: 'ship_count',
-            targetId: entry.itemId,
-            targetValue: newCompletedCount,
-          } : undefined,
+          tutorialCheck: entry.type === 'ship'
+            ? { type: 'ship_count' as const, targetId: entry.itemId, targetValue: newCompletedCount }
+            : entry.type === 'defense'
+              ? { type: 'defense_count' as const, targetId: entry.itemId, targetValue: newCompletedCount }
+              : undefined,
         };
       }
 

@@ -7,5 +7,10 @@ export function createTutorialRouter(tutorialService: ReturnType<typeof createTu
       .query(async ({ ctx }) => {
         return tutorialService.getCurrent(ctx.userId!);
       }),
+
+    completeQuest: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        return tutorialService.completeCurrentQuest(ctx.userId!);
+      }),
   });
 }

@@ -14,6 +14,7 @@ export type ExiliumSource =
   | 'flagship_repair'
   | 'talent_unlock'
   | 'respec'
+  | 'tutorial'
   | 'admin';
 
 export function createExiliumService(db: Database, gameConfigService: GameConfigService) {
