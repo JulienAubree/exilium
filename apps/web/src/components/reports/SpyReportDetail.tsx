@@ -1,4 +1,5 @@
 // apps/web/src/components/reports/SpyReportDetail.tsx
+import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
 import { getShipName, getDefenseName, getBuildingName, getResearchName } from '@/lib/entity-names';
 
@@ -11,9 +12,10 @@ const RESOURCE_COLORS: Record<string, string> = {
 interface SpyReportDetailProps {
   result: Record<string, any>;
   gameConfig: any;
+  coordinates?: { galaxy: number; system: number; position: number };
 }
 
-export function SpyReportDetail({ result, gameConfig }: SpyReportDetailProps) {
+export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDetailProps) {
   const visibility = result.visibility ?? {};
   const visibilityKeys = ['resources', 'fleet', 'defenses', 'buildings', 'research'] as const;
   const probeCount: number = result.probeCount ?? 0;
@@ -27,6 +29,32 @@ export function SpyReportDetail({ result, gameConfig }: SpyReportDetailProps) {
 
   return (
     <div className="space-y-4">
+      {/* Quick actions */}
+      {coordinates && (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to={`/fleet/send?mission=spy&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`}
+            className="inline-flex items-center gap-1.5 rounded-md bg-violet-500/20 px-3 py-1.5 text-xs font-semibold text-violet-400 transition-colors hover:bg-violet-500/30"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            Relancer l'espionnage
+          </Link>
+          <Link
+            to={`/fleet/send?mission=attack&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`}
+            className="inline-flex items-center gap-1.5 rounded-md bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/30"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m5 12 7-7 7 7" />
+              <path d="M12 19V5" />
+            </svg>
+            Attaquer
+          </Link>
+        </div>
+      )}
+
       {/* Visibility & Detection */}
       <div>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Informations obtenues</h3>
