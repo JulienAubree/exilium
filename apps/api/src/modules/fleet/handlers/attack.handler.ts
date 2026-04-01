@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings } from '@exilium/db';
-import { simulateCombat, totalCargoCapacity, calculateShieldCapacity } from '@exilium/game-engine';
+import { planets, planetShips, planetDefenses, planetBuildings, userResearch } from '@exilium/db';
+import { simulateCombat, totalCargoCapacity, calculateShieldCapacity, calculateProtectedResources } from '@exilium/game-engine';
 import type { CombatInput, RoundResult } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
@@ -243,6 +243,7 @@ export class AttackHandler implements MissionHandler {
     let pillagedMinerai = 0;
     let pillagedSilicium = 0;
     let pillagedHydrogene = 0;
+    let protectedResources = { minerai: 0, silicium: 0, hydrogene: 0 };
 
     if (outcome === 'attacker') {
       const remainingCargoCapacity = totalCargoCapacity(survivingShips, shipStatsMap);
@@ -252,12 +253,55 @@ export class AttackHandler implements MissionHandler {
         await ctx.resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
         const [updatedPlanet] = await ctx.db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
 
-        // Pillage: apply ratio (33% max) then talent protection (capped at 90%)
+        // Armored storage: calculate protected resources
+        const defenderBuildingLevels = await ctx.resourceService.getBuildingLevels(targetPlanet.id);
+
+        const findBuildingIdByRole = (buildings: Record<string, any>, role: string): string | undefined =>
+          Object.entries(buildings).find(([, b]) => (b as any).role === role)?.[0];
+
+        const storageMineraiId = findBuildingIdByRole(config.buildings, 'storage_minerai');
+        const storageSiliciumId = findBuildingIdByRole(config.buildings, 'storage_silicium');
+        const storageHydrogeneId = findBuildingIdByRole(config.buildings, 'storage_hydrogene');
+
+        const [defenderResearchRow] = await ctx.db
+          .select()
+          .from(userResearch)
+          .where(eq(userResearch.userId, targetPlanet.userId))
+          .limit(1);
+
+        const defenderResearchLevels: Record<string, number> = {};
+        if (defenderResearchRow) {
+          for (const [key, rDef] of Object.entries(config.research)) {
+            defenderResearchLevels[key] = (defenderResearchRow[rDef.levelColumn as keyof typeof defenderResearchRow] ?? 0) as number;
+          }
+        }
+
+        const baseRatio = Number(config.universe['protected_storage_base_ratio']) || 0.05;
+        const storageConfig = config.universe['storage_config'] as
+          { storageBase: number; coeffA: number; coeffB: number; coeffC: number } | undefined;
+
+        protectedResources = calculateProtectedResources(
+          {
+            storageMineraiLevel: storageMineraiId ? (defenderBuildingLevels[storageMineraiId] ?? 0) : 0,
+            storageSiliciumLevel: storageSiliciumId ? (defenderBuildingLevels[storageSiliciumId] ?? 0) : 0,
+            storageHydrogeneLevel: storageHydrogeneId ? (defenderBuildingLevels[storageHydrogeneId] ?? 0) : 0,
+            minerai: Number(updatedPlanet.minerai),
+            silicium: Number(updatedPlanet.silicium),
+            hydrogene: Number(updatedPlanet.hydrogene),
+          },
+          baseRatio,
+          defenderResearchLevels,
+          config.bonuses,
+          storageConfig,
+          defenderTalentCtx,
+        );
+
+        // Pillage: subtract protected resources, apply ratio (33% max) then talent protection (capped at 90%)
         const pillageProtection = 1 - Math.min(0.9, defenderTalentCtx['pillage_protection'] ?? 0);
         const ratio = combatConfig.pillageRatio;
-        const availMinerai = Math.floor(Number(updatedPlanet.minerai) * ratio * pillageProtection);
-        const availSilicium = Math.floor(Number(updatedPlanet.silicium) * ratio * pillageProtection);
-        const availHydrogene = Math.floor(Number(updatedPlanet.hydrogene) * ratio * pillageProtection);
+        const availMinerai = Math.floor(Math.max(0, Number(updatedPlanet.minerai) - protectedResources.minerai) * ratio * pillageProtection);
+        const availSilicium = Math.floor(Math.max(0, Number(updatedPlanet.silicium) - protectedResources.silicium) * ratio * pillageProtection);
+        const availHydrogene = Math.floor(Math.max(0, Number(updatedPlanet.hydrogene) - protectedResources.hydrogene) * ratio * pillageProtection);
 
         const thirdCargo = Math.floor(availableCargo / 3);
 
@@ -335,6 +379,11 @@ export class AttackHandler implements MissionHandler {
           minerai: pillagedMinerai,
           silicium: pillagedSilicium,
           hydrogene: pillagedHydrogene,
+        };
+        reportResult.protectedResources = {
+          minerai: protectedResources.minerai,
+          silicium: protectedResources.silicium,
+          hydrogene: protectedResources.hydrogene,
         };
       }
       if (planetaryShieldCapacity > 0) {
