@@ -2,11 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Scan /assets/flagships/ for hero images (N.webp without suffix).
+ * Scan /assets/flagships/{hullId}/ for hero images (N.webp without suffix).
  * Returns a random index from available images, or null if none exist.
  */
-export function getRandomFlagshipImageIndex(assetsDir: string): number | null {
-  const dir = path.join(assetsDir, 'flagships');
+export function getRandomFlagshipImageIndex(hullId: string, assetsDir: string): number | null {
+  const dir = path.join(assetsDir, 'flagships', hullId);
   if (!fs.existsSync(dir)) return null;
 
   const indexes = fs.readdirSync(dir)
@@ -19,10 +19,10 @@ export function getRandomFlagshipImageIndex(assetsDir: string): number | null {
 }
 
 /**
- * Get the next available index for flagship images (for upload).
+ * Get the next available index for flagship images of a given hull (for upload).
  */
-export function getNextFlagshipImageIndex(assetsDir: string): number {
-  const dir = path.join(assetsDir, 'flagships');
+export function getNextFlagshipImageIndex(hullId: string, assetsDir: string): number {
+  const dir = path.join(assetsDir, 'flagships', hullId);
   if (!fs.existsSync(dir)) return 1;
 
   const indexes = fs.readdirSync(dir)
@@ -34,10 +34,10 @@ export function getNextFlagshipImageIndex(assetsDir: string): number {
 }
 
 /**
- * List all available image indexes for flagships.
+ * List all available image indexes for flagships of a given hull.
  */
-export function listFlagshipImageIndexes(assetsDir: string): number[] {
-  const dir = path.join(assetsDir, 'flagships');
+export function listFlagshipImageIndexes(hullId: string, assetsDir: string): number[] {
+  const dir = path.join(assetsDir, 'flagships', hullId);
   if (!fs.existsSync(dir)) return [];
 
   return fs.readdirSync(dir)

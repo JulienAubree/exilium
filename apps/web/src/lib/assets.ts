@@ -21,8 +21,9 @@ export function getPlanetImageUrl(
 }
 
 export function getFlagshipImageUrl(
+  hullId: string,
   imageIndex: number,
   size: AssetSize = 'full',
 ): string {
-  return `/assets/flagships/${imageIndex}${SUFFIX[size]}.webp`;
+  return `/assets/flagships/${hullId}/${imageIndex}${SUFFIX[size]}.webp`;
 }
