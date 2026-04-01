@@ -65,7 +65,7 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
 
   return (
     <div className={cn(
-      'rounded-xl border bg-card/80 overflow-hidden transition-colors',
+      'flex flex-col rounded-xl border bg-card/80 overflow-hidden transition-colors',
       hasAttack
         ? 'border-destructive/25 hover:border-destructive/60 hover:shadow-lg hover:shadow-destructive/10'
         : 'border-border/50 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/5',
@@ -133,71 +133,71 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
       </div>
 
       {/* Status badges */}
-      <div className="flex flex-wrap gap-1.5 px-3.5 pb-2.5">
+      <div className="flex flex-1 flex-wrap content-start gap-1.5 px-3.5 pb-2.5">
         {planet.activeBuild && (
-          <div className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
+          <button onClick={() => goTo('/buildings')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/80 transition-colors">
             <Hammer className="h-3 w-3" />
             <span>{getBuildingName(planet.activeBuild.buildingId, gameConfig)} Nv.{planet.activeBuild.level}</span>
             <Timer endTime={new Date(planet.activeBuild.endTime)} className="inline [&>span]:text-energy" />
-          </div>
+          </button>
         )}
         {planet.activeResearch && (
-          <div className="flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-1 text-[11px] text-purple-400">
+          <button onClick={() => goTo('/research')} className="flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-1 text-[11px] text-purple-400 hover:bg-purple-500/20 transition-colors">
             <FlaskConical className="h-3 w-3" />
             <span>{getResearchName(planet.activeResearch.researchId, gameConfig)}</span>
             <Timer endTime={new Date(planet.activeResearch.endTime)} className="inline [&>span]:text-purple-400" />
-          </div>
+          </button>
         )}
         {planet.activeShipyard && (
-          <div className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary">
+          <button onClick={() => goTo('/shipyard')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
             <ShipyardIcon width={12} height={12} />
-            <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} ×{planet.activeShipyard.quantity}</span>
+            <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} x{planet.activeShipyard.quantity}</span>
             <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />
-          </div>
+          </button>
         )}
         {planet.activeDefense && (
-          <div className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400">
+          <button onClick={() => goTo('/defense')} className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400 hover:bg-cyan-500/20 transition-colors">
             <ShieldPlus className="h-3 w-3" />
-            <span>{getDefenseName(planet.activeDefense.defenseId, gameConfig)} ×{planet.activeDefense.quantity}</span>
+            <span>{getDefenseName(planet.activeDefense.defenseId, gameConfig)} x{planet.activeDefense.quantity}</span>
             <Timer endTime={new Date(planet.activeDefense.endTime)} className="inline [&>span]:text-cyan-400" />
-          </div>
+          </button>
         )}
         {planet.outboundFleets && (
-          <div className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/80 transition-colors">
             <ArrowUpRight className="h-3 w-3" />
             <span>{planet.outboundFleets.count} sortie{planet.outboundFleets.count > 1 ? 's' : ''}</span>
             <Timer endTime={new Date(planet.outboundFleets.earliestArrival)} className="inline [&>span]:text-muted-foreground" />
-          </div>
+          </button>
         )}
         {planet.inboundFriendlyFleets && (
-          <div className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
             <ArrowDownLeft className="h-3 w-3" />
-            <span>{planet.inboundFriendlyFleets.count} arrivée{planet.inboundFriendlyFleets.count > 1 ? 's' : ''}</span>
+            <span>{planet.inboundFriendlyFleets.count} arrivee{planet.inboundFriendlyFleets.count > 1 ? 's' : ''}</span>
             <Timer endTime={new Date(planet.inboundFriendlyFleets.earliestArrival)} className="inline [&>span]:text-primary" />
-          </div>
+          </button>
         )}
         {hasAttack && (
-          <div className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1 text-[11px] text-destructive">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1 text-[11px] text-destructive hover:bg-destructive/20 transition-colors">
             <ShieldAlert className="h-3 w-3" />
             <span>Attaque</span>
             <Timer endTime={new Date(planet.inboundAttack!.arrivalTime)} className="inline [&>span]:text-destructive" />
-          </div>
+          </button>
         )}
         {planet.energyConsumed > planet.energyProduced && !hasAttack && (
-          <div className="flex items-center gap-1 rounded-md border border-energy/20 bg-energy/10 px-2 py-1 text-[11px] text-energy">
-            ⚡ Déficit énergie
-          </div>
+          <button onClick={() => goTo('/energy')} className="flex items-center gap-1 rounded-md border border-energy/20 bg-energy/10 px-2 py-1 text-[11px] text-energy hover:bg-energy/20 transition-colors">
+            ⚡ Deficit energie
+          </button>
         )}
         {!hasActivity && planet.energyConsumed <= planet.energyProduced && (
           <div className="flex items-center gap-1 rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1 text-[11px] text-green-500">
             <Check className="h-3 w-3" />
-            <span>Aucune activité</span>
+            <span>Aucune activite</span>
           </div>
         )}
       </div>
 
       {/* Nav shortcuts */}
-      <div className="flex border-t border-border/30">
+      <div className="mt-auto flex border-t border-border/30">
         {[
           { label: 'Bâtiments', icon: Building2, path: '/buildings' },
           { label: 'Chantier', icon: Wrench, path: '/shipyard' },
