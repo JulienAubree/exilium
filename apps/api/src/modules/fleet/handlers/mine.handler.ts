@@ -4,15 +4,15 @@ import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } fro
 import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { buildShipStatsMap, formatDuration } from '../fleet.types.js';
-import { findShipByRole } from '../../../lib/config-helpers.js';
+import { findShipsByRole } from '../../../lib/config-helpers.js';
 
 export class MineHandler implements PhasedMissionHandler {
   async validateFleet(input: SendFleetInput, config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
     const fullConfig = await ctx.gameConfigService.getFullConfig();
-    const prospectorDef = findShipByRole(fullConfig, 'mining');
-    const prospectorCount = input.ships[prospectorDef.id] ?? 0;
-    if (prospectorCount === 0) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 prospecteur' });
+    const miningShips = findShipsByRole(fullConfig, 'mining');
+    const miningCount = miningShips.reduce((sum, def) => sum + (input.ships[def.id] ?? 0), 0);
+    if (miningCount === 0) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 vaisseau minier' });
     }
     const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
     if (!beltPositions.includes(input.targetPosition)) {

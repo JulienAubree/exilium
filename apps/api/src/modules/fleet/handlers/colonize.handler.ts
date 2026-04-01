@@ -5,14 +5,14 @@ import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapaci
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
-import { findShipByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
+import { findShipByRole, findShipsByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
 
 export class ColonizeHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
     const config = await ctx.gameConfigService.getFullConfig();
-    const colonyShipDef = findShipByRole(config, 'colonization');
+    const allowedIds = new Set(findShipsByRole(config, 'colonization').map((s) => s.id));
     for (const [shipType, count] of Object.entries(input.ships)) {
-      if (count > 0 && shipType !== colonyShipDef.id) {
+      if (count > 0 && !allowedIds.has(shipType) && shipType !== 'flagship') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seuls les vaisseaux de colonisation peuvent être envoyés en mission colonisation' });
       }
     }

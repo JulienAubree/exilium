@@ -4,7 +4,6 @@ import { debrisFields, planets } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { formatDuration, buildShipStatsMap } from '../fleet.types.js';
 import { totalCargoCapacity } from '@exilium/game-engine';
-import { findShipByRole } from '../../../lib/config-helpers.js';
 
 export class RecycleHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {

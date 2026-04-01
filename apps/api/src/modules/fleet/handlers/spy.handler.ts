@@ -6,7 +6,7 @@ import type { Database } from '@exilium/db';
 import type { CombatInput } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
-import { findShipByRole } from '../../../lib/config-helpers.js';
+import { findShipByRole, findShipsByRole } from '../../../lib/config-helpers.js';
 import { publishNotification } from '../../notification/notification.publisher.js';
 import {
   buildCombatConfig,
@@ -26,9 +26,9 @@ import {
 export class SpyHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
     const config = await ctx.gameConfigService.getFullConfig();
-    const probeDef = findShipByRole(config, 'espionage');
+    const allowedIds = new Set(findShipsByRole(config, 'espionage').map((s) => s.id));
     for (const [shipType, count] of Object.entries(input.ships)) {
-      if (count > 0 && shipType !== probeDef.id && shipType !== 'flagship') {
+      if (count > 0 && !allowedIds.has(shipType) && shipType !== 'flagship') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seules les sondes d\'espionnage peuvent être envoyées en mission espionnage' });
       }
     }

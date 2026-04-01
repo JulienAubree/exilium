@@ -6,6 +6,12 @@ export function findShipByRole(config: GameConfig, role: string): ShipConfig {
   return ship;
 }
 
+export function findShipsByRole(config: GameConfig, role: string): ShipConfig[] {
+  const ships = Object.values(config.ships).filter((s) => s.role === role);
+  if (ships.length === 0) throw new Error(`No ship with role "${role}" found in config`);
+  return ships;
+}
+
 export function findBuildingByRole(config: GameConfig, role: string): BuildingConfig {
   const building = Object.values(config.buildings).find((b) => b.role === role);
   if (!building) throw new Error(`No building with role "${role}" found in config`);
