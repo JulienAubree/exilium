@@ -72,22 +72,26 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
           alt={details.name}
           className="w-full h-full object-cover"
         />
-        {/* Role badge - top left */}
-        {role && ROLE_LABELS[role] && (
-          <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded bg-black/60 text-foreground backdrop-blur-sm border border-white/10">
-            {ROLE_LABELS[role]}
-          </span>
-        )}
-        {/* Armor badge - top right */}
-        {combatCategoryId && ARMOR_LABELS[combatCategoryId] && (
-          <span className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded bg-black/60 text-foreground backdrop-blur-sm border border-white/10">
-            {ARMOR_LABELS[combatCategoryId]}
-          </span>
-        )}
       </div>
 
       {/* Ship name */}
       <h3 className="text-lg font-semibold text-white">{details.name}</h3>
+
+      {/* Role & armor badges */}
+      {(role || combatCategoryId) && (
+        <div className="flex gap-1.5 flex-wrap">
+          {role && ROLE_LABELS[role] && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+              {ROLE_LABELS[role]}
+            </span>
+          )}
+          {combatCategoryId && ARMOR_LABELS[combatCategoryId] && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border/30">
+              {ARMOR_LABELS[combatCategoryId]}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Flavor text */}
       {details.flavorText && (
