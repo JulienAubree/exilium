@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
@@ -7,10 +7,20 @@ import { FlagshipNamingModal } from '@/components/flagship/FlagshipNamingModal';
 export function TutorialPanel() {
   const { data, isLoading } = trpc.tutorial.getCurrent.useQuery();
   const [minimized, setMinimized] = useState(false);
+  const [introSeen, setIntroSeen] = useState(false);
   const [showNamingModal, setShowNamingModal] = useState(false);
   const navigate = useNavigate();
 
   const utils = trpc.useUtils();
+
+  // Reset introSeen when chapter changes
+  const prevChapterRef = useRef(data?.chapter?.id);
+  useEffect(() => {
+    if (data?.chapter?.id && data.chapter.id !== prevChapterRef.current) {
+      setIntroSeen(false);
+      prevChapterRef.current = data.chapter.id;
+    }
+  }, [data?.chapter?.id]);
   const completeQuest = trpc.tutorial.completeQuest.useMutation({
     onSuccess: () => {
       utils.tutorial.getCurrent.invalidate();
@@ -46,8 +56,8 @@ export function TutorialPanel() {
     );
   }
 
-  // State 2: Chapter intro (new chapter, no quests completed yet, not pending)
-  const isChapterIntro = chapter && completedInChapter === 0 && !data.pendingCompletion && quest;
+  // State 2: Chapter intro (new chapter, no quests completed yet, not pending, not seen yet)
+  const isChapterIntro = chapter && completedInChapter === 0 && !data.pendingCompletion && quest && !introSeen;
   if (isChapterIntro && chapter) {
     return (
       <div className="fixed bottom-16 right-3 z-40 w-72 rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm lg:bottom-4 lg:w-80">
@@ -70,10 +80,7 @@ export function TutorialPanel() {
             {chapter.journalIntro}
           </p>
           <button
-            onClick={() => {
-              /* Chapter intro acknowledged — panel will show the first quest */
-              setMinimized(false);
-            }}
+            onClick={() => setIntroSeen(true)}
             className="mt-3 w-full rounded-md bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/30"
           >
             Commencer
