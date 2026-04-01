@@ -412,6 +412,7 @@ const UNIVERSE_CONFIG = [
   { key: 'pve_tier_hard_unlock', value: 6 },
   { key: 'pve_deposit_variance_min', value: 0.6 },
   { key: 'pve_deposit_variance_max', value: 1.6 },
+  { key: 'pve_loot_multiplier', value: 0.1 },
 
   // ── FP (Facteur de Puissance) ──
   { key: 'fp_shotcount_exponent', value: 1.5 },
