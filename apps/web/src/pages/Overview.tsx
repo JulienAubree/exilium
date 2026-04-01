@@ -31,12 +31,13 @@ import {
 
 // ── Circular gauge (inline, used only here) ──
 
-function ResourceGauge({ current, capacity, rate, label, color }: {
+function ResourceGauge({ current, capacity, rate, label, color, protectedAmount }: {
   current: number;
   capacity: number;
   rate: number;
   label: string;
   color: string;
+  protectedAmount?: number;
 }) {
   const pct = capacity > 0 ? Math.min(100, Math.round((current / capacity) * 100)) : 0;
   const radius = 28;
@@ -52,11 +53,28 @@ function ResourceGauge({ current, capacity, rate, label, color }: {
             cx={33} cy={33} r={radius} fill="none" stroke={color} strokeWidth={3}
             strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
           />
+          {protectedAmount != null && protectedAmount > 0 && (() => {
+            const protPct = Math.min(100, (protectedAmount / capacity) * 100);
+            const protOffset = circumference - (protPct / 100) * circumference;
+            return (
+              <circle
+                cx={33} cy={33} r={radius} fill="none" stroke="#22c55e" strokeWidth={2}
+                strokeDasharray={circumference} strokeDashoffset={protOffset}
+                strokeLinecap="round" opacity={0.4}
+              />
+            );
+          })()}
         </svg>
         <span className="text-xs font-semibold" style={{ color }}>{pct}%</span>
       </div>
       <div className="text-[10px] mt-1 font-medium" style={{ color }}>{label}</div>
       <div className="text-[10px] text-muted-foreground">+{Math.floor(rate).toLocaleString('fr-FR')}/h</div>
+      {protectedAmount != null && protectedAmount > 0 && (
+        <div className="text-[9px] text-green-500/70 flex items-center justify-center gap-0.5">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          {Math.floor(protectedAmount).toLocaleString('fr-FR')}
+        </div>
+      )}
     </div>
   );
 }
@@ -102,6 +120,7 @@ function ProductionStorageCard({ planetId }: { planetId: string }) {
           rate={resourceData?.rates.mineraiPerHour ?? 0}
           label="Minerai"
           color="#fb923c"
+          protectedAmount={resourceData?.protectedMinerai}
         />
         <ResourceGauge
           current={resources?.silicium ?? 0}
@@ -109,6 +128,7 @@ function ProductionStorageCard({ planetId }: { planetId: string }) {
           rate={resourceData?.rates.siliciumPerHour ?? 0}
           label="Silicium"
           color="#34d399"
+          protectedAmount={resourceData?.protectedSilicium}
         />
         <ResourceGauge
           current={resources?.hydrogene ?? 0}
@@ -116,6 +136,7 @@ function ProductionStorageCard({ planetId }: { planetId: string }) {
           rate={resourceData?.rates.hydrogenePerHour ?? 0}
           label="Hydrogene"
           color="#60a5fa"
+          protectedAmount={resourceData?.protectedHydrogene}
         />
       </div>
     </section>

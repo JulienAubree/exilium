@@ -251,6 +251,29 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
                 )
               ))}
             </div>
+            {result.protectedResources && (
+              result.protectedResources.minerai > 0 ||
+              result.protectedResources.silicium > 0 ||
+              result.protectedResources.hydrogene > 0
+            ) && (
+              <div className="mt-3">
+                <h4 className="text-xs font-semibold text-green-500 mb-1.5 flex items-center gap-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Ressources protégées
+                </h4>
+                <div className="flex gap-3">
+                  {result.protectedResources.minerai > 0 && (
+                    <span className={cn('text-xs', RESOURCE_COLORS.minerai)}>{fmt(result.protectedResources.minerai)} minerai</span>
+                  )}
+                  {result.protectedResources.silicium > 0 && (
+                    <span className={cn('text-xs', RESOURCE_COLORS.silicium)}>{fmt(result.protectedResources.silicium)} silicium</span>
+                  )}
+                  {result.protectedResources.hydrogene > 0 && (
+                    <span className={cn('text-xs', RESOURCE_COLORS.hydrogene)}>{fmt(result.protectedResources.hydrogene)} hydrogène</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         {result.debris && (result.debris.minerai > 0 || result.debris.silicium > 0) && (
