@@ -5,7 +5,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { EditModal } from '@/components/ui/EditModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
-import { Plus, Pencil, Trash2, Sparkles, ChevronDown, ChevronRight, Ship } from 'lucide-react';
+import { Plus, Pencil, Trash2, Sparkles, ChevronDown, ChevronRight, Ship, Shield, Zap } from 'lucide-react';
 
 // ── Branch CRUD ──
 
@@ -183,6 +183,119 @@ function FlagshipImagePool() {
   );
 }
 
+// ── Hull Config Section ──
+
+const BONUS_LABELS: Record<string, string> = {
+  combat_build_time_reduction: 'Temps construction militaire',
+  industrial_build_time_reduction: 'Temps construction industrielle',
+  research_time_reduction: 'Temps de recherche',
+  bonus_armor: 'Blindage',
+  bonus_shot_count: 'Attaques',
+  bonus_weapons: 'Armes',
+};
+
+function HullConfigSection({ hulls }: { hulls: Record<string, any> }) {
+  if (!hulls || Object.keys(hulls).length === 0) return null;
+
+  const hullList = Object.values(hulls);
+
+  return (
+    <div className="admin-card mb-6">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-panel-border">
+        <Shield className="w-4 h-4 text-cyan-400" />
+        <span className="font-semibold text-gray-100">Configuration des coques</span>
+        <span className="text-xs text-gray-500">({hullList.length})</span>
+      </div>
+      <div className="divide-y divide-panel-border">
+        {hullList.map((hull: any) => {
+          const hullStyle = HULL_TYPES.find(h => h.id === hull.id);
+          return (
+            <div key={hull.id} className="p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${hullStyle?.color ?? 'text-gray-200'}`}>{hull.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 font-mono">{hull.id}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-500">playstyle: {hull.playstyle}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-400">{hull.description}</p>
+
+              {/* Passive bonuses */}
+              <div>
+                <div className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider mb-1">Bonus passifs</div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(hull.passiveBonuses ?? {}).map(([key, val]) => (
+                    <span key={key} className="text-[11px] px-2 py-1 rounded bg-gray-800/80 border border-gray-700/50 text-gray-300">
+                      <span className="text-gray-500">{BONUS_LABELS[key] ?? key}:</span>{' '}
+                      <span className="font-semibold text-gray-200">
+                        {typeof val === 'number' && val < 1 ? `${(val as number) * 100}%` : String(val)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bonus labels (displayed to players) */}
+              {hull.bonusLabels && hull.bonusLabels.length > 0 && (
+                <div>
+                  <div className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider mb-1">Labels affiches aux joueurs</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {hull.bonusLabels.map((label: string, i: number) => (
+                      <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-gray-800/60 text-gray-400 italic">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Abilities */}
+              {hull.abilities && hull.abilities.length > 0 && (
+                <div>
+                  <div className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider mb-1">Capacites</div>
+                  <div className="flex gap-2">
+                    {hull.abilities.map((a: string) => (
+                      <span key={a} className="text-[11px] px-2 py-1 rounded bg-cyan-900/30 border border-cyan-800/30 text-cyan-400 font-mono">
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Scan params */}
+              {hull.scanCooldownSeconds != null && (
+                <div>
+                  <div className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider mb-1">Parametres scan</div>
+                  <div className="flex gap-3 text-[11px] text-gray-400">
+                    <span>Cooldown: <span className="text-gray-200 font-semibold">{hull.scanCooldownSeconds}s</span> ({Math.round(hull.scanCooldownSeconds / 60)}min)</span>
+                    <span>Bonus espionnage: <span className="text-gray-200 font-semibold">+{hull.scanEspionageBonus ?? 0}</span></span>
+                  </div>
+                </div>
+              )}
+
+              {/* Change cost */}
+              <div>
+                <div className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider mb-1">Cout de changement</div>
+                <div className="flex gap-3 text-[11px] text-gray-400">
+                  <span>Multiplicateur: <span className="text-gray-200 font-semibold">{hull.changeCost?.baseMultiplier ?? '?'}</span> x totalEarned</span>
+                  <span>Ratio: <span className="text-orange-400">{hull.changeCost?.resourceRatio?.minerai ?? 0}</span>/<span className="text-emerald-400">{hull.changeCost?.resourceRatio?.silicium ?? 0}</span>/<span className="text-blue-400">{hull.changeCost?.resourceRatio?.hydrogene ?? 0}</span></span>
+                </div>
+                <div className="flex gap-3 text-[11px] text-gray-400 mt-0.5">
+                  <span>Indisponibilite: <span className="text-gray-200 font-semibold">{hull.unavailabilitySeconds}s</span> ({Math.round(hull.unavailabilitySeconds / 3600)}h)</span>
+                  <span>Cooldown: <span className="text-gray-200 font-semibold">{hull.cooldownSeconds}s</span> ({Math.round(hull.cooldownSeconds / 86400)}j)</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ──
 
 export default function Talents() {
@@ -261,6 +374,7 @@ export default function Talents() {
       </div>
 
       <FlagshipImagePool />
+      <HullConfigSection hulls={data?.hulls ?? {}} />
 
       {branches.length === 0 && (
         <div className="admin-card p-8 text-center text-gray-500">Aucune branche de talent configuree.</div>
