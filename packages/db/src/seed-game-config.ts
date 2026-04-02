@@ -626,6 +626,8 @@ const TALENT_DEFINITIONS: any[] = [
   { id: 'sci_fuel', branchId: 'scientifique', tier: 1, position: 'left', name: 'Economiseur', description: '-1 consommation carburant par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'fuelConsumption', perRank: -1 }, sortOrder: 0 },
   { id: 'sci_shots', branchId: 'scientifique', tier: 1, position: 'center', name: 'Tirs de precision', description: '+1 tir par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shotCount', perRank: 1 }, sortOrder: 1 },
   { id: 'sci_shield', branchId: 'scientifique', tier: 1, position: 'right', name: 'Champ de force', description: '+2 bouclier par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shield', perRank: 2 }, sortOrder: 2 },
+  // Tier 2
+  { id: 'sci_research_time', branchId: 'scientifique', tier: 2, position: 'center', name: 'Protocoles avances', description: '-10% temps de recherche', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'research_time', perRank: 0.10 }, sortOrder: 3 },
 ];
 
 async function seed() {
