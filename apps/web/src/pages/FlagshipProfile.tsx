@@ -380,64 +380,66 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
         </div>
       </div>
 
-      {/* Active abilities — cards */}
+      {/* Active abilities — retro-card style */}
       {hasActiveAbilities && (
-        <div className={cn('glass-card p-4 lg:p-5 border', styles.border)}>
-          <SectionHeader
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
-            label="Capacites actives"
-            color={styles.badgeText}
-          />
-          <div className="mt-3 grid grid-cols-1 gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.badgeText}>
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.badgeText)}>Capacites actives</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Scan card */}
             {hullId === 'scientific' && (
               <div className={cn(
-                'relative rounded-lg border p-4 transition-all overflow-hidden',
-                scanOnCooldown
-                  ? 'border-slate-600/50 bg-slate-900/60'
-                  : 'border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10',
+                'retro-card relative overflow-hidden flex flex-col',
+                scanOnCooldown && 'opacity-80',
               )}>
-                {/* Cooldown overlay */}
-                {scanOnCooldown && (
-                  <div className="absolute inset-0 pointer-events-none">
+                {/* Hero zone — icon placeholder (admin can upload later) */}
+                <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-cyan-950/60 to-slate-900 flex items-center justify-center">
+                  <CooldownIcon
+                    secondsLeft={scanSecondsLeft}
+                    totalSeconds={hullConfig.scanCooldownSeconds ?? 1800}
+                    size={56}
+                    icon={
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                      </svg>
+                    }
+                  />
+                  {/* Cooldown sweep overlay on hero */}
+                  {scanOnCooldown && (
                     <div
-                      className="absolute inset-0 bg-slate-800/50"
+                      className="absolute inset-0 bg-slate-900/60 pointer-events-none"
                       style={{
                         clipPath: `inset(0 ${((hullConfig.scanCooldownSeconds ?? 1800) - scanSecondsLeft) / (hullConfig.scanCooldownSeconds ?? 1800) * 100}% 0 0)`,
                       }}
                     />
-                  </div>
-                )}
+                  )}
+                  {/* Timer badge */}
+                  {scanOnCooldown && (
+                    <span className="absolute top-2 right-2 bg-slate-800/90 text-slate-400 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border border-slate-700/50">
+                      {Math.floor(scanSecondsLeft / 60)}:{String(scanSecondsLeft % 60).padStart(2, '0')}
+                    </span>
+                  )}
+                  {!scanOnCooldown && (
+                    <span className="absolute top-2 right-2 bg-cyan-500/20 text-cyan-400 text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-cyan-500/30">
+                      Pret
+                    </span>
+                  )}
+                </div>
 
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-2">
-                    <CooldownIcon
-                      secondsLeft={scanSecondsLeft}
-                      totalSeconds={hullConfig.scanCooldownSeconds ?? 1800}
-                      size={36}
-                      icon={
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
-                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                        </svg>
-                      }
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={cn('text-sm font-semibold', scanOnCooldown ? 'text-slate-400' : 'text-cyan-300')}>
-                          Scan
-                        </span>
-                        {scanOnCooldown && (
-                          <span className="text-[11px] text-slate-500 font-mono">
-                            {Math.floor(scanSecondsLeft / 60)}:{String(scanSecondsLeft % 60).padStart(2, '0')}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        Rapport d'espionnage instantane (+{hullConfig.scanEspionageBonus ?? 5} espionnage, indetectable)
-                      </p>
-                    </div>
-                  </div>
+                {/* Content */}
+                <div className="p-3 flex flex-col flex-1 gap-2">
+                  <div className="text-[13px] font-semibold text-foreground">Scan</div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Espionnage instantane (+{hullConfig.scanEspionageBonus ?? 5}), indetectable
+                  </p>
 
+                  <div className="flex-1" />
+
+                  {/* Target input */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <CoordinateInput
                       galaxy={scanTarget.galaxy}
@@ -450,21 +452,21 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
                       onSelect={setScanTarget}
                       disabled={!isActive || scanOnCooldown}
                     />
-                    <button
-                      onClick={handleScan}
-                      disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
-                      className="rounded-lg bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {scanMutation.isPending ? 'Scan...' : 'Scanner'}
-                    </button>
                   </div>
-                  {scanError && <p className="mt-2 text-[11px] text-red-400">{scanError}</p>}
-                  {scanMutation.isSuccess && <p className="mt-2 text-[11px] text-emerald-400">Scan termine !</p>}
+                  <button
+                    onClick={handleScan}
+                    disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
+                    className="w-full rounded-md bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {scanMutation.isPending ? 'Scan en cours...' : 'Scanner'}
+                  </button>
+                  {scanError && <p className="text-[11px] text-red-400">{scanError}</p>}
+                  {scanMutation.isSuccess && <p className="text-[11px] text-emerald-400">Scan termine !</p>}
                 </div>
               </div>
             )}
 
-            {/* Future active abilities can be added here as additional cards */}
+            {/* Future active abilities added here as additional retro-cards */}
           </div>
         </div>
       )}
