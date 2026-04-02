@@ -15,6 +15,14 @@ Table `changelogs` :
 - `createdAt` : timestamp
 - `updatedAt` : timestamp
 
+Table `changelog_comments` (meme pattern que `feedback_comments`) :
+- `id` : UUID, PK
+- `changelogId` : UUID, FK → changelogs.id, cascade delete
+- `userId` : UUID, FK → users.id, cascade delete
+- `content` : text (max 2000 chars)
+- `isAdmin` : boolean, default false
+- `createdAt` : timestamp
+
 ## Backend
 
 ### Route admin : generation automatique
@@ -35,6 +43,9 @@ Table `changelogs` :
 ### Route publique joueur
 
 - `GET /api/changelog/list` — entrees `published: true` uniquement, triees par date desc, paginee (20 par page)
+- `GET /api/changelog/detail/:id` — une entree avec ses commentaires (meme pattern que feedback.detail)
+- `POST /api/changelog/comment` — ajouter un commentaire (protegee auth joueur, input: changelogId + content)
+- `DELETE /api/changelog/comment/:id` — supprimer son propre commentaire (ou tout commentaire si admin)
 
 ### Cron
 
@@ -45,11 +56,12 @@ Crontab systeme sur le serveur :
 
 ## Frontend joueur
 
-Page `/changelog` :
-- Liste des entrees publiees
-- Chaque entree : titre, date formatee, contenu markdown rendu
-- Style glass-card coherent avec le jeu
-- Scroll infini ou pagination simple
+Page `/changelog` : liste des entrees publiees, chaque entree = titre + date + contenu markdown. Style glass-card.
+
+Page `/changelog/:id` : detail d'une entree avec section commentaires en dessous (meme UX que FeedbackDetail) :
+- Liste des commentaires avec username, date relative, badge admin
+- Formulaire d'ajout de commentaire (textarea + bouton envoyer)
+- Suppression de ses propres commentaires
 
 ## Frontend admin
 
