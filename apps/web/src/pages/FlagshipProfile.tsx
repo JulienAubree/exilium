@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { getFlagshipImageUrl, getPlanetImageUrl } from '@/lib/assets';
 import { TalentTree } from '@/components/flagship/TalentTree';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
+import { CoordinateInput } from '@/components/common/CoordinateInput';
+import { TargetContactsDropdown } from '@/components/fleet/TargetContactsDropdown';
 import {
   ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
   SpeedIcon, PropulsionIcon, FuelIcon, CargoIcon,
@@ -268,7 +270,7 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
   hullConfig: any;
   hullId: string;
 }) {
-  const [scanTarget, setScanTarget] = useState({ galaxy: '', system: '', position: '' });
+  const [scanTarget, setScanTarget] = useState({ galaxy: 0, system: 0, position: 0 });
   const [scanError, setScanError] = useState('');
 
   const utils = trpc.useUtils();
@@ -280,7 +282,7 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
 
   const scanMutation = trpc.flagship.scan.useMutation({
     onSuccess: () => {
-      setScanTarget({ galaxy: '', system: '', position: '' });
+      setScanTarget({ galaxy: 0, system: 0, position: 0 });
       setScanError('');
       utils.talent.list.invalidate();
     },
@@ -288,12 +290,16 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
   });
 
   const handleScan = () => {
-    const g = parseInt(scanTarget.galaxy);
-    const s = parseInt(scanTarget.system);
-    const p = parseInt(scanTarget.position);
-    if (!g || !s || !p) { setScanError('Coordonnees invalides'); return; }
+    if (!scanTarget.galaxy || !scanTarget.system || !scanTarget.position) {
+      setScanError('Coordonnees invalides');
+      return;
+    }
     setScanError('');
-    scanMutation.mutate({ targetGalaxy: g, targetSystem: s, targetPosition: p });
+    scanMutation.mutate({
+      targetGalaxy: scanTarget.galaxy,
+      targetSystem: scanTarget.system,
+      targetPosition: scanTarget.position,
+    });
   };
 
   const styles = HULL_CARD_STYLES[hullId] ?? HULL_CARD_STYLES.industrial;
@@ -334,39 +340,25 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
               </span>
             )}
           </div>
-          <p className="text-[11px] text-slate-400 mb-2">
-            Envoie une sonde ephemere (+2 espionnage) sur une planete cible. La sonde est detruite apres la mission.
+          <p className="text-[11px] text-slate-400 mb-3">
+            Scan instantane d'une planete cible (+2 espionnage). Genere un rapport d'espionnage sans etre detecte.
           </p>
-          <div className="flex items-end gap-2">
-            <div className="flex gap-1.5">
-              <input
-                type="number"
-                placeholder="G"
-                value={scanTarget.galaxy}
-                onChange={(e) => setScanTarget(t => ({ ...t, galaxy: e.target.value }))}
-                className="w-12 rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-center text-slate-200 placeholder-slate-600"
-              />
-              <span className="text-slate-600 self-center">:</span>
-              <input
-                type="number"
-                placeholder="S"
-                value={scanTarget.system}
-                onChange={(e) => setScanTarget(t => ({ ...t, system: e.target.value }))}
-                className="w-14 rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-center text-slate-200 placeholder-slate-600"
-              />
-              <span className="text-slate-600 self-center">:</span>
-              <input
-                type="number"
-                placeholder="P"
-                value={scanTarget.position}
-                onChange={(e) => setScanTarget(t => ({ ...t, position: e.target.value }))}
-                className="w-12 rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-center text-slate-200 placeholder-slate-600"
-              />
-            </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CoordinateInput
+              galaxy={scanTarget.galaxy}
+              system={scanTarget.system}
+              position={scanTarget.position}
+              onChange={setScanTarget}
+              disabled={!isActive || scanOnCooldown}
+            />
+            <TargetContactsDropdown
+              onSelect={setScanTarget}
+              disabled={!isActive || scanOnCooldown}
+            />
             <button
               onClick={handleScan}
               disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
-              className="rounded bg-cyan-600 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {scanMutation.isPending ? 'Scan...' : 'Scanner'}
             </button>
