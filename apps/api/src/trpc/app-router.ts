@@ -55,6 +55,8 @@ import { createDailyQuestService } from '../modules/daily-quest/daily-quest.serv
 import { createDailyQuestRouter } from '../modules/daily-quest/daily-quest.router.js';
 import { createFeedbackService } from '../modules/feedback/feedback.service.js';
 import { createFeedbackRouter } from '../modules/feedback/feedback.router.js';
+import { createChangelogService } from '../modules/changelog/changelog.service.js';
+import { createChangelogRouter } from '../modules/changelog/changelog.router.js';
 import { createNotificationPreferencesService } from '../modules/notification/notification-preferences.service.js';
 import { createNotificationPreferencesRouter } from '../modules/notification/notification-preferences.router.js';
 import { env } from '../config/env.js';
@@ -93,6 +95,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const tutorialService = createTutorialService(db, pveService, exiliumService);
   const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService, talentService);
   const feedbackService = createFeedbackService(db);
+  const changelogService = createChangelogService(db);
   const notificationPreferencesService = createNotificationPreferencesService(db);
 
   const authRouter = createAuthRouter(authService, planetService);
@@ -121,6 +124,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const talentRouter = createTalentRouter(talentService);
   const dailyQuestRouter = createDailyQuestRouter(dailyQuestService, gameConfigService);
   const feedbackRouter = createFeedbackRouter(feedbackService, adminProcedure);
+  const changelogRouter = createChangelogRouter(changelogService, adminProcedure);
   const notificationPreferencesRouter = createNotificationPreferencesRouter(notificationPreferencesService);
 
   return router({
@@ -154,6 +158,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     talent: talentRouter,
     dailyQuest: dailyQuestRouter,
     feedback: feedbackRouter,
+    changelog: changelogRouter,
     notificationPreferences: notificationPreferencesRouter,
   });
 }
