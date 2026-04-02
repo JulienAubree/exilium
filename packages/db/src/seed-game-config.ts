@@ -574,7 +574,7 @@ const HULLS = [
     changeCost: { baseMultiplier: 500, resourceRatio: { minerai: 3, silicium: 2, hydrogene: 1 } },
     unavailabilitySeconds: 7200,
     cooldownSeconds: 604800,
-    scanCooldownSeconds: 3600,
+    scanCooldownSeconds: 1800,
     scanEspionageBonus: 5,
   },
 ];
