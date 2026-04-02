@@ -11,6 +11,7 @@ const MISSION_COLORS: Record<Mission, string> = {
   mine:      '#f59e0b',   // amber-500
   pirate:    '#e11d48',   // rose-600
   trade:     '#a78bfa',   // violet-400
+  scan:      '#22d3ee',   // cyan-400
 };
 
 export function getMissionColor(mission: Mission): string {

@@ -1,13 +1,14 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, userExilium } from '@exilium/db';
+import { flagships, planets, users, userExilium, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createTalentService } from './talent.service.js';
 import type { createResourceService } from '../resource/resource.service.js';
+import type { createReportService } from '../report/report.service.js';
 import { listFlagshipImageIndexes, getRandomFlagshipImageIndex } from '../../lib/flagship-image.util.js';
-import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS } from '@exilium/game-engine';
+import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport } from '@exilium/game-engine';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -19,6 +20,7 @@ export function createFlagshipService(
   talentService?: ReturnType<typeof createTalentService>,
   assetsDir?: string,
   resourceService?: ReturnType<typeof createResourceService>,
+  reportService?: ReturnType<typeof createReportService>,
 ) {
   function validateName(name: string) {
     if (!NAME_REGEX.test(name)) {
@@ -444,6 +446,154 @@ export function createFlagshipService(
         .update(flagships)
         .set({ unlockedShips: updatedList, ...stats, updatedAt: new Date() })
         .where(eq(flagships.id, flagship.id));
+    },
+
+    async scan(userId: string, targetGalaxy: number, targetSystem: number, targetPosition: number) {
+      // 1. Validate flagship
+      const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vaisseau amiral introuvable' });
+      if (flagship.hullId !== 'scientific') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seule la coque scientifique permet les missions de scan' });
+      if (flagship.status !== 'active') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le vaisseau amiral doit etre stationne' });
+
+      // 2. Check cooldown
+      const SCAN_COOLDOWN_ID = 'scan_mission';
+      const [cooldown] = await db.select().from(flagshipCooldowns)
+        .where(and(eq(flagshipCooldowns.flagshipId, flagship.id), eq(flagshipCooldowns.talentId, SCAN_COOLDOWN_ID)))
+        .limit(1);
+      if (cooldown && cooldown.cooldownEnds && new Date() < cooldown.cooldownEnds) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Scan en cooldown' });
+      }
+
+      // 3. Get config
+      const config = await gameConfigService.getFullConfig();
+      const hullConfig = config.hulls['scientific'];
+      const espionageBonus = hullConfig?.scanEspionageBonus ?? 2;
+
+      // 4. Get attacker tech
+      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      const attackerTech = (research?.espionageTech ?? 0) + espionageBonus;
+
+      // 5. Find target planet
+      const [targetPlanet] = await db.select().from(planets)
+        .where(and(eq(planets.galaxy, targetGalaxy), eq(planets.system, targetSystem), eq(planets.position, targetPosition)))
+        .limit(1);
+      if (!targetPlanet) throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune planete a ces coordonnees' });
+
+      // 6. Defender tech
+      const [defResearch] = await db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
+      const defenderTech = defResearch?.espionageTech ?? 0;
+
+      // 7. Calculate spy report (1 virtual probe, no detection)
+      const spyThresholds = (config.universe['spy_visibility_thresholds'] as number[] | undefined) ?? [1, 3, 5, 7, 9];
+      const visibility = calculateSpyReport(1, attackerTech, defenderTech, spyThresholds);
+
+      // 8. Collect report data (same structure as SpyHandler)
+      const reportResult: Record<string, unknown> = {
+        visibility,
+        probeCount: 1,
+        attackerTech,
+        defenderTech,
+        detectionChance: 0,
+        detected: false,
+        scanMission: true,
+      };
+
+      if (visibility.resources) {
+        if (resourceService) {
+          await resourceService.materializeResources(targetPlanet.id, targetPlanet.userId);
+        }
+        const [planet] = await db.select().from(planets).where(eq(planets.id, targetPlanet.id)).limit(1);
+        reportResult.resources = {
+          minerai: Math.floor(Number(planet.minerai)),
+          silicium: Math.floor(Number(planet.silicium)),
+          hydrogene: Math.floor(Number(planet.hydrogene)),
+        };
+      }
+
+      if (visibility.fleet) {
+        const [targetShipsRow] = await db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
+        if (targetShipsRow) {
+          const fleetData: Record<string, number> = {};
+          for (const [key, val] of Object.entries(targetShipsRow)) {
+            if (key === 'planetId') continue;
+            if (typeof val === 'number' && val > 0) fleetData[key] = val;
+          }
+          reportResult.fleet = fleetData;
+        }
+        // Check defender flagship
+        const [defFlagship] = await db.select({ name: flagships.name, status: flagships.status, weapons: flagships.weapons, shield: flagships.shield, hull: flagships.hull, cargoCapacity: flagships.cargoCapacity })
+          .from(flagships).where(and(eq(flagships.userId, targetPlanet.userId), eq(flagships.planetId, targetPlanet.id), eq(flagships.status, 'active'))).limit(1);
+        if (defFlagship) {
+          reportResult.flagship = { name: defFlagship.name, weapons: defFlagship.weapons, shield: defFlagship.shield, hull: defFlagship.hull, cargoCapacity: defFlagship.cargoCapacity };
+        }
+      }
+
+      if (visibility.defenses) {
+        const [targetDefsRow] = await db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
+        if (targetDefsRow) {
+          const defensesData: Record<string, number> = {};
+          for (const [key, val] of Object.entries(targetDefsRow)) {
+            if (key === 'planetId') continue;
+            if (typeof val === 'number' && val > 0) defensesData[key] = val;
+          }
+          reportResult.defenses = defensesData;
+        }
+      }
+
+      if (visibility.buildings) {
+        const bRows = await db.select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
+          .from(planetBuildings).where(eq(planetBuildings.planetId, targetPlanet.id));
+        const buildingsData: Record<string, number> = {};
+        for (const row of bRows) {
+          if (row.level > 0) buildingsData[row.buildingId] = row.level;
+        }
+        reportResult.buildings = buildingsData;
+      }
+
+      if (visibility.research) {
+        if (defResearch) {
+          const researchData: Record<string, number> = {};
+          for (const [key, val] of Object.entries(defResearch)) {
+            if (key === 'userId') continue;
+            if (typeof val === 'number' && val > 0) researchData[key] = val;
+          }
+          reportResult.research = researchData;
+        }
+      }
+
+      // 9. Create report
+      let reportId: string | undefined;
+      if (reportService) {
+        const coords = `[${targetGalaxy}:${targetSystem}:${targetPosition}]`;
+        const report = await reportService.create({
+          userId,
+          missionType: 'scan',
+          title: `Scan ${coords}`,
+          coordinates: { galaxy: targetGalaxy, system: targetSystem, position: targetPosition },
+          fleet: { ships: {}, totalCargo: 0 },
+          departureTime: new Date(),
+          completionTime: new Date(),
+          result: reportResult,
+        });
+        reportId = report.id;
+      }
+
+      // 10. Set cooldown
+      const now = new Date();
+      const cooldownSeconds = hullConfig?.scanCooldownSeconds ?? 3600;
+      const cooldownEnds = new Date(now.getTime() + cooldownSeconds * 1000);
+      await db.insert(flagshipCooldowns).values({
+        flagshipId: flagship.id,
+        talentId: SCAN_COOLDOWN_ID,
+        activatedAt: now,
+        expiresAt: now,
+        cooldownEnds,
+      }).onConflictDoUpdate({
+        target: [flagshipCooldowns.flagshipId, flagshipCooldowns.talentId],
+        set: { activatedAt: now, expiresAt: now, cooldownEnds },
+      });
+
+      return { reportId, cooldownEnds: cooldownEnds.toISOString() };
     },
   };
 }

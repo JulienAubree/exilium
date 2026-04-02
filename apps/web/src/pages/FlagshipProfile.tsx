@@ -278,12 +278,11 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
   const scanCooldownEnd = scanCooldown ? new Date(scanCooldown.cooldownEnds) : null;
   const scanSecondsLeft = useCountdown(scanOnCooldown ? scanCooldownEnd : null);
 
-  const sendMutation = trpc.fleet.send.useMutation({
+  const scanMutation = trpc.flagship.scan.useMutation({
     onSuccess: () => {
       setScanTarget({ galaxy: '', system: '', position: '' });
       setScanError('');
       utils.talent.list.invalidate();
-      utils.fleet.movements.invalidate();
     },
     onError: (err) => setScanError(err.message),
   });
@@ -294,14 +293,7 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
     const p = parseInt(scanTarget.position);
     if (!g || !s || !p) { setScanError('Coordonnees invalides'); return; }
     setScanError('');
-    sendMutation.mutate({
-      originPlanetId: flagship.planetId,
-      targetGalaxy: g,
-      targetSystem: s,
-      targetPosition: p,
-      mission: 'scan',
-      ships: { flagship: 1 },
-    });
+    scanMutation.mutate({ targetGalaxy: g, targetSystem: s, targetPosition: p });
   };
 
   const styles = HULL_CARD_STYLES[hullId] ?? HULL_CARD_STYLES.industrial;
@@ -373,14 +365,14 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
             </div>
             <button
               onClick={handleScan}
-              disabled={!isActive || scanOnCooldown || sendMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
+              disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
               className="rounded bg-cyan-600 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {sendMutation.isPending ? 'Envoi...' : 'Scanner'}
+              {scanMutation.isPending ? 'Scan...' : 'Scanner'}
             </button>
           </div>
           {scanError && <p className="mt-1.5 text-[11px] text-red-400">{scanError}</p>}
-          {sendMutation.isSuccess && <p className="mt-1.5 text-[11px] text-emerald-400">Sonde envoyee !</p>}
+          {scanMutation.isSuccess && <p className="mt-1.5 text-[11px] text-emerald-400">Scan termine !</p>}
         </div>
       )}
 

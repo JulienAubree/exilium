@@ -65,5 +65,15 @@ export function createFlagshipRouter(
       .mutation(async ({ ctx, input }) => {
         return flagshipService.changeHull(ctx.userId!, input.hullId);
       }),
+
+    scan: protectedProcedure
+      .input(z.object({
+        targetGalaxy: z.number().int().min(1).max(999),
+        targetSystem: z.number().int().min(1).max(9999),
+        targetPosition: z.number().int().min(1).max(999),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return flagshipService.scan(ctx.userId!, input.targetGalaxy, input.targetSystem, input.targetPosition);
+      }),
   });
 }

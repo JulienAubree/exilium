@@ -15,6 +15,7 @@ export const fleetMissionEnum = pgEnum('fleet_mission', [
   'mine',
   'pirate',
   'trade',
+  'scan',
 ]);
 
 export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'prospecting', 'mining', 'return']);
