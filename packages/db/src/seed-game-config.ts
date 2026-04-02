@@ -611,13 +611,15 @@ const TALENT_DEFINITIONS: any[] = [
   { id: 'mil_armor', branchId: 'militaire', tier: 1, position: 'center', name: 'Blindage reactif', description: '+2 blindage par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'baseArmor', perRank: 2 }, sortOrder: 1 },
   { id: 'mil_shield', branchId: 'militaire', tier: 1, position: 'right', name: 'Boucliers amplifies', description: '+3 bouclier par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shield', perRank: 3 }, sortOrder: 2 },
   // Tier 2
-  { id: 'mil_build_time', branchId: 'militaire', tier: 2, position: 'center', name: 'Chaine de production', description: '-20% temps de construction vaisseaux militaires', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'military_build_time', perRank: 0.20 }, sortOrder: 3 },
+  { id: 'mil_build_time', branchId: 'militaire', tier: 2, position: 'center', name: 'Chaine de production', description: '-10% temps de construction vaisseaux militaires', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'military_build_time', perRank: 0.10 }, sortOrder: 3 },
 
   // === INDUSTRIEL === (production, minage, commerce)
   // Tier 1
   { id: 'ind_cargo', branchId: 'industriel', tier: 1, position: 'left', name: 'Soute etendue', description: '+1000 cargo par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'cargoCapacity', perRank: 1000 }, sortOrder: 0 },
   { id: 'ind_speed', branchId: 'industriel', tier: 1, position: 'center', name: 'Reacteurs optimises', description: '+10% vitesse par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'speedPercent', perRank: 0.10 }, sortOrder: 1 },
   { id: 'ind_hull', branchId: 'industriel', tier: 1, position: 'right', name: 'Coque renforcee', description: '+5 coque par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'hull', perRank: 5 }, sortOrder: 2 },
+  // Tier 2
+  { id: 'ind_build_time', branchId: 'industriel', tier: 2, position: 'center', name: 'Chaine de montage', description: '-10% temps de construction vaisseaux industriels', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'industrial_build_time', perRank: 0.10 }, sortOrder: 3 },
 
   // === SCIENTIFIQUE === (recherche, espionnage, information)
   // Tier 1
