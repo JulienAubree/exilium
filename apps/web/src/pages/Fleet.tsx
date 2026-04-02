@@ -41,6 +41,7 @@ export default function Fleet() {
   // Trade mode
   const [tradeId, setTradeId] = useState<string | null>(null);
   const [tradeMode, setTradeMode] = useState(false);
+  const [coordsLocked, setCoordsLocked] = useState(false);
   const prefillRef = useRef<{ mission: Mission; galaxy: number; system: number; position: number } | null>(null);
 
   // Data queries
@@ -86,6 +87,7 @@ export default function Fleet() {
     prefillRef.current = data;
     setTarget({ galaxy: data.galaxy, system: data.system, position: data.position });
     setMission(data.mission);
+    setCoordsLocked(true);
     setSearchParams({}, { replace: true });
   }, []);
 
@@ -352,7 +354,7 @@ export default function Fleet() {
       <MissionSelector
         selected={mission}
         onChange={handleMissionChange}
-        locked={pveMode || tradeMode}
+        locked={pveMode || tradeMode || coordsLocked}
       />
 
       {/* Destination */}
@@ -363,9 +365,9 @@ export default function Fleet() {
           system={target.system}
           position={target.position}
           onChange={setTarget}
-          disabled={pveMode || tradeMode}
+          disabled={pveMode || tradeMode || coordsLocked}
         />
-        {!(pveMode || tradeMode) && (
+        {!(pveMode || tradeMode || coordsLocked) && (
           <TargetContactsDropdown onSelect={setTarget} />
         )}
       </div>
