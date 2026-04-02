@@ -50,7 +50,7 @@ export function createChangelogService(db: Database) {
           updatedAt: changelogs.updatedAt,
         })
         .from(changelogs)
-        .where(eq(changelogs.id, id))
+        .where(and(eq(changelogs.id, id), eq(changelogs.published, true)))
         .limit(1);
 
       if (!changelog) {
@@ -133,7 +133,7 @@ export function createChangelogService(db: Database) {
 
       await db.delete(changelogComments).where(eq(changelogComments.id, commentId));
       await db.update(changelogs).set({
-        commentCount: sql`${changelogs.commentCount} - 1`,
+        commentCount: sql`GREATEST(${changelogs.commentCount} - 1, 0)`,
         updatedAt: new Date(),
       }).where(eq(changelogs.id, comment.changelogId));
 

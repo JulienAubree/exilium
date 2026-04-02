@@ -5,6 +5,7 @@ import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/format';
 import { ArrowLeft, Send } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
 
 const MONTHS = [
   'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
@@ -16,10 +17,55 @@ function formatDate(date: string | Date): string {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+function renderMarkdown(content: string) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let listItems: string[] = [];
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      elements.push(
+        <ul key={`ul-${elements.length}`} className="space-y-1 mb-3">
+          {listItems.map((item, i) => (
+            <li key={i} className="text-sm text-foreground/80 flex gap-2">
+              <span className="text-muted-foreground shrink-0">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      listItems = [];
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('### ')) {
+      flushList();
+      elements.push(
+        <h3 key={`h-${elements.length}`} className="text-sm font-semibold text-foreground mt-3 mb-1">
+          {line.slice(4)}
+        </h3>
+      );
+    } else if (line.startsWith('- ')) {
+      listItems.push(line.slice(2));
+    } else if (line.trim() === '') {
+      flushList();
+    } else {
+      flushList();
+      elements.push(
+        <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-1">{line}</p>
+      );
+    }
+  }
+  flushList();
+  return elements;
+}
+
 export default function ChangelogDetail() {
   const { changelogId } = useParams<{ changelogId: string }>();
   const navigate = useNavigate();
   const [commentText, setCommentText] = useState('');
+  const userId = useAuthStore((s) => s.user?.id);
 
   const utils = trpc.useUtils();
   const { data: changelog, isLoading } = trpc.changelog.detail.useQuery(
@@ -30,6 +76,12 @@ export default function ChangelogDetail() {
   const commentMutation = trpc.changelog.comment.useMutation({
     onSuccess: () => {
       setCommentText('');
+      utils.changelog.detail.invalidate({ id: changelogId! });
+    },
+  });
+
+  const deleteMutation = trpc.changelog.deleteComment.useMutation({
+    onSuccess: () => {
       utils.changelog.detail.invalidate({ id: changelogId! });
     },
   });
@@ -53,7 +105,9 @@ export default function ChangelogDetail() {
           <h1 className="text-lg font-semibold text-foreground">{changelog.title}</h1>
           <p className="text-xs text-muted-foreground">{formatDate(changelog.createdAt)}</p>
         </div>
-        <div className="text-sm text-foreground/80 whitespace-pre-wrap">{changelog.content}</div>
+        <div className="glass-card p-4">
+          {renderMarkdown(changelog.content)}
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -77,6 +131,15 @@ export default function ChangelogDetail() {
                 </span>
               )}
               <span className="text-muted-foreground ml-auto">{timeAgo(comment.createdAt)}</span>
+              {comment.userId === userId && (
+                <button
+                  onClick={() => deleteMutation.mutate({ commentId: comment.id })}
+                  className="text-muted-foreground hover:text-destructive text-xs ml-2"
+                  disabled={deleteMutation.isPending}
+                >
+                  supprimer
+                </button>
+              )}
             </div>
             <p className="text-sm text-foreground/80 whitespace-pre-wrap">{comment.content}</p>
           </div>
