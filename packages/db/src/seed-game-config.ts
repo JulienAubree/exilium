@@ -605,8 +605,23 @@ const HULLS = [
 // ── Talent Definitions ──
 
 const TALENT_DEFINITIONS: any[] = [
-  // Talents will be rebuilt tier by tier using /creating-flagship-talents process
-  // Branches: militaire, scientifique, industriel
+  // === MILITAIRE === (combat, attaque, defense)
+  // Tier 1
+  { id: 'mil_weapons', branchId: 'militaire', tier: 1, position: 'left', name: 'Armes renforcees', description: '+2 armes par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'weapons', perRank: 2 }, sortOrder: 0 },
+  { id: 'mil_armor', branchId: 'militaire', tier: 1, position: 'center', name: 'Blindage reactif', description: '+2 blindage par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'baseArmor', perRank: 2 }, sortOrder: 1 },
+  { id: 'mil_shield', branchId: 'militaire', tier: 1, position: 'right', name: 'Boucliers amplifies', description: '+3 bouclier par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shield', perRank: 3 }, sortOrder: 2 },
+
+  // === INDUSTRIEL === (production, minage, commerce)
+  // Tier 1
+  { id: 'ind_cargo', branchId: 'industriel', tier: 1, position: 'left', name: 'Soute etendue', description: '+1000 cargo par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'cargoCapacity', perRank: 1000 }, sortOrder: 0 },
+  { id: 'ind_speed', branchId: 'industriel', tier: 1, position: 'center', name: 'Reacteurs optimises', description: '+10% vitesse par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'speedPercent', perRank: 0.10 }, sortOrder: 1 },
+  { id: 'ind_hull', branchId: 'industriel', tier: 1, position: 'right', name: 'Coque renforcee', description: '+5 coque par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'hull', perRank: 5 }, sortOrder: 2 },
+
+  // === SCIENTIFIQUE === (recherche, espionnage, information)
+  // Tier 1
+  { id: 'sci_fuel', branchId: 'scientifique', tier: 1, position: 'left', name: 'Economiseur', description: '-1 consommation carburant par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'fuelConsumption', perRank: -1 }, sortOrder: 0 },
+  { id: 'sci_shots', branchId: 'scientifique', tier: 1, position: 'center', name: 'Tirs de precision', description: '+1 tir par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shotCount', perRank: 1 }, sortOrder: 1 },
+  { id: 'sci_shield', branchId: 'scientifique', tier: 1, position: 'right', name: 'Champ de force', description: '+2 bouclier par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shield', perRank: 2 }, sortOrder: 2 },
 ];
 
 async function seed() {
