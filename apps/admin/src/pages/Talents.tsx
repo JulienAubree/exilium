@@ -499,7 +499,7 @@ function HullConfigSection({ hulls, onUpdated }: { hulls: Record<string, any>; o
                   <div className="space-y-1.5">
                     {hull.abilities.map((a: any) => (
                       <div key={a.id ?? a} className="flex items-center gap-2 text-[11px]">
-                        <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', a.type === 'active' ? 'bg-cyan-900/40 text-cyan-400' : 'bg-amber-900/40 text-amber-400')}>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${a.type === 'active' ? 'bg-cyan-900/40 text-cyan-400' : 'bg-amber-900/40 text-amber-400'}`}>
                           {a.type === 'active' ? 'Actif' : 'Fleet'}
                         </span>
                         <span className="text-gray-200 font-medium">{a.name ?? a.id ?? a}</span>
