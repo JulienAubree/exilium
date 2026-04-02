@@ -63,7 +63,7 @@ export function createResearchService(
           const nextLevel = currentLevel + 1;
           const cost = researchCost(def, nextLevel, phaseMap);
           const bonusMultiplier = resolveBonus('research_time', null, buildingLevels, config.bonuses);
-          const time = researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier;
+          const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier));
 
           const researchLevels: Record<string, number> = {};
           for (const [key, rDef] of Object.entries(config.research)) {
@@ -133,7 +133,7 @@ export function createResearchService(
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['research_time'] ?? 0));
       const hullTimeMultiplier = 1 - (talentCtx['hull_research_time_reduction'] ?? 0);
-      const time = researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier;
+      const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier));
 
       await resourceService.spendResources(planetId, userId, cost);
 
