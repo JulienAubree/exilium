@@ -131,6 +131,25 @@ export default function ReportDetail() {
         </div>
       </div>
 
+      {/* Scan: flagship info */}
+      {report.missionType === 'scan' && result.scanner && (
+        <div className="glass-card p-4 border border-cyan-500/20">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-cyan-300">{result.scanner.name}</div>
+              <div className="text-[11px] text-muted-foreground">
+                Coque scientifique — Scan instantane (+{result.scanner.espionageBonus ?? 2} espionnage)
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Fleet summary (if non-empty) */}
       {Object.keys(fleet.ships).length > 0 && (
         <div className="glass-card p-4">

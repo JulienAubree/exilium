@@ -560,14 +560,21 @@ export function createFlagshipService(
         }
       }
 
-      // 9. Create report
+      // 9. Attach scanner flagship info to report
+      reportResult.scanner = {
+        name: flagship.name,
+        hullId: flagship.hullId,
+        espionageBonus,
+      };
+
+      // 10. Create report
       let reportId: string | undefined;
       if (reportService) {
         const coords = `[${targetGalaxy}:${targetSystem}:${targetPosition}]`;
         const report = await reportService.create({
           userId,
           missionType: 'scan',
-          title: `Scan ${coords}`,
+          title: `Rapport de scan ${coords}`,
           coordinates: { galaxy: targetGalaxy, system: targetSystem, position: targetPosition },
           fleet: { ships: {}, totalCargo: 0 },
           departureTime: new Date(),
@@ -577,7 +584,7 @@ export function createFlagshipService(
         reportId = report.id;
       }
 
-      // 10. Set cooldown
+      // 11. Set cooldown
       const now = new Date();
       const cooldownSeconds = hullConfig?.scanCooldownSeconds ?? 3600;
       const cooldownEnds = new Date(now.getTime() + cooldownSeconds * 1000);
