@@ -11,8 +11,9 @@ export class MineHandler implements PhasedMissionHandler {
     const fullConfig = await ctx.gameConfigService.getFullConfig();
     const miningShips = findShipsByRole(fullConfig, 'mining');
     const miningCount = miningShips.reduce((sum, def) => sum + (input.ships[def.id] ?? 0), 0);
-    if (miningCount === 0) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 vaisseau minier' });
+    const hasFlagship = (input.ships['flagship'] ?? 0) > 0;
+    if (miningCount === 0 && !hasFlagship) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'La mission Miner nécessite au moins 1 vaisseau minier ou le vaisseau amiral' });
     }
     const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
     if (!beltPositions.includes(input.targetPosition)) {

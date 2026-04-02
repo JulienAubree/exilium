@@ -26,14 +26,18 @@ export function categorizeShip(
   shipId: string,
   shipCount: number,
   missionDef: MissionDef | undefined,
-  shipConfig?: { isStationary?: boolean; role?: string | null },
+  shipConfig?: { isStationary?: boolean; role?: string | null; unlockedMissions?: string[] },
+  missionId?: string,
 ): ShipCategory {
   if (shipConfig?.isStationary) return 'disabled';
   if (!missionDef) return 'disabled';
   if (shipCount === 0) return 'disabled';
 
-  // Flagship can join any mission as companion
+  // Flagship: check hull-unlocked missions, otherwise optional companion
   if (shipId === 'flagship') {
+    if (missionId && shipConfig?.unlockedMissions?.length && shipConfig.unlockedMissions.includes(missionId)) {
+      return 'required';
+    }
     return 'optional';
   }
 

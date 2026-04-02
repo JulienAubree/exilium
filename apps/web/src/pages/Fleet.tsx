@@ -311,17 +311,21 @@ export default function Fleet() {
   const allShips = (() => {
     const base = ships ?? [];
     if (!flagship) return base;
+    const hullAbilities = (flagship as any).hullConfig?.abilities as { type: string; unlockedMissions?: string[] }[] | undefined;
+    const unlockedMissions = hullAbilities
+      ?.filter((a) => a.type === 'fleet_unlock' && a.unlockedMissions)
+      .flatMap((a) => a.unlockedMissions!) ?? [];
     const isAvailable = flagship.status === 'active' && flagship.planetId === planetId;
     const isUnavailable = flagship.status === 'in_mission' || flagship.status === 'incapacitated' || (flagship.status === 'active' && flagship.planetId !== planetId);
     if (isAvailable) {
       return [
-        { id: 'flagship', name: flagship.name, count: 1, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
+        { id: 'flagship', name: flagship.name, count: 1, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
         ...base,
       ];
     }
     if (isUnavailable) {
       return [
-        { id: 'flagship', name: flagship.name, count: 1, isStationary: true, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
+        { id: 'flagship', name: flagship.name, count: 1, isStationary: true, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
         ...base,
       ];
     }
