@@ -356,108 +356,116 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
   const styles = HULL_CARD_STYLES[hullId] ?? HULL_CARD_STYLES.industrial;
   const isActive = flagship.status === 'active';
 
-  return (
-    <div className={cn('glass-card p-4 lg:p-5 border', styles.border)}>
-      <SectionHeader
-        icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>}
-        label="Effets & Pouvoirs"
-        color={styles.badgeText}
-      />
+  const hasActiveAbilities = hullId === 'scientific';
 
-      {/* Passive bonuses */}
-      <div className="mt-3 space-y-1.5">
-        {(hullConfig.bonusLabels ?? []).map((label: string, i: number) => (
-          <div key={i} className="flex items-center gap-2 text-xs">
-            <span className={cn('text-[10px]', styles.badgeText)}>●</span>
-            <span className={cn('font-medium', isActive ? 'text-slate-200' : 'text-slate-500')}>
-              {label}
-            </span>
-            {!isActive && <span className="text-[10px] text-slate-600">(inactif)</span>}
-          </div>
-        ))}
+  return (
+    <div className="space-y-4">
+      {/* Passive effects — inline */}
+      <div className={cn('glass-card p-4 lg:p-5 border', styles.border)}>
+        <SectionHeader
+          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>}
+          label="Effets passifs"
+          color={styles.badgeText}
+        />
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+          {(hullConfig.bonusLabels ?? []).map((label: string, i: number) => (
+            <div key={i} className="flex items-center gap-1.5 text-xs">
+              <span className={cn('text-[10px]', styles.badgeText)}>●</span>
+              <span className={cn('font-medium', isActive ? 'text-slate-200' : 'text-slate-500')}>
+                {label}
+              </span>
+              {!isActive && <span className="text-[10px] text-slate-600">(inactif)</span>}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Scan ability (scientific hull only) */}
-      {hullId === 'scientific' && (
-        <div className="mt-4 pt-3 border-t border-slate-700/50">
-          <div className="flex items-start gap-3">
-            {/* Cooldown icon */}
-            <CooldownIcon
-              secondsLeft={scanSecondsLeft}
-              totalSeconds={hullConfig.scanCooldownSeconds ?? 1800}
-              size={40}
-              icon={
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>
-              }
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-cyan-300">Mission de scan</span>
+      {/* Active abilities — cards */}
+      {hasActiveAbilities && (
+        <div className={cn('glass-card p-4 lg:p-5 border', styles.border)}>
+          <SectionHeader
+            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
+            label="Capacites actives"
+            color={styles.badgeText}
+          />
+          <div className="mt-3 grid grid-cols-1 gap-3">
+            {/* Scan card */}
+            {hullId === 'scientific' && (
+              <div className={cn(
+                'relative rounded-lg border p-4 transition-all overflow-hidden',
+                scanOnCooldown
+                  ? 'border-slate-600/50 bg-slate-900/60'
+                  : 'border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10',
+              )}>
+                {/* Cooldown overlay */}
                 {scanOnCooldown && (
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    {Math.floor(scanSecondsLeft / 60)}:{String(scanSecondsLeft % 60).padStart(2, '0')}
-                  </span>
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div
+                      className="absolute inset-0 bg-slate-800/50"
+                      style={{
+                        clipPath: `inset(0 ${((hullConfig.scanCooldownSeconds ?? 1800) - scanSecondsLeft) / (hullConfig.scanCooldownSeconds ?? 1800) * 100}% 0 0)`,
+                      }}
+                    />
+                  </div>
                 )}
-              </div>
-              <p className="text-[11px] text-slate-400 mb-3">
-                Scan instantane (+{hullConfig.scanEspionageBonus ?? 5} espionnage). Genere un rapport sans etre detecte.
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <CoordinateInput
-                  galaxy={scanTarget.galaxy}
-                  system={scanTarget.system}
-                  position={scanTarget.position}
-                  onChange={setScanTarget}
-                  disabled={!isActive || scanOnCooldown}
-                />
-                <TargetContactsDropdown
-                  onSelect={setScanTarget}
-                  disabled={!isActive || scanOnCooldown}
-                />
-                <button
-                  onClick={handleScan}
-                  disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
-                  className="rounded-lg bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  {scanMutation.isPending ? 'Scan...' : 'Scanner'}
-                </button>
-              </div>
-              {scanError && <p className="mt-1.5 text-[11px] text-red-400">{scanError}</p>}
-              {scanMutation.isSuccess && <p className="mt-1.5 text-[11px] text-emerald-400">Scan termine !</p>}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Industrial abilities info */}
-      {hullId === 'industrial' && (
-        <div className="mt-4 pt-3 border-t border-slate-700/50">
-          <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
-              <path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/>
-            </svg>
-            <span className="text-xs font-semibold text-amber-300">Minage & Recyclage</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Votre vaisseau amiral peut participer aux missions de minage et recyclage. Son extraction est egale a sa soute.
-          </p>
-        </div>
-      )}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CooldownIcon
+                      secondsLeft={scanSecondsLeft}
+                      totalSeconds={hullConfig.scanCooldownSeconds ?? 1800}
+                      size={36}
+                      icon={
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                        </svg>
+                      }
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={cn('text-sm font-semibold', scanOnCooldown ? 'text-slate-400' : 'text-cyan-300')}>
+                          Scan
+                        </span>
+                        {scanOnCooldown && (
+                          <span className="text-[11px] text-slate-500 font-mono">
+                            {Math.floor(scanSecondsLeft / 60)}:{String(scanSecondsLeft % 60).padStart(2, '0')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        Rapport d'espionnage instantane (+{hullConfig.scanEspionageBonus ?? 5} espionnage, indetectable)
+                      </p>
+                    </div>
+                  </div>
 
-      {/* Combat abilities info */}
-      {hullId === 'combat' && (
-        <div className="mt-4 pt-3 border-t border-slate-700/50">
-          <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-            <span className="text-xs font-semibold text-red-300">Puissance brute</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CoordinateInput
+                      galaxy={scanTarget.galaxy}
+                      system={scanTarget.system}
+                      position={scanTarget.position}
+                      onChange={setScanTarget}
+                      disabled={!isActive || scanOnCooldown}
+                    />
+                    <TargetContactsDropdown
+                      onSelect={setScanTarget}
+                      disabled={!isActive || scanOnCooldown}
+                    />
+                    <button
+                      onClick={handleScan}
+                      disabled={!isActive || scanOnCooldown || scanMutation.isPending || !scanTarget.galaxy || !scanTarget.system || !scanTarget.position}
+                      className="rounded-lg bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {scanMutation.isPending ? 'Scan...' : 'Scanner'}
+                    </button>
+                  </div>
+                  {scanError && <p className="mt-2 text-[11px] text-red-400">{scanError}</p>}
+                  {scanMutation.isSuccess && <p className="mt-2 text-[11px] text-emerald-400">Scan termine !</p>}
+                </div>
+              </div>
+            )}
+
+            {/* Future active abilities can be added here as additional cards */}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Les bonus de stats de combat s'appliquent automatiquement quand le vaisseau amiral est stationne.
-          </p>
         </div>
       )}
     </div>
