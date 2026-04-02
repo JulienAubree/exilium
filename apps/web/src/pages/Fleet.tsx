@@ -205,8 +205,11 @@ export default function Fleet() {
     }
 
     if (config?.exclusive && config.requiredShipRoles) {
-      const hasDisallowed = selected.some(([id]) => id !== 'flagship' && !matchesRole(id, config.requiredShipRoles!));
-      if (hasDisallowed) return `Cette mission n'autorise que : ${config.requiredShipRoles.map((id) => getShipName(id, gameConfig)).join(', ')}`;
+      const disallowed = selected.filter(([id]) => id !== 'flagship' && !matchesRole(id, config.requiredShipRoles!));
+      if (disallowed.length > 0) {
+        const disallowedNames = disallowed.map(([id]) => getShipName(id, gameConfig)).join(', ');
+        return `${disallowedNames} incompatible${disallowed.length > 1 ? 's' : ''} avec cette mission. Seuls les ${config.requiredShipRoles.map((id) => getShipName(id, gameConfig)).join(', ')} et le vaisseau amiral sont autorisés.`;
+      }
     }
 
     // Check total cargo does not exceed capacity
