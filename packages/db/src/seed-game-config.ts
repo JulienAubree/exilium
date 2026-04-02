@@ -575,7 +575,7 @@ const HULLS = [
     unavailabilitySeconds: 7200,
     cooldownSeconds: 604800,
     scanCooldownSeconds: 3600,
-    scanEspionageBonus: 2,
+    scanEspionageBonus: 5,
   },
 ];
 
