@@ -60,7 +60,7 @@ export function TutorialPanel() {
   const isChapterIntro = chapter && completedInChapter === 0 && !data.pendingCompletion && quest && !introSeen;
   if (isChapterIntro && chapter) {
     return (
-      <div className="fixed bottom-16 right-3 z-40 w-72 rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm lg:bottom-4 lg:w-80">
+      <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
         <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
           <div className="flex items-center gap-2">
             <span className="text-amber-400">&#9733;</span>
@@ -160,7 +160,7 @@ export function TutorialPanel() {
 
   // State 3 & 4: Active quest / Pending completion
   return (
-    <div className="fixed bottom-16 right-3 z-40 w-72 rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm lg:bottom-4 lg:w-80">
+    <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
         <div className="flex items-center gap-2">
