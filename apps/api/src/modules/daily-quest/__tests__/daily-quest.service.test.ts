@@ -267,13 +267,50 @@ describe('daily-quest.service', () => {
       });
       expect(resultBelow).toBeNull();
 
-      // Au-dessus du seuil : completion
+      // Un seul event a 5000 d'un coup : completion
+      // Note: l'accumulation fait 3000 + 5000 = 8000 >= 5000
       const resultAbove = await service.processEvent({
         type: 'resources:collected',
         userId: 'user-1',
         payload: { totalCollected: 5000 },
       });
       expect(resultAbove).toEqual({
+        questId: 'miner',
+        questName: 'Mineur assidu',
+        reward: 1,
+      });
+    });
+
+    it('accumule les ressources sur plusieurs events pour atteindre le seuil miner', async () => {
+      setupTodayQuests([
+        { id: 'miner', status: 'pending' },
+        { id: 'navigator', status: 'pending' },
+        { id: 'warrior', status: 'pending' },
+      ]);
+
+      // 1er event : 1500 ressources (total = 1500)
+      const r1 = await service.processEvent({
+        type: 'resources:collected',
+        userId: 'user-1',
+        payload: { totalCollected: 1500 },
+      });
+      expect(r1).toBeNull();
+
+      // 2e event : 2000 ressources (total = 3500)
+      const r2 = await service.processEvent({
+        type: 'resources:collected',
+        userId: 'user-1',
+        payload: { totalCollected: 2000 },
+      });
+      expect(r2).toBeNull();
+
+      // 3e event : 2000 ressources (total = 5500 >= 5000) → completion
+      const r3 = await service.processEvent({
+        type: 'resources:collected',
+        userId: 'user-1',
+        payload: { totalCollected: 2000 },
+      });
+      expect(r3).toEqual({
         questId: 'miner',
         questName: 'Mineur assidu',
         reward: 1,

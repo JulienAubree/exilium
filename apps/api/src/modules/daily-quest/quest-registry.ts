@@ -5,6 +5,12 @@ export interface DailyQuestDefinition {
   /** Liste d'evenements qui peuvent declencher la completion */
   events: string[];
   /**
+   * Champ du payload a accumuler au fil de la journee.
+   * Si defini, le service additionne la valeur a chaque event
+   * et passe le total cumule dans le payload avant d'appeler check().
+   */
+  accumulate?: string;
+  /**
    * Condition de completion.
    * Recoit le payload de l'evenement + la config univers.
    * Retourne true si la quete est completee.
@@ -24,6 +30,7 @@ export const DAILY_QUEST_REGISTRY: Record<string, DailyQuestDefinition> = {
     name: 'Mineur assidu',
     description: 'Collecter {daily_quest_miner_threshold} ressources',
     events: ['resources:collected'],
+    accumulate: 'totalCollected',
     check: (event, config) => {
       const threshold = Number(config['daily_quest_miner_threshold']) || 5000;
       return (Number(event.payload.totalCollected) || 0) >= threshold;
