@@ -132,6 +132,7 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
       const resources = calculateResources(
@@ -193,6 +194,7 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
       const produced = calculateResources(
@@ -266,6 +268,9 @@ export function createResourceService(
       const prodConfig = buildProductionConfig(config);
       const talentCtx: Record<string, number> = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
 
+      // Apply shield level bonus from talents
+      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
+
       // Inject energy research bonus into context
       if (userId) {
         const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
@@ -281,7 +286,8 @@ export function createResourceService(
         }
       }
 
-      return calculateProductionRates(levels, bonus, prodConfig, talentCtx);
+      const rates = calculateProductionRates(levels, bonus, prodConfig, talentCtx);
+      return { ...rates, shieldLevelBonus: talentCtx['shield_level_bonus'] ?? 0 };
     },
   };
 }

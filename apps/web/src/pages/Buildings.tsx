@@ -217,6 +217,7 @@ export default function Buildings() {
   const maxTemp = resourceData?.maxTemp ?? 50;
   const productionFactor = resourceData?.rates.productionFactor ?? 1;
   const prodConfig = gameConfig ? buildProductionConfig(gameConfig) : undefined;
+  const shieldLevelBonus = resourceData?.rates?.shieldLevelBonus ?? 0;
 
   const buildingCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'building')
@@ -326,7 +327,7 @@ export default function Buildings() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold truncate">{building.name}</span>
                             <span className="ml-2 shrink-0 bg-primary/12 text-primary border border-primary/20 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                              {building.currentLevel}
+                              {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-primary ml-0.5">+{shieldLevelBonus}</span>}
                             </span>
                           </div>
                           {building.isUpgrading && building.upgradeEndTime ? (
@@ -407,9 +408,12 @@ export default function Buildings() {
                       return pb && pb.currentLevel >= p.level;
                     });
 
+                    const effectiveLevel = building.id === 'planetaryShield'
+                      ? building.currentLevel + shieldLevelBonus
+                      : building.currentLevel;
                     const stats = getProductionStats(
                       building.id,
-                      building.currentLevel,
+                      effectiveLevel,
                       maxTemp,
                       productionFactor,
                       prodConfig,
@@ -443,7 +447,7 @@ export default function Buildings() {
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-2 right-2 bg-emerald-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                            Niv. {building.currentLevel}
+                            Niv. {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-cyan-300 ml-0.5">+{shieldLevelBonus}</span>}
                           </span>
                         </div>
 

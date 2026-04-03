@@ -78,7 +78,9 @@ export default function Energy() {
   const satEnergyTotal = satEnergyPerUnit * satCount;
   const plantEnergy = data.rates.energyProduced - satEnergyTotal;
 
-  const shieldLevel = buildings?.find((b) => b.id === 'planetaryShield')?.currentLevel ?? 0;
+  const shieldBuildingLevel = buildings?.find((b) => b.id === 'planetaryShield')?.currentLevel ?? 0;
+  const shieldLevelBonus = data.rates.shieldLevelBonus ?? 0;
+  const shieldLevel = shieldBuildingLevel + shieldLevelBonus;
   const shieldPercent = localPercents['shield'] ?? data.rates.shieldPercent ?? 100;
 
   // Energy bar segments
@@ -144,6 +146,7 @@ export default function Energy() {
           name: 'Bouclier',
           icon: <DefenseIcon width={18} height={18} />,
           level: shieldLevel,
+          levelBonus: shieldLevelBonus > 0 ? shieldLevelBonus : undefined,
           colorHex: '#22d3ee',
           colorClass: 'text-shield',
           percent: shieldPercent,
