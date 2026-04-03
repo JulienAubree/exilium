@@ -42,8 +42,9 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
   const isValid = name.length >= 2 && name.length <= 32 && NAME_REGEX.test(name) && selectedHull !== null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-lg border border-amber-500/30 bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm">
+      <div className="flex min-h-full items-end sm:items-center justify-center p-4">
+      <div className="w-full max-w-2xl rounded-lg border border-amber-500/30 bg-card p-5 sm:p-6 shadow-xl">
         <h2 className="text-lg font-bold text-amber-400">Votre vaisseau amiral</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Nos ingenieurs ont remis ce vaisseau en etat. Choisissez sa coque et donnez-lui un nom, Commandant.
@@ -130,6 +131,7 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
         >
           {createMutation.isPending ? 'Creation...' : 'Baptiser le vaisseau'}
         </button>
+      </div>
       </div>
     </div>
   );
