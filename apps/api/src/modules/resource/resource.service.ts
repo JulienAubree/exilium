@@ -275,9 +275,9 @@ export function createResourceService(
             if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
           }
           const energyMult = resolveBonus('energy_production', null, researchLevels, config.bonuses);
-          if (energyMult > 1) talentCtx['energy_production'] = energyMult - 1;
+          if (energyMult > 1) talentCtx['energy_production'] = (talentCtx['energy_production'] ?? 0) + (energyMult - 1);
           const energyEfficiency = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
-          if (energyEfficiency < 1) talentCtx['energy_consumption'] = energyEfficiency - 1;
+          if (energyEfficiency < 1) talentCtx['energy_consumption'] = (talentCtx['energy_consumption'] ?? 0) + (energyEfficiency - 1);
         }
       }
 
