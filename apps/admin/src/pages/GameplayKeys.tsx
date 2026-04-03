@@ -70,6 +70,7 @@ const KEYS: GameplayKey[] = [
   { key: 'fleet_slot_bonus', label: 'Slot flotte (planete)', description: '+N slot de flotte sur cette planete', category: 'talent_planet', source: 'Talent planet_bonus', consumer: 'fleet.service.ts', formula: 'slots = base + bonus', example: 'explore_control: +1' },
   { key: 'storage_capacity_bonus', label: 'Stockage', description: '+N% capacite de stockage sur la planete', category: 'talent_planet', source: 'Talent planet_bonus', consumer: 'resource.service.ts', formula: 'storage = base × (1 + bonus)', example: 'trade_logistics: +5%/rang' },
   { key: 'mine_production_bonus', label: 'Production mines', description: '+N% production des mines sur la planete', category: 'talent_planet', source: 'Talent planet_bonus', consumer: 'resource.service.ts', formula: 'production = base × (1 + bonus)', example: 'trade_prospector: +3%/rang' },
+  { key: 'energy_production', label: 'Production energie', description: '+N% production d\'energie sur la planete du flagship', category: 'talent_planet', source: 'Talent planet_bonus', consumer: 'game-engine/formulas/resources.ts', formula: 'energyProduced = base × (1 + bonus)', example: 'sci_energy: +2%/rang × 3 = +6%' },
 
   // ── Timed buff keys ──
   { key: 'fleet_damage_boost', label: 'Boost degats', description: '+25% degats des flottes depuis cette planete', category: 'talent_buff', source: 'Talent timed_buff', consumer: 'combat engine', formula: 'damage = base × (1 + multiplier)', example: 'combat_assault: 1h actif, 24h CD' },

@@ -628,6 +628,7 @@ const TALENT_DEFINITIONS: any[] = [
   { id: 'sci_shield', branchId: 'scientifique', tier: 1, position: 'right', name: 'Champ de force', description: '+2 bouclier par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'shield', perRank: 2 }, sortOrder: 2 },
   // Tier 2
   { id: 'sci_research_time', branchId: 'scientifique', tier: 2, position: 'center', name: 'Protocoles avances', description: '-10% temps de recherche', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'research_time', perRank: 0.10 }, sortOrder: 3 },
+  { id: 'sci_energy', branchId: 'scientifique', tier: 2, position: 'left', name: 'Amplification energetique', description: '+2% production d\'energie par rang (planete du flagship)', maxRanks: 3, prerequisiteId: null, effectType: 'planet_bonus', effectParams: { key: 'energy_production', perRank: 0.02 }, sortOrder: 4 },
 ];
 
 async function seed() {
