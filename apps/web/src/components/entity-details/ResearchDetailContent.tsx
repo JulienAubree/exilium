@@ -210,24 +210,63 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
       {/* Slag rate for deepSpaceRefining */}
       {researchId === 'deepSpaceRefining' && gameConfig?.universe && (() => {
         const baseRate = Number((gameConfig.universe as Record<string, unknown>).slag_rate ?? 0.5);
-        const effectiveRate = baseRate / (1 + currentLevel);
-        const nextRate = baseRate / (1 + currentLevel + 1);
+        const effectiveRate = baseRate * Math.pow(0.85, currentLevel);
+        const nextRate = baseRate * Math.pow(0.85, currentLevel + 1);
+        const previewLevels = [0, 1, 2, 3, 5, 7, 10, 15, 20].filter((l) => l >= currentLevel - 1);
         return (
-          <div>
-            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
-              Taux de scories
-            </div>
-            <div className="space-y-1 text-[11px]">
-              <div className="flex justify-between text-slate-300">
-                <span>Taux actuel</span>
-                <span className="text-emerald-400">{(effectiveRate * 100).toFixed(1)}%</span>
+          <>
+            <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                Taux de scories
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span>Niveau suivant</span>
-                <span className="text-emerald-400">{(nextRate * 100).toFixed(1)}%</span>
+              <div className="text-[11px] text-slate-300 space-y-1.5">
+                <p>Base : <span className="text-amber-400 font-mono">{(baseRate * 100).toFixed(0)}%</span> de scories sur chaque extraction.</p>
+                <p>Chaque niveau reduit les scories de <span className="text-emerald-400">15%</span> (multiplicatif : taux = {(baseRate * 100).toFixed(0)}% x 0.85^niveau).</p>
+              </div>
+              <div className="flex gap-4 text-[11px]">
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-400">Actuel (niv. {currentLevel}) :</span>
+                  <span className="text-emerald-400 font-mono font-semibold">{(effectiveRate * 100).toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-400">Niv. {currentLevel + 1} :</span>
+                  <span className="text-emerald-400 font-mono">{(nextRate * 100).toFixed(1)}%</span>
+                </div>
               </div>
             </div>
-          </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+                Progression des scories
+              </div>
+              <table className="w-full text-[11px] border-collapse">
+                <thead>
+                  <tr className="text-slate-500 text-left">
+                    <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right">Scories</th>
+                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right">Ressources recues</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-300">
+                  {previewLevels.map((lvl, i) => {
+                    const rate = baseRate * Math.pow(0.85, lvl);
+                    return (
+                      <tr key={lvl} className={`${i % 2 === 0 ? 'bg-[#1e293b]' : ''} ${lvl === currentLevel ? 'ring-1 ring-emerald-500/50' : ''}`}>
+                        <td className={`px-2 py-1.5 ${lvl === currentLevel ? 'font-semibold text-emerald-400' : ''}`}>
+                          {lvl}{lvl === currentLevel ? ' \u25C4' : ''}
+                        </td>
+                        <td className={`px-2 py-1.5 text-right font-mono ${rate > 0.3 ? 'text-red-400' : rate > 0.15 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {(rate * 100).toFixed(1)}%
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono text-emerald-400">
+                          {((1 - rate) * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         );
       })()}
 
