@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc } from 'drizzle-orm';
+import { eq, and, inArray, asc, sql, gt } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -475,12 +475,15 @@ export function createShipyardService(
           unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
         }
 
-        // If queued batch has remaining qty > 1, split off 1 unit
+        // Atomic decrement: try to claim 1 unit from queued batch
+        // This prevents race conditions when multiple slots complete simultaneously
         if (nextBatch.quantity - nextBatch.completedCount > 1) {
-          // Reduce queued batch qty by 1
-          await db.update(buildQueue)
-            .set({ quantity: nextBatch.quantity - 1 })
-            .where(eq(buildQueue.id, nextBatch.id));
+          const [decremented] = await db.update(buildQueue)
+            .set({ quantity: sql`${buildQueue.quantity} - 1` })
+            .where(and(eq(buildQueue.id, nextBatch.id), gt(buildQueue.quantity, 1)))
+            .returning();
+
+          if (!decremented) continue; // Another worker already claimed it
 
           // Create new active entry for 1 unit
           const now = new Date();
@@ -503,13 +506,16 @@ export function createShipyardService(
             { delay: unitTime * 1000, jobId: `shipyard-${newEntry.id}-1` },
           );
         } else {
-          // Single unit — just activate it
+          // Single unit — atomically claim it by setting active (only if still queued)
           const now = new Date();
-          await db.update(buildQueue).set({
+          const [activated] = await db.update(buildQueue).set({
             status: 'active',
             startTime: now,
             endTime: new Date(now.getTime() + unitTime * 1000),
-          }).where(eq(buildQueue.id, nextBatch.id));
+          }).where(and(eq(buildQueue.id, nextBatch.id), eq(buildQueue.status, 'queued')))
+            .returning();
+
+          if (!activated) continue; // Another worker already activated it
 
           await completionQueue.add(
             'shipyard-unit',
