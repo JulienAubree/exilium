@@ -1,5 +1,5 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
-import { pveMissions, planets, missionCenterState, fleetEvents, planetShips } from '@exilium/db';
+import { pveMissions, planets, missionCenterState, fleetEvents, planetShips, asteroidDeposits } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
 import type { Database } from '@exilium/db';
 import { discoveryCooldown, depositSize, depositComposition, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
@@ -17,12 +17,33 @@ export function createPveService(
 ) {
   return {
     async getMissions(userId: string) {
-      return db.select().from(pveMissions)
+      const missions = await db.select().from(pveMissions)
         .where(and(
           eq(pveMissions.userId, userId),
           eq(pveMissions.status, 'available'),
         ))
         .orderBy(asc(pveMissions.createdAt));
+
+      // For mining missions, replace rewards with remaining deposit amounts
+      for (const mission of missions) {
+        if (mission.missionType !== 'mine') continue;
+        const params = mission.parameters as { depositId?: string };
+        if (!params.depositId) continue;
+        const [deposit] = await db.select({
+          minerai: asteroidDeposits.mineraiRemaining,
+          silicium: asteroidDeposits.siliciumRemaining,
+          hydrogene: asteroidDeposits.hydrogeneRemaining,
+        }).from(asteroidDeposits).where(eq(asteroidDeposits.id, params.depositId)).limit(1);
+        if (deposit) {
+          (mission as any).rewards = {
+            minerai: Math.floor(Number(deposit.minerai)),
+            silicium: Math.floor(Number(deposit.silicium)),
+            hydrogene: Math.floor(Number(deposit.hydrogene)),
+          };
+        }
+      }
+
+      return missions;
     },
 
     async getMissionById(userId: string, missionId: string) {
