@@ -194,7 +194,6 @@ export function createShipyardService(
 
       const existingActive = await this.getShipyardQueue(planetId);
       const sameTypeQueue = existingActive.filter((e) => e.facilityId === facilityId);
-      const hasActive = sameTypeQueue.some((e) => e.status === 'active');
 
       const buildingLevels = await this.getBuildingLevels(planetId);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
@@ -217,49 +216,74 @@ export function createShipyardService(
         unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
       }
 
-      // Merge into existing entry if last batch in queue is the same item
-      const lastBatch = sameTypeQueue[sameTypeQueue.length - 1];
-      if (lastBatch && lastBatch.itemId === itemId) {
-        const [updated] = await db
-          .update(buildQueue)
-          .set({ quantity: lastBatch.quantity + quantity })
-          .where(eq(buildQueue.id, lastBatch.id))
-          .returning();
-
-        // If it was the only entry and already active, the BullMQ job is already scheduled
-        return { entry: updated, unitTime };
+      // Compute parallel build slots for this facility
+      let maxSlots = 1;
+      if (facilityId === 'shipyard') {
+        maxSlots += Math.floor(talentCtx['industrial_parallel_build'] ?? 0);
       }
+      if (facilityId === 'commandCenter') {
+        maxSlots += Math.floor(talentCtx['military_parallel_build'] ?? 0);
+      }
+      const activeCount = sameTypeQueue.filter((e) => e.status === 'active').length;
+      const freeSlots = Math.max(0, maxSlots - activeCount);
+
+      // How many units can start immediately vs queued
+      const immediateUnits = Math.min(quantity, freeSlots);
+      const queuedUnits = quantity - immediateUnits;
 
       const now = new Date();
-      const status = hasActive ? 'queued' : 'active';
-      const startTime = now;
-      const endTime = new Date(now.getTime() + unitTime * 1000);
+      let lastEntry: any = null;
 
-      const [entry] = await db
-        .insert(buildQueue)
-        .values({
-          planetId,
-          userId,
-          type,
-          itemId,
-          quantity,
-          completedCount: 0,
-          startTime,
-          endTime,
-          status,
-          facilityId,
-        })
-        .returning();
+      // Create active entries (one per slot, qty=1 each)
+      for (let i = 0; i < immediateUnits; i++) {
+        const startTime = now;
+        const endTime = new Date(now.getTime() + unitTime * 1000);
+        const [entry] = await db
+          .insert(buildQueue)
+          .values({
+            planetId, userId, type, itemId,
+            quantity: 1, completedCount: 0,
+            startTime, endTime,
+            status: 'active',
+            facilityId,
+          })
+          .returning();
 
-      if (!hasActive) {
         await completionQueue.add(
           'shipyard-unit',
           { buildQueueId: entry.id },
           { delay: unitTime * 1000, jobId: `shipyard-${entry.id}-1` },
         );
+        lastEntry = entry;
       }
 
-      return { entry, unitTime };
+      // Create queued entry for remainder (or merge with last queued)
+      if (queuedUnits > 0) {
+        const lastBatch = sameTypeQueue.filter(e => e.status === 'queued').pop();
+        if (lastBatch && lastBatch.itemId === itemId) {
+          // Merge with existing queued entry
+          const [updated] = await db
+            .update(buildQueue)
+            .set({ quantity: lastBatch.quantity + queuedUnits })
+            .where(eq(buildQueue.id, lastBatch.id))
+            .returning();
+          if (!lastEntry) lastEntry = updated;
+        } else {
+          const [entry] = await db
+            .insert(buildQueue)
+            .values({
+              planetId, userId, type, itemId,
+              quantity: queuedUnits, completedCount: 0,
+              startTime: now, endTime: new Date(now.getTime() + unitTime * 1000),
+              status: 'queued',
+              facilityId,
+            })
+            .returning();
+          if (!lastEntry) lastEntry = entry;
+        }
+      }
+
+      return { entry: lastEntry, unitTime };
     },
 
     async completeUnit(buildQueueId: string): Promise<BuildCompletionResult> {
@@ -390,63 +414,110 @@ export function createShipyardService(
     },
 
     async activateNextBatch(planetId: string, type: 'ship' | 'defense', facilityId?: string | null) {
-      const [nextBatch] = await db
-        .select()
-        .from(buildQueue)
-        .where(
-          and(
-            eq(buildQueue.planetId, planetId),
-            eq(buildQueue.status, 'queued'),
-            eq(buildQueue.type, type),
-            ...(facilityId ? [eq(buildQueue.facilityId, facilityId)] : []),
-          ),
-        )
-        .orderBy(asc(buildQueue.startTime))
-        .limit(1);
+      // Get current state to compute free slots
+      const queue = await this.getShipyardQueue(planetId, facilityId ?? undefined);
+      const sameType = queue.filter(e =>
+        e.type === type && (!facilityId || e.facilityId === facilityId)
+      );
 
-      if (!nextBatch) return;
+      // Compute max slots
+      let maxSlots = 1;
+      const anyEntry = sameType[0];
+      if (anyEntry && talentService) {
+        const talentCtx = await talentService.computeTalentContext(anyEntry.userId, planetId);
+        if (facilityId === 'shipyard') maxSlots += Math.floor(talentCtx['industrial_parallel_build'] ?? 0);
+        if (facilityId === 'commandCenter') maxSlots += Math.floor(talentCtx['military_parallel_build'] ?? 0);
+      }
 
-      const config = await gameConfigService.getFullConfig();
-      const def = nextBatch.type === 'ship' ? config.ships[nextBatch.itemId] : config.defenses[nextBatch.itemId];
+      const activeCount = sameType.filter(e => e.status === 'active').length;
+      const freeSlots = Math.max(0, maxSlots - activeCount);
 
-      const buildingLevels = await this.getBuildingLevels(planetId);
-      const talentCtx = talentService ? await talentService.computeTalentContext(nextBatch.userId, planetId) : {};
-      const timeDivisor = Number(config.universe.shipyard_time_divisor) || 2500;
-      let unitTime = 60;
-      if (def) {
-        if (nextBatch.type === 'ship') {
+      for (let i = 0; i < freeSlots; i++) {
+        // Find next queued entry
+        const [nextBatch] = await db
+          .select()
+          .from(buildQueue)
+          .where(
+            and(
+              eq(buildQueue.planetId, planetId),
+              eq(buildQueue.status, 'queued'),
+              eq(buildQueue.type, type),
+              ...(facilityId ? [eq(buildQueue.facilityId, facilityId)] : []),
+            ),
+          )
+          .orderBy(asc(buildQueue.startTime))
+          .limit(1);
+
+        if (!nextBatch) break;
+
+        const config = await gameConfigService.getFullConfig();
+        const buildingLevels = await this.getBuildingLevels(planetId);
+        const talentCtx2 = talentService ? await talentService.computeTalentContext(nextBatch.userId, planetId) : {};
+        const timeDivisor = Number(config.universe.shipyard_time_divisor) || 2500;
+
+        let unitTime: number;
+        if (type === 'ship') {
+          const def = config.ships[nextBatch.itemId];
           const buildCategory = getShipBuildCategory(def as any, config.bonuses);
           const bonusMultiplier = resolveBonus('ship_build_time', buildCategory, buildingLevels, config.bonuses);
-          const talentTimeMultiplier = 1 / (1 + (talentCtx['ship_build_time'] ?? 0));
+          const talentTimeMultiplier = 1 / (1 + (talentCtx2['ship_build_time'] ?? 0));
           const hullKey = buildCategory === 'build_military' ? 'hull_combat_build_time_reduction'
             : buildCategory === 'build_industrial' ? 'hull_industrial_build_time_reduction'
             : null;
-          const hullTimeMultiplier = hullKey ? 1 - (talentCtx[hullKey] ?? 0) : 1;
-          const tcKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
-          const tcMult = tcKey ? 1 - (talentCtx[tcKey] ?? 0) : 1;
-          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * tcMult));
+          const hullTimeMultiplier = hullKey ? 1 - (talentCtx2[hullKey] ?? 0) : 1;
+          const talentCatKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
+          const talentCatMult = talentCatKey ? 1 - (talentCtx2[talentCatKey] ?? 0) : 1;
+          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCatMult));
         } else {
+          const def = config.defenses[nextBatch.itemId];
           const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
-          const talentTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
+          const talentTimeMultiplier = 1 / (1 + (talentCtx2['defense_build_time'] ?? 0));
           unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
         }
+
+        // If queued batch has remaining qty > 1, split off 1 unit
+        if (nextBatch.quantity - nextBatch.completedCount > 1) {
+          // Reduce queued batch qty by 1
+          await db.update(buildQueue)
+            .set({ quantity: nextBatch.quantity - 1 })
+            .where(eq(buildQueue.id, nextBatch.id));
+
+          // Create new active entry for 1 unit
+          const now = new Date();
+          const [newEntry] = await db.insert(buildQueue).values({
+            planetId: nextBatch.planetId,
+            userId: nextBatch.userId,
+            type: nextBatch.type,
+            itemId: nextBatch.itemId,
+            quantity: 1,
+            completedCount: 0,
+            startTime: now,
+            endTime: new Date(now.getTime() + unitTime * 1000),
+            status: 'active',
+            facilityId: nextBatch.facilityId,
+          }).returning();
+
+          await completionQueue.add(
+            'shipyard-unit',
+            { buildQueueId: newEntry.id },
+            { delay: unitTime * 1000, jobId: `shipyard-${newEntry.id}-1` },
+          );
+        } else {
+          // Single unit — just activate it
+          const now = new Date();
+          await db.update(buildQueue).set({
+            status: 'active',
+            startTime: now,
+            endTime: new Date(now.getTime() + unitTime * 1000),
+          }).where(eq(buildQueue.id, nextBatch.id));
+
+          await completionQueue.add(
+            'shipyard-unit',
+            { buildQueueId: nextBatch.id },
+            { delay: unitTime * 1000, jobId: `shipyard-${nextBatch.id}-${nextBatch.completedCount + 1}` },
+          );
+        }
       }
-
-      const now = new Date();
-      await db
-        .update(buildQueue)
-        .set({
-          status: 'active',
-          startTime: now,
-          endTime: new Date(now.getTime() + unitTime * 1000),
-        })
-        .where(eq(buildQueue.id, nextBatch.id));
-
-      await completionQueue.add(
-        'shipyard-unit',
-        { buildQueueId: nextBatch.id },
-        { delay: unitTime * 1000, jobId: `shipyard-${nextBatch.id}-1` },
-      );
     },
 
     async cancelBatch(userId: string, planetId: string, batchId: string) {

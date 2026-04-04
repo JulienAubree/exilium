@@ -154,16 +154,28 @@ export default function CommandCenter() {
       <PageHeader title="Centre de commandement" />
 
       {shipQueue.length > 0 && (() => {
+        const activeEntries = shipQueue.filter(e => e.status === 'active');
+        const parallelSlots = activeEntries.length;
+
+        // Calculate total queue end time
         let queueEndTime: Date | null = null;
         let totalMs = 0;
-        for (const item of shipQueue) {
+        const queuedItems = shipQueue.filter(e => e.status === 'queued');
+        const totalQueuedUnits = queuedItems.reduce((sum, e) => sum + (e.quantity - (e.completedCount ?? 0)), 0);
+        let longestActiveMs = 0;
+        for (const item of activeEntries) {
           const remaining = item.quantity - (item.completedCount ?? 0);
-          if (item.status === 'active' && item.endTime) {
+          if (item.endTime) {
             const unitDurationMs = new Date(item.endTime).getTime() - new Date(item.startTime).getTime();
-            totalMs += (new Date(item.endTime).getTime() - Date.now()) + unitDurationMs * (remaining - 1);
-          } else if (item.status === 'queued') {
-            const ship = ships.find((s) => s.id === item.itemId);
-            if (ship) totalMs += (ship.timePerUnit * 1000) * remaining;
+            const itemMs = (new Date(item.endTime).getTime() - Date.now()) + unitDurationMs * (remaining - 1);
+            if (itemMs > longestActiveMs) longestActiveMs = itemMs;
+          }
+        }
+        totalMs = longestActiveMs;
+        if (totalQueuedUnits > 0 && parallelSlots > 0) {
+          const sampleShip = ships.find((s) => s.id === queuedItems[0]?.itemId);
+          if (sampleShip) {
+            totalMs += Math.ceil(totalQueuedUnits / Math.max(1, parallelSlots)) * sampleShip.timePerUnit * 1000;
           }
         }
         if (totalMs > 0) queueEndTime = new Date(Date.now() + totalMs);
@@ -171,7 +183,14 @@ export default function CommandCenter() {
         return (
         <section className="glass-card p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold">File de construction</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold">File de construction</h2>
+              {parallelSlots > 1 && (
+                <span className="rounded bg-cyan-500/20 border border-cyan-500/50 px-2 py-0.5 text-[10px] font-semibold text-cyan-400">
+                  x{parallelSlots} parallele
+                </span>
+              )}
+            </div>
             {queueEndTime && (
               <span className="text-xs text-muted-foreground">
                 Fin : {queueEndTime.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
@@ -183,9 +202,17 @@ export default function CommandCenter() {
               const name = getShipName(item.itemId, gameConfig);
               const remaining = item.quantity - (item.completedCount ?? 0);
               return (
-                <div key={item.id} className="space-y-1 border-l-4 border-l-orange-500 pl-3">
+                <div key={item.id} className={cn(
+                  'space-y-1 border-l-4 pl-3',
+                  item.status === 'active' ? 'border-l-orange-500' : 'border-l-muted-foreground/30',
+                )}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{remaining}x {name}</span>
+                    <span className="font-medium">
+                      {remaining}x {name}
+                      {item.status === 'active' && parallelSlots > 1 && (
+                        <span className="ml-1.5 text-[10px] text-orange-400 font-normal">(slot actif)</span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-1">
                       {remaining > 1 && (
                         <Button
