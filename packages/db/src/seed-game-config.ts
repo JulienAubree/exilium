@@ -612,7 +612,7 @@ const TALENT_DEFINITIONS: any[] = [
   // Tier 2
   { id: 'mil_build_time', branchId: 'militaire', tier: 2, position: 'center', name: 'Chaine de production', description: '-10% temps de construction vaisseaux militaires', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'military_build_time', perRank: 0.10 }, sortOrder: 3 },
   // Tier 3
-  { id: 'mil_parallel_build', branchId: 'militaire', tier: 3, position: 'center', name: 'Production militaire parallele', description: '+1 slot de construction militaire parallele', maxRanks: 1, prerequisiteId: 'mil_build_time', effectType: 'global_bonus', effectParams: { key: 'military_parallel_build', perRank: 1 }, sortOrder: 4 },
+  { id: 'mil_parallel_build', branchId: 'militaire', tier: 3, position: 'center', name: 'Production militaire parallele', description: '+1 slot de construction militaire parallele (planete du flagship)', maxRanks: 1, prerequisiteId: 'mil_build_time', effectType: 'planet_bonus', effectParams: { key: 'military_parallel_build', perRank: 1 }, sortOrder: 4 },
 
   // === INDUSTRIEL === (production, minage, commerce)
   // Tier 1
@@ -622,7 +622,7 @@ const TALENT_DEFINITIONS: any[] = [
   // Tier 2
   { id: 'ind_build_time', branchId: 'industriel', tier: 2, position: 'center', name: 'Chaine de montage', description: '-10% temps de construction vaisseaux industriels', maxRanks: 1, prerequisiteId: null, effectType: 'global_bonus', effectParams: { key: 'industrial_build_time', perRank: 0.10 }, sortOrder: 3 },
   // Tier 3
-  { id: 'ind_parallel_build', branchId: 'industriel', tier: 3, position: 'center', name: 'Production parallele', description: '+1 slot de construction industrielle parallele', maxRanks: 1, prerequisiteId: 'ind_build_time', effectType: 'global_bonus', effectParams: { key: 'industrial_parallel_build', perRank: 1 }, sortOrder: 4 },
+  { id: 'ind_parallel_build', branchId: 'industriel', tier: 3, position: 'center', name: 'Production parallele', description: '+1 slot de construction industrielle parallele (planete du flagship)', maxRanks: 1, prerequisiteId: 'ind_build_time', effectType: 'planet_bonus', effectParams: { key: 'industrial_parallel_build', perRank: 1 }, sortOrder: 4 },
 
   // === SCIENTIFIQUE === (recherche, espionnage, information)
   // Tier 1
