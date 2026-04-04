@@ -319,13 +319,13 @@ export default function Fleet() {
     const isUnavailable = flagship.status === 'in_mission' || flagship.status === 'incapacitated' || (flagship.status === 'active' && flagship.planetId !== planetId);
     if (isAvailable) {
       return [
-        { id: 'flagship', name: flagship.name, count: 1, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
+        { id: 'flagship', name: flagship.name, count: 1, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined, hullId: (flagship as any).hullId ?? undefined },
         ...base,
       ];
     }
     if (isUnavailable) {
       return [
-        { id: 'flagship', name: flagship.name, count: 1, isStationary: true, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined },
+        { id: 'flagship', name: flagship.name, count: 1, isStationary: true, unlockedMissions, flagshipImageIndex: flagship.flagshipImageIndex ?? undefined, hullId: (flagship as any).hullId ?? undefined },
         ...base,
       ];
     }
