@@ -336,8 +336,11 @@ export function createShipyardService(
         let maxSlots = 1;
         if (talentService) {
           const tc = await talentService.computeTalentContext(entry.userId, entry.planetId);
+          console.log(`[completeUnit] userId=${entry.userId} planetId=${entry.planetId} facilityId=${entry.facilityId} talentService=YES talentCtx=${JSON.stringify(tc)}`);
           if (entry.facilityId === 'shipyard') maxSlots += Math.floor(tc['industrial_parallel_build'] ?? 0);
           if (entry.facilityId === 'commandCenter') maxSlots += Math.floor(tc['military_parallel_build'] ?? 0);
+        } else {
+          console.log(`[completeUnit] talentService=NO — maxSlots stays 1`);
         }
 
         await this.activateNextBatch(entry.planetId, entry.type as 'ship' | 'defense', entry.facilityId, maxSlots);
