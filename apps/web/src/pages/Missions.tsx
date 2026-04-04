@@ -334,14 +334,25 @@ export default function Missions() {
                       />
                     </div>
                   ))}
-                  <Button
-                    size="sm"
-                    className="w-full bg-rose-600 hover:bg-rose-700 text-white"
-                    onClick={() => navigate(`/fleet/send?mission=pirate&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`)}
-                    disabled={!!fleetsByMission.get(mission.id)?.length}
-                  >
-                    {fleetsByMission.get(mission.id)?.length ? 'Flotte en route' : 'Attaquer'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
+                      onClick={() => navigate(`/fleet/send?mission=pirate&galaxy=${params.galaxy}&system=${params.system}&position=${params.position}&pveMissionId=${mission.id}`)}
+                      disabled={!!fleetsByMission.get(mission.id)?.length}
+                    >
+                      {fleetsByMission.get(mission.id)?.length ? 'Flotte en route' : 'Attaquer'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => dismissMutation.mutate({ missionId: mission.id })}
+                      disabled={dismissMutation.isPending || !!fleetsByMission.get(mission.id)?.length}
+                      title="Annuler ce repaire"
+                    >
+                      Annuler
+                    </Button>
+                  </div>
                 </div>
               );
             })}
