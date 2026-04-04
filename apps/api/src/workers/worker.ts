@@ -16,6 +16,7 @@ import { createReportService } from '../modules/report/report.service.js';
 import { createPushService } from '../modules/push/push.service.js';
 import { createExiliumService } from '../modules/exilium/exilium.service.js';
 import { createFlagshipService } from '../modules/flagship/flagship.service.js';
+import { createTalentService } from '../modules/flagship/talent.service.js';
 import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
 import { buildCompletionQueue, fleetQueue, marketQueue } from '../queues/queues.js';
 import { startBuildCompletionWorker } from './build-completion.worker.js';
@@ -42,13 +43,14 @@ const pveService = createPveService(db, asteroidBeltService, pirateService, game
 const reportService = createReportService(db);
 const tutorialService = createTutorialService(db, pveService);
 
+// Talent & flagship services
+const flagshipService = createFlagshipService(db, exiliumService, gameConfigService);
+const talentService = createTalentService(db, exiliumService, gameConfigService);
+
 // Build services (receive the unified build queue)
 const buildingService = createBuildingService(db, resourceService, buildCompletionQueue, gameConfigService);
 const researchService = createResearchService(db, resourceService, buildCompletionQueue, gameConfigService);
-const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService);
-
-// Fleet service (receives the unified fleet queue)
-const flagshipService = createFlagshipService(db, exiliumService, gameConfigService);
+const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, flagshipService);
 const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService);
 
 // Market service
