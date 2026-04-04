@@ -441,8 +441,8 @@ export function createTutorialService(
         }
       }
 
-      // Clean metadata when quest_17 (mining mission) is completed
-      if (quest.id === 'quest_17') {
+      // Clean metadata when quest_16 (mining mission) is completed
+      if (quest.id === 'quest_16') {
         await db
           .update(tutorialProgress)
           .set({ metadata: null })
