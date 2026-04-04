@@ -97,7 +97,9 @@ export class MineHandler implements PhasedMissionHandler {
     const baseFleetExtr = totalMiningExtraction(fleetEvent.ships, shipStatsMap);
     const extractionMultiplier = resolveBonus('mining_extraction', null, researchLevels, config.bonuses);
     const fleetExtr = Math.floor(baseFleetExtr * extractionMultiplier);
-    const mineMins = miningDuration(cargoCapacity, fleetExtr, 1);
+    const talentCtx = ctx.talentService ? await ctx.talentService.computeTalentContext(fleetEvent.userId) : {};
+    const miningSpeedBonus = 1 + (talentCtx['mining_speed'] ?? 0);
+    const mineMins = miningDuration(cargoCapacity, fleetExtr, 1 / miningSpeedBonus);
     const mineMs = mineMins * 60 * 1000;
 
     const now = new Date();
