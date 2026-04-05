@@ -17,11 +17,14 @@ function formatDate(date: string | Date): string {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function inlineBold(text: string) {
-  const parts = text.split(/(\*\*.+?\*\*)/g);
+function inlineFormat(text: string) {
+  const parts = text.split(/(\*\*.+?\*\*|\*.+?\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={i} className="text-foreground font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={i} className="text-foreground/70 italic">{part.slice(1, -1)}</em>;
     }
     return part;
   });
@@ -39,7 +42,7 @@ function renderMarkdown(content: string) {
           {listItems.map((item, i) => (
             <li key={i} className="text-sm text-foreground/80 flex gap-2">
               <span className="text-muted-foreground shrink-0">•</span>
-              <span>{inlineBold(item)}</span>
+              <span>{inlineFormat(item)}</span>
             </li>
           ))}
         </ul>
@@ -49,11 +52,25 @@ function renderMarkdown(content: string) {
   };
 
   for (const line of lines) {
-    if (line.startsWith('### ')) {
+    if (line.startsWith('##### ')) {
+      flushList();
+      elements.push(
+        <h5 key={`h5-${elements.length}`} className="text-xs font-medium text-foreground/70 mt-2 mb-0.5">
+          {inlineFormat(line.slice(6))}
+        </h5>
+      );
+    } else if (line.startsWith('#### ')) {
+      flushList();
+      elements.push(
+        <h4 key={`h4-${elements.length}`} className="text-sm font-medium text-foreground/90 mt-2.5 mb-0.5">
+          {inlineFormat(line.slice(5))}
+        </h4>
+      );
+    } else if (line.startsWith('### ')) {
       flushList();
       elements.push(
         <h3 key={`h-${elements.length}`} className="text-sm font-semibold text-foreground mt-3 mb-1">
-          {line.slice(4)}
+          {inlineFormat(line.slice(4))}
         </h3>
       );
     } else if (line.startsWith('- ')) {
@@ -63,7 +80,7 @@ function renderMarkdown(content: string) {
     } else {
       flushList();
       elements.push(
-        <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-1">{inlineBold(line)}</p>
+        <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-1">{inlineFormat(line)}</p>
       );
     }
   }
