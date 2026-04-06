@@ -35,21 +35,22 @@ export class PirateHandler implements MissionHandler {
     if (ships['flagship'] && ships['flagship'] > 0 && ctx.flagshipService) {
       const flagship = await ctx.flagshipService.get(fleetEvent.userId);
       if (flagship) {
+        const fs = 'effectiveStats' in flagship ? (flagship as any).effectiveStats : null;
         shipStatsMap['flagship'] = {
-          baseSpeed: flagship.baseSpeed,
-          fuelConsumption: flagship.fuelConsumption,
-          cargoCapacity: flagship.cargoCapacity,
-          driveType: flagship.driveType as import('@exilium/game-engine').ShipStats['driveType'],
+          baseSpeed: fs?.baseSpeed ?? flagship.baseSpeed,
+          fuelConsumption: fs?.fuelConsumption ?? flagship.fuelConsumption,
+          cargoCapacity: fs?.cargoCapacity ?? flagship.cargoCapacity,
+          driveType: (fs?.driveType ?? flagship.driveType) as import('@exilium/game-engine').ShipStats['driveType'],
           miningExtraction: 0,
         };
         flagshipCombatConfig = {
           shipType: 'flagship',
           categoryId: flagship.combatCategoryId ?? 'support',
-          baseShield: flagship.shield,
-          baseArmor: flagship.baseArmor ?? 0,
-          baseHull: flagship.hull,
-          baseWeaponDamage: flagship.weapons,
-          baseShotCount: flagship.shotCount ?? 1,
+          baseShield: fs?.shield ?? flagship.shield,
+          baseArmor: fs?.baseArmor ?? flagship.baseArmor ?? 0,
+          baseHull: fs?.hull ?? flagship.hull,
+          baseWeaponDamage: fs?.weapons ?? flagship.weapons,
+          baseShotCount: fs?.shotCount ?? flagship.shotCount ?? 1,
         };
       }
     }
