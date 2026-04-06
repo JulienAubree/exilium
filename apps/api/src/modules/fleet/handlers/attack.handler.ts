@@ -145,7 +145,9 @@ export class AttackHandler implements MissionHandler {
     const targetPlanetName = targetPlanet.name;
 
     const [defShipsRow] = await ctx.db.select().from(planetShips).where(eq(planetShips.planetId, targetPlanet.id)).limit(1);
+    if (!defShipsRow) await ctx.db.insert(planetShips).values({ planetId: targetPlanet.id }).onConflictDoNothing();
     const [defDefsRow] = await ctx.db.select().from(planetDefenses).where(eq(planetDefenses.planetId, targetPlanet.id)).limit(1);
+    if (!defDefsRow) await ctx.db.insert(planetDefenses).values({ planetId: targetPlanet.id }).onConflictDoNothing();
 
     const defenderFleet = parseUnitRow(defShipsRow);
     const defenderDefenses = parseUnitRow(defDefsRow);

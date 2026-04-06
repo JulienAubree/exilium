@@ -1,6 +1,6 @@
 import { eq, asc, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetTypes, buildQueue, fleetEvents, flagships } from '@exilium/db';
+import { planets, planetBuildings, planetShips, planetDefenses, planetTypes, buildQueue, fleetEvents, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -78,6 +78,9 @@ export function createPlanetService(
           })),
         );
       }
+
+      await db.insert(planetShips).values({ planetId: planet.id });
+      await db.insert(planetDefenses).values({ planetId: planet.id });
 
       return planet;
     },
