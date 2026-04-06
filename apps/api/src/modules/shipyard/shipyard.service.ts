@@ -336,11 +336,8 @@ export function createShipyardService(
         let maxSlots = 1;
         if (talentService) {
           const tc = await talentService.computeTalentContext(entry.userId, entry.planetId);
-          console.log(`[completeUnit] userId=${entry.userId} planetId=${entry.planetId} facilityId=${entry.facilityId} talentService=YES talentCtx=${JSON.stringify(tc)}`);
           if (entry.facilityId === 'shipyard') maxSlots += Math.floor(tc['industrial_parallel_build'] ?? 0);
           if (entry.facilityId === 'commandCenter') maxSlots += Math.floor(tc['military_parallel_build'] ?? 0);
-        } else {
-          console.log(`[completeUnit] talentService=NO — maxSlots stays 1`);
         }
 
         await this.activateNextBatch(entry.planetId, entry.type as 'ship' | 'defense', entry.facilityId, maxSlots);
@@ -425,17 +422,14 @@ export function createShipyardService(
     },
 
     async activateNextBatch(planetId: string, type: 'ship' | 'defense', facilityId?: string | null, maxSlots: number = 1) {
-      // Get current state to compute free slots
-      const queue = await this.getShipyardQueue(planetId, facilityId ?? undefined);
-      const sameType = queue.filter(e =>
-        e.type === type && (!facilityId || e.facilityId === facilityId)
-      );
-
-      const activeCount = sameType.filter(e => e.status === 'active').length;
-      const freeSlots = Math.max(0, maxSlots - activeCount);
-      console.log(`[activateNextBatch] facilityId=${facilityId} maxSlots=${maxSlots} activeCount=${activeCount} freeSlots=${freeSlots} queuedCount=${sameType.filter(e => e.status === 'queued').length}`);
-
-      for (let i = 0; i < freeSlots; i++) {
+      for (;;) {
+        // Fresh active count each iteration to prevent concurrent over-activation
+        const freshQueue = await this.getShipyardQueue(planetId, facilityId ?? undefined);
+        const freshSameType = freshQueue.filter(e =>
+          e.type === type && (!facilityId || e.facilityId === facilityId)
+        );
+        const activeCount = freshSameType.filter(e => e.status === 'active').length;
+        if (activeCount >= maxSlots) break;
         // Find next queued entry
         const [nextBatch] = await db
           .select()
