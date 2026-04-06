@@ -32,10 +32,11 @@ export function createPlanetService(
       const systems = Number(universe.systems) || 499;
       const spawnRadius = Number(universe.spawn_radius) || 10;
 
-      // Spawn near the most recently created planet (cluster new players together)
+      // Spawn near the most recently created homeworld (cluster new players together)
       const [lastPlanet] = await db
         .select({ galaxy: planets.galaxy, system: planets.system })
         .from(planets)
+        .where(eq(planets.planetClassId, homeworldType.id))
         .orderBy(desc(planets.createdAt))
         .limit(1);
 
