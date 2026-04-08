@@ -165,20 +165,20 @@ export function CostPills({ cost }: { cost: { minerai: number; silicium: number;
   return (
     <div className="flex gap-2 flex-wrap">
       {cost.minerai > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-amber-400/[0.08] text-amber-400 border border-amber-400/15 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-minerai/[0.08] text-minerai border border-minerai/15 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-minerai" />
           {fmt(cost.minerai)}
         </span>
       )}
       {cost.silicium > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-sky-400/[0.08] text-sky-400 border border-sky-400/15 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-silicium/[0.08] text-silicium border border-silicium/15 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-silicium" />
           {fmt(cost.silicium)}
         </span>
       )}
       {cost.hydrogene > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-emerald-400/[0.08] text-emerald-400 border border-emerald-400/15 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-hydrogene/[0.08] text-hydrogene border border-hydrogene/15 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-hydrogene" />
           {fmt(cost.hydrogene)}
         </span>
       )}
