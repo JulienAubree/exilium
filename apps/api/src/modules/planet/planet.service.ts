@@ -99,7 +99,7 @@ export function createPlanetService(
         .select()
         .from(planets)
         .where(eq(planets.userId, userId))
-        .orderBy(asc(planets.createdAt));
+        .orderBy(asc(planets.sortOrder), asc(planets.createdAt));
     },
 
     async getPlanet(userId: string, planetId: string) {
@@ -124,6 +124,31 @@ export function createPlanetService(
         .update(planets)
         .set({ name, renamed: true })
         .where(eq(planets.id, planetId));
+
+      return { ok: true };
+    },
+
+    async reorderPlanets(userId: string, order: { planetId: string; sortOrder: number }[]) {
+      const planetIds = order.map((o) => o.planetId);
+
+      // Validate all planets belong to the user
+      const userPlanets = await db
+        .select({ id: planets.id })
+        .from(planets)
+        .where(and(eq(planets.userId, userId), inArray(planets.id, planetIds)));
+
+      if (userPlanets.length !== planetIds.length) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Some planets do not belong to user' });
+      }
+
+      await db.transaction(async (tx) => {
+        for (const { planetId, sortOrder } of order) {
+          await tx
+            .update(planets)
+            .set({ sortOrder })
+            .where(eq(planets.id, planetId));
+        }
+      });
 
       return { ok: true };
     },

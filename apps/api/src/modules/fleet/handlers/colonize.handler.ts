@@ -117,6 +117,10 @@ export class ColonizeHandler implements MissionHandler {
       };
     }
 
+    // Compute sortOrder for the new colony (max existing + 1)
+    const maxSortOrder = userPlanets.reduce((max, p) => Math.max(max, p.sortOrder ?? 0), 0);
+    const newSortOrder = maxSortOrder + 1;
+
     // Success: create new planet
     const planetTypeForPos = config.planetTypes.find(
       (pt) => pt.id !== homeworldType.id && (pt.positions as number[]).includes(fleetEvent.targetPosition),
@@ -149,6 +153,7 @@ export class ColonizeHandler implements MissionHandler {
         minTemp,
         maxTemp,
         planetImageIndex,
+        sortOrder: newSortOrder,
       })
       .returning();
 

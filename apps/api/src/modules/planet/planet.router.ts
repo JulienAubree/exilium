@@ -23,6 +23,17 @@ export function createPlanetRouter(planetService: ReturnType<typeof createPlanet
         return planetService.rename(ctx.userId!, input.planetId, input.name);
       }),
 
+    reorder: protectedProcedure
+      .input(z.object({
+        order: z.array(z.object({
+          planetId: z.string().uuid(),
+          sortOrder: z.number().int().min(0),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return planetService.reorderPlanets(ctx.userId!, input.order);
+      }),
+
     empire: protectedProcedure.query(async ({ ctx }) => {
       return planetService.getEmpireOverview(ctx.userId!);
     }),
