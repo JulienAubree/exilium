@@ -282,23 +282,6 @@ export function createPveService(
     },
 
     async dismissMission(userId: string, missionId: string) {
-      const config = await gameConfigService.getFullConfig();
-      const dismissCooldownHours = Number(config.universe.pve_dismiss_cooldown_hours) || 24;
-      // Check cooldown
-      const [state] = await db.select().from(missionCenterState)
-        .where(eq(missionCenterState.userId, userId)).limit(1);
-
-      if (state?.lastDismissAt) {
-        const hoursSinceLastDismiss = (Date.now() - state.lastDismissAt.getTime()) / (3600 * 1000);
-        if (hoursSinceLastDismiss < dismissCooldownHours) {
-          const remainingHours = Math.ceil(dismissCooldownHours - hoursSinceLastDismiss);
-          throw new TRPCError({
-            code: 'TOO_MANY_REQUESTS',
-            message: `Vous devez attendre encore ${remainingHours}h avant de pouvoir annuler un gisement`,
-          });
-        }
-      }
-
       // Check mission exists and belongs to user
       const [mission] = await db.select().from(pveMissions)
         .where(and(eq(pveMissions.id, missionId), eq(pveMissions.userId, userId)))
@@ -326,10 +309,6 @@ export function createPveService(
       await db.update(pveMissions)
         .set({ status: 'expired' })
         .where(eq(pveMissions.id, missionId));
-
-      await db.update(missionCenterState)
-        .set({ lastDismissAt: new Date() })
-        .where(eq(missionCenterState.userId, userId));
     },
 
     async getPlayerFleetFP(
