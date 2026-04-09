@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { type Mission } from '@/config/mission-config';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -9,22 +10,29 @@ interface MissionSelectorProps {
   locked: boolean;
 }
 
-const SELECTABLE_MISSIONS: Mission[] = ['transport', 'station', 'spy', 'attack', 'colonize', 'recycle', 'explore'];
-
 export function MissionSelector({ selected, onChange, locked }: MissionSelectorProps) {
   const { data: gameConfig } = useGameConfig();
 
+  // Build selectable missions from game config: all missions that don't require PvE
+  const selectableMissions = useMemo(() => {
+    if (!gameConfig?.missions) return [];
+    return Object.entries(gameConfig.missions)
+      .filter(([, m]) => !m.requiresPveMission)
+      .sort(([, a], [, b]) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map(([id]) => id as Mission);
+  }, [gameConfig?.missions]);
+
   // In PvE mode, include the pre-filled mission (mine/pirate) even though it's not manually selectable
-  const missions = selected && !SELECTABLE_MISSIONS.includes(selected)
-    ? [...SELECTABLE_MISSIONS, selected]
-    : SELECTABLE_MISSIONS;
+  const missions = selected && !selectableMissions.includes(selected)
+    ? [...selectableMissions, selected]
+    : selectableMissions;
 
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs uppercase text-muted-foreground">Mission</span>
         {locked && (
-          <span className="text-xs text-yellow-500">🔒 Verrouillée pour cette mission</span>
+          <span className="text-xs text-yellow-500">Mission verrouill\u00e9e</span>
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -46,7 +54,7 @@ export function MissionSelector({ selected, onChange, locked }: MissionSelectorP
               )}
             >
               <MissionIcon mission={m} size={14} className="inline-block mr-1" />
-              {isSelected && '✓ '}{config?.label ?? m}
+              {isSelected && '\u2713 '}{config?.label ?? m}
             </button>
           );
         })}
