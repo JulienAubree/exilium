@@ -11,6 +11,59 @@ import { AsteroidBelt } from '@/components/galaxy/AsteroidBelt';
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
 
+const RARITY_COLORS: Record<string, string> = {
+  common: '#9ca3af',
+  uncommon: '#22c55e',
+  rare: '#3b82f6',
+  epic: '#a855f7',
+  legendary: '#eab308',
+};
+
+const RARITY_LABELS: Record<string, string> = {
+  common: 'Commun',
+  uncommon: 'Peu commun',
+  rare: 'Rare',
+  epic: 'Épique',
+  legendary: 'Légendaire',
+};
+
+const STAT_LABELS: Record<string, string> = {
+  production_minerai: 'Production minerai',
+  production_silicium: 'Production silicium',
+  production_hydrogene: 'Production hydrogène',
+  energy_production: 'Production énergie',
+  storage_minerai: 'Stockage minerai',
+  storage_silicium: 'Stockage silicium',
+  storage_hydrogene: 'Stockage hydrogène',
+};
+
+function BiomeList({ biomes }: { biomes: any[] }) {
+  if (!biomes || biomes.length === 0) return null;
+  return (
+    <div className="mt-1 space-y-0.5">
+      <div className="text-xs text-zinc-500 font-medium">Biomes</div>
+      {biomes.map((biome: any) => (
+        <div key={biome.id} className="flex items-start gap-1.5 text-xs">
+          <span
+            className="mt-0.5 w-2 h-2 rounded-full inline-block flex-shrink-0"
+            style={{ backgroundColor: RARITY_COLORS[biome.rarity] ?? '#9ca3af' }}
+          />
+          <span style={{ color: RARITY_COLORS[biome.rarity] ?? '#9ca3af' }} className="flex-shrink-0">
+            {biome.name}
+          </span>
+          {biome.effects && biome.effects.length > 0 && (
+            <span className="text-zinc-500">
+              {biome.effects.map((e: any) =>
+                `${e.modifier > 0 ? '+' : ''}${Math.round(e.modifier * 100)}% ${STAT_LABELS[e.stat] ?? e.stat}`
+              ).join(', ')}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Galaxy() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: planets } = trpc.planet.list.useQuery();
@@ -128,7 +181,9 @@ export default function Galaxy() {
             >
               {data?.slots.map((slot, i) => {
                 const isBelt = slot && 'type' in slot && (slot as any).type === 'belt';
-                const isOtherPlayer = slot && !isBelt && (slot as any).userId && (slot as any).userId !== currentUser?.id;
+                const isEmpty = slot && 'type' in slot && (slot as any).type === 'empty';
+                const isPlanet = slot && !isBelt && !isEmpty;
+                const isOtherPlayer = isPlanet && (slot as any).userId && (slot as any).userId !== currentUser?.id;
                 const isSameAlliance = isOtherPlayer && myAlliance && (slot as any).allianceId && (slot as any).allianceId === myAlliance.id;
                 const canAttack = isOtherPlayer && !isSameAlliance;
 
@@ -153,12 +208,49 @@ export default function Galaxy() {
                   );
                 }
 
+                if (isEmpty) {
+                  const emptySlot = slot as any;
+                  const planetTypeName = emptySlot.planetClassId
+                    ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot.planetClassId)?.name ?? ''
+                    : '';
+                  return (
+                    <div key={i} className="rounded-lg p-2 hover:bg-accent/50">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
+                        <PlanetDot planetClassId={emptySlot.planetClassId} size={20} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-muted-foreground">Vide</span>
+                          {planetTypeName && (
+                            <span className="ml-1 text-xs text-primary/60">{planetTypeName}</span>
+                          )}
+                        </div>
+                        {hasColonizer && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-6 px-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20"
+                            onClick={() => navigate(`/fleet/send?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                          >
+                            Coloniser
+                          </Button>
+                        )}
+                      </div>
+                      {emptySlot.biomes && emptySlot.biomes.length > 0 && (
+                        <div className="pl-9">
+                          <BiomeList biomes={emptySlot.biomes} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={i}
-                    className={`flex items-center gap-3 rounded-lg p-2 ${!slot ? 'opacity-40' : 'hover:bg-accent/50'}`}
+                    className={`rounded-lg p-2 ${!slot ? 'opacity-40' : 'hover:bg-accent/50'}`}
                   >
-                    <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
                     {slot ? (
                       <>
                         <PlanetDot planetClassId={(slot as any).planetClassId} size={20} />
@@ -224,6 +316,12 @@ export default function Galaxy() {
                         )}
                       </>
                     )}
+                    </div>
+                    {isPlanet && (slot as any).biomes && (slot as any).biomes.length > 0 && (
+                      <div className="pl-9">
+                        <BiomeList biomes={(slot as any).biomes} />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -244,7 +342,9 @@ export default function Galaxy() {
                 <tbody>
                   {data?.slots.map((slot, i) => {
                     const isBelt = slot && 'type' in slot && (slot as any).type === 'belt';
-                    const isOtherPlayer2 = slot && !isBelt && (slot as any).userId && (slot as any).userId !== currentUser?.id;
+                    const isEmpty2 = slot && 'type' in slot && (slot as any).type === 'empty';
+                    const isPlanet2 = slot && !isBelt && !isEmpty2;
+                    const isOtherPlayer2 = isPlanet2 && (slot as any).userId && (slot as any).userId !== currentUser?.id;
                     const isSameAlliance2 = isOtherPlayer2 && myAlliance && (slot as any).allianceId && (slot as any).allianceId === myAlliance.id;
                     const canAttack2 = isOtherPlayer2 && !isSameAlliance2;
 
@@ -275,36 +375,80 @@ export default function Galaxy() {
                       );
                     }
 
+                    if (isEmpty2) {
+                      const emptySlot2 = slot as any;
+                      const planetTypeName2 = emptySlot2.planetClassId
+                        ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot2.planetClassId)?.name ?? ''
+                        : '';
+                      return (
+                        <tr key={i} className="border-b border-border/50 align-top">
+                          <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
+                          <td className="px-2 py-2">
+                            <span className="inline-flex items-center gap-2">
+                              <PlanetDot planetClassId={emptySlot2.planetClassId} size={18} />
+                              <span className="text-muted-foreground">Vide</span>
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-xs text-muted-foreground">
+                            {planetTypeName2}
+                          </td>
+                          <td className="px-2 py-2">
+                            {emptySlot2.biomes && emptySlot2.biomes.length > 0 && (
+                              <BiomeList biomes={emptySlot2.biomes} />
+                            )}
+                          </td>
+                          <td className="px-2 py-2">
+                            {hasColonizer && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-6 px-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20"
+                                onClick={() => navigate(`/fleet/send?mission=colonize&galaxy=${galaxy}&system=${system}&position=${i + 1}`)}
+                                title="Coloniser"
+                              >
+                                Coloniser
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     return (
-                      <tr key={i} className={`border-b border-border/50 ${!slot ? 'opacity-40' : ''}`}>
-                        <td className="px-2 py-1 text-muted-foreground">{i + 1}</td>
+                      <tr key={i} className={`border-b border-border/50 align-top ${!slot ? 'opacity-40' : ''}`}>
+                        <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
                         {slot ? (
                           <>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-2">
                               <span className="inline-flex items-center gap-2">
                                 <PlanetDot planetClassId={(slot as any).planetClassId} size={18} />
                                 {(slot as any).planetName}
                               </span>
                             </td>
-                            <td className="px-2 py-1 text-xs text-muted-foreground">
+                            <td className="px-2 py-2 text-xs text-muted-foreground">
                               {(slot as any).planetClassId
                                 ? gameConfig?.planetTypes?.find((t) => t.id === (slot as any).planetClassId)?.name ?? ''
                                 : ''}
                             </td>
-                            <td className="px-2 py-1">
-                              {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
-                              {(slot as any).username}
-                              {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
-                                <Link
-                                  to={`/fleet/send?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
-                                  className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
-                                  title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
-                                >
-                                  DF
-                                </Link>
+                            <td className="px-2 py-2">
+                              <div>
+                                {(slot as any).allianceTag && <span className="text-xs text-primary mr-1">[{(slot as any).allianceTag}]</span>}
+                                {(slot as any).username}
+                                {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
+                                  <Link
+                                    to={`/fleet/send?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
+                                    className="text-xs text-orange-400 ml-2 hover:underline cursor-pointer"
+                                    title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
+                                  >
+                                    DF
+                                  </Link>
+                                )}
+                              </div>
+                              {(slot as any).biomes && (slot as any).biomes.length > 0 && (
+                                <BiomeList biomes={(slot as any).biomes} />
                               )}
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-2">
                               {isOtherPlayer2 && (
                                 <div className="flex items-center gap-1">
                                   <Button
@@ -345,10 +489,10 @@ export default function Galaxy() {
                           </>
                         ) : (
                           <>
-                            <td className="px-2 py-1 text-muted-foreground">-</td>
-                            <td className="px-2 py-1 text-muted-foreground">-</td>
-                            <td className="px-2 py-1 text-muted-foreground">-</td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-2 text-muted-foreground">-</td>
+                            <td className="px-2 py-2 text-muted-foreground">-</td>
+                            <td className="px-2 py-2 text-muted-foreground">-</td>
+                            <td className="px-2 py-2">
                               {hasColonizer && (
                                 <Button
                                   size="sm"
