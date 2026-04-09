@@ -20,6 +20,7 @@ import {
   uiLabels,
   talentBranchDefinitions,
   talentDefinitions,
+  biomeDefinitions,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
@@ -108,6 +109,15 @@ export interface HullConfig {
   bonusLabels: string[];
 }
 
+export interface BiomeConfig {
+  id: string;
+  name: string;
+  description: string;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  compatiblePlanetTypes: string[];
+  effects: Array<{ stat: string; category?: string; modifier: number }>;
+}
+
 export interface GameConfig {
   categories: CategoryConfig[];
   buildings: Record<string, BuildingConfig>;
@@ -125,6 +135,7 @@ export interface GameConfig {
   talentBranches: TalentBranchConfig[];
   talents: Record<string, TalentConfig>;
   hulls: Record<string, HullConfig>;
+  biomes: BiomeConfig[];
 }
 
 export interface BuildingConfig {
@@ -286,6 +297,7 @@ export function createGameConfigService(db: Database) {
       labelsRows,
       talentBranchRows,
       talentRows,
+      biomeRows,
     ] = await Promise.all([
       db.select().from(entityCategories),
       db.select().from(buildingDefinitions),
@@ -306,6 +318,7 @@ export function createGameConfigService(db: Database) {
       db.select().from(uiLabels),
       db.select().from(talentBranchDefinitions).orderBy(talentBranchDefinitions.sortOrder),
       db.select().from(talentDefinitions),
+      db.select().from(biomeDefinitions),
     ]);
 
     // Categories
@@ -570,7 +583,17 @@ export function createGameConfigService(db: Database) {
       }
     }
 
-    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels, talentBranches, talents, hulls };
+    // Biomes
+    const biomes: BiomeConfig[] = biomeRows.map(b => ({
+      id: b.id,
+      name: b.name,
+      description: b.description,
+      rarity: b.rarity as BiomeConfig['rarity'],
+      compatiblePlanetTypes: b.compatiblePlanetTypes as string[],
+      effects: b.effects as Array<{ stat: string; category?: string; modifier: number }>,
+    }));
+
+    cache = { categories, buildings, research, ships, defenses, production, universe, planetTypes: ptConfigs, pirateTemplates: ptTemplates, tutorialQuests: tqConfigs, bonuses, missions, labels, talentBranches, talents, hulls, biomes };
     return cache;
   }
 

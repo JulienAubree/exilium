@@ -20,6 +20,7 @@ function makeConfig(overrides: Partial<GameConfig> = {}): GameConfig {
     talentBranches: [],
     talents: {},
     hulls: {},
+    biomes: [],
     ...overrides,
   };
 }
