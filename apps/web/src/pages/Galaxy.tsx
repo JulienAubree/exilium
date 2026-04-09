@@ -37,29 +37,42 @@ const STAT_LABELS: Record<string, string> = {
   storage_hydrogene: 'Stockage hydrogène',
 };
 
-function BiomeList({ biomes }: { biomes: any[] }) {
+function BiomeSummary({ biomes }: { biomes: any[] }) {
+  const [expanded, setExpanded] = useState(false);
   if (!biomes || biomes.length === 0) return null;
+
   return (
-    <div className="mt-1 space-y-0.5">
-      <div className="text-xs text-zinc-500 font-medium">Biomes</div>
-      {biomes.map((biome: any) => (
-        <div key={biome.id} className="flex items-start gap-1.5 text-xs">
-          <span
-            className="mt-0.5 w-2 h-2 rounded-full inline-block flex-shrink-0"
-            style={{ backgroundColor: RARITY_COLORS[biome.rarity] ?? '#9ca3af' }}
-          />
-          <span style={{ color: RARITY_COLORS[biome.rarity] ?? '#9ca3af' }} className="flex-shrink-0">
-            {biome.name}
-          </span>
-          {biome.effects && biome.effects.length > 0 && (
-            <span className="text-zinc-500">
-              {biome.effects.map((e: any) =>
-                `${e.modifier > 0 ? '+' : ''}${Math.round(e.modifier * 100)}% ${STAT_LABELS[e.stat] ?? e.stat}`
-              ).join(', ')}
-            </span>
-          )}
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+      >
+        <span>{biomes.length} biome{biomes.length > 1 ? 's' : ''}</span>
+        <svg width={10} height={10} viewBox="0 0 10 10" className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>
+          <path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {expanded && (
+        <div className="mt-1.5 space-y-1">
+          {biomes.map((biome: any) => {
+            const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+            return (
+              <div key={biome.id} className="flex items-center gap-1.5 text-xs">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <span style={{ color }} className="flex-shrink-0">{biome.name}</span>
+                {biome.effects && biome.effects.length > 0 && (
+                  <span className="text-muted-foreground">
+                    {biome.effects.map((e: any) =>
+                      `${e.modifier > 0 ? '+' : ''}${Math.round(e.modifier * 100)}% ${STAT_LABELS[e.stat] ?? e.stat}`
+                    ).join(', ')}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -237,7 +250,7 @@ export default function Galaxy() {
                       </div>
                       {emptySlot.biomes && emptySlot.biomes.length > 0 && (
                         <div className="pl-9">
-                          <BiomeList biomes={emptySlot.biomes} />
+                          <BiomeSummary biomes={emptySlot.biomes} />
                         </div>
                       )}
                     </div>
@@ -317,9 +330,9 @@ export default function Galaxy() {
                       </>
                     )}
                     </div>
-                    {isPlanet && (slot as any).biomes && (slot as any).biomes.length > 0 && (
+                    {isPlanet && !isOtherPlayer && (slot as any).biomes && (slot as any).biomes.length > 0 && (
                       <div className="pl-9">
-                        <BiomeList biomes={(slot as any).biomes} />
+                        <BiomeSummary biomes={(slot as any).biomes} />
                       </div>
                     )}
                   </div>
@@ -394,7 +407,7 @@ export default function Galaxy() {
                           </td>
                           <td className="px-2 py-2">
                             {emptySlot2.biomes && emptySlot2.biomes.length > 0 && (
-                              <BiomeList biomes={emptySlot2.biomes} />
+                              <BiomeSummary biomes={emptySlot2.biomes} />
                             )}
                           </td>
                           <td className="px-2 py-2">
@@ -444,8 +457,8 @@ export default function Galaxy() {
                                   </Link>
                                 )}
                               </div>
-                              {(slot as any).biomes && (slot as any).biomes.length > 0 && (
-                                <BiomeList biomes={(slot as any).biomes} />
+                              {!isOtherPlayer2 && (slot as any).biomes && (slot as any).biomes.length > 0 && (
+                                <BiomeSummary biomes={(slot as any).biomes} />
                               )}
                             </td>
                             <td className="px-2 py-2">
