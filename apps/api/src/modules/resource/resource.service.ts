@@ -1,13 +1,15 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetTypes, planetBuildings, planetShips, userResearch } from '@exilium/db';
+import { planets, planetTypes, planetBuildings, planetShips, userResearch, planetBiomes, biomeDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
   calculateProductionRates,
   resolveBonus,
+  aggregateBiomeBonuses,
   type ResourceCost,
   type PlanetTypeBonus,
+  type BiomeEffect,
 } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
@@ -43,6 +45,17 @@ async function getSolarSatelliteCount(db: Database, planetId: string): Promise<n
     .where(eq(planetShips.planetId, planetId))
     .limit(1);
   return row?.solarSatellite ?? 0;
+}
+
+async function loadBiomeBonuses(db: Database, planetId: string): Promise<Record<string, number>> {
+  const rows = await db
+    .select({ effects: biomeDefinitions.effects })
+    .from(planetBiomes)
+    .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
+    .where(eq(planetBiomes.planetId, planetId));
+
+  const allEffects: BiomeEffect[] = rows.flatMap(r => r.effects as BiomeEffect[]);
+  return aggregateBiomeBonuses(allEffects);
 }
 
 async function buildPlanetLevels(
@@ -132,6 +145,10 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      for (const [key, value] of Object.entries(biomeBonuses)) {
+        talentCtx[key] = (talentCtx[key] ?? 0) + value;
+      }
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
@@ -194,6 +211,10 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      for (const [key, value] of Object.entries(biomeBonuses)) {
+        talentCtx[key] = (talentCtx[key] ?? 0) + value;
+      }
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
@@ -267,6 +288,10 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx: Record<string, number> = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
+      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      for (const [key, value] of Object.entries(biomeBonuses)) {
+        talentCtx[key] = (talentCtx[key] ?? 0) + value;
+      }
 
       // Apply shield level bonus from talents
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;

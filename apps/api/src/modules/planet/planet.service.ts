@@ -1,6 +1,6 @@
 import { eq, asc, desc, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetShips, planetDefenses, planetTypes, buildQueue, fleetEvents, flagships } from '@exilium/db';
+import { planets, planetBuildings, planetShips, planetDefenses, planetTypes, buildQueue, fleetEvents, flagships, planetBiomes, biomeDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -182,6 +182,17 @@ export function createPlanetService(
 
           const rates = await resourceService.getProductionRates(planet.id, planet, bonus, userId);
 
+          const biomes = await db
+            .select({
+              id: biomeDefinitions.id,
+              name: biomeDefinitions.name,
+              rarity: biomeDefinitions.rarity,
+              effects: biomeDefinitions.effects,
+            })
+            .from(planetBiomes)
+            .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
+            .where(eq(planetBiomes.planetId, planet.id));
+
           const activeBuilds = await db
             .select({
               type: buildQueue.type,
@@ -293,6 +304,7 @@ export function createPlanetService(
             inboundAttack: inboundAttacks[0]
               ? { arrivalTime: inboundAttacks[0].arrivalTime.toISOString() }
               : null,
+            biomes,
           };
         }),
       );
