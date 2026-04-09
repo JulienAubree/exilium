@@ -1,6 +1,6 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, fleetEvents, planetBiomes } from '@exilium/db';
+import { planets, planetShips, planetDefenses, fleetEvents, planetBiomes, discoveredBiomes } from '@exilium/db';
 import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, type BiomeDefinition } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
@@ -180,6 +180,19 @@ export class ColonizeHandler implements MissionHandler {
           pickedBiomes.map(b => ({ planetId: newPlanet.id, biomeId: b.id })),
         );
       }
+    }
+
+    // Auto-discover all biomes for the colonizer
+    if (pickedBiomes.length > 0) {
+      await ctx.db.insert(discoveredBiomes).values(
+        pickedBiomes.map((b) => ({
+          userId: fleetEvent.userId,
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+          biomeId: b.id,
+        })),
+      ).onConflictDoNothing();
     }
 
     // Transfer cargo to the new planet
