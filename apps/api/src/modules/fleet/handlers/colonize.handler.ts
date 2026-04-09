@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, fleetEvents } from '@exilium/db';
-import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity } from '@exilium/game-engine';
+import { planets, planetShips, planetDefenses, fleetEvents, planetBiomes } from '@exilium/db';
+import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, type BiomeDefinition } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
@@ -160,6 +160,28 @@ export class ColonizeHandler implements MissionHandler {
     await ctx.db.insert(planetShips).values({ planetId: newPlanet.id });
     await ctx.db.insert(planetDefenses).values({ planetId: newPlanet.id });
 
+    // Generate and persist biomes for the new colony
+    const biomeCatalogue: BiomeDefinition[] = (config.biomes ?? []).map((b: any) => ({
+      id: b.id,
+      rarity: b.rarity,
+      compatiblePlanetTypes: b.compatiblePlanetTypes as string[],
+      effects: b.effects as Array<{ stat: string; modifier: number }>,
+    }));
+
+    let pickedBiomes: BiomeDefinition[] = [];
+    if (biomeCatalogue.length > 0 && planetTypeForPos) {
+      const seed = coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition);
+      const rng = seededRandom(seed);
+      const biomeCount = generateBiomeCount(rng);
+      pickedBiomes = pickBiomes(biomeCatalogue, planetTypeForPos.id, biomeCount, rng);
+
+      if (pickedBiomes.length > 0) {
+        await ctx.db.insert(planetBiomes).values(
+          pickedBiomes.map(b => ({ planetId: newPlanet.id, biomeId: b.id })),
+        );
+      }
+    }
+
     // Transfer cargo to the new planet
     if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
       await ctx.db
@@ -186,7 +208,7 @@ export class ColonizeHandler implements MissionHandler {
 
     const reportId = await createColonizeReport(
       `Colonisation réussie ${coords}`,
-      { success: true, diameter, planetId: newPlanet.id },
+      { success: true, diameter, planetId: newPlanet.id, biomes: pickedBiomes.map(b => b.id) },
     );
 
     // Return remaining ships in a new fleet event (cargo already transferred to planet)
