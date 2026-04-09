@@ -428,9 +428,38 @@ export default function Overview() {
                 [{planet.galaxy}:{planet.system}:{planet.position}]
               </p>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
-              <div><span className="text-foreground">{planet.minTemp}&deg;C</span> a <span className="text-foreground">{planet.maxTemp}&deg;C</span></div>
-              <div><span className="text-foreground">{planet.diameter.toLocaleString('fr-FR')}</span> km</div>
+            <div className="text-right text-sm text-muted-foreground flex flex-col items-end gap-1.5">
+              <div>
+                <div><span className="text-foreground">{planet.minTemp}&deg;C</span> a <span className="text-foreground">{planet.maxTemp}&deg;C</span></div>
+                <div><span className="text-foreground">{planet.diameter.toLocaleString('fr-FR')}</span> km</div>
+              </div>
+              {(planet as any).biomes && (planet as any).biomes.length > 0 && (
+                <div className="flex flex-wrap justify-end gap-1">
+                  {(planet as any).biomes.map((biome: any) => {
+                    const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+                    return (
+                      <span
+                        key={biome.id}
+                        className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-medium border backdrop-blur-sm"
+                        style={{
+                          color,
+                          borderColor: `${color}44`,
+                          backgroundColor: `${color}20`,
+                        }}
+                        title={`${biome.name} (${RARITY_LABELS[biome.rarity] ?? biome.rarity}) — ${biome.effects?.map((e: any) =>
+                          `${e.modifier > 0 ? '+' : ''}${Math.round(e.modifier * 100)}% ${STAT_LABELS[e.stat] ?? e.stat}`
+                        ).join(', ')}`}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        {biome.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
