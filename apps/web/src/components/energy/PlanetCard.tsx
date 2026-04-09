@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { getPlanetImageUrl } from '@/lib/assets';
 
 interface BiomeData {
@@ -39,6 +40,16 @@ const RARITY_LABELS: Record<string, string> = {
   legendary: 'Legendaire',
 };
 
+const STAT_SHORT: Record<string, { label: string; icon: string }> = {
+  production_minerai: { label: 'Minerai', icon: 'Fe' },
+  production_silicium: { label: 'Silicium', icon: 'Si' },
+  production_hydrogene: { label: 'Hydrogene', icon: 'H' },
+  energy_production: { label: 'Energie', icon: 'E' },
+  storage_minerai: { label: 'Stock. Fe', icon: 'Fe' },
+  storage_silicium: { label: 'Stock. Si', icon: 'Si' },
+  storage_hydrogene: { label: 'Stock. H', icon: 'H' },
+};
+
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Prod. minerai',
   production_silicium: 'Prod. silicium',
@@ -49,7 +60,6 @@ const STAT_LABELS: Record<string, string> = {
   storage_hydrogene: 'Stock. hydrogene',
 };
 
-// Map planet type bonus keys to the same stat keys used by biomes
 const PLANET_BONUS_TO_STAT: Record<string, string> = {
   mineraiBonus: 'production_minerai',
   siliciumBonus: 'production_silicium',
@@ -117,13 +127,15 @@ function BiomePopover({ biome }: { biome: BiomeData }) {
 }
 
 export function PlanetCard({ name, planetTypeName, planetClassId, planetImageIndex, maxTemp, bonus, biomes }: PlanetCardProps) {
-  // Compute planet type effects as stat modifiers
+  const [expanded, setExpanded] = useState(false);
+
+  // Compute planet type effects
   const planetTypeEffects: Record<string, number> = {};
   if (bonus) {
     for (const [key, stat] of Object.entries(PLANET_BONUS_TO_STAT)) {
       const val = bonus[key as keyof typeof bonus];
       if (val && val !== 1) {
-        planetTypeEffects[stat] = val - 1; // 1.2 -> 0.2
+        planetTypeEffects[stat] = val - 1;
       }
     }
   }
@@ -149,7 +161,6 @@ export function PlanetCard({ name, planetTypeName, planetClassId, planetImageInd
 
   return (
     <div className="glass-card p-4">
-      {/* Header */}
       <div className="flex items-center gap-4">
         {planetClassId && planetImageIndex != null ? (
           <img
@@ -169,22 +180,56 @@ export function PlanetCard({ name, planetTypeName, planetClassId, planetImageInd
           <h2 className="font-bold text-foreground tracking-wide truncate">{name}</h2>
           <p className="text-xs text-muted-foreground">
             {planetTypeName ?? 'Inconnue'} · {maxTemp}°C
+            {biomes && biomes.length > 0 && ` · ${biomes.length} biome${biomes.length > 1 ? 's' : ''}`}
           </p>
+
+          {/* Summary line: total bonuses as compact pills */}
+          {hasBonuses && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {Object.entries(totals).map(([stat, val]) => {
+                const info = STAT_SHORT[stat];
+                return (
+                  <span
+                    key={stat}
+                    className={`text-[11px] px-2 py-0.5 rounded font-medium border ${
+                      val > 0
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : val < 0
+                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        : 'bg-muted/10 text-muted-foreground border-border/30'
+                    }`}
+                  >
+                    {formatBonus(val)} {info?.label ?? stat}
+                  </span>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5 ml-1"
+              >
+                Detail
+                <ChevronDown className={`h-3 w-3 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bonus breakdown */}
-      {hasBonuses && (
-        <div className="mt-4 space-y-3">
-          {/* Planet type row */}
+      {/* Expandable detail */}
+      {expanded && hasBonuses && (
+        <div className="mt-4 pt-3 border-t border-border/30 space-y-3 text-xs">
+          {/* Planet type */}
           {Object.keys(planetTypeEffects).length > 0 && (
             <div>
-              <div className="text-[11px] text-muted-foreground font-medium mb-1">Type : {planetTypeName}</div>
-              <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
+              <div className="text-[11px] text-muted-foreground font-medium mb-1.5">
+                Type de planete : {planetTypeName}
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 ml-2">
                 {Object.entries(planetTypeEffects).map(([stat, val]) => (
-                  <div key={stat} className="contents text-xs">
+                  <div key={stat} className="contents">
                     <span className="text-muted-foreground">{STAT_LABELS[stat] ?? stat}</span>
-                    <span className={val > 0 ? 'text-emerald-400 font-medium text-right' : 'text-red-400 font-medium text-right'}>
+                    <span className={`text-right font-medium ${val > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       {formatBonus(val)}
                     </span>
                   </div>
@@ -193,20 +238,20 @@ export function PlanetCard({ name, planetTypeName, planetClassId, planetImageInd
             </div>
           )}
 
-          {/* Biomes row */}
+          {/* Biomes */}
           {biomes && biomes.length > 0 && (
             <div>
-              <div className="text-[11px] text-muted-foreground font-medium mb-1">Biomes</div>
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="text-[11px] text-muted-foreground font-medium mb-1.5">Biomes</div>
+              <div className="flex flex-wrap gap-1 mb-2 ml-2">
                 {biomes.map((biome) => (
                   <BiomePopover key={biome.id} biome={biome} />
                 ))}
               </div>
-              <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
+              <div className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 ml-2">
                 {Object.entries(biomeEffects).map(([stat, val]) => (
-                  <div key={stat} className="contents text-xs">
+                  <div key={stat} className="contents">
                     <span className="text-muted-foreground">{STAT_LABELS[stat] ?? stat}</span>
-                    <span className={val > 0 ? 'text-emerald-400 font-medium text-right' : 'text-red-400 font-medium text-right'}>
+                    <span className={`text-right font-medium ${val > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       {formatBonus(val)}
                     </span>
                   </div>
@@ -214,21 +259,6 @@ export function PlanetCard({ name, planetTypeName, planetClassId, planetImageInd
               </div>
             </div>
           )}
-
-          {/* Total */}
-          <div className="border-t border-border/30 pt-2">
-            <div className="text-[11px] text-foreground font-semibold mb-1">Total bonus planete</div>
-            <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
-              {Object.entries(totals).map(([stat, val]) => (
-                <div key={stat} className="contents text-xs">
-                  <span className="text-muted-foreground">{STAT_LABELS[stat] ?? stat}</span>
-                  <span className={`font-semibold text-right ${val > 0 ? 'text-emerald-400' : val < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
-                    {formatBonus(val)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
