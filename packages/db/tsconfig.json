@@ -5,5 +5,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["src/seed-game-config.ts", "src/migrate-buildings.ts", "src/scripts"]
+  "exclude": ["src/seed-game-config.ts", "src/migrate-buildings.ts", "src/migrate-existing-planet-biomes.ts", "src/scripts"]
 }
