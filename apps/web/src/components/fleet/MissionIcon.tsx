@@ -12,6 +12,7 @@ const MISSION_COLORS: Record<Mission, string> = {
   pirate:    '#e11d48',   // rose-600
   trade:     '#a78bfa',   // violet-400
   scan:      '#22d3ee',   // cyan-400
+  explore:   '#06b6d4',   // cyan-500
 };
 
 export function getMissionColor(mission: Mission): string {
@@ -126,6 +127,16 @@ export function MissionIcon({ mission, size = 16, className, ...props }: Mission
           <line x1="14" y1="8" x2="16" y2="10" />
           <line x1="16" y1="8" x2="14" y2="10" />
           <line x1="9" y1="14" x2="15" y2="14" />
+        </svg>
+      );
+
+    case 'explore':
+      // Telescope / search
+      return (
+        <svg {...svgProps}>
+          <circle cx="11" cy="11" r="7" />
+          <line x1="16" y1="16" x2="21" y2="21" />
+          <circle cx="11" cy="11" r="3" fill={color} fillOpacity={0.2} />
         </svg>
       );
 

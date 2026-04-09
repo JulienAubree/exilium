@@ -170,7 +170,7 @@ export class ExploreHandler implements PhasedMissionHandler {
           position: originPlanet.position,
           planetName: originPlanet.name,
         } : undefined,
-        fleet: { ships: fleetEvent.ships },
+        fleet: { ships: fleetEvent.ships, totalCargo: 0 },
         departureTime: fleetEvent.departureTime,
         completionTime: fleetEvent.arrivalTime,
         result: {
