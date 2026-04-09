@@ -180,6 +180,7 @@ export default function Energy() {
         planetImageIndex={data.planetImageIndex}
         maxTemp={data.maxTemp}
         bonus={data.planetTypeBonus}
+        biomes={data.biomes as any}
       />
 
       {/* View tabs */}

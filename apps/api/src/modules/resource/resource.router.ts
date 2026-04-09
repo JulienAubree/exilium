@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { protectedProcedure, router } from '../../trpc/router.js';
-import { planets, planetTypes, planetShips, userResearch } from '@exilium/db';
+import { planets, planetTypes, planetShips, userResearch, planetBiomes, biomeDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createResourceService } from './resource.service.js';
 import type { createPlanetService } from '../planet/planet.service.js';
@@ -47,6 +47,19 @@ export function createResourceRouter(
         const [ships] = await db.select({ solarSatellite: planetShips.solarSatellite })
           .from(planetShips).where(eq(planetShips.planetId, input.planetId)).limit(1);
         const rates = await resourceService.getProductionRates(input.planetId, planet, bonus, ctx.userId!);
+
+        // Load biomes for this planet
+        const biomes = await db
+          .select({
+            id: biomeDefinitions.id,
+            name: biomeDefinitions.name,
+            description: biomeDefinitions.description,
+            rarity: biomeDefinitions.rarity,
+            effects: biomeDefinitions.effects,
+          })
+          .from(planetBiomes)
+          .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
+          .where(eq(planetBiomes.planetId, input.planetId));
 
         // Protected resources calculation
         const storageMineraiId = findBuildingByRole(config, 'storage_minerai').id;
@@ -96,6 +109,7 @@ export function createResourceRouter(
           planetName: planet.name,
           planetTypeName,
           planetTypeBonus: bonus,
+          biomes,
           levels: {
             mineraiMine: buildingLevels[mineraiMineId] ?? 0,
             siliciumMine: buildingLevels[siliciumMineId] ?? 0,
