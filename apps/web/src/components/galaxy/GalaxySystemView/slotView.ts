@@ -25,6 +25,7 @@ export type SlotView =
       kind: 'planet';
       position: number;
       planetClassId: string | null;
+      planetImageIndex: number | null;
       relation: Relation;
       planetId: string;
       planetName: string;
@@ -115,6 +116,9 @@ export function toSlotView(
 
   const allianceId = typeof rawSlot.allianceId === 'string' ? rawSlot.allianceId : null;
 
+  const planetImageIndex =
+    typeof rawSlot.planetImageIndex === 'number' ? rawSlot.planetImageIndex : null;
+
   let relation: Relation = 'enemy';
   if (ctx.currentUserId && userId === ctx.currentUserId) {
     relation = 'mine';
@@ -137,6 +141,7 @@ export function toSlotView(
     planetName: typeof rawSlot.planetName === 'string' ? rawSlot.planetName : '',
     planetClassId:
       typeof rawSlot.planetClassId === 'string' ? rawSlot.planetClassId : null,
+    planetImageIndex,
     relation,
     userId,
     username: typeof rawSlot.username === 'string' ? rawSlot.username : null,

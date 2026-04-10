@@ -10,6 +10,7 @@
  */
 
 import { PlanetDot } from '../PlanetDot';
+import { PlanetVisual } from '../PlanetVisual';
 import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
 
@@ -30,7 +31,15 @@ export interface RibbonProps {
 function MiniMarker({ view }: { view: SlotView }) {
   switch (view.kind) {
     case 'planet':
-      return <PlanetDot planetClassId={view.planetClassId} size={14} aura={view.relation} />;
+      return (
+        <PlanetVisual
+          planetClassId={view.planetClassId}
+          planetImageIndex={view.planetImageIndex}
+          size={18}
+          aura={view.relation}
+          variant="icon"
+        />
+      );
     case 'empty-discovered':
       return <PlanetDot planetClassId={view.planetClassId} size={14} />;
     case 'undiscovered':

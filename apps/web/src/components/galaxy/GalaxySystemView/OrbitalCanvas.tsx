@@ -19,7 +19,7 @@
 import { useMemo, type ReactElement } from 'react';
 import { BELT_DEBRIS_COLOR, type PlanetAura } from '../planetPalette';
 import { OrbitalDebrisRing } from '../OrbitalDebrisRing';
-import { PlanetDot } from '../PlanetDot';
+import { PlanetVisual } from '../PlanetVisual';
 import { hash01, orbitRadius, polarToCartesian, slotAngle } from './geometry';
 import type { SlotView } from './slotView';
 import { SlotMarker } from './SlotMarker';
@@ -61,6 +61,7 @@ interface TooltipDescriptor {
   tooltipX: number;
   tooltipY: number;
   planetClassId: string | null;
+  planetImageIndex: number | null;
   aura: PlanetAura | null;
   line1: string;
   line1Class: string;
@@ -124,6 +125,7 @@ export function OrbitalCanvas({
     let line2: string | undefined;
     let line2Class: string | undefined;
     let planetClassId: string | null;
+    let planetImageIndex: number | null = null;
     let aura: PlanetAura | null;
 
     switch (view.kind) {
@@ -131,6 +133,7 @@ export function OrbitalCanvas({
         line1 = view.planetName;
         line1Class = 'text-foreground';
         planetClassId = view.planetClassId;
+        planetImageIndex = view.planetImageIndex;
         aura = view.relation;
         const username = view.username ?? 'Joueur';
         const tagPrefix = view.allianceTag ? `[${view.allianceTag}] ` : '';
@@ -181,6 +184,7 @@ export function OrbitalCanvas({
       tooltipX,
       tooltipY,
       planetClassId,
+      planetImageIndex,
       aura,
       line1,
       line1Class,
@@ -342,10 +346,12 @@ export function OrbitalCanvas({
         >
           <div className="w-full h-full rounded-md bg-black/85 border border-cyan-500/30 px-2 py-1 flex items-center gap-2 backdrop-blur-sm">
             <div className="flex-shrink-0">
-              <PlanetDot
+              <PlanetVisual
                 planetClassId={tooltip.planetClassId}
-                size={28}
-                aura={tooltip.aura}
+                planetImageIndex={tooltip.planetImageIndex}
+                size={32}
+                aura={tooltip.aura ?? undefined}
+                variant="icon"
               />
             </div>
             <div className="min-w-0 flex-1">

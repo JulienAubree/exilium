@@ -16,6 +16,7 @@ import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
 import { BiomeChips } from './BiomeChips';
 import { PlanetDot } from '../../PlanetDot';
+import { PlanetVisual } from '../../PlanetVisual';
 
 type PlanetLikeView = Extract<
   SlotView,
@@ -80,10 +81,13 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
       <div>
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
-            <PlanetDot
+            <PlanetVisual
               planetClassId={view.planetClassId}
-              size={80}
+              planetImageIndex={view.planetImageIndex}
+              size={96}
               aura={view.relation}
+              variant="thumb"
+              glow
             />
           </div>
           <div className="flex-1 min-w-0">

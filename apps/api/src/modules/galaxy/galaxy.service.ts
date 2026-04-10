@@ -55,6 +55,7 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
           allianceId: allianceMembers.allianceId,
           allianceTag: alliances.tag,
           planetClassId: planets.planetClassId,
+          planetImageIndex: planets.planetImageIndex,
         })
         .from(planets)
         .leftJoin(users, eq(users.id, planets.userId))
