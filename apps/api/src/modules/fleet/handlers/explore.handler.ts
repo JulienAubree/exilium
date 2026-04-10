@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, planets, userResearch, discoveredBiomes } from '@exilium/db';
+import { fleetEvents, planets, userResearch, discoveredBiomes, discoveredPositions } from '@exilium/db';
 import { biomeDiscoveryProbability, scanDuration, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, type BiomeDefinition } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { findShipsByRole } from '../../../lib/config-helpers.js';
@@ -74,6 +74,14 @@ export class ExploreHandler implements PhasedMissionHandler {
     const metadata = fleetEvent.metadata as { explorerCount: number; researchLevel: number } | null;
     const explorerCount = metadata?.explorerCount ?? 1;
     const researchLevel = metadata?.researchLevel ?? 0;
+
+    // Mark this position as discovered for the player (regardless of biome roll outcome)
+    await ctx.db.insert(discoveredPositions).values({
+      userId: fleetEvent.userId,
+      galaxy: fleetEvent.targetGalaxy,
+      system: fleetEvent.targetSystem,
+      position: fleetEvent.targetPosition,
+    }).onConflictDoNothing();
 
     const biomeCatalogue: BiomeDefinition[] = (config.biomes ?? []).map((b: any) => ({
       id: b.id,
