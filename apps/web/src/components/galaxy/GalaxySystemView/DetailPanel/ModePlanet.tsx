@@ -121,16 +121,23 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
           </span>
         </div>
 
-        <div className="mt-3">
-          <SectionLabel>Biomes</SectionLabel>
-          {view.biomes.length > 0 ? (
-            <BiomeChips biomes={view.biomes} />
-          ) : (
+        {view.relation === 'mine' ? (
+          <div className="mt-3">
+            <SectionLabel>Biomes</SectionLabel>
+            {view.biomes.length > 0 ? (
+              <BiomeChips biomes={view.biomes} />
+            ) : (
+              <p className="text-xs italic text-muted-foreground">Aucun biome.</p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-3">
+            <SectionLabel>Biomes</SectionLabel>
             <p className="text-xs italic text-muted-foreground">
-              Biomes inconnus — explorer pour révéler.
+              Biomes inconnus. Espionne la planète pour en savoir plus.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         {view.debris &&
           (view.debris.minerai > 0 || view.debris.silicium > 0) && (
@@ -209,16 +216,40 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
           </div>
         </div>
 
-        <div className="mt-3">
-          <SectionLabel>Biomes</SectionLabel>
-          {view.biomes.length > 0 ? (
-            <BiomeChips biomes={view.biomes} />
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              Explorer pour révéler les biomes.
+        {view.biomes.length === 0 ? (
+          <div className="mt-3 rounded-md border border-dashed border-cyan-500/30 bg-cyan-500/5 px-3 py-3">
+            <div className="text-[10px] uppercase tracking-wider text-cyan-500/70 mb-1">
+              Position inexplorée
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Les biomes de cette position n&apos;ont pas encore été révélés.
+              Envoie un explorateur pour découvrir ses caractéristiques.
             </p>
-          )}
-        </div>
+            {view.totalBiomeCount > 0 && (
+              <p className="text-xs text-cyan-300/80 mt-1.5">
+                {view.totalBiomeCount} biome{view.totalBiomeCount > 1 ? 's' : ''}{' '}
+                à découvrir
+              </p>
+            )}
+          </div>
+        ) : view.undiscoveredCount > 0 ? (
+          <div className="mt-3">
+            <SectionLabel>Biomes</SectionLabel>
+            <BiomeChips biomes={view.biomes} />
+            <p className="text-xs text-amber-400/80 mt-2">
+              {view.undiscoveredCount} biome{view.undiscoveredCount > 1 ? 's' : ''}{' '}
+              encore à découvrir
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <SectionLabel>Biomes</SectionLabel>
+            <BiomeChips biomes={view.biomes} />
+            <p className="text-xs text-emerald-400/80 mt-2">
+              Tous les biomes ont été révélés
+            </p>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-2">
           {ctx.hasColonizer && (
