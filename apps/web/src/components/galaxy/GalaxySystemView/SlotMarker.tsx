@@ -11,24 +11,33 @@
  */
 
 import { useId, type KeyboardEvent, type ReactElement } from 'react';
+import { TYPE_COLORS, AURA_COLORS } from '../planetPalette';
 import type { SlotView } from './slotView';
 
-const TYPE_COLORS: Record<string, { from: string; to: string; accent: string }> = {
-  volcanic:  { from: '#ef4444', to: '#f97316', accent: '#fbbf24' },
-  arid:      { from: '#d97706', to: '#92400e', accent: '#fbbf24' },
-  temperate: { from: '#22c55e', to: '#3b82f6', accent: '#86efac' },
-  glacial:   { from: '#93c5fd', to: '#e0f2fe', accent: '#ffffff' },
-  gaseous:   { from: '#a855f7', to: '#ec4899', accent: '#e879f9' },
-  homeworld: { from: '#22d3ee', to: '#10b981', accent: '#a7f3d0' },
-  unknown:   { from: '#52525b', to: '#27272a', accent: '#a1a1aa' },
-};
+/**
+ * Radii and tick offsets for the slot marker geometry, in the orbital
+ * canvas coordinate system. Grouped here so the visual scale is easy to
+ * tune in one place.
+ */
+const SLOT_RADII = {
+  PLANET: 4.5,
+  HALO: 14,
+  HALO_HOVER: 15.4,
+  EMPTY: 5,
+  EMPTY_HOVER: 5.5,
+  UNKNOWN: 4,
+  UNKNOWN_HOVER: 4.4,
+  SELECTION: 14,
+  TICK_INNER: 11,
+  TICK_OUTER: 17,
+} as const;
 
-const AURA_COLORS: Record<'mine' | 'ally' | 'enemy', string> = {
-  mine:  '#67e8f9',
-  ally:  '#60a5fa',
-  enemy: '#f87171',
-};
-
+/**
+ * Props for {@link SlotMarker}.
+ *
+ * Returns null when view.kind === 'belt' — parent renders OrbitalDebrisRing
+ * at orbit scale instead.
+ */
 export interface SlotMarkerProps {
   view: SlotView;
   cx: number;
@@ -67,7 +76,7 @@ export function SlotMarker({
   isHovered,
   onClick,
   onHoverChange,
-}: SlotMarkerProps) {
+}: SlotMarkerProps): ReactElement | null {
   // Hooks must be called unconditionally — do the early return AFTER.
   const rawId = useId();
 
@@ -79,13 +88,13 @@ export function SlotMarker({
   const undiscoveredGradId = `slot-${rawId}-unknown`;
 
   const handleKeyDown = (e: KeyboardEvent<SVGGElement>) => {
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick(view.position);
     }
   };
 
-  const haloRadius = isHovered ? 15.4 : 14;
+  const haloRadius = isHovered ? SLOT_RADII.HALO_HOVER : SLOT_RADII.HALO;
 
   let body: ReactElement | null = null;
   let defs: ReactElement | null = null;
@@ -117,11 +126,11 @@ export function SlotMarker({
           fill={`url(#${haloGradId})`}
           className="animate-aura-breathe"
         />
-        <circle cx={cx} cy={cy} r={4.5} fill={`url(#${planetGradId})`} />
+        <circle cx={cx} cy={cy} r={SLOT_RADII.PLANET} fill={`url(#${planetGradId})`} />
         <circle
           cx={cx}
           cy={cy}
-          r={4.5}
+          r={SLOT_RADII.PLANET}
           fill="none"
           stroke="rgba(255,255,255,0.15)"
           strokeWidth={0.4}
@@ -135,7 +144,7 @@ export function SlotMarker({
       <circle
         cx={cx}
         cy={cy}
-        r={isHovered ? 5.5 : 5}
+        r={isHovered ? SLOT_RADII.EMPTY_HOVER : SLOT_RADII.EMPTY}
         fill="none"
         stroke={typeColor}
         strokeWidth={0.8}
@@ -156,7 +165,7 @@ export function SlotMarker({
       <circle
         cx={cx}
         cy={cy}
-        r={isHovered ? 4.4 : 4}
+        r={isHovered ? SLOT_RADII.UNKNOWN_HOVER : SLOT_RADII.UNKNOWN}
         fill={`url(#${undiscoveredGradId})`}
         opacity={0.55}
       />
@@ -182,17 +191,45 @@ export function SlotMarker({
           <circle
             cx={cx}
             cy={cy}
-            r={14}
+            r={SLOT_RADII.SELECTION}
             fill="none"
             stroke="#fffbe8"
             strokeWidth={0.8}
             strokeDasharray="4 4"
             className="animate-selection-rotate"
           />
-          <line x1={cx} y1={cy - 17} x2={cx} y2={cy - 11} stroke="#fffbe8" strokeWidth={0.8} />
-          <line x1={cx} y1={cy + 11} x2={cx} y2={cy + 17} stroke="#fffbe8" strokeWidth={0.8} />
-          <line x1={cx - 17} y1={cy} x2={cx - 11} y2={cy} stroke="#fffbe8" strokeWidth={0.8} />
-          <line x1={cx + 11} y1={cy} x2={cx + 17} y2={cy} stroke="#fffbe8" strokeWidth={0.8} />
+          <line
+            x1={cx}
+            y1={cy - SLOT_RADII.TICK_OUTER}
+            x2={cx}
+            y2={cy - SLOT_RADII.TICK_INNER}
+            stroke="#fffbe8"
+            strokeWidth={0.8}
+          />
+          <line
+            x1={cx}
+            y1={cy + SLOT_RADII.TICK_INNER}
+            x2={cx}
+            y2={cy + SLOT_RADII.TICK_OUTER}
+            stroke="#fffbe8"
+            strokeWidth={0.8}
+          />
+          <line
+            x1={cx - SLOT_RADII.TICK_OUTER}
+            y1={cy}
+            x2={cx - SLOT_RADII.TICK_INNER}
+            y2={cy}
+            stroke="#fffbe8"
+            strokeWidth={0.8}
+          />
+          <line
+            x1={cx + SLOT_RADII.TICK_INNER}
+            y1={cy}
+            x2={cx + SLOT_RADII.TICK_OUTER}
+            y2={cy}
+            stroke="#fffbe8"
+            strokeWidth={0.8}
+          />
         </>
       )}
     </g>

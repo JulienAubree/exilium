@@ -10,6 +10,7 @@
  */
 
 import { PlanetDot } from '../PlanetDot';
+import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
 
 export interface RibbonProps {
@@ -31,9 +32,9 @@ function MiniMarker({ view }: { view: SlotView }) {
     case 'belt':
       return (
         <svg width={14} height={14} viewBox="0 0 14 14" aria-hidden="true">
-          <circle cx={3} cy={7} r={1} fill="#fb923c" />
-          <circle cx={7} cy={7} r={1.2} fill="#fb923c" />
-          <circle cx={11} cy={7} r={1} fill="#fb923c" />
+          <circle cx={3} cy={7} r={1} fill={BELT_DEBRIS_COLOR} />
+          <circle cx={7} cy={7} r={1.2} fill={BELT_DEBRIS_COLOR} />
+          <circle cx={11} cy={7} r={1} fill={BELT_DEBRIS_COLOR} />
         </svg>
       );
   }
@@ -46,6 +47,7 @@ export function Ribbon({
   onSelectPosition,
   onHoverPosition,
 }: RibbonProps) {
+  const discoverable = views.filter((v) => v.kind !== 'belt').length;
   const discoveredCount = views.filter(
     (v) => v.kind === 'planet' || v.kind === 'empty-discovered',
   ).length;
@@ -58,7 +60,7 @@ export function Ribbon({
       <div className="px-2 py-2 border-b border-cyan-500/10">
         <div className="text-[10px] uppercase tracking-wider text-cyan-500/70">Slots</div>
         <div className="text-[11px] font-mono text-muted-foreground">
-          {discoveredCount}/14
+          {discoveredCount}/{discoverable}
         </div>
       </div>
       <ol

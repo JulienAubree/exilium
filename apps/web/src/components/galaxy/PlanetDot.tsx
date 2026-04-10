@@ -1,22 +1,10 @@
 import { useId } from 'react';
+import { TYPE_COLORS, AURA_COLORS, type PlanetAura as SharedPlanetAura } from './planetPalette';
 
-const TYPE_COLORS: Record<string, { from: string; to: string; accent: string }> = {
-  volcanic:  { from: '#ef4444', to: '#f97316', accent: '#fbbf24' },
-  arid:      { from: '#d97706', to: '#92400e', accent: '#fbbf24' },
-  temperate: { from: '#22c55e', to: '#3b82f6', accent: '#86efac' },
-  glacial:   { from: '#93c5fd', to: '#e0f2fe', accent: '#ffffff' },
-  gaseous:   { from: '#a855f7', to: '#ec4899', accent: '#e879f9' },
-  homeworld: { from: '#22d3ee', to: '#10b981', accent: '#a7f3d0' },
-  unknown:   { from: '#52525b', to: '#27272a', accent: '#a1a1aa' },
-};
-
-const AURA_COLORS: Record<'mine' | 'ally' | 'enemy', string> = {
-  mine:  '#67e8f9', // cyan
-  ally:  '#60a5fa', // blue
-  enemy: '#f87171', // red
-};
-
-export type PlanetAura = 'mine' | 'ally' | 'enemy' | null;
+// Re-export for backwards compatibility with any consumer that imported
+// `PlanetAura` from this module. The palette type is non-null; PlanetDot
+// accepts `null` to mean "no aura".
+export type PlanetAura = SharedPlanetAura | null;
 
 export function PlanetDot({
   planetClassId,
