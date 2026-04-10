@@ -250,8 +250,7 @@ export default function Galaxy() {
                         <span className="w-6 text-center text-xs font-mono text-muted-foreground">{i + 1}</span>
                         <PlanetDot planetClassId={emptySlot.planetClassId} size={20} />
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm text-muted-foreground">Vide</span>
-                          <span className={`ml-1 text-xs ${emptySlot.isDiscovered ? 'text-primary/60' : 'text-muted-foreground italic'}`}>
+                          <span className={`text-sm ${emptySlot.isDiscovered ? 'text-primary/70' : 'text-muted-foreground italic'}`}>
                             {planetTypeName}
                           </span>
                         </div>
@@ -428,10 +427,7 @@ export default function Galaxy() {
                           <tr className={`${isExpanded2 ? '' : 'border-b border-border/50'}`}>
                             <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
                             <td className="px-2 py-2">
-                              <span className="inline-flex items-center gap-2">
-                                <PlanetDot planetClassId={emptySlot2.planetClassId} size={18} />
-                                <span className="text-muted-foreground">Vide</span>
-                              </span>
+                              <PlanetDot planetClassId={emptySlot2.planetClassId} size={18} />
                             </td>
                             <td className={`px-2 py-2 text-xs ${emptySlot2.isDiscovered ? 'text-muted-foreground' : 'text-muted-foreground/60 italic'}`}>
                               {planetTypeName2}
