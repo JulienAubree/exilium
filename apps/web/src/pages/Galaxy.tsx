@@ -241,9 +241,9 @@ export default function Galaxy() {
 
                 if (isEmpty) {
                   const emptySlot = slot as any;
-                  const planetTypeName = emptySlot.planetClassId
-                    ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot.planetClassId)?.name ?? ''
-                    : '';
+                  const planetTypeName = emptySlot.isDiscovered && emptySlot.planetClassId
+                    ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot.planetClassId)?.name ?? 'Inconnu'
+                    : 'Inconnu';
                   return (
                     <div key={i} className="rounded-lg p-2 hover:bg-accent/50">
                       <div className="flex items-center gap-3">
@@ -251,9 +251,9 @@ export default function Galaxy() {
                         <PlanetDot planetClassId={emptySlot.planetClassId} size={20} />
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-muted-foreground">Vide</span>
-                          {planetTypeName && (
-                            <span className="ml-1 text-xs text-primary/60">{planetTypeName}</span>
-                          )}
+                          <span className={`ml-1 text-xs ${emptySlot.isDiscovered ? 'text-primary/60' : 'text-muted-foreground italic'}`}>
+                            {planetTypeName}
+                          </span>
                         </div>
                         {hasColonizer && (
                           <Button
@@ -418,9 +418,9 @@ export default function Galaxy() {
 
                     if (isEmpty2) {
                       const emptySlot2 = slot as any;
-                      const planetTypeName2 = emptySlot2.planetClassId
-                        ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot2.planetClassId)?.name ?? ''
-                        : '';
+                      const planetTypeName2 = emptySlot2.isDiscovered && emptySlot2.planetClassId
+                        ? gameConfig?.planetTypes?.find((t) => t.id === emptySlot2.planetClassId)?.name ?? 'Inconnu'
+                        : 'Inconnu';
                       const hasBiomes2 = emptySlot2.biomes && emptySlot2.biomes.length > 0;
                       const isExpanded2 = expandedBiomeSlot === i;
                       return (
@@ -433,7 +433,7 @@ export default function Galaxy() {
                                 <span className="text-muted-foreground">Vide</span>
                               </span>
                             </td>
-                            <td className="px-2 py-2 text-xs text-muted-foreground">
+                            <td className={`px-2 py-2 text-xs ${emptySlot2.isDiscovered ? 'text-muted-foreground' : 'text-muted-foreground/60 italic'}`}>
                               {planetTypeName2}
                             </td>
                             <td className="px-2 py-2">
