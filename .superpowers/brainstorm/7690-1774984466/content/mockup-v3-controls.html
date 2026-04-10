@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exilium — Énergie v3 — Comparatif contrôles</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --border: rgba(100, 140, 255, 0.15);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --energy: #f0c040;
+    --minerai: #fb923c;
+    --silicium: #34d399;
+    --hydrogene: #60a5fa;
+    --shield: #22d3ee;
+    --danger: #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      linear-gradient(rgba(100,140,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100,140,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 20px 16px; }
+
+  .banner {
+    text-align: center; margin-bottom: 24px; padding: 10px;
+    background: linear-gradient(135deg, rgba(240,192,64,0.08), rgba(100,140,255,0.05));
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .banner h1 { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--energy); letter-spacing: 2px; }
+  .banner p { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* ===== ENERGY BAR — Top of page ===== */
+  .energy-bar-wrapper {
+    margin-bottom: 20px;
+  }
+  .energy-bar-header {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+  }
+  .energy-bar-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 600; color: var(--energy);
+    letter-spacing: 1px;
+  }
+  .energy-bar-values {
+    display: flex; gap: 12px; font-size: 11px; font-family: 'Orbitron', monospace;
+  }
+  .energy-bar-available { color: var(--energy); font-weight: 700; font-size: 13px; }
+  .energy-bar-total { color: var(--text-dim); }
+
+  .energy-bar-track {
+    width: 100%; height: 10px; background: rgba(255,255,255,0.05);
+    border-radius: 5px; overflow: hidden; position: relative;
+    border: 1px solid rgba(240,192,64,0.1);
+  }
+  .energy-bar-used {
+    height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, var(--energy), rgba(240,192,64,0.6));
+    transition: width 0.5s;
+  }
+  .energy-bar-segments {
+    position: absolute; inset: 0;
+    display: flex;
+  }
+  .energy-segment {
+    height: 100%;
+    opacity: 0.7;
+    border-right: 1px solid rgba(0,0,0,0.3);
+  }
+  .energy-bar-legend {
+    display: flex; gap: 12px; margin-top: 6px; font-size: 9px; color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+  .legend-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px;
+    vertical-align: middle;
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+  }
+
+  /* ===== OPTION SEPARATOR ===== */
+  .option-divider {
+    display: flex; align-items: center; gap: 12px; margin: 32px 0 24px;
+    font-family: 'Orbitron', monospace; font-size: 11px; color: var(--energy);
+    letter-spacing: 2px;
+  }
+  .option-divider::before, .option-divider::after {
+    content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--energy), transparent);
+    opacity: 0.3;
+  }
+
+  /* ===== CONSUMER GRID ===== */
+  .consumers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (min-width: 640px) {
+    .consumers { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .consumer {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    position: relative; overflow: hidden;
+  }
+  .consumer::before {
+    content: ''; position: absolute; inset-x: 0; top: 0; height: 3px;
+  }
+  .consumer.minerai::before { background: linear-gradient(90deg, transparent, var(--minerai), transparent); }
+  .consumer.silicium::before { background: linear-gradient(90deg, transparent, var(--silicium), transparent); }
+  .consumer.hydrogene::before { background: linear-gradient(90deg, transparent, var(--hydrogene), transparent); }
+  .consumer.shield::before { background: linear-gradient(90deg, transparent, var(--shield), transparent); }
+
+  .consumer-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .consumer-icon {
+    font-size: 20px; line-height: 1;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04); border-radius: 8px; flex-shrink: 0;
+  }
+  .consumer-info { flex: 1; min-width: 0; }
+  .consumer-name { font-size: 12px; font-weight: 600; color: var(--text-bright); }
+  .consumer-level { font-size: 10px; color: var(--text-dim); }
+
+  /* ===== OPTION A: VERTICAL GAUGE ===== */
+  .gauge-control {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .gauge-track {
+    flex: 1; height: 28px; background: rgba(0,0,0,0.3);
+    border-radius: 6px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+  }
+  .gauge-fill {
+    height: 100%; border-radius: 5px;
+    transition: width 0.2s;
+    position: relative;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+  }
+  .gauge-handle {
+    position: absolute; right: -1px; top: -1px; bottom: -1px;
+    width: 6px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 0 5px 5px 0;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.4);
+  }
+  .gauge-value {
+    font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--text-bright);
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+  .gauge-value span { font-size: 9px; color: rgba(255,255,255,0.5); }
+
+  /* ===== OPTION B: STYLED INPUT + BUTTONS ===== */
+  .input-control {
+    display: flex; align-items: center; gap: 0; margin-bottom: 10px;
+    background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .input-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: none; color: var(--text); cursor: pointer;
+    font-size: 18px; font-weight: 300;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .input-btn:hover { background: rgba(255,255,255,0.1); }
+  .input-btn:active { background: rgba(255,255,255,0.15); }
+  .input-btn.minus { border-right: 1px solid rgba(255,255,255,0.06); }
+  .input-btn.plus { border-left: 1px solid rgba(255,255,255,0.06); }
+
+  .input-center {
+    flex: 1; text-align: center; position: relative;
+  }
+  .input-number {
+    font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700;
+    color: var(--text-bright); background: none; border: none; outline: none;
+    width: 100%; text-align: center; padding: 6px 0;
+  }
+  .input-bar {
+    position: absolute; bottom: 0; left: 4px; right: 4px; height: 3px;
+    background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;
+  }
+  .input-bar-fill {
+    height: 100%; border-radius: 2px; transition: width 0.2s;
+  }
+
+  /* ===== OPTION C: HYBRID (GAUGE + TAP TO EDIT) ===== */
+  .hybrid-control {
+    position: relative; margin-bottom: 10px;
+  }
+  .hybrid-track {
+    height: 40px; background: rgba(0,0,0,0.3);
+    border-radius: 10px; overflow: hidden; position: relative;
+    border: 2px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .hybrid-track:hover {
+    border-color: rgba(255,255,255,0.12);
+  }
+  .hybrid-fill {
+    height: 100%; border-radius: 8px;
+    transition: width 0.2s;
+    position: relative;
+  }
+  .hybrid-fill::after {
+    content: '';
+    position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+  }
+  .hybrid-value {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700;
+    color: var(--text-bright);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    pointer-events: none;
+  }
+  .hybrid-value span { font-size: 10px; color: rgba(255,255,255,0.5); margin-left: 1px; }
+  .hybrid-hint {
+    position: absolute; bottom: 2px; right: 8px;
+    font-size: 7px; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  /* ===== STATS ===== */
+  .consumer-stats {
+    display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;
+  }
+  .stat-prod { font-family: 'Orbitron', monospace; font-weight: 600; font-size: 12px; }
+  .stat-nrj { font-family: 'Orbitron', monospace; font-weight: 600; color: var(--danger); font-size: 11px; }
+
+  /* ===== SOURCES ===== */
+  .sources { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .source {
+    flex: 1; min-width: 140px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card); border: 1px solid rgba(240,192,64,0.12); border-radius: 10px;
+  }
+  .source-icon {
+    font-size: 22px; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(240,192,64,0.06); border-radius: 8px; flex-shrink: 0;
+  }
+  .source-name { font-size: 11px; color: var(--text-dim); }
+  .source-value { font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700; color: var(--energy); }
+  .source-detail { font-size: 10px; color: var(--text-dim); }
+
+  /* ===== RECOMMENDATION ===== */
+  .reco {
+    margin-top: 16px; padding: 14px 16px;
+    background: rgba(240,192,64,0.06);
+    border: 1px solid rgba(240,192,64,0.2); border-radius: 10px;
+  }
+  .reco h3 { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--energy); margin-bottom: 6px; letter-spacing: 1px; }
+  .reco p { font-size: 12px; color: var(--text); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <h1>⚡ Page Énergie v3 — Comparatif contrôles</h1>
+    <p>Barre d'énergie disponible en haut · 3 options de contrôle à comparer</p>
+  </div>
+
+  <!-- ===== BARRE D'ÉNERGIE DISPONIBLE ===== -->
+  <div class="energy-bar-wrapper">
+    <div class="energy-bar-header">
+      <span class="energy-bar-title">⚡ Énergie disponible</span>
+      <div class="energy-bar-values">
+        <span class="energy-bar-available">180 / 520</span>
+      </div>
+    </div>
+    <div class="energy-bar-track">
+      <div class="energy-bar-segments">
+        <div class="energy-segment" style="width: 21.5%; background: var(--minerai);"></div>
+        <div class="energy-segment" style="width: 18.8%; background: var(--silicium);"></div>
+        <div class="energy-segment" style="width: 16.3%; background: var(--hydrogene);"></div>
+        <div class="energy-segment" style="width: 8.7%; background: var(--shield);"></div>
+      </div>
+    </div>
+    <div class="energy-bar-legend">
+      <span><span class="legend-dot" style="background: var(--minerai);"></span>Mine Min. 112</span>
+      <span><span class="legend-dot" style="background: var(--silicium);"></span>Mine Sil. 98</span>
+      <span><span class="legend-dot" style="background: var(--hydrogene);"></span>Synth. H₂ 85</span>
+      <span><span class="legend-dot" style="background: var(--shield);"></span>Bouclier 45</span>
+      <span><span class="legend-dot" style="background: rgba(255,255,255,0.15);"></span>Disponible 180</span>
+    </div>
+  </div>
+
+  <!-- ===== OPTION A : JAUGE HORIZONTALE ===== -->
+  <div class="option-divider">OPTION A — Jauge horizontale</div>
+
+  <div class="consumers">
+    <div class="consumer minerai">
+      <div class="consumer-header">
+        <div class="consumer-icon">⛏️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Minerai</div>
+          <div class="consumer-level">Niv. 10</div>
+        </div>
+      </div>
+      <div class="gauge-control">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width: 80%; background: linear-gradient(90deg, rgba(251,146,60,0.3), rgba(251,146,60,0.6));">
+            <div class="gauge-handle"></div>
+          </div>
+          <span class="gauge-value">80<span>%</span></span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--minerai);">+1 240/h</span>
+        <span class="stat-nrj">−112 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer silicium">
+      <div class="consumer-header">
+        <div class="consumer-icon">💎</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Silicium</div>
+          <div class="consumer-level">Niv. 8</div>
+        </div>
+      </div>
+      <div class="gauge-control">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width: 100%; background: linear-gradient(90deg, rgba(52,211,153,0.3), rgba(52,211,153,0.6));">
+            <div class="gauge-handle"></div>
+          </div>
+          <span class="gauge-value">100<span>%</span></span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--silicium);">+820/h</span>
+        <span class="stat-nrj">−98 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer hydrogene">
+      <div class="consumer-header">
+        <div class="consumer-icon">🧪</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Synth. H₂</div>
+          <div class="consumer-level">Niv. 7</div>
+        </div>
+      </div>
+      <div class="gauge-control">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width: 60%; background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(96,165,250,0.6));">
+            <div class="gauge-handle"></div>
+          </div>
+          <span class="gauge-value">60<span>%</span></span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--hydrogene);">+95/h</span>
+        <span class="stat-nrj">−85 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer shield">
+      <div class="consumer-header">
+        <div class="consumer-icon">🛡️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Bouclier</div>
+          <div class="consumer-level">Niv. 5</div>
+        </div>
+      </div>
+      <div class="gauge-control">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width: 100%; background: linear-gradient(90deg, rgba(34,211,238,0.3), rgba(34,211,238,0.6));">
+            <div class="gauge-handle"></div>
+          </div>
+          <span class="gauge-value">100<span>%</span></span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--shield);">30/tour</span>
+        <span class="stat-nrj">−45 ⚡</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== OPTION B : INPUT STYLISÉ + BOUTONS +/− ===== -->
+  <div class="option-divider">OPTION B — Input + boutons ±</div>
+
+  <div class="consumers">
+    <div class="consumer minerai">
+      <div class="consumer-header">
+        <div class="consumer-icon">⛏️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Minerai</div>
+          <div class="consumer-level">Niv. 10</div>
+        </div>
+      </div>
+      <div class="input-control">
+        <button class="input-btn minus">−</button>
+        <div class="input-center">
+          <input class="input-number" value="80%" readonly>
+          <div class="input-bar"><div class="input-bar-fill" style="width: 80%; background: var(--minerai);"></div></div>
+        </div>
+        <button class="input-btn plus">+</button>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--minerai);">+1 240/h</span>
+        <span class="stat-nrj">−112 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer silicium">
+      <div class="consumer-header">
+        <div class="consumer-icon">💎</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Silicium</div>
+          <div class="consumer-level">Niv. 8</div>
+        </div>
+      </div>
+      <div class="input-control">
+        <button class="input-btn minus">−</button>
+        <div class="input-center">
+          <input class="input-number" value="100%" readonly>
+          <div class="input-bar"><div class="input-bar-fill" style="width: 100%; background: var(--silicium);"></div></div>
+        </div>
+        <button class="input-btn plus">+</button>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--silicium);">+820/h</span>
+        <span class="stat-nrj">−98 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer hydrogene">
+      <div class="consumer-header">
+        <div class="consumer-icon">🧪</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Synth. H₂</div>
+          <div class="consumer-level">Niv. 7</div>
+        </div>
+      </div>
+      <div class="input-control">
+        <button class="input-btn minus">−</button>
+        <div class="input-center">
+          <input class="input-number" value="60%" readonly>
+          <div class="input-bar"><div class="input-bar-fill" style="width: 60%; background: var(--hydrogene);"></div></div>
+        </div>
+        <button class="input-btn plus">+</button>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--hydrogene);">+95/h</span>
+        <span class="stat-nrj">−85 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer shield">
+      <div class="consumer-header">
+        <div class="consumer-icon">🛡️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Bouclier</div>
+          <div class="consumer-level">Niv. 5</div>
+        </div>
+      </div>
+      <div class="input-control">
+        <button class="input-btn minus">−</button>
+        <div class="input-center">
+          <input class="input-number" value="100%" readonly>
+          <div class="input-bar"><div class="input-bar-fill" style="width: 100%; background: var(--shield);"></div></div>
+        </div>
+        <button class="input-btn plus">+</button>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--shield);">30/tour</span>
+        <span class="stat-nrj">−45 ⚡</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== OPTION C : HYBRID GAUGE (slide + tap to edit) ===== -->
+  <div class="option-divider">OPTION C — Jauge cliquable (glisser ou taper)</div>
+
+  <div class="consumers">
+    <div class="consumer minerai">
+      <div class="consumer-header">
+        <div class="consumer-icon">⛏️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Minerai</div>
+          <div class="consumer-level">Niv. 10</div>
+        </div>
+      </div>
+      <div class="hybrid-control">
+        <div class="hybrid-track">
+          <div class="hybrid-fill" style="width: 80%; background: linear-gradient(90deg, rgba(251,146,60,0.15), rgba(251,146,60,0.45));"></div>
+          <span class="hybrid-value">80<span>%</span></span>
+          <span class="hybrid-hint">tap = éditer</span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--minerai);">+1 240/h</span>
+        <span class="stat-nrj">−112 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer silicium">
+      <div class="consumer-header">
+        <div class="consumer-icon">💎</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Silicium</div>
+          <div class="consumer-level">Niv. 8</div>
+        </div>
+      </div>
+      <div class="hybrid-control">
+        <div class="hybrid-track">
+          <div class="hybrid-fill" style="width: 100%; background: linear-gradient(90deg, rgba(52,211,153,0.15), rgba(52,211,153,0.45));"></div>
+          <span class="hybrid-value">100<span>%</span></span>
+          <span class="hybrid-hint">tap = éditer</span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--silicium);">+820/h</span>
+        <span class="stat-nrj">−98 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer hydrogene">
+      <div class="consumer-header">
+        <div class="consumer-icon">🧪</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Synth. H₂</div>
+          <div class="consumer-level">Niv. 7</div>
+        </div>
+      </div>
+      <div class="hybrid-control">
+        <div class="hybrid-track">
+          <div class="hybrid-fill" style="width: 60%; background: linear-gradient(90deg, rgba(96,165,250,0.15), rgba(96,165,250,0.45));"></div>
+          <span class="hybrid-value">60<span>%</span></span>
+          <span class="hybrid-hint">tap = éditer</span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--hydrogene);">+95/h</span>
+        <span class="stat-nrj">−85 ⚡</span>
+      </div>
+    </div>
+
+    <div class="consumer shield">
+      <div class="consumer-header">
+        <div class="consumer-icon">🛡️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Bouclier</div>
+          <div class="consumer-level">Niv. 5</div>
+        </div>
+      </div>
+      <div class="hybrid-control">
+        <div class="hybrid-track">
+          <div class="hybrid-fill" style="width: 100%; background: linear-gradient(90deg, rgba(34,211,238,0.15), rgba(34,211,238,0.45));"></div>
+          <span class="hybrid-value">100<span>%</span></span>
+          <span class="hybrid-hint">tap = éditer</span>
+        </div>
+      </div>
+      <div class="consumer-stats">
+        <span class="stat-prod" style="color: var(--shield);">30/tour</span>
+        <span class="stat-nrj">−45 ⚡</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sources -->
+  <div class="section-label" style="margin-top: 24px;">Sources d'énergie</div>
+  <div class="sources">
+    <div class="source">
+      <div class="source-icon">☀️</div>
+      <div>
+        <div class="source-name">Centrale Solaire</div>
+        <div class="source-value">+385</div>
+        <div class="source-detail">Niveau 12</div>
+      </div>
+    </div>
+    <div class="source">
+      <div class="source-icon">🛰️</div>
+      <div>
+        <div class="source-name">Satellites Solaires</div>
+        <div class="source-value">+135</div>
+        <div class="source-detail">3 × 45</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reco -->
+  <div class="reco">
+    <h3>Ma recommandation : Option A (jauge)</h3>
+    <p>
+      La jauge horizontale est le pattern le plus universel et mobile-friendly. On comprend immédiatement qu'on peut glisser. Le handle blanc donne un affordance clair. Tap sur la valeur pour éditer au clavier. L'option B (+/−) est plus accessible mais plus lente pour de gros changements. L'option C est un compromis mais le "tap = éditer" n'est pas assez visible.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

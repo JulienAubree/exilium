@@ -1,0 +1,40 @@
+<h2>Comment le joueur reorganise-t-il ses planetes ?</h2>
+<p class="subtitle">Choisis l'interaction qui te semble la plus naturelle pour reordonner les cartes dans la vue Empire</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Drag & Drop</h3>
+      <p>Le joueur maintient une carte et la glisse vers sa nouvelle position. Les autres cartes se decalent en temps reel. Interaction la plus intuitive mais necessite une librairie (dnd-kit) et un mode "edition" pour ne pas interferer avec les clics normaux sur les cartes.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Tres visuel et satisfaisant</li><li>Standard mobile (long press) et desktop</li><li>Le joueur voit le resultat en direct</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Necessite un mode "reorganiser" separe</li><li>Librairie externe (dnd-kit ~15kb)</li><li>Gestion tactile + souris</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Fleches haut/bas sur chaque carte</h3>
+      <p>Un bouton "Reorganiser" active un mode ou des fleches haut/bas apparaissent sur chaque carte. Le joueur clique pour deplacer une planete d'un cran. Simple et accessible.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero dependance externe</li><li>Fonctionne parfaitement sur mobile</li><li>Tres accessible (clavier, lecteur ecran)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Fastidieux avec beaucoup de planetes</li><li>Moins "wow" visuellement</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Drag & Drop + fleches en fallback</h3>
+      <p>Drag & drop sur desktop, fleches sur mobile. Le meilleur des deux mondes mais plus de code a maintenir.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Experience optimale par device</li><li>Accessible partout</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Deux interactions a implementer et tester</li><li>Plus de complexite</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

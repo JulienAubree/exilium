@@ -417,6 +417,7 @@ const UI_LABELS = [
   { key: 'phase.outbound', label: 'En route' },
   { key: 'phase.prospecting', label: 'Prospection' },
   { key: 'phase.mining', label: 'Extraction' },
+  { key: 'phase.exploring', label: 'Exploration en cours' },
   { key: 'phase.return', label: 'Retour' },
   { key: 'phase.base', label: 'Base' },
   // PvE tiers

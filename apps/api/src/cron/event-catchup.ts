@@ -9,6 +9,7 @@ const fleetPhaseToJobName: Record<string, string> = {
   return: 'return',
   prospecting: 'prospect-done',
   mining: 'mine-done',
+  exploring: 'explore-done',
 };
 
 async function ensureJobQueued(queue: Queue, jobName: string, data: Record<string, string>, jobId: string): Promise<boolean> {

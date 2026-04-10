@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exilium — Page Énergie v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --border: rgba(100, 140, 255, 0.15);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --energy: #f0c040;
+    --energy-dim: rgba(240, 192, 64, 0.15);
+    --minerai: #fb923c;
+    --silicium: #34d399;
+    --hydrogene: #60a5fa;
+    --shield: #22d3ee;
+    --danger: #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(100, 140, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100, 140, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 20px 16px; }
+
+  /* Banner */
+  .banner {
+    text-align: center; margin-bottom: 20px; padding: 10px;
+    background: linear-gradient(135deg, rgba(240,192,64,0.08), rgba(100,140,255,0.05));
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .banner h1 { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--energy); letter-spacing: 2px; }
+  .banner p { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* Planet card */
+  .planet-card {
+    display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px;
+  }
+  .planet-icon {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 35%, #4a7c59, #1a3a2a, #0d1f15);
+    box-shadow: 0 0 16px rgba(52, 211, 153, 0.15);
+  }
+  .planet-name { font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 700; color: var(--text-bright); }
+  .planet-class { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .planet-bonuses { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .bonus-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
+  .bonus-tag.pos { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .bonus-tag.neg { background: rgba(248,113,113,0.08); color: var(--danger); border: 1px solid rgba(248,113,113,0.15); }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 2px; margin-bottom: 16px;
+    background: rgba(15,23,42,0.5); border-radius: 8px; padding: 3px;
+    border: 1px solid var(--border); width: fit-content;
+  }
+  .tab {
+    padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 500;
+    color: var(--text-dim); cursor: pointer; border: none; background: none; font-family: inherit;
+  }
+  .tab.active { background: rgba(240,192,64,0.12); color: var(--energy); }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+  }
+
+  /* ===== CONSUMER CARDS — Les actionnables en haut ===== */
+  .consumers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (min-width: 640px) {
+    .consumers { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .consumer {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 12px 14px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .consumer::before {
+    content: '';
+    position: absolute; inset-x: 0; top: 0; height: 3px;
+  }
+  .consumer.minerai::before { background: linear-gradient(90deg, transparent, var(--minerai), transparent); }
+  .consumer.silicium::before { background: linear-gradient(90deg, transparent, var(--silicium), transparent); }
+  .consumer.hydrogene::before { background: linear-gradient(90deg, transparent, var(--hydrogene), transparent); }
+  .consumer.shield::before { background: linear-gradient(90deg, transparent, var(--shield), transparent); }
+
+  .consumer-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px; width: 100%;
+  }
+  .consumer-icon {
+    font-size: 22px; line-height: 1;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .consumer-info { flex: 1; min-width: 0; }
+  .consumer-name { font-size: 12px; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .consumer-level { font-size: 10px; color: var(--text-dim); }
+
+  /* ===== KNOB — Plus gros, plus explicite ===== */
+  .knob-area {
+    position: relative;
+    width: 88px; height: 88px;
+    margin: 0 auto 10px;
+    cursor: grab;
+  }
+  .knob-bg {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    border: 3px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .knob-area:hover .knob-bg {
+    border-color: rgba(255,255,255,0.18);
+  }
+  .knob-ring {
+    position: absolute; inset: -2px;
+  }
+  .knob-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px; font-weight: 700; color: var(--text-bright);
+  }
+  .knob-value span { font-size: 11px; color: var(--text-dim); }
+
+  /* Drag affordance indicator */
+  .knob-hint {
+    position: absolute;
+    bottom: -2px; left: 50%; transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--text-dim);
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .knob-arrows {
+    position: absolute;
+    right: -6px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 2px;
+    opacity: 0.25;
+  }
+  .knob-arrows span {
+    display: block;
+    width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+  }
+  .knob-arrows .up { border-bottom: 5px solid var(--text); }
+  .knob-arrows .down { border-top: 5px solid var(--text); }
+  .knob-area:hover .knob-arrows { opacity: 0.5; }
+
+  /* ===== CONSUMER STATS ===== */
+  .consumer-stats {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px;
+  }
+  .stat-label { color: var(--text-dim); }
+  .stat-value { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 600; }
+
+  /* Consumption bar — plus épaisse */
+  .conso-bar {
+    width: 100%; height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 3px; overflow: hidden; margin-top: 2px;
+  }
+  .conso-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  /* ===== ENERGY BALANCE — Compact inline ===== */
+  .energy-balance {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .balance-label {
+    font-size: 11px; color: var(--text-dim); white-space: nowrap;
+    font-weight: 600;
+  }
+  .balance-bar-track {
+    flex: 1; height: 6px; background: rgba(255,255,255,0.05);
+    border-radius: 3px; overflow: hidden;
+  }
+  .balance-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--energy), rgba(240,192,64,0.5));
+  }
+  .balance-numbers {
+    display: flex; gap: 8px; font-size: 11px; font-family: 'Orbitron', monospace; white-space: nowrap;
+  }
+  .balance-prod { color: var(--energy); font-weight: 600; }
+  .balance-conso { color: var(--danger); font-weight: 600; }
+  .balance-factor {
+    font-size: 11px; font-family: 'Orbitron', monospace;
+    font-weight: 700; white-space: nowrap;
+  }
+  .balance-factor.ok { color: var(--energy); }
+  .balance-factor.warn { color: var(--danger); }
+
+  /* ===== ENERGY SOURCES — En bas, discret ===== */
+  .sources {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .source {
+    flex: 1; min-width: 140px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid rgba(240,192,64,0.12);
+    border-radius: 10px;
+  }
+  .source-icon {
+    font-size: 24px;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(240,192,64,0.06);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .source-info { flex: 1; }
+  .source-name { font-size: 11px; color: var(--text-dim); }
+  .source-value {
+    font-family: 'Orbitron', monospace; font-size: 16px;
+    font-weight: 700; color: var(--energy);
+  }
+  .source-detail { font-size: 10px; color: var(--text-dim); }
+
+  /* ===== ANNOTATIONS ===== */
+  .annotation {
+    position: relative;
+    margin: 20px 0 8px;
+    padding: 8px 12px;
+    background: rgba(240,192,64,0.06);
+    border-left: 3px solid var(--energy);
+    border-radius: 0 6px 6px 0;
+    font-size: 11px;
+    color: var(--energy);
+  }
+  .annotation strong { font-weight: 700; }
+
+  @media (max-width: 639px) {
+    .energy-balance { flex-wrap: wrap; gap: 8px; }
+    .balance-bar-track { min-width: 100%; order: 10; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <h1>⚡ Page Énergie v2 — UX Rework</h1>
+    <p>Actionnables en haut · Knobs plus gros et explicites · Bilan compact · Sources en bas</p>
+  </div>
+
+  <!-- Planet Card -->
+  <div class="planet-card">
+    <div class="planet-icon"></div>
+    <div>
+      <div class="planet-name">KEPLER-442b</div>
+      <div class="planet-class">Classe M · 38°C</div>
+      <div class="planet-bonuses">
+        <span class="bonus-tag pos">+15% silicium</span>
+        <span class="bonus-tag neg">−12% hydrogène</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active">⚡ Flux</button>
+    <button class="tab">📊 Tableau</button>
+  </div>
+
+  <!-- ===== ANNOTATION ===== -->
+  <div class="annotation">
+    <strong>Changement clé :</strong> Les consommateurs (ce que le joueur contrôle) sont maintenant en haut. Chaque carte montre directement la production résultante.
+  </div>
+
+  <!-- ===== 1. CONSOMMATEURS — En haut, actionnables ===== -->
+  <div class="section-label">Réglages de production</div>
+  <div class="consumers">
+
+    <!-- Mine Minerai -->
+    <div class="consumer minerai">
+      <div class="consumer-header">
+        <div class="consumer-icon">⛏️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Minerai</div>
+          <div class="consumer-level">Niv. 10</div>
+        </div>
+      </div>
+      <div class="knob-area">
+        <div class="knob-bg">
+          <svg class="knob-ring" viewBox="0 0 92 92">
+            <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(251,146,60,0.1)" stroke-width="4"/>
+            <circle cx="46" cy="46" r="41" fill="none" stroke="var(--minerai)" stroke-width="4"
+              stroke-dasharray="258" stroke-dashoffset="52"
+              transform="rotate(-90 46 46)" stroke-linecap="round"/>
+          </svg>
+          <span class="knob-value">80<span>%</span></span>
+        </div>
+        <div class="knob-arrows"><span class="up"></span><span class="down"></span></div>
+        <div class="knob-hint">glisser ↕</div>
+      </div>
+      <div class="consumer-stats">
+        <div class="stat-row">
+          <span class="stat-label">Production</span>
+          <span class="stat-value" style="color: var(--minerai);">+1 240/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Énergie</span>
+          <span class="stat-value" style="color: var(--danger);">−112</span>
+        </div>
+        <div class="conso-bar"><div class="conso-fill" style="width:80%; background: var(--minerai);"></div></div>
+      </div>
+    </div>
+
+    <!-- Mine Silicium -->
+    <div class="consumer silicium">
+      <div class="consumer-header">
+        <div class="consumer-icon">💎</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Mine Silicium</div>
+          <div class="consumer-level">Niv. 8</div>
+        </div>
+      </div>
+      <div class="knob-area">
+        <div class="knob-bg">
+          <svg class="knob-ring" viewBox="0 0 92 92">
+            <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(52,211,153,0.1)" stroke-width="4"/>
+            <circle cx="46" cy="46" r="41" fill="none" stroke="var(--silicium)" stroke-width="4"
+              stroke-dasharray="258" stroke-dashoffset="0"
+              transform="rotate(-90 46 46)" stroke-linecap="round"/>
+          </svg>
+          <span class="knob-value">100<span>%</span></span>
+        </div>
+        <div class="knob-arrows"><span class="up"></span><span class="down"></span></div>
+        <div class="knob-hint">glisser ↕</div>
+      </div>
+      <div class="consumer-stats">
+        <div class="stat-row">
+          <span class="stat-label">Production</span>
+          <span class="stat-value" style="color: var(--silicium);">+820/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Énergie</span>
+          <span class="stat-value" style="color: var(--danger);">−98</span>
+        </div>
+        <div class="conso-bar"><div class="conso-fill" style="width:100%; background: var(--silicium);"></div></div>
+      </div>
+    </div>
+
+    <!-- Synth H2 -->
+    <div class="consumer hydrogene">
+      <div class="consumer-header">
+        <div class="consumer-icon">🧪</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Synth. H₂</div>
+          <div class="consumer-level">Niv. 7</div>
+        </div>
+      </div>
+      <div class="knob-area">
+        <div class="knob-bg">
+          <svg class="knob-ring" viewBox="0 0 92 92">
+            <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(96,165,250,0.1)" stroke-width="4"/>
+            <circle cx="46" cy="46" r="41" fill="none" stroke="var(--hydrogene)" stroke-width="4"
+              stroke-dasharray="258" stroke-dashoffset="103"
+              transform="rotate(-90 46 46)" stroke-linecap="round"/>
+          </svg>
+          <span class="knob-value">60<span>%</span></span>
+        </div>
+        <div class="knob-arrows"><span class="up"></span><span class="down"></span></div>
+        <div class="knob-hint">glisser ↕</div>
+      </div>
+      <div class="consumer-stats">
+        <div class="stat-row">
+          <span class="stat-label">Production</span>
+          <span class="stat-value" style="color: var(--hydrogene);">+95/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Énergie</span>
+          <span class="stat-value" style="color: var(--danger);">−85</span>
+        </div>
+        <div class="conso-bar"><div class="conso-fill" style="width:60%; background: var(--hydrogene);"></div></div>
+      </div>
+    </div>
+
+    <!-- Bouclier -->
+    <div class="consumer shield">
+      <div class="consumer-header">
+        <div class="consumer-icon">🛡️</div>
+        <div class="consumer-info">
+          <div class="consumer-name">Bouclier</div>
+          <div class="consumer-level">Niv. 5</div>
+        </div>
+      </div>
+      <div class="knob-area">
+        <div class="knob-bg">
+          <svg class="knob-ring" viewBox="0 0 92 92">
+            <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(34,211,238,0.1)" stroke-width="4"/>
+            <circle cx="46" cy="46" r="41" fill="none" stroke="var(--shield)" stroke-width="4"
+              stroke-dasharray="258" stroke-dashoffset="0"
+              transform="rotate(-90 46 46)" stroke-linecap="round"/>
+          </svg>
+          <span class="knob-value">100<span>%</span></span>
+        </div>
+        <div class="knob-arrows"><span class="up"></span><span class="down"></span></div>
+        <div class="knob-hint">glisser ↕</div>
+      </div>
+      <div class="consumer-stats">
+        <div class="stat-row">
+          <span class="stat-label">Capacité</span>
+          <span class="stat-value" style="color: var(--shield);">30/tour</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Énergie</span>
+          <span class="stat-value" style="color: var(--danger);">−45</span>
+        </div>
+        <div class="conso-bar"><div class="conso-fill" style="width:100%; background: var(--shield);"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 2. BILAN ÉNERGÉTIQUE — Compact inline ===== -->
+  <div class="annotation">
+    <strong>Changement clé :</strong> Le bilan énergie est une barre compacte, pas une grosse carte. L'info essentielle en un coup d'oeil.
+  </div>
+
+  <div class="energy-balance">
+    <span class="balance-label">⚡ Bilan</span>
+    <div class="balance-bar-track">
+      <div class="balance-bar-fill" style="width: 65%;"></div>
+    </div>
+    <div class="balance-numbers">
+      <span class="balance-prod">+520</span>
+      <span class="balance-conso">−340</span>
+    </div>
+    <span class="balance-factor ok">100%</span>
+  </div>
+
+  <!-- ===== 3. SOURCES D'ÉNERGIE — En bas, discrètes ===== -->
+  <div class="annotation">
+    <strong>Changement clé :</strong> Les sources sont en bas — ce n'est pas de l'actionnable, juste de l'info contextuelle.
+  </div>
+
+  <div class="section-label">Sources d'énergie</div>
+  <div class="sources">
+    <div class="source">
+      <div class="source-icon">☀️</div>
+      <div class="source-info">
+        <div class="source-name">Centrale Solaire</div>
+        <div class="source-value">+385</div>
+        <div class="source-detail">Niveau 12</div>
+      </div>
+    </div>
+    <div class="source">
+      <div class="source-icon">🛰️</div>
+      <div class="source-info">
+        <div class="source-name">Satellites Solaires</div>
+        <div class="source-value">+135</div>
+        <div class="source-detail">3 × 45</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RÉSUMÉ DES CHANGEMENTS ===== -->
+  <div style="margin-top: 32px; padding: 16px; background: rgba(240,192,64,0.05); border: 1px solid rgba(240,192,64,0.15); border-radius: 10px;">
+    <h3 style="font-family: 'Orbitron', monospace; font-size: 11px; color: var(--energy); margin-bottom: 10px; letter-spacing: 1px;">CHANGEMENTS UX</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+      <div>
+        <div style="color: var(--danger); margin-bottom: 4px; font-weight: 600;">❌ Avant</div>
+        <ul style="color: var(--text-dim); padding-left: 14px; line-height: 1.8;">
+          <li>Sources en haut, consommateurs en bas</li>
+          <li>Knob 72px, aucun indice d'interaction</li>
+          <li>Bilan = grosse carte dédiée</li>
+          <li>Section "Impact ressources" séparée (stocks)</li>
+          <li>Traits fins (0.5px), icônes flottantes</li>
+        </ul>
+      </div>
+      <div>
+        <div style="color: var(--energy); margin-bottom: 4px; font-weight: 600;">✅ Après</div>
+        <ul style="color: var(--text); padding-left: 14px; line-height: 1.8;">
+          <li>Consommateurs (actionnables) en haut</li>
+          <li>Knob 88px + flèches ↕ + label "glisser"</li>
+          <li>Bilan = barre inline compacte</li>
+          <li>Production intégrée dans chaque carte</li>
+          <li>Traits 3-4px, icônes dans des boîtes alignées</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Construction parallele v2 — Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --border: rgba(100, 140, 255, 0.15);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --primary: #34d399;
+    --orange: #fb923c;
+    --destructive: #f87171;
+    --cyan: #22d3ee;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .page { max-width: 700px; margin: 0 auto; }
+
+  h1 { font-size: 15px; font-weight: 700; color: var(--text-bright); margin-bottom: 6px; }
+  .subtitle { font-size: 11px; color: var(--text-dim); margin-bottom: 24px; }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin: 28px 0 16px;
+    font-size: 11px; font-weight: 600; color: var(--cyan); letter-spacing: 1px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: 0.3;
+  }
+
+  /* Queue card */
+  .queue-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .queue-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .queue-title { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+  .queue-end { font-size: 11px; color: var(--text-dim); }
+
+  .talent-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+  }
+
+  /* Slots */
+  .slots {
+    display: flex; gap: 8px; margin-bottom: 10px;
+  }
+  .slot {
+    flex: 1; border-radius: 8px; padding: 10px;
+    position: relative; overflow: hidden;
+  }
+  .slot.active {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--orange);
+    border-left: 4px solid var(--orange);
+  }
+  .slot-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .slot-name { font-size: 12px; font-weight: 500; color: var(--text-bright); }
+  .slot-badge {
+    font-size: 9px; font-weight: 600; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 3px;
+    background: rgba(251, 146, 60, 0.15); color: var(--orange);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+  .slot-timer {
+    font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 4px;
+  }
+  .slot-bar {
+    height: 3px; background: rgba(255,255,255,0.05);
+    border-radius: 2px; overflow: hidden;
+  }
+  .slot-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--primary), rgba(52, 211, 153, 0.5));
+  }
+  .slot-actions {
+    display: flex; gap: 8px; font-size: 11px;
+  }
+  .slot-action { color: var(--text-dim); cursor: pointer; }
+  .slot-action.cancel { color: var(--destructive); }
+
+  /* Queue items */
+  .queue-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    border-left: 3px solid rgba(255,255,255,0.06);
+  }
+  .queue-item-name { font-size: 12px; color: var(--text); }
+  .queue-item-status { font-size: 10px; color: var(--text-dim); }
+
+  /* Step label */
+  .step {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    background: rgba(34, 211, 238, 0.15); color: var(--cyan);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+  .step-text { font-size: 12px; color: var(--text); }
+  .step-text span { color: var(--cyan); font-weight: 600; }
+
+  .note {
+    margin-top: 20px; padding: 12px 14px;
+    background: rgba(52, 211, 153, 0.06);
+    border: 1px solid rgba(52, 211, 153, 0.15);
+    border-radius: 8px;
+    font-size: 11px; color: var(--text); line-height: 1.7;
+  }
+  .note strong { color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Construction parallele v2 — File unique, 2 ouvriers</h1>
+  <p class="subtitle">Les 2 slots piochent dans la meme file. Chaque unite est construite individuellement.</p>
+
+  <!-- ===== ETAPE 1 ===== -->
+  <div class="divider">Etape 1 — Lancement de 3 Prospecteurs + 5 Recycleurs</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-text">Les 2 slots prennent chacun <span>1 Prospecteur</span>. Le 3e attend.</div>
+  </div>
+
+  <div class="queue-card">
+    <div class="queue-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="queue-title">File de construction</span>
+        <span class="talent-badge">x2 parallele</span>
+      </div>
+    </div>
+
+    <div class="slots">
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Prospecteur (1/3)</span>
+          <span class="slot-badge">Slot 1</span>
+        </div>
+        <div class="slot-timer">00:02:30</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 0%;"></div></div>
+      </div>
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Prospecteur (2/3)</span>
+          <span class="slot-badge">Slot 2</span>
+        </div>
+        <div class="slot-timer">00:02:30</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 0%;"></div></div>
+      </div>
+    </div>
+
+    <div class="queue-item">
+      <span class="queue-item-name">Prospecteur (3/3)</span>
+      <span class="queue-item-status">En attente</span>
+    </div>
+    <div class="queue-item">
+      <span class="queue-item-name">5x Recycleur</span>
+      <span class="queue-item-status">En attente</span>
+    </div>
+  </div>
+
+  <!-- ===== ETAPE 2 ===== -->
+  <div class="divider">Etape 2 — Slot 1 termine, prend le prochain</div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-text">Slot 1 a fini son Prospecteur. Il prend le <span>3e Prospecteur</span>. Slot 2 continue.</div>
+  </div>
+
+  <div class="queue-card">
+    <div class="queue-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="queue-title">File de construction</span>
+        <span class="talent-badge">x2 parallele</span>
+      </div>
+    </div>
+
+    <div class="slots">
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Prospecteur (3/3)</span>
+          <span class="slot-badge">Slot 1</span>
+        </div>
+        <div class="slot-timer">00:02:30</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 0%;"></div></div>
+      </div>
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Prospecteur (2/3)</span>
+          <span class="slot-badge">Slot 2</span>
+        </div>
+        <div class="slot-timer">00:01:15</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 50%;"></div></div>
+      </div>
+    </div>
+
+    <div class="queue-item">
+      <span class="queue-item-name">5x Recycleur</span>
+      <span class="queue-item-status">En attente</span>
+    </div>
+  </div>
+
+  <!-- ===== ETAPE 3 ===== -->
+  <div class="divider">Etape 3 — Slot 2 termine, passe aux Recycleurs</div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-text">Tous les Prospecteurs sont lances. Slot 2 prend le <span>1er Recycleur</span>.</div>
+  </div>
+
+  <div class="queue-card">
+    <div class="queue-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="queue-title">File de construction</span>
+        <span class="talent-badge">x2 parallele</span>
+      </div>
+    </div>
+
+    <div class="slots">
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Prospecteur (3/3)</span>
+          <span class="slot-badge">Slot 1</span>
+        </div>
+        <div class="slot-timer">00:01:00</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 60%;"></div></div>
+      </div>
+      <div class="slot active">
+        <div class="slot-header">
+          <span class="slot-name">Recycleur (1/5)</span>
+          <span class="slot-badge">Slot 2</span>
+        </div>
+        <div class="slot-timer">00:05:00</div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width: 0%;"></div></div>
+      </div>
+    </div>
+
+    <div class="queue-item">
+      <span class="queue-item-name">Recycleur (2/5)</span>
+      <span class="queue-item-status">En attente</span>
+    </div>
+    <div class="queue-item">
+      <span class="queue-item-name">Recycleur (3/5)</span>
+      <span class="queue-item-status">En attente</span>
+    </div>
+    <div class="queue-item" style="opacity: 0.5;">
+      <span class="queue-item-name">...</span>
+      <span class="queue-item-status">+2 en attente</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Comment ca marche :</strong> La file est une liste d'unites individuelles. Les 2 slots piochent chacun la prochaine unite disponible, independamment. Un batch de "5x Recycleur" est decoupe en 5 unites dans la file. Quand un slot finit, il prend la prochaine unite en attente. Resultat : la production est ~2x plus rapide sans changer les temps unitaires.
+  </div>
+
+</div>
+</body>
+</html>

@@ -9,7 +9,7 @@ export const fleetMissionEnum = pgEnum('fleet_mission', [
   'transport', 'station', 'spy', 'attack', 'colonize', 'recycle', 'mine', 'pirate', 'trade', 'scan', 'explore',
 ]);
 
-export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'prospecting', 'mining', 'return']);
+export const fleetPhaseEnum = pgEnum('fleet_phase', ['outbound', 'prospecting', 'mining', 'exploring', 'return']);
 
 export const fleetStatusEnum = pgEnum('fleet_status', ['active', 'completed', 'recalled']);
 

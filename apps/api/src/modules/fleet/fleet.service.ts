@@ -936,7 +936,12 @@ export function createFleetService(
       return null;
     },
 
-    async processPhaseDispatch(fleetEventId: string, phaseName: string, expectedPhase: 'outbound' | 'prospecting' | 'mining' | 'return') {
+    async processExploreDone(fleetEventId: string): Promise<FleetCompletionResult> {
+      await this.processPhaseDispatch(fleetEventId, 'explore-done', 'exploring');
+      return null;
+    },
+
+    async processPhaseDispatch(fleetEventId: string, phaseName: string, expectedPhase: 'outbound' | 'prospecting' | 'mining' | 'exploring' | 'return') {
       const [event] = await db
         .select()
         .from(fleetEvents)

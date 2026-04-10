@@ -1,0 +1,101 @@
+<h2>Page Énergie — 3 Approches</h2>
+<p class="subtitle">Chaque approche intègre : carte planète, vue flux + vue tableau, knobs de réglage</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>🔋 Flow-First — Le flux comme élément central</h3>
+      <div style="margin: 12px 0; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 2;">
+        <div style="color: #888;">┌─────────────────────────────────────────────┐</div>
+        <div style="color: #6ee7b7;">│ 🪐 Kepler-442b · Classe M · +15% silicium  │</div>
+        <div style="color: #888;">├──────────────────┬──────────────────────────┤</div>
+        <div style="color: #888;">│ <span style="color:#fbbf24;">[Flux]</span>  Tableau  │                          │</div>
+        <div style="color: #888;">│                  │                          │</div>
+        <div style="color: #34d399;">│  ☀ Centrale ─────┬──▶ ⛏ Mine Minerai [knob]│</div>
+        <div style="color: #34d399;">│                  ├──▶ 💎 Mine Silicium[knob]│</div>
+        <div style="color: #34d399;">│  🛰 Satellites ──┼──▶ 🧪 Synth H₂    [knob]│</div>
+        <div style="color: #34d399;">│                  └──▶ 🛡 Bouclier     [knob]│</div>
+        <div style="color: #888;">│                  │                          │</div>
+        <div style="color: #888;">│  ══════ Bilan: 340/520 (65%) ══════         │</div>
+        <div style="color: #888;">├──────────────────┴──────────────────────────┤</div>
+        <div style="color: #fbbf24;">│ Minerai: 1,240/h  Silicium: 820/h  H₂: 95/h│</div>
+        <div style="color: #888;">└─────────────────────────────────────────────┘</div>
+      </div>
+      <p><strong>Le flux occupe toute la largeur.</strong> Les knobs sont intégrés directement dans le diagramme de flux, à côté de chaque consommateur. Les ressources impactées s'affichent en bas. L'onglet "Tableau" bascule vers une vue liste compacte.</p>
+      <div style="margin-top:8px;">
+        <span style="color:#34d399;">✓</span> Très visuel et immersif<br>
+        <span style="color:#34d399;">✓</span> On voit d'un coup d'œil où va l'énergie<br>
+        <span style="color:#f87171;">✗</span> Knobs dans le flux = potentiellement chargé sur mobile
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>🎛 Control-Panel — Panneau de contrôle spatial</h3>
+      <div style="margin: 12px 0; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 2;">
+        <div style="color: #888;">┌─────────────────────────────────────────────┐</div>
+        <div style="color: #6ee7b7;">│ 🪐 Kepler-442b · Classe M · +15% silicium  │</div>
+        <div style="color: #888;">├──────────────┬──────────────────────────────┤</div>
+        <div style="color: #888;">│              │  <span style="color:#fbbf24;">[Flux]</span>  Tableau             │</div>
+        <div style="color: #888;">│  BILAN       │                              │</div>
+        <div style="color: #34d399;">│  ☀ 520      │  ⛏ Mine Min.  <span style="color:#fbbf24;">(knob 80%)</span>    │</div>
+        <div style="color: #f87171;">│  ⚡-340      │    → 1,240 minerai/h        │</div>
+        <div style="color: #888;">│  ─────       │                              │</div>
+        <div style="color: #6ee7b7;">│  = +180 ✓    │  💎 Mine Sil.  <span style="color:#fbbf24;">(knob 100%)</span>  │</div>
+        <div style="color: #888;">│              │    → 820 silicium/h          │</div>
+        <div style="color: #888;">│  Facteur:    │                              │</div>
+        <div style="color: #34d399;">│  100%        │  🧪 Synth H₂  <span style="color:#fbbf24;">(knob 60%)</span>   │</div>
+        <div style="color: #888;">│              │    → 95 hydrogène/h          │</div>
+        <div style="color: #888;">│              │                              │</div>
+        <div style="color: #888;">│              │  🛡 Bouclier  <span style="color:#fbbf24;">(knob 100%)</span>   │</div>
+        <div style="color: #888;">│              │    → 45 bouclier/tour        │</div>
+        <div style="color: #888;">└──────────────┴──────────────────────────────┘</div>
+      </div>
+      <p><strong>Layout en 2 colonnes.</strong> À gauche : bilan énergétique synthétique (produit − consommé = solde). À droite : les bâtiments avec knob + impact sur la ressource. Onglet flux/tableau pour basculer la colonne droite.</p>
+      <div style="margin-top:8px;">
+        <span style="color:#34d399;">✓</span> Bilan toujours visible pendant les réglages<br>
+        <span style="color:#34d399;">✓</span> Chaque knob montre son impact direct<br>
+        <span style="color:#f87171;">✗</span> Moins spectaculaire visuellement, plus "utilitaire"
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>⚡ Hybrid — Bilan visuel + contrôles détachés</h3>
+      <div style="margin: 12px 0; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 2;">
+        <div style="color: #888;">┌─────────────────────────────────────────────┐</div>
+        <div style="color: #6ee7b7;">│ 🪐 Kepler-442b · Classe M · +15% silicium  │</div>
+        <div style="color: #888;">├─────────────────────────────────────────────┤</div>
+        <div style="color: #888;">│         <span style="color:#fbbf24;">[Flux]</span>  Tableau                      │</div>
+        <div style="color: #888;">│                                             │</div>
+        <div style="color: #34d399;">│    ☀ Centrale ──┬──▶ ⛏ Mine Minerai        │</div>
+        <div style="color: #34d399;">│    🛰 Sat. ─────┼──▶ 💎 Mine Silicium      │</div>
+        <div style="color: #34d399;">│                 ├──▶ 🧪 Synth H₂           │</div>
+        <div style="color: #34d399;">│                 └──▶ 🛡 Bouclier            │</div>
+        <div style="color: #888;">│       Bilan: ████████░░ 340/520 (65%)       │</div>
+        <div style="color: #888;">├─────────────────────────────────────────────┤</div>
+        <div style="color: #888;">│  <span style="color:#fbbf24;">(knob)</span>     <span style="color:#fbbf24;">(knob)</span>     <span style="color:#fbbf24;">(knob)</span>     <span style="color:#fbbf24;">(knob)</span>   │</div>
+        <div style="color: #888;">│  Min 80%   Sil 100%  H₂ 60%    🛡 100%    │</div>
+        <div style="color: #fbbf24;">│  1240/h     820/h     95/h      45/tour   │</div>
+        <div style="color: #888;">└─────────────────────────────────────────────┘</div>
+      </div>
+      <p><strong>Le flux en haut (lecture seule), les knobs en bas (contrôle).</strong> Le diagramme de flux est propre car les contrôles sont séparés. La rangée de knobs en bas forme un "panneau de commande". Le flux s'anime en temps réel quand on tourne un knob.</p>
+      <div style="margin-top:8px;">
+        <span style="color:#34d399;">✓</span> Flux lisible + contrôles accessibles<br>
+        <span style="color:#34d399;">✓</span> Les knobs en rangée = très bon sur mobile (scroll horizontal)<br>
+        <span style="color:#34d399;">✓</span> Feedback visuel : le flux réagit aux changements<br>
+        <span style="color:#f87171;">✗</span> Plus de scroll vertical (flux + contrôles empilés)
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 8px;">
+  <h3 style="color: #34d399; margin-top: 0;">💡 Ma recommandation : C (Hybrid)</h3>
+  <p>La séparation flux/contrôles résout le problème mobile : le flux reste lisible, les knobs sont tous accessibles en bas de page dans une zone dédiée. Et l'animation du flux quand on ajuste un knob donne un feedback immédiat et satisfaisant. C'est le meilleur compromis entre visuel impactant et UX pratique.</p>
+</div>

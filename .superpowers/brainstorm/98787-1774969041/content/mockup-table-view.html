@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exilium — Vue Tableau</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --border: rgba(100, 140, 255, 0.15);
+    --border-glow: rgba(100, 140, 255, 0.3);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --energy: #34d399;
+    --minerai: #f59e0b;
+    --silicium: #38bdf8;
+    --hydrogene: #a78bfa;
+    --shield: #22d3ee;
+    --danger: #f87171;
+    --solar: #fbbf24;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(100, 140, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100, 140, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+
+  .approach-banner {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.05), rgba(100, 140, 255, 0.05));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .approach-banner h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--energy);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .approach-banner p { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Planet Card (compact) */
+  .planet-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .planet-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4a7c59, #1a3a2a, #0d1f15);
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 15px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .planet-info { flex: 1; }
+  .planet-name { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; color: var(--text-bright); letter-spacing: 1px; }
+  .planet-class { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .planet-bonuses { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .bonus-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .bonus-tag.positive { background: rgba(52, 211, 153, 0.15); color: var(--energy); border: 1px solid rgba(52, 211, 153, 0.25); }
+  .bonus-tag.negative { background: rgba(248, 113, 113, 0.1); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.2); }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 2px; margin-bottom: 20px;
+    background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 3px;
+    border: 1px solid var(--border); width: fit-content;
+  }
+  .tab {
+    padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-dim); cursor: pointer; border: none; background: none; font-family: inherit;
+  }
+  .tab.active { background: rgba(52, 211, 153, 0.12); color: var(--energy); }
+
+  /* Section label */
+  .section-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px; padding-left: 4px;
+  }
+
+  /* ===== TABLE VIEW ===== */
+  .table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* Table header */
+  .table-header {
+    display: grid;
+    grid-template-columns: 2fr 80px 1fr 1fr 1fr;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    align-items: center;
+  }
+  .table-header span:not(:first-child) { text-align: center; }
+
+  /* Table row */
+  .table-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 1fr 1fr 1fr;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(100, 140, 255, 0.06);
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .table-row:last-child { border-bottom: none; }
+  .table-row:hover { background: rgba(100, 140, 255, 0.04); }
+
+  /* Row building info */
+  .row-building {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .row-icon { font-size: 20px; }
+  .row-info {}
+  .row-name { font-size: 13px; font-weight: 500; color: var(--text-bright); }
+  .row-level { font-size: 11px; color: var(--text-dim); }
+
+  /* Mini knob in table */
+  .mini-knob {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(100, 140, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+  }
+  .mini-knob svg {
+    position: absolute;
+    inset: -1px;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+  }
+  .mini-knob-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-bright);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Values */
+  .row-energy, .row-production, .row-resource {
+    text-align: center;
+  }
+  .row-energy-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .row-energy-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .row-production-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .row-production-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .row-resource-bar {
+    width: 60px;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 4px auto 0;
+  }
+  .row-resource-fill { height: 100%; border-radius: 2px; }
+
+  /* Color accents */
+  .row-minerai .mini-knob { border-color: rgba(245,158,11,0.3); }
+  .row-minerai .row-energy-value { color: var(--danger); }
+  .row-minerai .row-production-value { color: var(--minerai); }
+  .row-minerai .row-resource-fill { background: var(--minerai); }
+
+  .row-silicium .mini-knob { border-color: rgba(56,189,248,0.3); }
+  .row-silicium .row-energy-value { color: var(--danger); }
+  .row-silicium .row-production-value { color: var(--silicium); }
+  .row-silicium .row-resource-fill { background: var(--silicium); }
+
+  .row-hydrogene .mini-knob { border-color: rgba(167,139,250,0.3); }
+  .row-hydrogene .row-energy-value { color: var(--danger); }
+  .row-hydrogene .row-production-value { color: var(--hydrogene); }
+  .row-hydrogene .row-resource-fill { background: var(--hydrogene); }
+
+  .row-shield .mini-knob { border-color: rgba(34,211,238,0.3); }
+  .row-shield .row-energy-value { color: var(--danger); }
+  .row-shield .row-production-value { color: var(--shield); }
+  .row-shield .row-resource-fill { background: var(--shield); }
+
+  /* Source rows */
+  .row-source .row-energy-value { color: var(--energy); }
+  .row-source { background: rgba(52, 211, 153, 0.03); }
+
+  .source-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--energy);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  /* Separator */
+  .table-separator {
+    display: grid;
+    grid-template-columns: 2fr 80px 1fr 1fr 1fr;
+    padding: 8px 16px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Balance row */
+  .balance-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 1fr 1fr 1fr;
+    padding: 14px 16px;
+    align-items: center;
+    background: rgba(52, 211, 153, 0.04);
+    border-top: 1px solid rgba(52, 211, 153, 0.15);
+  }
+  .balance-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--energy);
+    letter-spacing: 1px;
+  }
+  .balance-total {
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--energy);
+  }
+  .balance-factor {
+    text-align: center;
+  }
+  .balance-factor-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--energy);
+  }
+  .balance-factor-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* Bar in balance */
+  .balance-bar-container {
+    grid-column: 4 / 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+  }
+  .balance-bar-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .balance-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--energy), rgba(52,211,153,0.6));
+  }
+  .balance-bar-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  /* Resource summary */
+  .resource-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .resource-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .resource-item-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .resource-item-name { font-size: 12px; font-weight: 500; }
+  .resource-item-name.minerai { color: var(--minerai); }
+  .resource-item-name.silicium { color: var(--silicium); }
+  .resource-item-name.hydrogene { color: var(--hydrogene); }
+  .resource-item-rate { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--text-dim); }
+  .resource-item-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+  .resource-item-fill { height: 100%; border-radius: 2px; }
+  .resource-item-fill.minerai { background: var(--minerai); }
+  .resource-item-fill.silicium { background: var(--silicium); }
+  .resource-item-fill.hydrogene { background: var(--hydrogene); }
+  .resource-item-amounts { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: var(--text-dim); }
+  .resource-item-current { font-family: 'Orbitron', monospace; font-weight: 600; color: var(--text); }
+
+  @media (max-width: 640px) {
+    .table-header, .table-row, .table-separator, .balance-row {
+      grid-template-columns: 1.5fr 56px 1fr 1fr;
+    }
+    .table-header span:last-child,
+    .table-row .row-resource,
+    .table-separator span:last-child,
+    .balance-bar-container { display: none; }
+    .resource-summary { grid-template-columns: 1fr; }
+    .planet-card { flex-direction: column; text-align: center; }
+    .planet-bonuses { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="approach-banner">
+    <h1>📊 Vue Tableau</h1>
+    <p>Tout en lignes — sources, consommateurs, bilan. Knobs mini intégrés.</p>
+  </div>
+
+  <!-- Planet Card -->
+  <div class="planet-card">
+    <div class="planet-icon"></div>
+    <div class="planet-info">
+      <div class="planet-name">KEPLER-442b</div>
+      <div class="planet-class">Classe M · Tempérée · 38°C</div>
+      <div class="planet-bonuses">
+        <span class="bonus-tag positive">+15% silicium</span>
+        <span class="bonus-tag positive">+8% énergie solaire</span>
+        <span class="bonus-tag negative">−12% hydrogène</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab">⚡ Flux</button>
+    <button class="tab active">📊 Tableau</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+
+    <!-- Header -->
+    <div class="table-header">
+      <span>Bâtiment</span>
+      <span>Alloc.</span>
+      <span>Énergie</span>
+      <span>Production</span>
+      <span>Stock</span>
+    </div>
+
+    <!-- Sources -->
+    <div class="table-separator">
+      <span style="color: var(--energy);">▸ Sources</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="table-row row-source">
+      <div class="row-building">
+        <span class="row-icon">☀️</span>
+        <div class="row-info">
+          <div class="row-name">Centrale Solaire</div>
+          <div class="row-level">Niveau 12</div>
+        </div>
+      </div>
+      <div style="text-align:center;"><span class="source-badge">source</span></div>
+      <div class="row-energy">
+        <div class="row-energy-value">+385</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-label" style="color: var(--text-dim);">—</div>
+      </div>
+      <div class="row-resource">
+        <div class="row-production-label" style="color: var(--text-dim);">—</div>
+      </div>
+    </div>
+
+    <div class="table-row row-source">
+      <div class="row-building">
+        <span class="row-icon">🛰️</span>
+        <div class="row-info">
+          <div class="row-name">Satellites Solaires</div>
+          <div class="row-level">3 unités × 45</div>
+        </div>
+      </div>
+      <div style="text-align:center;"><span class="source-badge">source</span></div>
+      <div class="row-energy">
+        <div class="row-energy-value">+135</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-label" style="color: var(--text-dim);">—</div>
+      </div>
+      <div class="row-resource">
+        <div class="row-production-label" style="color: var(--text-dim);">—</div>
+      </div>
+    </div>
+
+    <!-- Consumers -->
+    <div class="table-separator">
+      <span style="color: var(--danger);">▸ Consommateurs</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <!-- Mine Minerai -->
+    <div class="table-row row-minerai">
+      <div class="row-building">
+        <span class="row-icon">⛏️</span>
+        <div class="row-info">
+          <div class="row-name">Mine Minerai</div>
+          <div class="row-level">Niveau 10</div>
+        </div>
+      </div>
+      <div>
+        <div class="mini-knob">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(245,158,11,0.1)" stroke-width="2.5"/>
+            <circle cx="24" cy="24" r="21" fill="none" stroke="var(--minerai)" stroke-width="2.5"
+              stroke-dasharray="132" stroke-dashoffset="26"
+              transform="rotate(-90 24 24)" stroke-linecap="round"/>
+          </svg>
+          <span class="mini-knob-value">80%</span>
+        </div>
+      </div>
+      <div class="row-energy">
+        <div class="row-energy-value">−112</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-value" style="color: var(--minerai);">1 240</div>
+        <div class="row-production-label">/heure</div>
+      </div>
+      <div class="row-resource">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--text);text-align:center;">12 450</div>
+        <div class="row-resource-bar"><div class="row-resource-fill" style="width:43%;background:var(--minerai);"></div></div>
+        <div style="font-size:9px;color:var(--text-dim);text-align:center;margin-top:2px;">/ 29 000</div>
+      </div>
+    </div>
+
+    <!-- Mine Silicium -->
+    <div class="table-row row-silicium">
+      <div class="row-building">
+        <span class="row-icon">💎</span>
+        <div class="row-info">
+          <div class="row-name">Mine Silicium</div>
+          <div class="row-level">Niveau 8</div>
+        </div>
+      </div>
+      <div>
+        <div class="mini-knob">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(56,189,248,0.1)" stroke-width="2.5"/>
+            <circle cx="24" cy="24" r="21" fill="none" stroke="var(--silicium)" stroke-width="2.5"
+              stroke-dasharray="132" stroke-dashoffset="0"
+              transform="rotate(-90 24 24)" stroke-linecap="round"/>
+          </svg>
+          <span class="mini-knob-value">100%</span>
+        </div>
+      </div>
+      <div class="row-energy">
+        <div class="row-energy-value">−98</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-value" style="color: var(--silicium);">820</div>
+        <div class="row-production-label">/heure</div>
+      </div>
+      <div class="row-resource">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--text);text-align:center;">5 620</div>
+        <div class="row-resource-bar"><div class="row-resource-fill" style="width:28%;background:var(--silicium);"></div></div>
+        <div style="font-size:9px;color:var(--text-dim);text-align:center;margin-top:2px;">/ 20 000</div>
+      </div>
+    </div>
+
+    <!-- Synth H2 -->
+    <div class="table-row row-hydrogene">
+      <div class="row-building">
+        <span class="row-icon">🧪</span>
+        <div class="row-info">
+          <div class="row-name">Synth. H₂</div>
+          <div class="row-level">Niveau 7</div>
+        </div>
+      </div>
+      <div>
+        <div class="mini-knob">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(167,139,250,0.1)" stroke-width="2.5"/>
+            <circle cx="24" cy="24" r="21" fill="none" stroke="var(--hydrogene)" stroke-width="2.5"
+              stroke-dasharray="132" stroke-dashoffset="53"
+              transform="rotate(-90 24 24)" stroke-linecap="round"/>
+          </svg>
+          <span class="mini-knob-value">60%</span>
+        </div>
+      </div>
+      <div class="row-energy">
+        <div class="row-energy-value">−85</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-value" style="color: var(--hydrogene);">95</div>
+        <div class="row-production-label">/heure</div>
+      </div>
+      <div class="row-resource">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--text);text-align:center;">1 890</div>
+        <div class="row-resource-bar"><div class="row-resource-fill" style="width:15%;background:var(--hydrogene);"></div></div>
+        <div style="font-size:9px;color:var(--text-dim);text-align:center;margin-top:2px;">/ 12 500</div>
+      </div>
+    </div>
+
+    <!-- Bouclier -->
+    <div class="table-row row-shield">
+      <div class="row-building">
+        <span class="row-icon">🛡️</span>
+        <div class="row-info">
+          <div class="row-name">Bouclier</div>
+          <div class="row-level">Niveau 5</div>
+        </div>
+      </div>
+      <div>
+        <div class="mini-knob">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(34,211,238,0.1)" stroke-width="2.5"/>
+            <circle cx="24" cy="24" r="21" fill="none" stroke="var(--shield)" stroke-width="2.5"
+              stroke-dasharray="132" stroke-dashoffset="0"
+              transform="rotate(-90 24 24)" stroke-linecap="round"/>
+          </svg>
+          <span class="mini-knob-value">100%</span>
+        </div>
+      </div>
+      <div class="row-energy">
+        <div class="row-energy-value">−45</div>
+      </div>
+      <div class="row-production">
+        <div class="row-production-value" style="color: var(--shield);">30</div>
+        <div class="row-production-label">/tour</div>
+      </div>
+      <div class="row-resource">
+        <div class="row-production-label" style="color: var(--text-dim); text-align: center;">—</div>
+      </div>
+    </div>
+
+    <!-- Balance -->
+    <div class="balance-row">
+      <div class="balance-label">⚡ BILAN</div>
+      <div></div>
+      <div class="balance-total">+180</div>
+      <div class="balance-factor">
+        <div class="balance-factor-value">100%</div>
+        <div class="balance-factor-label">facteur prod.</div>
+      </div>
+      <div class="balance-bar-container">
+        <div class="balance-bar-track">
+          <div class="balance-bar-fill" style="width: 65%;"></div>
+        </div>
+        <span class="balance-bar-label">520/340</span>
+      </div>
+    </div>
+
+  </div><!-- /table-container -->
+
+  <!-- Resource Summary -->
+  <div style="margin-top: 20px;">
+    <div class="section-label" style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Impact sur les ressources</div>
+    <div class="resource-summary">
+      <div class="resource-item">
+        <div class="resource-item-header">
+          <span class="resource-item-name minerai">⛏ Minerai</span>
+          <span class="resource-item-rate">+1 240 /h</span>
+        </div>
+        <div class="resource-item-bar"><div class="resource-item-fill minerai" style="width: 43%;"></div></div>
+        <div class="resource-item-amounts">
+          <span class="resource-item-current">12 450</span>
+          <span>/ 29 000</span>
+        </div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-item-header">
+          <span class="resource-item-name silicium">💎 Silicium</span>
+          <span class="resource-item-rate">+820 /h</span>
+        </div>
+        <div class="resource-item-bar"><div class="resource-item-fill silicium" style="width: 28%;"></div></div>
+        <div class="resource-item-amounts">
+          <span class="resource-item-current">5 620</span>
+          <span>/ 20 000</span>
+        </div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-item-header">
+          <span class="resource-item-name hydrogene">🧪 Hydrogène</span>
+          <span class="resource-item-rate">+95 /h</span>
+        </div>
+        <div class="resource-item-bar"><div class="resource-item-fill hydrogene" style="width: 15%;"></div></div>
+        <div class="resource-item-amounts">
+          <span class="resource-item-current">1 890</span>
+          <span>/ 12 500</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

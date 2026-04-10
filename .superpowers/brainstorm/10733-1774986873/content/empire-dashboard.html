@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empire Dashboard - Mockup</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#070d1a; color:#e2e8f0; font-family:system-ui,-apple-system,sans-serif; min-height:100vh; }
+
+  /* Top bar mock */
+  .topbar { background:#0a1225; border-bottom:1px solid #1e293b; padding:10px 20px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+  .topbar-logo { color:#0099DD; font-weight:700; font-size:16px; letter-spacing:1px; }
+  .topbar-resources { display:flex; gap:16px; margin-left:auto; font-size:12px; }
+  .topbar-res { display:flex; align-items:center; gap:4px; }
+  .topbar-res .dot { width:8px; height:8px; border-radius:50%; }
+
+  /* KPI Bar */
+  .kpi-bar { background:linear-gradient(180deg,#0d1628 0%,#0a1225 100%); border-bottom:1px solid #1e293b; padding:12px 20px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .kpi { display:flex; align-items:center; gap:8px; }
+  .kpi-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .kpi-data { display:flex; flex-direction:column; }
+  .kpi-value { font-size:15px; font-weight:700; }
+  .kpi-label { font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; }
+  .kpi-sep { width:1px; height:28px; background:#1e293b; }
+  .kpi-alert { background:#dc262618; border:1px solid #dc262644; border-radius:8px; padding:6px 12px; display:flex; align-items:center; gap:6px; font-size:12px; color:#ef4444; margin-left:auto; animation:pulse-alert 2s infinite; }
+  @keyframes pulse-alert { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  /* Page header */
+  .page-header { padding:20px 20px 0; }
+  .page-header h1 { font-size:22px; font-weight:700; color:#f1f5f9; }
+  .page-header p { font-size:13px; color:#64748b; margin-top:2px; }
+
+  /* Planet grid */
+  .planet-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; padding:16px 20px 40px; }
+
+  /* Planet card */
+  .planet-card { background:#0d1628; border:1px solid #1e293b; border-radius:12px; overflow:hidden; transition:border-color 0.2s,box-shadow 0.2s; cursor:pointer; }
+  .planet-card:hover { border-color:#0099DD44; box-shadow:0 0 20px #0099DD11; }
+  .planet-card.alert { border-color:#dc262644; }
+  .planet-card.alert:hover { border-color:#dc2626aa; box-shadow:0 0 20px #dc262622; }
+
+  .pc-header { display:flex; align-items:center; gap:10px; padding:14px 14px 10px; }
+  .pc-planet-img { width:44px; height:44px; border-radius:50%; flex-shrink:0; border:2px solid #1e293b; }
+  .pc-planet-img.alert-border { border-color:#dc262666; }
+  .pc-info { flex:1; min-width:0; }
+  .pc-name { font-size:14px; font-weight:600; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pc-coords { font-size:11px; color:#64748b; }
+  .pc-tag { font-size:10px; padding:2px 8px; border-radius:5px; font-weight:500; }
+  .pc-tag.capital { background:#0099DD22; color:#0099DD; }
+  .pc-tag.colony { background:#8b5cf622; color:#a78bfa; }
+
+  /* Resources */
+  .pc-resources { padding:0 14px 10px; display:flex; flex-direction:column; gap:5px; }
+  .pc-res-row { display:flex; align-items:center; gap:8px; }
+  .pc-res-icon { font-size:10px; width:16px; text-align:center; font-weight:700; }
+  .pc-res-bar { flex:1; height:5px; background:#1e293b; border-radius:3px; overflow:hidden; }
+  .pc-res-fill { height:100%; border-radius:3px; }
+  .pc-res-rate { font-size:11px; color:#94a3b8; width:62px; text-align:right; }
+  .minerai { color:#fb923c; }
+  .silicium { color:#34d399; }
+  .hydrogene { color:#60a5fa; }
+  .fill-minerai { background:linear-gradient(90deg,#fb923c,#f97316); }
+  .fill-silicium { background:linear-gradient(90deg,#34d399,#10b981); }
+  .fill-hydrogene { background:linear-gradient(90deg,#60a5fa,#3b82f6); }
+
+  /* Status badges */
+  .pc-status { padding:0 14px 10px; display:flex; gap:6px; flex-wrap:wrap; }
+  .pc-badge { font-size:11px; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; }
+  .pc-badge.build { background:#1e293b; border:1px solid #334155; color:#94a3b8; }
+  .pc-badge.build .timer { color:#f0c040; }
+  .pc-badge.fleet { background:#1e293b; border:1px solid #334155; color:#94a3b8; }
+  .pc-badge.attack { background:#dc262618; border:1px solid #dc262644; color:#ef4444; }
+  .pc-badge.idle { background:#22c55e18; border:1px solid #22c55e33; color:#22c55e; }
+  .pc-badge.research { background:#a78bfa18; border:1px solid #a78bfa33; color:#a78bfa; }
+
+  /* Nav shortcuts */
+  .pc-nav { display:flex; border-top:1px solid #1e293b; }
+  .pc-nav a { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; padding:8px; font-size:11px; color:#64748b; text-decoration:none; transition:all 0.15s; border-right:1px solid #1e293b; }
+  .pc-nav a:last-child { border-right:none; }
+  .pc-nav a:hover { color:#0099DD; background:#0099DD08; }
+  .pc-nav a svg { width:14px; height:14px; }
+
+  /* Mobile */
+  @media (max-width:768px) {
+    .kpi-bar { gap:12px; padding:10px 16px; }
+    .kpi-sep { display:none; }
+    .page-header { padding:16px 16px 0; }
+    .planet-grid { grid-template-columns:1fr; gap:0; padding:12px 16px 40px; }
+
+    .planet-card { border-radius:0; border-left:none; border-right:none; border-bottom:none; }
+    .planet-card:first-child { border-radius:12px 12px 0 0; }
+    .planet-card:last-child { border-radius:0 0 12px 12px; border-bottom:1px solid #1e293b; }
+
+    /* Transform to row */
+    .pc-header { padding:10px 12px; }
+    .pc-planet-img { width:34px; height:34px; }
+    .pc-resources { flex-direction:row; gap:12px; padding:0 12px 8px; }
+    .pc-res-row { flex:1; }
+    .pc-res-bar { display:none; }
+    .pc-res-rate { width:auto; text-align:left; font-size:12px; font-weight:600; }
+    .pc-res-icon { width:auto; }
+    .pc-status { padding:0 12px 8px; }
+    .pc-nav { display:none; }
+    .mobile-arrow { display:block !important; }
+  }
+
+  .mobile-arrow { display:none; color:#334155; margin-left:auto; }
+
+  /* Label */
+  .section-label { padding:16px 20px 4px; font-size:11px; color:#475569; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- Top bar (existing - just for context) -->
+<div class="topbar">
+  <div class="topbar-logo">EXILIUM</div>
+  <div class="topbar-resources">
+    <div class="topbar-res"><div class="dot" style="background:#fb923c"></div> 24.5k</div>
+    <div class="topbar-res"><div class="dot" style="background:#34d399"></div> 18.2k</div>
+    <div class="topbar-res"><div class="dot" style="background:#60a5fa"></div> 5.1k</div>
+  </div>
+</div>
+
+<!-- KPI Bar -->
+<div class="kpi-bar">
+  <div class="kpi">
+    <div class="kpi-icon" style="background:#fb923c18">
+      <span style="color:#fb923c">⛏</span>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value minerai">3.8k<span style="font-weight:400;font-size:11px;color:#64748b">/h</span></div>
+      <div class="kpi-label">Minerai total</div>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-icon" style="background:#34d39918">
+      <span style="color:#34d399">◆</span>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value silicium">2.6k<span style="font-weight:400;font-size:11px;color:#64748b">/h</span></div>
+      <div class="kpi-label">Silicium total</div>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-icon" style="background:#60a5fa18">
+      <span style="color:#60a5fa">💧</span>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value hydrogene">890<span style="font-weight:400;font-size:11px;color:#64748b">/h</span></div>
+      <div class="kpi-label">Hydrogene total</div>
+    </div>
+  </div>
+
+  <div class="kpi-sep"></div>
+
+  <div class="kpi">
+    <div class="kpi-icon" style="background:#94a3b818">
+      <span style="color:#94a3b8">🪐</span>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value">4</div>
+      <div class="kpi-label">Planetes</div>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-icon" style="background:#0099DD18">
+      <span style="color:#0099DD">🚀</span>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value">2</div>
+      <div class="kpi-label">Flottes en vol</div>
+    </div>
+  </div>
+
+  <div class="kpi-alert">
+    <span>⚠</span> 1 attaque en cours
+  </div>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+  <h1>Empire</h1>
+  <p>Vue d'ensemble de vos colonies</p>
+</div>
+
+<!-- Planet Grid -->
+<div class="planet-grid">
+
+  <!-- Planet 1: Kepler Prime (capital, under attack) -->
+  <div class="planet-card alert">
+    <div class="pc-header">
+      <div class="pc-planet-img alert-border" style="background:radial-gradient(circle at 35% 35%,#4a6fa5,#1a2a4a)"></div>
+      <div class="pc-info">
+        <div class="pc-name">Kepler Prime</div>
+        <div class="pc-coords">[1:42:7] · Aride · 12 400 km</div>
+      </div>
+      <div class="pc-tag capital">Capitale</div>
+      <div class="mobile-arrow">›</div>
+    </div>
+    <div class="pc-resources">
+      <div class="pc-res-row">
+        <span class="pc-res-icon minerai">Fe</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-minerai" style="width:72%"></div></div>
+        <span class="pc-res-rate minerai">+1.2k/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon silicium">Si</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-silicium" style="width:55%"></div></div>
+        <span class="pc-res-rate silicium">+840/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon hydrogene">H</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-hydrogene" style="width:30%"></div></div>
+        <span class="pc-res-rate hydrogene">+320/h</span>
+      </div>
+    </div>
+    <div class="pc-status">
+      <div class="pc-badge build">🔨 Mine Si Nv.12 <span class="timer">14:32</span></div>
+      <div class="pc-badge fleet">🚀 2 flottes</div>
+      <div class="pc-badge attack">⚠ Attaque 02:15</div>
+    </div>
+    <div class="pc-nav">
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Bâtiments
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Chantier
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Flottes
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Défenses
+      </a>
+    </div>
+  </div>
+
+  <!-- Planet 2: Nova Dust (building, fleet out) -->
+  <div class="planet-card">
+    <div class="pc-header">
+      <div class="pc-planet-img" style="background:radial-gradient(circle at 35% 35%,#8a6a3a,#3a2a1a);border-color:#fb923c33"></div>
+      <div class="pc-info">
+        <div class="pc-name">Nova Dust</div>
+        <div class="pc-coords">[2:18:3] · Désertique · 8 700 km</div>
+      </div>
+      <div class="pc-tag colony">Colonie</div>
+      <div class="mobile-arrow">›</div>
+    </div>
+    <div class="pc-resources">
+      <div class="pc-res-row">
+        <span class="pc-res-icon minerai">Fe</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-minerai" style="width:88%"></div></div>
+        <span class="pc-res-rate minerai">+1.4k/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon silicium">Si</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-silicium" style="width:40%"></div></div>
+        <span class="pc-res-rate silicium">+620/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon hydrogene">H</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-hydrogene" style="width:15%"></div></div>
+        <span class="pc-res-rate hydrogene">+180/h</span>
+      </div>
+    </div>
+    <div class="pc-status">
+      <div class="pc-badge build">🔨 Hangar Nv.8 <span class="timer">1:04:12</span></div>
+      <div class="pc-badge research">🔬 Recherche <span class="timer">2:31:00</span></div>
+      <div class="pc-badge fleet">🚀 1 flotte</div>
+    </div>
+    <div class="pc-nav">
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Bâtiments
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Chantier
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Flottes
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Défenses
+      </a>
+    </div>
+  </div>
+
+  <!-- Planet 3: Verdania (idle) -->
+  <div class="planet-card">
+    <div class="pc-header">
+      <div class="pc-planet-img" style="background:radial-gradient(circle at 35% 35%,#2a7a4a,#1a3a2a);border-color:#34d39933"></div>
+      <div class="pc-info">
+        <div class="pc-name">Verdania</div>
+        <div class="pc-coords">[1:89:11] · Jungle · 15 200 km</div>
+      </div>
+      <div class="pc-tag colony">Colonie</div>
+      <div class="mobile-arrow">›</div>
+    </div>
+    <div class="pc-resources">
+      <div class="pc-res-row">
+        <span class="pc-res-icon minerai">Fe</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-minerai" style="width:45%"></div></div>
+        <span class="pc-res-rate minerai">+680/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon silicium">Si</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-silicium" style="width:62%"></div></div>
+        <span class="pc-res-rate silicium">+920/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon hydrogene">H</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-hydrogene" style="width:50%"></div></div>
+        <span class="pc-res-rate hydrogene">+390/h</span>
+      </div>
+    </div>
+    <div class="pc-status">
+      <div class="pc-badge idle">✓ Aucune activité</div>
+    </div>
+    <div class="pc-nav">
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Bâtiments
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Chantier
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Flottes
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Défenses
+      </a>
+    </div>
+  </div>
+
+  <!-- Planet 4: Inferno (building) -->
+  <div class="planet-card">
+    <div class="pc-header">
+      <div class="pc-planet-img" style="background:radial-gradient(circle at 35% 35%,#aa3a2a,#3a1a1a);border-color:#ef444433"></div>
+      <div class="pc-info">
+        <div class="pc-name">Inferno IX</div>
+        <div class="pc-coords">[3:55:2] · Volcanique · 6 100 km</div>
+      </div>
+      <div class="pc-tag colony">Colonie</div>
+      <div class="mobile-arrow">›</div>
+    </div>
+    <div class="pc-resources">
+      <div class="pc-res-row">
+        <span class="pc-res-icon minerai">Fe</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-minerai" style="width:95%"></div></div>
+        <span class="pc-res-rate minerai">+520/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon silicium">Si</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-silicium" style="width:20%"></div></div>
+        <span class="pc-res-rate silicium">+220/h</span>
+      </div>
+      <div class="pc-res-row">
+        <span class="pc-res-icon hydrogene">H</span>
+        <div class="pc-res-bar"><div class="pc-res-fill fill-hydrogene" style="width:8%"></div></div>
+        <span class="pc-res-rate hydrogene">+0/h</span>
+      </div>
+    </div>
+    <div class="pc-status">
+      <div class="pc-badge build">🔨 Centrale Nv.5 <span class="timer">32:15</span></div>
+    </div>
+    <div class="pc-nav">
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Bâtiments
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Chantier
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Flottes
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Défenses
+      </a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

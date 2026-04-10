@@ -50,7 +50,7 @@ export class ExploreHandler implements PhasedMissionHandler {
     const explorerCount = explorerShips.reduce((sum, def) => sum + (fleetEvent.ships[def.id] ?? 0), 0);
 
     await ctx.db.update(fleetEvents).set({
-      phase: 'prospecting',
+      phase: 'exploring',
       departureTime: now,
       arrivalTime: scanEnd,
       metadata: { explorerCount, researchLevel },

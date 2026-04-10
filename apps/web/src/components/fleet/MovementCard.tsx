@@ -32,6 +32,7 @@ export const PHASE_STYLE: Record<string, { classes: string; dot: string; pulse?:
   outbound:    { classes: 'text-blue-300 bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-400', pulse: true },
   prospecting: { classes: 'text-amber-300 bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-400', pulse: true },
   mining:      { classes: 'text-amber-200 bg-amber-400/10 border-amber-400/20', dot: 'bg-amber-300', pulse: true },
+  exploring:   { classes: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/20', dot: 'bg-cyan-400', pulse: true },
   return:      { classes: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
 };
 

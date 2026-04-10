@@ -23,6 +23,7 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
     'return':        (id) => fleetService.processReturn(id),
     'prospect-done': (id) => fleetService.processProspectDone(id),
     'mine-done':     (id) => fleetService.processMineDone(id),
+    'explore-done':  (id) => fleetService.processExploreDone(id),
   };
 
   const worker = new Worker(

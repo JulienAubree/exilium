@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutorial Highlight - Mockup</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#070d1a; color:#e2e8f0; font-family:system-ui,-apple-system,sans-serif; min-height:100vh; padding:20px; }
+
+  h2 { font-size:20px; font-weight:700; margin-bottom:4px; }
+  .subtitle { color:#64748b; font-size:13px; margin-bottom:20px; }
+
+  /* Building grid */
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:900px; }
+
+  /* Building card */
+  .card {
+    background:#0d1628;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    overflow:hidden;
+    transition:all 0.3s;
+  }
+  .card-img {
+    height:100px;
+    background:linear-gradient(135deg,#1a2a4a 0%,#0d1628 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  .card-img .icon { font-size:32px; opacity:0.5; }
+  .card-body { padding:12px; }
+  .card-name { font-size:13px; font-weight:600; color:#e2e8f0; }
+  .card-level { font-size:11px; color:#64748b; margin-top:2px; }
+  .card-action { margin-top:8px; }
+  .card-action button {
+    width:100%;
+    padding:6px 12px;
+    border-radius:6px;
+    border:1px solid #334155;
+    background:#1e293b;
+    color:#94a3b8;
+    font-size:11px;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .card-action button:hover { background:#334155; color:#e2e8f0; }
+
+  /* HIGHLIGHTED CARD — tutorial target */
+  .card.highlighted {
+    border-color:#f59e0b88;
+    box-shadow:0 0 20px #f59e0b22, 0 0 40px #f59e0b11;
+    animation:tutorial-pulse 2s ease-in-out infinite;
+  }
+  .card.highlighted .card-img {
+    background:linear-gradient(135deg,#1a2a3a 0%,#1a1a0a 100%);
+  }
+  .card.highlighted .card-action button {
+    background:#f59e0b22;
+    border-color:#f59e0b44;
+    color:#f59e0b;
+  }
+  .card.highlighted .card-action button:hover {
+    background:#f59e0b33;
+  }
+
+  @keyframes tutorial-pulse {
+    0%, 100% { box-shadow:0 0 15px #f59e0b15, 0 0 30px #f59e0b08; border-color:#f59e0b66; }
+    50% { box-shadow:0 0 25px #f59e0b30, 0 0 50px #f59e0b15; border-color:#f59e0baa; }
+  }
+
+  /* Objective badge */
+  .objective-badge {
+    position:absolute;
+    top:8px;
+    right:8px;
+    background:#f59e0b22;
+    border:1px solid #f59e0b66;
+    color:#f59e0b;
+    font-size:9px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:3px 8px;
+    border-radius:5px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .objective-badge svg { width:10px; height:10px; }
+
+  /* Tutorial panel (bottom right) */
+  .tutorial-panel {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    width:320px;
+    background:#0d1628ee;
+    border:1px solid #f59e0b33;
+    border-radius:14px;
+    backdrop-filter:blur(12px);
+    overflow:hidden;
+    box-shadow:0 8px 32px #00000066;
+  }
+  .tp-header {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 14px;
+    border-bottom:1px solid #1e293b;
+  }
+  .tp-chapter {
+    font-size:10px;
+    color:#f59e0b;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    font-weight:600;
+  }
+  .tp-progress {
+    margin-left:auto;
+    font-size:10px;
+    color:#64748b;
+  }
+  .tp-progress-bar {
+    width:60px;
+    height:4px;
+    background:#1e293b;
+    border-radius:2px;
+    overflow:hidden;
+    margin-top:2px;
+  }
+  .tp-progress-fill {
+    height:100%;
+    background:#f59e0b;
+    border-radius:2px;
+  }
+  .tp-body { padding:14px; }
+  .tp-journal {
+    font-size:12px;
+    color:#94a3b8;
+    font-style:italic;
+    line-height:1.5;
+    margin-bottom:12px;
+    padding-left:10px;
+    border-left:2px solid #f59e0b33;
+  }
+  .tp-objective {
+    background:#0a1225;
+    border:1px solid #1e293b;
+    border-radius:8px;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .tp-obj-icon {
+    width:36px;
+    height:36px;
+    border-radius:8px;
+    background:#f59e0b15;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:18px;
+  }
+  .tp-obj-text { flex:1; }
+  .tp-obj-title { font-size:12px; font-weight:600; color:#e2e8f0; }
+  .tp-obj-progress-row { display:flex; align-items:center; gap:8px; margin-top:4px; }
+  .tp-obj-bar {
+    flex:1;
+    height:5px;
+    background:#1e293b;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .tp-obj-bar-fill {
+    height:100%;
+    background:#f59e0b;
+    border-radius:3px;
+    width:0%;
+  }
+  .tp-obj-count { font-size:11px; color:#f59e0b; font-weight:600; }
+  .tp-rewards {
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid #1e293b;
+  }
+  .tp-reward {
+    display:flex;
+    align-items:center;
+    gap:3px;
+    font-size:11px;
+  }
+  .tp-reward .dot { width:8px; height:8px; border-radius:50%; }
+  .tp-link {
+    display:block;
+    text-align:center;
+    margin-top:10px;
+    padding:7px;
+    border-radius:6px;
+    background:#f59e0b15;
+    border:1px solid #f59e0b33;
+    color:#f59e0b;
+    font-size:11px;
+    font-weight:500;
+    text-decoration:none;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .tp-link:hover { background:#f59e0b25; }
+
+  .page-label {
+    display:inline-block;
+    background:#1e293b;
+    color:#64748b;
+    font-size:10px;
+    padding:3px 10px;
+    border-radius:4px;
+    margin-bottom:12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-label">PAGE BATIMENTS</div>
+<h2>Bâtiments</h2>
+<p class="subtitle">Construisez et améliorez les infrastructures de votre colonie</p>
+
+<div class="grid">
+  <!-- HIGHLIGHTED: Mine de minerai -->
+  <div class="card highlighted">
+    <div class="card-img">
+      <div class="icon">⛏</div>
+      <div class="objective-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+        Objectif
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-name">Mine de minerai</div>
+      <div class="card-level">Niveau 0</div>
+      <div class="card-action">
+        <button>Construire — 60 Fe, 15 Si</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Normal cards -->
+  <div class="card">
+    <div class="card-img"><div class="icon">💎</div></div>
+    <div class="card-body">
+      <div class="card-name">Mine de silicium</div>
+      <div class="card-level">Niveau 0</div>
+      <div class="card-action"><button>Construire — 75 Fe, 30 Si</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-img"><div class="icon">☀</div></div>
+    <div class="card-body">
+      <div class="card-name">Centrale solaire</div>
+      <div class="card-level">Niveau 0</div>
+      <div class="card-action"><button>Construire — 75 Fe, 30 Si</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-img"><div class="icon">📦</div></div>
+    <div class="card-body">
+      <div class="card-name">Hangar minerai</div>
+      <div class="card-level">Niveau 0</div>
+      <div class="card-action"><button>Construire — 1k Fe</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-img"><div class="icon">📦</div></div>
+    <div class="card-body">
+      <div class="card-name">Hangar silicium</div>
+      <div class="card-level">Niveau 0</div>
+      <div class="card-action"><button>Construire — 1k Si</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-img"><div class="icon">🤖</div></div>
+    <div class="card-body">
+      <div class="card-name">Usine de robots</div>
+      <div class="card-level">Verrouillé</div>
+      <div class="card-action"><button disabled style="opacity:0.4;cursor:not-allowed">Prérequis manquants</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tutorial panel -->
+<div class="tutorial-panel">
+  <div class="tp-header">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+    <div>
+      <div class="tp-chapter">Chapitre 1 : L'atterrissage</div>
+    </div>
+    <div class="tp-progress">
+      <div>0 / 5</div>
+      <div class="tp-progress-bar"><div class="tp-progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="tp-body">
+    <div class="tp-journal">
+      "Jour 1 — L'impact a été violent. La coque est fissurée de partout mais les capteurs détectent du minerai brut à quelques centaines de mètres. Il faut commencer à extraire si on veut réparer quoi que ce soit."
+    </div>
+    <div class="tp-objective">
+      <div class="tp-obj-icon">⛏</div>
+      <div class="tp-obj-text">
+        <div class="tp-obj-title">Mine de minerai</div>
+        <div class="tp-obj-progress-row">
+          <div class="tp-obj-bar"><div class="tp-obj-bar-fill" style="width:0%"></div></div>
+          <div class="tp-obj-count">0 / 1</div>
+        </div>
+      </div>
+    </div>
+    <div class="tp-rewards">
+      <div class="tp-reward"><div class="dot" style="background:#fb923c"></div> 150</div>
+    </div>
+    <a class="tp-link">Aller aux Bâtiments →</a>
+  </div>
+</div>
+
+</body>
+</html>

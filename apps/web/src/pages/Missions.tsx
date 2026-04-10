@@ -64,6 +64,7 @@ export default function Missions() {
     outbound: 'En vol',
     prospecting: 'Prospection',
     mining: 'Extraction',
+    exploring: 'Exploration',
     return: 'Retour',
   };
 
