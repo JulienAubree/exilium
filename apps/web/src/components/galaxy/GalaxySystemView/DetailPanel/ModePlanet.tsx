@@ -15,6 +15,7 @@ import type { ReactElement } from 'react';
 import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
 import { BiomeChips } from './BiomeChips';
+import { PlanetDot } from '../../PlanetDot';
 
 type PlanetLikeView = Extract<
   SlotView,
@@ -77,10 +78,21 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
     const displayName = view.username ?? 'Joueur';
     return (
       <div>
-        <h3 className="text-base font-semibold">{view.planetName}</h3>
-        <p className="text-xs text-muted-foreground">
-          Type {typeName} · Position {view.position}
-        </p>
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <PlanetDot
+              planetClassId={view.planetClassId}
+              size={80}
+              aura={view.relation}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold">{view.planetName}</h3>
+            <p className="text-xs text-muted-foreground">
+              Type {typeName} · Position {view.position}
+            </p>
+          </div>
+        </div>
 
         <div
           className={`flex items-center gap-2 mt-3 px-3 py-2 rounded-md ${RELATION_BANNER[view.relation]}`}
@@ -172,8 +184,15 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
     const typeName = planetTypeName(view.planetClassId, ctx);
     return (
       <div>
-        <h3 className="text-base font-semibold">Position {view.position}</h3>
-        <p className="text-xs text-muted-foreground">Type {typeName} — vide</p>
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <PlanetDot planetClassId={view.planetClassId} size={80} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold">Position {view.position}</h3>
+            <p className="text-xs text-muted-foreground">Type {typeName} — vide</p>
+          </div>
+        </div>
 
         <div className="mt-3">
           <SectionLabel>Biomes</SectionLabel>
@@ -213,8 +232,15 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
   // view.kind === 'undiscovered'
   return (
     <div>
-      <h3 className="text-base font-semibold">Position {view.position}</h3>
-      <p className="text-xs text-muted-foreground italic">Inconnu</p>
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0">
+          <PlanetDot planetClassId={null} size={80} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-semibold">Position {view.position}</h3>
+          <p className="text-xs text-muted-foreground italic">Inconnu</p>
+        </div>
+      </div>
       <p className="text-xs text-muted-foreground italic mt-2">
         Aucune donnée disponible. Envoyer un explorateur pour révéler la
         position.

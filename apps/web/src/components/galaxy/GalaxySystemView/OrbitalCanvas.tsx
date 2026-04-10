@@ -17,8 +17,9 @@
  */
 
 import { useMemo, type ReactElement } from 'react';
-import { BELT_DEBRIS_COLOR } from '../planetPalette';
+import { BELT_DEBRIS_COLOR, type PlanetAura } from '../planetPalette';
 import { OrbitalDebrisRing } from '../OrbitalDebrisRing';
+import { PlanetDot } from '../PlanetDot';
 import { hash01, orbitRadius, polarToCartesian, slotAngle } from './geometry';
 import type { SlotView } from './slotView';
 import { SlotMarker } from './SlotMarker';
@@ -59,14 +60,16 @@ interface PlacedSlot {
 interface TooltipDescriptor {
   tooltipX: number;
   tooltipY: number;
+  planetClassId: string | null;
+  aura: PlanetAura | null;
   line1: string;
   line1Class: string;
   line2?: string;
   line2Class?: string;
 }
 
-const TOOLTIP_WIDTH = 180;
-const TOOLTIP_HEIGHT = 48;
+const TOOLTIP_WIDTH = 200;
+const TOOLTIP_HEIGHT = 46;
 
 export function OrbitalCanvas({
   views,
@@ -120,11 +123,15 @@ export function OrbitalCanvas({
     let line1Class: string;
     let line2: string | undefined;
     let line2Class: string | undefined;
+    let planetClassId: string | null;
+    let aura: PlanetAura | null;
 
     switch (view.kind) {
       case 'planet': {
         line1 = view.planetName;
         line1Class = 'text-foreground';
+        planetClassId = view.planetClassId;
+        aura = view.relation;
         const username = view.username ?? 'Joueur';
         const tagPrefix = view.allianceTag ? `[${view.allianceTag}] ` : '';
         if (view.relation === 'mine') {
@@ -140,13 +147,21 @@ export function OrbitalCanvas({
         break;
       }
       case 'empty-discovered': {
-        line1 = `Position ${view.position} · Vide`;
+        line1 = `Position ${view.position}`;
         line1Class = 'text-muted-foreground';
+        line2 = 'Vide';
+        line2Class = 'text-muted-foreground';
+        planetClassId = view.planetClassId;
+        aura = null;
         break;
       }
       case 'undiscovered': {
-        line1 = `Position ${view.position} · Inconnu`;
+        line1 = `Position ${view.position}`;
         line1Class = 'text-muted-foreground italic';
+        line2 = 'Inconnu';
+        line2Class = 'text-muted-foreground italic';
+        planetClassId = null;
+        aura = null;
         break;
       }
       case 'belt':
@@ -162,7 +177,16 @@ export function OrbitalCanvas({
       tooltipY = cy + 14;
     }
 
-    return { tooltipX, tooltipY, line1, line1Class, line2, line2Class };
+    return {
+      tooltipX,
+      tooltipY,
+      planetClassId,
+      aura,
+      line1,
+      line1Class,
+      line2,
+      line2Class,
+    };
   }, [hoveredPosition, placedSlots]);
 
   // Accessibility summary.
@@ -316,15 +340,28 @@ export function OrbitalCanvas({
           height={TOOLTIP_HEIGHT}
           style={{ pointerEvents: 'none' }}
         >
-          <div className="w-full h-full rounded-md bg-black/85 border border-cyan-500/30 px-2 py-1 text-[10px] leading-tight backdrop-blur-sm">
-            <div className={`font-semibold truncate ${tooltip.line1Class}`}>
-              {tooltip.line1}
+          <div className="w-full h-full rounded-md bg-black/85 border border-cyan-500/30 px-2 py-1 flex items-center gap-2 backdrop-blur-sm">
+            <div className="flex-shrink-0">
+              <PlanetDot
+                planetClassId={tooltip.planetClassId}
+                size={28}
+                aura={tooltip.aura}
+              />
             </div>
-            {tooltip.line2 && (
-              <div className={`truncate ${tooltip.line2Class ?? ''}`}>
-                {tooltip.line2}
+            <div className="min-w-0 flex-1">
+              <div
+                className={`text-[10px] leading-tight font-semibold truncate ${tooltip.line1Class}`}
+              >
+                {tooltip.line1}
               </div>
-            )}
+              {tooltip.line2 && (
+                <div
+                  className={`text-[10px] leading-tight truncate ${tooltip.line2Class ?? ''}`}
+                >
+                  {tooltip.line2}
+                </div>
+              )}
+            </div>
           </div>
         </foreignObject>
       )}

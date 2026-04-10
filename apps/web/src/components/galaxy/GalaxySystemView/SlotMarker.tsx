@@ -23,8 +23,6 @@ const SLOT_RADII = {
   PLANET: 4.5,
   HALO: 14,
   HALO_HOVER: 15.4,
-  EMPTY: 5,
-  EMPTY_HOVER: 5.5,
   UNKNOWN: 4,
   UNKNOWN_HOVER: 4.4,
   SELECTION: 14,
@@ -138,18 +136,30 @@ export function SlotMarker({
       </>
     );
   } else if (view.kind === 'empty-discovered') {
-    const typeColor =
-      (TYPE_COLORS[view.planetClassId] ?? TYPE_COLORS.unknown).from;
+    const colors = TYPE_COLORS[view.planetClassId] ?? TYPE_COLORS.unknown;
+
+    defs = (
+      <defs>
+        <radialGradient id={planetGradId} cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stopColor={colors.accent} />
+          <stop offset="50%" stopColor={colors.from} />
+          <stop offset="100%" stopColor={colors.to} />
+        </radialGradient>
+      </defs>
+    );
+
     body = (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={isHovered ? SLOT_RADII.EMPTY_HOVER : SLOT_RADII.EMPTY}
-        fill="none"
-        stroke={typeColor}
-        strokeWidth={0.8}
-        strokeDasharray="1.5 1.5"
-      />
+      <>
+        <circle cx={cx} cy={cy} r={SLOT_RADII.PLANET} fill={`url(#${planetGradId})`} />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={SLOT_RADII.PLANET}
+          fill="none"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth={0.4}
+        />
+      </>
     );
   } else {
     // undiscovered
