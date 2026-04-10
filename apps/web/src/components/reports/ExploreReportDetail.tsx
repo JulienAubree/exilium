@@ -45,7 +45,7 @@ export function ExploreReportDetail({ result }: ExploreReportDetailProps) {
   const discovered = result.discovered ?? [];
   const discoveredCount = result.discoveredCount ?? discovered.length;
   const remaining = result.remaining ?? 0;
-  const total = discoveredCount + remaining;
+  const isComplete = remaining === 0;
 
   return (
     <div className="space-y-4">
@@ -59,18 +59,26 @@ export function ExploreReportDetail({ result }: ExploreReportDetailProps) {
             <div className="text-2xl font-bold text-cyan-400">{discoveredCount}</div>
             <div className="text-[11px] text-muted-foreground">Biome{discoveredCount > 1 ? 's' : ''} découvert{discoveredCount > 1 ? 's' : ''}</div>
           </div>
-          {total > 0 && (
-            <div>
-              <div className="text-2xl font-bold text-muted-foreground">{remaining}</div>
-              <div className="text-[11px] text-muted-foreground">Biome{remaining > 1 ? 's' : ''} restant{remaining > 1 ? 's' : ''}</div>
-            </div>
+        </div>
+
+        {/* Qualitative status message */}
+        <div className="mt-3">
+          {discoveredCount === 0 && !isComplete && (
+            <p className="text-xs text-amber-400 italic">
+              Aucun biome détecté cette fois. Renforcez votre flotte ou améliorez la recherche Exploration planétaire pour augmenter vos chances.
+            </p>
+          )}
+          {discoveredCount > 0 && !isComplete && (
+            <p className="text-xs text-cyan-400 italic">
+              D'autres biomes restent à découvrir sur cette planète. Une nouvelle mission pourrait révéler de nouveaux secrets.
+            </p>
+          )}
+          {isComplete && (
+            <p className="text-xs text-emerald-400 italic">
+              L'exploration de cette planète semble complète. Tous les biomes ont été cartographiés.
+            </p>
           )}
         </div>
-        {discoveredCount === 0 && (
-          <p className="text-xs text-muted-foreground mt-3 italic">
-            Aucun biome détecté lors de cette exploration. Renforcez votre flotte ou améliorez la recherche Exploration planétaire pour augmenter vos chances.
-          </p>
-        )}
       </div>
 
       {/* Biomes discovered */}
