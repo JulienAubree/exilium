@@ -10,17 +10,17 @@ import { AsteroidBelt } from '@/components/galaxy/AsteroidBelt';
 import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
 
-interface Props {
+interface ModeBeltProps {
   view: Extract<SlotView, { kind: 'belt' }>;
-  ctx: DetailPanelContext;
+  ctx: Pick<DetailPanelContext, 'beltMissions'>;
   actions: Pick<DetailPanelActions, 'onMine'>;
 }
 
 const BTN_ORANGE =
   'inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs border transition-colors bg-orange-500/15 text-orange-300 border-orange-500/30 hover:bg-orange-500/25';
 
-export function ModeBelt({ view, ctx, actions }: Props): ReactElement {
-  const mission = ctx.beltMissions.get(view.position);
+export function ModeBelt({ view, ctx, actions }: ModeBeltProps): ReactElement {
+  const mission = ctx.beltMissions[view.position];
 
   return (
     <div>

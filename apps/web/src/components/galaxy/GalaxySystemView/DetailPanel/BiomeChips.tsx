@@ -14,6 +14,9 @@ interface Props {
   biomes: BiomeView[];
 }
 
+// TODO(task-6): consolidate with Galaxy.tsx — these duplicate the legacy maps
+// at apps/web/src/pages/Galaxy.tsx (lines 14-38). When Task 6 rewrites Galaxy.tsx,
+// extract both into a shared module (e.g., apps/web/src/components/galaxy/biomeConstants.ts).
 const RARITY_COLORS: Record<string, string> = {
   common: '#9ca3af',
   uncommon: '#22c55e',
@@ -22,6 +25,9 @@ const RARITY_COLORS: Record<string, string> = {
   legendary: '#eab308',
 };
 
+// TODO(task-6): consolidate with Galaxy.tsx — these duplicate the legacy maps
+// at apps/web/src/pages/Galaxy.tsx (lines 14-38). When Task 6 rewrites Galaxy.tsx,
+// extract both into a shared module (e.g., apps/web/src/components/galaxy/biomeConstants.ts).
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',

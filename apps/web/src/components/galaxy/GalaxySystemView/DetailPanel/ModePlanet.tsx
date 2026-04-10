@@ -74,6 +74,7 @@ function SectionLabel({ children }: { children: string }): ReactElement {
 export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
   if (view.kind === 'planet') {
     const typeName = planetTypeName(view.planetClassId, ctx);
+    const displayName = view.username ?? 'Joueur';
     return (
       <div>
         <h3 className="text-base font-semibold">{view.planetName}</h3>
@@ -86,7 +87,7 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
         >
           <div className="flex-1 min-w-0">
             <div className="text-sm truncate">
-              {view.username ?? 'Joueur'}
+              {displayName}
               {view.allianceTag && (
                 <span className="text-xs text-muted-foreground ml-1">
                   [{view.allianceTag}]
@@ -132,9 +133,7 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
             <button
               type="button"
               className={BTN_NEUTRAL}
-              onClick={() =>
-                actions.onMessage(view.userId, view.username ?? 'Joueur')
-              }
+              onClick={() => actions.onMessage(view.userId, displayName)}
             >
               Message
             </button>
@@ -158,9 +157,7 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
               <button
                 type="button"
                 className={BTN_NEUTRAL}
-                onClick={() =>
-                  actions.onMessage(view.userId, view.username ?? 'Joueur')
-                }
+                onClick={() => actions.onMessage(view.userId, displayName)}
               >
                 Message
               </button>

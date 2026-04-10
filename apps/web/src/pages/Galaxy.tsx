@@ -11,6 +11,8 @@ import { AsteroidBelt } from '@/components/galaxy/AsteroidBelt';
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
 
+// TODO(task-6): these are duplicated in apps/web/src/components/galaxy/GalaxySystemView/DetailPanel/BiomeChips.tsx
+// Will be consolidated when this file is refactored.
 const RARITY_COLORS: Record<string, string> = {
   common: '#9ca3af',
   uncommon: '#22c55e',

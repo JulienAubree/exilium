@@ -21,12 +21,10 @@ export interface DetailPanelContext {
   galaxy: number;
   system: number;
   planetTypes: PlanetTypeMeta[];
-  currentUserId: string | null;
-  myAllianceId: string | null;
   hasColonizer: boolean;
   hasExplorer: boolean;
   /** Mining mission keyed by belt position. */
-  beltMissions: Map<number, { id: string }>;
+  beltMissions: Record<number, { id: string }>;
   myCapitalPosition: number | null;
 }
 
