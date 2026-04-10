@@ -225,20 +225,13 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
               Les biomes de cette position n&apos;ont pas encore été révélés.
               Envoie un explorateur pour découvrir ses caractéristiques.
             </p>
-            {view.totalBiomeCount > 0 && (
-              <p className="text-xs text-cyan-300/80 mt-1.5">
-                {view.totalBiomeCount} biome{view.totalBiomeCount > 1 ? 's' : ''}{' '}
-                à découvrir
-              </p>
-            )}
           </div>
         ) : view.undiscoveredCount > 0 ? (
           <div className="mt-3">
             <SectionLabel>Biomes</SectionLabel>
             <BiomeChips biomes={view.biomes} />
             <p className="text-xs text-amber-400/80 mt-2">
-              {view.undiscoveredCount} biome{view.undiscoveredCount > 1 ? 's' : ''}{' '}
-              encore à découvrir
+              Exploration incomplète
             </p>
           </div>
         ) : (
