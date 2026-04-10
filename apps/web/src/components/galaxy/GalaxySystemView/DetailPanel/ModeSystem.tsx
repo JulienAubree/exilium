@@ -9,6 +9,7 @@
 import type { ReactElement } from 'react';
 import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
+import { AURA_COLORS, BELT_DEBRIS_COLOR } from '../../planetPalette';
 
 interface Props {
   views: SlotView[];
@@ -87,12 +88,12 @@ export function ModeSystem({ views, ctx, actions }: Props): ReactElement {
           Légende
         </summary>
         <div className="mt-2 pl-2">
-          <LegendRow color="#22d3ee" label="Mes planètes" />
-          <LegendRow color="#3b82f6" label="Alliées" />
-          <LegendRow color="#ef4444" label="Hostiles" />
+          <LegendRow color={AURA_COLORS.mine} label="Mes planètes" />
+          <LegendRow color={AURA_COLORS.ally} label="Alliées" />
+          <LegendRow color={AURA_COLORS.enemy} label="Hostiles" />
           <LegendRow color="#6b7280" label="Vide (découverte)" />
           <LegendRow color="#374151" label="Inconnu" />
-          <LegendRow color="#f97316" label="Ceinture d'astéroïdes" />
+          <LegendRow color={BELT_DEBRIS_COLOR} label="Ceinture d'astéroïdes" />
         </div>
       </details>
 

@@ -196,7 +196,7 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
               Coloniser
             </button>
           )}
-          {ctx.hasExplorer && (
+          {ctx.hasExplorer && view.undiscoveredCount > 0 && (
             <button
               type="button"
               className={BTN_CYAN}

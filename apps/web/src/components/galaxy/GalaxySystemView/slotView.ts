@@ -101,11 +101,22 @@ export function toSlotView(
   }
 
   // Otherwise: PlanetSlot
-  const userId = typeof rawSlot.userId === 'string' ? rawSlot.userId : null;
+  const planetId =
+    typeof rawSlot.planetId === 'string' && rawSlot.planetId.length > 0
+      ? rawSlot.planetId
+      : null;
+  const userId =
+    typeof rawSlot.userId === 'string' && rawSlot.userId.length > 0
+      ? rawSlot.userId
+      : null;
+  if (!planetId || !userId) {
+    return { kind: 'undiscovered', position: slotPosition };
+  }
+
   const allianceId = typeof rawSlot.allianceId === 'string' ? rawSlot.allianceId : null;
 
   let relation: Relation = 'enemy';
-  if (userId && ctx.currentUserId && userId === ctx.currentUserId) {
+  if (ctx.currentUserId && userId === ctx.currentUserId) {
     relation = 'mine';
   } else if (allianceId && ctx.myAllianceId && allianceId === ctx.myAllianceId) {
     relation = 'ally';
@@ -122,12 +133,12 @@ export function toSlotView(
   return {
     kind: 'planet',
     position: slotPosition,
-    planetId: typeof rawSlot.planetId === 'string' ? rawSlot.planetId : '',
+    planetId,
     planetName: typeof rawSlot.planetName === 'string' ? rawSlot.planetName : '',
     planetClassId:
       typeof rawSlot.planetClassId === 'string' ? rawSlot.planetClassId : null,
     relation,
-    userId: userId ?? '',
+    userId,
     username: typeof rawSlot.username === 'string' ? rawSlot.username : null,
     allianceId,
     allianceTag: typeof rawSlot.allianceTag === 'string' ? rawSlot.allianceTag : null,

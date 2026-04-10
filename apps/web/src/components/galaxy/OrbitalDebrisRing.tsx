@@ -10,6 +10,7 @@
  */
 
 import { hash01 } from './GalaxySystemView/geometry';
+import { BELT_DEBRIS_COLOR } from './planetPalette';
 
 export interface OrbitalDebrisRingProps {
   cx: number;
@@ -25,7 +26,7 @@ export function OrbitalDebrisRing({
   cy,
   radius,
   count = 22,
-  color = '#fb923c',
+  color = BELT_DEBRIS_COLOR,
   seed = 1,
 }: OrbitalDebrisRingProps) {
   const dots = [];
