@@ -243,13 +243,6 @@ export function OrbitalCanvas({
     };
   }, [hoveredPosition, placedSlots, zoom, panCenter]);
 
-  const dragStateRef = useRef<{
-    startClientX: number;
-    startClientY: number;
-    startCenterX: number;
-    startCenterY: number;
-    moved: boolean;
-  } | null>(null);
   const swallowNextClickRef = useRef(false);
 
   function cursorToSvg(
@@ -298,46 +291,48 @@ export function OrbitalCanvas({
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     if (e.button !== 0) return;
-    dragStateRef.current = {
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startCenterX: panCenter.x,
-      startCenterY: panCenter.y,
-      moved: false,
-    };
-    (e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);
-  }
 
-  function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    const drag = dragStateRef.current;
-    if (!drag) return;
-    const dx = e.clientX - drag.startClientX;
-    const dy = e.clientY - drag.startClientY;
-    if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-    drag.moved = true;
     const svg = svgRef.current;
     if (!svg) return;
+
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    const startCenterX = panCenter.x;
+    const startCenterY = panCenter.y;
+    let moved = false;
+
+    // Cache viewBox-per-pixel once per drag so we don't re-measure on every move.
     const rect = svg.getBoundingClientRect();
     const minSide = Math.min(rect.width, rect.height);
-    if (minSide <= 0) return;
-    const viewPerPixel = CANVAS_SIZE / zoom / minSide;
-    setPanCenter({
-      x: drag.startCenterX - dx * viewPerPixel,
-      y: drag.startCenterY - dy * viewPerPixel,
-    });
-  }
+    const viewPerPixel = minSide > 0 ? CANVAS_SIZE / zoom / minSide : 0;
 
-  function handlePointerUp(e: React.PointerEvent<SVGSVGElement>) {
-    const drag = dragStateRef.current;
-    dragStateRef.current = null;
-    try {
-      (e.currentTarget as SVGSVGElement).releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
-    if (drag?.moved) {
-      swallowNextClickRef.current = true;
-    }
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startClientX;
+      const dy = ev.clientY - startClientY;
+      if (!moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      moved = true;
+      if (viewPerPixel === 0) return;
+      setPanCenter({
+        x: startCenterX - dx * viewPerPixel,
+        y: startCenterY - dy * viewPerPixel,
+      });
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      if (moved) {
+        // A click event will still fire afterwards on the common ancestor of
+        // mousedown + mouseup (usually the SVG, but could be a child if the
+        // pointer happened to return to it). Swallow it via the capture phase.
+        swallowNextClickRef.current = true;
+      }
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   }
 
   function handleClickCapture(e: React.MouseEvent<SVGSVGElement>) {
@@ -367,9 +362,6 @@ export function OrbitalCanvas({
       role="img"
       aria-label={ariaLabel}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
       onClickCapture={handleClickCapture}
       onDoubleClick={handleReset}
       style={{
