@@ -16,7 +16,7 @@
  * file intentionally stays small (no per-slot gradient defs here).
  */
 
-import { useMemo, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { BELT_DEBRIS_COLOR, type PlanetAura } from '../planetPalette';
 import { OrbitalDebrisRing } from '../OrbitalDebrisRing';
 import { PlanetVisual } from '../PlanetVisual';
@@ -30,6 +30,9 @@ const STAR_OUTER_RADIUS = 26;
 const STAR_CORE_RADIUS = 9;
 const STARFIELD_COUNT = 60;
 const TOTAL_POSITIONS = 16;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4;
+const DRAG_THRESHOLD_PX = 5;
 
 export interface OrbitalCanvasProps {
   views: SlotView[];
@@ -207,15 +210,151 @@ export function OrbitalCanvas({
     }
   };
 
+  // ── Zoom & pan state ─────────────────────────────────────────────────────
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [panCenter, setPanCenter] = useState<{ x: number; y: number }>({
+    x: CENTER,
+    y: CENTER,
+  });
+
+  const viewBoxSize = CANVAS_SIZE / zoom;
+  const viewBoxX = panCenter.x - viewBoxSize / 2;
+  const viewBoxY = panCenter.y - viewBoxSize / 2;
+
+  const dragStateRef = useRef<{
+    startClientX: number;
+    startClientY: number;
+    startCenterX: number;
+    startCenterY: number;
+    moved: boolean;
+  } | null>(null);
+  const swallowNextClickRef = useRef(false);
+
+  function cursorToSvg(
+    clientX: number,
+    clientY: number,
+  ): { x: number; y: number } | null {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const svgP = pt.matrixTransform(ctm.inverse());
+    return { x: svgP.x, y: svgP.y };
+  }
+
+  // Attach wheel listener as a native non-passive listener so we can
+  // preventDefault() (React's synthetic wheel handler is passive by default
+  // in React 17+, which logs a warning when calling preventDefault).
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const cursor = cursorToSvg(e.clientX, e.clientY);
+      if (!cursor) return;
+      setZoom((prevZoom) => {
+        const factor = e.deltaY > 0 ? 1 / 1.15 : 1.15;
+        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prevZoom * factor));
+        if (nextZoom === prevZoom) return prevZoom;
+        setPanCenter((prevCenter) => ({
+          x: cursor.x + (prevCenter.x - cursor.x) * (prevZoom / nextZoom),
+          y: cursor.y + (prevCenter.y - cursor.y) * (prevZoom / nextZoom),
+        }));
+        return nextZoom;
+      });
+    };
+
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      svg.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
+    if (e.button !== 0) return;
+    dragStateRef.current = {
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startCenterX: panCenter.x,
+      startCenterY: panCenter.y,
+      moved: false,
+    };
+    (e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    const drag = dragStateRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startClientX;
+    const dy = e.clientY - drag.startClientY;
+    if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+    drag.moved = true;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const minSide = Math.min(rect.width, rect.height);
+    if (minSide <= 0) return;
+    const viewPerPixel = CANVAS_SIZE / zoom / minSide;
+    setPanCenter({
+      x: drag.startCenterX - dx * viewPerPixel,
+      y: drag.startCenterY - dy * viewPerPixel,
+    });
+  }
+
+  function handlePointerUp(e: React.PointerEvent<SVGSVGElement>) {
+    const drag = dragStateRef.current;
+    dragStateRef.current = null;
+    try {
+      (e.currentTarget as SVGSVGElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    if (drag?.moved) {
+      swallowNextClickRef.current = true;
+    }
+  }
+
+  function handleClickCapture(e: React.MouseEvent<SVGSVGElement>) {
+    if (swallowNextClickRef.current) {
+      swallowNextClickRef.current = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }
+
+  function handleReset() {
+    setZoom(1);
+    setPanCenter({ x: CENTER, y: CENTER });
+  }
+
+  function zoomBy(factor: number) {
+    setZoom((prev) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev * factor)));
+  }
+
   return (
+    <div className="relative w-full h-full">
     <svg
-      viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}
+      ref={svgRef}
+      viewBox={`${viewBoxX} ${viewBoxY} ${viewBoxSize} ${viewBoxSize}`}
       preserveAspectRatio="xMidYMid meet"
       className="w-full h-full block"
       role="img"
       aria-label={ariaLabel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onClickCapture={handleClickCapture}
+      onDoubleClick={handleReset}
       style={{
         background: 'radial-gradient(ellipse at 30% 20%, #1a1535 0%, #05070f 75%)',
+        cursor: zoom > 1 ? 'grab' : 'default',
+        touchAction: 'none',
       }}
     >
       <defs>
@@ -372,5 +511,35 @@ export function OrbitalCanvas({
         </foreignObject>
       )}
     </svg>
+      <div className="absolute top-2 right-2 flex flex-col gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => zoomBy(1.2)}
+          className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-sm"
+          aria-label="Zoomer"
+          title="Zoomer"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={() => zoomBy(1 / 1.2)}
+          className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-sm"
+          aria-label="Dézoomer"
+          title="Dézoomer"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-[10px]"
+          aria-label="Réinitialiser la vue"
+          title="Réinitialiser"
+        >
+          ⟲
+        </button>
+      </div>
+    </div>
   );
 }
