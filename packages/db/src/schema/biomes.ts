@@ -29,3 +29,12 @@ export const discoveredBiomes = pgTable('discovered_biomes', {
 }, (t) => [
   primaryKey({ columns: [t.userId, t.galaxy, t.system, t.position, t.biomeId] }),
 ]);
+
+export const discoveredPositions = pgTable('discovered_positions', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  galaxy: smallint('galaxy').notNull(),
+  system: smallint('system').notNull(),
+  position: smallint('position').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.galaxy, t.system, t.position] }),
+]);
