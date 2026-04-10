@@ -23,8 +23,8 @@ const SLOT_RADII = {
   PLANET: 4.5,
   HALO: 14,
   HALO_HOVER: 15.4,
-  UNKNOWN: 4,
-  UNKNOWN_HOVER: 4.4,
+  UNKNOWN: 4.5,
+  UNKNOWN_HOVER: 5.0,
   SELECTION: 14,
   TICK_INNER: 11,
   TICK_OUTER: 17,
@@ -165,9 +165,10 @@ export function SlotMarker({
     // undiscovered
     defs = (
       <defs>
-        <radialGradient id={undiscoveredGradId} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#475569" />
-          <stop offset="100%" stopColor="#0f172a" />
+        <radialGradient id={undiscoveredGradId} cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#cbd5e1" />
+          <stop offset="60%" stopColor="#94a3b8" />
+          <stop offset="100%" stopColor="#475569" />
         </radialGradient>
       </defs>
     );
@@ -177,7 +178,6 @@ export function SlotMarker({
         cy={cy}
         r={isHovered ? SLOT_RADII.UNKNOWN_HOVER : SLOT_RADII.UNKNOWN}
         fill={`url(#${undiscoveredGradId})`}
-        opacity={0.55}
       />
     );
   }

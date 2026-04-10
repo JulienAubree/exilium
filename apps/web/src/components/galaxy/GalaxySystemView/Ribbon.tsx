@@ -13,6 +13,12 @@ import { PlanetDot } from '../PlanetDot';
 import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
 
+function hasDebris(view: SlotView): boolean {
+  if (view.kind !== 'planet') return false;
+  const d = view.debris;
+  return !!d && (d.minerai > 0 || d.silicium > 0);
+}
+
 export interface RibbonProps {
   views: SlotView[];
   selectedPosition: number | null;
@@ -121,6 +127,15 @@ export function Ribbon({
               <div className={`min-w-0 flex-1 text-xs truncate ${textClasses}`}>
                 {displayName}
               </div>
+              {hasDebris(view) && (
+                <span
+                  className="flex-shrink-0 text-[9px] font-mono font-bold text-orange-400 bg-orange-500/15 border border-orange-500/30 rounded px-1 leading-tight"
+                  title="Champ de débris à recycler"
+                  aria-label="Champ de débris présent"
+                >
+                  DF
+                </span>
+              )}
             </li>
           );
         })}

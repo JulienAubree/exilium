@@ -23,7 +23,7 @@ export const TYPE_COLORS: Record<string, PlanetTypeColors> = {
   glacial:   { from: '#93c5fd', to: '#e0f2fe', accent: '#ffffff' },
   gaseous:   { from: '#a855f7', to: '#ec4899', accent: '#e879f9' },
   homeworld: { from: '#22d3ee', to: '#10b981', accent: '#a7f3d0' },
-  unknown:   { from: '#52525b', to: '#27272a', accent: '#a1a1aa' },
+  unknown:   { from: '#94a3b8', to: '#475569', accent: '#e2e8f0' },
 };
 
 export type PlanetAura = 'mine' | 'ally' | 'enemy';
