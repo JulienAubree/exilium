@@ -10,11 +10,12 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MIGRATIONS_DIR="$PROJECT_DIR/packages/db/drizzle"
 
-if [ -f "$PROJECT_DIR/.env" ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$PROJECT_DIR/.env"
-  set +a
+if [ -z "$DATABASE_URL" ] && [ -f "$PROJECT_DIR/.env" ]; then
+  DATABASE_URL=$(grep -E '^DATABASE_URL=' "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2-)
+  DATABASE_URL="${DATABASE_URL%\"}"
+  DATABASE_URL="${DATABASE_URL#\"}"
+  DATABASE_URL="${DATABASE_URL%\'}"
+  DATABASE_URL="${DATABASE_URL#\'}"
 fi
 
 if [ -z "$DATABASE_URL" ]; then

@@ -9,12 +9,15 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MIGRATIONS_DIR="$PROJECT_DIR/packages/db/drizzle"
 
-# Source .env to get DATABASE_URL or build it from PG vars
-if [ -f "$PROJECT_DIR/.env" ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$PROJECT_DIR/.env"
-  set +a
+# Extract DATABASE_URL from .env without sourcing it
+# (sourcing .env files breaks on values containing apostrophes/spaces)
+if [ -z "$DATABASE_URL" ] && [ -f "$PROJECT_DIR/.env" ]; then
+  DATABASE_URL=$(grep -E '^DATABASE_URL=' "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2-)
+  # Strip surrounding quotes if any
+  DATABASE_URL="${DATABASE_URL%\"}"
+  DATABASE_URL="${DATABASE_URL#\"}"
+  DATABASE_URL="${DATABASE_URL%\'}"
+  DATABASE_URL="${DATABASE_URL#\'}"
 fi
 
 if [ -z "$DATABASE_URL" ]; then
