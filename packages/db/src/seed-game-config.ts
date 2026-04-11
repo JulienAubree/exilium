@@ -432,6 +432,9 @@ const UI_LABELS = [
   { key: 'event.fleet-returned', label: 'Flotte de retour' },
   { key: 'event.pve-mission-done', label: 'Mission PvE' },
   { key: 'event.tutorial-quest-done', label: 'Tutoriel' },
+  { key: 'event.friend-request', label: 'Demande d\'ami' },
+  { key: 'event.friend-accepted', label: 'Ami accepté' },
+  { key: 'event.friend-declined', label: 'Ami refusé' },
   // Spy visibility
   { key: 'spy_visibility.resources', label: 'Ressources' },
   { key: 'spy_visibility.fleet', label: 'Flotte' },

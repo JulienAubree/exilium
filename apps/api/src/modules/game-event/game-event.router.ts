@@ -2,7 +2,18 @@ import { z } from 'zod';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createGameEventService } from './game-event.service.js';
 
-const gameEventTypeEnum = z.enum(['building-done', 'research-done', 'shipyard-done', 'fleet-arrived', 'fleet-returned', 'pve-mission-done', 'tutorial-quest-done']);
+const gameEventTypeEnum = z.enum([
+  'building-done',
+  'research-done',
+  'shipyard-done',
+  'fleet-arrived',
+  'fleet-returned',
+  'pve-mission-done',
+  'tutorial-quest-done',
+  'friend-request',
+  'friend-accepted',
+  'friend-declined',
+]);
 
 export function createGameEventRouter(gameEventService: ReturnType<typeof createGameEventService>) {
   return router({
