@@ -185,7 +185,7 @@ export default function ReportDetail() {
         <SpyReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
       )}
       {report.missionType === 'recycle' && (
-        <RecycleReportDetail result={result} />
+        <RecycleReportDetail result={result} coordinates={coords} />
       )}
       {report.missionType === 'explore' && (
         <ExploreReportDetail result={result} coordinates={coords} />

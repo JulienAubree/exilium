@@ -1,3 +1,7 @@
+import { useMemo, type ReactNode } from 'react';
+import { useNavigate, useOutletContext } from 'react-router';
+import { trpc } from '@/trpc';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
 
 const RESOURCE_COLORS: Record<string, string> = {
@@ -5,11 +9,65 @@ const RESOURCE_COLORS: Record<string, string> = {
   silicium: 'text-emerald-400',
 };
 
-interface RecycleReportDetailProps {
-  result: Record<string, any>;
+// Button styles — mirror ModePlanet.tsx / ExploreReportDetail.tsx
+const BTN_BASE =
+  'inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs border transition-colors';
+const BTN_ORANGE = `${BTN_BASE} bg-orange-500/15 text-orange-300 border-orange-500/30 hover:bg-orange-500/25`;
+const BTN_DISABLED = `${BTN_BASE} bg-white/5 text-muted-foreground border-white/5 cursor-not-allowed opacity-50`;
+
+function ActionButton({
+  enabled,
+  enabledClassName,
+  disabledTitle,
+  enabledTitle,
+  onClick,
+  children,
+}: {
+  enabled: boolean;
+  enabledClassName: string;
+  disabledTitle: string;
+  enabledTitle?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={!enabled}
+      title={enabled ? enabledTitle : disabledTitle}
+      className={enabled ? enabledClassName : BTN_DISABLED}
+      onClick={enabled ? onClick : undefined}
+    >
+      {children}
+    </button>
+  );
 }
 
-export function RecycleReportDetail({ result }: RecycleReportDetailProps) {
+interface RecycleReportDetailProps {
+  result: Record<string, any>;
+  coordinates: { galaxy: number; system: number; position: number };
+}
+
+export function RecycleReportDetail({ result, coordinates }: RecycleReportDetailProps) {
+  const navigate = useNavigate();
+  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { data: gameConfig } = useGameConfig();
+  const { data: ships } = trpc.shipyard.ships.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
+  const recyclerShipIds = useMemo(() => {
+    if (!gameConfig?.ships) return [] as string[];
+    return Object.entries(gameConfig.ships)
+      .filter(([, s]) => (s as any).role === 'recycling')
+      .map(([id]) => id);
+  }, [gameConfig?.ships]);
+
+  const hasRecycler = !!ships?.some(
+    (s: any) => recyclerShipIds.includes(s.id) && s.count > 0,
+  );
+
   if (result.empty) {
     return (
       <div className="space-y-4">
@@ -24,6 +82,7 @@ export function RecycleReportDetail({ result }: RecycleReportDetailProps) {
   const collected = result.collected ?? {};
   const available = result.debrisAvailable ?? {};
   const remaining = result.debrisRemaining;
+  const hasRemaining = !!remaining && ((remaining.minerai ?? 0) > 0 || (remaining.silicium ?? 0) > 0);
   const totalCollected = (collected.minerai ?? 0) + (collected.silicium ?? 0);
   const totalAvailable = (available.minerai ?? 0) + (available.silicium ?? 0);
   const cargoCapacity = result.cargoCapacity ?? 0;
@@ -105,28 +164,44 @@ export function RecycleReportDetail({ result }: RecycleReportDetailProps) {
         </div>
 
         {/* Remaining debris */}
-        {remaining && (
-          <div className="border-t border-border pt-3">
-            <div className="text-xs text-amber-400 mb-1">Débris restants</div>
-            <div className="flex flex-wrap gap-3">
-              {(['minerai', 'silicium'] as const).map((r) => {
-                const val = remaining[r] ?? 0;
-                if (val === 0) return null;
-                return (
-                  <span key={r} className="text-sm">
-                    <span className={cn('font-medium', RESOURCE_COLORS[r])}>{val.toLocaleString('fr-FR')}</span>
-                    <span className="text-muted-foreground ml-1 capitalize">{r}</span>
-                  </span>
-                );
-              })}
+        {hasRemaining && (
+          <div className="border-t border-border pt-3 space-y-3">
+            <div>
+              <div className="text-xs text-amber-400 mb-1">Débris restants</div>
+              <div className="flex flex-wrap gap-3">
+                {(['minerai', 'silicium'] as const).map((r) => {
+                  const val = remaining?.[r] ?? 0;
+                  if (val === 0) return null;
+                  return (
+                    <span key={r} className="text-sm">
+                      <span className={cn('font-medium', RESOURCE_COLORS[r])}>{val.toLocaleString('fr-FR')}</span>
+                      <span className="text-muted-foreground ml-1 capitalize">{r}</span>
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground/70 mt-1">
+                Envoyez plus de recycleurs pour collecter les débris restants.
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground/70 mt-1">
-              Envoyez plus de recycleurs pour collecter les débris restants.
-            </p>
+            <div>
+              <ActionButton
+                enabled={hasRecycler}
+                enabledClassName={BTN_ORANGE}
+                disabledTitle="Aucun recycleur disponible"
+                onClick={() =>
+                  navigate(
+                    `/fleet/send?mission=recycle&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`,
+                  )
+                }
+              >
+                Envoyer des recycleurs
+              </ActionButton>
+            </div>
           </div>
         )}
 
-        {!remaining && (
+        {!hasRemaining && (
           <p className="text-xs text-emerald-400">Champ de débris entièrement recyclé !</p>
         )}
       </div>
