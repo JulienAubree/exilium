@@ -1,4 +1,10 @@
 // apps/web/src/components/reports/ExploreReportDetail.tsx
+import { useMemo } from 'react';
+import { useNavigate, useOutletContext } from 'react-router';
+import { trpc } from '@/trpc';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { Button } from '@/components/ui/button';
+import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#9ca3af',
@@ -39,62 +45,210 @@ interface ExploreReportDetailProps {
     discoveredCount?: number;
     remaining?: number;
   };
+  coordinates: { galaxy: number; system: number; position: number };
 }
 
-export function ExploreReportDetail({ result }: ExploreReportDetailProps) {
+function generateReport(opts: {
+  discoveredCount: number;
+  isComplete: boolean;
+  rarities: string[];
+  planetTypeName: string;
+}): { title: string; body: string } {
+  const hasLegendary = opts.rarities.includes('legendary');
+  const hasEpic = opts.rarities.includes('epic');
+  const hasRare = opts.rarities.includes('rare');
+
+  if (opts.discoveredCount === 0 && !opts.isComplete) {
+    return {
+      title: "Rapport d'exploration — sans découverte",
+      body: `L'équipe scientifique a survolé la position sans parvenir à établir de relevés concluants. Les conditions environnementales de cette planète ${opts.planetTypeName.toLowerCase()} rendent la collecte de données particulièrement délicate. Un second passage, ou une flotte renforcée, devrait permettre de compléter la cartographie.`,
+    };
+  }
+
+  if (opts.isComplete) {
+    const highlight = hasLegendary
+      ? "notamment une structure écosystémique d'intérêt majeur"
+      : hasEpic
+        ? 'dont plusieurs formations géologiques remarquables'
+        : hasRare
+          ? "avec des particularités dignes d'une étude approfondie"
+          : 'à potentiel stratégique modéré';
+    return {
+      title: "Rapport d'exploration — cartographie complète",
+      body: `L'équipe a achevé la cartographie intégrale de cette planète ${opts.planetTypeName.toLowerCase()}. ${opts.discoveredCount} biome${opts.discoveredCount > 1 ? 's' : ''} identifié${opts.discoveredCount > 1 ? 's' : ''}, ${highlight}. La position est désormais prête à être colonisée.`,
+    };
+  }
+
+  // Partial discovery
+  const tone = hasLegendary
+    ? 'Découverte exceptionnelle'
+    : hasEpic
+      ? 'Relevés prometteurs'
+      : hasRare
+        ? 'Premiers résultats encourageants'
+        : 'Résultats préliminaires';
+  return {
+    title: `Rapport d'exploration — ${tone.toLowerCase()}`,
+    body: `Notre équipe a isolé ${opts.discoveredCount} biome${opts.discoveredCount > 1 ? 's' : ''} lors de cette mission. Les relevés suggèrent que la planète recèle encore des formations non identifiées ; une nouvelle mission sera nécessaire pour compléter la cartographie.`,
+  };
+}
+
+export function ExploreReportDetail({ result, coordinates }: ExploreReportDetailProps) {
+  const navigate = useNavigate();
+  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { data: gameConfig } = useGameConfig();
+
+  const { data: ships } = trpc.shipyard.ships.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
+
+  const { data: systemData } = trpc.galaxy.system.useQuery({
+    galaxy: coordinates.galaxy,
+    system: coordinates.system,
+  });
+
   const discovered = result.discovered ?? [];
   const discoveredCount = result.discoveredCount ?? discovered.length;
   const remaining = result.remaining ?? 0;
   const isComplete = remaining === 0;
 
-  return (
-    <div className="space-y-4">
-      {/* Summary */}
-      <div className="glass-card p-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Résultat de l'exploration
-        </h3>
-        <div className="flex items-baseline gap-6">
-          <div>
-            <div className="text-2xl font-bold text-cyan-400">{discoveredCount}</div>
-            <div className="text-[11px] text-muted-foreground">Biome{discoveredCount > 1 ? 's' : ''} découvert{discoveredCount > 1 ? 's' : ''}</div>
-          </div>
-        </div>
+  const targetSlot = systemData?.slots?.[coordinates.position - 1];
+  const planetClassId: string | null =
+    targetSlot && typeof targetSlot === 'object' && 'planetClassId' in targetSlot
+      ? ((targetSlot as any).planetClassId ?? null)
+      : null;
 
-        {/* Qualitative status message */}
-        <div className="mt-3">
-          {discoveredCount === 0 && !isComplete && (
-            <p className="text-xs text-amber-400 italic">
-              Aucun biome détecté cette fois. Renforcez votre flotte ou améliorez la recherche Exploration planétaire pour augmenter vos chances.
-            </p>
-          )}
-          {discoveredCount > 0 && !isComplete && (
-            <p className="text-xs text-cyan-400 italic">
-              D'autres biomes restent à découvrir sur cette planète. Une nouvelle mission pourrait révéler de nouveaux secrets.
-            </p>
-          )}
-          {isComplete && (
-            <p className="text-xs text-emerald-400 italic">
-              L'exploration de cette planète semble complète. Tous les biomes ont été cartographiés.
-            </p>
-          )}
+  const planetTypeName = planetClassId
+    ? (gameConfig?.planetTypes?.find((t: any) => t.id === planetClassId)?.name ?? 'Inconnue')
+    : 'Inconnue';
+
+  const colonizerShipId = useMemo(() => {
+    if (!gameConfig?.ships) return null;
+    const entry = Object.entries(gameConfig.ships).find(
+      ([, s]) => (s as any).role === 'colonization',
+    );
+    return entry?.[0] ?? null;
+  }, [gameConfig?.ships]);
+
+  const explorerShipId = useMemo(() => {
+    if (!gameConfig?.ships) return null;
+    const entry = Object.entries(gameConfig.ships).find(
+      ([, s]) => (s as any).role === 'exploration',
+    );
+    return entry?.[0] ?? null;
+  }, [gameConfig?.ships]);
+
+  const hasColonizer = !!(
+    colonizerShipId && ships?.find((s: any) => s.id === colonizerShipId && s.count > 0)
+  );
+  const hasExplorer = !!(
+    explorerShipId && ships?.find((s: any) => s.id === explorerShipId && s.count > 0)
+  );
+
+  const rarities = discovered.map((b) => b.rarity);
+  const report = generateReport({
+    discoveredCount,
+    isComplete,
+    rarities,
+    planetTypeName,
+  });
+
+  const coordsLabel = `[${coordinates.galaxy}:${coordinates.system}:${coordinates.position}]`;
+
+  const statusBadge = isComplete
+    ? { label: 'Cartographie complète', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' }
+    : { label: 'Exploration incomplète', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30' };
+
+  const showColonize = hasColonizer;
+  const showExplore = !isComplete && hasExplorer;
+
+  return (
+    <div className="glass-card p-4 lg:p-5 border border-cyan-500/20">
+      {/* Header row: planet visual + target info */}
+      <div className="flex items-start gap-4">
+        <div className="shrink-0">
+          <PlanetVisual
+            planetClassId={planetClassId}
+            planetImageIndex={null}
+            size={128}
+            variant="thumb"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Position cartographiée
+          </div>
+          <h3 className="text-lg font-bold text-foreground leading-tight">{planetTypeName}</h3>
+          <div className="text-xs text-muted-foreground font-mono mt-0.5">{coordsLabel}</div>
+          <div className="mt-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${statusBadge.cls}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              {statusBadge.label}
+            </span>
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="text-cyan-400 font-semibold">{discoveredCount}</span> biome
+            {discoveredCount > 1 ? 's' : ''} découvert{discoveredCount > 1 ? 's' : ''}
+            {!isComplete && remaining > 0 && (
+              <>
+                {' '}
+                · <span className="text-amber-400">{remaining} restant{remaining > 1 ? 's' : ''}</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Biomes discovered */}
+      {/* Scientific report flavor block */}
+      <div className="mt-4 rounded-lg border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent p-4">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-cyan-400/80 mb-2">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9 3h6" />
+            <path d="M10 3v6L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9V3" />
+            <path d="M7 14h10" />
+          </svg>
+          <span>Rapport scientifique</span>
+        </div>
+        <h4 className="text-sm font-semibold text-foreground mb-1">{report.title}</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed italic">{report.body}</p>
+      </div>
+
+      {/* Biomes section */}
       {discovered.length > 0 && (
-        <div className="glass-card p-4">
+        <div className="mt-4">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Nouveaux biomes
+            Biomes cartographiés
           </h3>
           <div className="space-y-3">
             {discovered.map((biome) => {
               const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
               return (
-                <div key={biome.id} className="border-l-2 pl-3" style={{ borderColor: color }}>
+                <div
+                  key={biome.id}
+                  className="border-l-2 pl-3"
+                  style={{ borderColor: color }}
+                >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-sm font-semibold" style={{ color }}>
+                      {biome.name}
+                    </span>
                     <span
                       className="text-[10px] rounded-full px-1.5 py-px font-medium"
                       style={{ color, backgroundColor: `${color}20` }}
@@ -106,9 +260,18 @@ export function ExploreReportDetail({ result }: ExploreReportDetailProps) {
                     <div className="text-xs space-y-0.5 ml-4">
                       {biome.effects.map((e, i) => (
                         <div key={i} className="flex justify-between gap-3">
-                          <span className="text-muted-foreground">{STAT_LABELS[e.stat] ?? e.stat}</span>
-                          <span className={e.modifier > 0 ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>
-                            {e.modifier > 0 ? '+' : ''}{Math.round(e.modifier * 100)}%
+                          <span className="text-muted-foreground">
+                            {STAT_LABELS[e.stat] ?? e.stat}
+                          </span>
+                          <span
+                            className={
+                              e.modifier > 0
+                                ? 'text-emerald-400 font-medium'
+                                : 'text-red-400 font-medium'
+                            }
+                          >
+                            {e.modifier > 0 ? '+' : ''}
+                            {Math.round(e.modifier * 100)}%
                           </span>
                         </div>
                       ))}
@@ -120,6 +283,46 @@ export function ExploreReportDetail({ result }: ExploreReportDetailProps) {
           </div>
         </div>
       )}
+
+      {/* Action buttons row */}
+      <div className="mt-5 pt-4 border-t border-border/50">
+        {showColonize || showExplore ? (
+          <div className="flex flex-wrap gap-2">
+            {showColonize && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30"
+                onClick={() =>
+                  navigate(
+                    `/fleet/send?mission=colonize&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`,
+                  )
+                }
+              >
+                Coloniser
+              </Button>
+            )}
+            {showExplore && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30"
+                onClick={() =>
+                  navigate(
+                    `/fleet/send?mission=explore&galaxy=${coordinates.galaxy}&system=${coordinates.system}&position=${coordinates.position}`,
+                  )
+                }
+              >
+                Explorer à nouveau
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs italic text-muted-foreground">
+            Aucun vaisseau disponible pour agir sur cette position.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

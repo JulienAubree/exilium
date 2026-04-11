@@ -188,7 +188,7 @@ export default function ReportDetail() {
         <RecycleReportDetail result={result} />
       )}
       {report.missionType === 'explore' && (
-        <ExploreReportDetail result={result} />
+        <ExploreReportDetail result={result} coordinates={coords} />
       )}
     </div>
   );
