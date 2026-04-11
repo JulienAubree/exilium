@@ -11,6 +11,7 @@
 
 import { PlanetDot } from '../PlanetDot';
 import { PlanetVisual } from '../PlanetVisual';
+import { DebrisFieldIcon } from '../DebrisFieldIcon';
 import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
 
@@ -138,11 +139,10 @@ export function Ribbon({
               </div>
               {hasDebris(view) && (
                 <span
-                  className="flex-shrink-0 text-[9px] font-mono font-bold text-orange-400 bg-orange-500/15 border border-orange-500/30 rounded px-1 leading-tight"
+                  className="flex-shrink-0 inline-flex items-center justify-center"
                   title="Champ de débris à recycler"
-                  aria-label="Champ de débris présent"
                 >
-                  DF
+                  <DebrisFieldIcon size={18} title="Champ de débris présent" />
                 </span>
               )}
             </li>

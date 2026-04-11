@@ -17,6 +17,7 @@ import type { DetailPanelActions, DetailPanelContext } from './types';
 import { BiomeChips } from './BiomeChips';
 import { PlanetDot } from '../../PlanetDot';
 import { PlanetVisual } from '../../PlanetVisual';
+import { DebrisFieldIcon } from '../../DebrisFieldIcon';
 
 type PlanetLikeView = Extract<
   SlotView,
@@ -170,9 +171,13 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
 
         {view.debris &&
           (view.debris.minerai > 0 || view.debris.silicium > 0) && (
-            <div className="mt-3 text-xs text-muted-foreground">
-              Champ de débris : {view.debris.minerai} minerai ·{' '}
-              {view.debris.silicium} silicium
+            <div className="mt-3 flex items-center gap-2 rounded-md border border-orange-500/20 bg-orange-500/5 px-3 py-2">
+              <DebrisFieldIcon size={22} />
+              <div className="text-xs text-muted-foreground">
+                <span className="text-orange-300 font-semibold">Champ de débris</span>{' '}
+                · {view.debris.minerai.toLocaleString('fr-FR')} minerai ·{' '}
+                {view.debris.silicium.toLocaleString('fr-FR')} silicium
+              </div>
             </div>
           )}
 

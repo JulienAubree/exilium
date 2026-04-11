@@ -79,10 +79,31 @@
   animation: selection-rotate 12s linear infinite;
 }
 
+/* --- Debris field icon (used by Ribbon + legacy Galaxy mobile list) --- */
+
+@keyframes debris-tumble {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(0.6px, -0.4px) rotate(8deg); }
+  50%      { transform: translate(-0.3px, 0.6px) rotate(-6deg); }
+  75%      { transform: translate(0.4px, 0.3px) rotate(5deg); }
+}
+
+.debris-shard {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: debris-tumble 3.6s ease-in-out infinite;
+}
+
+.debris-shard-1 { animation-delay: 0s; }
+.debris-shard-2 { animation-delay: -1.2s; animation-duration: 4.2s; }
+.debris-shard-3 { animation-delay: -2.4s; animation-duration: 3s; }
+.debris-shard-4 { animation-delay: -0.6s; animation-duration: 4.8s; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-star-breathe,
   .animate-aura-breathe,
-  .animate-selection-rotate {
+  .animate-selection-rotate,
+  .debris-shard {
     animation: none;
   }
 }

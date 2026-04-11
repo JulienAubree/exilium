@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
 import { AsteroidBelt } from '@/components/galaxy/AsteroidBelt';
+import { DebrisFieldIcon } from '@/components/galaxy/DebrisFieldIcon';
 import { GalaxySystemView } from '@/components/galaxy/GalaxySystemView';
 import type { DetailPanelActions, PlanetTypeMeta } from '@/components/galaxy/GalaxySystemView';
 import { useAuthStore } from '@/stores/auth.store';
@@ -438,10 +439,10 @@ export default function Galaxy() {
                           {(slot as any).debris && ((slot as any).debris.minerai > 0 || (slot as any).debris.silicium > 0) && (
                             <Link
                               to={`/fleet/send?mission=recycle&galaxy=${galaxy}&system=${system}&position=${i + 1}`}
-                              className="text-xs text-orange-400 hover:underline cursor-pointer"
+                              className="inline-flex items-center justify-center rounded hover:bg-orange-500/10 p-0.5 cursor-pointer"
                               title={`Débris: ${(slot as any).debris.minerai.toLocaleString('fr-FR')} minerai, ${(slot as any).debris.silicium.toLocaleString('fr-FR')} silicium`}
                             >
-                              DF
+                              <DebrisFieldIcon size={18} title="Champ de débris" />
                             </Link>
                           )}
                         </div>
