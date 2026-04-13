@@ -129,7 +129,7 @@ export default function Research() {
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
       <PageHeader title="Recherche" />
 
-      {/* Research Dashboard */}
+      {/* Research Dashboard — unified card */}
       {bonuses && (() => {
         const totalReduction = Math.round((1 - bonuses.totalMultiplier) * 100);
         const labReduction = Math.round((1 - bonuses.labMultiplier) * 100);
@@ -147,156 +147,112 @@ export default function Research() {
         };
 
         return (
-          <section className="glass-card p-4 space-y-4">
-            {/* Speed bar */}
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-semibold text-foreground">Vitesse de recherche</h2>
-                <span className="text-lg font-bold text-emerald-400">-{totalReduction}%</span>
+          <section className="glass-card p-4 space-y-3">
+            {/* Active research */}
+            {researchingTech ? (
+              <div className="flex items-center gap-3 rounded-md bg-card/50 p-3 border-l-4 border-l-orange-500">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {researchingTech.name} <span className="text-muted-foreground">Niv. {researchingTech.currentLevel + 1}</span>
+                  </p>
+                  <Timer
+                    endTime={new Date(researchingTech.researchEndTime!)}
+                    totalDuration={researchingTech.nextLevelTime}
+                    onComplete={() => {
+                      utils.research.list.invalidate();
+                      utils.tutorial.getCurrent.invalidate();
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => cancelMutation.mutate()}
+                  disabled={cancelMutation.isPending}
+                  className="text-sm text-destructive hover:text-destructive/80 font-medium shrink-0"
+                >
+                  Annuler
+                </button>
               </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Aucune recherche en cours</p>
+            )}
+
+            {/* Speed summary — always visible */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500"
                   style={{ width: `${Math.min(totalReduction, 100)}%` }}
                 />
               </div>
+              <button
+                onClick={() => setCollapsed(prev => ({ ...prev, __bonusDetails: !prev.__bonusDetails }))}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              >
+                <span className="font-semibold text-emerald-400">-{totalReduction}%</span>
+                <span>vitesse</span>
+                <svg
+                  width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                  className={cn('transition-transform', collapsed.__bonusDetails ? '' : 'rotate-180')}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Left: Labs */}
-              <div className="flex-1 space-y-3">
-                <h3 className="text-[10px] uppercase tracking-wider font-semibold text-violet-400 flex items-center gap-1.5">
-                  <BuildingsIcon width={14} height={14} />
-                  Laboratoires de l'empire
-                </h3>
-
-                <div className="space-y-1.5">
-                  {/* Main lab */}
-                  <div className="flex items-center gap-2 bg-card/50 border border-white/10 rounded-lg px-3 py-2">
-                    <ResearchIcon width={16} height={16} className="text-violet-400 shrink-0" />
-                    <span className="text-xs text-foreground font-medium">Laboratoire de recherche</span>
-                    <span className="ml-auto text-xs text-violet-400 font-semibold">Niv. {bonuses.labLevel}</span>
-                  </div>
-
-                  {/* Annex labs */}
-                  {bonuses.annexDetails.length > 0 ? (
-                    bonuses.annexDetails.map((annex, i) => (
-                      <div key={i} className="flex items-center gap-2 bg-card/50 border border-white/10 rounded-lg px-3 py-2">
-                        <BuildingsIcon width={14} height={14} className="text-violet-400/60 shrink-0" />
+            {/* Expandable bonus details */}
+            {collapsed.__bonusDetails && (
+              <div className="flex flex-col lg:flex-row gap-4 pt-1">
+                {/* Left: Labs */}
+                <div className="flex-1 space-y-2">
+                  <h3 className="text-[10px] uppercase tracking-wider font-semibold text-violet-400 flex items-center gap-1.5">
+                    <BuildingsIcon width={14} height={14} />
+                    Laboratoires de l'empire
+                  </h3>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 bg-card/50 border border-white/10 rounded-lg px-3 py-1.5">
+                      <ResearchIcon width={14} height={14} className="text-violet-400 shrink-0" />
+                      <span className="text-xs text-foreground font-medium">Laboratoire de recherche</span>
+                      <span className="ml-auto text-xs text-violet-400 font-semibold">Niv. {bonuses.labLevel}</span>
+                    </div>
+                    {bonuses.annexDetails.map((annex, i) => (
+                      <div key={i} className="flex items-center gap-2 bg-card/50 border border-white/10 rounded-lg px-3 py-1.5">
+                        <BuildingsIcon width={12} height={12} className="text-violet-400/60 shrink-0" />
                         <span className="text-xs text-foreground truncate">{ANNEX_NAMES[annex.buildingId] ?? annex.buildingId}</span>
                         <span className="text-[10px] text-muted-foreground truncate">({annex.planetName})</span>
                         <span className="ml-auto text-xs text-violet-400/80 font-semibold shrink-0">Niv. {annex.level}</span>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic px-1">Aucun laboratoire annexe</p>
-                  )}
+                    ))}
+                    {bonuses.annexDetails.length === 0 && (
+                      <p className="text-[11px] text-muted-foreground italic px-1">Aucun laboratoire annexe</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden lg:block w-px bg-white/10" />
+                <div className="lg:hidden h-px bg-white/10" />
+
+                {/* Right: Bonuses */}
+                <div className="flex-1 space-y-2">
+                  <h3 className="text-[10px] uppercase tracking-wider font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    Bonus de vitesse
+                  </h3>
+                  <div className="space-y-0.5">
+                    <BonusLine icon={<ResearchIcon width={12} height={12} />} label="Labo principal" detail={`Niv. ${bonuses.labLevel}`} reduction={labReduction} color="text-violet-400" />
+                    <BonusLine icon={<BuildingsIcon width={12} height={12} />} label="Labos annexes" detail={`${bonuses.annexLevelsSum} niv.`} reduction={annexReduction} color="text-violet-400" />
+                    <BonusLine icon={<GalaxyIcon width={12} height={12} />} label="Biomes" detail={`${bonuses.discoveredBiomesCount}`} reduction={biomeReduction} color="text-amber-400" />
+                    {talentReduction > 0 && <BonusLine icon={<EmpireIcon width={12} height={12} />} label="Talents" reduction={talentReduction} color="text-emerald-400" />}
+                    {hullReduction > 0 && <BonusLine icon={<FlagshipIcon width={12} height={12} />} label="Vaisseau amiral" reduction={hullReduction} color="text-cyan-400" />}
+                  </div>
                 </div>
               </div>
-
-              {/* Divider */}
-              <div className="hidden lg:block w-px bg-white/10" />
-              <div className="lg:hidden h-px bg-white/10" />
-
-              {/* Right: Bonuses */}
-              <div className="flex-1 space-y-3">
-                <h3 className="text-[10px] uppercase tracking-wider font-semibold text-emerald-400 flex items-center gap-1.5">
-                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  Bonus de vitesse
-                </h3>
-
-                <div className="space-y-1.5">
-                  {/* Main lab bonus */}
-                  <div className="flex items-center gap-2 px-3 py-1.5">
-                    <ResearchIcon width={14} height={14} className="text-violet-400 shrink-0" />
-                    <span className="text-xs text-foreground flex-1">Labo principal <span className="text-muted-foreground">(Niv. {bonuses.labLevel})</span></span>
-                    <span className="text-xs font-semibold text-emerald-400 shrink-0">-{labReduction}%</span>
-                    <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden shrink-0">
-                      <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(labReduction, 100)}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Annex bonus */}
-                  <div className="flex items-center gap-2 px-3 py-1.5">
-                    <BuildingsIcon width={14} height={14} className={cn('shrink-0', annexReduction > 0 ? 'text-violet-400' : 'text-muted-foreground/50')} />
-                    <span className={cn('text-xs flex-1', annexReduction > 0 ? 'text-foreground' : 'text-muted-foreground')}>Labos annexes <span className="text-muted-foreground">({bonuses.annexLevelsSum} niv.)</span></span>
-                    <span className={cn('text-xs font-semibold shrink-0', annexReduction > 0 ? 'text-emerald-400' : 'text-muted-foreground/50')}>-{annexReduction}%</span>
-                    <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden shrink-0">
-                      <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(annexReduction, 100)}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Biomes bonus */}
-                  <div className="flex items-center gap-2 px-3 py-1.5">
-                    <GalaxyIcon width={14} height={14} className={cn('shrink-0', biomeReduction > 0 ? 'text-amber-400' : 'text-muted-foreground/50')} />
-                    <span className={cn('text-xs flex-1', biomeReduction > 0 ? 'text-foreground' : 'text-muted-foreground')}>Biomes <span className="text-muted-foreground">({bonuses.discoveredBiomesCount})</span></span>
-                    <span className={cn('text-xs font-semibold shrink-0', biomeReduction > 0 ? 'text-emerald-400' : 'text-muted-foreground/50')}>-{biomeReduction}%</span>
-                    <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden shrink-0">
-                      <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(biomeReduction, 100)}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Talents bonus */}
-                  {talentReduction > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1.5">
-                      <EmpireIcon width={14} height={14} className="text-emerald-400 shrink-0" />
-                      <span className="text-xs text-foreground flex-1">Talents</span>
-                      <span className="text-xs font-semibold text-emerald-400 shrink-0">-{talentReduction}%</span>
-                      <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden shrink-0">
-                        <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(talentReduction, 100)}%` }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Hull bonus */}
-                  {hullReduction > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1.5">
-                      <FlagshipIcon width={14} height={14} className="text-cyan-400 shrink-0" />
-                      <span className="text-xs text-foreground flex-1">Vaisseau amiral</span>
-                      <span className="text-xs font-semibold text-emerald-400 shrink-0">-{hullReduction}%</span>
-                      <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden shrink-0">
-                        <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(hullReduction, 100)}%` }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
           </section>
         );
       })()}
-
-      {researchingTech && (
-        <section className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-foreground">Recherche en cours</h2>
-          </div>
-          <div className="flex items-center gap-3 rounded-md bg-card/50 p-3 border-l-4 border-l-orange-500">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {researchingTech.name} <span className="text-muted-foreground">Niv. {researchingTech.currentLevel + 1}</span>
-              </p>
-              <Timer
-                endTime={new Date(researchingTech.researchEndTime!)}
-                totalDuration={researchingTech.nextLevelTime}
-                onComplete={() => {
-                  utils.research.list.invalidate();
-                  utils.tutorial.getCurrent.invalidate();
-                }}
-              />
-            </div>
-            <button
-              onClick={() => cancelMutation.mutate()}
-              disabled={cancelMutation.isPending}
-              className="text-sm text-destructive hover:text-destructive/80 font-medium shrink-0"
-            >
-              Annuler
-            </button>
-          </div>
-        </section>
-      )}
 
       {researchCategories.map((category) => {
         const categoryTechs = techs.filter((t) =>
@@ -519,3 +475,29 @@ export default function Research() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Bonus line helper                                                 */
+/* ------------------------------------------------------------------ */
+
+function BonusLine({ icon, label, detail, reduction, color }: {
+  icon: React.ReactNode;
+  label: string;
+  detail?: string;
+  reduction: number;
+  color: string;
+}) {
+  const active = reduction > 0;
+  return (
+    <div className="flex items-center gap-2 px-2 py-1">
+      <span className={cn('shrink-0', active ? color : 'text-muted-foreground/50')}>{icon}</span>
+      <span className={cn('text-[11px] flex-1 min-w-0 truncate', active ? 'text-foreground' : 'text-muted-foreground')}>
+        {label}
+        {detail && <span className="text-muted-foreground ml-1">({detail})</span>}
+      </span>
+      <span className={cn('text-[11px] font-semibold shrink-0', active ? 'text-emerald-400' : 'text-muted-foreground/50')}>-{reduction}%</span>
+      <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden shrink-0">
+        <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(reduction, 100)}%` }} />
+      </div>
+    </div>
+  );
+}
