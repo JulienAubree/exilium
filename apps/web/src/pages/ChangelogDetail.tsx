@@ -85,6 +85,55 @@ function inlineFormat(text: string): React.ReactNode {
   return tokens;
 }
 
+interface TocEntry {
+  level: number;
+  text: string;
+  id: string;
+}
+
+function extractToc(content: string): TocEntry[] {
+  const toc: TocEntry[] = [];
+  for (const line of content.split('\n')) {
+    const match = line.match(/^(#{1,3})\s+(.+)/);
+    if (match) {
+      const level = match[1].length;
+      const text = match[2].replace(/\*\*/g, '');
+      const id = text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .slice(0, 60);
+      toc.push({ level, text, id });
+    }
+  }
+  return toc;
+}
+
+function TableOfContents({ toc }: { toc: TocEntry[] }) {
+  if (toc.length < 3) return null;
+  // Only show h2 entries (## sections) for a clean sommaire
+  const sections = toc.filter((t) => t.level === 2);
+  if (sections.length < 2) return null;
+  return (
+    <nav className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 mb-6">
+      <div className="text-[10px] uppercase tracking-wider text-cyan-400/70 mb-2">Sommaire</div>
+      <ol className="space-y-1">
+        {sections.map((entry, i) => (
+          <li key={entry.id}>
+            <a
+              href={`#${entry.id}`}
+              className="text-sm text-foreground/70 hover:text-cyan-400 transition-colors flex items-center gap-2"
+            >
+              <span className="text-cyan-500/50 font-mono text-xs tabular-nums w-4">{i + 1}.</span>
+              {entry.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 function renderMarkdown(content: string) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
@@ -92,14 +141,23 @@ function renderMarkdown(content: string) {
   let orderedListItems: string[] = [];
   let codeBlockLines: string[] = [];
   let inCodeBlock = false;
+  const headingCounter = { h1: 0, h2: 0, h3: 0 };
+
+  const slugify = (text: string) =>
+    text
+      .replace(/\*\*/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .slice(0, 60);
 
   const flushList = () => {
     if (listItems.length > 0) {
       elements.push(
-        <ul key={`ul-${elements.length}`} className="space-y-1 mb-3 ml-1">
+        <ul key={`ul-${elements.length}`} className="space-y-1.5 mb-4 ml-1">
           {listItems.map((item, i) => (
-            <li key={i} className="text-sm text-foreground/80 flex gap-2">
-              <span className="text-muted-foreground shrink-0">•</span>
+            <li key={i} className="text-sm text-foreground/80 flex gap-2 leading-relaxed">
+              <span className="text-cyan-500/50 shrink-0 mt-1">•</span>
               <span>{inlineFormat(item)}</span>
             </li>
           ))}
@@ -109,10 +167,10 @@ function renderMarkdown(content: string) {
     }
     if (orderedListItems.length > 0) {
       elements.push(
-        <ol key={`ol-${elements.length}`} className="space-y-1 mb-3 ml-1">
+        <ol key={`ol-${elements.length}`} className="space-y-1.5 mb-4 ml-1">
           {orderedListItems.map((item, i) => (
-            <li key={i} className="text-sm text-foreground/80 flex gap-2">
-              <span className="text-muted-foreground shrink-0 tabular-nums">{i + 1}.</span>
+            <li key={i} className="text-sm text-foreground/80 flex gap-2 leading-relaxed">
+              <span className="text-cyan-500/50 shrink-0 tabular-nums mt-0.5">{i + 1}.</span>
               <span>{inlineFormat(item)}</span>
             </li>
           ))}
@@ -161,22 +219,33 @@ function renderMarkdown(content: string) {
       );
     } else if (line.startsWith('### ')) {
       flushList();
+      headingCounter.h3++;
+      const text = line.slice(4);
+      const id = slugify(text);
       elements.push(
-        <h3 key={`h3-${elements.length}`} className="text-sm font-semibold text-foreground mt-3 mb-1">
-          {inlineFormat(line.slice(4))}
+        <h3 key={`h3-${elements.length}`} id={id} className="text-sm font-semibold text-foreground mt-5 mb-1.5 scroll-mt-4">
+          {inlineFormat(text)}
         </h3>
       );
     } else if (line.startsWith('## ')) {
       flushList();
+      headingCounter.h2++;
+      headingCounter.h3 = 0;
+      const text = line.slice(3);
+      const id = slugify(text);
       elements.push(
-        <h2 key={`h2-${elements.length}`} className="text-base font-semibold text-foreground mt-4 mb-1.5 border-b border-border/30 pb-1">
-          {inlineFormat(line.slice(3))}
+        <h2 key={`h2-${elements.length}`} id={id} className="text-base font-bold text-foreground mt-8 mb-2 pb-2 border-b border-cyan-500/20 scroll-mt-4 flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-cyan-500/60" />
+          {inlineFormat(text)}
         </h2>
       );
     } else if (line.startsWith('# ')) {
       flushList();
+      headingCounter.h1++;
+      headingCounter.h2 = 0;
+      headingCounter.h3 = 0;
       elements.push(
-        <h1 key={`h1-${elements.length}`} className="text-lg font-bold text-foreground mt-4 mb-2 border-b border-border/40 pb-1.5">
+        <h1 key={`h1-${elements.length}`} className="text-xl font-bold text-foreground mt-6 mb-3 border-b border-border/40 pb-2">
           {inlineFormat(line.slice(2))}
         </h1>
       );
@@ -205,7 +274,7 @@ function renderMarkdown(content: string) {
     } else {
       flushList();
       elements.push(
-        <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-1">{inlineFormat(line)}</p>
+        <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-2 leading-relaxed">{inlineFormat(line)}</p>
       );
     }
   }
@@ -260,12 +329,14 @@ export default function ChangelogDetail() {
         Nouveautes
       </button>
 
-      <div className="glass-card p-4 space-y-3">
-        <div className="space-y-1">
-          <h1 className="text-lg font-semibold text-foreground">{changelog.title}</h1>
+      <div className="glass-card p-5 lg:p-8 space-y-4">
+        <div className="space-y-1.5">
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground">{changelog.title}</h1>
           <p className="text-xs text-muted-foreground">{formatDate(changelog.createdAt)}</p>
         </div>
-        <div className="glass-card p-4">
+        <hr className="border-border/30" />
+        <TableOfContents toc={extractToc(changelog.content)} />
+        <div className="max-w-none">
           {renderMarkdown(changelog.content)}
         </div>
       </div>
