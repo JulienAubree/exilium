@@ -48,6 +48,7 @@ export function createFleetService(
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
   flagshipService?: ReturnType<typeof createFlagshipService>,
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
+  gameEventService?: ReturnType<typeof import('../game-event/game-event.service.js').createGameEventService>,
 ) {
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
@@ -79,6 +80,7 @@ export function createFleetService(
     fleetQueue,
     assetsDir: env.ASSETS_DIR,
     redis,
+    gameEventService,
   };
 
   function buildFleetConfig(config: { universe: Record<string, unknown> }): FleetConfig {

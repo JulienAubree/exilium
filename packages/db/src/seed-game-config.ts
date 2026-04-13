@@ -437,6 +437,8 @@ const UI_LABELS = [
   { key: 'event.friend-declined', label: 'Ami refusé' },
   { key: 'event.report-sold', label: 'Rapport vendu' },
   { key: 'event.report-purchased', label: 'Rapport acheté' },
+  { key: 'event.market-offer-reserved', label: 'Offre réservée' },
+  { key: 'event.market-offer-sold', label: 'Vente finalisée' },
   // Spy visibility
   { key: 'spy_visibility.resources', label: 'Ressources' },
   { key: 'spy_visibility.fleet', label: 'Flotte' },

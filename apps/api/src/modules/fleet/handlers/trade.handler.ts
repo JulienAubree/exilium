@@ -113,17 +113,26 @@ export class TradeHandler implements MissionHandler {
       }
     }
 
-    // Notify seller
+    // Notify seller (ephemeral toast + persistent bell)
+    const reservedPayload = {
+      offerId: offer.id,
+      resourceType: offer.resourceType,
+      quantity: Number(offer.quantity),
+      planetName: sellerPlanet.name ?? 'Planète inconnue',
+    };
     if (ctx.redis) {
       publishNotification(ctx.redis, offer.sellerId, {
         type: 'market-offer-reserved',
-        payload: {
-          offerId: offer.id,
-          resourceType: offer.resourceType,
-          quantity: Number(offer.quantity),
-          planetName: sellerPlanet.name ?? 'Planète inconnue',
-        },
+        payload: reservedPayload,
       });
+    }
+    if (ctx.gameEventService) {
+      await ctx.gameEventService.insert(
+        offer.sellerId,
+        null,
+        'market-offer-reserved',
+        reservedPayload,
+      );
     }
   }
 
@@ -203,17 +212,18 @@ export class TradeHandler implements MissionHandler {
       ctx.exiliumService.tryDrop(offer.sellerId, 'market', { offerId: offer.id }).catch((e) => console.warn('[exilium-drop] tryDrop failed:', e));
     }
 
-    // Notify seller
+    // Notify seller (ephemeral + persistent)
+    const soldOfferPayload = {
+      offerId: offer.id,
+      resourceType: offer.resourceType,
+      quantity: Number(offer.quantity),
+      payment: price,
+    };
     if (ctx.redis) {
-      publishNotification(ctx.redis, offer.sellerId, {
-        type: 'market-offer-sold',
-        payload: {
-          offerId: offer.id,
-          resourceType: offer.resourceType,
-          quantity: Number(offer.quantity),
-          payment: price,
-        },
-      });
+      publishNotification(ctx.redis, offer.sellerId, { type: 'market-offer-sold', payload: soldOfferPayload });
+    }
+    if (ctx.gameEventService) {
+      await ctx.gameEventService.insert(offer.sellerId, null, 'market-offer-sold', soldOfferPayload);
     }
 
     // ── Report offer: transfer biome data, no physical merchandise ──
@@ -271,28 +281,29 @@ export class TradeHandler implements MissionHandler {
           .where(eq(users.id, offer.sellerId))
           .limit(1);
 
-        // Notify both parties about report purchase
+        // Notify both parties about report purchase (ephemeral + persistent)
+        const soldPayload = {
+          buyerUsername: buyer?.username ?? 'Joueur',
+          galaxy: report.galaxy,
+          system: report.system,
+          position: report.position,
+          price,
+        };
+        const purchasedPayload = {
+          sellerUsername: seller?.username ?? 'Joueur',
+          galaxy: report.galaxy,
+          system: report.system,
+          position: report.position,
+          biomeCount: reportBiomes.length,
+        };
+
         if (ctx.redis) {
-          publishNotification(ctx.redis, offer.sellerId, {
-            type: 'report-sold',
-            payload: {
-              buyerUsername: buyer?.username ?? 'Joueur',
-              galaxy: report.galaxy,
-              system: report.system,
-              position: report.position,
-              price,
-            },
-          });
-          publishNotification(ctx.redis, fleetEvent.userId, {
-            type: 'report-purchased',
-            payload: {
-              sellerUsername: seller?.username ?? 'Joueur',
-              galaxy: report.galaxy,
-              system: report.system,
-              position: report.position,
-              biomeCount: reportBiomes.length,
-            },
-          });
+          publishNotification(ctx.redis, offer.sellerId, { type: 'report-sold', payload: soldPayload });
+          publishNotification(ctx.redis, fleetEvent.userId, { type: 'report-purchased', payload: purchasedPayload });
+        }
+        if (ctx.gameEventService) {
+          await ctx.gameEventService.insert(offer.sellerId, null, 'report-sold', soldPayload);
+          await ctx.gameEventService.insert(fleetEvent.userId, null, 'report-purchased', purchasedPayload);
         }
 
         // Create a trade mission report for the buyer

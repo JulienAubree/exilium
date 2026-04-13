@@ -12,6 +12,8 @@ export function eventTypeColor(type: string) {
     case 'friend-declined': return 'bg-red-500';
     case 'report-sold': return 'bg-emerald-500';
     case 'report-purchased': return 'bg-cyan-500';
+    case 'market-offer-reserved': return 'bg-amber-500';
+    case 'market-offer-sold': return 'bg-emerald-500';
     default: return 'bg-muted';
   }
 }
@@ -49,6 +51,12 @@ export function formatEventText(
     case 'friend-declined': return `${p.fromUsername} a refusé votre demande`;
     case 'report-sold': return `Rapport vendu à ${p.buyerUsername} [${p.galaxy}:${p.system}:?]`;
     case 'report-purchased': return `Rapport acquis en [${p.galaxy}:${p.system}:${p.position}] — ${p.biomeCount} biomes`;
+    case 'market-offer-reserved': return p.resourceType
+      ? `Offre réservée : ${Number(p.quantity).toLocaleString('fr-FR')} ${p.resourceType}`
+      : `Acheteur trouvé pour votre rapport — cargo en route`;
+    case 'market-offer-sold': return p.resourceType
+      ? `Vente finalisée : ${Number(p.quantity).toLocaleString('fr-FR')} ${p.resourceType}`
+      : `Rapport vendu — paiement reçu`;
     default: return 'Événement';
   }
 }
