@@ -251,6 +251,7 @@ export default function Galaxy() {
       setActivePlanetStore(planetId);
       navigate('/');
     },
+    onCreateReport: () => navigate('/market'),
   }), [navigate, galaxy, system, openChat, myCapitalPosition, setSearchParams, setActivePlanetStore]);
 
   // Touch swipe for system navigation

@@ -40,6 +40,7 @@ const BTN_RED = `${BTN_BASE} bg-red-500/15 text-red-300 border-red-500/30 hover:
 const BTN_BLUE = `${BTN_BASE} bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25`;
 const BTN_NEUTRAL = `${BTN_BASE} bg-white/5 text-foreground border-white/10 hover:bg-white/10`;
 const BTN_ORANGE = `${BTN_BASE} bg-orange-500/15 text-orange-300 border-orange-500/30 hover:bg-orange-500/25`;
+const BTN_AMBER = `${BTN_BASE} bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25`;
 const BTN_DISABLED = `${BTN_BASE} bg-white/5 text-muted-foreground border-white/5 cursor-not-allowed opacity-50`;
 
 function ActionButton({
@@ -183,13 +184,22 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
 
         <div className="mt-4 flex flex-wrap gap-2">
           {view.relation === 'mine' && (
-            <button
-              type="button"
-              className={BTN_CYAN}
-              onClick={() => actions.onManagePlanet(view.planetId)}
-            >
-              Gérer la planète
-            </button>
+            <>
+              <button
+                type="button"
+                className={BTN_CYAN}
+                onClick={() => actions.onManagePlanet(view.planetId)}
+              >
+                Gérer la planète
+              </button>
+              <button
+                type="button"
+                className={BTN_AMBER}
+                onClick={() => actions.onCreateReport(view.position)}
+              >
+                Creer un rapport
+              </button>
+            </>
           )}
 
           {view.relation !== 'mine' && (
@@ -302,6 +312,13 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
           >
             Explorer
           </ActionButton>
+          <button
+            type="button"
+            className={BTN_AMBER}
+            onClick={() => actions.onCreateReport(view.position)}
+          >
+            Creer un rapport
+          </button>
         </div>
       </div>
     );

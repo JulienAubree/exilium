@@ -42,6 +42,7 @@ export interface DetailPanelActions {
   onMessage: (userId: string, username: string) => void;
   onCenterCapital: () => void;
   onManagePlanet: (planetId: string) => void;
+  onCreateReport: (position: number) => void;
 }
 
 /** Convenience re-export so mode files can import from one place. */

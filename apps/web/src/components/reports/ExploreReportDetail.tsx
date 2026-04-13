@@ -1,8 +1,9 @@
 // apps/web/src/components/reports/ExploreReportDetail.tsx
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { useToastStore } from '@/stores/toast.store';
 import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 
 // Button styles — mirrors ModePlanet.tsx so enabled/disabled states
@@ -11,6 +12,8 @@ const BTN_BASE =
   'inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs border transition-colors';
 const BTN_EMERALD = `${BTN_BASE} bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25`;
 const BTN_CYAN = `${BTN_BASE} bg-cyan-500/15 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/25`;
+const BTN_AMBER = `${BTN_BASE} bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25`;
+const BTN_NEUTRAL = `${BTN_BASE} bg-white/5 text-foreground border-white/10 hover:bg-white/10`;
 const BTN_DISABLED = `${BTN_BASE} bg-white/5 text-muted-foreground border-white/5 cursor-not-allowed opacity-50`;
 
 function ActionButton({
@@ -141,6 +144,34 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
   const navigate = useNavigate();
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
+  const addToast = useToastStore((s) => s.addToast);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const canCreate = trpc.explorationReport.canCreate.useQuery({
+    galaxy: coordinates.galaxy,
+    system: coordinates.system,
+    position: coordinates.position,
+  });
+
+  const createMutation = trpc.explorationReport.create.useMutation({
+    onSuccess: () => {
+      addToast('Rapport cree — disponible dans votre inventaire', 'success');
+      setShowCreateForm(false);
+    },
+    onError: (err) => {
+      addToast(err.message ?? 'Erreur lors de la creation du rapport', 'error');
+    },
+  });
+
+  const handleCreate = () => {
+    if (!planetId) return;
+    createMutation.mutate({
+      planetId,
+      galaxy: coordinates.galaxy,
+      system: coordinates.system,
+      position: coordinates.position,
+    });
+  };
 
   const { data: ships } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -374,7 +405,37 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
           >
             Explorer à nouveau
           </ActionButton>
+          <ActionButton
+            enabled={canCreate.data?.canCreate === true}
+            enabledClassName={BTN_AMBER}
+            disabledTitle={canCreate.data?.reason ?? 'Creation impossible'}
+            onClick={() => setShowCreateForm((v) => !v)}
+          >
+            Creer un rapport vendable
+          </ActionButton>
         </div>
+        {showCreateForm && (
+          <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
+            <div className="text-[10px] uppercase tracking-wider text-amber-400/80">Creer un rapport vendable</div>
+            <div className="text-xs text-muted-foreground">
+              Position [{coordinates.galaxy}:{coordinates.system}:{coordinates.position}]
+              {' · '}Type {planetTypeName}
+              {' · '}{discoveredCount > 0 ? `${discoveredCount} biome(s) inclus` : 'Aucun biome'}
+              {isComplete && ' · Complet'}
+            </div>
+            <div className="text-xs">
+              Cout : <span className="text-blue-400 font-semibold">{canCreate.data?.cost} hydrogene</span>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className={BTN_AMBER} onClick={handleCreate} disabled={createMutation.isPending}>
+                {createMutation.isPending ? 'Creation...' : 'Confirmer'}
+              </button>
+              <button type="button" className={BTN_NEUTRAL} onClick={() => setShowCreateForm(false)}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
