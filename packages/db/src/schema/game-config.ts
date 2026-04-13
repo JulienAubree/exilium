@@ -24,6 +24,7 @@ export const buildingDefinitions = pgTable('building_definitions', {
   sortOrder: integer('sort_order').notNull().default(0),
   role: varchar('role', { length: 64 }).unique(),
   flavorText: text('flavor_text'),
+  allowedPlanetTypes: jsonb('allowed_planet_types'),
 });
 
 export const buildingPrerequisites = pgTable('building_prerequisites', {
@@ -62,6 +63,7 @@ export const researchDefinitions = pgTable('research_definitions', {
   flavorText: text('flavor_text'),
   effectDescription: text('effect_description'),
   maxLevel: smallint('max_level'),
+  requiredAnnexType: varchar('required_annex_type', { length: 64 }),
 });
 
 export const researchPrerequisites = pgTable('research_prerequisites', {

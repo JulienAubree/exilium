@@ -19,4 +19,9 @@ export const userResearch = pgTable('user_research', {
   semiconductors: smallint('semiconductors').notNull().default(0),
   armoredStorage: smallint('armored_storage').notNull().default(0),
   planetaryExploration: smallint('planetary_exploration').notNull().default(0),
+  volcanicWeaponry: smallint('volcanic_weaponry').notNull().default(0),
+  aridArmor: smallint('arid_armor').notNull().default(0),
+  temperateProduction: smallint('temperate_production').notNull().default(0),
+  glacialShielding: smallint('glacial_shielding').notNull().default(0),
+  gaseousPropulsion: smallint('gaseous_propulsion').notNull().default(0),
 });
