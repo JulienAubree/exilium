@@ -341,7 +341,17 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
           En inventaire
         </h3>
         {inventory.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">Aucun rapport en inventaire.</p>
+          <div className="rounded-lg border border-dashed border-cyan-500/30 bg-cyan-500/5 px-4 py-6 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Aucun rapport en inventaire.
+            </p>
+            <p className="text-xs text-muted-foreground/80">
+              Pour vendre les informations sur une planete, rendez-vous dans la{' '}
+              <a href="/galaxy" className="text-cyan-400 hover:underline">vue galaxie</a>,
+              {' '}selectionnez une position exploree et cliquez sur{' '}
+              <span className="text-amber-300 font-medium">Vendre le rapport</span>.
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
             {inventory.map((report) => {
