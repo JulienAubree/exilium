@@ -190,6 +190,62 @@
       "when": 1775200000000,
       "tag": "0026_hull_columns_and_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1775286400000,
+      "tag": "0027_add_scan_mission_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1775372800000,
+      "tag": "0028_planet_sort_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1775459200000,
+      "tag": "0029_planet_biomes",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1775545600000,
+      "tag": "0030_planetary_exploration",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1775632000000,
+      "tag": "0031_fleet_exploring_phase",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1775718400000,
+      "tag": "0032_discovered_positions",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1775804800000,
+      "tag": "0033_exploration_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1775891200000,
+      "tag": "0034_biome_active_flag",
+      "breakpoints": true
     }
   ]
 }

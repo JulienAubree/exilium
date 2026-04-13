@@ -389,7 +389,9 @@ const BONUS_DEFINITIONS = [
   { id: 'armoredStorage__armored_storage', sourceType: 'research', sourceId: 'armoredStorage', stat: 'armored_storage', percentPerLevel: 5, category: null, statLabel: 'Protection blindée' },
   { id: 'volcanicWeaponry__weapons', sourceType: 'research', sourceId: 'volcanicWeaponry', stat: 'weapons', percentPerLevel: 10, category: null, statLabel: 'Degats des armes (Forge Volcanique)' },
   { id: 'aridArmor__armor', sourceType: 'research', sourceId: 'aridArmor', stat: 'armor', percentPerLevel: 10, category: null, statLabel: 'Resistance de la coque (Laboratoire Aride)' },
-  { id: 'temperateProduction__all_production', sourceType: 'research', sourceId: 'temperateProduction', stat: 'all_production', percentPerLevel: 2, category: null, statLabel: 'Production de toutes les ressources (Bio-Laboratoire)' },
+  { id: 'temperateProduction__production_minerai', sourceType: 'research', sourceId: 'temperateProduction', stat: 'production_minerai', percentPerLevel: 2, category: null, statLabel: 'Production de minerai (Bio-Laboratoire)' },
+  { id: 'temperateProduction__production_silicium', sourceType: 'research', sourceId: 'temperateProduction', stat: 'production_silicium', percentPerLevel: 2, category: null, statLabel: 'Production de silicium (Bio-Laboratoire)' },
+  { id: 'temperateProduction__production_hydrogene', sourceType: 'research', sourceId: 'temperateProduction', stat: 'production_hydrogene', percentPerLevel: 2, category: null, statLabel: "Production d'hydrogene (Bio-Laboratoire)" },
   { id: 'glacialShielding__shielding', sourceType: 'research', sourceId: 'glacialShielding', stat: 'shielding', percentPerLevel: 10, category: null, statLabel: 'Puissance des boucliers (Cryo-Laboratoire)' },
   { id: 'gaseousPropulsion__ship_speed', sourceType: 'research', sourceId: 'gaseousPropulsion', stat: 'ship_speed', percentPerLevel: 10, category: null, statLabel: 'Vitesse des vaisseaux (Nebula-Lab)' },
 ];

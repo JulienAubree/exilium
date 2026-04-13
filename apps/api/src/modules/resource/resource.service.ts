@@ -151,6 +151,21 @@ export function createResourceService(
       }
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
+      // Inject production research bonuses into context
+      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      if (research) {
+        const researchLevels: Record<string, number> = {};
+        for (const [key, value] of Object.entries(research)) {
+          if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
+        }
+        const mineraiBonus = resolveBonus('production_minerai', null, researchLevels, config.bonuses);
+        if (mineraiBonus > 1) talentCtx['production_minerai'] = (talentCtx['production_minerai'] ?? 0) + (mineraiBonus - 1);
+        const siliciumBonus = resolveBonus('production_silicium', null, researchLevels, config.bonuses);
+        if (siliciumBonus > 1) talentCtx['production_silicium'] = (talentCtx['production_silicium'] ?? 0) + (siliciumBonus - 1);
+        const hydrogeneBonus = resolveBonus('production_hydrogene', null, researchLevels, config.bonuses);
+        if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
+      }
+
       const now = new Date();
       const resources = calculateResources(
         {
@@ -216,6 +231,21 @@ export function createResourceService(
         talentCtx[key] = (talentCtx[key] ?? 0) + value;
       }
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
+
+      // Inject production research bonuses into context
+      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      if (research) {
+        const researchLevels: Record<string, number> = {};
+        for (const [key, value] of Object.entries(research)) {
+          if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
+        }
+        const mineraiBonus = resolveBonus('production_minerai', null, researchLevels, config.bonuses);
+        if (mineraiBonus > 1) talentCtx['production_minerai'] = (talentCtx['production_minerai'] ?? 0) + (mineraiBonus - 1);
+        const siliciumBonus = resolveBonus('production_silicium', null, researchLevels, config.bonuses);
+        if (siliciumBonus > 1) talentCtx['production_silicium'] = (talentCtx['production_silicium'] ?? 0) + (siliciumBonus - 1);
+        const hydrogeneBonus = resolveBonus('production_hydrogene', null, researchLevels, config.bonuses);
+        if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
+      }
 
       const now = new Date();
       const produced = calculateResources(
@@ -296,7 +326,7 @@ export function createResourceService(
       // Apply shield level bonus from talents
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
-      // Inject energy research bonus into context
+      // Inject energy and production research bonuses into context
       if (userId) {
         const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
         if (research) {
@@ -308,6 +338,12 @@ export function createResourceService(
           if (energyMult > 1) talentCtx['energy_production'] = (talentCtx['energy_production'] ?? 0) + (energyMult - 1);
           const energyEfficiency = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
           if (energyEfficiency < 1) talentCtx['energy_consumption'] = (talentCtx['energy_consumption'] ?? 0) + (energyEfficiency - 1);
+          const mineraiBonus = resolveBonus('production_minerai', null, researchLevels, config.bonuses);
+          if (mineraiBonus > 1) talentCtx['production_minerai'] = (talentCtx['production_minerai'] ?? 0) + (mineraiBonus - 1);
+          const siliciumBonus = resolveBonus('production_silicium', null, researchLevels, config.bonuses);
+          if (siliciumBonus > 1) talentCtx['production_silicium'] = (talentCtx['production_silicium'] ?? 0) + (siliciumBonus - 1);
+          const hydrogeneBonus = resolveBonus('production_hydrogene', null, researchLevels, config.bonuses);
+          if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
         }
       }
 
