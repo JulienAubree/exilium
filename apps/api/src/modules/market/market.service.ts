@@ -1,7 +1,7 @@
 import { eq, and, ne, desc, lt, sql, isNotNull, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
-import { marketOffers, planets, planetBuildings, fleetEvents, explorationReports, discoveredBiomes, discoveredPositions, users } from '@exilium/db';
+import { marketOffers, planets, planetBuildings, fleetEvents, explorationReports, discoveredBiomes, users } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { maxMarketOffers, calculateSellerCommission } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
@@ -418,6 +418,9 @@ export function createMarketService(
           priceSilicium: marketOffers.priceSilicium,
           priceHydrogene: marketOffers.priceHydrogene,
           sellerUsername: users.username,
+          sellerGalaxy: planets.galaxy,
+          sellerSystem: planets.system,
+          sellerPosition: planets.position,
           expiresAt: marketOffers.expiresAt,
           createdAt: marketOffers.createdAt,
           reportBiomes: explorationReports.biomes,
@@ -425,6 +428,7 @@ export function createMarketService(
         .from(marketOffers)
         .innerJoin(explorationReports, eq(marketOffers.explorationReportId, explorationReports.id))
         .innerJoin(users, eq(explorationReports.creatorId, users.id))
+        .innerJoin(planets, eq(marketOffers.planetId, planets.id))
         .where(and(...conditions))
         .orderBy(desc(marketOffers.createdAt))
         .limit(limit + 1);
@@ -467,6 +471,7 @@ export function createMarketService(
             priceSilicium: Number(r.priceSilicium),
             priceHydrogene: Number(r.priceHydrogene),
             sellerUsername: r.sellerUsername,
+            sellerCoords: { galaxy: r.sellerGalaxy, system: r.sellerSystem, position: r.sellerPosition },
             expiresAt: r.expiresAt.toISOString(),
             createdAt: r.createdAt.toISOString(),
             knownBiomeCount,
@@ -568,221 +573,6 @@ export function createMarketService(
       );
 
       return offer;
-    },
-
-    async buyReport(userId: string, planetId: string, offerId: string) {
-      return db.transaction(async (tx) => {
-        // 1. Load the offer with SELECT FOR UPDATE (prevent race condition)
-        const [offer] = await tx
-          .select()
-          .from(marketOffers)
-          .where(
-            and(
-              eq(marketOffers.id, offerId),
-              eq(marketOffers.status, 'active'),
-              isNotNull(marketOffers.explorationReportId),
-            ),
-          )
-          .for('update')
-          .limit(1);
-
-        if (!offer) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Offre non disponible ou deja vendue' });
-        }
-
-        if (offer.sellerId === userId) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Impossible d\'acheter sa propre offre' });
-        }
-
-        // 2. Load the linked exploration report
-        const [report] = await tx
-          .select()
-          .from(explorationReports)
-          .where(eq(explorationReports.id, offer.explorationReportId!))
-          .limit(1);
-
-        if (!report) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport d\'exploration introuvable' });
-        }
-
-        const reportBiomes = report.biomes as Array<{ id: string; name: string; rarity: string; effects: unknown }>;
-
-        // 3. Check the buyer doesn't already know all biomes in the report
-        if (reportBiomes.length > 0) {
-          const [knownResult] = await tx
-            .select({ count: sql<number>`count(*)::int` })
-            .from(discoveredBiomes)
-            .where(
-              and(
-                eq(discoveredBiomes.userId, userId),
-                eq(discoveredBiomes.galaxy, report.galaxy),
-                eq(discoveredBiomes.system, report.system),
-                eq(discoveredBiomes.position, report.position),
-                sql`${discoveredBiomes.biomeId} IN (${sql.join(reportBiomes.map(b => sql`${b.id}`), sql`, `)})`,
-              ),
-            );
-          if ((knownResult?.count ?? 0) >= reportBiomes.length) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: 'Vous connaissez deja toutes les informations de ce rapport',
-            });
-          }
-        } else {
-          // Report with 0 biomes — check if position is already known
-          const [posKnown] = await tx
-            .select({ userId: discoveredPositions.userId })
-            .from(discoveredPositions)
-            .where(
-              and(
-                eq(discoveredPositions.userId, userId),
-                eq(discoveredPositions.galaxy, report.galaxy),
-                eq(discoveredPositions.system, report.system),
-                eq(discoveredPositions.position, report.position),
-              ),
-            )
-            .limit(1);
-          if (posKnown) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: 'Vous connaissez deja toutes les informations de ce rapport',
-            });
-          }
-        }
-
-        // 4. Deduct payment from buyer's planet
-        const price = {
-          minerai: Number(offer.priceMinerai),
-          silicium: Number(offer.priceSilicium),
-          hydrogene: Number(offer.priceHydrogene),
-        };
-        await resourceService.spendResources(planetId, userId, price);
-
-        // 5. Credit payment to seller's planet
-        const [sellerPlanet] = await tx
-          .select()
-          .from(planets)
-          .where(eq(planets.id, offer.planetId))
-          .limit(1);
-
-        if (sellerPlanet) {
-          await tx
-            .update(planets)
-            .set({
-              minerai: String(Number(sellerPlanet.minerai) + price.minerai),
-              silicium: String(Number(sellerPlanet.silicium) + price.silicium),
-              hydrogene: String(Number(sellerPlanet.hydrogene) + price.hydrogene),
-            })
-            .where(eq(planets.id, offer.planetId));
-        }
-
-        // 6. Write discovery data for the buyer
-        // Upsert discovered_positions
-        await tx
-          .insert(discoveredPositions)
-          .values({
-            userId,
-            galaxy: report.galaxy,
-            system: report.system,
-            position: report.position,
-          })
-          .onConflictDoNothing();
-
-        // Upsert discovered_biomes for each biome in the report
-        if (reportBiomes.length > 0) {
-          await tx
-            .insert(discoveredBiomes)
-            .values(
-              reportBiomes.map((b) => ({
-                userId,
-                galaxy: report.galaxy,
-                system: report.system,
-                position: report.position,
-                biomeId: b.id,
-              })),
-            )
-            .onConflictDoNothing();
-        }
-
-        // 7. Update report: status -> sold (ownerId stays with the seller —
-        // the buyer consumes the data, they don't "own" the report object.
-        // This prevents the bought report from showing in the buyer's
-        // "Mes rapports" inventory.)
-        await tx
-          .update(explorationReports)
-          .set({ status: 'sold' })
-          .where(eq(explorationReports.id, report.id));
-
-        // 8. Update offer: status -> sold
-        await tx
-          .update(marketOffers)
-          .set({ status: 'sold' })
-          .where(eq(marketOffers.id, offerId));
-
-        // 9. Cancel the expiration job (outside transaction is fine — idempotent)
-        marketQueue.remove(`market-expire-${offerId}`).catch(() => {});
-
-        // 10. Send notifications
-        // Fetch usernames for notification payloads
-        const [buyer] = await tx
-          .select({ username: users.username })
-          .from(users)
-          .where(eq(users.id, userId))
-          .limit(1);
-        const [seller] = await tx
-          .select({ username: users.username })
-          .from(users)
-          .where(eq(users.id, offer.sellerId))
-          .limit(1);
-
-        const buyerUsername = buyer?.username ?? 'Inconnu';
-        const sellerUsername = seller?.username ?? 'Inconnu';
-
-        // Notify seller: report-sold
-        publishNotification(redis, offer.sellerId, {
-          type: 'report-sold',
-          payload: {
-            buyerUsername,
-            galaxy: report.galaxy,
-            system: report.system,
-            position: report.position,
-            price,
-          },
-        });
-
-        if (gameEventService) {
-          gameEventService.insert(offer.sellerId, offer.planetId, 'report-sold', {
-            buyerUsername,
-            galaxy: report.galaxy,
-            system: report.system,
-            position: report.position,
-            price,
-          }).catch(() => {});
-        }
-
-        // Notify buyer: report-purchased
-        publishNotification(redis, userId, {
-          type: 'report-purchased',
-          payload: {
-            sellerUsername,
-            galaxy: report.galaxy,
-            system: report.system,
-            position: report.position,
-            biomeCount: reportBiomes.length,
-          },
-        });
-
-        if (gameEventService) {
-          gameEventService.insert(userId, planetId, 'report-purchased', {
-            sellerUsername,
-            galaxy: report.galaxy,
-            system: report.system,
-            position: report.position,
-            biomeCount: reportBiomes.length,
-          }).catch(() => {});
-        }
-
-        return { success: true };
-      });
     },
 
     async cancelReportOffer(userId: string, reportId: string) {

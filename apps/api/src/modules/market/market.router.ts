@@ -69,15 +69,6 @@ export function createMarketRouter(marketService: ReturnType<typeof createMarket
         return marketService.createReportOffer(ctx.userId!, input.planetId, input);
       }),
 
-    buyReport: protectedProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        offerId: z.string().uuid(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return marketService.buyReport(ctx.userId!, input.planetId, input.offerId);
-      }),
-
     cancelReportOffer: protectedProcedure
       .input(z.object({ reportId: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {

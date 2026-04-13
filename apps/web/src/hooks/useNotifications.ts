@@ -278,13 +278,19 @@ export function useNotifications() {
       }
       case 'market-offer-reserved': {
         utils.market.myOffers.invalidate();
+        utils.market.listReports.invalidate();
         if (isToastEnabled(event.type)) {
-          const resLabel: Record<string, string> = { minerai: 'Minerai', silicium: 'Silicium', hydrogene: 'Hydrogène' };
-          const resName = resLabel[String(event.payload.resourceType)] ?? event.payload.resourceType;
-          const qty = Number(event.payload.quantity).toLocaleString('fr-FR');
           const pName = event.payload.planetName ?? 'votre planète';
-          addToast(`Offre acceptée : ${qty} ${resName}. Un cargo est en route vers ${pName}`);
-          showBrowserNotification('Offre acceptée', `${qty} ${resName} — cargo en route vers ${pName}`);
+          if (event.payload.resourceType) {
+            const resLabel: Record<string, string> = { minerai: 'Minerai', silicium: 'Silicium', hydrogene: 'Hydrogène' };
+            const resName = resLabel[String(event.payload.resourceType)] ?? event.payload.resourceType;
+            const qty = Number(event.payload.quantity).toLocaleString('fr-FR');
+            addToast(`Offre acceptée : ${qty} ${resName}. Un cargo est en route vers ${pName}`);
+            showBrowserNotification('Offre acceptée', `${qty} ${resName} — cargo en route vers ${pName}`);
+          } else {
+            addToast(`Un acheteur a réservé votre rapport d'exploration. Un cargo est en route vers ${pName}`);
+            showBrowserNotification('Rapport réservé', `Un acheteur est en route vers ${pName}`);
+          }
         }
         break;
       }

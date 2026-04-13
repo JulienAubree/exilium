@@ -1,6 +1,6 @@
 import { eq, and, ne } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { marketOffers, planets } from '@exilium/db';
+import { marketOffers, planets, explorationReports, discoveredBiomes, discoveredPositions, users } from '@exilium/db';
 import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
@@ -94,19 +94,23 @@ export class TradeHandler implements MissionHandler {
     }
 
     // Verify fleet cargo capacity can handle return merchandise
-    const shipStatsMap = buildShipStatsMap(config);
-    const fleetCargo = totalCargoCapacity(input.ships, shipStatsMap);
-    const merchandiseQty = Number(offer.quantity);
-    if (fleetCargo < merchandiseQty) {
-      // Rollback reservation
-      await ctx.db
-        .update(marketOffers)
-        .set({ status: 'active', reservedBy: null, reservedAt: null })
-        .where(eq(marketOffers.id, input.tradeId));
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `Capacité de fret insuffisante pour rapatrier la marchandise (${merchandiseQty.toLocaleString('fr-FR')} ${offer.resourceType}). Capacité: ${fleetCargo.toLocaleString('fr-FR')}`,
-      });
+    // For report offers, there's no physical merchandise to return —
+    // the data transfer happens on arrival with no return cargo needed.
+    if (offer.resourceType) {
+      const shipStatsMap = buildShipStatsMap(config);
+      const fleetCargo = totalCargoCapacity(input.ships, shipStatsMap);
+      const merchandiseQty = Number(offer.quantity);
+      if (fleetCargo < merchandiseQty) {
+        // Rollback reservation
+        await ctx.db
+          .update(marketOffers)
+          .set({ status: 'active', reservedBy: null, reservedAt: null })
+          .where(eq(marketOffers.id, input.tradeId));
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Capacité de fret insuffisante pour rapatrier la marchandise (${merchandiseQty.toLocaleString('fr-FR')} ${offer.resourceType}). Capacité: ${fleetCargo.toLocaleString('fr-FR')}`,
+        });
+      }
     }
 
     // Notify seller
@@ -212,7 +216,89 @@ export class TradeHandler implements MissionHandler {
       });
     }
 
-    // Load merchandise into fleet cargo for return trip
+    // ── Report offer: transfer biome data, no physical merchandise ──
+    if (offer.explorationReportId) {
+      const [report] = await ctx.db
+        .select()
+        .from(explorationReports)
+        .where(eq(explorationReports.id, offer.explorationReportId))
+        .limit(1);
+
+      if (report) {
+        const reportBiomes = report.biomes as Array<{ id: string; name: string; rarity: string; effects: unknown }>;
+
+        // Write discovery data for the buyer
+        await ctx.db
+          .insert(discoveredPositions)
+          .values({
+            userId: fleetEvent.userId,
+            galaxy: report.galaxy,
+            system: report.system,
+            position: report.position,
+          })
+          .onConflictDoNothing();
+
+        if (reportBiomes.length > 0) {
+          await ctx.db
+            .insert(discoveredBiomes)
+            .values(
+              reportBiomes.map((b) => ({
+                userId: fleetEvent.userId,
+                galaxy: report.galaxy,
+                system: report.system,
+                position: report.position,
+                biomeId: b.id,
+              })),
+            )
+            .onConflictDoNothing();
+        }
+
+        // Mark report as sold
+        await ctx.db
+          .update(explorationReports)
+          .set({ status: 'sold' })
+          .where(eq(explorationReports.id, report.id));
+
+        // Notify both parties about report purchase
+        if (ctx.redis) {
+          const [buyer] = await ctx.db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, fleetEvent.userId))
+            .limit(1);
+          const [seller] = await ctx.db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, offer.sellerId))
+            .limit(1);
+
+          publishNotification(ctx.redis, offer.sellerId, {
+            type: 'report-sold',
+            payload: {
+              buyerUsername: buyer?.username ?? 'Joueur',
+              galaxy: report.galaxy,
+              system: report.system,
+              position: report.position,
+              price,
+            },
+          });
+          publishNotification(ctx.redis, fleetEvent.userId, {
+            type: 'report-purchased',
+            payload: {
+              sellerUsername: seller?.username ?? 'Joueur',
+              galaxy: report.galaxy,
+              system: report.system,
+              position: report.position,
+              biomeCount: reportBiomes.length,
+            },
+          });
+        }
+      }
+
+      return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 } };
+    }
+
+    // ── Resource offer: load merchandise into cargo for return trip ──
     const merchandise = { minerai: 0, silicium: 0, hydrogene: 0 };
     if (offer.resourceType && offer.resourceType in merchandise) {
       merchandise[offer.resourceType as keyof typeof merchandise] = Number(offer.quantity);

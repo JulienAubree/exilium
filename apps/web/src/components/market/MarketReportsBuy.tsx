@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { useToastStore } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -37,8 +37,7 @@ interface MarketReportsBuyProps {
 }
 
 export function MarketReportsBuy({ planetId }: MarketReportsBuyProps) {
-  const utils = trpc.useUtils();
-  const addToast = useToastStore((s) => s.addToast);
+  const navigate = useNavigate();
   const { data: gameConfig } = useGameConfig();
 
   const [galaxyFilter, setGalaxyFilter] = useState<string>('');
@@ -57,14 +56,17 @@ export function MarketReportsBuy({ planetId }: MarketReportsBuyProps) {
     },
   );
 
-  const buyMutation = trpc.market.buyReport.useMutation({
-    onSuccess: () => {
-      addToast('Rapport acquis');
-      utils.market.listReports.invalidate();
-      utils.galaxy.system.invalidate();
-    },
-    onError: (err) => addToast(err.message, 'error'),
-  });
+  const handleBuy = (offer: {
+    offerId: string;
+    priceMinerai: number;
+    priceSilicium: number;
+    priceHydrogene: number;
+    sellerCoords: { galaxy: number; system: number; position: number };
+  }) => {
+    navigate(
+      `/fleet/send?mission=trade&galaxy=${offer.sellerCoords.galaxy}&system=${offer.sellerCoords.system}&position=${offer.sellerCoords.position}&tradeId=${offer.offerId}&cargoMi=${offer.priceMinerai}&cargoSi=${offer.priceSilicium}&cargoH2=${offer.priceHydrogene}`,
+    );
+  };
 
   const resolvePlanetName = (planetClassId: string): string => {
     if (!gameConfig?.planetTypes) return planetClassId;
@@ -204,8 +206,7 @@ export function MarketReportsBuy({ planetId }: MarketReportsBuyProps) {
                   variant="retro"
                   size="sm"
                   className="w-full mt-auto"
-                  onClick={() => buyMutation.mutate({ planetId, offerId: offer.offerId })}
-                  disabled={buyMutation.isPending}
+                  onClick={() => handleBuy(offer)}
                 >
                   Acheter
                 </Button>
