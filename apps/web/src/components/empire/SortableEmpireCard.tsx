@@ -49,16 +49,16 @@ export function SortableEmpireCard({
       style={style}
       className={cn(
         'relative',
-        isDragging && 'z-50 opacity-80',
+        isDragging && 'z-50 opacity-30',
       )}
     >
-      {/* Drag handle -- desktop only */}
+      {/* Drag handle -- desktop: full-width top bar for easy grabbing */}
       <div
-        className="absolute left-2 top-2 z-10 hidden cursor-grab rounded-md border border-border/50 bg-card/90 p-1.5 backdrop-blur-sm active:cursor-grabbing lg:flex"
+        className="absolute inset-x-0 top-0 z-10 hidden h-10 cursor-grab items-center justify-center rounded-t-lg bg-gradient-to-b from-card/95 to-transparent backdrop-blur-sm active:cursor-grabbing lg:flex"
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
 
       {/* Mobile arrow buttons */}
