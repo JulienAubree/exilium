@@ -1,0 +1,89 @@
+import { trpc } from '@/trpc';
+import { Button } from '@/components/ui/button';
+import { useToastStore } from '@/stores/toast.store';
+import { cn } from '@/lib/utils';
+import {
+  RESOURCE_COLORS,
+  RESOURCE_GLOWS,
+  RESOURCE_CARD_CLASS,
+  RESOURCE_LABELS,
+  STATUS_STYLES,
+  STATUS_LABELS,
+  formatPrice,
+} from './market-constants';
+
+interface ResourceMyOffersProps {
+  planetId: string;
+}
+
+export function ResourceMyOffers({ planetId: _planetId }: ResourceMyOffersProps) {
+  const utils = trpc.useUtils();
+  const addToast = useToastStore((s) => s.addToast);
+
+  const { data: myOffers } = trpc.market.myOffers.useQuery();
+
+  const cancelOfferMutation = trpc.market.cancelOffer.useMutation({
+    onSuccess: () => {
+      addToast('Offre annulee');
+      utils.market.myOffers.invalidate();
+      utils.resource.production.invalidate();
+    },
+    onError: (err) => addToast(err.message, 'error'),
+  });
+
+  const resourceOffers = (myOffers ?? []).filter((o) => o.resourceType != null);
+
+  return (
+    <div>
+      {resourceOffers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <svg className="h-10 w-10 mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" />
+          </svg>
+          <p className="text-sm">Aucune offre.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {resourceOffers.map((offer) => (
+            <div
+              key={offer.id}
+              className={cn(
+                'retro-card flex items-center justify-between p-4',
+                RESOURCE_CARD_CLASS[offer.resourceType],
+              )}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className={cn('font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType], RESOURCE_GLOWS[offer.resourceType])}>
+                    {Number(offer.quantity).toLocaleString('fr-FR')}
+                  </span>
+                  <span className={cn('text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>
+                    {RESOURCE_LABELS[offer.resourceType]}
+                  </span>
+                  <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-medium', STATUS_STYLES[offer.status])}>
+                    {STATUS_LABELS[offer.status]}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1.5">
+                  Prix : {formatPrice(offer.priceMinerai, offer.priceSilicium, offer.priceHydrogene)}
+                </div>
+              </div>
+              <div className="shrink-0 ml-3">
+                {offer.status === 'active' && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}
+                    disabled={cancelOfferMutation.isPending}
+                  >
+                    Annuler
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
