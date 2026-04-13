@@ -14,6 +14,7 @@ import type { DetailPanelActions, PlanetTypeMeta } from '@/components/galaxy/Gal
 import { useAuthStore } from '@/stores/auth.store';
 import { useChatStore } from '@/stores/chat.store';
 import { usePlanetStore } from '@/stores/planet.store';
+import { useToastStore } from '@/stores/toast.store';
 
 // Note: these biome constants are intentionally duplicated with
 // apps/web/src/components/galaxy/GalaxySystemView/DetailPanel/BiomeChips.tsx —
@@ -119,6 +120,14 @@ export default function Galaxy() {
 
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
+  const addToast = useToastStore((s) => s.addToast);
+
+  const createReportMutation = trpc.explorationReport.create.useMutation({
+    onSuccess: () => {
+      addToast('Rapport cree — disponible dans votre inventaire');
+    },
+    onError: (err) => addToast(err.message, 'error'),
+  });
   const openChat = useChatStore((s) => s.openChat);
   const { data, isLoading } = trpc.galaxy.system.useQuery(
     { galaxy, system },
@@ -251,7 +260,10 @@ export default function Galaxy() {
       setActivePlanetStore(planetId);
       navigate('/');
     },
-    onCreateReport: () => navigate('/market'),
+    onCreateReport: (position) => {
+      if (!planetId) return;
+      createReportMutation.mutate({ planetId, galaxy, system, position });
+    },
   }), [navigate, galaxy, system, openChat, myCapitalPosition, setSearchParams, setActivePlanetStore]);
 
   // Touch swipe for system navigation
