@@ -2,7 +2,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { planets, users, debrisFields, allianceMembers, alliances, planetBiomes, biomeDefinitions, discoveredBiomes, discoveredPositions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
-import { seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, calculateMaxTemp } from '@exilium/game-engine';
+import { seededRandom, coordinateSeed, generateBiomeCount, pickPlanetTypeForPosition, calculateMaxTemp } from '@exilium/game-engine';
 
 export function createGalaxyService(db: Database, gameConfigService: GameConfigService) {
   return {
@@ -10,13 +10,24 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
       const config = await gameConfigService.getFullConfig();
       const positions = Number(config.universe.positions) || 16;
       const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
-      const biomeCatalogue = config.biomes;
 
-      // Load player's discovered biomes for this system
+
+      // Load player's discovered biomes for this system, enriched with
+      // biome definition data. This is the authoritative source of what
+      // the player sees — NOT the regenerated pickBiomes() set. This way,
+      // even if the biome catalogue changes between deploys, previously
+      // discovered biomes remain visible and stable.
       const playerDiscoveries = _currentUserId
         ? await db
-            .select({ position: discoveredBiomes.position, biomeId: discoveredBiomes.biomeId })
+            .select({
+              position: discoveredBiomes.position,
+              biomeId: discoveredBiomes.biomeId,
+              name: biomeDefinitions.name,
+              rarity: biomeDefinitions.rarity,
+              effects: biomeDefinitions.effects,
+            })
             .from(discoveredBiomes)
+            .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, discoveredBiomes.biomeId))
             .where(
               and(
                 eq(discoveredBiomes.userId, _currentUserId),
@@ -26,7 +37,13 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
             )
         : [];
 
-      const discoverySet = new Set(playerDiscoveries.map((d) => `${d.position}:${d.biomeId}`));
+      // Group discovered biomes by position for fast lookup
+      const discoveryByPosition = new Map<number, Array<{ id: string; name: string; rarity: string; effects: unknown }>>();
+      for (const d of playerDiscoveries) {
+        const arr = discoveryByPosition.get(d.position);
+        const entry = { id: d.biomeId, name: d.name, rarity: d.rarity, effects: d.effects };
+        if (arr) arr.push(entry); else discoveryByPosition.set(d.position, [entry]);
+      }
 
       // Load player's discovered positions for this system
       const discoveredPositionRows = _currentUserId
@@ -143,16 +160,18 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
         const typeRng = seededRandom(coordinateSeed(galaxy, system, i) ^ 0x9E3779B9);
         const planetClassId = pickPlanetTypeForPosition(maxTemp, typeRng);
 
-        // Compute biomes deterministically
+        // Compute the TOTAL biome count deterministically (for the
+        // "exploration incomplete" indicator). We still regenerate here
+        // to know how many biomes EXIST, but the DISPLAYED biomes come
+        // from discovered_biomes (persisted, stable across deploys).
         const rng = seededRandom(coordinateSeed(galaxy, system, i));
-        const count = generateBiomeCount(rng);
-        const biomes = pickBiomes(biomeCatalogue, planetClassId, count, rng);
+        const totalBiomeCount = generateBiomeCount(rng);
 
-        const discoveredForPos = biomes.filter((b) =>
-          discoverySet.has(`${i}:${b.id}`),
-        );
-        const totalBiomeCount = biomes.length;
-        const undiscoveredCount = totalBiomeCount - discoveredForPos.length;
+        // Read discovered biomes from the persisted set (not from the
+        // regenerated pickBiomes output). This makes the display immune
+        // to catalogue changes between deploys.
+        const discoveredForPos = discoveryByPosition.get(i) ?? [];
+        const undiscoveredCount = Math.max(0, totalBiomeCount - discoveredForPos.length);
 
         slots[i - 1] = isDiscovered
           ? {
@@ -160,10 +179,7 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
               position: i,
               planetClassId,
               isDiscovered: true,
-              biomes: discoveredForPos.map((b) => {
-                const full = biomeCatalogue.find((bc: any) => bc.id === b.id);
-                return { id: b.id, name: (full as any)?.name ?? b.id, rarity: b.rarity, effects: b.effects };
-              }),
+              biomes: discoveredForPos,
               totalBiomeCount,
               undiscoveredCount,
             }
