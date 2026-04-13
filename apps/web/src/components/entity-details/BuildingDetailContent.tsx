@@ -20,6 +20,7 @@ interface BuildingListItem {
   id: string;
   name: string;
   currentLevel: number;
+  prerequisites?: { buildingId: string; level: number; currentLevel?: number }[];
 }
 
 interface Props {
@@ -176,7 +177,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
   const configDef = gameConfig?.buildings[buildingId];
   const name = getBuildingName(buildingId, gameConfig);
   const flavorText = configDef?.flavorText ?? '';
-  const prerequisites = configDef?.prerequisites ?? [];
+  const prerequisites = building?.prerequisites ?? configDef?.prerequisites ?? [];
 
   // Bonus provided BY this building
   const buildingBonus = useMemo(() => {
