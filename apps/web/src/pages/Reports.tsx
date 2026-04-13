@@ -5,14 +5,18 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { ReportCard } from '@/components/reports/ReportCard';
+import { MissionType } from '@exilium/shared';
 
-const FILTER_OPTIONS = [
+// Grouping is a UX decision — some mission types are shown under the
+// same filter label. Maintain this list when adding new mission types.
+const FILTER_OPTIONS: Array<{ label: string; types: MissionType[] }> = [
   { label: 'Tous', types: [] },
-  { label: 'Combat', types: ['attack', 'pirate'] },
-  { label: 'Mine', types: ['mine'] },
-  { label: 'Recyclage', types: ['recycle'] },
-  { label: 'Espionnage', types: ['spy', 'scan'] },
-  { label: 'Exploration', types: ['explore'] },
+  { label: 'Combat', types: [MissionType.Attack, MissionType.Pirate] },
+  { label: 'Mine', types: [MissionType.Mine] },
+  { label: 'Recyclage', types: [MissionType.Recycle] },
+  { label: 'Espionnage', types: [MissionType.Spy, MissionType.Scan] },
+  { label: 'Exploration', types: [MissionType.Explore] },
+  { label: 'Commerce', types: [MissionType.Trade] },
 ];
 
 export default function Reports() {
@@ -27,7 +31,7 @@ export default function Reports() {
   const currentCursor = cursors[cursors.length - 1];
 
   const { data, isFetching } = trpc.report.list.useQuery(
-    { cursor: currentCursor, limit: 20, missionTypes: typeFilter.length > 0 ? typeFilter as any : undefined },
+    { cursor: currentCursor, limit: 20, missionTypes: typeFilter.length > 0 ? typeFilter : undefined },
     { placeholderData: (prev: any) => prev },
   );
 
