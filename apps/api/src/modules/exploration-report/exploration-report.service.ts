@@ -173,7 +173,8 @@ export function createExplorationReportService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette position est deja colonisee — impossible de vendre un rapport' });
       }
 
-      // 2. Check the user EXPLORED this position themselves (not just via a purchased report)
+      // 2. Check the user EXPLORED this position themselves (not just via a purchased report).
+      // Use JSONB cast to integer for reliable comparison (coordinates are stored as JSON numbers).
       const [exploreReport] = await db
         .select({ id: missionReports.id })
         .from(missionReports)
@@ -181,9 +182,9 @@ export function createExplorationReportService(
           and(
             eq(missionReports.userId, userId),
             eq(missionReports.missionType, 'explore'),
-            sql`${missionReports.coordinates}->>'galaxy' = ${String(input.galaxy)}`,
-            sql`${missionReports.coordinates}->>'system' = ${String(input.system)}`,
-            sql`${missionReports.coordinates}->>'position' = ${String(input.position)}`,
+            sql`(${missionReports.coordinates}->>'galaxy')::int = ${input.galaxy}`,
+            sql`(${missionReports.coordinates}->>'system')::int = ${input.system}`,
+            sql`(${missionReports.coordinates}->>'position')::int = ${input.position}`,
           ),
         )
         .limit(1);
@@ -342,9 +343,9 @@ export function createExplorationReportService(
           and(
             eq(missionReports.userId, userId),
             eq(missionReports.missionType, 'explore'),
-            sql`${missionReports.coordinates}->>'galaxy' = ${String(input.galaxy)}`,
-            sql`${missionReports.coordinates}->>'system' = ${String(input.system)}`,
-            sql`${missionReports.coordinates}->>'position' = ${String(input.position)}`,
+            sql`(${missionReports.coordinates}->>'galaxy')::int = ${input.galaxy}`,
+            sql`(${missionReports.coordinates}->>'system')::int = ${input.system}`,
+            sql`(${missionReports.coordinates}->>'position')::int = ${input.position}`,
           ),
         )
         .limit(1);
