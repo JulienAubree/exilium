@@ -1,5 +1,5 @@
 // apps/web/src/components/reports/ExploreReportDetail.tsx
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -145,7 +145,6 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
   const addToast = useToastStore((s) => s.addToast);
-  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const canCreate = trpc.explorationReport.canCreate.useQuery({
     galaxy: coordinates.galaxy,
@@ -155,15 +154,15 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
 
   const createMutation = trpc.explorationReport.create.useMutation({
     onSuccess: () => {
-      addToast('Rapport cree — disponible dans votre inventaire', 'success');
-      setShowCreateForm(false);
+      addToast('Rapport cree — renseignez votre prix de vente', 'success');
+      navigate('/market?view=report-my');
     },
     onError: (err) => {
       addToast(err.message ?? 'Erreur lors de la creation du rapport', 'error');
     },
   });
 
-  const handleCreate = () => {
+  const handleSellReport = () => {
     if (!planetId) return;
     createMutation.mutate({
       planetId,
@@ -406,33 +405,14 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
             Explorer à nouveau
           </ActionButton>
           <ActionButton
-            enabled={canCreate.data?.canCreate === true}
+            enabled={canCreate.data?.canCreate === true && !createMutation.isPending}
             enabledClassName={BTN_AMBER}
-            disabledTitle={canCreate.data?.reason ?? 'Creation impossible'}
-            onClick={() => setShowCreateForm((v) => !v)}
+            disabledTitle={canCreate.data?.reason ?? 'Vente impossible'}
+            onClick={handleSellReport}
           >
-            Creer un rapport vendable
+            {createMutation.isPending ? 'Creation...' : 'Vendre le rapport'}
           </ActionButton>
         </div>
-        {showCreateForm && (
-          <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
-            <div className="text-[10px] uppercase tracking-wider text-amber-400/80">Creer un rapport vendable</div>
-            <div className="text-xs text-muted-foreground">
-              Position [{coordinates.galaxy}:{coordinates.system}:{coordinates.position}]
-              {' · '}Type {planetTypeName}
-              {' · '}{discoveredCount > 0 ? `${discoveredCount} biome(s) inclus` : 'Aucun biome'}
-              {isComplete && ' · Complet'}
-            </div>
-            <div className="flex gap-2">
-              <button type="button" className={BTN_AMBER} onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creation...' : 'Confirmer'}
-              </button>
-              <button type="button" className={BTN_NEUTRAL} onClick={() => setShowCreateForm(false)}>
-                Annuler
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -7,6 +7,10 @@ export type MarketView =
   | 'report-buy'
   | 'report-my';
 
+export const MARKET_VIEWS: MarketView[] = [
+  'resource-buy', 'resource-sell', 'resource-my', 'report-buy', 'report-my',
+];
+
 interface MarketSidebarProps {
   view: MarketView;
   onViewChange: (view: MarketView) => void;

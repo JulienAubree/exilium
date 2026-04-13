@@ -197,7 +197,7 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
                 className={BTN_AMBER}
                 onClick={() => actions.onCreateReport(view.position)}
               >
-                Creer un rapport
+                Vendre le rapport
               </button>
             </>
           )}

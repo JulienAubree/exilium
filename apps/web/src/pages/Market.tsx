@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useOutletContext, Link } from 'react-router';
+import { useOutletContext, useSearchParams, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PageHeader } from '@/components/common/PageHeader';
-import { MarketSidebar, type MarketView } from '@/components/market/MarketSidebar';
+import { MarketSidebar, type MarketView, MARKET_VIEWS } from '@/components/market/MarketSidebar';
 import { MarketMobileTabs } from '@/components/market/MarketMobileTabs';
 import { ResourceBuy } from '@/components/market/ResourceBuy';
 import { ResourceSell } from '@/components/market/ResourceSell';
@@ -14,7 +14,13 @@ import { MarketReportsInventory } from '@/components/market/MarketReportsInvento
 export default function Market() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
-  const [view, setView] = useState<MarketView>('resource-buy');
+  const [searchParams] = useSearchParams();
+  const initialView = searchParams.get('view');
+  const [view, setView] = useState<MarketView>(
+    initialView && MARKET_VIEWS.includes(initialView as MarketView)
+      ? (initialView as MarketView)
+      : 'resource-buy',
+  );
 
   const commissionPercent = Number(gameConfig?.universe?.market_commission_percent) || 5;
 

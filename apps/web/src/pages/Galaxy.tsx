@@ -124,7 +124,8 @@ export default function Galaxy() {
 
   const createReportMutation = trpc.explorationReport.create.useMutation({
     onSuccess: () => {
-      addToast('Rapport cree — disponible dans votre inventaire');
+      addToast('Rapport cree — renseignez votre prix de vente');
+      navigate('/market?view=report-my');
     },
     onError: (err) => addToast(err.message, 'error'),
   });
