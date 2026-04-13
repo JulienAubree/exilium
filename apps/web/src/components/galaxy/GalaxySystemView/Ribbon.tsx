@@ -9,11 +9,20 @@
  * when the canvas highlights a slot, the matching ribbon row highlights too.
  */
 
+import type { ReactElement } from 'react';
 import { PlanetDot } from '../PlanetDot';
 import { PlanetVisual } from '../PlanetVisual';
 import { DebrisFieldIcon } from '../DebrisFieldIcon';
 import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
+
+const RARITY_COLORS: Record<string, string> = {
+  common: '#9ca3af',
+  uncommon: '#22c55e',
+  rare: '#3b82f6',
+  epic: '#a855f7',
+  legendary: '#eab308',
+};
 
 function hasDebris(view: SlotView): boolean {
   if (view.kind !== 'planet') return false;
@@ -96,23 +105,38 @@ export function Ribbon({
               ? 'bg-cyan-500/10 border-l-2 border-transparent'
               : 'bg-transparent border-l-2 border-transparent hover:bg-cyan-500/10';
 
-          let displayName: string;
+          let displayContent: ReactElement | string;
           let textClasses: string;
           switch (view.kind) {
             case 'planet':
-              displayName = view.planetName;
+              displayContent = view.planetName;
               textClasses = 'text-foreground';
               break;
             case 'empty-discovered':
-              displayName = 'Vide';
+              if (view.biomes.length > 0) {
+                displayContent = (
+                  <span className="inline-flex items-center gap-1">
+                    {view.biomes.map((b) => (
+                      <span
+                        key={b.id}
+                        className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+                        style={{ backgroundColor: RARITY_COLORS[b.rarity] ?? '#9ca3af' }}
+                        title={`${b.name} (${b.rarity})`}
+                      />
+                    ))}
+                  </span>
+                );
+              } else {
+                displayContent = 'Vide';
+              }
               textClasses = 'text-muted-foreground';
               break;
             case 'undiscovered':
-              displayName = 'Inconnu';
+              displayContent = 'Inconnu';
               textClasses = 'text-muted-foreground italic';
               break;
             case 'belt':
-              displayName = 'Ceinture';
+              displayContent = 'Ceinture';
               textClasses = 'text-orange-400/80';
               break;
           }
@@ -135,7 +159,7 @@ export function Ribbon({
                 <MiniMarker view={view} />
               </div>
               <div className={`min-w-0 flex-1 text-xs truncate ${textClasses}`}>
-                {displayName}
+                {displayContent}
               </div>
               {hasDebris(view) && (
                 <span
