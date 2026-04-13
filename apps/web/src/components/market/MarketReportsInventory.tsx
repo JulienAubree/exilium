@@ -206,11 +206,13 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-foreground">
-              {resolvePlanetName(report.planetClassId)}
+              <span className="font-mono text-muted-foreground">{report.galaxy}:{report.system}:{report.position}</span>
+              {' '}
+              <span className="text-cyan-400/70">—</span>
+              {' '}
+              Planete {resolvePlanetName(report.planetClassId)}
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">
-              [{report.galaxy}:{report.system}:{report.position}]
-            </span>
+            {opts?.showStars && stars > 0 && <ValueStars count={stars} />}
             {opts?.clickable && (
               <svg
                 width={12}
@@ -246,7 +248,6 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
             >
               {report.isComplete ? 'Complet' : 'Partiel'}
             </span>
-            {opts?.showStars && stars > 0 && <ValueStars count={stars} />}
           </div>
         </div>
       </div>

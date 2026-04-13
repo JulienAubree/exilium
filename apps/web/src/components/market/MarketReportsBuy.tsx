@@ -148,10 +148,11 @@ export function MarketReportsBuy({ planetId }: MarketReportsBuyProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-foreground">
-                        {resolvePlanetName(offer.planetClassId)}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        [{offer.galaxy}:{offer.system}:?]
+                        <span className="font-mono text-muted-foreground">{offer.galaxy}:{offer.system}:?</span>
+                        {' '}
+                        <span className="text-cyan-400/70">—</span>
+                        {' '}
+                        Planete {resolvePlanetName(offer.planetClassId)}
                       </span>
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">
