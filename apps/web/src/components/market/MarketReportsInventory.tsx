@@ -274,7 +274,7 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => cancelOfferMutation.mutate({ offerId: report.id })}
+                    onClick={() => cancelOfferMutation.mutate({ reportId: report.id })}
                     disabled={cancelOfferMutation.isPending}
                   >
                     Annuler

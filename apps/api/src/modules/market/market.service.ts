@@ -184,6 +184,14 @@ export function createMarketService(
         }
       }
 
+      // For report offers, restore the report to inventory
+      if (offer.explorationReportId) {
+        await db
+          .update(explorationReports)
+          .set({ status: 'inventory' })
+          .where(eq(explorationReports.id, offer.explorationReportId));
+      }
+
       // Update status
       await db
         .update(marketOffers)
@@ -475,80 +483,84 @@ export function createMarketService(
       priceSilicium: number;
       priceHydrogene: number;
     }) {
-      // 1. Verify report exists, ownership, status
-      const [report] = await db
-        .select()
-        .from(explorationReports)
-        .where(eq(explorationReports.id, input.reportId))
-        .limit(1);
+      const { offer, durationHours } = await db.transaction(async (tx) => {
+        // 1. Lock and load the report (FOR UPDATE prevents TOCTOU race)
+        const [report] = await tx
+          .select()
+          .from(explorationReports)
+          .where(
+            and(
+              eq(explorationReports.id, input.reportId),
+              eq(explorationReports.ownerId, userId),
+            ),
+          )
+          .for('update')
+          .limit(1);
 
-      if (!report) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouve' });
-      }
-      if (report.ownerId !== userId) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Ce rapport ne vous appartient pas' });
-      }
-      if (report.status !== 'inventory') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le rapport doit etre en inventaire pour etre mis en vente' });
-      }
+        if (!report || report.status !== 'inventory') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Rapport non trouvé ou non disponible' });
+        }
 
-      // 2. Check market building level
-      const marketLevel = await getMarketLevel(planetId);
-      if (marketLevel < 1) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis' });
-      }
+        // 2. Check market building level
+        const marketLevel = await getMarketLevel(planetId);
+        if (marketLevel < 1) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis' });
+        }
 
-      // 3. Check max offers (report offers count against the same limit)
-      const count = await countActiveOffers(userId);
-      if (count >= maxMarketOffers(marketLevel)) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxMarketOffers(marketLevel)})` });
-      }
+        // 3. Check max offers (report offers count against the same limit)
+        const count = await countActiveOffers(userId);
+        if (count >= maxMarketOffers(marketLevel)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxMarketOffers(marketLevel)})` });
+        }
 
-      // 4. Validate price (at least one > 0)
-      if (input.priceMinerai <= 0 && input.priceSilicium <= 0 && input.priceHydrogene <= 0) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le prix doit être supérieur à 0' });
-      }
+        // 4. Validate price (at least one > 0)
+        if (input.priceMinerai <= 0 && input.priceSilicium <= 0 && input.priceHydrogene <= 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le prix doit être supérieur à 0' });
+        }
 
-      // 5. Calculate commission: % of each price component independently
-      const { adjustedPercent, durationHours } = await getCommissionConfig(userId);
-      const commissionMinerai = calculateSellerCommission(input.priceMinerai, adjustedPercent);
-      const commissionSilicium = calculateSellerCommission(input.priceSilicium, adjustedPercent);
-      const commissionHydrogene = calculateSellerCommission(input.priceHydrogene, adjustedPercent);
+        // 5. Calculate commission: % of each price component independently
+        const { adjustedPercent, durationHours: durHours } = await getCommissionConfig(userId);
+        const commissionMinerai = calculateSellerCommission(input.priceMinerai, adjustedPercent);
+        const commissionSilicium = calculateSellerCommission(input.priceSilicium, adjustedPercent);
+        const commissionHydrogene = calculateSellerCommission(input.priceHydrogene, adjustedPercent);
 
-      // 6. Deduct commission from planet
-      await resourceService.spendResources(planetId, userId, {
-        minerai: commissionMinerai,
-        silicium: commissionSilicium,
-        hydrogene: commissionHydrogene,
+        // 6. Deduct commission from planet (uses main db connection, same pattern as buyReport)
+        await resourceService.spendResources(planetId, userId, {
+          minerai: commissionMinerai,
+          silicium: commissionSilicium,
+          hydrogene: commissionHydrogene,
+        });
+
+        // 7. Update report status to listed
+        await tx
+          .update(explorationReports)
+          .set({ status: 'listed' })
+          .where(eq(explorationReports.id, input.reportId));
+
+        // 8. Calculate expiration
+        const expiresAt = new Date(Date.now() + durHours * 60 * 60 * 1000);
+
+        // 9. Insert market offer
+        const [txOffer] = await tx
+          .insert(marketOffers)
+          .values({
+            sellerId: userId,
+            planetId,
+            resourceType: null,
+            quantity: null,
+            explorationReportId: input.reportId,
+            priceMinerai: String(input.priceMinerai),
+            priceSilicium: String(input.priceSilicium),
+            priceHydrogene: String(input.priceHydrogene),
+            status: 'active',
+            expiresAt,
+          })
+          .returning();
+
+        return { offer: txOffer, durationHours: durHours };
       });
 
-      // 7. Update report status to listed
-      await db
-        .update(explorationReports)
-        .set({ status: 'listed' })
-        .where(eq(explorationReports.id, input.reportId));
-
-      // 8. Calculate expiration
-      const expiresAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
-
-      // 9. Insert market offer
-      const [offer] = await db
-        .insert(marketOffers)
-        .values({
-          sellerId: userId,
-          planetId,
-          resourceType: null,
-          quantity: null,
-          explorationReportId: input.reportId,
-          priceMinerai: String(input.priceMinerai),
-          priceSilicium: String(input.priceSilicium),
-          priceHydrogene: String(input.priceHydrogene),
-          status: 'active',
-          expiresAt,
-        })
-        .returning();
-
-      // 10. Schedule expiration job
+      // 10. Schedule expiration job (outside transaction — idempotent)
       await marketQueue.add(
         'market-expire',
         { offerId: offer.id },
@@ -770,17 +782,16 @@ export function createMarketService(
       });
     },
 
-    async cancelReportOffer(userId: string, offerId: string) {
-      // 1. Load offer and verify
+    async cancelReportOffer(userId: string, reportId: string) {
+      // 1. Find the active offer for this report
       const [offer] = await db
         .select()
         .from(marketOffers)
         .where(
           and(
-            eq(marketOffers.id, offerId),
             eq(marketOffers.sellerId, userId),
+            eq(marketOffers.explorationReportId, reportId),
             eq(marketOffers.status, 'active'),
-            isNotNull(marketOffers.explorationReportId),
           ),
         )
         .limit(1);
@@ -810,10 +821,10 @@ export function createMarketService(
       await db
         .update(marketOffers)
         .set({ status: 'cancelled' })
-        .where(eq(marketOffers.id, offerId));
+        .where(eq(marketOffers.id, offer.id));
 
       // 5. Cancel expiration job
-      await marketQueue.remove(`market-expire-${offerId}`);
+      await marketQueue.remove(`market-expire-${offer.id}`);
 
       // 6. Commission is NOT refunded (already destroyed at listing time)
       return { success: true };

@@ -296,14 +296,20 @@ export function useNotifications() {
           showBrowserNotification('Vente finalisée', `${event.payload.quantity}x ${event.payload.resourceType} vendu`);
         }
         break;
-      case 'market-offer-expired':
+      case 'market-offer-expired': {
         utils.market.myOffers.invalidate();
         utils.resource.production.invalidate();
+        utils.explorationReport.list.invalidate();
         if (isToastEnabled(event.type)) {
-          addToast(`Offre expirée, ressources restituées (${event.payload.quantity}x ${event.payload.resourceType})`);
-          showBrowserNotification('Offre expirée', 'Ressources restituées');
+          const isReport = !event.payload.resourceType;
+          const msg = isReport
+            ? `Offre de rapport d'exploration expirée`
+            : `Offre expirée, ressources restituées (${event.payload.quantity}x ${event.payload.resourceType})`;
+          addToast(msg);
+          showBrowserNotification('Offre expirée', msg);
         }
         break;
+      }
       case 'daily-quest-completed':
         utils.exilium.getBalance.invalidate();
         utils.dailyQuest.getQuests.invalidate();
