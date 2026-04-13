@@ -56,7 +56,7 @@ export function createBuildingService(
 
       return Object.values(config.buildings)
         .filter((def) => {
-          const allowed = (def as { allowedPlanetTypes?: string[] | null }).allowedPlanetTypes;
+          const allowed = def.allowedPlanetTypes;
           if (!allowed) return true;
           return allowed.includes(planet.planetClassId ?? '');
         })
@@ -106,7 +106,7 @@ export function createBuildingService(
       }
 
       // Check planet type restriction
-      const allowedTypes = (def as { allowedPlanetTypes?: string[] | null }).allowedPlanetTypes;
+      const allowedTypes = def.allowedPlanetTypes;
       if (allowedTypes && !allowedTypes.includes(planet.planetClassId ?? '')) {
         throw new TRPCError({
           code: 'BAD_REQUEST',

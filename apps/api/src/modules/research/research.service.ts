@@ -137,7 +137,7 @@ export function createResearchService(
             const prereqCheck = checkResearchPrerequisites(def.prerequisites, buildingLevels, researchLevels);
 
             // Check annex prerequisite if required
-            const requiredAnnex = (def as { requiredAnnexType?: string | null }).requiredAnnexType;
+            const requiredAnnex = def.requiredAnnexType;
             let annexMet = true;
             if (requiredAnnex) {
               annexMet = await hasAnnexOfType(db, userId, requiredAnnex);
@@ -199,7 +199,7 @@ export function createResearchService(
       }
 
       // Check annex prerequisite
-      const requiredAnnex = (def as { requiredAnnexType?: string | null }).requiredAnnexType;
+      const requiredAnnex = def.requiredAnnexType;
       if (requiredAnnex) {
         const hasAnnex = await hasAnnexOfType(db, userId, requiredAnnex);
         if (!hasAnnex) {

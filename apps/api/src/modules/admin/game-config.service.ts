@@ -149,6 +149,7 @@ export interface BuildingConfig {
   categoryId: string | null;
   sortOrder: number;
   role: string | null;
+  allowedPlanetTypes: string[] | null;
   prerequisites: { buildingId: string; level: number }[];
 }
 
@@ -164,6 +165,7 @@ export interface ResearchConfig {
   categoryId: string | null;
   sortOrder: number;
   maxLevel: number | null;
+  requiredAnnexType: string | null;
   prerequisites: {
     buildings: { buildingId: string; level: number }[];
     research: { researchId: string; level: number }[];
@@ -365,6 +367,7 @@ export function createGameConfigService(db: Database) {
         categoryId: b.categoryId,
         sortOrder: b.sortOrder,
         role: b.role ?? null,
+        allowedPlanetTypes: (b.allowedPlanetTypes as string[] | null) ?? null,
         prerequisites: (buildingPrereqMap.get(b.id) ?? [])
           .map(p => ({ buildingId: p.requiredBuildingId, level: p.requiredLevel })),
       };
@@ -386,6 +389,7 @@ export function createGameConfigService(db: Database) {
         categoryId: r.categoryId,
         sortOrder: r.sortOrder,
         maxLevel: r.maxLevel ?? null,
+        requiredAnnexType: (r.requiredAnnexType as string | null) ?? null,
         prerequisites: {
           buildings: prereqs.filter(p => p.requiredBuildingId).map(p => ({ buildingId: p.requiredBuildingId!, level: p.requiredLevel })),
           research: prereqs.filter(p => p.requiredResearchId).map(p => ({ researchId: p.requiredResearchId!, level: p.requiredLevel })),
