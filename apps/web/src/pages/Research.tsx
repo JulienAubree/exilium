@@ -177,27 +177,26 @@ export default function Research() {
             )}
 
             {/* Speed summary — always visible */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500"
-                  style={{ width: `${Math.min(totalReduction, 100)}%` }}
-                />
-              </div>
-              <button
-                onClick={() => setCollapsed(prev => ({ ...prev, __bonusDetails: !prev.__bonusDetails }))}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              >
+            <button
+              onClick={() => setCollapsed(prev => ({ ...prev, __bonusDetails: !prev.__bonusDetails }))}
+              className="flex items-center justify-between w-full py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+                  <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                <span>Vitesse de recherche</span>
+              </span>
+              <span className="flex items-center gap-1.5">
                 <span className="font-semibold text-emerald-400">-{totalReduction}%</span>
-                <span>vitesse</span>
                 <svg
                   width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
                   className={cn('transition-transform', collapsed.__bonusDetails ? '' : 'rotate-180')}
                 >
                   <path d="M6 9l6 6 6-6" />
                 </svg>
-              </button>
-            </div>
+              </span>
+            </button>
 
             {/* Expandable bonus details */}
             {collapsed.__bonusDetails && (
