@@ -120,6 +120,14 @@
     box-shadow: 0 0 10px rgba(240, 192, 64, 0.1);
   }
 
+  /* Viewport height with fallback: 100vh for browsers that don't
+     support dvh (some Android PWA modes), overridden by 100dvh where
+     available so iOS address-bar resizing is handled correctly. */
+  .h-viewport {
+    height: 100vh;
+    height: 100dvh;
+  }
+
   /* Touch feedback for interactive elements on mobile */
   .touch-feedback {
     @apply transition-transform duration-150 active:scale-[0.97] active:opacity-80;

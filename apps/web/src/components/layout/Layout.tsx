@@ -42,7 +42,7 @@ export function Layout() {
   );
 
   return (
-    <div className="flex h-dvh flex-col bg-background bg-stars text-foreground">
+    <div className="flex h-viewport flex-col bg-background bg-stars text-foreground">
       {/* Desktop sidebar */}
       <Sidebar />
 
