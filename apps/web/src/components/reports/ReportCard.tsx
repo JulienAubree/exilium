@@ -2,20 +2,13 @@
 import { useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/format';
+import { MissionIcon } from '@/components/fleet/MissionIcon';
+import type { Mission } from '@/config/mission-config';
 
 const OUTCOME_STYLES: Record<string, string> = {
   attacker: 'bg-emerald-500/20 text-emerald-400',
   defender: 'bg-red-500/20 text-red-400',
   draw: 'bg-amber-500/20 text-amber-400',
-};
-
-const TYPE_ICONS: Record<string, string> = {
-  attack: '⚔',
-  pirate: '☠',
-  mine: '⛏',
-  spy: '👁',
-  scan: '🔬',
-  recycle: '♻',
 };
 
 interface ReportCardProps {
@@ -70,7 +63,9 @@ export function ReportCard({ report, gameConfig }: ReportCardProps) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-base shrink-0">{TYPE_ICONS[report.missionType] ?? '📋'}</span>
+          <span className="shrink-0">
+            <MissionIcon mission={report.missionType as Mission} size={18} />
+          </span>
           <span className={cn('text-sm truncate', !report.read ? 'font-semibold text-foreground' : 'text-foreground')}>
             {report.title}
           </span>
