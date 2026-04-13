@@ -6,6 +6,8 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
+import { MarketReportsBuy } from '@/components/market/MarketReportsBuy';
+import { MarketReportsInventory } from '@/components/market/MarketReportsInventory';
 
 const RESOURCE_COLORS: Record<string, string> = {
   minerai: 'text-orange-400',
@@ -37,7 +39,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   hydrogene: 'Hydrogene',
 };
 
-type Tab = 'buy' | 'sell' | 'my';
+type Tab = 'buy' | 'sell' | 'my' | 'reports';
 
 export default function Market() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -46,6 +48,7 @@ export default function Market() {
   const addToast = useToastStore((s) => s.addToast);
   const { data: gameConfig } = useGameConfig();
   const [tab, setTab] = useState<Tab>('buy');
+  const [reportSubTab, setReportSubTab] = useState<'buy' | 'my'>('buy');
   const [resourceFilter, setResourceFilter] = useState<string | undefined>(undefined);
 
   // Sell form state
@@ -169,6 +172,7 @@ export default function Market() {
             { key: 'buy' as Tab, label: 'Acheter' },
             { key: 'sell' as Tab, label: 'Vendre' },
             { key: 'my' as Tab, label: 'Mes offres' },
+            { key: 'reports' as Tab, label: 'Rapports' },
           ]).map(({ key, label }) => (
             <button
               key={key}
@@ -429,6 +433,33 @@ export default function Market() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reports tab */}
+        {tab === 'reports' && planetId && (
+          <div className="p-4 lg:p-5">
+            <div className="flex gap-3 mb-5">
+              {([
+                { key: 'buy' as const, label: 'Acheter' },
+                { key: 'my' as const, label: 'Mes rapports' },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setReportSubTab(key)}
+                  className={cn(
+                    'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
+                    reportSubTab === key
+                      ? 'border-primary/50 text-primary bg-primary/10 shadow-[0_0_8px_rgba(103,212,232,0.15)]'
+                      : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {reportSubTab === 'buy' && <MarketReportsBuy planetId={planetId} />}
+            {reportSubTab === 'my' && <MarketReportsInventory planetId={planetId} />}
           </div>
         )}
       </div>
