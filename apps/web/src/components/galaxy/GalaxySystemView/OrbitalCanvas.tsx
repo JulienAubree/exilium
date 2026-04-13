@@ -444,11 +444,7 @@ export function OrbitalCanvas({
         ))}
       </g>
 
-      {/* 16 concentric half-arcs, styled by slot kind. Each arc sweeps from
-          (STAR_X - r, STAR_Y) around to (STAR_X + r, STAR_Y) via the bottom.
-          In SVG's y-down coordinate system, sweep-flag=0 corresponds to the
-          counter-clockwise-on-screen direction, which is the downward bulge
-          we want for a half-circle opening below the star. */}
+      {/* 16 concentric full-circle orbits, styled by slot kind. */}
       <g aria-hidden="true">
         {Array.from({ length: TOTAL_POSITIONS }, (_, i) => {
           const position = i + 1;
@@ -478,12 +474,12 @@ export function OrbitalCanvas({
             strokeWidth = 0.7;
           }
 
-          const d = `M ${STAR_X - radius} ${STAR_Y} A ${radius} ${radius} 0 0 0 ${STAR_X + radius} ${STAR_Y}`;
-
           return (
-            <path
+            <circle
               key={position}
-              d={d}
+              cx={STAR_X}
+              cy={STAR_Y}
+              r={radius}
               fill="none"
               stroke={stroke}
               strokeWidth={strokeWidth}
