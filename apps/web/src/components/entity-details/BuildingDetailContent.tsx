@@ -251,7 +251,65 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         <p className="text-xs italic text-[#888] leading-relaxed">{flavorText}</p>
       )}
 
-      {/* 3b. Shield combat explanation */}
+      {/* 3b. Annex lab explanation */}
+      {configDef?.allowedPlanetTypes && configDef.allowedPlanetTypes.length > 0 && !configDef.allowedPlanetTypes.includes('homeworld') && (() => {
+        // Find the exclusive research unlocked by this annex
+        const annexType = configDef.allowedPlanetTypes[0];
+        const exclusiveResearch = gameConfig ? Object.values(gameConfig.research).find(
+          (r: any) => r.requiredAnnexType === annexType,
+        ) : null;
+
+        const planetTypeNames: Record<string, string> = {
+          volcanic: 'volcanique',
+          arid: 'aride',
+          temperate: 'temperee',
+          glacial: 'glaciale',
+          gaseous: 'gazeuse',
+        };
+
+        return (
+          <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
+            <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire annexe</div>
+            <div className="text-xs text-slate-300 space-y-2">
+              <p>Ce laboratoire est une <span className="text-violet-400 font-medium">annexe de recherche</span> specialisee, constructible uniquement sur une planete <span className="text-violet-400 font-medium">{planetTypeNames[annexType] ?? annexType}</span>.</p>
+
+              <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
+                <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Bonus passif</div>
+                <p className="text-slate-300">Chaque niveau de ce laboratoire reduit le <span className="text-emerald-400 font-medium">temps de toutes les recherches de 5%</span>. Ce bonus se cumule avec les autres laboratoires annexes de votre empire.</p>
+              </div>
+
+              {exclusiveResearch && (
+                <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
+                  <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Recherche exclusive</div>
+                  <p className="text-slate-300">
+                    Debloque la recherche <span className="text-amber-400 font-medium">{exclusiveResearch.name}</span> :
+                    {' '}{exclusiveResearch.effectDescription ?? exclusiveResearch.description}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-slate-500 text-[11px]">Le laboratoire principal (planete mere) doit etre au niveau 6 minimum.</p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 3c. Main lab explanation */}
+      {buildingId === 'researchLab' && (
+        <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
+          <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire principal</div>
+          <div className="text-xs text-slate-300 space-y-1.5">
+            <p>Le laboratoire de recherche est le <span className="text-violet-400 font-medium">centre nevralgique</span> de la recherche de votre empire. Toutes les recherches sont lancees depuis ce laboratoire.</p>
+            <ul className="list-disc list-inside space-y-1 text-slate-400">
+              <li>Chaque niveau reduit le <span className="text-emerald-400">temps de recherche</span> (rendements decroissants)</li>
+              <li>Au <span className="text-amber-400">niveau 6</span>, debloque la construction de laboratoires annexes sur vos colonies</li>
+              <li>Les ressources de recherche sont prelevees sur la planete mere</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* 3d. Shield combat explanation */}
       {buildingId === 'planetaryShield' && (
         <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 space-y-1.5">
           <div className="text-[10px] uppercase text-cyan-400 font-semibold tracking-wider">Comportement en combat</div>
@@ -490,11 +548,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
 
       {/* 6. Prerequisites */}
       {prerequisites.length > 0 && (() => {
-        const prereqItems: PrerequisiteItem[] = prerequisites.map(p => ({
+        const prereqItems: PrerequisiteItem[] = prerequisites.map((p: any) => ({
           id: p.buildingId,
           type: 'building' as const,
           requiredLevel: p.level,
-          currentLevel: buildings.find(b => b.id === p.buildingId)?.currentLevel ?? 0,
+          currentLevel: p.currentLevel ?? buildings.find(b => b.id === p.buildingId)?.currentLevel ?? 0,
           name: getBuildingName(p.buildingId, gameConfig),
         }));
         return (
