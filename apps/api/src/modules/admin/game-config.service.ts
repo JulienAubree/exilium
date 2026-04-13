@@ -318,7 +318,7 @@ export function createGameConfigService(db: Database) {
       db.select().from(uiLabels),
       db.select().from(talentBranchDefinitions).orderBy(talentBranchDefinitions.sortOrder),
       db.select().from(talentDefinitions),
-      db.select().from(biomeDefinitions),
+      db.select().from(biomeDefinitions).orderBy(biomeDefinitions.id),
     ]);
 
     // Categories
