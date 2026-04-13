@@ -30,6 +30,9 @@ export interface DetailPanelContext {
   /** Mining mission keyed by belt position. */
   beltMissions: Record<number, { id: string }>;
   myCapitalPosition: number | null;
+  /** Whether the player can create a vendable report for the selected position. */
+  canCreateReport: boolean;
+  canCreateReportReason: string | null;
 }
 
 export interface DetailPanelActions {

@@ -192,13 +192,14 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
               >
                 Gérer la planète
               </button>
-              <button
-                type="button"
-                className={BTN_AMBER}
+              <ActionButton
+                enabled={ctx.canCreateReport}
+                enabledClassName={BTN_AMBER}
+                disabledTitle={ctx.canCreateReportReason ?? 'Vente impossible'}
                 onClick={() => actions.onCreateReport(view.position)}
               >
                 Vendre le rapport
-              </button>
+              </ActionButton>
             </>
           )}
 
@@ -312,13 +313,14 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
           >
             Explorer
           </ActionButton>
-          <button
-            type="button"
-            className={BTN_AMBER}
+          <ActionButton
+            enabled={ctx.canCreateReport}
+            enabledClassName={BTN_AMBER}
+            disabledTitle={ctx.canCreateReportReason ?? 'Vente impossible'}
             onClick={() => actions.onCreateReport(view.position)}
           >
-            Creer un rapport
-          </button>
+            Vendre le rapport
+          </ActionButton>
         </div>
       </div>
     );

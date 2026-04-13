@@ -27,6 +27,7 @@ import {
   type ReactElement,
 } from 'react';
 import { useSearchParams } from 'react-router';
+import { trpc } from '@/trpc';
 import { DetailPanel } from './DetailPanel';
 import type {
   DetailPanelActions,
@@ -100,6 +101,14 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
     );
   }, [rawSlots, currentUserId, myAllianceId]);
 
+  // Check if the player can create a vendable report for the selected position.
+  // Only fires when a slot is selected (not for system-level or belt).
+  const selectedPos = selection.kind === 'slot' ? selection.position : null;
+  const { data: canCreateData } = trpc.explorationReport.canCreate.useQuery(
+    { galaxy, system, position: selectedPos! },
+    { enabled: selectedPos != null },
+  );
+
   const ctx = useMemo<DetailPanelContext>(
     () => ({
       galaxy,
@@ -113,6 +122,8 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
       hasMiner,
       beltMissions,
       myCapitalPosition,
+      canCreateReport: canCreateData?.canCreate ?? false,
+      canCreateReportReason: canCreateData?.reason ?? null,
     }),
     [
       galaxy,
@@ -126,6 +137,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
       hasMiner,
       beltMissions,
       myCapitalPosition,
+      canCreateData,
     ],
   );
 
