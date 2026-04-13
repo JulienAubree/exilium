@@ -246,8 +246,9 @@ function HullCooldownButton({ disabled, onClick }: {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+      className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-card/80 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
     >
+      <HullIcon size={13} />
       Changer de coque
     </button>
   );
