@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, real, jsonb, uuid, primaryKey, pgEnum, smallint } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, real, jsonb, uuid, primaryKey, pgEnum, smallint, boolean } from 'drizzle-orm/pg-core';
 import { planets } from './planets.js';
 import { users } from './users.js';
 
@@ -16,6 +16,7 @@ export const biomeDefinitions = pgTable('biome_definitions', {
 export const planetBiomes = pgTable('planet_biomes', {
   planetId: uuid('planet_id').notNull().references(() => planets.id, { onDelete: 'cascade' }),
   biomeId: varchar('biome_id', { length: 64 }).notNull().references(() => biomeDefinitions.id, { onDelete: 'cascade' }),
+  active: boolean('active').notNull().default(true),
 }, (t) => [
   primaryKey({ columns: [t.planetId, t.biomeId] }),
 ]);

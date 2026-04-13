@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, fleetEvents, planetBiomes, discoveredBiomes, discoveredPositions } from '@exilium/db';
-import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, type BiomeDefinition } from '@exilium/game-engine';
+import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, type BiomeDefinition } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
@@ -121,13 +121,11 @@ export class ColonizeHandler implements MissionHandler {
     const maxSortOrder = userPlanets.reduce((max, p) => Math.max(max, p.sortOrder ?? 0), 0);
     const newSortOrder = maxSortOrder + 1;
 
-    // Success: create new planet
-    const planetTypeForPos = config.planetTypes.find(
-      (pt) => pt.id !== homeworldType.id && (pt.positions as number[]).includes(fleetEvent.targetPosition),
-    );
-
-    const randomOffset = Math.floor(Math.random() * 41) - 20;
-    const maxTemp = calculateMaxTemp(fleetEvent.targetPosition, randomOffset);
+    // Success: create new planet — use seeded temperature-weighted picker (consistent with galaxy view)
+    const maxTemp = calculateMaxTemp(fleetEvent.targetPosition, 0);
+    const typeRng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition) ^ 0x9E3779B9);
+    const planetClassId = pickPlanetTypeForPosition(maxTemp, typeRng);
+    const planetTypeForPos = config.planetTypes.find((pt) => pt.id === planetClassId) ?? null;
     const minTemp = calculateMinTemp(maxTemp);
 
     let diameter: number;
@@ -176,8 +174,28 @@ export class ColonizeHandler implements MissionHandler {
       pickedBiomes = pickBiomes(biomeCatalogue, planetTypeForPos.id, biomeCount, rng);
 
       if (pickedBiomes.length > 0) {
+        // Cross with player's discovered biomes to set the active flag
+        const discoveredBiomeIds = new Set(
+          (await ctx.db
+            .select({ biomeId: discoveredBiomes.biomeId })
+            .from(discoveredBiomes)
+            .where(
+              and(
+                eq(discoveredBiomes.userId, fleetEvent.userId),
+                eq(discoveredBiomes.galaxy, fleetEvent.targetGalaxy),
+                eq(discoveredBiomes.system, fleetEvent.targetSystem),
+                eq(discoveredBiomes.position, fleetEvent.targetPosition),
+              ),
+            )
+          ).map(r => r.biomeId),
+        );
+
         await ctx.db.insert(planetBiomes).values(
-          pickedBiomes.map(b => ({ planetId: newPlanet.id, biomeId: b.id })),
+          pickedBiomes.map(b => ({
+            planetId: newPlanet.id,
+            biomeId: b.id,
+            active: discoveredBiomeIds.has(b.id),
+          })),
         );
       }
     }

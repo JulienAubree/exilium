@@ -52,7 +52,7 @@ async function loadBiomeBonuses(db: Database, planetId: string): Promise<Record<
     .select({ effects: biomeDefinitions.effects })
     .from(planetBiomes)
     .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
-    .where(eq(planetBiomes.planetId, planetId));
+    .where(and(eq(planetBiomes.planetId, planetId), eq(planetBiomes.active, true)));
 
   const allEffects: BiomeEffect[] = rows.flatMap(r => r.effects as BiomeEffect[]);
   return aggregateBiomeBonuses(allEffects);

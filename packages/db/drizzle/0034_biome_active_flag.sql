@@ -1,0 +1,1 @@
+ALTER TABLE planet_biomes ADD COLUMN active BOOLEAN NOT NULL DEFAULT true;

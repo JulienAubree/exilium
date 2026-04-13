@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import { planets, planetTypes, planetShips, userResearch, planetBiomes, biomeDefinitions } from '@exilium/db';
@@ -59,7 +59,7 @@ export function createResourceRouter(
           })
           .from(planetBiomes)
           .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
-          .where(eq(planetBiomes.planetId, input.planetId));
+          .where(and(eq(planetBiomes.planetId, input.planetId), eq(planetBiomes.active, true)));
 
         // Protected resources calculation
         const storageMineraiId = findBuildingByRole(config, 'storage_minerai').id;

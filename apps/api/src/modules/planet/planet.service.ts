@@ -115,7 +115,7 @@ export function createPlanetService(
         })
         .from(planetBiomes)
         .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
-        .where(inArray(planetBiomes.planetId, planetIds));
+        .where(and(inArray(planetBiomes.planetId, planetIds), eq(planetBiomes.active, true)));
 
       const biomesByPlanet = new Map<string, typeof biomeRows>();
       for (const row of biomeRows) {
@@ -225,7 +225,7 @@ export function createPlanetService(
             })
             .from(planetBiomes)
             .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
-            .where(eq(planetBiomes.planetId, planet.id));
+            .where(and(eq(planetBiomes.planetId, planet.id), eq(planetBiomes.active, true)));
 
           const activeBuilds = await db
             .select({

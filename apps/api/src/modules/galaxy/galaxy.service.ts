@@ -69,7 +69,7 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
         ? await db
             .select({ planetId: planetBiomes.planetId, biomeId: planetBiomes.biomeId })
             .from(planetBiomes)
-            .where(inArray(planetBiomes.planetId, planetIds))
+            .where(and(inArray(planetBiomes.planetId, planetIds), eq(planetBiomes.active, true)))
         : [];
 
       // Also load biome details for persisted biomes
