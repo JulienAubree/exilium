@@ -17,6 +17,7 @@ const FILTER_OPTIONS: Array<{ label: string; types: MissionType[] }> = [
   { label: 'Espionnage', types: [MissionType.Spy, MissionType.Scan] },
   { label: 'Exploration', types: [MissionType.Explore] },
   { label: 'Commerce', types: [MissionType.Trade] },
+  { label: 'Transport', types: [MissionType.Transport] },
 ];
 
 export default function Reports() {

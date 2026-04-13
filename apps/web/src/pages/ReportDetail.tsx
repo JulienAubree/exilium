@@ -12,6 +12,7 @@ import { SpyReportDetail } from '@/components/reports/SpyReportDetail';
 import { RecycleReportDetail } from '@/components/reports/RecycleReportDetail';
 import { ExploreReportDetail } from '@/components/reports/ExploreReportDetail';
 import { TradeReportDetail } from '@/components/reports/TradeReportDetail';
+import { TransportReportDetail } from '@/components/reports/TransportReportDetail';
 import { CoordsLink } from '@/components/common/CoordsLink';
 
 function formatDate(date: string | Date) {
@@ -194,6 +195,9 @@ export default function ReportDetail() {
       )}
       {report.missionType === 'trade' && result.type === 'report-purchase' && (
         <TradeReportDetail result={result} />
+      )}
+      {report.missionType === 'transport' && (
+        <TransportReportDetail result={result} coordinates={coords} />
       )}
     </div>
   );
