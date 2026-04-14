@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { TopBar } from './TopBar';
 import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
@@ -15,10 +15,17 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 
+// Pages that are planet-specific and should redirect when the active planet
+// is being colonized.  Empire-wide pages (/empire, /fleet, etc.) are NOT
+// redirected — only pages that operate on a single planet.
+const PLANET_PAGES = ['/', '/buildings', '/energy', '/shipyard', '/command-center', '/defense'];
+
 export function Layout() {
   const { data: planets } = trpc.planet.list.useQuery();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Trust localStorage activePlanetId while planet.list is loading
   // This avoids a query waterfall: dependent queries can fire immediately
@@ -31,6 +38,19 @@ export function Layout() {
       setActivePlanet(resolvedPlanetId);
     }
   }, [resolvedPlanetId, activePlanetId, setActivePlanet]);
+
+  // Redirect planet-specific pages to Overview when active planet is colonizing.
+  // Overview itself handles the ColonizationProgress display.
+  const activePlanet = planets?.find((p) => p.id === resolvedPlanetId);
+  useEffect(() => {
+    if (
+      activePlanet?.status === 'colonizing' &&
+      PLANET_PAGES.includes(location.pathname) &&
+      location.pathname !== '/'
+    ) {
+      navigate('/', { replace: true });
+    }
+  }, [activePlanet?.status, location.pathname, navigate]);
 
   useNotifications();
   useDocumentTitle();
