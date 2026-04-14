@@ -63,39 +63,35 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
 
   return (
     <div className="rounded-xl border border-border/30 bg-card/60 overflow-hidden">
-      {/* KPI row */}
-      <div className="flex flex-wrap items-center gap-4 p-3 lg:gap-6 lg:p-4">
+      {/* KPI row — single line, compact */}
+      <div className="flex items-center justify-between gap-1 px-2 py-2 lg:gap-3 lg:px-4 overflow-x-auto">
         <Kpi
-          iconNode={<MineraiIcon size={16} className="text-minerai" />}
-          iconBg="bg-minerai/10"
+          iconNode={<MineraiIcon size={14} className="text-minerai" />}
           color="text-minerai"
           value={`${formatRate(totalRates.mineraiPerHour)}/h`}
-          label="Minerai total"
+          label="Fe"
           active={openPanel === 'minerai'}
           onClick={() => toggle('minerai')}
         />
         <Kpi
-          iconNode={<SiliciumIcon size={16} className="text-silicium" />}
-          iconBg="bg-silicium/10"
+          iconNode={<SiliciumIcon size={14} className="text-silicium" />}
           color="text-silicium"
           value={`${formatRate(totalRates.siliciumPerHour)}/h`}
-          label="Silicium total"
+          label="Si"
           active={openPanel === 'silicium'}
           onClick={() => toggle('silicium')}
         />
         <Kpi
-          iconNode={<HydrogeneIcon size={16} className="text-hydrogene" />}
-          iconBg="bg-hydrogene/10"
+          iconNode={<HydrogeneIcon size={14} className="text-hydrogene" />}
           color="text-hydrogene"
           value={`${formatRate(totalRates.hydrogenePerHour)}/h`}
-          label="Hydrogene total"
+          label="H"
           active={openPanel === 'hydrogene'}
           onClick={() => toggle('hydrogene')}
         />
-        <div className="hidden h-7 w-px bg-border/50 lg:block" />
+        <div className="hidden h-5 w-px bg-border/40 lg:block" />
         <Kpi
-          iconNode={<Globe className="h-4 w-4 text-foreground" />}
-          iconBg="bg-muted"
+          iconNode={<Globe className="h-3.5 w-3.5 text-foreground" />}
           color="text-foreground"
           value={String(planetCount)}
           label="Planetes"
@@ -104,33 +100,26 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
         />
         {governance && (
           <Kpi
-            iconNode={<Landmark className={cn('h-4 w-4', govColor)} />}
-            iconBg={govIconBg}
+            iconNode={<Landmark className={cn('h-3.5 w-3.5', govColor)} />}
             color={govColor}
             value={`${governance.colonyCount}/${governance.capacity}`}
-            label="Gouvernance"
+            label="Gouv."
             active={openPanel === 'governance'}
             onClick={() => toggle('governance')}
-            extra={governance.overextend > 0 ? (
-              <div className="text-[10px] font-medium text-destructive">
-                {`\u2212${Math.round(governance.harvestMalus * 100)}% / +${Math.round(governance.constructionMalus * 100)}%`}
-              </div>
-            ) : undefined}
           />
         )}
         <Kpi
-          iconNode={<Rocket className="h-4 w-4 text-primary" />}
-          iconBg="bg-primary/10"
+          iconNode={<Rocket className="h-3.5 w-3.5 text-primary" />}
           color="text-primary"
           value={String(activeFleetCount)}
-          label="Flottes en vol"
+          label="Flottes"
           active={openPanel === 'fleets'}
           onClick={() => toggle('fleets')}
         />
         {inboundAttackCount > 0 && (
-          <div className="ml-auto flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive animate-pulse">
-            <ShieldAlert className="h-4 w-4" />
-            {inboundAttackCount} attaque{inboundAttackCount > 1 ? 's' : ''} en cours
+          <div className="flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive animate-pulse">
+            <ShieldAlert className="h-3.5 w-3.5" />
+            {inboundAttackCount}
           </div>
         )}
       </div>
@@ -162,35 +151,28 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
 // KPI pill (clickable)
 // ---------------------------------------------------------------------------
 
-function Kpi({ iconNode, iconBg, color, value, label, active, onClick, extra }: {
+function Kpi({ iconNode, color, value, label, active, onClick }: {
   iconNode: React.ReactNode;
-  iconBg: string;
   color: string;
   value: string;
   label: string;
   active?: boolean;
   onClick?: () => void;
-  extra?: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors',
+        'flex items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors shrink-0',
         active ? 'bg-accent/60 ring-1 ring-primary/30' : 'hover:bg-accent/30',
       )}
     >
-      <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg', iconBg)}>
-        {iconNode}
-      </div>
-      <div className="text-left">
-        <div className={cn('text-sm font-bold', color)}>{value}</div>
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-        {extra}
-      </div>
+      {iconNode}
+      <span className={cn('text-xs font-bold', color)}>{value}</span>
+      <span className="text-[9px] uppercase text-muted-foreground hidden lg:inline">{label}</span>
       <ChevronDown className={cn(
-        'h-3 w-3 text-muted-foreground/50 transition-transform ml-0.5',
+        'h-2.5 w-2.5 text-muted-foreground/40 transition-transform',
         active && 'rotate-180',
       )} />
     </button>
