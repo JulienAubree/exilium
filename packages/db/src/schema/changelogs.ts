@@ -3,7 +3,7 @@ import { users } from './users.js';
 
 export const changelogs = pgTable('changelogs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  date: date('date').notNull().unique(),
+  date: date('date').notNull(),
   title: varchar('title', { length: 256 }).notNull(),
   content: text('content').notNull().default(''),
   published: boolean('published').notNull().default(false),

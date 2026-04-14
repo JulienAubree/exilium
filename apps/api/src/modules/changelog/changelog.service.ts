@@ -248,20 +248,9 @@ export function createChangelogService(db: Database) {
       const titleDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
       const title = `Nouveautes du ${titleDate}`;
 
-      const [existing] = await db
-        .select({ id: changelogs.id })
-        .from(changelogs)
-        .where(eq(changelogs.date, dateStr))
-        .limit(1);
-
+      // Always create a NEW entry — never overwrite existing ones.
       let result;
-      if (existing) {
-        [result] = await db
-          .update(changelogs)
-          .set({ title, content, updatedAt: new Date() })
-          .where(eq(changelogs.id, existing.id))
-          .returning();
-      } else {
+      {
         [result] = await db
           .insert(changelogs)
           .values({ date: dateStr, title, content, published: false })
