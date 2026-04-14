@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Globe, Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
+import { trpc } from '@/trpc';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { formatDuration } from '@/lib/format';
 
 interface GovernanceData {
   colonyCount: number;
@@ -291,26 +294,85 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
 // Fleets panel
 // ---------------------------------------------------------------------------
 
+const MISSION_COLORS: Record<string, string> = {
+  transport: 'text-blue-400',
+  station: 'text-emerald-400',
+  spy: 'text-violet-400',
+  attack: 'text-destructive',
+  colonize: 'text-orange-400',
+  recycle: 'text-cyan-400',
+  mine: 'text-amber-400',
+  pirate: 'text-rose-400',
+  trade: 'text-purple-400',
+  scan: 'text-violet-400',
+  explore: 'text-teal-400',
+  colonize_supply: 'text-emerald-400',
+  colonize_reinforce: 'text-blue-400',
+};
+
+const PHASE_LABELS: Record<string, string> = {
+  outbound: 'En route',
+  return: 'Retour',
+  prospecting: 'Prospection',
+  mining: 'Extraction',
+  exploring: 'Exploration',
+};
+
 function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFleets: number }) {
-  const withFleets = planets.filter(p => p.outboundFleets && p.outboundFleets.count > 0);
+  const { data: movements } = trpc.fleet.movements.useQuery();
+  const { data: gameConfig } = useGameConfig();
   const underAttack = planets.filter(p => p.inboundAttack);
+
+  const planetNameMap = new Map(planets.map(p => [p.name, p]));
 
   return (
     <div className="space-y-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
         {totalFleets} flotte{totalFleets > 1 ? 's' : ''} en vol
       </div>
-      {withFleets.length > 0 ? (
+      {movements && movements.length > 0 ? (
         <div className="space-y-1">
-          {withFleets.map((p) => (
-            <div key={p.name} className="flex items-center justify-between text-xs rounded-lg border border-border/30 bg-card/50 px-3 py-1.5">
-              <span className="font-medium text-foreground">{p.name}</span>
-              <span className="text-primary font-mono">{p.outboundFleets!.count} flotte{p.outboundFleets!.count > 1 ? 's' : ''}</span>
-            </div>
-          ))}
+          {movements
+            .sort((a, b) => new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime())
+            .map((m) => {
+              const missionLabel = gameConfig?.missions?.[m.mission]?.label ?? m.mission;
+              const missionColor = MISSION_COLORS[m.mission] ?? 'text-foreground';
+              const phaseLabel = PHASE_LABELS[m.phase] ?? m.phase;
+              const arrival = new Date(m.arrivalTime);
+              const now = new Date();
+              const remainingSec = Math.max(0, Math.floor((arrival.getTime() - now.getTime()) / 1000));
+              const coords = `[${m.targetGalaxy}:${m.targetSystem}:${m.targetPosition}]`;
+              const shipCount = Object.values(m.ships as Record<string, number>).reduce((s, c) => s + c, 0);
+
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-lg border border-border/30 bg-card/50 px-3 py-2 text-xs"
+                >
+                  {/* Mission + phase */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn('font-semibold', missionColor)}>{missionLabel}</span>
+                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground">{phaseLabel}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {coords} · {shipCount} vaisseau{shipCount > 1 ? 'x' : ''}
+                    </div>
+                  </div>
+                  {/* Arrival countdown */}
+                  <div className="text-right shrink-0">
+                    <div className="font-mono text-foreground">{formatDuration(remainingSec)}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {arrival.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       ) : (
-        <div className="text-xs text-muted-foreground">Aucune flotte en vol depuis vos planetes.</div>
+        <div className="text-xs text-muted-foreground">Aucune flotte en vol.</div>
       )}
       {underAttack.length > 0 && (
         <div className="space-y-1 pt-1 border-t border-border/30">
