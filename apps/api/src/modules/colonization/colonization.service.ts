@@ -1,6 +1,6 @@
 import { eq, and, lt, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { colonizationProcesses, colonizationEvents, planets, planetBuildings } from '@exilium/db';
+import { colonizationProcesses, colonizationEvents, planets, planetBuildings, planetBiomes, discoveredBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { calculateGovernancePenalty } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -292,6 +292,49 @@ export function createColonizationService(
         .limit(1);
 
       if (!process) return;
+
+      // Re-activate biomes based on current discovered_biomes state.
+      // Biomes may have been discovered AFTER the planet was created
+      // (e.g., player bought an exploration report during colonization).
+      const [planet] = await db
+        .select({ galaxy: planets.galaxy, system: planets.system, position: planets.position })
+        .from(planets)
+        .where(eq(planets.id, process.planetId))
+        .limit(1);
+
+      if (planet) {
+        const discoveredIds = new Set(
+          (await db
+            .select({ biomeId: discoveredBiomes.biomeId })
+            .from(discoveredBiomes)
+            .where(and(
+              eq(discoveredBiomes.userId, process.userId),
+              eq(discoveredBiomes.galaxy, planet.galaxy),
+              eq(discoveredBiomes.system, planet.system),
+              eq(discoveredBiomes.position, planet.position),
+            ))
+          ).map(r => r.biomeId),
+        );
+
+        // Activate biomes that are now discovered
+        const currentBiomes = await db
+          .select({ biomeId: planetBiomes.biomeId, active: planetBiomes.active })
+          .from(planetBiomes)
+          .where(eq(planetBiomes.planetId, process.planetId));
+
+        for (const b of currentBiomes) {
+          const shouldBeActive = discoveredIds.has(b.biomeId);
+          if (shouldBeActive && !b.active) {
+            await db
+              .update(planetBiomes)
+              .set({ active: true })
+              .where(and(
+                eq(planetBiomes.planetId, process.planetId),
+                eq(planetBiomes.biomeId, b.biomeId),
+              ));
+          }
+        }
+      }
 
       await db
         .update(colonizationProcesses)
