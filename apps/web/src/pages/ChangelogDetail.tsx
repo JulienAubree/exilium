@@ -140,6 +140,7 @@ function renderMarkdown(content: string) {
   let listItems: string[] = [];
   let orderedListItems: string[] = [];
   let codeBlockLines: string[] = [];
+  let tableRows: string[] = [];
   let inCodeBlock = false;
   const headingCounter = { h1: 0, h2: 0, h3: 0 };
 
@@ -150,6 +151,43 @@ function renderMarkdown(content: string) {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .slice(0, 60);
+
+  const flushTable = () => {
+    if (tableRows.length === 0) return;
+    // First row = header, second row = separator (|---|---|), rest = body
+    const headerCells = tableRows[0].split('|').map(c => c.trim()).filter(Boolean);
+    const bodyLines = tableRows.filter((_, i) => i >= 2); // skip header + separator
+    elements.push(
+      <div key={`table-${elements.length}`} className="overflow-x-auto mb-4">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-white/10">
+              {headerCells.map((cell, i) => (
+                <th key={i} className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  {inlineFormat(cell)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bodyLines.map((row, ri) => {
+              const cells = row.split('|').map(c => c.trim()).filter(Boolean);
+              return (
+                <tr key={ri} className={ri % 2 === 0 ? 'bg-white/[0.02]' : ''}>
+                  {cells.map((cell, ci) => (
+                    <td key={ci} className="px-3 py-1.5 text-foreground/80 border-b border-white/5">
+                      {inlineFormat(cell)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+    tableRows = [];
+  };
 
   const flushList = () => {
     if (listItems.length > 0) {
@@ -275,16 +313,23 @@ function renderMarkdown(content: string) {
       // Flush unordered list if we were in one
       if (listItems.length > 0) flushList();
       orderedListItems.push(line.replace(/^\d+\.\s/, ''));
+    } else if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      // Table row — accumulate
+      if (tableRows.length === 0) flushList();
+      tableRows.push(line.trim());
     } else if (line.trim() === '') {
       flushList();
+      flushTable();
     } else {
       flushList();
+      flushTable();
       elements.push(
         <p key={`p-${elements.length}`} className="text-sm text-foreground/80 mb-2 leading-relaxed">{inlineFormat(line)}</p>
       );
     }
   }
   flushList();
+  flushTable();
   // Close any unterminated code block
   if (inCodeBlock && codeBlockLines.length > 0) {
     elements.push(
