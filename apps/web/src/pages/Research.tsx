@@ -242,7 +242,7 @@ export default function Research() {
                   <div className="space-y-0.5">
                     <BonusLine icon={<ResearchIcon width={12} height={12} />} label="Labo principal" detail={`Niv. ${bonuses.labLevel}`} reduction={labReduction} color="text-violet-400" />
                     <BonusLine icon={<BuildingsIcon width={12} height={12} />} label="Labos annexes" detail={`${bonuses.annexLevelsSum} niv.`} reduction={annexReduction} color="text-violet-400" />
-                    <BonusLine icon={<GalaxyIcon width={12} height={12} />} label="Biomes" detail={`${bonuses.discoveredBiomesCount}`} reduction={biomeReduction} color="text-amber-400" />
+                    <BonusLine icon={<GalaxyIcon width={12} height={12} />} label="Biomes actifs" detail={`${bonuses.discoveredBiomesCount}`} reduction={biomeReduction} color="text-amber-400" />
                     {talentReduction > 0 && <BonusLine icon={<EmpireIcon width={12} height={12} />} label="Talents" reduction={talentReduction} color="text-emerald-400" />}
                     {hullReduction > 0 && <BonusLine icon={<FlagshipIcon width={12} height={12} />} label="Vaisseau amiral" reduction={hullReduction} color="text-cyan-400" />}
                   </div>
