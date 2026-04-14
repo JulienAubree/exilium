@@ -1,4 +1,5 @@
-import { Globe, Rocket, ShieldAlert, Landmark } from 'lucide-react';
+import { useState } from 'react';
+import { Globe, Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 
@@ -10,12 +11,23 @@ interface GovernanceData {
   constructionMalus: number;
 }
 
+interface PlanetData {
+  name: string;
+  mineraiPerHour?: number;
+  siliciumPerHour?: number;
+  hydrogenePerHour?: number;
+  status?: string;
+  outboundFleets?: { count: number; earliestArrival: string } | null;
+  inboundAttack?: { arrivalTime: string } | null;
+}
+
 interface EmpireKpiBarProps {
   totalRates: { mineraiPerHour: number; siliciumPerHour: number; hydrogenePerHour: number };
   planetCount: number;
   activeFleetCount: number;
   inboundAttackCount: number;
   governance?: GovernanceData | null;
+  planets?: PlanetData[];
 }
 
 function formatRate(value: number): string {
@@ -24,7 +36,13 @@ function formatRate(value: number): string {
   return String(Math.floor(value));
 }
 
-export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboundAttackCount, governance }: EmpireKpiBarProps) {
+type PanelId = 'minerai' | 'silicium' | 'hydrogene' | 'planets' | 'governance' | 'fleets' | null;
+
+export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboundAttackCount, governance, planets }: EmpireKpiBarProps) {
+  const [openPanel, setOpenPanel] = useState<PanelId>(null);
+
+  const toggle = (id: PanelId) => setOpenPanel((prev) => (prev === id ? null : id));
+
   const govColor = governance
     ? governance.colonyCount > governance.capacity
       ? 'text-destructive'
@@ -41,58 +59,303 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
         : 'bg-emerald-400/10'
     : 'bg-muted';
 
+  const activePlanets = planets?.filter(p => p.status !== 'colonizing') ?? [];
+
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border/30 bg-card/60 p-3 lg:gap-6 lg:p-4">
-      <Kpi iconNode={<MineraiIcon size={16} className="text-minerai" />} iconBg="bg-minerai/10" color="text-minerai" value={`${formatRate(totalRates.mineraiPerHour)}/h`} label="Minerai total" />
-      <Kpi iconNode={<SiliciumIcon size={16} className="text-silicium" />} iconBg="bg-silicium/10" color="text-silicium" value={`${formatRate(totalRates.siliciumPerHour)}/h`} label="Silicium total" />
-      <Kpi iconNode={<HydrogeneIcon size={16} className="text-hydrogene" />} iconBg="bg-hydrogene/10" color="text-hydrogene" value={`${formatRate(totalRates.hydrogenePerHour)}/h`} label="Hydrogène total" />
-      <div className="hidden h-7 w-px bg-border/50 lg:block" />
-      <Kpi iconNode={<Globe className="h-4 w-4 text-foreground" />} iconBg="bg-muted" color="text-foreground" value={String(planetCount)} label="Planetes" />
-      {governance && (
-        <div className="flex items-center gap-2">
-          <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg', govIconBg)}>
-            <Landmark className={cn('h-4 w-4', govColor)} />
-          </div>
-          <div>
-            <div className={cn('text-sm font-bold', govColor)}>
-              {governance.colonyCount}/{governance.capacity}
-            </div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Gouvernance</div>
-            {governance.overextend > 0 && (
+    <div className="rounded-xl border border-border/30 bg-card/60 overflow-hidden">
+      {/* KPI row */}
+      <div className="flex flex-wrap items-center gap-4 p-3 lg:gap-6 lg:p-4">
+        <Kpi
+          iconNode={<MineraiIcon size={16} className="text-minerai" />}
+          iconBg="bg-minerai/10"
+          color="text-minerai"
+          value={`${formatRate(totalRates.mineraiPerHour)}/h`}
+          label="Minerai total"
+          active={openPanel === 'minerai'}
+          onClick={() => toggle('minerai')}
+        />
+        <Kpi
+          iconNode={<SiliciumIcon size={16} className="text-silicium" />}
+          iconBg="bg-silicium/10"
+          color="text-silicium"
+          value={`${formatRate(totalRates.siliciumPerHour)}/h`}
+          label="Silicium total"
+          active={openPanel === 'silicium'}
+          onClick={() => toggle('silicium')}
+        />
+        <Kpi
+          iconNode={<HydrogeneIcon size={16} className="text-hydrogene" />}
+          iconBg="bg-hydrogene/10"
+          color="text-hydrogene"
+          value={`${formatRate(totalRates.hydrogenePerHour)}/h`}
+          label="Hydrogene total"
+          active={openPanel === 'hydrogene'}
+          onClick={() => toggle('hydrogene')}
+        />
+        <div className="hidden h-7 w-px bg-border/50 lg:block" />
+        <Kpi
+          iconNode={<Globe className="h-4 w-4 text-foreground" />}
+          iconBg="bg-muted"
+          color="text-foreground"
+          value={String(planetCount)}
+          label="Planetes"
+          active={openPanel === 'planets'}
+          onClick={() => toggle('planets')}
+        />
+        {governance && (
+          <Kpi
+            iconNode={<Landmark className={cn('h-4 w-4', govColor)} />}
+            iconBg={govIconBg}
+            color={govColor}
+            value={`${governance.colonyCount}/${governance.capacity}`}
+            label="Gouvernance"
+            active={openPanel === 'governance'}
+            onClick={() => toggle('governance')}
+            extra={governance.overextend > 0 ? (
               <div className="text-[10px] font-medium text-destructive">
-                {`\u2212${Math.round(governance.harvestMalus * 100)}% recolte, +${Math.round(governance.constructionMalus * 100)}% construction`}
+                {`\u2212${Math.round(governance.harvestMalus * 100)}% / +${Math.round(governance.constructionMalus * 100)}%`}
               </div>
-            )}
+            ) : undefined}
+          />
+        )}
+        <Kpi
+          iconNode={<Rocket className="h-4 w-4 text-primary" />}
+          iconBg="bg-primary/10"
+          color="text-primary"
+          value={String(activeFleetCount)}
+          label="Flottes en vol"
+          active={openPanel === 'fleets'}
+          onClick={() => toggle('fleets')}
+        />
+        {inboundAttackCount > 0 && (
+          <div className="ml-auto flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive animate-pulse">
+            <ShieldAlert className="h-4 w-4" />
+            {inboundAttackCount} attaque{inboundAttackCount > 1 ? 's' : ''} en cours
           </div>
-        </div>
-      )}
-      <Kpi iconNode={<Rocket className="h-4 w-4 text-primary" />} iconBg="bg-primary/10" color="text-primary" value={String(activeFleetCount)} label="Flottes en vol" />
-      {inboundAttackCount > 0 && (
-        <div className="ml-auto flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive animate-pulse">
-          <ShieldAlert className="h-4 w-4" />
-          {inboundAttackCount} attaque{inboundAttackCount > 1 ? 's' : ''} en cours
+        )}
+      </div>
+
+      {/* Expandable panels */}
+      {openPanel && (
+        <div className="border-t border-border/30 px-4 py-3">
+          {(openPanel === 'minerai' || openPanel === 'silicium' || openPanel === 'hydrogene') && (
+            <ResourcePanel
+              resource={openPanel}
+              planets={activePlanets}
+              total={
+                openPanel === 'minerai' ? totalRates.mineraiPerHour
+                  : openPanel === 'silicium' ? totalRates.siliciumPerHour
+                    : totalRates.hydrogenePerHour
+              }
+            />
+          )}
+          {openPanel === 'planets' && <PlanetsPanel planets={planets ?? []} />}
+          {openPanel === 'governance' && governance && <GovernancePanel governance={governance} />}
+          {openPanel === 'fleets' && <FleetsPanel planets={planets ?? []} totalFleets={activeFleetCount} />}
         </div>
       )}
     </div>
   );
 }
 
-function Kpi({ iconNode, iconBg, color, value, label }: {
+// ---------------------------------------------------------------------------
+// KPI pill (clickable)
+// ---------------------------------------------------------------------------
+
+function Kpi({ iconNode, iconBg, color, value, label, active, onClick, extra }: {
   iconNode: React.ReactNode;
   iconBg: string;
   color: string;
   value: string;
   label: string;
+  active?: boolean;
+  onClick?: () => void;
+  extra?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors',
+        active ? 'bg-accent/60 ring-1 ring-primary/30' : 'hover:bg-accent/30',
+      )}
+    >
       <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg', iconBg)}>
         {iconNode}
       </div>
-      <div>
+      <div className="text-left">
         <div className={cn('text-sm font-bold', color)}>{value}</div>
         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+        {extra}
       </div>
+      <ChevronDown className={cn(
+        'h-3 w-3 text-muted-foreground/50 transition-transform ml-0.5',
+        active && 'rotate-180',
+      )} />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Resource breakdown panel
+// ---------------------------------------------------------------------------
+
+function ResourcePanel({ resource, planets, total }: {
+  resource: 'minerai' | 'silicium' | 'hydrogene';
+  planets: PlanetData[];
+  total: number;
+}) {
+  const colorMap = { minerai: 'text-minerai', silicium: 'text-silicium', hydrogene: 'text-hydrogene' };
+  const rateKey = resource === 'minerai' ? 'mineraiPerHour' : resource === 'silicium' ? 'siliciumPerHour' : 'hydrogenePerHour';
+  const label = resource === 'minerai' ? 'Minerai' : resource === 'silicium' ? 'Silicium' : 'Hydrogene';
+
+  const sorted = [...planets].sort((a, b) => (b[rateKey] ?? 0) - (a[rateKey] ?? 0));
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        Production {label} par planete
+      </div>
+      <div className="space-y-1">
+        {sorted.map((p) => {
+          const rate = p[rateKey] ?? 0;
+          const pct = total > 0 ? (rate / total) * 100 : 0;
+          return (
+            <div key={p.name} className="flex items-center gap-2 text-xs">
+              <span className="w-24 truncate text-foreground font-medium">{p.name}</span>
+              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn('h-full rounded-full', resource === 'minerai' ? 'bg-minerai' : resource === 'silicium' ? 'bg-silicium' : 'bg-hydrogene')}
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
+              </div>
+              <span className={cn('w-16 text-right font-mono text-[11px]', colorMap[resource])}>
+                {formatRate(rate)}/h
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t border-border/30">
+        Total : <span className={cn('font-semibold ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Planets panel
+// ---------------------------------------------------------------------------
+
+function PlanetsPanel({ planets }: { planets: PlanetData[] }) {
+  const active = planets.filter(p => p.status !== 'colonizing');
+  const colonizing = planets.filter(p => p.status === 'colonizing');
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        {active.length} planete{active.length > 1 ? 's' : ''} active{active.length > 1 ? 's' : ''}
+        {colonizing.length > 0 && `, ${colonizing.length} en colonisation`}
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-3">
+        {planets.map((p) => (
+          <div key={p.name} className={cn(
+            'rounded-lg border px-3 py-1.5 text-xs',
+            p.status === 'colonizing' ? 'border-amber-500/30 bg-amber-500/5' : 'border-border/30 bg-card/50',
+          )}>
+            <div className="font-medium text-foreground truncate">{p.name}</div>
+            <div className="text-muted-foreground text-[10px]">
+              {p.status === 'colonizing' ? 'Colonisation en cours' : `${formatRate(p.mineraiPerHour ?? 0)} / ${formatRate(p.siliciumPerHour ?? 0)} / ${formatRate(p.hydrogenePerHour ?? 0)}`}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Governance panel
+// ---------------------------------------------------------------------------
+
+function GovernancePanel({ governance }: { governance: GovernanceData }) {
+  const isOver = governance.overextend > 0;
+  const freeSlots = Math.max(0, governance.capacity - governance.colonyCount);
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        Gouvernance imperiale
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <MiniCard label="Capacite" value={`${governance.capacity} planete${governance.capacity > 1 ? 's' : ''}`} color="text-amber-400" />
+        <MiniCard label="Colonies" value={String(governance.colonyCount)} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
+        <MiniCard label="Malus recolte" value={isOver ? `-${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
+        <MiniCard label="Malus construction" value={isOver ? `+${Math.round(governance.constructionMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {isOver
+          ? `Depassement de +${governance.overextend}. Ameliorez le Centre de Pouvoir Imperial pour reduire les penalites.`
+          : freeSlots > 0
+            ? `${freeSlots} slot${freeSlots > 1 ? 's' : ''} disponible${freeSlots > 1 ? 's' : ''} pour coloniser sans penalite.`
+            : 'Capacite atteinte. Prochaine colonie = penalites sur toutes les colonies.'}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Fleets panel
+// ---------------------------------------------------------------------------
+
+function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFleets: number }) {
+  const withFleets = planets.filter(p => p.outboundFleets && p.outboundFleets.count > 0);
+  const underAttack = planets.filter(p => p.inboundAttack);
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        {totalFleets} flotte{totalFleets > 1 ? 's' : ''} en vol
+      </div>
+      {withFleets.length > 0 ? (
+        <div className="space-y-1">
+          {withFleets.map((p) => (
+            <div key={p.name} className="flex items-center justify-between text-xs rounded-lg border border-border/30 bg-card/50 px-3 py-1.5">
+              <span className="font-medium text-foreground">{p.name}</span>
+              <span className="text-primary font-mono">{p.outboundFleets!.count} flotte{p.outboundFleets!.count > 1 ? 's' : ''}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-xs text-muted-foreground">Aucune flotte en vol depuis vos planetes.</div>
+      )}
+      {underAttack.length > 0 && (
+        <div className="space-y-1 pt-1 border-t border-border/30">
+          <div className="text-[10px] uppercase tracking-wider text-destructive font-semibold">
+            Planetes attaquees
+          </div>
+          {underAttack.map((p) => (
+            <div key={p.name} className="flex items-center justify-between text-xs text-destructive rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-1.5">
+              <span className="font-medium">{p.name}</span>
+              <span className="font-mono">Attaque imminente</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mini card helper
+// ---------------------------------------------------------------------------
+
+function MiniCard({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-1.5">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={cn('text-sm font-bold', color)}>{value}</div>
     </div>
   );
 }

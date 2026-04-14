@@ -57,6 +57,7 @@ export default function Empire() {
         activeFleetCount={data.activeFleetCount}
         inboundAttackCount={data.inboundAttackCount}
         governance={governance}
+        planets={data.planets}
       />
 
       {governance && <EmpireGovernanceBanner governance={governance} />}
