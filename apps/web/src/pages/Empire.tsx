@@ -3,6 +3,7 @@ import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { EmpireKpiBar } from '@/components/empire/EmpireKpiBar';
+import { EmpireGovernanceBanner } from '@/components/empire/EmpireGovernanceBanner';
 import { EmpirePlanetCard } from '@/components/empire/EmpirePlanetCard';
 import { EmpirePlanetRow } from '@/components/empire/EmpirePlanetRow';
 import { ReorderableEmpireGrid } from '@/components/empire/ReorderableEmpireGrid';
@@ -57,6 +58,8 @@ export default function Empire() {
         inboundAttackCount={data.inboundAttackCount}
         governance={governance}
       />
+
+      {governance && <EmpireGovernanceBanner governance={governance} />}
 
       {isReordering ? (
         <ReorderableEmpireGrid
