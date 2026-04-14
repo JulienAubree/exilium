@@ -5,6 +5,7 @@ import type { Database } from '@exilium/db';
 import { researchCost, researchTime, checkResearchPrerequisites, resolveBonus, researchAnnexBonus, researchBiomeBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { getGovernancePenalty } from '../../lib/governance.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
@@ -160,6 +161,10 @@ export function createResearchService(
       const bonusMultiplier = resolveBonus('research_time', null, buildingLevels, config.bonuses);
       const annexDetails = await getAnnexDetails(db, userId);
 
+      // Governance construction penalty (no-op on homeworld, applied for consistency)
+      const govPenalty = await getGovernancePenalty(db, userId, homeworld.sortOrder, config);
+      const govTimeMult = 1 + govPenalty.constructionMalus;
+
       const results = await Promise.all(
         Object.values(config.research)
           .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -167,7 +172,7 @@ export function createResearchService(
             const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
             const nextLevel = currentLevel + 1;
             const cost = researchCost(def, nextLevel, phaseMap);
-            const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier));
+            const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier * govTimeMult));
 
             const researchLevels: Record<string, number> = {};
             for (const [key, rDef] of Object.entries(config.research)) {
@@ -294,7 +299,10 @@ export function createResearchService(
       const annexBonusMultiplier = researchAnnexBonus(annexLevelsSum);
       const discoveredBiomesCount = await getDiscoveredBiomesCount(db, userId);
       const biomeBonusMultiplier = researchBiomeBonus(discoveredBiomesCount);
-      const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier));
+      // Governance construction penalty (no-op on homeworld, applied for consistency)
+      const govPenaltyResearch = await getGovernancePenalty(db, userId, homeworld.sortOrder, config);
+      const govTimeMultResearch = 1 + govPenaltyResearch.constructionMalus;
+      const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier * govTimeMultResearch));
 
       await resourceService.spendResources(planetId, userId, cost);
 

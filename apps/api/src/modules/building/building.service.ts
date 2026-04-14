@@ -5,6 +5,7 @@ import type { Database } from '@exilium/db';
 import { buildingCost, buildingTime, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { getGovernancePenalty } from '../../lib/governance.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
@@ -54,6 +55,10 @@ export function createBuildingService(
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['building_time'] ?? 0));
 
+      // Governance construction penalty (non-homeworld only)
+      const govPenalty = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      const govTimeMult = 1 + govPenalty.constructionMalus;
+
       // Fetch cross-planet max building levels for annex prerequisite display
       const hasAnnex = Object.values(config.buildings).some(
         (def) => def.allowedPlanetTypes && def.allowedPlanetTypes.includes(planet.planetClassId ?? ''),
@@ -83,7 +88,7 @@ export function createBuildingService(
           const nextLevel = currentLevel + 1;
           const cost = buildingCost(def, nextLevel, phaseMap);
           const bonusMultiplier = resolveBonus('building_time', null, buildingLevels, config.bonuses);
-          const time = buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap);
+          const time = Math.max(1, Math.floor(buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) * govTimeMult));
 
           // For annex buildings, resolve prerequisites cross-planet
           const prereqLevels = def.allowedPlanetTypes ? (globalBuildingLevels ?? buildingLevels) : buildingLevels;
@@ -180,7 +185,9 @@ export function createBuildingService(
       const bonusMultiplier = resolveBonus('building_time', null, buildingLevels, config.bonuses);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['building_time'] ?? 0));
-      const time = buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap);
+      const govPenaltyUpgrade = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      const govTimeMultUpgrade = 1 + govPenaltyUpgrade.constructionMalus;
+      const time = Math.max(1, Math.floor(buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) * govTimeMultUpgrade));
 
       // Spend resources (atomic)
       await resourceService.spendResources(planetId, userId, cost);

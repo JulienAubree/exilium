@@ -5,6 +5,7 @@ import type { Database } from '@exilium/db';
 import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { getGovernancePenalty } from '../../lib/governance.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 
@@ -53,7 +54,7 @@ export function createShipyardService(
     },
 
     async listShips(userId: string, planetId: string) {
-      await this.getOwnedPlanet(userId, planetId);
+      const planet = await this.getOwnedPlanet(userId, planetId);
       const ships = await this.getOrCreateShips(planetId);
       const research = await this.getResearchLevels(userId);
       const config = await gameConfigService.getFullConfig();
@@ -61,6 +62,10 @@ export function createShipyardService(
       const buildingLevels = await this.getBuildingLevels(planetId);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['ship_build_time'] ?? 0));
+
+      // Governance construction penalty
+      const govPenalty = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      const govTimeMult = 1 + govPenalty.constructionMalus;
 
       return Object.values(config.ships)
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -78,7 +83,7 @@ export function createShipyardService(
           const hullTimeMultiplier = hullKey ? 1 - (talentCtx[hullKey] ?? 0) : 1;
           const talentCategoryKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
           const talentCategoryMultiplier = talentCategoryKey ? 1 - (talentCtx[talentCategoryKey] ?? 0) : 1;
-          const time = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCategoryMultiplier));
+          const time = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCategoryMultiplier * govTimeMult));
 
           return {
             id: def.id,
@@ -96,7 +101,7 @@ export function createShipyardService(
     },
 
     async listDefenses(userId: string, planetId: string) {
-      await this.getOwnedPlanet(userId, planetId);
+      const planet = await this.getOwnedPlanet(userId, planetId);
       const defenses = await this.getOrCreateDefenses(planetId);
       const research = await this.getResearchLevels(userId);
       const config = await gameConfigService.getFullConfig();
@@ -104,6 +109,10 @@ export function createShipyardService(
       const buildingLevels = await this.getBuildingLevels(planetId);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const talentDefenseTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
+
+      // Governance construction penalty
+      const govPenaltyDef = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      const govTimeMultDef = 1 + govPenaltyDef.constructionMalus;
 
       return Object.values(config.defenses)
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -114,7 +123,7 @@ export function createShipyardService(
 
           const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
           const timeDivisor = Number(config.universe.shipyard_time_divisor) || 2500;
-          const time = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentDefenseTimeMultiplier));
+          const time = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentDefenseTimeMultiplier * govTimeMultDef));
 
           return {
             id: def.id,
@@ -156,7 +165,7 @@ export function createShipyardService(
       itemId: string,
       quantity: number,
     ) {
-      await this.getOwnedPlanet(userId, planetId);
+      const planet = await this.getOwnedPlanet(userId, planetId);
       const config = await gameConfigService.getFullConfig();
       const facilityId = getFacilityId(type, itemId, config);
 
@@ -198,6 +207,11 @@ export function createShipyardService(
       const buildingLevels = await this.getBuildingLevels(planetId);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
       const timeDivisor = Number(config.universe.shipyard_time_divisor) || 2500;
+
+      // Governance construction penalty
+      const govPenaltyBuild = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      const govTimeMultBuild = 1 + govPenaltyBuild.constructionMalus;
+
       let unitTime: number;
       if (type === 'ship') {
         const buildCategory = getShipBuildCategory(def as any, config.bonuses);
@@ -209,11 +223,11 @@ export function createShipyardService(
         const hullTimeMultiplier = hullKey ? 1 - (talentCtx[hullKey] ?? 0) : 1;
         const talentCatKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
         const talentCatMult = talentCatKey ? 1 - (talentCtx[talentCatKey] ?? 0) : 1;
-        unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCatMult));
+        unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCatMult * govTimeMultBuild));
       } else {
         const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
         const talentTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
-        unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
+        unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * govTimeMultBuild));
       }
 
       // Compute parallel build slots for this facility
@@ -297,6 +311,15 @@ export function createShipyardService(
 
       const config = await gameConfigService.getFullConfig();
       const newCompletedCount = entry.completedCount + 1;
+
+      // Fetch planet sortOrder for governance penalty
+      const [entryPlanet] = await db
+        .select({ sortOrder: planets.sortOrder })
+        .from(planets)
+        .where(eq(planets.id, entry.planetId))
+        .limit(1);
+      const govPenaltyUnit = await getGovernancePenalty(db, entry.userId, entryPlanet?.sortOrder ?? 0, config);
+      const govTimeMultUnit = 1 + govPenaltyUnit.constructionMalus;
 
       if (entry.type === 'ship') {
         const shipDef = config.ships[entry.itemId];
@@ -394,11 +417,11 @@ export function createShipyardService(
           const hullTimeMultiplier = hullKey ? 1 - (talentCtx[hullKey] ?? 0) : 1;
           const tcKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
           const tcMult = tcKey ? 1 - (talentCtx[tcKey] ?? 0) : 1;
-          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * tcMult));
+          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * tcMult * govTimeMultUnit));
         } else {
           const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
           const talentTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
-          unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
+          unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * govTimeMultUnit));
         }
       }
 
@@ -427,6 +450,18 @@ export function createShipyardService(
       const timeDivisor = Number(config.universe.shipyard_time_divisor) || 2500;
       // talentCtx is lazily initialised on first iteration (needs userId from nextBatch)
       let talentCtx2: Record<string, number> | null = null;
+
+      // Governance construction penalty
+      const [batchPlanet] = await db
+        .select({ sortOrder: planets.sortOrder, userId: planets.userId })
+        .from(planets)
+        .where(eq(planets.id, planetId))
+        .limit(1);
+      let govTimeMultBatch = 1;
+      if (batchPlanet) {
+        const govPenaltyBatch = await getGovernancePenalty(db, batchPlanet.userId, batchPlanet.sortOrder, config);
+        govTimeMultBatch = 1 + govPenaltyBatch.constructionMalus;
+      }
 
       for (;;) {
         // Fresh active count each iteration to prevent concurrent over-activation
@@ -469,12 +504,12 @@ export function createShipyardService(
           const hullTimeMultiplier = hullKey ? 1 - (talentCtx2[hullKey] ?? 0) : 1;
           const talentCatKey = buildCategory === 'build_military' ? 'military_build_time' : buildCategory === 'build_industrial' ? 'industrial_build_time' : null;
           const talentCatMult = talentCatKey ? 1 - (talentCtx2[talentCatKey] ?? 0) : 1;
-          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCatMult));
+          unitTime = Math.max(1, Math.floor(shipTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * hullTimeMultiplier * talentCatMult * govTimeMultBatch));
         } else {
           const def = config.defenses[nextBatch.itemId];
           const bonusMultiplier = resolveBonus('defense_build_time', null, buildingLevels, config.bonuses);
           const talentTimeMultiplier = 1 / (1 + (talentCtx2['defense_build_time'] ?? 0));
-          unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier));
+          unitTime = Math.max(1, Math.floor(defenseTime(def, bonusMultiplier, timeDivisor) * talentTimeMultiplier * govTimeMultBatch));
         }
 
         // Atomic decrement: try to claim 1 unit from queued batch

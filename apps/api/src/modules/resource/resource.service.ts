@@ -13,6 +13,7 @@ import {
 } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
+import { getGovernancePenalty } from '../../lib/governance.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
@@ -166,6 +167,14 @@ export function createResourceService(
         if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
       }
 
+      // Governance harvest penalty (non-homeworld only)
+      const govPenalty = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      if (govPenalty.harvestMalus > 0) {
+        for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+          talentCtx[key] = (talentCtx[key] ?? 0) - govPenalty.harvestMalus;
+        }
+      }
+
       const now = new Date();
       const resources = calculateResources(
         {
@@ -247,6 +256,14 @@ export function createResourceService(
         if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
       }
 
+      // Governance harvest penalty (non-homeworld only)
+      const govPenalty = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+      if (govPenalty.harvestMalus > 0) {
+        for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+          talentCtx[key] = (talentCtx[key] ?? 0) - govPenalty.harvestMalus;
+        }
+      }
+
       const now = new Date();
       const produced = calculateResources(
         {
@@ -312,6 +329,7 @@ export function createResourceService(
       hydrogeneSynthPercent: number;
       shieldPercent?: number | null;
       planetClassId?: string | null;
+      sortOrder?: number;
     }, bonus?: PlanetTypeBonus, userId?: string) {
       const roleMap = await getRoleMap();
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
@@ -344,6 +362,16 @@ export function createResourceService(
           if (siliciumBonus > 1) talentCtx['production_silicium'] = (talentCtx['production_silicium'] ?? 0) + (siliciumBonus - 1);
           const hydrogeneBonus = resolveBonus('production_hydrogene', null, researchLevels, config.bonuses);
           if (hydrogeneBonus > 1) talentCtx['production_hydrogene'] = (talentCtx['production_hydrogene'] ?? 0) + (hydrogeneBonus - 1);
+        }
+      }
+
+      // Governance harvest penalty (non-homeworld only)
+      if (userId && planet.sortOrder != null) {
+        const govPenalty = await getGovernancePenalty(db, userId, planet.sortOrder, config);
+        if (govPenalty.harvestMalus > 0) {
+          for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+            talentCtx[key] = (talentCtx[key] ?? 0) - govPenalty.harvestMalus;
+          }
         }
       }
 
