@@ -268,117 +268,146 @@ export default function ColonizationProgress() {
           </section>
         )}
 
-        {/* ════ MISSIONS DE COLONISATION ════ */}
+        {/* ════ FONDATIONS DE LA COLONIE ════ */}
         <section className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Missions de colonisation
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Fondations de la colonie
+            </h3>
+            <span className="text-xs text-muted-foreground">
+              {[status.consolidateCompleted, status.supplyCompleted, status.reinforceCompleted].filter(Boolean).length}/3
+            </span>
+          </div>
 
-          {/* Etablir l'avant-poste */}
-          <button
-            type="button"
-            onClick={() => consolidateMutation.mutate({ planetId: planetId! })}
-            disabled={consolidateMutation.isPending || hasCooldown}
-            className="w-full rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-900/10 p-4 text-left transition-all hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 shrink-0">
-                <Wrench className="h-6 w-6 text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-sm font-bold text-foreground">Etablir l'avant-poste</h4>
-                  <span className="text-xs font-bold text-amber-400 shrink-0">+20%</span>
+          {/* Mini progress: 3 steps */}
+          <div className="flex gap-1.5">
+            <div className={cn('h-1.5 flex-1 rounded-full', status.consolidateCompleted ? 'bg-amber-400' : 'bg-muted')} />
+            <div className={cn('h-1.5 flex-1 rounded-full', status.supplyCompleted ? 'bg-emerald-400' : 'bg-muted')} />
+            <div className={cn('h-1.5 flex-1 rounded-full', status.reinforceCompleted ? 'bg-blue-400' : 'bg-muted')} />
+          </div>
+
+          {/* ── Milestone 1: Avant-poste ── */}
+          {status.consolidateCompleted ? (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-amber-400" />
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  Deployer les infrastructures temporaires et etablir un perimetre de securite. Les fondations de la colonie prennent forme.
-                </p>
-                <div className="flex items-center gap-3 mt-2 text-[10px]">
-                  <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-minerai font-medium">2 000 minerai</span>
-                  <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-silicium font-medium">1 000 silicium</span>
-                  <span className="text-muted-foreground">· Cooldown 4h</span>
+                <div>
+                  <h4 className="text-sm font-bold text-amber-400">Avant-poste etabli</h4>
+                  <p className="text-[11px] text-muted-foreground">Les infrastructures temporaires sont deployees. Le perimetre est securise.</p>
                 </div>
-                {hasCooldown && (
-                  <div className="mt-1.5 text-[11px] text-amber-400/70">
-                    Disponible dans {Math.floor(status.consolidateCooldownRemaining! / 3600)}h{Math.ceil((status.consolidateCooldownRemaining! % 3600) / 60)}min
-                  </div>
-                )}
               </div>
             </div>
-          </button>
-
-          {/* Ravitaillement vital (one-shot) */}
-          <button
-            type="button"
-            onClick={() => navigate(fleetSendUrl('colonize_supply'))}
-            disabled={!!status.supplyCompleted}
-            className={cn(
-              'w-full rounded-xl border p-4 text-left transition-all',
-              status.supplyCompleted
-                ? 'border-emerald-500/20 bg-emerald-900/5 opacity-60 cursor-not-allowed'
-                : 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10',
-            )}
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 shrink-0">
-                <Package className="h-6 w-6 text-emerald-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-sm font-bold text-foreground">Ravitaillement vital</h4>
-                  {status.supplyCompleted ? (
-                    <span className="text-xs font-bold text-emerald-400 shrink-0 flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Accompli
-                    </span>
-                  ) : (
-                    <span className="text-xs font-bold text-emerald-400 shrink-0">+5% / 2 000 res.</span>
-                  )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => consolidateMutation.mutate({ planetId: planetId! })}
+              disabled={consolidateMutation.isPending}
+              className="w-full rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-900/10 p-4 text-left transition-all hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 shrink-0">
+                  <Wrench className="h-6 w-6 text-amber-400" />
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  {status.supplyCompleted
-                    ? 'Le convoi de ravitaillement a ete livre avec succes. Les materiaux sont en cours de deploiement.'
-                    : 'Les reserves de la colonie sont critiques. Un convoi de ravitaillement apportera les materiaux necessaires a la construction des premiers batiments permanents.'}
-                </p>
-                {!status.supplyCompleted && (
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-sm font-bold text-foreground">Etablir l'avant-poste</h4>
+                    <span className="text-xs font-bold text-amber-400 shrink-0">+20%</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    Deployer les infrastructures temporaires et etablir un perimetre de securite. Les fondations de la colonie prennent forme.
+                  </p>
+                  <div className="flex items-center gap-3 mt-2 text-[10px]">
+                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-minerai font-medium">2 000 minerai</span>
+                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-silicium font-medium">1 000 silicium</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          )}
+
+          {/* ── Milestone 2: Ravitaillement ── */}
+          {status.supplyCompleted ? (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-emerald-400">Colonie ravitaillee</h4>
+                  <p className="text-[11px] text-muted-foreground">Les materiaux ont ete livres. La construction des batiments permanents peut commencer.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate(fleetSendUrl('colonize_supply'))}
+              className="w-full rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 p-4 text-left transition-all hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 shrink-0">
+                  <Package className="h-6 w-6 text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-sm font-bold text-foreground">Ravitaillement vital</h4>
+                    <span className="text-xs font-bold text-emerald-400 shrink-0">+5% / 2 000 res.</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    Les reserves de la colonie sont critiques. Un convoi de ravitaillement apportera les materiaux necessaires a la construction des premiers batiments permanents.
+                  </p>
                   <div className="flex items-center gap-3 mt-2 text-[10px]">
                     <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-emerald-400 font-medium">+5% par tranche de 2 000 ressources</span>
-                    <span className="text-muted-foreground">· Max +25% · Mission unique</span>
+                    <span className="text-muted-foreground">· Max +25%</span>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
 
-          {/* Securiser le secteur */}
-          <button
-            type="button"
-            onClick={() => navigate(fleetSendUrl('colonize_reinforce'))}
-            className="w-full rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-blue-900/10 p-4 text-left transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 shrink-0">
-                <Shield className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-sm font-bold text-foreground">Securiser le secteur</h4>
-                  <span className="text-xs font-bold text-blue-400 shrink-0">+2%/h par vaisseau</span>
+          {/* ── Milestone 3: Securisation ── */}
+          {status.reinforceCompleted ? (
+            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-blue-400" />
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  Des signaux hostiles ont ete detectes dans le secteur. L'envoi d'une escorte militaire securisera la zone durablement, accelerant l'installation en continu.
-                </p>
-                <div className="flex items-center gap-3 mt-2 text-[10px]">
-                  <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-blue-400 font-medium">+2%/h passif par vaisseau de combat</span>
-                  <span className="text-muted-foreground">· Max +20%/h · Cumulable</span>
+                <div>
+                  <h4 className="text-sm font-bold text-blue-400">Patrouilles en cours</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Le secteur est securise. Bonus passif actif : <span className="text-blue-400 font-medium">+{((status.reinforcePassiveBonus ?? 0) * 100).toFixed(0)}%/h</span>
+                  </p>
                 </div>
-                {(status.reinforcePassiveBonus ?? 0) > 0 && (
-                  <div className="mt-1.5 text-[11px] text-blue-400">
-                    Bonus actif : +{((status.reinforcePassiveBonus ?? 0) * 100).toFixed(0)}%/h
-                  </div>
-                )}
               </div>
             </div>
-          </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate(fleetSendUrl('colonize_reinforce'))}
+              className="w-full rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-blue-900/10 p-4 text-left transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 shrink-0">
+                  <Shield className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-sm font-bold text-foreground">Securiser le secteur</h4>
+                    <span className="text-xs font-bold text-blue-400 shrink-0">+2%/h par vaisseau</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    Des signaux hostiles ont ete detectes dans le secteur. L'envoi d'une escorte militaire securisera la zone durablement, accelerant l'installation en continu.
+                  </p>
+                  <div className="flex items-center gap-3 mt-2 text-[10px]">
+                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-blue-400 font-medium">+2%/h passif par vaisseau de combat</span>
+                    <span className="text-muted-foreground">· Max +20%/h</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          )}
         </section>
 
         {/* ════ EVENT HISTORY ════ */}

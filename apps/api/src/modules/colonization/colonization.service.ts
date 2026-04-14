@@ -217,32 +217,21 @@ export function createColonizationService(
         .where(eq(colonizationProcesses.id, processId));
     },
 
-    /** Local action: consolidate colony (costs resources, with cooldown) */
+    /** Local action: establish outpost (one-shot, costs resources) */
     async consolidate(userId: string, planetId: string) {
       const process = await this.getProcess(planetId);
       if (!process || process.userId !== userId) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'No active colonization process' });
       }
 
+      if (process.consolidateCompleted) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "L'avant-poste a deja ete etabli" });
+      }
+
       const config = await gameConfigService.getFullConfig();
-      const cooldownSeconds = Number(config.universe.colonization_consolidate_cooldown) || 14400;
       const boost = Number(config.universe.colonization_consolidate_boost) || 0.20;
       const costMinerai = Number(config.universe.colonization_consolidate_cost_minerai) || 2000;
       const costSilicium = Number(config.universe.colonization_consolidate_cost_silicium) || 1000;
-
-      // Enforce cooldown
-      if (process.lastConsolidateAt) {
-        const elapsed = (Date.now() - new Date(process.lastConsolidateAt).getTime()) / 1000;
-        if (elapsed < cooldownSeconds) {
-          const remaining = Math.ceil(cooldownSeconds - elapsed);
-          const hours = Math.floor(remaining / 3600);
-          const minutes = Math.ceil((remaining % 3600) / 60);
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Consolidation en cooldown (${hours}h${minutes > 0 ? ` ${minutes}min` : ''} restantes)`,
-          });
-        }
-      }
 
       // Check and deduct resources from the colonizing planet
       const [planet] = await db
@@ -275,7 +264,7 @@ export function createColonizationService(
       await this.applyBoost(process.id, boost);
       await db
         .update(colonizationProcesses)
-        .set({ lastConsolidateAt: new Date() })
+        .set({ consolidateCompleted: true })
         .where(eq(colonizationProcesses.id, process.id));
 
       return { boosted: true, amount: boost };

@@ -35,6 +35,14 @@ export class ColonizeReinforceHandler implements MissionHandler {
     if (!target) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucune colonisation en cours a cette position' });
     }
+
+    // Check reinforce hasn't already been completed
+    if (ctx.colonizationService) {
+      const process = await ctx.colonizationService.getProcess(target.id);
+      if (process?.reinforceCompleted) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le secteur a deja ete securise pour cette colonie' });
+      }
+    }
   }
 
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
@@ -72,14 +80,14 @@ export class ColonizeReinforceHandler implements MissionHandler {
 
     if (targetPlanet && ctx.colonizationService && addedBonus > 0) {
       const process = await ctx.colonizationService.getProcess(targetPlanet.id);
-      if (process) {
+      if (process && !process.reinforceCompleted) {
         const currentBonus = process.reinforcePassiveBonus ?? 0;
         const newBonus = Math.min(maxBoost, currentBonus + addedBonus);
         actualBonusAdded = newBonus - currentBonus;
 
         await ctx.db
           .update(colonizationProcesses)
-          .set({ reinforcePassiveBonus: newBonus })
+          .set({ reinforcePassiveBonus: newBonus, reinforceCompleted: true })
           .where(eq(colonizationProcesses.id, process.id));
 
         // Auto-resolve any pending 'raid' event
