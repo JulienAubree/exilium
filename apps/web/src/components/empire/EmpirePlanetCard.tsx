@@ -57,29 +57,33 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
     navigate(path);
   };
 
-  // Colonizing planets: simplified card
+  // Colonizing planets: simplified clickable card → navigates to Overview which shows ColonizationProgress
   if (planet.status === 'colonizing') {
     return (
-      <div className="flex flex-col rounded-xl border border-amber-500/25 bg-card/80 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => goTo('/')}
+        className="flex flex-col rounded-xl border border-amber-500/25 bg-card/80 overflow-hidden text-left transition-colors hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5 cursor-pointer"
+      >
         {/* Header */}
         <div className="flex items-center gap-3 p-3.5 pb-2.5">
-          <button onClick={() => goTo('/colonization')} className="shrink-0">
+          <div className="shrink-0">
             {planet.planetClassId && planet.planetImageIndex != null ? (
               <img
                 src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
                 alt={planet.name}
-                className="h-11 w-11 rounded-full border-2 border-amber-500/30 object-cover cursor-pointer opacity-70 hover:ring-2 hover:ring-amber-500/40 transition-shadow"
+                className="h-11 w-11 rounded-full border-2 border-amber-500/30 object-cover opacity-70"
               />
             ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-500/30 bg-muted font-semibold text-muted-foreground cursor-pointer opacity-70">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-500/30 bg-muted font-semibold text-muted-foreground opacity-70">
                 {planet.name.charAt(0)}
               </div>
             )}
-          </button>
+          </div>
           <div className="min-w-0 flex-1">
-            <button onClick={() => goTo('/colonization')} className="truncate text-sm font-semibold text-foreground hover:text-amber-400 transition-colors text-left">
+            <div className="truncate text-sm font-semibold text-foreground">
               {planet.name}
-            </button>
+            </div>
             <div className="text-xs text-muted-foreground">
               [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
             </div>
@@ -93,10 +97,10 @@ export function EmpirePlanetCard({ planet, isFirst }: { planet: EmpirePlanet; is
         <div className="px-3.5 pb-3.5">
           <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-400">
             <Rocket className="h-3.5 w-3.5 shrink-0" />
-            <span>Colonisation en cours</span>
+            <span>Colonisation en cours — cliquez pour voir la progression</span>
           </div>
         </div>
-      </div>
+      </button>
     );
   }
 

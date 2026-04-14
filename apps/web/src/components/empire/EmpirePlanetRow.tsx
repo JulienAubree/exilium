@@ -47,7 +47,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast }: { planet: EmpirePla
 
   const handleClick = () => {
     setActivePlanet(planet.id);
-    navigate(planet.status === 'colonizing' ? '/colonization' : '/');
+    navigate('/');
   };
 
   // Colonizing planets: simplified row
