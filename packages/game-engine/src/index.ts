@@ -22,3 +22,4 @@ export * from './formulas/armored-storage.js';
 export * from './formulas/biomes.js';
 export * from './formulas/exploration.js';
 export * from './formulas/planet-type.js';
+export * from './formulas/governance.js';
