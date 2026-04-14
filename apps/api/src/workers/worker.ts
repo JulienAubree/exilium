@@ -55,13 +55,14 @@ const buildingService = createBuildingService(db, resourceService, buildCompleti
 const researchService = createResearchService(db, resourceService, buildCompletionQueue, gameConfigService);
 const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, flagshipService);
 const gameEventService = createGameEventService(db);
-const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService);
-
-// Market service
-const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);
 
 // Colonization service
 const colonizationService = createColonizationService(db, gameConfigService);
+
+const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService);
+
+// Market service
+const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);
 
 console.log('[worker] Starting workers...');
 

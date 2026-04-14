@@ -1,11 +1,11 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, fleetEvents, planetBiomes, discoveredBiomes, discoveredPositions } from '@exilium/db';
-import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, type BiomeDefinition } from '@exilium/game-engine';
+import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapacity, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, calculateColonizationDifficulty, type BiomeDefinition } from '@exilium/game-engine';
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
-import { findShipByRole, findShipsByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
+import { findShipsByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
 
 export class ColonizeHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -27,10 +27,8 @@ export class ColonizeHandler implements MissionHandler {
 
     const config = await ctx.gameConfigService.getFullConfig();
     const shipStatsMap = buildShipStatsMap(config);
-    const colonyShipDef = findShipByRole(config, 'colonization');
     const homeworldType = findPlanetTypeByRole(config, 'homeworld');
     const beltPositions = (config.universe.belt_positions as number[]) ?? [8, 16];
-    const maxPlanetsPerPlayer = Number(config.universe.maxPlanetsPerPlayer) || 9;
 
     const createColonizeReport = async (title: string, result: Record<string, unknown>) => {
       if (!ctx.reportService) return undefined;
@@ -99,25 +97,11 @@ export class ColonizeHandler implements MissionHandler {
       };
     }
 
-    // Check max planets
+    // Compute sortOrder for the new colony (max existing + 1)
     const userPlanets = await ctx.db
-      .select()
+      .select({ sortOrder: planets.sortOrder })
       .from(planets)
       .where(eq(planets.userId, fleetEvent.userId));
-
-    if (userPlanets.length >= maxPlanetsPerPlayer) {
-      const reportId = await createColonizeReport(
-        `Colonisation échouée ${coords}`,
-        { success: false, reason: 'max_planets', maxPlanets: maxPlanetsPerPlayer },
-      );
-      return {
-        scheduleReturn: true,
-        cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
-        reportId,
-      };
-    }
-
-    // Compute sortOrder for the new colony (max existing + 1)
     const maxSortOrder = userPlanets.reduce((max, p) => Math.max(max, p.sortOrder ?? 0), 0);
     const newSortOrder = maxSortOrder + 1;
 
@@ -152,6 +136,7 @@ export class ColonizeHandler implements MissionHandler {
         maxTemp,
         planetImageIndex,
         sortOrder: newSortOrder,
+        status: 'colonizing',
       })
       .returning();
 
@@ -233,11 +218,32 @@ export class ColonizeHandler implements MissionHandler {
         .where(eq(planets.id, newPlanet.id));
     }
 
-    // Colony ship is consumed
-    const remainingShips = { ...ships };
-    if (remainingShips[colonyShipDef.id]) {
-      remainingShips[colonyShipDef.id] = Math.max(0, remainingShips[colonyShipDef.id] - 1);
+    // Calculate colonization difficulty
+    const [homeworld] = await ctx.db.select({ system: planets.system }).from(planets)
+      .where(and(eq(planets.userId, fleetEvent.userId), eq(planets.sortOrder, 0)))
+      .limit(1);
+
+    const config2 = await ctx.gameConfigService.getFullConfig();
+    const difficultyMap: Record<string, number> = {};
+    for (const key of Object.keys(config2.universe)) {
+      if (key.startsWith('colonization_difficulty_')) {
+        difficultyMap[key.replace('colonization_difficulty_', '')] = Number(config2.universe[key]);
+      }
     }
+    const difficulty = calculateColonizationDifficulty(
+      planetTypeForPos?.id ?? 'temperate',
+      homeworld?.system ?? fleetEvent.targetSystem,
+      fleetEvent.targetSystem,
+      difficultyMap,
+    );
+
+    // Start colonization process (colony ship consumed when process reaches 100%)
+    await ctx.colonizationService!.startProcess(
+      newPlanet.id,
+      fleetEvent.userId,
+      fleetEvent.originPlanetId,
+      difficulty,
+    );
 
     // Mark original event completed
     await ctx.db
@@ -246,38 +252,10 @@ export class ColonizeHandler implements MissionHandler {
       .where(eq(fleetEvents.id, fleetEvent.id));
 
     const reportId = await createColonizeReport(
-      `Colonisation réussie ${coords}`,
-      { success: true, diameter, planetId: newPlanet.id, biomes: pickedBiomes.map(b => b.id) },
+      `Colonisation lancée ${coords}`,
+      { success: true, colonizing: true, planetId: newPlanet.id, difficulty },
     );
 
-    // Return remaining ships in a new fleet event (cargo already transferred to planet)
-    const hasRemainingShips = Object.values(remainingShips).some(v => v > 0);
-    if (hasRemainingShips) {
-      return {
-        scheduleReturn: false,
-        cargo: { minerai: 0, silicium: 0, hydrogene: 0 },
-        reportId,
-        createReturnEvent: {
-          userId: fleetEvent.userId,
-          originPlanetId: fleetEvent.originPlanetId,
-          targetPlanetId: newPlanet.id,
-          targetGalaxy: fleetEvent.targetGalaxy,
-          targetSystem: fleetEvent.targetSystem,
-          targetPosition: fleetEvent.targetPosition,
-          mission: 'transport',
-          phase: 'outbound',
-          status: 'active',
-          departureTime: new Date(),
-          arrivalTime: new Date(),
-          mineraiCargo: '0',
-          siliciumCargo: '0',
-          hydrogeneCargo: '0',
-          ships: remainingShips,
-        },
-      };
-    }
-
-    // No remaining ships — nothing returns
     return { scheduleReturn: false, reportId };
   }
 }

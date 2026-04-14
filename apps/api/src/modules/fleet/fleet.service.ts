@@ -49,6 +49,7 @@ export function createFleetService(
   flagshipService?: ReturnType<typeof createFlagshipService>,
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
   gameEventService?: ReturnType<typeof import('../game-event/game-event.service.js').createGameEventService>,
+  colonizationService?: ReturnType<typeof import('../colonization/colonization.service.js').createColonizationService>,
 ) {
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
@@ -81,6 +82,7 @@ export function createFleetService(
     assetsDir: env.ASSETS_DIR,
     redis,
     gameEventService,
+    colonizationService,
   };
 
   function buildFleetConfig(config: { universe: Record<string, unknown> }): FleetConfig {

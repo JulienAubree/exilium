@@ -14,6 +14,7 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createGameEventService } from '../game-event/game-event.service.js';
+import type { createColonizationService } from '../colonization/colonization.service.js';
 import type { Queue } from 'bullmq';
 import type Redis from 'ioredis';
 
@@ -83,6 +84,7 @@ export interface MissionHandlerContext {
   dailyQuestService?: ReturnType<typeof createDailyQuestService>;
   flagshipService?: ReturnType<typeof createFlagshipService>;
   gameEventService?: ReturnType<typeof createGameEventService>;
+  colonizationService?: ReturnType<typeof createColonizationService>;
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> };
   fleetQueue: Queue;
   assetsDir: string;
