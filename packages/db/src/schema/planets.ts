@@ -32,6 +32,7 @@ export const planets = pgTable('planets', {
   shieldPercent: smallint('shield_percent').notNull().default(100),
 
   sortOrder: smallint('sort_order').notNull().default(0),
+  status: varchar('status', { length: 32 }).notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   uniqueIndex('unique_coordinates').on(table.galaxy, table.system, table.position, table.planetType),
