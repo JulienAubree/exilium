@@ -39,11 +39,19 @@ export function createColonizationService(
       const remaining = Math.max(0, 1 - process.progress);
       const etaHours = effectiveRate > 0 ? remaining / effectiveRate : Infinity;
 
+      const cooldownSeconds = Number(config.universe.colonization_consolidate_cooldown) || 14400;
+      let consolidateCooldownRemaining = 0;
+      if (process.lastConsolidateAt) {
+        const elapsed = (Date.now() - new Date(process.lastConsolidateAt).getTime()) / 1000;
+        consolidateCooldownRemaining = Math.max(0, Math.ceil(cooldownSeconds - elapsed));
+      }
+
       return {
         ...process,
         events: events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
         effectivePassiveRate: effectiveRate,
         estimatedCompletionHours: etaHours,
+        consolidateCooldownRemaining,
       };
     },
 
@@ -207,7 +215,7 @@ export function createColonizationService(
         .where(eq(colonizationProcesses.id, processId));
     },
 
-    /** Local action: consolidate colony */
+    /** Local action: consolidate colony (with cooldown) */
     async consolidate(userId: string, planetId: string) {
       const process = await this.getProcess(planetId);
       if (!process || process.userId !== userId) {
@@ -215,9 +223,29 @@ export function createColonizationService(
       }
 
       const config = await gameConfigService.getFullConfig();
+      const cooldownSeconds = Number(config.universe.colonization_consolidate_cooldown) || 14400;
       const boost = Number(config.universe.colonization_consolidate_boost) || 0.09;
 
+      // Enforce cooldown
+      if (process.lastConsolidateAt) {
+        const elapsed = (Date.now() - new Date(process.lastConsolidateAt).getTime()) / 1000;
+        if (elapsed < cooldownSeconds) {
+          const remaining = Math.ceil(cooldownSeconds - elapsed);
+          const hours = Math.floor(remaining / 3600);
+          const minutes = Math.ceil((remaining % 3600) / 60);
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Consolidation en cooldown (${hours}h${minutes > 0 ? ` ${minutes}min` : ''} restantes)`,
+          });
+        }
+      }
+
       await this.applyBoost(process.id, boost);
+      await db
+        .update(colonizationProcesses)
+        .set({ lastConsolidateAt: new Date() })
+        .where(eq(colonizationProcesses.id, process.id));
+
       return { boosted: true, amount: boost };
     },
 

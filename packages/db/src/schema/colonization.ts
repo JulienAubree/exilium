@@ -18,6 +18,7 @@ export const colonizationProcesses = pgTable('colonization_processes', {
   status: colonizationStatusEnum('status').notNull().default('active'),
   lastTickAt: timestamp('last_tick_at', { withTimezone: true }).notNull().defaultNow(),
   lastEventAt: timestamp('last_event_at', { withTimezone: true }).notNull().defaultNow(),
+  lastConsolidateAt: timestamp('last_consolidate_at', { withTimezone: true }),
   startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

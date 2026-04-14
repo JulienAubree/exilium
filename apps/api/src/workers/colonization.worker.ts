@@ -80,12 +80,20 @@ export function startColonizationWorker(
                 ([, s]) => s.role === 'colonization',
               );
 
+              if (!colonyShipEntry) {
+                console.error(`[colonization] Colony ship definition not found in config — ship lost for user ${result.userId}`);
+              }
+
               if (colonyShipEntry && result.originPlanetId) {
                 const [originPlanet] = await db
                   .select()
                   .from(planets)
                   .where(eq(planets.id, result.originPlanetId))
                   .limit(1);
+
+                if (!originPlanet) {
+                  console.error(`[colonization] Origin planet ${result.originPlanetId} not found — colony ship lost for user ${result.userId}`);
+                }
 
                 if (originPlanet) {
                   const now = new Date();
