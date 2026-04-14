@@ -1,6 +1,6 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, userResearch, buildQueue, planetBuildings, discoveredBiomes } from '@exilium/db';
+import { planets, userResearch, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { researchCost, researchTime, checkResearchPrerequisites, resolveBonus, researchAnnexBonus, researchBiomeBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
@@ -42,11 +42,21 @@ async function getAnnexLevelsSum(db: Database, userId: string): Promise<number> 
   return Number(result?.total ?? 0);
 }
 
-async function getDiscoveredBiomesCount(db: Database, userId: string): Promise<number> {
+async function getActiveBiomesCount(db: Database, userId: string): Promise<number> {
+  const userPlanets = db
+    .select({ id: planets.id })
+    .from(planets)
+    .where(eq(planets.userId, userId));
+
   const [result] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(discoveredBiomes)
-    .where(eq(discoveredBiomes.userId, userId));
+    .from(planetBiomes)
+    .where(
+      and(
+        inArray(planetBiomes.planetId, userPlanets),
+        eq(planetBiomes.active, true),
+      ),
+    );
   return Number(result?.count ?? 0);
 }
 
@@ -156,7 +166,7 @@ export function createResearchService(
 
       const annexLevelsSum = await getAnnexLevelsSum(db, userId);
       const annexBonusMultiplier = researchAnnexBonus(annexLevelsSum);
-      const discoveredBiomesCount = await getDiscoveredBiomesCount(db, userId);
+      const discoveredBiomesCount = await getActiveBiomesCount(db, userId);
       const biomeBonusMultiplier = researchBiomeBonus(discoveredBiomesCount);
       const bonusMultiplier = resolveBonus('research_time', null, buildingLevels, config.bonuses);
       const annexDetails = await getAnnexDetails(db, userId);
@@ -302,7 +312,7 @@ export function createResearchService(
       }
       const annexLevelsSum = await getAnnexLevelsSum(db, userId);
       const annexBonusMultiplier = researchAnnexBonus(annexLevelsSum);
-      const discoveredBiomesCount = await getDiscoveredBiomesCount(db, userId);
+      const discoveredBiomesCount = await getActiveBiomesCount(db, userId);
       const biomeBonusMultiplier = researchBiomeBonus(discoveredBiomesCount);
       // Governance construction penalty (no-op on homeworld, applied for consistency)
       const govPenaltyResearch = await getGovernancePenalty(db, userId, homeworld.planetClassId, config);
