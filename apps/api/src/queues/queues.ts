@@ -11,3 +11,4 @@ const defaultJobOptions = {
 export const buildCompletionQueue = new Queue('build-completion', { connection, defaultJobOptions });
 export const fleetQueue = new Queue('fleet', { connection, defaultJobOptions });
 export const marketQueue = new Queue('market', { connection, defaultJobOptions });
+export const colonizationQueue = new Queue('colonization', { connection, defaultJobOptions });
