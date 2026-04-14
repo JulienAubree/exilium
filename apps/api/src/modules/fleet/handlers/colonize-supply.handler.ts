@@ -1,7 +1,9 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, colonizationEvents } from '@exilium/db';
+import { planets, colonizationEvents, colonizationProcesses } from '@exilium/db';
+import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { buildShipStatsMap } from '../fleet.types.js';
 
 export class ColonizeSupplyHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -19,6 +21,14 @@ export class ColonizeSupplyHandler implements MissionHandler {
 
     if (!target) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucune colonisation en cours a cette position' });
+    }
+
+    // Check supply hasn't already been completed
+    if (ctx.colonizationService) {
+      const process = await ctx.colonizationService.getProcess(target.id);
+      if (process?.supplyCompleted) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le ravitaillement vital a deja ete accompli pour cette colonie' });
+      }
     }
   }
 
@@ -49,10 +59,19 @@ export class ColonizeSupplyHandler implements MissionHandler {
       ))
       .limit(1);
 
+    let boostApplied = 0;
+
     if (targetPlanet && ctx.colonizationService && boost > 0) {
       const process = await ctx.colonizationService.getProcess(targetPlanet.id);
-      if (process) {
+      if (process && !process.supplyCompleted) {
         await ctx.colonizationService.applyBoost(process.id, boost);
+        boostApplied = boost;
+
+        // Mark supply as completed (one-shot)
+        await ctx.db
+          .update(colonizationProcesses)
+          .set({ supplyCompleted: true })
+          .where(eq(colonizationProcesses.id, process.id));
 
         // Auto-resolve any pending 'shortage' event
         const [shortageEvent] = await ctx.db
@@ -83,6 +102,43 @@ export class ColonizeSupplyHandler implements MissionHandler {
         .where(eq(planets.id, targetPlanet.id));
     }
 
-    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 } };
+    // Create mission report
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    let reportId: string | undefined;
+    if (ctx.reportService) {
+      const shipStatsMap = buildShipStatsMap(config);
+      const [originPlanet] = await ctx.db.select({
+        galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+      }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+
+      const report = await ctx.reportService.create({
+        userId: fleetEvent.userId,
+        fleetEventId: fleetEvent.id,
+        missionType: 'colonize_supply',
+        title: `Ravitaillement vital ${coords}`,
+        coordinates: {
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+        },
+        originCoordinates: originPlanet ? {
+          galaxy: originPlanet.galaxy,
+          system: originPlanet.system,
+          position: originPlanet.position,
+          planetName: originPlanet.name,
+        } : undefined,
+        fleet: { ships: fleetEvent.ships, totalCargo: totalCargoCapacity(fleetEvent.ships as Record<string, number>, shipStatsMap) },
+        departureTime: fleetEvent.departureTime,
+        completionTime: fleetEvent.arrivalTime,
+        result: {
+          resourcesDelivered: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+          totalResources,
+          boostApplied: Math.round(boostApplied * 100),
+        },
+      });
+      reportId = report.id;
+    }
+
+    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
   }
 }

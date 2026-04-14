@@ -307,11 +307,17 @@ export default function ColonizationProgress() {
             </div>
           </button>
 
-          {/* Ravitaillement vital */}
+          {/* Ravitaillement vital (one-shot) */}
           <button
             type="button"
             onClick={() => navigate(fleetSendUrl('colonize_supply'))}
-            className="w-full rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 p-4 text-left transition-all hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10"
+            disabled={!!status.supplyCompleted}
+            className={cn(
+              'w-full rounded-xl border p-4 text-left transition-all',
+              status.supplyCompleted
+                ? 'border-emerald-500/20 bg-emerald-900/5 opacity-60 cursor-not-allowed'
+                : 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10',
+            )}
           >
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 shrink-0">
@@ -320,15 +326,25 @@ export default function ColonizationProgress() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h4 className="text-sm font-bold text-foreground">Ravitaillement vital</h4>
-                  <span className="text-xs font-bold text-emerald-400 shrink-0">+5% / 2 000 res.</span>
+                  {status.supplyCompleted ? (
+                    <span className="text-xs font-bold text-emerald-400 shrink-0 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Accompli
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-emerald-400 shrink-0">+5% / 2 000 res.</span>
+                  )}
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  Les reserves de la colonie sont critiques. Un convoi de ravitaillement apportera les materiaux necessaires a la construction des premiers batiments permanents.
+                  {status.supplyCompleted
+                    ? 'Le convoi de ravitaillement a ete livre avec succes. Les materiaux sont en cours de deploiement.'
+                    : 'Les reserves de la colonie sont critiques. Un convoi de ravitaillement apportera les materiaux necessaires a la construction des premiers batiments permanents.'}
                 </p>
-                <div className="flex items-center gap-3 mt-2 text-[10px]">
-                  <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-emerald-400 font-medium">+5% par tranche de 2 000 ressources</span>
-                  <span className="text-muted-foreground">· Max +25%</span>
-                </div>
+                {!status.supplyCompleted && (
+                  <div className="flex items-center gap-3 mt-2 text-[10px]">
+                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-emerald-400 font-medium">+5% par tranche de 2 000 ressources</span>
+                    <span className="text-muted-foreground">· Max +25% · Mission unique</span>
+                  </div>
+                )}
               </div>
             </div>
           </button>

@@ -1,4 +1,4 @@
-import { pgTable, uuid, real, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, real, timestamp, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { planets } from './planets.js';
 import { users } from './users.js';
 
@@ -16,6 +16,7 @@ export const colonizationProcesses = pgTable('colonization_processes', {
   progress: real('progress').notNull().default(0),
   difficultyFactor: real('difficulty_factor').notNull().default(1),
   reinforcePassiveBonus: real('reinforce_passive_bonus').notNull().default(0),
+  supplyCompleted: boolean('supply_completed').notNull().default(false),
   status: colonizationStatusEnum('status').notNull().default('active'),
   lastTickAt: timestamp('last_tick_at', { withTimezone: true }).notNull().defaultNow(),
   lastEventAt: timestamp('last_event_at', { withTimezone: true }).notNull().defaultNow(),

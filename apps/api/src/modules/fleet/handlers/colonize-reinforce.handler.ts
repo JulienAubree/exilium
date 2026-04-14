@@ -1,7 +1,9 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, colonizationEvents, colonizationProcesses } from '@exilium/db';
+import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { buildShipStatsMap } from '../fleet.types.js';
 
 export class ColonizeReinforceHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -38,7 +40,7 @@ export class ColonizeReinforceHandler implements MissionHandler {
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
     const config = await ctx.gameConfigService.getFullConfig();
 
-    // Proportional boost: +2% per combat ship, capped at 20%
+    // Passive bonus: +2%/h per combat ship, capped at 20%/h total
     const boostPerShip = Number(config.universe.colonization_reinforce_boost_per_ship) || 0.02;
     const maxBoost = Number(config.universe.colonization_reinforce_max_boost) || 0.20;
 
@@ -52,7 +54,7 @@ export class ColonizeReinforceHandler implements MissionHandler {
         combatShipCount += count;
       }
     }
-    const boost = Math.min(maxBoost, combatShipCount * boostPerShip);
+    const addedBonus = combatShipCount * boostPerShip;
 
     // Find the colonizing planet
     const [targetPlanet] = await ctx.db
@@ -66,12 +68,15 @@ export class ColonizeReinforceHandler implements MissionHandler {
       ))
       .limit(1);
 
-    if (targetPlanet && ctx.colonizationService && boost > 0) {
+    let actualBonusAdded = 0;
+
+    if (targetPlanet && ctx.colonizationService && addedBonus > 0) {
       const process = await ctx.colonizationService.getProcess(targetPlanet.id);
       if (process) {
-        // Add passive bonus instead of instant boost — capped at maxBoost total
         const currentBonus = process.reinforcePassiveBonus ?? 0;
-        const newBonus = Math.min(maxBoost, currentBonus + boost);
+        const newBonus = Math.min(maxBoost, currentBonus + addedBonus);
+        actualBonusAdded = newBonus - currentBonus;
+
         await ctx.db
           .update(colonizationProcesses)
           .set({ reinforcePassiveBonus: newBonus })
@@ -94,7 +99,43 @@ export class ColonizeReinforceHandler implements MissionHandler {
       }
     }
 
-    // Military ships return
-    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 } };
+    // Create mission report
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    let reportId: string | undefined;
+    if (ctx.reportService) {
+      const shipStatsMap = buildShipStatsMap(config);
+      const [originPlanet] = await ctx.db.select({
+        galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+      }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+
+      const report = await ctx.reportService.create({
+        userId: fleetEvent.userId,
+        fleetEventId: fleetEvent.id,
+        missionType: 'colonize_reinforce',
+        title: `Securisation du secteur ${coords}`,
+        coordinates: {
+          galaxy: fleetEvent.targetGalaxy,
+          system: fleetEvent.targetSystem,
+          position: fleetEvent.targetPosition,
+        },
+        originCoordinates: originPlanet ? {
+          galaxy: originPlanet.galaxy,
+          system: originPlanet.system,
+          position: originPlanet.position,
+          planetName: originPlanet.name,
+        } : undefined,
+        fleet: { ships: fleetEvent.ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+        departureTime: fleetEvent.departureTime,
+        completionTime: fleetEvent.arrivalTime,
+        result: {
+          combatShipsSent: combatShipCount,
+          passiveBonusAdded: Math.round(actualBonusAdded * 100),
+          raidResolved: false, // Will be true if a raid was auto-resolved
+        },
+      });
+      reportId = report.id;
+    }
+
+    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
   }
 }
