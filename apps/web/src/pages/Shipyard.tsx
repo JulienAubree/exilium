@@ -7,7 +7,6 @@ import { ResourceCost } from '@/components/common/ResourceCost';
 import { QuantityStepper } from '@/components/common/QuantityStepper';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
-import { getAssetUrl } from '@/lib/assets';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -123,8 +122,6 @@ export default function Shipyard() {
   });
 
   const shipQueue = queue ?? [];
-  const totalFleetUnits = ships?.reduce((sum, s) => sum + s.count, 0) ?? 0;
-  const totalQueueUnits = shipQueue.reduce((sum, e) => sum + (e.quantity - (e.completedCount ?? 0)), 0);
 
   if (isLoading || !ships) {
     return (
@@ -152,54 +149,9 @@ export default function Shipyard() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      {/* Hero banner */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={getAssetUrl('buildings', 'shipyard')}
-            alt=""
-            className="h-full w-full object-cover opacity-30 blur-sm scale-110"
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-        </div>
-        <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
-          <div className="flex items-start gap-4">
-            <GameImage
-              category="buildings"
-              id="shipyard"
-              size="icon"
-              alt="Chantier spatial"
-              className="h-14 w-14 lg:h-16 lg:w-16 rounded-xl border border-white/10 shadow-lg shrink-0"
-            />
-            <div className="flex-1 min-w-0 pt-1">
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground">Chantier spatial</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Niveau {shipyardLevel}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-center">
-              <div className="text-lg lg:text-xl font-bold text-foreground">{totalFleetUnits}</div>
-              <div className="text-[11px] text-muted-foreground font-medium">Vaisseaux</div>
-            </div>
-            <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-center">
-              <div className={`text-lg lg:text-xl font-bold ${totalQueueUnits > 0 ? 'text-orange-400' : 'text-muted-foreground'}`}>
-                {totalQueueUnits > 0 ? totalQueueUnits : '-'}
-              </div>
-              <div className="text-[11px] text-muted-foreground font-medium">En construction</div>
-            </div>
-            <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-center">
-              <div className={`text-lg lg:text-xl font-bold ${shipQueue.length > 0 ? 'text-orange-400' : 'text-muted-foreground'}`}>
-                {shipQueue.length > 0 ? shipQueue.length : '-'}
-              </div>
-              <div className="text-[11px] text-muted-foreground font-medium">Lots en file</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
+      <PageHeader title="Chantier spatial" />
 
-      <div className="space-y-4 px-4 pb-4 lg:space-y-6 lg:px-6 lg:pb-6">
       {shipQueue.length > 0 && (() => {
         const activeEntries = shipQueue.filter(e => e.status === 'active');
         const parallelSlots = activeEntries.length;
@@ -513,7 +465,6 @@ export default function Shipyard() {
           </div>
         );
       })}
-      </div>
 
       <EntityDetailOverlay
         open={!!detailId}
