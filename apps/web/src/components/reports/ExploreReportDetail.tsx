@@ -326,15 +326,22 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
           <div className="space-y-3">
             {biomesToShow.map((biome) => {
               const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+              // Get effects from game config biome definition (authoritative source with modifiers)
+              const configBiome = gameConfig?.biomes?.find((b: any) => b.id === biome.id);
+              const effects: Array<{ stat: string; modifier: number }> =
+                (configBiome?.effects as Array<{ stat: string; modifier: number }>) ??
+                biome.effects ??
+                [];
+
               return (
                 <div
                   key={biome.id}
-                  className="border-l-2 pl-3"
-                  style={{ borderColor: color }}
+                  className="rounded-lg border border-border/30 bg-card/40 p-3"
+                  style={{ borderLeftWidth: 3, borderLeftColor: color }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: color }}
                     />
                     <span className="text-sm font-semibold" style={{ color }}>
@@ -347,24 +354,18 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
                       {RARITY_LABELS[biome.rarity] ?? biome.rarity}
                     </span>
                   </div>
-                  {biome.effects && biome.effects.length > 0 && (
-                    <div className="text-xs space-y-0.5 ml-4">
-                      {biome.effects.map((e, i) => (
-                        <div key={i} className="flex justify-between gap-3">
+                  {effects.length > 0 && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 ml-4">
+                      {effects.map((e, i) => (
+                        <span key={i} className="text-xs">
+                          <span className={e.modifier > 0 ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>
+                            {e.modifier > 0 ? '+' : ''}{Math.round(e.modifier * 100)}%
+                          </span>
+                          {' '}
                           <span className="text-muted-foreground">
                             {STAT_LABELS[e.stat] ?? e.stat}
                           </span>
-                          <span
-                            className={
-                              e.modifier > 0
-                                ? 'text-emerald-400 font-medium'
-                                : 'text-red-400 font-medium'
-                            }
-                          >
-                            {e.modifier > 0 ? '+' : ''}
-                            {Math.round(e.modifier * 100)}%
-                          </span>
-                        </div>
+                        </span>
                       ))}
                     </div>
                   )}
