@@ -134,22 +134,20 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
     }
   }
 
-  // Planet type bonuses
+  // Planet type bonuses — values are multipliers (0.8 = -20%, 1.2 = +20%)
   const planetTypeName = gameConfig?.planetTypes?.find((t: any) => t.id === planet.planetClassId)?.name ?? planet.planetClassId;
   const typeBonus = resourceData?.planetTypeBonus as { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number } | undefined;
-  const typeBonusEntries: Array<{ stat: string; value: number }> = [];
+  const typeBonusEntries: Array<{ stat: string; pct: number }> = [];
   if (typeBonus) {
-    if (typeBonus.mineraiBonus !== 0) typeBonusEntries.push({ stat: 'Production minerai', value: typeBonus.mineraiBonus });
-    if (typeBonus.siliciumBonus !== 0) typeBonusEntries.push({ stat: 'Production silicium', value: typeBonus.siliciumBonus });
-    if (typeBonus.hydrogeneBonus !== 0) typeBonusEntries.push({ stat: 'Production hydrogene', value: typeBonus.hydrogeneBonus });
+    if (typeBonus.mineraiBonus !== 1) typeBonusEntries.push({ stat: 'production_minerai', pct: Math.round((typeBonus.mineraiBonus - 1) * 100) });
+    if (typeBonus.siliciumBonus !== 1) typeBonusEntries.push({ stat: 'production_silicium', pct: Math.round((typeBonus.siliciumBonus - 1) * 100) });
+    if (typeBonus.hydrogeneBonus !== 1) typeBonusEntries.push({ stat: 'production_hydrogene', pct: Math.round((typeBonus.hydrogeneBonus - 1) * 100) });
   }
 
-  // Total cumulated bonuses (type + biomes)
+  // Total cumulated bonuses (type deltas + biome deltas)
   const totalBonuses: Record<string, number> = {};
-  if (typeBonus) {
-    if (typeBonus.mineraiBonus !== 0) totalBonuses['production_minerai'] = typeBonus.mineraiBonus;
-    if (typeBonus.siliciumBonus !== 0) totalBonuses['production_silicium'] = typeBonus.siliciumBonus;
-    if (typeBonus.hydrogeneBonus !== 0) totalBonuses['production_hydrogene'] = typeBonus.hydrogeneBonus;
+  for (const entry of typeBonusEntries) {
+    totalBonuses[entry.stat] = entry.pct / 100;
   }
   for (const [stat, mod] of Object.entries(biomeBonuses)) {
     totalBonuses[stat] = (totalBonuses[stat] ?? 0) + mod;
@@ -198,8 +196,8 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
           {typeBonusEntries.length > 0 ? (
             <div className="flex flex-wrap gap-x-4 mt-1.5">
               {typeBonusEntries.map((b) => (
-                <span key={b.stat} className={`text-xs ${b.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {b.value > 0 ? '+' : ''}{Math.round(b.value * 100)}% {b.stat}
+                <span key={b.stat} className={`text-xs ${b.pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {b.pct > 0 ? '+' : ''}{b.pct}% {STAT_LABELS[b.stat] ?? b.stat}
                 </span>
               ))}
             </div>

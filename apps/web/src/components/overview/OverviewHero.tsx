@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FlagshipIcon } from '@/lib/icons';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { trpc } from '@/trpc';
@@ -113,24 +114,36 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
                 [{planet.galaxy}:{planet.system}:{planet.position}]
                 {planetTypeName && <> · <span className="text-foreground/80">{planetTypeName}</span></>}
               </p>
-              {/* Planet type bonuses */}
-              {planetTypeBonus && (planetTypeBonus.mineraiBonus !== 0 || planetTypeBonus.siliciumBonus !== 0 || planetTypeBonus.hydrogeneBonus !== 0) && (
-                <div className="flex flex-wrap gap-x-3 mt-1">
-                  {planetTypeBonus.mineraiBonus !== 0 && (
-                    <span className={`text-xs ${planetTypeBonus.mineraiBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {planetTypeBonus.mineraiBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.mineraiBonus * 100)}% minerai
-                    </span>
-                  )}
-                  {planetTypeBonus.siliciumBonus !== 0 && (
-                    <span className={`text-xs ${planetTypeBonus.siliciumBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {planetTypeBonus.siliciumBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.siliciumBonus * 100)}% silicium
-                    </span>
-                  )}
-                  {planetTypeBonus.hydrogeneBonus !== 0 && (
-                    <span className={`text-xs ${planetTypeBonus.hydrogeneBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {planetTypeBonus.hydrogeneBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.hydrogeneBonus * 100)}% hydrogene
-                    </span>
-                  )}
+              {/* Planet type bonuses — KPI-bar style with resource icons */}
+              {planetTypeBonus && (planetTypeBonus.mineraiBonus !== 1 || planetTypeBonus.siliciumBonus !== 1 || planetTypeBonus.hydrogeneBonus !== 1) && (
+                <div className="flex items-center gap-3 mt-1.5">
+                  {planetTypeBonus.mineraiBonus !== 1 && (() => {
+                    const pct = Math.round((planetTypeBonus.mineraiBonus - 1) * 100);
+                    return (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <MineraiIcon size={13} className="text-minerai" />
+                        {pct > 0 ? '+' : ''}{pct}%
+                      </span>
+                    );
+                  })()}
+                  {planetTypeBonus.siliciumBonus !== 1 && (() => {
+                    const pct = Math.round((planetTypeBonus.siliciumBonus - 1) * 100);
+                    return (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <SiliciumIcon size={13} className="text-silicium" />
+                        {pct > 0 ? '+' : ''}{pct}%
+                      </span>
+                    );
+                  })()}
+                  {planetTypeBonus.hydrogeneBonus !== 1 && (() => {
+                    const pct = Math.round((planetTypeBonus.hydrogeneBonus - 1) * 100);
+                    return (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <HydrogeneIcon size={13} className="text-hydrogene" />
+                        {pct > 0 ? '+' : ''}{pct}%
+                      </span>
+                    );
+                  })()}
                 </div>
               )}
             </div>
