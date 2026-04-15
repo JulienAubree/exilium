@@ -393,25 +393,40 @@ export default function Overview() {
 
   return (
     <div className="space-y-4 p-4 lg:p-6">
-      <PageHeader title="Vue d'ensemble" />
-
-      {/* ════ HERO ════ */}
-      <section className="glass-card rounded-xl">
-        <div className="relative h-40 lg:h-56 w-full overflow-hidden rounded-t-xl">
+      {/* ════ HERO BANNER ════ */}
+      <div className="relative overflow-hidden rounded-2xl -mx-4 -mt-4 lg:mx-0 lg:mt-0">
+        {/* Background image */}
+        <div className="absolute inset-0">
           {planet.planetClassId && planet.planetImageIndex != null ? (
             <img
               src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex)}
-              alt={planet.name}
-              className="w-full h-full object-cover"
+              alt=""
+              className="h-full w-full object-cover opacity-40 blur-sm scale-110"
               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+            <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+        </div>
 
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex justify-between items-end">
-            <div>
+        <div className="relative px-5 pt-8 pb-5 lg:px-8 lg:pt-10 lg:pb-6">
+          <div className="flex items-start gap-5">
+            {/* Planet thumbnail */}
+            {planet.planetClassId && planet.planetImageIndex != null ? (
+              <img
+                src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
+                alt={planet.name}
+                className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-primary/10 shrink-0"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-card text-2xl font-bold text-primary shadow-lg shadow-primary/10 shrink-0">
+                {planet.name.charAt(0)}
+              </div>
+            )}
+
+            {/* Title + info */}
+            <div className="flex-1 min-w-0 pt-1">
               {isRenaming ? (
                 <form
                   className="flex items-center gap-2"
@@ -433,34 +448,35 @@ export default function Overview() {
                   <Button type="button" size="sm" variant="ghost" onClick={() => setIsRenaming(false)}>Annuler</Button>
                 </form>
               ) : (
-                <h2
-                  className={`text-xl lg:text-2xl font-bold text-white ${!planet.renamed ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                <h1
+                  className={`text-xl lg:text-2xl font-bold text-foreground truncate ${!planet.renamed ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
                   onClick={!planet.renamed ? () => { setNewName(planet.name); setIsRenaming(true); } : undefined}
                   title={!planet.renamed ? 'Cliquer pour renommer' : undefined}
                 >
                   {planet.name}
-                </h2>
+                  {flagship?.planetId === planet.id && (
+                    <FlagshipIcon width={18} height={18} className="inline-block ml-2 text-energy align-text-bottom" />
+                  )}
+                </h1>
               )}
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground">
                 [{planet.galaxy}:{planet.system}:{planet.position}]
+                {' '} · {planet.diameter.toLocaleString('fr-FR')} km
+                {' '} · {planet.minTemp}&deg;C a {planet.maxTemp}&deg;C
               </p>
             </div>
-            <div className="text-right text-sm text-muted-foreground flex flex-col items-end gap-1.5">
-              <div>
-                <div><span className="text-foreground">{planet.minTemp}&deg;C</span> a <span className="text-foreground">{planet.maxTemp}&deg;C</span></div>
-                <div><span className="text-foreground">{planet.diameter.toLocaleString('fr-FR')}</span> km</div>
-              </div>
-              {(planet as any).biomes && (planet as any).biomes.length > 0 && (
-                <div className="flex flex-wrap justify-end gap-1">
-                  {(planet as any).biomes.map((biome: any) => (
-                    <BiomeBadge key={biome.id} biome={biome} size="xs" />
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
+
+          {/* Biomes */}
+          {(planet as any).biomes && (planet as any).biomes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-4">
+              {(planet as any).biomes.map((biome: any) => (
+                <BiomeBadge key={biome.id} biome={biome} size="xs" />
+              ))}
+            </div>
+          )}
         </div>
-      </section>
+      </div>
 
       {/* ════ LAYOUT: main + sidebar ════ */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 lg:gap-6">
