@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { trpc } from '@/trpc';
@@ -44,17 +45,40 @@ function formatBonus(value: number): string {
 
 function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: string; description?: string; effects?: Array<{ stat: string; modifier: number }> } }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
   const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+
+  const handleEnter = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const popoverWidth = 224;
+      let left = rect.left;
+      if (left + popoverWidth > window.innerWidth - 8) {
+        left = Math.max(8, window.innerWidth - popoverWidth - 8);
+      }
+      setCoords({ top: rect.bottom + 6, left });
+    }
+    setIsOpen(true);
+  };
+
   return (
-    <span className="relative" style={isOpen ? { zIndex: 9999 } : undefined}
-      onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-      <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium border cursor-default transition-colors"
-        style={{ color, borderColor: `${color}${isOpen ? '55' : '33'}`, backgroundColor: `${color}${isOpen ? '25' : '15'}` }}>
+    <>
+      <span
+        ref={triggerRef}
+        onMouseEnter={handleEnter}
+        onMouseLeave={() => { setIsOpen(false); setCoords(null); }}
+        className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium border cursor-default transition-colors"
+        style={{ color, borderColor: `${color}${isOpen ? '55' : '33'}`, backgroundColor: `${color}${isOpen ? '25' : '15'}` }}
+      >
         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
         {biome.name}
       </span>
-      {isOpen && (
-        <div className="absolute left-0 top-full mt-1.5 w-56 rounded-lg border border-border bg-popover p-3 shadow-xl pointer-events-none" style={{ zIndex: 9999 }}>
+      {isOpen && coords && createPortal(
+        <div
+          className="fixed w-56 rounded-lg border border-border bg-popover p-3 shadow-xl pointer-events-none"
+          style={{ top: coords.top, left: coords.left, zIndex: 9999 }}
+        >
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
@@ -72,9 +96,10 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
               ))}
             </div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
-    </span>
+    </>
   );
 }
 
