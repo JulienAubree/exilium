@@ -285,6 +285,7 @@ export default function Overview() {
   const navigate = useNavigate();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
+  const [showPlanetDetail, setShowPlanetDetail] = useState(false);
   const utils = trpc.useUtils();
 
   const { data: gameConfig } = useGameConfig();
@@ -367,8 +368,6 @@ export default function Overview() {
       </div>
     );
   }
-
-  const [showPlanetDetail, setShowPlanetDetail] = useState(false);
 
   const activeBuilding = buildings?.find((b) => b.isUpgrading);
   const activeResearch = techs?.find((t) => t.isResearching);
