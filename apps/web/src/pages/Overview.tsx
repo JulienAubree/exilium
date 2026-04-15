@@ -123,18 +123,41 @@ function BiomeBadge({ biome, size = 'sm' }: { biome: any; size?: 'sm' | 'xs' }) 
 
 function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any; resourceData: any; gameConfig: any }) {
   const biomes = (planet.biomes ?? []) as Array<{ id: string; name: string; rarity: string; effects?: Array<{ stat: string; modifier: number }> }>;
-  const aggregatedBonuses: Record<string, number> = {};
+
+  // Aggregate all biome bonuses
+  const biomeBonuses: Record<string, number> = {};
   for (const biome of biomes) {
     const configBiome = gameConfig?.biomes?.find((b: any) => b.id === biome.id);
     const effects = (configBiome?.effects ?? biome.effects ?? []) as Array<{ stat: string; modifier: number }>;
     for (const e of effects) {
-      if (typeof e.modifier === 'number') aggregatedBonuses[e.stat] = (aggregatedBonuses[e.stat] ?? 0) + e.modifier;
+      if (typeof e.modifier === 'number') biomeBonuses[e.stat] = (biomeBonuses[e.stat] ?? 0) + e.modifier;
     }
   }
+
+  // Planet type bonuses
   const planetTypeName = gameConfig?.planetTypes?.find((t: any) => t.id === planet.planetClassId)?.name ?? planet.planetClassId;
+  const typeBonus = resourceData?.planetTypeBonus as { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number } | undefined;
+  const typeBonusEntries: Array<{ stat: string; value: number }> = [];
+  if (typeBonus) {
+    if (typeBonus.mineraiBonus !== 0) typeBonusEntries.push({ stat: 'Production minerai', value: typeBonus.mineraiBonus });
+    if (typeBonus.siliciumBonus !== 0) typeBonusEntries.push({ stat: 'Production silicium', value: typeBonus.siliciumBonus });
+    if (typeBonus.hydrogeneBonus !== 0) typeBonusEntries.push({ stat: 'Production hydrogene', value: typeBonus.hydrogeneBonus });
+  }
+
+  // Total cumulated bonuses (type + biomes)
+  const totalBonuses: Record<string, number> = {};
+  if (typeBonus) {
+    if (typeBonus.mineraiBonus !== 0) totalBonuses['production_minerai'] = typeBonus.mineraiBonus;
+    if (typeBonus.siliciumBonus !== 0) totalBonuses['production_silicium'] = typeBonus.siliciumBonus;
+    if (typeBonus.hydrogeneBonus !== 0) totalBonuses['production_hydrogene'] = typeBonus.hydrogeneBonus;
+  }
+  for (const [stat, mod] of Object.entries(biomeBonuses)) {
+    totalBonuses[stat] = (totalBonuses[stat] ?? 0) + mod;
+  }
 
   return (
     <>
+      {/* Hero image */}
       <div className="relative -mx-5 -mt-5 h-[200px] overflow-hidden">
         {planet.planetClassId && planet.planetImageIndex != null ? (
           <img src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex)} alt={planet.name} className="w-full h-full object-cover" />
@@ -150,32 +173,48 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
           <span className="text-xs font-medium text-white/80 bg-white/10 rounded-full px-2.5 py-0.5 backdrop-blur-sm">{planetTypeName}</span>
         </div>
       </div>
-      <div className="mt-4">
-        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Caracteristiques</div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
-            <div className="text-[10px] text-muted-foreground">Diametre</div>
-            <div className="text-sm font-bold text-foreground">{planet.diameter.toLocaleString('fr-FR')} km</div>
-          </div>
-          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
-            <div className="text-[10px] text-muted-foreground">Temperature</div>
-            <div className="text-sm font-bold text-foreground">{planet.minTemp}&deg;C a {planet.maxTemp}&deg;C</div>
-          </div>
-          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
-            <div className="text-[10px] text-muted-foreground">Type</div>
-            <div className="text-sm font-bold text-foreground">{planetTypeName}</div>
-          </div>
-          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
-            <div className="text-[10px] text-muted-foreground">Energie</div>
-            <div className="text-sm font-bold" style={{ color: (resourceData?.rates.energyProduced ?? 0) >= (resourceData?.rates.energyConsumed ?? 0) ? '#facc15' : '#f87171' }}>
-              {Math.floor(resourceData?.rates.energyProduced ?? 0) - Math.floor(resourceData?.rates.energyConsumed ?? 0)} / {Math.floor(resourceData?.rates.energyProduced ?? 0)}
-            </div>
+
+      {/* Bonus cumules (type + biomes) — tout en haut */}
+      {Object.keys(totalBonuses).length > 0 && (
+        <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="text-[10px] uppercase text-primary/70 font-semibold tracking-wider mb-2">Bonus cumules (type + biomes)</div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {Object.entries(totalBonuses).map(([stat, mod]) => (
+              <span key={stat} className={`text-sm font-semibold ${mod > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {mod > 0 ? '+' : ''}{Math.round(mod * 100)}% {STAT_LABELS[stat] ?? stat}
+              </span>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Type de planete + ses bonus */}
+      <div className="mt-4">
+        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Type de planete</div>
+        <div className="rounded-md border border-border/30 bg-card/50 px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-foreground">{planetTypeName}</span>
+          </div>
+          {typeBonusEntries.length > 0 ? (
+            <div className="flex flex-wrap gap-x-4 mt-1.5">
+              {typeBonusEntries.map((b) => (
+                <span key={b.stat} className={`text-xs ${b.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {b.value > 0 ? '+' : ''}{Math.round(b.value * 100)}% {b.stat}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-1">Aucun bonus de type</p>
+          )}
+        </div>
       </div>
-      {biomes.length > 0 && (
-        <div className="mt-4">
-          <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Biomes</div>
+
+      {/* Biomes + leurs bonus */}
+      <div className="mt-4">
+        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
+          Biomes {biomes.length > 0 && <span className="text-muted-foreground/50">({biomes.length})</span>}
+        </div>
+        {biomes.length > 0 ? (
           <div className="space-y-2">
             {biomes.map((biome) => {
               const bColor = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
@@ -203,20 +242,10 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
               );
             })}
           </div>
-          {Object.keys(aggregatedBonuses).length > 0 && (
-            <div className="mt-3 rounded-md border border-border/30 bg-card/50 px-3 py-2">
-              <div className="text-[10px] text-muted-foreground font-semibold mb-1">Bonus cumules</div>
-              <div className="flex flex-wrap gap-x-4">
-                {Object.entries(aggregatedBonuses).map(([stat, mod]) => (
-                  <span key={stat} className={`text-xs ${mod > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {mod > 0 ? '+' : ''}{Math.round(mod * 100)}% {STAT_LABELS[stat] ?? stat}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-muted-foreground italic">Aucun biome decouvert</p>
+        )}
+      </div>
     </>
   );
 }
