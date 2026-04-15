@@ -429,6 +429,7 @@ export default function Overview() {
         defenses={stationaryDefenses}
         movements={allMovementsForGrid}
         flagship={flagship as any}
+        shieldLevel={buildings?.find((b) => b.id === 'planetaryShield')?.currentLevel ?? 0}
         currentPlanetId={planet.id}
         currentPlanetName={planet.name}
         currentPlanetCoords={{ galaxy: planet.galaxy, system: planet.system, position: planet.position }}
