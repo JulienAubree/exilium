@@ -15,6 +15,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { eventTypeColor, formatEventText, formatRelativeTime, groupEvents } from '@/lib/game-events';
 import { getPlanetImageUrl, getFlagshipImageUrl } from '@/lib/assets';
 import { getUnitName } from '@/lib/entity-names';
+import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import ColonizationProgress from './ColonizationProgress';
 import {
   HistoryIcon,
@@ -365,6 +366,8 @@ export default function Overview() {
     );
   }
 
+  const [showPlanetDetail, setShowPlanetDetail] = useState(false);
+
   const activeBuilding = buildings?.find((b) => b.isUpgrading);
   const activeResearch = techs?.find((t) => t.isResearching);
   const activeQueue = queue?.filter((q) => q.endTime) ?? [];
@@ -412,18 +415,20 @@ export default function Overview() {
 
         <div className="relative px-5 pt-8 pb-5 lg:px-8 lg:pt-10 lg:pb-6">
           <div className="flex items-start gap-5">
-            {/* Planet thumbnail */}
-            {planet.planetClassId && planet.planetImageIndex != null ? (
-              <img
-                src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
-                alt={planet.name}
-                className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-primary/10 shrink-0"
-              />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-card text-2xl font-bold text-primary shadow-lg shadow-primary/10 shrink-0">
-                {planet.name.charAt(0)}
-              </div>
-            )}
+            {/* Planet thumbnail — clickable for detail */}
+            <button type="button" onClick={() => setShowPlanetDetail(true)} className="shrink-0 cursor-pointer group">
+              {planet.planetClassId && planet.planetImageIndex != null ? (
+                <img
+                  src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
+                  alt={planet.name}
+                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-primary/10 transition-all group-hover:ring-2 group-hover:ring-primary/40 group-hover:shadow-primary/20"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-card text-2xl font-bold text-primary shadow-lg shadow-primary/10 transition-all group-hover:ring-2 group-hover:ring-primary/40">
+                  {planet.name.charAt(0)}
+                </div>
+              )}
+            </button>
 
             {/* Title + info */}
             <div className="flex-1 min-w-0 pt-1">
@@ -1067,6 +1072,170 @@ export default function Overview() {
           </section>
         </div>
       </div>
+
+      {/* ════ PLANET DETAIL OVERLAY ════ */}
+      <EntityDetailOverlay
+        open={showPlanetDetail}
+        onClose={() => setShowPlanetDetail(false)}
+        title={planet.name}
+      >
+        <PlanetDetailContent planet={planet} resourceData={resourceData} gameConfig={gameConfig} />
+      </EntityDetailOverlay>
     </div>
+  );
+}
+
+// ── Planet detail content (shown in overlay on planet click) ──
+
+function PlanetDetailContent({ planet, resourceData, gameConfig }: {
+  planet: any;
+  resourceData: any;
+  gameConfig: any;
+}) {
+  const biomes = (planet.biomes ?? []) as Array<{
+    id: string; name: string; rarity: string;
+    effects?: Array<{ stat: string; modifier: number }>;
+  }>;
+
+  // Aggregate all biome bonuses
+  const aggregatedBonuses: Record<string, number> = {};
+  for (const biome of biomes) {
+    const configBiome = gameConfig?.biomes?.find((b: any) => b.id === biome.id);
+    const effects = (configBiome?.effects ?? biome.effects ?? []) as Array<{ stat: string; modifier: number }>;
+    for (const e of effects) {
+      if (typeof e.modifier === 'number') {
+        aggregatedBonuses[e.stat] = (aggregatedBonuses[e.stat] ?? 0) + e.modifier;
+      }
+    }
+  }
+
+  const planetTypeName = gameConfig?.planetTypes?.find((t: any) => t.id === planet.planetClassId)?.name ?? planet.planetClassId;
+
+  return (
+    <>
+      {/* Hero image */}
+      <div className="relative -mx-5 -mt-5 h-[200px] overflow-hidden">
+        {planet.planetClassId && planet.planetImageIndex != null ? (
+          <img
+            src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex)}
+            alt={planet.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+        <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white">{planet.name}</h3>
+            <p className="text-xs text-white/70">[{planet.galaxy}:{planet.system}:{planet.position}]</p>
+          </div>
+          <span className="text-xs font-medium text-white/80 bg-white/10 rounded-full px-2.5 py-0.5 backdrop-blur-sm">
+            {planetTypeName}
+          </span>
+        </div>
+      </div>
+
+      {/* Characteristics */}
+      <div className="mt-4">
+        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
+          Caracteristiques
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
+            <div className="text-[10px] text-muted-foreground">Diametre</div>
+            <div className="text-sm font-bold text-foreground">{planet.diameter.toLocaleString('fr-FR')} km</div>
+          </div>
+          <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
+            <div className="text-[10px] text-muted-foreground">Temperature</div>
+            <div className="text-sm font-bold text-foreground">{planet.minTemp}&deg;C a {planet.maxTemp}&deg;C</div>
+          </div>
+          {resourceData && (
+            <>
+              <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
+                <div className="text-[10px] text-muted-foreground">Energie</div>
+                <div className="text-sm font-bold">
+                  <span className={(resourceData.rates?.energyProduced ?? 0) >= (resourceData.rates?.energyConsumed ?? 0) ? 'text-emerald-400' : 'text-red-400'}>
+                    {resourceData.rates?.energyProduced ?? 0} / {resourceData.rates?.energyConsumed ?? 0}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-2">
+                <div className="text-[10px] text-muted-foreground">Production totale</div>
+                <div className="text-sm font-bold text-foreground">
+                  {((resourceData.rates?.mineraiPerHour ?? 0) + (resourceData.rates?.siliciumPerHour ?? 0) + (resourceData.rates?.hydrogenePerHour ?? 0)).toLocaleString('fr-FR')}/h
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Biomes with full effects */}
+      {biomes.length > 0 && (
+        <div className="mt-4">
+          <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
+            Biomes actifs ({biomes.length})
+          </div>
+          <div className="space-y-2">
+            {biomes.map((biome) => {
+              const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+              const configBiome = gameConfig?.biomes?.find((b: any) => b.id === biome.id);
+              const effects = (configBiome?.effects ?? biome.effects ?? []) as Array<{ stat: string; modifier: number }>;
+              return (
+                <div
+                  key={biome.id}
+                  className="rounded-lg px-3 py-2"
+                  style={{ backgroundColor: `${color}10`, borderLeft: `3px solid ${color}` }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
+                    <span className="text-[10px] rounded-full px-1.5 py-px font-medium" style={{ color, backgroundColor: `${color}20` }}>
+                      {RARITY_LABELS[biome.rarity] ?? biome.rarity}
+                    </span>
+                  </div>
+                  {effects.length > 0 && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 ml-4 text-xs">
+                      {effects.map((e: any, i: number) => (
+                        <span key={i}>
+                          <span className={e.modifier > 0 ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>
+                            {e.modifier > 0 ? '+' : ''}{Math.round(e.modifier * 100)}%
+                          </span>{' '}
+                          <span className="text-muted-foreground">{STAT_LABELS[e.stat] ?? e.stat}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Aggregated bonuses */}
+      {Object.keys(aggregatedBonuses).length > 0 && (
+        <div className="mt-4">
+          <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
+            Bonus cumules des biomes
+          </div>
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+            <div className="grid grid-cols-2 gap-y-1.5 gap-x-4 text-xs">
+              {Object.entries(aggregatedBonuses)
+                .sort(([, a], [, b]) => b - a)
+                .map(([stat, modifier]) => (
+                  <div key={stat} className="flex justify-between">
+                    <span className="text-muted-foreground">{STAT_LABELS[stat] ?? stat}</span>
+                    <span className={modifier > 0 ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
+                      {modifier > 0 ? '+' : ''}{Math.round(modifier * 100)}%
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

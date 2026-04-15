@@ -416,16 +416,6 @@ function EmptyDiscoveredPanel({
         </div>
       )}
 
-      {/* Report link */}
-      {view.biomes.length > 0 && (
-        <button
-          type="button"
-          onClick={() => navigate('/reports?filter=exploration')}
-          className="mt-2 text-[11px] text-primary hover:underline"
-        >
-          Voir les rapports d&apos;exploration
-        </button>
-      )}
 
       <div className="mt-4 flex flex-col gap-2">
         <ActionButton
