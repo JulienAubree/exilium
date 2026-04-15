@@ -49,6 +49,24 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
 
   const biomes = planet.biomes ?? [];
 
+  // Cumulate type + biome bonuses per resource
+  const cumulatedBonuses: Record<string, number> = {};
+  if (planetTypeBonus) {
+    if (planetTypeBonus.mineraiBonus !== 1) cumulatedBonuses['minerai'] = (planetTypeBonus.mineraiBonus - 1);
+    if (planetTypeBonus.siliciumBonus !== 1) cumulatedBonuses['silicium'] = (planetTypeBonus.siliciumBonus - 1);
+    if (planetTypeBonus.hydrogeneBonus !== 1) cumulatedBonuses['hydrogene'] = (planetTypeBonus.hydrogeneBonus - 1);
+  }
+  const biomeStat2Resource: Record<string, string> = {
+    production_minerai: 'minerai', production_silicium: 'silicium', production_hydrogene: 'hydrogene',
+  };
+  for (const biome of biomes) {
+    for (const e of biome.effects ?? []) {
+      const key = biomeStat2Resource[e.stat];
+      if (key) cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) + e.modifier;
+    }
+  }
+  const hasBonuses = Object.keys(cumulatedBonuses).length > 0;
+
   return (
     <>
       <div className="relative overflow-hidden">
@@ -114,11 +132,11 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
                 [{planet.galaxy}:{planet.system}:{planet.position}]
                 {planetTypeName && <> · <span className="text-foreground/80">{planetTypeName}</span></>}
               </p>
-              {/* Planet type bonuses — KPI-bar style with resource icons */}
-              {planetTypeBonus && (planetTypeBonus.mineraiBonus !== 1 || planetTypeBonus.siliciumBonus !== 1 || planetTypeBonus.hydrogeneBonus !== 1) && (
+              {/* Cumulated bonuses (type + biomes) with resource icons */}
+              {hasBonuses && (
                 <div className="flex items-center gap-3 mt-1.5">
-                  {planetTypeBonus.mineraiBonus !== 1 && (() => {
-                    const pct = Math.round((planetTypeBonus.mineraiBonus - 1) * 100);
+                  {cumulatedBonuses['minerai'] != null && (() => {
+                    const pct = Math.round(cumulatedBonuses['minerai'] * 100);
                     return (
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         <MineraiIcon size={13} className="text-minerai" />
@@ -126,8 +144,8 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
                       </span>
                     );
                   })()}
-                  {planetTypeBonus.siliciumBonus !== 1 && (() => {
-                    const pct = Math.round((planetTypeBonus.siliciumBonus - 1) * 100);
+                  {cumulatedBonuses['silicium'] != null && (() => {
+                    const pct = Math.round(cumulatedBonuses['silicium'] * 100);
                     return (
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         <SiliciumIcon size={13} className="text-silicium" />
@@ -135,8 +153,8 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
                       </span>
                     );
                   })()}
-                  {planetTypeBonus.hydrogeneBonus !== 1 && (() => {
-                    const pct = Math.round((planetTypeBonus.hydrogeneBonus - 1) * 100);
+                  {cumulatedBonuses['hydrogene'] != null && (() => {
+                    const pct = Math.round(cumulatedBonuses['hydrogene'] * 100);
                     return (
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         <HydrogeneIcon size={13} className="text-hydrogene" />
