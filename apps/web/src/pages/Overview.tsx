@@ -393,6 +393,7 @@ export default function Overview() {
         } : undefined}
         liveResources={liveResources}
         ships={stationaryShips}
+        levels={resourceData?.levels}
       />
 
       {/* 3. Activities */}

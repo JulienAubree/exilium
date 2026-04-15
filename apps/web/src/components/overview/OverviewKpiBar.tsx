@@ -28,10 +28,22 @@ interface ShipCount {
   count: number;
 }
 
+interface BuildingLevels {
+  mineraiMine: number;
+  siliciumMine: number;
+  hydrogeneSynth: number;
+  solarPlant: number;
+  solarSatelliteCount: number;
+  storageMinerai?: number;
+  storageSilicium?: number;
+  storageHydrogene?: number;
+}
+
 interface OverviewKpiBarProps {
   resources: ResourceData | undefined;
   liveResources: { minerai: number; silicium: number; hydrogene: number } | undefined;
   ships: ShipCount[];
+  levels?: BuildingLevels;
 }
 
 function formatRate(value: number): string {
@@ -63,43 +75,61 @@ function Kpi({ iconNode, color, value, active, onClick }: {
   );
 }
 
-function ResourceGauge({ current, capacity, rate, label, color, protectedAmount }: {
-  current: number; capacity: number; rate: number; label: string; color: string; protectedAmount?: number;
+
+function formatNumber(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return Math.floor(value).toLocaleString('fr-FR');
+}
+
+function ResourcePanel({ mineLevel, mineLabel, production, storageLevel, capacity, current, protectedAmount, color }: {
+  mineLevel: number; mineLabel: string; production: number;
+  storageLevel?: number; capacity: number; current: number;
+  protectedAmount?: number; color: string;
 }) {
   const pct = capacity > 0 ? Math.min(100, Math.round((current / capacity) * 100)) : 0;
-  const radius = 28;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pct / 100) * circumference;
-
   return (
-    <div className="text-center">
-      <div className="relative w-[66px] h-[66px] flex items-center justify-center mx-auto">
-        <svg className="absolute top-0 left-0 -rotate-90" width={66} height={66}>
-          <circle cx={33} cy={33} r={radius} fill="none" stroke={color} strokeWidth={3} opacity={0.2} />
-          <circle cx={33} cy={33} r={radius} fill="none" stroke={color} strokeWidth={3}
-            strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
-          {protectedAmount != null && protectedAmount > 0 && (() => {
-            const protPct = Math.min(100, (protectedAmount / capacity) * 100);
-            const protOffset = circumference - (protPct / 100) * circumference;
-            return <circle cx={33} cy={33} r={radius} fill="none" stroke="#22c55e" strokeWidth={2}
-              strokeDasharray={circumference} strokeDashoffset={protOffset} strokeLinecap="round" opacity={0.4} />;
-          })()}
-        </svg>
-        <span className="text-xs font-semibold" style={{ color }}>{pct}%</span>
+    <div className="border-t border-border/30 px-4 py-3">
+      <div className="flex items-center gap-4 text-xs">
+        {/* Mine */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] text-muted-foreground">{mineLabel}</div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-bold" style={{ color }}>Niv. {mineLevel}</span>
+            <span className="text-muted-foreground">·</span>
+            <span style={{ color }}>+{formatNumber(production)}/h</span>
+          </div>
+        </div>
+        {/* Storage */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] text-muted-foreground">
+            Hangar{storageLevel != null && <span> Niv. {storageLevel}</span>}
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-bold text-foreground">{formatNumber(current)}</span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">{formatNumber(capacity)}</span>
+          </div>
+        </div>
+        {/* Fill gauge */}
+        <div className="w-16 text-right">
+          <div className="text-sm font-bold" style={{ color }}>{pct}%</div>
+          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mt-0.5">
+            <div className="h-full rounded-full" style={{ background: color, width: `${pct}%` }} />
+          </div>
+        </div>
       </div>
-      <div className="text-[10px] mt-1 font-medium" style={{ color }}>{label}</div>
-      <div className="text-[10px] text-muted-foreground">+{Math.floor(rate).toLocaleString('fr-FR')}/h</div>
       {protectedAmount != null && protectedAmount > 0 && (
-        <div className="text-[9px] text-green-500/70 flex items-center justify-center gap-0.5">
+        <div className="text-[9px] text-green-500/70 flex items-center gap-1 mt-1">
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          {Math.floor(protectedAmount).toLocaleString('fr-FR')}
+          {formatNumber(protectedAmount)} protege
         </div>
       )}
     </div>
   );
 }
 
-export function OverviewKpiBar({ resources, liveResources, ships }: OverviewKpiBarProps) {
+export function OverviewKpiBar({ resources, liveResources, ships, levels }: OverviewKpiBarProps) {
   const [openPanel, setOpenPanel] = useState<PanelId>(null);
   const toggle = (id: PanelId) => setOpenPanel((prev) => (prev === id ? null : id));
 
@@ -152,40 +182,40 @@ export function OverviewKpiBar({ resources, liveResources, ships }: OverviewKpiB
 
       {/* Expandable panels */}
       {openPanel === 'minerai' && resources && (
-        <div className="border-t border-border/30 px-4 py-3">
-          <ResourceGauge
-            current={liveResources?.minerai ?? 0}
-            capacity={resources.storageMineraiCapacity}
-            rate={resources.mineraiPerHour}
-            label="Minerai"
-            color="#fb923c"
-            protectedAmount={resources.protectedMinerai}
-          />
-        </div>
+        <ResourcePanel
+          mineLevel={levels?.mineraiMine ?? 0}
+          mineLabel="Mine de minerai"
+          production={resources.mineraiPerHour}
+          storageLevel={levels?.storageMinerai}
+          capacity={resources.storageMineraiCapacity}
+          current={liveResources?.minerai ?? 0}
+          protectedAmount={resources.protectedMinerai}
+          color="#fb923c"
+        />
       )}
       {openPanel === 'silicium' && resources && (
-        <div className="border-t border-border/30 px-4 py-3">
-          <ResourceGauge
-            current={liveResources?.silicium ?? 0}
-            capacity={resources.storageSiliciumCapacity}
-            rate={resources.siliciumPerHour}
-            label="Silicium"
-            color="#34d399"
-            protectedAmount={resources.protectedSilicium}
-          />
-        </div>
+        <ResourcePanel
+          mineLevel={levels?.siliciumMine ?? 0}
+          mineLabel="Mine de silicium"
+          production={resources.siliciumPerHour}
+          storageLevel={levels?.storageSilicium}
+          capacity={resources.storageSiliciumCapacity}
+          current={liveResources?.silicium ?? 0}
+          protectedAmount={resources.protectedSilicium}
+          color="#34d399"
+        />
       )}
       {openPanel === 'hydrogene' && resources && (
-        <div className="border-t border-border/30 px-4 py-3">
-          <ResourceGauge
-            current={liveResources?.hydrogene ?? 0}
-            capacity={resources.storageHydrogeneCapacity}
-            rate={resources.hydrogenePerHour}
-            label="Hydrogene"
-            color="#60a5fa"
-            protectedAmount={resources.protectedHydrogene}
-          />
-        </div>
+        <ResourcePanel
+          mineLevel={levels?.hydrogeneSynth ?? 0}
+          mineLabel="Synthétiseur d'hydrogène"
+          production={resources.hydrogenePerHour}
+          storageLevel={levels?.storageHydrogene}
+          capacity={resources.storageHydrogeneCapacity}
+          current={liveResources?.hydrogene ?? 0}
+          protectedAmount={resources.protectedHydrogene}
+          color="#60a5fa"
+        />
       )}
       {openPanel === 'energy' && resources && (
         <div className="border-t border-border/30 px-4 py-3">
