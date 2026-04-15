@@ -26,11 +26,13 @@ interface OverviewHeroProps {
     biomes?: Array<{ id: string; name: string; rarity: string; effects?: any[] }>;
   };
   flagshipOnPlanet: boolean;
+  planetTypeName?: string;
+  planetTypeBonus?: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number };
   renderBiomeBadge: (biome: any) => React.ReactNode;
   renderPlanetDetail: (planet: any) => React.ReactNode;
 }
 
-export function OverviewHero({ planet, flagshipOnPlanet, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
+export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetTypeBonus, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -109,9 +111,28 @@ export function OverviewHero({ planet, flagshipOnPlanet, renderBiomeBadge, rende
               )}
               <p className="text-sm text-muted-foreground mt-0.5">
                 [{planet.galaxy}:{planet.system}:{planet.position}]
-                {' '} · {planet.diameter.toLocaleString('fr-FR')} km
-                {' '} · {planet.minTemp}&deg;C a {planet.maxTemp}&deg;C
+                {planetTypeName && <> · <span className="text-foreground/80">{planetTypeName}</span></>}
               </p>
+              {/* Planet type bonuses */}
+              {planetTypeBonus && (planetTypeBonus.mineraiBonus !== 0 || planetTypeBonus.siliciumBonus !== 0 || planetTypeBonus.hydrogeneBonus !== 0) && (
+                <div className="flex flex-wrap gap-x-3 mt-1">
+                  {planetTypeBonus.mineraiBonus !== 0 && (
+                    <span className={`text-xs ${planetTypeBonus.mineraiBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {planetTypeBonus.mineraiBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.mineraiBonus * 100)}% minerai
+                    </span>
+                  )}
+                  {planetTypeBonus.siliciumBonus !== 0 && (
+                    <span className={`text-xs ${planetTypeBonus.siliciumBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {planetTypeBonus.siliciumBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.siliciumBonus * 100)}% silicium
+                    </span>
+                  )}
+                  {planetTypeBonus.hydrogeneBonus !== 0 && (
+                    <span className={`text-xs ${planetTypeBonus.hydrogeneBonus > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {planetTypeBonus.hydrogeneBonus > 0 ? '+' : ''}{Math.round(planetTypeBonus.hydrogeneBonus * 100)}% hydrogene
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

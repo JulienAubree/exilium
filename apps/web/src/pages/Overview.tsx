@@ -369,6 +369,8 @@ export default function Overview() {
       <OverviewHero
         planet={planet as any}
         flagshipOnPlanet={flagship?.planetId === planet.id}
+        planetTypeName={resourceData?.planetTypeName}
+        planetTypeBonus={resourceData?.planetTypeBonus}
         renderBiomeBadge={(biome) => <BiomeBadge biome={biome} size="xs" />}
         renderPlanetDetail={(p) => <PlanetDetailContent planet={p} resourceData={resourceData} gameConfig={gameConfig} />}
       />
