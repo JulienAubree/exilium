@@ -12,14 +12,8 @@ import { getAssetUrl } from '@/lib/assets';
 
 // ── Types ────────────────────────────────────────────────────────────
 
-type MarketCategory = 'all' | 'resources' | 'exploration';
 type MarketTab = 'buy' | 'sell' | 'my-offers' | 'history';
-
-const CATEGORIES: { key: MarketCategory; label: string }[] = [
-  { key: 'all', label: 'Tout' },
-  { key: 'resources', label: 'Ressources' },
-  { key: 'exploration', label: 'Exploration' },
-];
+type MarketFilter = 'all' | 'resources' | 'planets';
 
 const TABS: { key: MarketTab; label: string }[] = [
   { key: 'buy', label: 'Acheter' },
@@ -28,7 +22,13 @@ const TABS: { key: MarketTab; label: string }[] = [
   { key: 'history', label: 'Historique' },
 ];
 
-/** Map legacy ?view= values to new tab+category (backward compat). */
+const FILTERS: { key: MarketFilter; label: string }[] = [
+  { key: 'all', label: 'Tout' },
+  { key: 'resources', label: 'Ressources' },
+  { key: 'planets', label: 'Planetes' },
+];
+
+/** Map legacy ?view= values to new tab (backward compat). */
 function resolveInitialTab(param: string | null): MarketTab {
   if (!param) return 'buy';
   const map: Record<string, MarketTab> = {
@@ -45,10 +45,10 @@ function resolveInitialTab(param: string | null): MarketTab {
   return map[param] ?? 'buy';
 }
 
-function resolveInitialCategory(param: string | null, viewParam: string | null): MarketCategory {
-  if (param === 'all' || param === 'resources' || param === 'exploration') return param;
-  // Legacy ?view= hints
-  if (viewParam?.startsWith('report')) return 'exploration';
+function resolveInitialFilter(param: string | null, viewParam: string | null): MarketFilter {
+  if (param === 'all' || param === 'resources' || param === 'planets') return param;
+  if (param === 'exploration') return 'planets';
+  if (viewParam?.startsWith('report')) return 'planets';
   return 'all';
 }
 
@@ -86,11 +86,11 @@ export default function Market() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
   const [searchParams] = useSearchParams();
-  const [category, setCategory] = useState<MarketCategory>(
-    resolveInitialCategory(searchParams.get('cat'), searchParams.get('view')),
-  );
   const [tab, setTab] = useState<MarketTab>(
     resolveInitialTab(searchParams.get('tab') ?? searchParams.get('view')),
+  );
+  const [filter, setFilter] = useState<MarketFilter>(
+    resolveInitialFilter(searchParams.get('cat'), searchParams.get('view')),
   );
 
   const commissionPercent = Number(gameConfig?.universe?.market_commission_percent) || 5;
@@ -244,15 +244,15 @@ export default function Market() {
           />
         </div>
 
-        {/* Category selector */}
-        <div className="flex gap-1 bg-card/50 rounded-lg p-1 border border-border/30 w-fit">
-          {CATEGORIES.map(({ key, label }) => (
+        {/* Action tabs */}
+        <div className="flex gap-0.5 bg-card/50 rounded-lg p-0.5 border border-border/30 w-fit">
+          {TABS.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setCategory(key)}
+              onClick={() => setTab(key)}
               className={cn(
                 'px-4 py-2 rounded-md text-sm font-semibold transition-colors',
-                category === key
+                tab === key
                   ? 'bg-primary/15 text-primary border border-primary/30'
                   : 'text-muted-foreground hover:text-foreground border border-transparent',
               )}
@@ -262,15 +262,15 @@ export default function Market() {
           ))}
         </div>
 
-        {/* Action tabs */}
+        {/* Type filter */}
         <div className="flex gap-0.5 bg-card/30 rounded-lg p-0.5 border border-border/20 w-fit">
-          {TABS.map(({ key, label }) => (
+          {FILTERS.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => setFilter(key)}
               className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                tab === key
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                filter === key
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground',
               )}
@@ -283,33 +283,33 @@ export default function Market() {
         {/* ── Tab content ──────────────────────────────────── */}
 
         {planetId && (
-          <div className="space-y-6">
+          <section className="glass-card p-4 lg:p-5 space-y-8">
             {/* Resources */}
-            {(category === 'all' || category === 'resources') && (
-              <section className="glass-card p-4 lg:p-5">
-                {category === 'all' && (
+            {(filter === 'all' || filter === 'resources') && (
+              <div>
+                {filter === 'all' && (
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Ressources</h3>
                 )}
                 {tab === 'buy' && <ResourceBuy planetId={planetId} />}
                 {tab === 'sell' && <ResourceSell planetId={planetId} commissionPercent={commissionPercent} />}
                 {tab === 'my-offers' && <ResourceMyOffers planetId={planetId} statuses={['active', 'reserved']} />}
                 {tab === 'history' && <ResourceMyOffers planetId={planetId} statuses={['sold', 'expired', 'cancelled']} />}
-              </section>
+              </div>
             )}
 
-            {/* Exploration */}
-            {(category === 'all' || category === 'exploration') && (
-              <section className="glass-card p-4 lg:p-5">
-                {category === 'all' && (
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Rapports d'exploration</h3>
+            {/* Planets (exploration reports) */}
+            {(filter === 'all' || filter === 'planets') && (
+              <div>
+                {filter === 'all' && (
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Planetes</h3>
                 )}
                 {tab === 'buy' && <MarketReportsBuy planetId={planetId} />}
                 {tab === 'sell' && <MarketReportsInventory planetId={planetId} sections={['inventory']} />}
                 {tab === 'my-offers' && <MarketReportsInventory planetId={planetId} sections={['listed']} />}
                 {tab === 'history' && <MarketReportsInventory planetId={planetId} sections={['sold']} />}
-              </section>
+              </div>
             )}
-          </div>
+          </section>
         )}
       </div>
     </div>
