@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { Globe, Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
+import { Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { trpc } from '@/trpc';
@@ -48,7 +48,6 @@ interface PlanetData {
 
 interface EmpireKpiBarProps {
   totalRates: { mineraiPerHour: number; siliciumPerHour: number; hydrogenePerHour: number };
-  planetCount: number;
   activeFleetCount: number;
   inboundAttackCount: number;
   governance?: GovernanceData | null;
@@ -61,9 +60,9 @@ function formatRate(value: number): string {
   return String(Math.floor(value));
 }
 
-type PanelId = 'minerai' | 'silicium' | 'hydrogene' | 'planets' | 'governance' | 'fleets' | null;
+type PanelId = 'minerai' | 'silicium' | 'hydrogene' | 'governance' | 'fleets' | null;
 
-export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboundAttackCount, governance, planets }: EmpireKpiBarProps) {
+export function EmpireKpiBar({ totalRates, activeFleetCount, inboundAttackCount, governance, planets }: EmpireKpiBarProps) {
   const [openPanel, setOpenPanel] = useState<PanelId>(null);
 
   const toggle = (id: PanelId) => setOpenPanel((prev) => (prev === id ? null : id));
@@ -83,8 +82,6 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
         ? 'bg-amber-400/10'
         : 'bg-emerald-400/10'
     : 'bg-muted';
-
-  const activePlanets = planets?.filter(p => p.status !== 'colonizing') ?? [];
 
   return (
     <div className="rounded-xl border border-border/30 bg-card/60 overflow-hidden">
@@ -115,14 +112,6 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
           onClick={() => toggle('hydrogene')}
         />
         <div className="hidden h-5 w-px bg-border/40 lg:block" />
-        <Kpi
-          iconNode={<Globe className="h-3.5 w-3.5 text-foreground" />}
-          color="text-foreground"
-          value={String(planetCount)}
-          label="Planetes"
-          active={openPanel === 'planets'}
-          onClick={() => toggle('planets')}
-        />
         {governance && (
           <Kpi
             iconNode={<Landmark className={cn('h-3.5 w-3.5', govColor)} />}
@@ -155,7 +144,7 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
           {(openPanel === 'minerai' || openPanel === 'silicium' || openPanel === 'hydrogene') && (
             <ResourcePanel
               resource={openPanel}
-              planets={activePlanets}
+              planets={(planets ?? []).filter(p => p.status !== 'colonizing')}
               total={
                 openPanel === 'minerai' ? totalRates.mineraiPerHour
                   : openPanel === 'silicium' ? totalRates.siliciumPerHour
@@ -163,7 +152,6 @@ export function EmpireKpiBar({ totalRates, planetCount, activeFleetCount, inboun
               }
             />
           )}
-          {openPanel === 'planets' && <PlanetsPanel planets={planets ?? []} />}
           {openPanel === 'governance' && governance && <GovernancePanel governance={governance} />}
           {openPanel === 'fleets' && <FleetsPanel planets={planets ?? []} totalFleets={activeFleetCount} />}
         </div>
@@ -260,48 +248,6 @@ function ResourcePanel({ resource, planets, total }: {
       </div>
       <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t border-border/30">
         Total : <span className={cn('font-semibold ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Planets panel
-// ---------------------------------------------------------------------------
-
-function PlanetsPanel({ planets }: { planets: PlanetData[] }) {
-  const navigate = useNavigate();
-  const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
-  const active = planets.filter(p => p.status !== 'colonizing');
-  const colonizing = planets.filter(p => p.status === 'colonizing');
-
-  const goToPlanet = (p: PlanetData) => { setActivePlanet(p.id); navigate('/'); };
-
-  return (
-    <div className="space-y-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-        {active.length} planete{active.length > 1 ? 's' : ''} active{active.length > 1 ? 's' : ''}
-        {colonizing.length > 0 && `, ${colonizing.length} en colonisation`}
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-3">
-        {planets.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => goToPlanet(p)}
-            className={cn(
-              'rounded-lg border px-3 py-1.5 text-xs text-left transition-colors',
-              p.status === 'colonizing'
-                ? 'border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50'
-                : 'border-border/30 bg-card/50 hover:border-primary/30',
-            )}
-          >
-            <div className="font-medium text-foreground truncate hover:text-primary transition-colors">{p.name}</div>
-            <div className="text-muted-foreground text-[10px]">
-              {p.status === 'colonizing' ? 'Colonisation en cours' : `${formatRate(p.mineraiPerHour ?? 0)} / ${formatRate(p.siliciumPerHour ?? 0)} / ${formatRate(p.hydrogenePerHour ?? 0)}`}
-            </div>
-          </button>
-        ))}
       </div>
     </div>
   );

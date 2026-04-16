@@ -52,7 +52,6 @@ export default function Empire() {
 
       <EmpireKpiBar
         totalRates={data.totalRates}
-        planetCount={data.planets.length}
         activeFleetCount={data.activeFleetCount}
         inboundAttackCount={data.inboundAttackCount}
         governance={governance}
