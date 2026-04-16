@@ -124,7 +124,11 @@ function BuildingEditor({
   buildingDefs: Record<string, { name: string }>;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState<Record<string, number>>(() => ({ ...buildingLevels }));
+  const [form, setForm] = useState<Record<string, number>>(() => {
+    const s: Record<string, number> = {};
+    for (const id of Object.keys(buildingDefs)) s[id] = buildingLevels[id] ?? 0;
+    return s;
+  });
   const mutation = trpc.playerAdmin.updateBuildingLevel.useMutation({ onSuccess: onSaved });
   const [saving, setSaving] = useState(false);
 
