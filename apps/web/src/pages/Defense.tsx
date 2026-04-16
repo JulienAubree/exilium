@@ -137,10 +137,10 @@ export default function Defense() {
         <PageHeader title="Défense" />
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Avant de pouvoir acceder aux defenses, veuillez construire l'<span className="text-foreground font-semibold">Arsenal planetaire</span>.
+            Avant de pouvoir accéder aux défenses, veuillez construire l'<span className="text-foreground font-semibold">Arsenal planétaire</span>.
           </p>
           <Link to="/buildings" className="text-xs text-primary hover:underline">
-            Aller aux batiments
+            Aller aux bâtiments
           </Link>
         </div>
       </div>

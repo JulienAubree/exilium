@@ -155,7 +155,7 @@ export default function Market() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              Aller aux batiments
+              Aller aux bâtiments
             </Link>
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function Market() {
             Acheter
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Parcourez les offres des autres joueurs en <span className="text-foreground font-medium">ressources</span> (minerai, silicium, hydrogene) et en <span className="text-foreground font-medium">rapports de planetes</span>. Pour acheter, vous devez envoyer une <span className="text-foreground font-medium">flotte marchande</span> chargee du prix demande vers la planete du vendeur.
+            Parcourez les offres des autres joueurs en <span className="text-foreground font-medium">ressources</span> (minerai, silicium, hydrogène) et en <span className="text-foreground font-medium">rapports de planètes</span>. Pour acheter, vous devez envoyer une <span className="text-foreground font-medium">flotte marchande</span> chargée du prix demandé vers la planète du vendeur.
           </p>
         </div>
 
@@ -370,7 +370,7 @@ export default function Market() {
             Vendre
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Mettez en vente vos <span className="text-foreground font-medium">ressources excedentaires</span> ou vos <span className="text-foreground font-medium">rapports d&apos;exploration</span> en fixant votre prix. Une commission de <span className="text-foreground font-medium">{commissionPercent}%</span> est prelevee sur chaque vente. Vos offres restent actives jusqu&apos;a ce qu&apos;un acheteur les prenne ou que vous les annuliez.
+            Mettez en vente vos <span className="text-foreground font-medium">ressources excédentaires</span> ou vos <span className="text-foreground font-medium">rapports d&apos;exploration</span> en fixant votre prix. Une commission de <span className="text-foreground font-medium">{commissionPercent}%</span> est prélevée sur chaque vente. Vos offres restent actives jusqu&apos;à ce qu&apos;un acheteur les prenne ou que vous les annuliez.
           </p>
         </div>
 
@@ -385,7 +385,7 @@ export default function Market() {
             Livraison
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Les echanges se font par <span className="text-foreground font-medium">flotte marchande</span>. L&apos;acheteur envoie ses cargos charges du paiement vers la planete du vendeur. Le temps de trajet depend de la <span className="text-foreground font-medium">distance</span> entre les deux planetes et de la <span className="text-foreground font-medium">vitesse</span> de la flotte.
+            Les échanges se font par <span className="text-foreground font-medium">flotte marchande</span>. L&apos;acheteur envoie ses cargos chargés du paiement vers la planète du vendeur. Le temps de trajet dépend de la <span className="text-foreground font-medium">distance</span> entre les deux planètes et de la <span className="text-foreground font-medium">vitesse</span> de la flotte.
           </p>
         </div>
 
@@ -401,7 +401,7 @@ export default function Market() {
             Rapports d&apos;exploration
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Les rapports d&apos;exploration revelent les <span className="text-foreground font-medium">biomes</span> et les <span className="text-foreground font-medium">bonus</span> d&apos;une planete avant colonisation. Plus une planete est rare, plus son rapport a de valeur. Creez des rapports depuis la <span className="text-foreground font-medium">vue galaxie</span> en selectionnant une position exploree.
+            Les rapports d&apos;exploration révèlent les <span className="text-foreground font-medium">biomes</span> et les <span className="text-foreground font-medium">bonus</span> d&apos;une planète avant colonisation. Plus une planète est rare, plus son rapport a de valeur. Créez des rapports depuis la <span className="text-foreground font-medium">vue galaxie</span> en sélectionnant une position explorée.
           </p>
         </div>
       </EntityDetailOverlay>

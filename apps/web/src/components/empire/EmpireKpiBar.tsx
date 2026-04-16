@@ -224,7 +224,7 @@ function ResourcePanel({ resource, planets, total }: {
   return (
     <div className="space-y-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-        Production {label} par planete
+        Production {label} par planète
       </div>
       <div className="space-y-1">
         {sorted.map((p) => {
@@ -264,20 +264,20 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
   return (
     <div className="space-y-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-        Gouvernance imperiale
+        Gouvernance impériale
       </div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <MiniCard label="Capacite" value={`${governance.capacity} planete${governance.capacity > 1 ? 's' : ''}`} color="text-amber-400" />
+        <MiniCard label="Capacité" value={`${governance.capacity} planète${governance.capacity > 1 ? 's' : ''}`} color="text-amber-400" />
         <MiniCard label="Colonies" value={String(governance.colonyCount)} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
-        <MiniCard label="Malus recolte" value={isOver ? `-${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
+        <MiniCard label="Malus récolte" value={isOver ? `-${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
         <MiniCard label="Malus construction" value={isOver ? `+${Math.round(governance.constructionMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
       </div>
       <div className="text-xs text-muted-foreground">
         {isOver
-          ? `Depassement de +${governance.overextend}. Ameliorez le Centre de Pouvoir Imperial pour reduire les penalites.`
+          ? `Dépassement de +${governance.overextend}. Améliorez le Centre de Pouvoir Impérial pour réduire les pénalités.`
           : freeSlots > 0
-            ? `${freeSlots} slot${freeSlots > 1 ? 's' : ''} disponible${freeSlots > 1 ? 's' : ''} pour coloniser sans penalite.`
-            : 'Capacite atteinte. Prochaine colonie = penalites sur toutes les colonies.'}
+            ? `${freeSlots} slot${freeSlots > 1 ? 's' : ''} disponible${freeSlots > 1 ? 's' : ''} pour coloniser sans pénalité.`
+            : 'Capacité atteinte. Prochaine colonie = pénalités sur toutes les colonies.'}
       </div>
     </div>
   );

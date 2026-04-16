@@ -138,10 +138,10 @@ export default function Shipyard() {
         <PageHeader title="Chantier spatial" />
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Avant de pouvoir acceder au chantier spatial, veuillez construire le <span className="text-foreground font-semibold">Chantier spatial</span>.
+            Avant de pouvoir accéder au chantier spatial, veuillez construire le <span className="text-foreground font-semibold">Chantier spatial</span>.
           </p>
           <Link to="/buildings" className="text-xs text-primary hover:underline">
-            Aller aux batiments
+            Aller aux bâtiments
           </Link>
         </div>
       </div>

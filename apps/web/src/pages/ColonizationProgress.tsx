@@ -570,7 +570,7 @@ export default function ColonizationProgress() {
                 ) : (
                   <div className="rounded-lg bg-card/40 border border-border/20 px-3 py-4 text-center">
                     <p className="text-xs text-muted-foreground">
-                      Aucun vaisseau stationne — la colonie est vulnerable aux raids
+                      Aucun vaisseau stationné — la colonie est vulnérable aux raids
                     </p>
                   </div>
                 )}

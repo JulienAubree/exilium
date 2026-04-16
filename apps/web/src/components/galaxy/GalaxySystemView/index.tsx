@@ -295,7 +295,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
             type="button"
             onClick={onSystemPrev}
             className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-sm"
-            aria-label="Systeme precedent"
+            aria-label="Système précédent"
           >
             &lt;
           </button>
@@ -312,7 +312,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
             type="button"
             onClick={onSystemNext}
             className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-sm"
-            aria-label="Systeme suivant"
+            aria-label="Système suivant"
           >
             &gt;
           </button>

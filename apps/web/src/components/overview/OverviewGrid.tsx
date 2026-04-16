@@ -93,7 +93,7 @@ export function OverviewGrid({
     <div className="grid grid-cols-2 gap-3">
       {/* Fleet */}
       <GridCard onClick={() => navigate('/fleet')}>
-        <GridHeader icon={FleetIcon} label="Flotte stationnee" color="text-cyan-400" count={totalShips} />
+        <GridHeader icon={FleetIcon} label="Flotte stationnée" color="text-cyan-400" count={totalShips} />
         {ships.length > 0 ? (
           <div className="grid grid-cols-2 gap-1 text-[10px]">
             {ships.map((s) => (
@@ -104,7 +104,7 @@ export function OverviewGrid({
             ))}
           </div>
         ) : (
-          <p className="text-[10px] text-muted-foreground italic">Aucun vaisseau stationne</p>
+          <p className="text-[10px] text-muted-foreground italic">Aucun vaisseau stationné</p>
         )}
       </GridCard>
 
@@ -148,13 +148,13 @@ export function OverviewGrid({
 
       {/* Defenses — col-span-2 on mobile, normal on desktop */}
       <GridCard onClick={() => navigate('/defense')} className="col-span-2 lg:col-span-1">
-        <GridHeader icon={DefenseIcon} label="Defenses" color="text-emerald-400" count={totalDefenses} />
+        <GridHeader icon={DefenseIcon} label="Défenses" color="text-emerald-400" count={totalDefenses} />
         {shieldLevel > 0 && (
           <div className="flex items-center gap-1.5 px-1.5 py-1 rounded bg-cyan-500/[0.06] border border-cyan-500/10 mb-1.5 text-[10px]">
             <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-cyan-400 flex-shrink-0">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span className="text-cyan-300 font-medium">Bouclier planetaire</span>
+            <span className="text-cyan-300 font-medium">Bouclier planétaire</span>
             <span className="text-cyan-400 font-bold ml-auto">Niv. {shieldLevel}</span>
           </div>
         )}
@@ -168,7 +168,7 @@ export function OverviewGrid({
             ))}
           </div>
         ) : (
-          <p className="text-[10px] text-muted-foreground italic">Aucune defense</p>
+          <p className="text-[10px] text-muted-foreground italic">Aucune défense</p>
         )}
       </GridCard>
 
@@ -198,14 +198,14 @@ export function OverviewGrid({
                     flagship.status === 'active' ? 'text-emerald-400' :
                     flagship.status === 'in_mission' ? 'text-blue-400' : 'text-red-400'
                   }>
-                    {flagship.status === 'active' ? 'Operationnel' :
-                     flagship.status === 'in_mission' ? 'En mission' : 'Incapacite'}
+                    {flagship.status === 'active' ? 'Opérationnel' :
+                     flagship.status === 'in_mission' ? 'En mission' : 'Incapacité'}
                   </span>
                 </div>
               </div>
             </div>
           ) : (
-            <p className="text-[10px] text-muted-foreground italic">Pas sur cette planete</p>
+            <p className="text-[10px] text-muted-foreground italic">Pas sur cette planète</p>
           )
         ) : (
           <p className="text-[10px] text-muted-foreground italic">Aucun vaisseau amiral</p>

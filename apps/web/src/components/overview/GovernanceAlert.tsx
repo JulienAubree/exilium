@@ -34,20 +34,20 @@ export function GovernanceAlert({ planetClassId }: GovernanceAlertProps) {
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">Surextension imperiale</span>
+          <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">Surextension impériale</span>
           <span className="text-amber-400/50 text-[10px] font-semibold ml-auto">
             {colonyCount}/{capacity} colonies (+{overextend})
           </span>
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-          <span className="text-red-400 font-medium">-{Math.round(harvestMalus * 100)}% recolte</span>
+          <span className="text-red-400 font-medium">-{Math.round(harvestMalus * 100)}% récolte</span>
           <span className="text-amber-500/30">|</span>
           <span className="text-red-400 font-medium">+{Math.round(constructionMalus * 100)}% temps construction</span>
         </div>
 
         <p className="mt-1.5 text-[11px] text-amber-300/50 leading-relaxed">
-          Votre empire depasse sa capacite de gouvernance. Ameliorez le Centre de Pouvoir Imperial pour lever ces penalites.
+          Votre empire dépasse sa capacité de gouvernance. Améliorez le Centre de Pouvoir Impérial pour lever ces pénalités.
         </p>
       </div>
     </section>

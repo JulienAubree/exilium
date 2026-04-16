@@ -112,10 +112,10 @@ export default function Research() {
         <PageHeader title="Recherche" />
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Avant de pouvoir acceder a la recherche, veuillez construire le <span className="text-foreground font-semibold">Laboratoire de recherche</span>.
+            Avant de pouvoir accéder à la recherche, veuillez construire le <span className="text-foreground font-semibold">Laboratoire de recherche</span>.
           </p>
           <Link to="/buildings" className="text-xs text-primary hover:underline">
-            Aller aux batiments
+            Aller aux bâtiments
           </Link>
         </div>
       </div>

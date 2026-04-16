@@ -17,17 +17,17 @@ const RARITY_LABELS: Record<string, string> = {
   uncommon: 'Peu commun',
   rare: 'Rare',
   epic: 'Epique',
-  legendary: 'Legendaire',
+  legendary: 'Légendaire',
 };
 
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',
-  production_hydrogene: 'Production hydrogene',
-  energy_production: 'Production energie',
+  production_hydrogene: 'Production hydrogène',
+  energy_production: 'Production énergie',
   storage_minerai: 'Stockage minerai',
   storage_silicium: 'Stockage silicium',
-  storage_hydrogene: 'Stockage hydrogene',
+  storage_hydrogene: 'Stockage hydrogène',
 };
 
 const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -140,9 +140,9 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
           <span>Transaction commerciale</span>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed italic">
-          Les donnees cartographiques de cette planete {planetTypeName.toLowerCase()} ont ete acquises
-          aupres de <span className="text-foreground font-medium not-italic">{sellerUsername}</span> via
-          le marche galactique. {biomeCount} biome{biomeCount > 1 ? 's' : ''} {isComplete ? 'ont ete reveles, couvrant l\'integralite de la surface.' : 'ont ete reveles. D\'autres formations restent potentiellement a decouvrir.'}
+          Les données cartographiques de cette planète {planetTypeName.toLowerCase()} ont été acquises
+          auprès de <span className="text-foreground font-medium not-italic">{sellerUsername}</span> via
+          le marché galactique. {biomeCount} biome{biomeCount > 1 ? 's' : ''} {isComplete ? 'ont été révélés, couvrant l\'intégralité de la surface.' : 'ont été révélés. D\'autres formations restent potentiellement à découvrir.'}
         </p>
       </div>
 

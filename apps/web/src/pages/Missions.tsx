@@ -141,7 +141,7 @@ export default function Missions() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              Aller aux batiments
+              Aller aux bâtiments
             </Link>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function Missions() {
             }
           />
           <KpiTile
-            label="Prochaine decouverte"
+            label="Prochaine découverte"
             value={
               nextDiscoveryInFuture ? (
                 <Timer
@@ -302,7 +302,7 @@ export default function Missions() {
                     <path d="M12 16v-4M12 8h.01" />
                   </svg>
                   <span className="text-xs text-muted-foreground">
-                    La <span className="text-amber-300 font-semibold">capacite de soute</span> de votre flotte determine combien de ressources vous ramenez.
+                    La <span className="text-amber-300 font-semibold">capacité de soute</span> de votre flotte détermine combien de ressources vous ramenez.
                   </span>
                   <svg
                     width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -314,13 +314,13 @@ export default function Missions() {
                 {miningInfoOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
                     <p>
-                      Envoyez des <span className="text-foreground">cargos</span> avec votre flotte miniere pour maximiser le butin. Sans cargos, vos vaisseaux ne pourront rien ramener.
+                      Envoyez des <span className="text-foreground">cargos</span> avec votre flotte minière pour maximiser le butin. Sans cargos, vos vaisseaux ne pourront rien ramener.
                     </p>
                     <p>
-                      Le minage se deroule en plusieurs phases : <span className="text-foreground">aller</span>, <span className="text-foreground">prospection</span>, <span className="text-foreground">extraction</span>, puis <span className="text-foreground">retour</span>. La recherche <span className="text-foreground">Raffinage spatial</span> reduit les pertes de scories lors de l&apos;extraction.
+                      Le minage se déroule en plusieurs phases : <span className="text-foreground">aller</span>, <span className="text-foreground">prospection</span>, <span className="text-foreground">extraction</span>, puis <span className="text-foreground">retour</span>. La recherche <span className="text-foreground">Raffinage spatial</span> réduit les pertes de scories lors de l&apos;extraction.
                     </p>
                     <p>
-                      Un gisement reste exploitable tant qu&apos;il contient des ressources — vous pouvez envoyer <span className="text-foreground">plusieurs flottes</span> successivement pour le vider completement.
+                      Un gisement reste exploitable tant qu&apos;il contient des ressources — vous pouvez envoyer <span className="text-foreground">plusieurs flottes</span> successivement pour le vider complètement.
                     </p>
                   </div>
                 )}
@@ -331,7 +331,7 @@ export default function Missions() {
                   <svg className="h-10 w-10 mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  <p className="text-sm">Aucun gisement decouvert pour le moment.</p>
+                  <p className="text-sm">Aucun gisement découvert pour le moment.</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -439,10 +439,10 @@ export default function Missions() {
                 {combatInfoOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
                     <p>
-                      Plus le FP est eleve, plus la flotte est puissante. Comparez votre FP a celui des pirates avant d&apos;attaquer.
+                      Plus le FP est élevé, plus la flotte est puissante. Comparez votre FP à celui des pirates avant d&apos;attaquer.
                     </p>
                     <p>
-                      Le combat se deroule en <span className="text-foreground">4 rounds maximum</span>. Chaque round, vos vaisseaux tirent simultanement sur les ennemis et vice-versa. Les <span className="text-foreground">boucliers</span> absorbent les degats en premier puis se regenerent a chaque round. Les degats sur la <span className="text-foreground">coque</span> sont permanents.
+                      Le combat se déroule en <span className="text-foreground">4 rounds maximum</span>. Chaque round, vos vaisseaux tirent simultanément sur les ennemis et vice-versa. Les <span className="text-foreground">boucliers</span> absorbent les dégâts en premier puis se régénèrent à chaque round. Les dégâts sur la <span className="text-foreground">coque</span> sont permanents.
                     </p>
                     <Link
                       to="/guide/combat"
@@ -582,10 +582,10 @@ export default function Missions() {
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            Decouverte automatique
+            Découverte automatique
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Votre Centre de missions decouvre automatiquement des gisements et des repaires pirates toutes les <span className="text-foreground font-medium">{Math.max(1, 7 - centerLevel)}h</span> (6h au niv. 1, -1h/niveau, min 1h). Jusqu&apos;a <span className="text-foreground font-medium">3 gisements</span> et <span className="text-foreground font-medium">2 repaires pirates</span> peuvent etre decouverts simultanement.
+            Votre Centre de missions découvre automatiquement des gisements et des repaires pirates toutes les <span className="text-foreground font-medium">{Math.max(1, 7 - centerLevel)}h</span> (6h au niv. 1, -1h/niveau, min 1h). Jusqu&apos;à <span className="text-foreground font-medium">3 gisements</span> et <span className="text-foreground font-medium">2 repaires pirates</span> peuvent être découverts simultanément.
           </p>
         </div>
 
@@ -598,13 +598,13 @@ export default function Missions() {
             Gisements miniers
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Un gisement reste exploitable <span className="text-foreground font-medium">tant qu&apos;il contient des ressources</span> — envoyez plusieurs flottes pour le vider completement. Le minage se deroule en phases : aller, prospection, extraction, puis retour.
+            Un gisement reste exploitable <span className="text-foreground font-medium">tant qu&apos;il contient des ressources</span> — envoyez plusieurs flottes pour le vider complètement. Le minage se déroule en phases : aller, prospection, extraction, puis retour.
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="text-foreground font-medium">Pensez a envoyer des cargos</span> avec vos flottes ! Les ressources extraites sont limitees par la capacite de soute. La recherche <span className="text-foreground font-medium">Raffinage spatial</span> reduit les pertes de scories.
+            <span className="text-foreground font-medium">Pensez à envoyer des cargos</span> avec vos flottes ! Les ressources extraites sont limitées par la capacité de soute. La recherche <span className="text-foreground font-medium">Raffinage spatial</span> réduit les pertes de scories.
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Vous pouvez annuler un gisement pour liberer un emplacement (cooldown 24h).
+            Vous pouvez annuler un gisement pour libérer un emplacement (cooldown 24h).
           </p>
         </div>
 

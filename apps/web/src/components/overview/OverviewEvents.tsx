@@ -31,7 +31,7 @@ export function OverviewEvents({ events, gameConfig }: OverviewEventsProps) {
       >
         <span className="flex items-center gap-2 text-muted-foreground">
           <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-90')} />
-          {grouped.length} evenement{grouped.length > 1 ? 's' : ''} recent{grouped.length > 1 ? 's' : ''}
+          {grouped.length} événement{grouped.length > 1 ? 's' : ''} récent{grouped.length > 1 ? 's' : ''}
         </span>
         <span className="text-muted-foreground/50">
           {open ? 'Masquer' : 'Voir'}

@@ -13,7 +13,7 @@ import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent
 
 const BREADCRUMB_SEGMENTS = [
   { label: 'Flotte', path: '/fleet' },
-  { label: 'Flotte stationnee', path: '/fleet/stationed' },
+  { label: 'Flotte stationnée', path: '/fleet/stationed' },
 ];
 
 export default function StationedFleet() {
@@ -77,7 +77,7 @@ export default function StationedFleet() {
     return (
       <div className="space-y-4 p-4 lg:p-6">
         <Breadcrumb segments={BREADCRUMB_SEGMENTS} />
-        <PageHeader title="Flotte stationnee" />
+        <PageHeader title="Flotte stationnée" />
         <CardGridSkeleton count={6} />
       </div>
     );
@@ -87,10 +87,10 @@ export default function StationedFleet() {
     return (
       <div className="space-y-4 p-4 lg:p-6">
         <Breadcrumb segments={BREADCRUMB_SEGMENTS} />
-        <PageHeader title="Flotte stationnee" />
+        <PageHeader title="Flotte stationnée" />
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Aucun vaisseau stationne sur cette planete.{' '}
+            Aucun vaisseau stationné sur cette planète.{' '}
             <Link to="/shipyard" className="text-primary hover:underline">
               Construire des vaisseaux
             </Link>
@@ -105,7 +105,7 @@ export default function StationedFleet() {
   return (
     <div className="space-y-4 p-4 pb-28 lg:p-6 lg:pb-6">
       <Breadcrumb segments={BREADCRUMB_SEGMENTS} />
-      <PageHeader title="Flotte stationnee" />
+      <PageHeader title="Flotte stationnée" />
 
       {/* Flagship */}
       {(flagshipOnPlanet || flagshipInFlight) && flagship && (

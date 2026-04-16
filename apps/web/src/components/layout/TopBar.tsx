@@ -188,7 +188,7 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
               <span className="w-5 h-5 rounded-full bg-primary/30 inline-block" />
             )}
             <span className="font-medium">
-              {activePlanet ? activePlanet.name : 'Planete'}
+              {activePlanet ? activePlanet.name : 'Planète'}
               {activePlanet && (
                 <span className="hidden lg:inline"> [{activePlanet.galaxy}:{activePlanet.system}:{activePlanet.position}]</span>
               )}
@@ -588,7 +588,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
       case 'ship_count':
         if (condition.targetId === 'interceptor') return { label: 'Aller au Centre de commandement \u2192', action: () => { navigate('/command-center'); onClose(); } };
         return { label: 'Aller au Chantier \u2192', action: () => { navigate('/shipyard'); onClose(); } };
-      case 'defense_count': return { label: 'Aller aux Defenses \u2192', action: () => { navigate('/defense'); onClose(); } };
+      case 'defense_count': return { label: 'Aller aux Défenses \u2192', action: () => { navigate('/defense'); onClose(); } };
       case 'mission_complete': return { label: 'Aller aux Missions \u2192', action: () => { navigate('/missions'); onClose(); } };
       default: return null;
     }

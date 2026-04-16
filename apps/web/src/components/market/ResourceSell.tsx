@@ -26,7 +26,7 @@ export function ResourceSell({ planetId, commissionPercent }: ResourceSellProps)
 
   const createOfferMutation = trpc.market.createOffer.useMutation({
     onSuccess: () => {
-      addToast('Offre creee !');
+      addToast('Offre créée !');
       utils.market.myOffers.invalidate();
       utils.resource.production.invalidate();
       setSellQuantity(0);

@@ -224,7 +224,7 @@ export default function FleetDashboard() {
         <div className="order-2 lg:order-1 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Flotte stationnee
+              Flotte stationnée
             </h2>
             <Link
               to="/fleet/stationed"
@@ -237,7 +237,7 @@ export default function FleetDashboard() {
           {availableShips.length === 0 && !flagshipOnPlanet ? (
             <div className="rounded-lg border border-border bg-card p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Aucun vaisseau stationne.{' '}
+                Aucun vaisseau stationné.{' '}
                 <Link to="/shipyard" className="text-primary hover:underline">
                   Construire des vaisseaux
                 </Link>

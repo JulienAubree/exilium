@@ -39,7 +39,7 @@ export function EmpireGovernanceBanner({ governance }: { governance: GovernanceD
   const statusLabel = isOverextend
     ? 'Empire en surextension'
     : isAtCapacity
-      ? 'Capacite maximale atteinte'
+      ? 'Capacité maximale atteinte'
       : 'Gouvernance stable';
 
   const freeSlots = Math.max(0, governance.capacity - governance.colonyCount);
@@ -75,7 +75,7 @@ export function EmpireGovernanceBanner({ governance }: { governance: GovernanceD
             <InfoCard
               label="Centre de Pouvoir"
               value={`Niveau ${governance.ipcLevel}`}
-              sub={`Capacite : ${governance.capacity} planete${governance.capacity > 1 ? 's' : ''}`}
+              sub={`Capacité : ${governance.capacity} planète${governance.capacity > 1 ? 's' : ''}`}
               color="text-amber-400"
             />
             <InfoCard
@@ -85,7 +85,7 @@ export function EmpireGovernanceBanner({ governance }: { governance: GovernanceD
               color={isSafe ? 'text-emerald-400' : isAtCapacity ? 'text-amber-400' : 'text-destructive'}
             />
             <InfoCard
-              label="Malus recolte"
+              label="Malus récolte"
               value={isOverextend ? `${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'}
               icon={<TrendingDown className="h-3.5 w-3.5" />}
               color={isOverextend ? 'text-destructive' : 'text-emerald-400'}
@@ -102,18 +102,18 @@ export function EmpireGovernanceBanner({ governance }: { governance: GovernanceD
           <div className="text-xs text-muted-foreground leading-relaxed">
             {isOverextend ? (
               <p>
-                Votre empire depasse sa capacite de gouvernance de <span className="text-destructive font-medium">+{governance.overextend}</span>.
-                {' '}Toutes vos colonies subissent des penalites de production et de construction.
-                {' '}Ameliorez le <span className="text-amber-400 font-medium">Centre de Pouvoir Imperial</span> sur votre planete mere pour augmenter votre capacite.
+                Votre empire dépasse sa capacité de gouvernance de <span className="text-destructive font-medium">+{governance.overextend}</span>.
+                {' '}Toutes vos colonies subissent des pénalités de production et de construction.
+                {' '}Améliorez le <span className="text-amber-400 font-medium">Centre de Pouvoir Impérial</span> sur votre planète mère pour augmenter votre capacité.
               </p>
             ) : isAtCapacity ? (
               <p>
-                Vous avez atteint votre capacite maximale. La prochaine colonie entrainera des penalites sur toutes vos colonies.
-                {' '}Ameliorez le <span className="text-amber-400 font-medium">Centre de Pouvoir Imperial</span> avant de coloniser.
+                Vous avez atteint votre capacité maximale. La prochaine colonie entraînera des pénalités sur toutes vos colonies.
+                {' '}Améliorez le <span className="text-amber-400 font-medium">Centre de Pouvoir Impérial</span> avant de coloniser.
               </p>
             ) : (
               <p>
-                Votre empire est stable. Vous pouvez coloniser <span className="text-emerald-400 font-medium">{freeSlots}</span> planete{freeSlots > 1 ? 's' : ''} supplementaire{freeSlots > 1 ? 's' : ''} sans penalite.
+                Votre empire est stable. Vous pouvez coloniser <span className="text-emerald-400 font-medium">{freeSlots}</span> planète{freeSlots > 1 ? 's' : ''} supplémentaire{freeSlots > 1 ? 's' : ''} sans pénalité.
               </p>
             )}
           </div>

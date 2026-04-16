@@ -122,7 +122,7 @@ function ResourcePanel({ mineLevel, mineLabel, production, storageLevel, capacit
       {protectedAmount != null && protectedAmount > 0 && (
         <div className="text-[9px] text-green-500/70 flex items-center gap-1 mt-1">
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          {formatNumber(protectedAmount)} protege
+          {formatNumber(protectedAmount)} protégé
         </div>
       )}
     </div>
@@ -260,7 +260,7 @@ export function OverviewKpiBar({ resources, liveResources, ships, levels }: Over
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground italic">Aucun vaisseau stationne</p>
+            <p className="text-xs text-muted-foreground italic">Aucun vaisseau stationné</p>
           )}
         </div>
       )}

@@ -441,7 +441,7 @@ export default function Movements() {
               La <span className="text-muted-foreground/70 font-medium">Technologie Ordinateur</span> augmente
               le nombre d&apos;emplacements disponibles (+1 par niveau).
               {fleetSlots.current >= fleetSlots.max && (
-                <span className="text-amber-400/70"> Tous vos emplacements sont utilises — attendez le retour d&apos;une flotte ou ameliorez votre recherche.</span>
+                <span className="text-amber-400/70"> Tous vos emplacements sont utilisés — attendez le retour d&apos;une flotte ou améliorez votre recherche.</span>
               )}
             </p>
           </div>

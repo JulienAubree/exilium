@@ -48,10 +48,10 @@ export function TransportReportDetail({ result, coordinates }: TransportReportDe
             <line x1="9" y1="9" x2="15" y2="15" />
           </svg>
         </div>
-        <div className="text-red-400 text-sm font-semibold">Transport echoue</div>
+        <div className="text-red-400 text-sm font-semibold">Transport échoué</div>
         <div className="text-xs text-muted-foreground">
-          La planete cible en <CoordsLink galaxy={coordinates.galaxy} system={coordinates.system} position={coordinates.position} /> n'existe plus ou est inaccessible.
-          Les ressources ont ete rapatriees a votre planete d'origine.
+          La planète cible en <CoordsLink galaxy={coordinates.galaxy} system={coordinates.system} position={coordinates.position} /> n'existe plus ou est inaccessible.
+          Les ressources ont été rapatriées à votre planète d'origine.
         </div>
       </div>
     );

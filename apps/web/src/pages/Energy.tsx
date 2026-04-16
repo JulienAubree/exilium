@@ -24,15 +24,15 @@ const RARITY_LABELS: Record<string, string> = {
 };
 const STAT_SHORT: Record<string, { label: string }> = {
   production_minerai: { label: 'Minerai' }, production_silicium: { label: 'Silicium' },
-  production_hydrogene: { label: 'Hydrogene' }, energy_production: { label: 'Energie' },
+  production_hydrogene: { label: 'Hydrogène' }, energy_production: { label: 'Énergie' },
   storage_minerai: { label: 'Stock. Fe' }, storage_silicium: { label: 'Stock. Si' },
   storage_hydrogene: { label: 'Stock. H' },
 };
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Prod. minerai', production_silicium: 'Prod. silicium',
-  production_hydrogene: 'Prod. hydrogene', energy_production: 'Prod. energie',
+  production_hydrogene: 'Prod. hydrogène', energy_production: 'Prod. énergie',
   storage_minerai: 'Stock. minerai', storage_silicium: 'Stock. silicium',
-  storage_hydrogene: 'Stock. hydrogene',
+  storage_hydrogene: 'Stock. hydrogène',
 };
 const PLANET_BONUS_TO_STAT: Record<string, string> = {
   mineraiBonus: 'production_minerai', siliciumBonus: 'production_silicium', hydrogeneBonus: 'production_hydrogene',

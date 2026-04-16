@@ -121,9 +121,9 @@ function IncapacitatedBanner({
           {/* Info */}
           <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
             <div>
-              <h2 className="text-lg font-black text-red-400 uppercase tracking-tight">Vaisseau incapacite</h2>
+              <h2 className="text-lg font-black text-red-400 uppercase tracking-tight">Vaisseau incapacité</h2>
               <p className="text-xs text-red-300/60">
-                <span className="font-semibold text-red-300/80">{name}</span> a ete mis hors service au combat.
+                <span className="font-semibold text-red-300/80">{name}</span> a été mis hors service au combat.
               </p>
             </div>
 
@@ -496,7 +496,7 @@ const HULL_CARD_STYLES: Record<string, { border: string; glow: string; badge: st
 const STATUS_LABELS: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Operationnel', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   in_mission: { label: 'En mission', color: 'text-blue-400', dot: 'bg-blue-400' },
-  incapacitated: { label: 'Incapacite', color: 'text-red-400', dot: 'bg-red-400' },
+  incapacitated: { label: 'Incapacité', color: 'text-red-400', dot: 'bg-red-400' },
   hull_refit: { label: 'Changement de coque', color: 'text-amber-400', dot: 'bg-amber-400' },
 };
 

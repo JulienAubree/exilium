@@ -138,7 +138,7 @@ function getContextualTable(
     case 'galacticMarket':
       return {
         type: 'market',
-        title: 'Offres simultanees',
+        title: 'Offres simultanées',
         rows: levels.map((level) => ({
           level,
           maxOffers: maxMarketOffers(level),
@@ -272,11 +272,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
           <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
             <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire annexe</div>
             <div className="text-xs text-slate-300 space-y-2">
-              <p>Ce laboratoire est une <span className="text-violet-400 font-medium">annexe de recherche</span> specialisee, constructible uniquement sur une planete <span className="text-violet-400 font-medium">{planetTypeNames[annexType] ?? annexType}</span>.</p>
+              <p>Ce laboratoire est une <span className="text-violet-400 font-medium">annexe de recherche</span> spécialisée, constructible uniquement sur une planète <span className="text-violet-400 font-medium">{planetTypeNames[annexType] ?? annexType}</span>.</p>
 
               <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
                 <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Bonus passif</div>
-                <p className="text-slate-300">Chaque niveau de ce laboratoire reduit le <span className="text-emerald-400 font-medium">temps de toutes les recherches de 5%</span>. Ce bonus se cumule avec les autres laboratoires annexes de votre empire.</p>
+                <p className="text-slate-300">Chaque niveau de ce laboratoire réduit le <span className="text-emerald-400 font-medium">temps de toutes les recherches de 5%</span>. Ce bonus se cumule avec les autres laboratoires annexes de votre empire.</p>
               </div>
 
               {exclusiveResearch && (
@@ -289,7 +289,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
                 </div>
               )}
 
-              <p className="text-slate-500 text-[11px]">Le laboratoire principal (planete mere) doit etre au niveau 6 minimum.</p>
+              <p className="text-slate-500 text-[11px]">Le laboratoire principal (planète mère) doit être au niveau 6 minimum.</p>
             </div>
           </div>
         );
@@ -300,11 +300,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext }: 
         <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
           <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire principal</div>
           <div className="text-xs text-slate-300 space-y-1.5">
-            <p>Le laboratoire de recherche est le <span className="text-violet-400 font-medium">centre nevralgique</span> de la recherche de votre empire. Toutes les recherches sont lancees depuis ce laboratoire.</p>
+            <p>Le laboratoire de recherche est le <span className="text-violet-400 font-medium">centre névralgique</span> de la recherche de votre empire. Toutes les recherches sont lancées depuis ce laboratoire.</p>
             <ul className="list-disc list-inside space-y-1 text-slate-400">
-              <li>Chaque niveau reduit le <span className="text-emerald-400">temps de recherche</span> (rendements decroissants)</li>
-              <li>Au <span className="text-amber-400">niveau 6</span>, debloque la construction de laboratoires annexes sur vos colonies</li>
-              <li>Les ressources de recherche sont prelevees sur la planete mere</li>
+              <li>Chaque niveau réduit le <span className="text-emerald-400">temps de recherche</span> (rendements décroissants)</li>
+              <li>Au <span className="text-amber-400">niveau 6</span>, débloque la construction de laboratoires annexes sur vos colonies</li>
+              <li>Les ressources de recherche sont prélevées sur la planète mère</li>
             </ul>
           </div>
         </div>
@@ -595,14 +595,14 @@ function GovernanceSection({ currentLevel }: { currentLevel: number }) {
     <div className="space-y-3">
       {/* Current status */}
       <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 p-3 space-y-2">
-        <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Gouvernance imperiale</div>
+        <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Gouvernance impériale</div>
         <div className="text-xs text-slate-300 space-y-1.5">
-          <p>Chaque niveau augmente votre <span className="text-amber-400 font-medium">capacite de gouvernance</span> de +1 planete. Au-dela de votre capacite, toutes vos colonies subissent des penalites.</p>
+          <p>Chaque niveau augmente votre <span className="text-amber-400 font-medium">capacité de gouvernance</span> de +1 planète. Au-delà de votre capacité, toutes vos colonies subissent des pénalités.</p>
 
           <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1">
             <div className="flex items-center justify-between text-slate-300">
-              <span>Capacite actuelle</span>
-              <span className="font-semibold text-amber-400">{capacity} planete{capacity > 1 ? 's' : ''}</span>
+              <span>Capacité actuelle</span>
+              <span className="font-semibold text-amber-400">{capacity} planète{capacity > 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center justify-between text-slate-300">
               <span>Colonies actives</span>
@@ -612,7 +612,7 @@ function GovernanceSection({ currentLevel }: { currentLevel: number }) {
             </div>
             {overextend > 0 && (
               <div className="flex items-center justify-between text-red-400 border-t border-slate-700 pt-1 mt-1">
-                <span>Depassement</span>
+                <span>Dépassement</span>
                 <span className="font-semibold">+{overextend}</span>
               </div>
             )}
@@ -620,7 +620,7 @@ function GovernanceSection({ currentLevel }: { currentLevel: number }) {
 
           {overextend > 0 && (
             <p className="text-red-400 text-[11px]">
-              Penalites en cours : -{Math.round((governance?.harvestMalus ?? 0) * 100)}% recolte, +{Math.round((governance?.constructionMalus ?? 0) * 100)}% temps construction sur toutes vos colonies.
+              Pénalités en cours : -{Math.round((governance?.harvestMalus ?? 0) * 100)}% récolte, +{Math.round((governance?.constructionMalus ?? 0) * 100)}% temps construction sur toutes vos colonies.
             </p>
           )}
         </div>
@@ -629,13 +629,13 @@ function GovernanceSection({ currentLevel }: { currentLevel: number }) {
       {/* Progression table */}
       <div>
         <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
-          Capacite par niveau
+          Capacité par niveau
         </div>
         <table className="w-full text-[11px] border-collapse">
           <thead>
             <tr className="text-slate-500 text-left">
               <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
-              <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Capacite</th>
+              <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Capacité</th>
             </tr>
           </thead>
           <tbody className="text-slate-300">
@@ -645,7 +645,7 @@ function GovernanceSection({ currentLevel }: { currentLevel: number }) {
                   {level}{i === 0 ? ' \u25C4' : ''}
                 </td>
                 <td className="px-2 py-1.5 text-right text-amber-400">
-                  {1 + level} planete{1 + level > 1 ? 's' : ''}
+                  {1 + level} planète{1 + level > 1 ? 's' : ''}
                 </td>
               </tr>
             ))}

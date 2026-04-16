@@ -137,10 +137,10 @@ export default function CommandCenter() {
         <PageHeader title="Centre de commandement" />
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Avant de pouvoir acceder au centre de commandement, veuillez construire le <span className="text-foreground font-semibold">Centre de commandement</span>.
+            Avant de pouvoir accéder au centre de commandement, veuillez construire le <span className="text-foreground font-semibold">Centre de commandement</span>.
           </p>
           <Link to="/buildings" className="text-xs text-primary hover:underline">
-            Aller aux batiments
+            Aller aux bâtiments
           </Link>
         </div>
       </div>

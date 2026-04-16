@@ -57,18 +57,18 @@ const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
   uncommon: 'Peu commun',
   rare: 'Rare',
-  epic: 'Epique',
-  legendary: 'Legendaire',
+  epic: 'Épique',
+  legendary: 'Légendaire',
 };
 
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',
-  production_hydrogene: 'Production hydrogene',
-  energy_production: 'Production energie',
+  production_hydrogene: 'Production hydrogène',
+  energy_production: 'Production énergie',
   storage_minerai: 'Stockage minerai',
   storage_silicium: 'Stockage silicium',
-  storage_hydrogene: 'Stockage hydrogene',
+  storage_hydrogene: 'Stockage hydrogène',
 };
 
 interface BiomeDiscovery {

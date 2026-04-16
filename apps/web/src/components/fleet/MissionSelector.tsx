@@ -43,7 +43,7 @@ export function MissionSelector({ selected, onChange, locked }: MissionSelectorP
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs uppercase text-muted-foreground">Mission</span>
         {locked && (
-          <span className="text-xs text-yellow-500">Mission verrouill\u00e9e</span>
+          <span className="text-xs text-yellow-500">Mission verrouillée</span>
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">

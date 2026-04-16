@@ -19,18 +19,18 @@ const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
   uncommon: 'Peu commun',
   rare: 'Rare',
-  epic: 'Epique',
-  legendary: 'Legendaire',
+  epic: 'Épique',
+  legendary: 'Légendaire',
 };
 
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',
-  production_hydrogene: 'Production hydrogene',
-  energy_production: 'Production energie',
+  production_hydrogene: 'Production hydrogène',
+  energy_production: 'Production énergie',
   storage_minerai: 'Stockage minerai',
   storage_silicium: 'Stockage silicium',
-  storage_hydrogene: 'Stockage hydrogene',
+  storage_hydrogene: 'Stockage hydrogène',
 };
 
 const RESOURCE_COLORS: Record<string, string> = {
@@ -352,7 +352,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
               Aucun rapport en inventaire.
             </p>
             <p className="text-xs text-muted-foreground/80">
-              Pour vendre les informations sur une planete, rendez-vous dans la{' '}
+              Pour vendre les informations sur une planète, rendez-vous dans la{' '}
               <a href="/galaxy" className="text-cyan-400 hover:underline">vue galaxie</a>,
               {' '}selectionnez une position exploree et cliquez sur{' '}
               <span className="text-amber-300 font-medium">Vendre le rapport</span>.
@@ -466,7 +466,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                       <>
                         <div className="text-xs text-amber-400 flex items-center gap-1.5">
                           <div className="h-3 w-3 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
-                          Acheteur en route — vente verrouillee
+                          Acheteur en route — vente verrouillée
                         </div>
                         <Button
                           variant="destructive"

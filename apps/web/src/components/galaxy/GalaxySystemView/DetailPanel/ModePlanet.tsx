@@ -166,8 +166,8 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Cette planete est en cours de stabilisation. Les structures seront
-              disponibles une fois la colonisation terminee.
+              Cette planète est en cours de stabilisation. Les structures seront
+              disponibles une fois la colonisation terminée.
             </p>
           </div>
 
@@ -411,7 +411,7 @@ function EmptyDiscoveredPanel({
         </div>
       ) : (
         <div className="mt-3">
-          <SectionLabel>Biomes decouverts</SectionLabel>
+          <SectionLabel>Biomes découverts</SectionLabel>
           <BiomeChips biomes={view.biomes} />
         </div>
       )}
@@ -432,7 +432,7 @@ function EmptyDiscoveredPanel({
           disabledTitle={
             !ctx.hasExplorer
               ? "Aucun vaisseau d'exploration disponible"
-              : 'Tous les biomes sont deja decouverts'
+              : 'Tous les biomes sont déjà découverts'
           }
           onClick={() => actions.onExplore(view.position)}
         >
