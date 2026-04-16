@@ -87,23 +87,35 @@ export async function processPlanetImage(
   return files;
 }
 
+const AVATAR_SIZES: readonly { suffix: string; width: number; quality: number }[] = [
+  { suffix: '', width: 512, quality: 85 },
+  { suffix: '-thumb', width: 128, quality: 80 },
+  { suffix: '-icon', width: 64, quality: 75 },
+];
+
 export async function processAvatarImage(
   buffer: Buffer,
-  avatarId: string,
+  imageIndex: number,
   assetsDir: string,
 ): Promise<string[]> {
   const outputDir = path.join(assetsDir, 'avatars');
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const filename = `${avatarId}.webp`;
-  const outPath = path.join(outputDir, filename);
+  const files: string[] = [];
 
-  await sharp(buffer)
-    .resize({ width: 512, height: 512, fit: 'cover', position: 'centre' })
-    .webp({ quality: 85 })
-    .toFile(outPath);
+  for (const size of AVATAR_SIZES) {
+    const filename = `${imageIndex}${size.suffix}.webp`;
+    const outPath = path.join(outputDir, filename);
 
-  return [filename];
+    await sharp(buffer)
+      .resize({ width: size.width, height: size.width, fit: 'cover', position: 'centre' })
+      .webp({ quality: size.quality })
+      .toFile(outPath);
+
+    files.push(filename);
+  }
+
+  return files;
 }
 
 export async function processFlagshipImage(

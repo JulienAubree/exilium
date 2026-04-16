@@ -27,7 +27,7 @@ export function AvatarPicker({ currentAvatarId, onSelect, onClose }: AvatarPicke
                   id === currentAvatarId ? 'border-primary ring-2 ring-primary/50' : 'border-white/10 hover:border-white/30'
                 }`}
               >
-                <img src={`/assets/avatars/${id}.webp`} alt={id} className="w-full h-full object-cover" />
+                <img src={`/assets/avatars/${id}-thumb.webp`} alt={id} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>

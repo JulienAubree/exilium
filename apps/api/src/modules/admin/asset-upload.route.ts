@@ -6,7 +6,8 @@ import { users, type Database } from '@exilium/db';
 import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
-import { readdirSync, unlinkSync, existsSync } from 'fs';
+import { getNextAvatarIndex, listAvatarIndexes } from '../../lib/avatar-image.util.js';
+import { unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 import { env } from '../../config/env.js';
 
@@ -49,9 +50,9 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const entityId = (data.fields.entityId as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
-      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships' });
+      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars' });
     }
-    if (!entityId) {
+    if (!entityId && category !== 'avatars') {
       return reply.status(400).send({ error: 'entityId is required (hullId for flagships)' });
     }
     if (!ALLOWED_MIMES.includes(data.mimetype)) {
@@ -68,7 +69,8 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     try {
       let files: string[];
       if (category === 'avatars') {
-        files = await processAvatarImage(buffer, entityId!, env.ASSETS_DIR);
+        const nextIndex = getNextAvatarIndex(env.ASSETS_DIR);
+        files = await processAvatarImage(buffer, nextIndex, env.ASSETS_DIR);
       } else if (category === 'planets') {
         const planetClassId = entityId!;
         const nextIndex = getNextPlanetImageIndex(planetClassId, env.ASSETS_DIR);
@@ -155,7 +157,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
 
   // --- Avatar management routes ---
 
-  server.get('/admin/avatars', async (request, reply) => {
+  server.get('/admin/avatar-images', async (request, reply) => {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return reply.status(401).send({ error: 'Unauthorized' });
@@ -178,19 +180,16 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       return reply.status(403).send({ error: 'Admin access required' });
     }
 
-    const dir = join(env.ASSETS_DIR, 'avatars');
-    try {
-      const avatars = readdirSync(dir)
-        .filter(f => f.endsWith('.webp'))
-        .map(f => f.replace('.webp', ''))
-        .sort();
-      return reply.send({ avatars });
-    } catch {
-      return reply.send({ avatars: [] });
-    }
+    const indexes = listAvatarIndexes(env.ASSETS_DIR);
+    const images = indexes.map((index) => ({
+      index,
+      thumbUrl: `/assets/avatars/${index}-thumb.webp`,
+    }));
+
+    return reply.send({ images });
   });
 
-  server.delete('/admin/avatars/:avatarId', async (request, reply) => {
+  server.delete('/admin/avatar-images/:index', async (request, reply) => {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return reply.status(401).send({ error: 'Unauthorized' });
@@ -213,15 +212,19 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
       return reply.status(403).send({ error: 'Admin access required' });
     }
 
-    const { avatarId } = request.params as { avatarId: string };
-    const filePath = join(env.ASSETS_DIR, 'avatars', `${avatarId}.webp`);
+    const { index } = request.params as { index: string };
+    const dir = join(env.ASSETS_DIR, 'avatars');
+    const heroPath = join(dir, `${index}.webp`);
 
-    if (!existsSync(filePath)) {
+    if (!existsSync(heroPath)) {
       return reply.status(404).send({ error: 'Avatar not found' });
     }
 
     try {
-      unlinkSync(filePath);
+      for (const suffix of ['', '-thumb', '-icon']) {
+        const fp = join(dir, `${index}${suffix}.webp`);
+        if (existsSync(fp)) unlinkSync(fp);
+      }
       return reply.send({ success: true });
     } catch (err) {
       request.log.error(err, 'Failed to delete avatar');

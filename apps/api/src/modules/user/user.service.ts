@@ -98,8 +98,9 @@ export function createUserService(db: Database, assetsDir: string) {
       try {
         const dir = join(assetsDir, 'avatars');
         return readdirSync(dir)
-          .filter(f => f.endsWith('.webp'))
-          .map(f => f.replace('.webp', ''));
+          .filter(f => /^\d+\.webp$/.test(f))
+          .map(f => f.replace('.webp', ''))
+          .sort((a, b) => Number(a) - Number(b));
       } catch {
         return [];
       }
