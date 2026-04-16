@@ -9,6 +9,7 @@ import { ResourceMyOffers } from '@/components/market/ResourceMyOffers';
 import { MarketReportsBuy } from '@/components/market/MarketReportsBuy';
 import { MarketReportsInventory } from '@/components/market/MarketReportsInventory';
 import { cn } from '@/lib/utils';
+import { getAssetUrl } from '@/lib/assets';
 
 // ── KPI Tile ─────────────────────────────────────────────────────────
 
@@ -131,17 +132,27 @@ export default function Market() {
     <div className="space-y-4">
       {/* Hero banner */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/80 via-slate-950 to-purple-950/60" />
+        {/* Background: building image blurred, with gradient overlay */}
+        <div className="absolute inset-0">
+          <img
+            src={getAssetUrl('buildings', 'galacticMarket')}
+            alt=""
+            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/60 via-slate-950/80 to-purple-950/60" />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
         <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
           <div className="flex items-start gap-5">
-            {/* Market icon */}
-            <div className="flex h-20 w-20 lg:h-24 lg:w-24 items-center justify-center rounded-full border-2 border-primary/30 bg-card/80 shadow-lg shadow-cyan-500/10 shrink-0 backdrop-blur-sm">
-              <svg className="h-10 w-10 lg:h-12 lg:w-12 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
+            {/* Building thumbnail */}
+            <img
+              src={getAssetUrl('buildings', 'galacticMarket', 'thumb')}
+              alt="Marche Galactique"
+              className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 shrink-0"
+              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+            />
 
             <div className="flex-1 min-w-0 pt-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">Marche Galactique</h1>
