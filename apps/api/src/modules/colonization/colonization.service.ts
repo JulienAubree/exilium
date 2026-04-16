@@ -1,35 +1,39 @@
-import { eq, and, lt, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { colonizationProcesses, colonizationEvents, planets, planetBuildings, planetBiomes, discoveredBiomes } from '@exilium/db';
+import { colonizationProcesses, planets, planetBuildings, planetBiomes, discoveredBiomes, planetShips } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { calculateGovernancePenalty } from '@exilium/game-engine';
+import { calculateGovernancePenalty, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
 export function createColonizationService(
   db: Database,
   gameConfigService: GameConfigService,
 ) {
-  async function getIpcLevel(userId: string): Promise<number> {
-    const userPlanets = await db
-      .select({ id: planets.id })
-      .from(planets)
-      .where(eq(planets.userId, userId));
-    const userPlanetIds = new Set(userPlanets.map(p => p.id));
-    const allIpc = await db
-      .select({ planetId: planetBuildings.planetId, level: planetBuildings.level })
-      .from(planetBuildings)
-      .where(eq(planetBuildings.buildingId, 'imperialPowerCenter'));
-    const ipc = allIpc.find(b => userPlanetIds.has(b.planetId));
-    return ipc?.level ?? 0;
-  }
-
-  function scaleCost(baseCost: number, ipcLevel: number, scalingFactor: number): number {
-    return Math.floor(baseCost * (1 + scalingFactor * ipcLevel));
-  }
-
   return {
-    /** Get IPC level for a user (used by fleet handlers for cost scaling) */
-    getIpcLevel,
+    /** Get Imperial Power Center level for a user */
+    async getIpcLevel(userId: string): Promise<number> {
+      const userPlanets = await db
+        .select({ id: planets.id })
+        .from(planets)
+        .where(eq(planets.userId, userId));
+
+      if (userPlanets.length === 0) return 0;
+
+      const userPlanetIds = new Set(userPlanets.map(p => p.id));
+
+      const allIpc = await db
+        .select()
+        .from(planetBuildings)
+        .where(eq(planetBuildings.buildingId, 'imperialPowerCenter'));
+
+      const ipc = allIpc.find(b => userPlanetIds.has(b.planetId));
+      return ipc?.level ?? 0;
+    },
+
+    /** Scale a base cost by IPC level and scaling factor */
+    scaleCost(baseCost: number, ipcLevel: number, scalingFactor: number): number {
+      return baseCost * (1 + scalingFactor * ipcLevel);
+    },
 
     /** Get active colonization process for a planet */
     async getProcess(planetId: string) {
@@ -44,53 +48,108 @@ export function createColonizationService(
       return process ?? null;
     },
 
-    /** Get full colonization status (process + events) for frontend */
+    /** Get full colonization status for frontend */
     async getStatus(userId: string, planetId: string) {
       const process = await this.getProcess(planetId);
       if (!process || process.userId !== userId) return null;
 
-      const events = await db
-        .select()
-        .from(colonizationEvents)
-        .where(eq(colonizationEvents.processId, process.id));
-
       const config = await gameConfigService.getFullConfig();
       const passiveRate = Number(config.universe.colonization_passive_rate) || 0.10;
-      const reinforceBonus = process.reinforcePassiveBonus ?? 0;
-      const effectiveRate = passiveRate * process.difficultyFactor + reinforceBonus;
-      const remaining = Math.max(0, 1 - process.progress);
-      const etaHours = effectiveRate > 0 ? remaining / effectiveRate : Infinity;
+      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
+      const ipcLevel = await this.getIpcLevel(userId);
 
-      const cooldownSeconds = Number(config.universe.colonization_consolidate_cooldown) || 14400;
-      let consolidateCooldownRemaining = 0;
-      if (process.lastConsolidateAt) {
-        const elapsed = (Date.now() - new Date(process.lastConsolidateAt).getTime()) / 1000;
-        consolidateCooldownRemaining = Math.max(0, Math.ceil(cooldownSeconds - elapsed));
+      const baseMinerai = Number(config.universe.colonization_consumption_minerai) || 200;
+      const baseSilicium = Number(config.universe.colonization_consumption_silicium) || 100;
+      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, ipcLevel, sf);
+      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, ipcLevel, sf);
+
+      // Fetch planet resources
+      const [planet] = await db
+        .select({ minerai: planets.minerai, silicium: planets.silicium })
+        .from(planets)
+        .where(eq(planets.id, planetId))
+        .limit(1);
+
+      const currentMinerai = planet ? Number(planet.minerai) : 0;
+      const currentSilicium = planet ? Number(planet.silicium) : 0;
+
+      const stockSufficient = currentMinerai > 0 && currentSilicium > 0;
+
+      // Hours until stockout
+      let hoursUntilStockout: number | null = null;
+      if (process.outpostEstablished && consumptionMineraiPerHour > 0 && consumptionSiliciumPerHour > 0) {
+        const hoursMinerai = currentMinerai / consumptionMineraiPerHour;
+        const hoursSilicium = currentSilicium / consumptionSiliciumPerHour;
+        hoursUntilStockout = Math.min(hoursMinerai, hoursSilicium);
       }
 
-      // Scaled costs based on IPC level
-      const ipcLevel = await getIpcLevel(userId);
-      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-      const baseCostMinerai = Number(config.universe.colonization_consolidate_cost_minerai) || 2000;
-      const baseCostSilicium = Number(config.universe.colonization_consolidate_cost_silicium) || 1000;
-      const baseTrancheSize = Number(config.universe.colonization_supply_tranche_size) || 2000;
+      // Effective rate
+      const effectiveRate = process.outpostEstablished
+        ? passiveRate * process.difficultyFactor * (stockSufficient ? 1 : 0.5)
+        : 0;
+      const remaining = Math.max(0, 1 - process.progress);
+      const estimatedCompletionHours = effectiveRate > 0 ? remaining / effectiveRate : Infinity;
+
+      // Garrison info
+      const [ships] = await db
+        .select()
+        .from(planetShips)
+        .where(eq(planetShips.planetId, planetId))
+        .limit(1);
+
+      const stationedShips: Record<string, number> = {};
+      let stationedFP = 0;
+      if (ships) {
+        for (const [key, value] of Object.entries(ships)) {
+          if (key === 'planetId') continue;
+          const count = Number(value) || 0;
+          if (count > 0) stationedShips[key] = count;
+        }
+
+        // Compute stationed FP
+        const shipStats: Record<string, UnitCombatStats> = {};
+        for (const [id, ship] of Object.entries(config.ships)) {
+          shipStats[id] = {
+            weapons: ship.weapons,
+            shotCount: ship.shotCount ?? 1,
+            shield: ship.shield,
+            hull: ship.hull,
+          };
+        }
+        const fpConfig: FPConfig = {
+          shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+          divisor: Number(config.universe.fp_divisor) || 100,
+        };
+        stationedFP = computeFleetFP(stationedShips, shipStats, fpConfig);
+      }
+
+      // Outpost thresholds
+      const outpostThresholdMinerai = this.scaleCost(
+        Number(config.universe.colonization_outpost_threshold_minerai) || 500,
+        ipcLevel,
+        sf,
+      );
+      const outpostThresholdSilicium = this.scaleCost(
+        Number(config.universe.colonization_outpost_threshold_silicium) || 250,
+        ipcLevel,
+        sf,
+      );
 
       return {
         ...process,
-        events: events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
         effectivePassiveRate: effectiveRate,
-        estimatedCompletionHours: etaHours,
-        consolidateCooldownRemaining,
-        // Config values for frontend display (scaled by IPC)
+        estimatedCompletionHours,
+        consumptionMineraiPerHour,
+        consumptionSiliciumPerHour,
+        currentMinerai,
+        currentSilicium,
+        hoursUntilStockout,
+        stockSufficient,
+        stationedShips,
+        stationedFP,
         ipcLevel,
-        consolidateBoost: Number(config.universe.colonization_consolidate_boost) || 0.08,
-        consolidateCostMinerai: scaleCost(baseCostMinerai, ipcLevel, sf),
-        consolidateCostSilicium: scaleCost(baseCostSilicium, ipcLevel, sf),
-        supplyBoostPerTranche: Number(config.universe.colonization_supply_boost_per_tranche) || 0.03,
-        supplyTrancheSize: scaleCost(baseTrancheSize, ipcLevel, sf),
-        supplyMaxBoost: Number(config.universe.colonization_supply_max_boost) || 0.15,
-        reinforceBoostPerShip: Number(config.universe.colonization_reinforce_boost_per_ship) || 0.01,
-        reinforceMaxBoost: Number(config.universe.colonization_reinforce_max_boost) || 0.10,
+        outpostThresholdMinerai,
+        outpostThresholdSilicium,
       };
     },
 
@@ -108,8 +167,58 @@ export function createColonizationService(
       return process;
     },
 
-    /** Advance passive progress for a process */
-    async tick(processId: string) {
+    /** Consume resources from the colonizing planet */
+    async consumeResources(processId: string) {
+      const [process] = await db
+        .select()
+        .from(colonizationProcesses)
+        .where(and(eq(colonizationProcesses.id, processId), eq(colonizationProcesses.status, 'active')))
+        .limit(1);
+
+      if (!process) return { stockSufficient: true };
+
+      // No consumption before outpost is established
+      if (!process.outpostEstablished) return { stockSufficient: true };
+
+      const config = await gameConfigService.getFullConfig();
+      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
+      const ipcLevel = await this.getIpcLevel(process.userId);
+
+      const baseMinerai = Number(config.universe.colonization_consumption_minerai) || 200;
+      const baseSilicium = Number(config.universe.colonization_consumption_silicium) || 100;
+      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, ipcLevel, sf);
+      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, ipcLevel, sf);
+
+      const now = new Date();
+      const elapsedHours = (now.getTime() - new Date(process.lastTickAt).getTime()) / (1000 * 60 * 60);
+      const mineraiToDeduct = consumptionMineraiPerHour * elapsedHours;
+      const siliciumToDeduct = consumptionSiliciumPerHour * elapsedHours;
+
+      // Deduct resources, flooring at 0
+      await db
+        .update(planets)
+        .set({
+          minerai: sql`GREATEST(${planets.minerai} - ${mineraiToDeduct}, 0)`,
+          silicium: sql`GREATEST(${planets.silicium} - ${siliciumToDeduct}, 0)`,
+        })
+        .where(eq(planets.id, process.planetId));
+
+      // Read remaining resources after deduction
+      const [planet] = await db
+        .select({ minerai: planets.minerai, silicium: planets.silicium })
+        .from(planets)
+        .where(eq(planets.id, process.planetId))
+        .limit(1);
+
+      const stockSufficient = planet
+        ? Number(planet.minerai) > 0 && Number(planet.silicium) > 0
+        : false;
+
+      return { stockSufficient };
+    },
+
+    /** Generate a pirate raid if the interval has elapsed */
+    async maybeGenerateRaid(processId: string) {
       const [process] = await db
         .select()
         .from(colonizationProcesses)
@@ -118,10 +227,115 @@ export function createColonizationService(
 
       if (!process) return null;
 
+      // No raids before outpost is established
+      if (!process.outpostEstablished) return null;
+
+      const config = await gameConfigService.getFullConfig();
+      const intervalMin = Number(config.universe.colonization_raid_interval_min) || 3600;
+      const intervalMax = Number(config.universe.colonization_raid_interval_max) || 5400;
+      const travelMin = Number(config.universe.colonization_raid_travel_min) || 1800;
+      const travelMax = Number(config.universe.colonization_raid_travel_max) || 3600;
+      const baseFP = Number(config.universe.colonization_raid_base_fp) || 50;
+      const stationedFPRatio = Number(config.universe.colonization_raid_stationed_fp_ratio) || 0.3;
+      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
+
+      const now = new Date();
+      const elapsed = (now.getTime() - new Date(process.lastRaidAt ?? process.startedAt).getTime()) / 1000;
+
+      // Random interval for next raid
+      const interval = intervalMin + Math.random() * (intervalMax - intervalMin);
+      if (elapsed < interval) return null;
+
+      const ipcLevel = await this.getIpcLevel(process.userId);
+
+      // Compute stationed FP for scaling
+      const [ships] = await db
+        .select()
+        .from(planetShips)
+        .where(eq(planetShips.planetId, process.planetId))
+        .limit(1);
+
+      let stationedFP = 0;
+      if (ships) {
+        const fleet: Record<string, number> = {};
+        for (const [key, value] of Object.entries(ships)) {
+          if (key === 'planetId') continue;
+          const count = Number(value) || 0;
+          if (count > 0) fleet[key] = count;
+        }
+        const shipStats: Record<string, UnitCombatStats> = {};
+        for (const [id, ship] of Object.entries(config.ships)) {
+          shipStats[id] = {
+            weapons: ship.weapons,
+            shotCount: ship.shotCount ?? 1,
+            shield: ship.shield,
+            hull: ship.hull,
+          };
+        }
+        const fpConfig: FPConfig = {
+          shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+          divisor: Number(config.universe.fp_divisor) || 100,
+        };
+        stationedFP = computeFleetFP(fleet, shipStats, fpConfig);
+      }
+
+      // Target FP for the pirate raid
+      const targetFP = Math.round(baseFP * (1 + sf * ipcLevel) * (1 + stationedFPRatio * stationedFP));
+
+      // Random travel time
+      const travelTime = Math.round(travelMin + Math.random() * (travelMax - travelMin));
+
+      // Get planet coordinates
+      const [planet] = await db
+        .select({ galaxy: planets.galaxy, system: planets.system, position: planets.position })
+        .from(planets)
+        .where(eq(planets.id, process.planetId))
+        .limit(1);
+
+      if (!planet) return null;
+
+      // Update lastRaidAt
+      await db
+        .update(colonizationProcesses)
+        .set({ lastRaidAt: now })
+        .where(eq(colonizationProcesses.id, processId));
+
+      return {
+        targetFP,
+        travelTime,
+        planetId: process.planetId,
+        coordinates: {
+          galaxy: planet.galaxy,
+          system: planet.system,
+          position: planet.position,
+        },
+      };
+    },
+
+    /** Advance passive progress for a process */
+    async tick(processId: string, stockSufficient: boolean) {
+      const [process] = await db
+        .select()
+        .from(colonizationProcesses)
+        .where(and(eq(colonizationProcesses.id, processId), eq(colonizationProcesses.status, 'active')))
+        .limit(1);
+
+      if (!process) return null;
+
+      // No progress before outpost is established
+      if (!process.outpostEstablished) {
+        // Still update lastTickAt to keep timing accurate
+        const now = new Date();
+        await db
+          .update(colonizationProcesses)
+          .set({ lastTickAt: now })
+          .where(eq(colonizationProcesses.id, processId));
+        return { ...process, progress: process.progress };
+      }
+
       const config = await gameConfigService.getFullConfig();
       const passiveRate = Number(config.universe.colonization_passive_rate) || 0.10;
-      const reinforceBonus = process.reinforcePassiveBonus ?? 0;
-      const effectiveRate = passiveRate * process.difficultyFactor + reinforceBonus;
+      const effectiveRate = passiveRate * process.difficultyFactor * (stockSufficient ? 1 : 0.5);
 
       const now = new Date();
       const elapsedHours = (now.getTime() - new Date(process.lastTickAt).getTime()) / (1000 * 60 * 60);
@@ -136,183 +350,7 @@ export function createColonizationService(
       return { ...process, progress: newProgress };
     },
 
-    /** Expire overdue events and apply penalties */
-    async expireEvents(processId: string) {
-      const now = new Date();
-      const pendingExpired = await db
-        .select()
-        .from(colonizationEvents)
-        .where(and(
-          eq(colonizationEvents.processId, processId),
-          eq(colonizationEvents.status, 'pending'),
-          lt(colonizationEvents.expiresAt, now),
-        ));
-
-      let totalPenalty = 0;
-      for (const event of pendingExpired) {
-        totalPenalty += event.penalty;
-        await db
-          .update(colonizationEvents)
-          .set({ status: 'expired' })
-          .where(eq(colonizationEvents.id, event.id));
-      }
-
-      if (totalPenalty > 0) {
-        await db
-          .update(colonizationProcesses)
-          .set({ progress: sql`GREATEST(${colonizationProcesses.progress} - ${totalPenalty}, 0)` })
-          .where(eq(colonizationProcesses.id, processId));
-      }
-
-      return totalPenalty;
-    },
-
-    /** Generate a random event if interval has elapsed */
-    async maybeGenerateEvent(processId: string) {
-      const [process] = await db
-        .select()
-        .from(colonizationProcesses)
-        .where(and(eq(colonizationProcesses.id, processId), eq(colonizationProcesses.status, 'active')))
-        .limit(1);
-
-      if (!process) return null;
-
-      const config = await gameConfigService.getFullConfig();
-      const interval = Number(config.universe.colonization_event_interval) || 7200;
-      const now = new Date();
-      const elapsed = (now.getTime() - new Date(process.lastEventAt).getTime()) / 1000;
-
-      if (elapsed < interval) return null;
-
-      const deadlineMin = Number(config.universe.colonization_event_deadline_min) || 14400;
-      const deadlineMax = Number(config.universe.colonization_event_deadline_max) || 21600;
-      const deadline = deadlineMin + Math.random() * (deadlineMax - deadlineMin);
-
-      const eventType = Math.random() < 0.5 ? 'raid' : 'shortage';
-      const penalty = eventType === 'raid'
-        ? Number(config.universe.colonization_event_raid_penalty) || 0.12
-        : Number(config.universe.colonization_event_shortage_penalty) || 0.12;
-      const resolveBonus = Number(config.universe.colonization_event_resolve_bonus) || 0.04;
-
-      const [event] = await db
-        .insert(colonizationEvents)
-        .values({
-          processId,
-          eventType: eventType as 'raid' | 'shortage',
-          penalty,
-          resolveBonus,
-          expiresAt: new Date(now.getTime() + deadline * 1000),
-        })
-        .returning();
-
-      await db
-        .update(colonizationProcesses)
-        .set({ lastEventAt: now })
-        .where(eq(colonizationProcesses.id, processId));
-
-      return event;
-    },
-
-    /** Resolve a pending event */
-    async resolveEvent(eventId: string, userId: string) {
-      const [event] = await db
-        .select()
-        .from(colonizationEvents)
-        .where(and(eq(colonizationEvents.id, eventId), eq(colonizationEvents.status, 'pending')))
-        .limit(1);
-
-      if (!event) throw new TRPCError({ code: 'NOT_FOUND', message: 'Event not found or already resolved' });
-
-      // Verify ownership
-      const [process] = await db
-        .select()
-        .from(colonizationProcesses)
-        .where(and(eq(colonizationProcesses.id, event.processId), eq(colonizationProcesses.userId, userId)))
-        .limit(1);
-
-      if (!process) throw new TRPCError({ code: 'FORBIDDEN' });
-
-      const now = new Date();
-      await db
-        .update(colonizationEvents)
-        .set({ status: 'resolved', resolvedAt: now })
-        .where(eq(colonizationEvents.id, eventId));
-
-      // Apply resolve bonus
-      await db
-        .update(colonizationProcesses)
-        .set({ progress: sql`LEAST(${colonizationProcesses.progress} + ${event.resolveBonus}, 1)` })
-        .where(eq(colonizationProcesses.id, process.id));
-
-      return { resolved: true, bonus: event.resolveBonus };
-    },
-
-    /** Apply a mission boost to progress */
-    async applyBoost(processId: string, boostAmount: number) {
-      await db
-        .update(colonizationProcesses)
-        .set({ progress: sql`LEAST(${colonizationProcesses.progress} + ${boostAmount}, 1)` })
-        .where(eq(colonizationProcesses.id, processId));
-    },
-
-    /** Local action: establish outpost (one-shot, costs resources) */
-    async consolidate(userId: string, planetId: string) {
-      const process = await this.getProcess(planetId);
-      if (!process || process.userId !== userId) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'No active colonization process' });
-      }
-
-      if (process.consolidateCompleted) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: "L'avant-poste a deja ete etabli" });
-      }
-
-      const config = await gameConfigService.getFullConfig();
-      const boost = Number(config.universe.colonization_consolidate_boost) || 0.08;
-      const baseCostMinerai = Number(config.universe.colonization_consolidate_cost_minerai) || 2000;
-      const baseCostSilicium = Number(config.universe.colonization_consolidate_cost_silicium) || 1000;
-      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-      const ipcLevel = await getIpcLevel(userId);
-      const costMinerai = scaleCost(baseCostMinerai, ipcLevel, sf);
-      const costSilicium = scaleCost(baseCostSilicium, ipcLevel, sf);
-
-      // Check and deduct resources from the colonizing planet
-      const [planet] = await db
-        .select({ minerai: planets.minerai, silicium: planets.silicium })
-        .from(planets)
-        .where(eq(planets.id, planetId))
-        .limit(1);
-
-      if (!planet) throw new TRPCError({ code: 'NOT_FOUND' });
-
-      const currentMinerai = Number(planet.minerai);
-      const currentSilicium = Number(planet.silicium);
-
-      if (currentMinerai < costMinerai || currentSilicium < costSilicium) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Ressources insuffisantes (${costMinerai} minerai + ${costSilicium} silicium requis, disponible : ${Math.floor(currentMinerai)} minerai + ${Math.floor(currentSilicium)} silicium)`,
-        });
-      }
-
-      // Deduct resources atomically
-      await db
-        .update(planets)
-        .set({
-          minerai: sql`${planets.minerai} - ${costMinerai}`,
-          silicium: sql`${planets.silicium} - ${costSilicium}`,
-        })
-        .where(eq(planets.id, planetId));
-
-      await this.applyBoost(process.id, boost);
-      await db
-        .update(colonizationProcesses)
-        .set({ consolidateCompleted: true })
-        .where(eq(colonizationProcesses.id, process.id));
-
-      return { boosted: true, amount: boost };
-    },
-
-    /** Player-triggered completion — validates progress >= 0.995 */
+    /** Player-triggered completion -- validates progress >= 0.995 */
     async completeFromPlayer(userId: string, planetId: string) {
       const process = await this.getProcess(planetId);
       if (!process || process.userId !== userId) {
@@ -425,17 +463,8 @@ export function createColonizationService(
       const activePlanets = userPlanets.filter(p => p.status === 'active');
       const colonyCount = Math.max(0, activePlanets.length - 1);
 
-      // Get Imperial Power Center level (on any of the user's planets)
+      const ipcLevel = await this.getIpcLevel(userId);
       const config = await gameConfigService.getFullConfig();
-
-      const allIpc = await db
-        .select()
-        .from(planetBuildings)
-        .where(eq(planetBuildings.buildingId, 'imperialPowerCenter'));
-
-      const userPlanetIds = new Set(userPlanets.map(p => p.id));
-      const ipc = allIpc.find(b => userPlanetIds.has(b.planetId));
-      const ipcLevel = ipc?.level ?? 0;
 
       const capacity = 1 + ipcLevel;
       const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];

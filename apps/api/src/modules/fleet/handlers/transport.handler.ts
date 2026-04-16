@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { planets } from '@exilium/db';
+import { planets, colonizationProcesses } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
 import { totalCargoCapacity } from '@exilium/game-engine';
@@ -72,6 +72,29 @@ export class TransportHandler implements MissionHandler {
         hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
       })
       .where(eq(planets.id, targetPlanet.id));
+
+    // Check if this is a colonizing planet that needs outpost establishment
+    if (targetPlanet.status === 'colonizing' && ctx.colonizationService) {
+      const process = await ctx.colonizationService.getProcess(targetPlanet.id);
+      if (process && !process.outpostEstablished) {
+        const config = await ctx.gameConfigService.getFullConfig();
+        const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
+        const ipcLevel = await ctx.colonizationService.getIpcLevel(fleetEvent.userId);
+        const thresholdMinerai = Math.floor((Number(config.universe.colonization_outpost_threshold_minerai) || 500) * (1 + sf * ipcLevel));
+        const thresholdSilicium = Math.floor((Number(config.universe.colonization_outpost_threshold_silicium) || 250) * (1 + sf * ipcLevel));
+
+        // Check if total resources on planet (after deposit) meet threshold
+        const totalMinerai = Number(targetPlanet.minerai) + mineraiCargo;
+        const totalSilicium = Number(targetPlanet.silicium) + siliciumCargo;
+
+        if (totalMinerai >= thresholdMinerai && totalSilicium >= thresholdSilicium) {
+          await ctx.db
+            .update(colonizationProcesses)
+            .set({ outpostEstablished: true })
+            .where(eq(colonizationProcesses.id, process.id));
+        }
+      }
+    }
 
     const reportId = await createTransportReport(
       `Transport effectué ${coords}`,

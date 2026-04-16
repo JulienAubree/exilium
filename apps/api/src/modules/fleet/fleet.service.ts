@@ -28,8 +28,8 @@ import { MineHandler } from './handlers/mine.handler.js';
 import { TradeHandler } from './handlers/trade.handler.js';
 import { ScanHandler } from './handlers/scan.handler.js';
 import { ExploreHandler } from './handlers/explore.handler.js';
-import { ColonizeSupplyHandler } from './handlers/colonize-supply.handler.js';
 import { ColonizeReinforceHandler } from './handlers/colonize-reinforce.handler.js';
+import { ColonizationRaidHandler } from './handlers/colonization-raid.handler.js';
 import { buildShipStatsMap } from './fleet.types.js';
 import type { FleetCompletionResult } from '../../workers/completion.types.js';
 import { env } from '../../config/env.js';
@@ -65,8 +65,8 @@ export function createFleetService(
     trade: new TradeHandler(),
     scan: new ScanHandler(),
     explore: new ExploreHandler(),
-    colonize_supply: new ColonizeSupplyHandler(),
     colonize_reinforce: new ColonizeReinforceHandler(),
+    colonization_raid: new ColonizationRaidHandler(),
   };
 
   const handlerCtx: MissionHandlerContext = {

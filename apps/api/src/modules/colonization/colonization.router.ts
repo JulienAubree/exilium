@@ -15,18 +15,6 @@ export function createColonizationRouter(colonizationService: ReturnType<typeof 
         return colonizationService.getGovernanceInfo(ctx.userId!);
       }),
 
-    consolidate: protectedProcedure
-      .input(z.object({ planetId: z.string().uuid() }))
-      .mutation(async ({ ctx, input }) => {
-        return colonizationService.consolidate(ctx.userId!, input.planetId);
-      }),
-
-    resolveEvent: protectedProcedure
-      .input(z.object({ eventId: z.string().uuid() }))
-      .mutation(async ({ ctx, input }) => {
-        return colonizationService.resolveEvent(input.eventId, ctx.userId!);
-      }),
-
     /** Player-triggered finalization when progress >= 100% */
     complete: protectedProcedure
       .input(z.object({ planetId: z.string().uuid() }))

@@ -6,7 +6,7 @@ import { trpc } from '@/trpc';
 import { MissionIcon } from './MissionIcon';
 
 // Missions that only appear when the player has an active colonization
-const COLONIZATION_MISSIONS = new Set(['colonize_supply', 'colonize_reinforce']);
+const COLONIZATION_MISSIONS = new Set(['colonize_reinforce']);
 
 interface MissionSelectorProps {
   selected: Mission | null;

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
-import { Shield, Package, Wrench, AlertTriangle, Clock, CheckCircle2, XCircle, Send, Rocket, Target } from 'lucide-react';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { getShipName } from '@/lib/entity-names';
 
 // ── Countdown hook ──
 
@@ -24,42 +25,133 @@ function useCountdown(target: Date): string {
   return display;
 }
 
-// ── Event helpers ──
+// ── Inline SVG Icons ──
 
-function eventLabel(type: 'raid' | 'shortage') {
-  return type === 'raid' ? 'Raid hostile' : 'Penurie critique';
+function IconRocket({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </svg>
+  );
 }
 
-function eventDescription(type: 'raid' | 'shortage') {
-  return type === 'raid'
-    ? 'Des pirates ont repere votre avant-poste vulnerable et lancent une offensive. Sans renforts, la colonie subira de lourds degats.'
-    : 'Les stocks de materiaux sont en chute libre. Sans ravitaillement rapide, les travaux de colonisation seront suspendus.';
+function IconCheckCircle({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
 }
 
-function EventIcon({ type, className }: { type: 'raid' | 'shortage'; className?: string }) {
-  return type === 'raid'
-    ? <Shield className={className} />
-    : <Package className={className} />;
+function IconPackage({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  );
 }
 
-function EventCountdown({ expiresAt }: { expiresAt: Date | string }) {
-  const display = useCountdown(new Date(expiresAt));
-  const hoursLeft = (new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
+function IconShield({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconAlertTriangle({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function IconClock({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function IconSend({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+  );
+}
+
+function IconTruck({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="3" width="15" height="13" />
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
+    </svg>
+  );
+}
+
+function IconAnchor({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="3" />
+      <line x1="12" y1="22" x2="12" y2="8" />
+      <path d="M5 12H2a10 10 0 0 0 20 0h-3" />
+    </svg>
+  );
+}
+
+function IconCrosshair({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="22" y1="12" x2="18" y2="12" />
+      <line x1="6" y1="12" x2="2" y2="12" />
+      <line x1="12" y1="6" x2="12" y2="2" />
+      <line x1="12" y1="22" x2="12" y2="18" />
+    </svg>
+  );
+}
+
+// ── Raid countdown component ──
+
+function RaidCountdown({ arrivalTime }: { arrivalTime: string }) {
+  const display = useCountdown(new Date(arrivalTime));
+  const hoursLeft = (new Date(arrivalTime).getTime() - Date.now()) / (1000 * 60 * 60);
   return (
     <span className={cn(
-      'font-mono text-sm tabular-nums',
-      hoursLeft < 1 ? 'text-red-400' : hoursLeft < 2 ? 'text-orange-400' : 'text-foreground',
+      'font-mono text-sm tabular-nums font-bold',
+      hoursLeft < 0.5 ? 'text-red-400 animate-pulse' : hoursLeft < 1 ? 'text-red-400' : hoursLeft < 2 ? 'text-orange-400' : 'text-amber-400',
     )}>
       {display}
     </span>
   );
 }
 
-function urgencyBorder(expiresAt: Date | string): string {
-  const hoursLeft = (new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
-  if (hoursLeft < 1) return 'border-red-500/60 bg-red-500/5';
-  if (hoursLeft < 2) return 'border-orange-500/60 bg-orange-500/5';
-  return 'border-amber-500/40 bg-amber-500/5';
+// ── Format helpers ──
+
+function formatHoursMinutes(hours: number): string {
+  if (hours >= 24) return `${Math.floor(hours / 24)}j ${Math.floor(hours % 24)}h`;
+  if (hours >= 1) return `${Math.floor(hours)}h ${Math.round((hours % 1) * 60)}min`;
+  return `${Math.round(hours * 60)}min`;
+}
+
+function formatNumber(n: number): string {
+  return n.toLocaleString('fr-FR');
 }
 
 // ── Main component ──
@@ -68,6 +160,7 @@ export default function ColonizationProgress() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const { data: gameConfig } = useGameConfig();
 
   const { data: planets } = trpc.planet.list.useQuery();
   const planet = planets?.find((p) => p.id === planetId);
@@ -77,8 +170,8 @@ export default function ColonizationProgress() {
     { enabled: !!planetId, refetchInterval: 30_000 },
   );
 
-  const consolidateMutation = trpc.colonization.consolidate.useMutation({
-    onSuccess: () => utils.colonization.status.invalidate({ planetId: planetId! }),
+  const { data: inboundFleets } = trpc.fleet.inbound.useQuery(undefined, {
+    refetchInterval: 30_000,
   });
 
   const completeMutation = trpc.colonization.complete.useMutation({
@@ -88,6 +181,18 @@ export default function ColonizationProgress() {
       utils.planet.empire.invalidate();
     },
   });
+
+  // Filter inbound hostile fleets targeting this planet (pirate raids)
+  const planetRaids = useMemo(() => {
+    if (!inboundFleets || !planet) return [];
+    return inboundFleets.filter((f: any) =>
+      f.hostile &&
+      f.targetGalaxy === planet.galaxy &&
+      f.targetSystem === planet.system &&
+      f.targetPosition === planet.position &&
+      (f.mission === 'colonization_raid' || f.mission === 'pirate' || f.mission === 'attack'),
+    );
+  }, [inboundFleets, planet]);
 
   if (isLoading) {
     return (
@@ -109,9 +214,6 @@ export default function ColonizationProgress() {
       ? `~${Math.round(status.estimatedCompletionHours * 60)}min`
       : `~${status.estimatedCompletionHours.toFixed(1)}h`;
 
-  const pendingEvents = status.events.filter((e) => e.status === 'pending');
-  const pastEvents = status.events.filter((e) => e.status !== 'pending');
-
   const coords = planet
     ? { galaxy: planet.galaxy, system: planet.system, position: planet.position }
     : null;
@@ -123,8 +225,6 @@ export default function ColonizationProgress() {
 
   // ── COLONIZATION COMPLETE SCREEN ──
   if (isComplete) {
-    const milestonesCompleted = [status.consolidateCompleted, status.supplyCompleted, status.reinforceCompleted].filter(Boolean).length;
-
     return (
       <div className="flex flex-col items-center justify-center px-4 py-12 lg:py-20 text-center">
         {/* Planet image */}
@@ -136,7 +236,7 @@ export default function ColonizationProgress() {
               className="h-40 w-40 lg:h-52 lg:w-52 rounded-full border-4 border-emerald-500/40 object-cover shadow-2xl shadow-emerald-500/30"
             />
             <div className="absolute -bottom-2 -right-2 rounded-full bg-emerald-500 p-2.5 shadow-lg">
-              <CheckCircle2 className="h-6 w-6 text-white" />
+              <IconCheckCircle className="h-6 w-6 text-white" />
             </div>
           </div>
         )}
@@ -156,23 +256,19 @@ export default function ColonizationProgress() {
         {/* Summary */}
         <div className="flex items-center gap-6 mb-8 text-sm">
           <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-400">{milestonesCompleted}/3</div>
-            <div className="text-xs text-muted-foreground">Missions</div>
+            <div className="text-2xl font-bold text-emerald-400">100%</div>
+            <div className="text-xs text-muted-foreground">Progression</div>
           </div>
           <div className="h-8 w-px bg-border/50" />
           <div className="text-center">
             <div className="text-2xl font-bold text-amber-400">x{status.difficultyFactor.toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">Difficulte</div>
           </div>
-          {(status.reinforcePassiveBonus ?? 0) > 0 && (
-            <>
-              <div className="h-8 w-px bg-border/50" />
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">+{((status.reinforcePassiveBonus ?? 0) * 100).toFixed(0)}%/h</div>
-                <div className="text-xs text-muted-foreground">Patrouilles</div>
-              </div>
-            </>
-          )}
+          <div className="h-8 w-px bg-border/50" />
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">{status.stationedFP}</div>
+            <div className="text-xs text-muted-foreground">FP garnison</div>
+          </div>
         </div>
 
         {/* CTA */}
@@ -187,6 +283,20 @@ export default function ColonizationProgress() {
       </div>
     );
   }
+
+  // ── Outpost not established state ──
+  const outpostNotEstablished = !status.outpostEstablished;
+
+  // ── Stock status helpers ──
+  const stockStatus: 'sufficient' | 'critical' | 'stockout' =
+    !status.stockSufficient
+      ? 'stockout'
+      : status.hoursUntilStockout !== null && status.hoursUntilStockout < 2
+        ? 'critical'
+        : 'sufficient';
+
+  // Ship entries for garrison
+  const garrisonShips = Object.entries(status.stationedShips).filter(([, count]) => count > 0);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -217,7 +327,7 @@ export default function ColonizationProgress() {
                   className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/40 object-cover shadow-lg shadow-amber-500/20"
                 />
                 <div className="absolute -bottom-1 -right-1 rounded-full bg-amber-500 p-1.5 shadow-lg">
-                  <Rocket className="h-3.5 w-3.5 text-background" />
+                  <IconRocket className="h-3.5 w-3.5 text-background" />
                 </div>
               </div>
             ) : (
@@ -230,7 +340,7 @@ export default function ColonizationProgress() {
             <div className="flex-1 min-w-0 pt-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                  Colonisation en cours
+                  {outpostNotEstablished ? 'En attente' : 'Colonisation en cours'}
                 </span>
               </div>
               <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
@@ -254,258 +364,305 @@ export default function ColonizationProgress() {
           <div className="mt-5">
             <div className="relative h-5 w-full rounded-full bg-card/80 border border-border/30 overflow-hidden">
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 transition-[width] duration-1000 ease-linear shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-                style={{ width: `${progressPct}%` }}
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear',
+                  outpostNotEstablished
+                    ? 'bg-gradient-to-r from-amber-600/50 to-amber-500/30'
+                    : 'bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]',
+                )}
+                style={{ width: outpostNotEstablished ? '0%' : `${progressPct}%` }}
               />
               {/* Shimmer effect */}
-              <div
-                className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
-                style={{ width: `${progressPct}%` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite] -translate-x-full" />
-              </div>
+              {!outpostNotEstablished && (
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
+                  style={{ width: `${progressPct}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite] -translate-x-full" />
+                </div>
+              )}
               {/* Percentage inside bar on mobile */}
               <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white sm:hidden drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                {progressPct}%
+                {outpostNotEstablished ? 'En attente' : `${progressPct}%`}
               </span>
             </div>
             <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-              <span>
-                Progression : <span className="text-amber-400 font-medium">{passiveRatePct}%/h</span>
-                {(status.reinforcePassiveBonus ?? 0) > 0 && (
-                  <span className="text-blue-400 ml-1">(dont +{((status.reinforcePassiveBonus ?? 0) * 100).toFixed(0)}% renforts)</span>
-                )}
-              </span>
-              <span>Estimation : <span className="text-foreground font-medium">{etaDisplay}</span></span>
+              {outpostNotEstablished ? (
+                <span className="text-amber-400 font-medium">En attente de l'avant-poste</span>
+              ) : (
+                <span>
+                  Progression : <span className="text-amber-400 font-medium">{passiveRatePct}%/h</span>
+                  {!status.stockSufficient && (
+                    <span className="text-red-400 ml-1">(ralentie — rupture de stock)</span>
+                  )}
+                </span>
+              )}
+              {!outpostNotEstablished && (
+                <span>Estimation : <span className="text-foreground font-medium">{etaDisplay}</span></span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="space-y-4 px-4 lg:px-6">
-        {/* ════ ACTIVE EVENTS ════ */}
-        {pendingEvents.length > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Alertes actives ({pendingEvents.length})
-            </h3>
+        {/* ════ OUTPOST NOT ESTABLISHED ════ */}
+        {outpostNotEstablished ? (
+          <section className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-900/5 p-6 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 border border-amber-500/20">
+                <IconAnchor className="h-8 w-8 text-amber-400" />
+              </div>
+            </div>
 
-            {pendingEvents.map((event) => (
-              <div
-                key={event.id}
-                className={cn(
-                  'rounded-xl border-l-4 p-4 flex flex-col sm:flex-row sm:items-center gap-3',
-                  urgencyBorder(event.expiresAt),
-                )}
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg shrink-0',
-                    event.eventType === 'raid' ? 'bg-red-500/10' : 'bg-orange-500/10',
-                  )}>
-                    <EventIcon
-                      type={event.eventType}
-                      className={cn('w-5 h-5', event.eventType === 'raid' ? 'text-red-400' : 'text-orange-400')}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm">{eventLabel(event.eventType)}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{eventDescription(event.eventType)}</p>
-                    <div className="flex items-center gap-2 text-[10px] mt-1">
-                      <span className="text-red-400">-{Math.round(event.penalty * 100)}% si ignore</span>
-                      <span className="text-white/10">|</span>
-                      <span className="text-emerald-400">+{Math.round(event.resolveBonus * 100)}% si resolu</span>
+            <div>
+              <h2 className="text-lg font-bold text-foreground mb-1">
+                Etablissement de l'avant-poste
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                Envoyez un premier convoi de ressources pour etablir l'avant-poste
+                et demarrer la colonisation.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 text-sm">
+              <span className="rounded-lg bg-card/80 border border-border/30 px-3 py-1.5 text-minerai font-medium">
+                {formatNumber(status.outpostThresholdMinerai)} minerai
+              </span>
+              <span className="text-muted-foreground">+</span>
+              <span className="rounded-lg bg-card/80 border border-border/30 px-3 py-1.5 text-silicium font-medium">
+                {formatNumber(status.outpostThresholdSilicium)} silicium
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Minimum requis pour etablir l'avant-poste</p>
+
+            <Button
+              className="bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-500/20"
+              onClick={() => navigate(fleetSendUrl('transport'))}
+            >
+              <IconSend className="w-4 h-4 mr-2" />
+              Envoyer un convoi
+            </Button>
+          </section>
+        ) : (
+          <>
+            {/* ════ LOGISTIQUE ════ */}
+            <section className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-900/5 overflow-hidden">
+              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                  <IconTruck className="w-4 h-4" />
+                  Logistique
+                </h3>
+                <div className="flex items-center gap-1.5">
+                  {stockStatus === 'sufficient' && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      <span className="text-[11px] text-emerald-400 font-medium">Stock suffisant</span>
+                    </>
+                  )}
+                  {stockStatus === 'critical' && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+                      <span className="text-[11px] text-orange-400 font-medium">Stock critique — moins de 2h</span>
+                    </>
+                  )}
+                  {stockStatus === 'stockout' && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-[11px] text-red-400 font-medium">Rupture de stock — progression ralentie</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-4 space-y-3 pb-3">
+                {/* Minerai */}
+                <div className="rounded-lg bg-card/60 border border-border/20 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-minerai">Minerai</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="font-bold text-foreground tabular-nums">{formatNumber(Math.floor(status.currentMinerai))}</span>
+                      <span className="text-red-400 tabular-nums">-{formatNumber(status.consumptionMineraiPerHour)}/h</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="text-right">
-                    <EventCountdown expiresAt={event.expiresAt} />
-                    <div className="text-[10px] text-muted-foreground">restantes</div>
+                {/* Silicium */}
+                <div className="rounded-lg bg-card/60 border border-border/20 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-silicium">Silicium</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="font-bold text-foreground tabular-nums">{formatNumber(Math.floor(status.currentSilicium))}</span>
+                      <span className="text-red-400 tabular-nums">-{formatNumber(status.consumptionSiliciumPerHour)}/h</span>
+                    </div>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-500/20"
-                    onClick={() => {
-                      const mission = event.eventType === 'raid' ? 'colonize_reinforce' : 'colonize_supply';
-                      navigate(fleetSendUrl(mission));
-                    }}
-                  >
-                    <Target className="w-3.5 h-3.5 mr-1.5" />
-                    Resoudre
-                  </Button>
+                </div>
+
+                {/* Stockout ETA */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <IconClock className="w-3.5 h-3.5" />
+                    <span>Autonomie restante</span>
+                  </div>
+                  <span className={cn(
+                    'font-medium tabular-nums',
+                    status.hoursUntilStockout === null
+                      ? 'text-emerald-400'
+                      : status.hoursUntilStockout < 2
+                        ? 'text-red-400'
+                        : status.hoursUntilStockout < 6
+                          ? 'text-orange-400'
+                          : 'text-emerald-400',
+                  )}>
+                    {status.hoursUntilStockout === null
+                      ? 'Illimite'
+                      : formatHoursMinutes(status.hoursUntilStockout)}
+                  </span>
                 </div>
               </div>
-            ))}
-          </section>
-        )}
 
-        {/* ════ FONDATIONS DE LA COLONIE ════ */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Fondations de la colonie
-            </h3>
-            <span className="text-xs text-muted-foreground">
-              {[status.consolidateCompleted, status.supplyCompleted, status.reinforceCompleted].filter(Boolean).length}/3
-            </span>
-          </div>
-
-          {/* Mini progress: 3 steps */}
-          <div className="flex gap-1.5">
-            <div className={cn('h-1.5 flex-1 rounded-full', status.consolidateCompleted ? 'bg-amber-400' : 'bg-muted')} />
-            <div className={cn('h-1.5 flex-1 rounded-full', status.supplyCompleted ? 'bg-emerald-400' : 'bg-muted')} />
-            <div className={cn('h-1.5 flex-1 rounded-full', status.reinforceCompleted ? 'bg-blue-400' : 'bg-muted')} />
-          </div>
-
-          {/* ── Milestone 1: Avant-poste ── */}
-          {status.consolidateCompleted ? (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 shrink-0">
-                  <CheckCircle2 className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-amber-400">Avant-poste etabli</h4>
-                  <p className="text-[11px] text-muted-foreground">Les infrastructures temporaires sont deployees. Le perimetre est securise.</p>
-                </div>
+              <div className="border-t border-emerald-500/10 px-4 py-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                  onClick={() => navigate(fleetSendUrl('transport'))}
+                >
+                  <IconPackage className="w-4 h-4 mr-2" />
+                  Envoyer des ressources
+                </Button>
               </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => consolidateMutation.mutate({ planetId: planetId! })}
-              disabled={consolidateMutation.isPending}
-              className="w-full rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-900/10 p-4 text-left transition-all hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 shrink-0">
-                  <Wrench className="h-6 w-6 text-amber-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-bold text-foreground">Etablir l'avant-poste</h4>
-                    <span className="text-xs font-bold text-amber-400 shrink-0">+{Math.round((status.consolidateBoost ?? 0.08) * 100)}%</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                    Deployer les infrastructures temporaires et etablir un perimetre de securite. Les fondations de la colonie prennent forme.
-                  </p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px]">
-                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-minerai font-medium">{(status.consolidateCostMinerai ?? 2000).toLocaleString()} minerai</span>
-                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-silicium font-medium">{(status.consolidateCostSilicium ?? 1000).toLocaleString()} silicium</span>
-                  </div>
-                </div>
-              </div>
-            </button>
-          )}
+            </section>
 
-          {/* ── Milestone 2: Ravitaillement ── */}
-          {status.supplyCompleted ? (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20 shrink-0">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-emerald-400">Colonie ravitaillee</h4>
-                  <p className="text-[11px] text-muted-foreground">Les materiaux ont ete livres. La construction des batiments permanents peut commencer.</p>
-                </div>
+            {/* ════ GARNISON ════ */}
+            <section className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-blue-900/5 overflow-hidden">
+              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                  <IconShield className="w-4 h-4" />
+                  Garnison
+                </h3>
+                <span className="text-xs font-bold text-blue-400 tabular-nums">
+                  {formatNumber(status.stationedFP)} FP
+                </span>
               </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate(fleetSendUrl('colonize_supply'))}
-              className="w-full rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 p-4 text-left transition-all hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 shrink-0">
-                  <Package className="h-6 w-6 text-emerald-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-bold text-foreground">Ravitaillement vital</h4>
-                    <span className="text-xs font-bold text-emerald-400 shrink-0">+{Math.round((status.supplyBoostPerTranche ?? 0.03) * 100)}% / {(status.supplyTrancheSize ?? 2000).toLocaleString()} res.</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                    Les reserves de la colonie sont critiques. Un convoi de ravitaillement apportera les materiaux necessaires a la construction des premiers batiments permanents.
-                  </p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px]">
-                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-emerald-400 font-medium">+{Math.round((status.supplyBoostPerTranche ?? 0.03) * 100)}% par tranche de {(status.supplyTrancheSize ?? 2000).toLocaleString()} ressources</span>
-                    <span className="text-muted-foreground">· Max +{Math.round((status.supplyMaxBoost ?? 0.15) * 100)}%</span>
-                  </div>
-                </div>
-              </div>
-            </button>
-          )}
 
-          {/* ── Milestone 3: Securisation ── */}
-          {status.reinforceCompleted ? (
-            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 shrink-0">
-                  <CheckCircle2 className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-blue-400">Patrouilles en cours</h4>
-                  <p className="text-[11px] text-muted-foreground">
-                    Le secteur est securise. Bonus passif actif : <span className="text-blue-400 font-medium">+{((status.reinforcePassiveBonus ?? 0) * 100).toFixed(0)}%/h</span>
-                  </p>
-                </div>
+              <div className="px-4 pb-3">
+                {garrisonShips.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {garrisonShips.map(([shipId, count]) => (
+                      <div
+                        key={shipId}
+                        className="flex items-center justify-between rounded-lg bg-card/60 border border-border/20 px-3 py-2"
+                      >
+                        <span className="text-xs font-medium text-foreground">
+                          {getShipName(shipId, gameConfig)}
+                        </span>
+                        <span className="text-xs font-bold text-blue-400 tabular-nums">
+                          x{count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-card/40 border border-border/20 px-3 py-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Aucun vaisseau stationne — la colonie est vulnerable aux raids
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate(fleetSendUrl('colonize_reinforce'))}
-              className="w-full rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-blue-900/10 p-4 text-left transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 shrink-0">
-                  <Shield className="h-6 w-6 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-bold text-foreground">Securiser le secteur</h4>
-                    <span className="text-xs font-bold text-blue-400 shrink-0">+{Math.round((status.reinforceBoostPerShip ?? 0.01) * 100)}%/h par vaisseau</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                    Des signaux hostiles ont ete detectes dans le secteur. L'envoi d'une escorte militaire securisera la zone durablement, accelerant l'installation en continu.
-                  </p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px]">
-                    <span className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-blue-400 font-medium">+{Math.round((status.reinforceBoostPerShip ?? 0.01) * 100)}%/h passif par vaisseau de combat</span>
-                    <span className="text-muted-foreground">· Max +{Math.round((status.reinforceMaxBoost ?? 0.10) * 100)}%/h</span>
-                  </div>
-                </div>
+
+              <div className="border-t border-blue-500/10 px-4 py-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                  onClick={() => navigate(fleetSendUrl('colonize_reinforce'))}
+                >
+                  <IconShield className="w-4 h-4 mr-2" />
+                  Envoyer des renforts
+                </Button>
               </div>
-            </button>
-          )}
-        </section>
+            </section>
 
-        {/* ════ EVENT HISTORY ════ */}
-        {pastEvents.length > 0 && (
-          <section className="rounded-xl border border-border/30 bg-card/40 p-4 space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Historique ({pastEvents.length})
-            </h3>
+            {/* ════ MENACES ════ */}
+            <section className="rounded-xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-red-900/5 overflow-hidden">
+              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4" />
+                  Menaces
+                </h3>
+                {planetRaids.length > 0 && (
+                  <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-[10px] font-bold text-red-400">
+                    {planetRaids.length} en approche
+                  </span>
+                )}
+              </div>
 
-            <div className="divide-y divide-white/5">
-              {pastEvents.map((event) => (
-                <div key={event.id} className="flex items-center gap-3 py-2">
-                  <EventIcon type={event.eventType} className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-xs flex-1">{eventLabel(event.eventType)}</span>
-                  <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
-                    {event.status === 'resolved'
-                      ? <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /><span className="text-emerald-400">Resolu</span></>
-                      : <><XCircle className="w-3.5 h-3.5 text-red-400" /><span className="text-red-400">Expire</span></>
-                    }
+              <div className="px-4 pb-4">
+                {planetRaids.length > 0 ? (
+                  <div className="space-y-2">
+                    {planetRaids.map((raid: any) => {
+                      const ships = raid.ships as Record<string, number>;
+                      const shipEntries = Object.entries(ships).filter(([, v]) => (v as number) > 0);
+                      const tier = raid.detectionTier ?? 0;
+
+                      return (
+                        <div
+                          key={raid.id}
+                          className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <IconCrosshair className="w-4 h-4 text-red-400" />
+                              <span className="text-xs font-semibold text-red-400">
+                                {tier >= 4 && raid.senderUsername
+                                  ? raid.senderUsername
+                                  : 'Raid pirate'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <IconClock className="w-3.5 h-3.5 text-red-400/60" />
+                              <RaidCountdown arrivalTime={raid.arrivalTime} />
+                            </div>
+                          </div>
+
+                          {/* Fleet composition if visible */}
+                          {tier >= 3 && shipEntries.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {shipEntries.map(([shipId, count]) => (
+                                <span
+                                  key={shipId}
+                                  className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-[10px] text-muted-foreground"
+                                >
+                                  {getShipName(shipId, gameConfig)} x{count as number}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {tier >= 2 && tier < 3 && raid.shipCount != null && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Flotte estimee : {raid.shipCount} vaisseaux
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ) : (
+                  <div className="rounded-lg bg-card/40 border border-border/20 px-3 py-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Aucune menace detectee
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
         )}
       </div>
     </div>

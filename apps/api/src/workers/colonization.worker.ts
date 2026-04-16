@@ -3,11 +3,15 @@ import type Redis from 'ioredis';
 import type { Database } from '@exilium/db';
 import { colonizationProcesses, fleetEvents, planets } from '@exilium/db';
 import { eq } from 'drizzle-orm';
+import { scaleFleetToFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import { publishNotification } from '../modules/notification/notification.publisher.js';
 import { env } from '../config/env.js';
 import type { createColonizationService } from '../modules/colonization/colonization.service.js';
 import type { GameConfigService } from '../modules/admin/game-config.service.js';
 import type { Queue } from 'bullmq';
+
+/** Default pirate template ratios used when no DB templates are available */
+const DEFAULT_PIRATE_TEMPLATE: Record<string, number> = { interceptor: 3, frigate: 1 };
 
 export function startColonizationWorker(
   db: Database,
@@ -36,27 +40,28 @@ export function startColonizationWorker(
 
       for (const process of activeProcesses) {
         try {
-          // 1. Expire overdue events and apply penalties
-          await colonizationService.expireEvents(process.id);
+          // 1. Consume resources (returns whether stock is sufficient)
+          const { stockSufficient } = await colonizationService.consumeResources(process.id);
 
-          // 2. Advance passive progress
-          const updated = await colonizationService.tick(process.id);
+          // 2. Advance passive progress (halved if stock insufficient)
+          const updated = await colonizationService.tick(process.id, stockSufficient);
           if (!updated) continue;
 
-          // 3. Maybe generate a new event
-          const newEvent = await colonizationService.maybeGenerateEvent(process.id);
-          if (newEvent) {
-            publishNotification(redis, process.userId, {
-              type: 'colonization-event',
-              payload: {
-                planetId: process.planetId,
-                eventType: newEvent.eventType,
-                expiresAt: newEvent.expiresAt,
-              },
-            });
+          // 3. Maybe generate a pirate raid
+          const raidInfo = await colonizationService.maybeGenerateRaid(process.id);
+          if (raidInfo) {
+            await createRaidFleetEvent(
+              db,
+              gameConfigService,
+              fleetQueue,
+              redis,
+              process.userId,
+              process.id,
+              raidInfo,
+            );
           }
 
-          // 4. Re-read progress after tick + possible penalty
+          // 4. Re-read progress after tick
           const [fresh] = await db
             .select()
             .from(colonizationProcesses)
@@ -145,4 +150,80 @@ export function startColonizationWorker(
   });
 
   return worker;
+}
+
+/** Create a pirate raid fleet event and schedule its arrival */
+async function createRaidFleetEvent(
+  db: Database,
+  gameConfigService: GameConfigService,
+  fleetQueue: Queue,
+  redis: Redis,
+  userId: string,
+  processId: string,
+  raidInfo: {
+    targetFP: number;
+    travelTime: number;
+    planetId: string;
+    coordinates: { galaxy: number; system: number; position: number };
+  },
+) {
+  const config = await gameConfigService.getFullConfig();
+
+  // Build ship combat stats for fleet scaling
+  const shipStats: Record<string, UnitCombatStats> = {};
+  for (const [id, ship] of Object.entries(config.ships)) {
+    shipStats[id] = {
+      weapons: ship.weapons,
+      shotCount: ship.shotCount ?? 1,
+      shield: ship.shield,
+      hull: ship.hull,
+    };
+  }
+  const fpConfig: FPConfig = {
+    shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+    divisor: Number(config.universe.fp_divisor) || 100,
+  };
+
+  // Scale pirate fleet to target FP using default template
+  const pirateFleet = scaleFleetToFP(DEFAULT_PIRATE_TEMPLATE, raidInfo.targetFP, shipStats, fpConfig);
+
+  const now = new Date();
+  const arrivalTime = new Date(now.getTime() + raidInfo.travelTime * 1000);
+
+  // Create fleet event for the inbound pirate raid
+  const [raidEvent] = await db
+    .insert(fleetEvents)
+    .values({
+      userId,
+      originPlanetId: raidInfo.planetId,
+      targetPlanetId: raidInfo.planetId,
+      targetGalaxy: raidInfo.coordinates.galaxy,
+      targetSystem: raidInfo.coordinates.system,
+      targetPosition: raidInfo.coordinates.position,
+      mission: 'pirate',
+      phase: 'outbound',
+      status: 'active',
+      departureTime: now,
+      arrivalTime,
+      ships: pirateFleet,
+      metadata: { colonizationRaid: true, processId },
+    })
+    .returning();
+
+  // Schedule fleet arrival processing
+  await fleetQueue.add(
+    'arrival',
+    { fleetEventId: raidEvent.id },
+    { delay: raidInfo.travelTime * 1000, jobId: `fleet-arrival-${raidEvent.id}` },
+  );
+
+  // Notify the player about the incoming raid
+  publishNotification(redis, userId, {
+    type: 'colonization-raid',
+    payload: {
+      planetId: raidInfo.planetId,
+      arrivalTime: arrivalTime.toISOString(),
+      ships: pirateFleet,
+    },
+  });
 }

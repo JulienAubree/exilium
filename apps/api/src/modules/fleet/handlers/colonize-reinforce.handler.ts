@@ -1,25 +1,19 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, colonizationEvents, colonizationProcesses } from '@exilium/db';
+import { planets, planetShips } from '@exilium/db';
 import { totalCargoCapacity } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
 
 export class ColonizeReinforceHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
-    const config = await ctx.gameConfigService.getFullConfig();
-
-    // Must include at least one combat ship (weapons > 0)
-    const hasCombatShip = Object.entries(input.ships).some(([shipId, count]) => {
-      if (count <= 0) return false;
-      const def = config.ships[shipId];
-      return def && (def.weapons ?? 0) > 0;
-    });
-
-    if (!hasCombatShip) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Au moins un vaisseau de combat est requis pour securiser le secteur' });
+    // At least one ship required (any type)
+    const hasShip = Object.entries(input.ships).some(([, count]) => count > 0);
+    if (!hasShip) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Au moins un vaisseau est requis pour securiser le secteur' });
     }
 
+    // Target must be a colonizing planet owned by the user
     const [target] = await ctx.db
       .select({ id: planets.id })
       .from(planets)
@@ -35,38 +29,20 @@ export class ColonizeReinforceHandler implements MissionHandler {
     if (!target) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucune colonisation en cours a cette position' });
     }
-
-    // Check reinforce hasn't already been completed
-    if (ctx.colonizationService) {
-      const process = await ctx.colonizationService.getProcess(target.id);
-      if (process?.reinforceCompleted) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le secteur a deja ete securise pour cette colonie' });
-      }
-    }
   }
 
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
+    const mineraiCargo = Number(fleetEvent.mineraiCargo);
+    const siliciumCargo = Number(fleetEvent.siliciumCargo);
+    const hydrogeneCargo = Number(fleetEvent.hydrogeneCargo);
+    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
+    const ships = fleetEvent.ships;
     const config = await ctx.gameConfigService.getFullConfig();
+    const shipStatsMap = buildShipStatsMap(config);
 
-    // Passive bonus: +2%/h per combat ship, capped at 20%/h total
-    const boostPerShip = Number(config.universe.colonization_reinforce_boost_per_ship) || 0.02;
-    const maxBoost = Number(config.universe.colonization_reinforce_max_boost) || 0.20;
-
-    // Count combat ships (weapons > 0)
-    const ships = fleetEvent.ships as Record<string, number>;
-    let combatShipCount = 0;
-    for (const [shipId, count] of Object.entries(ships)) {
-      if (count <= 0) continue;
-      const def = config.ships[shipId];
-      if (def && (def.weapons ?? 0) > 0) {
-        combatShipCount += count;
-      }
-    }
-    const addedBonus = combatShipCount * boostPerShip;
-
-    // Find the colonizing planet
+    // Find the colonizing planet at target coordinates
     const [targetPlanet] = await ctx.db
-      .select({ id: planets.id })
+      .select()
       .from(planets)
       .where(and(
         eq(planets.galaxy, fleetEvent.targetGalaxy),
@@ -76,42 +52,71 @@ export class ColonizeReinforceHandler implements MissionHandler {
       ))
       .limit(1);
 
-    let actualBonusAdded = 0;
-
-    if (targetPlanet && ctx.colonizationService && addedBonus > 0) {
-      const process = await ctx.colonizationService.getProcess(targetPlanet.id);
-      if (process && !process.reinforceCompleted) {
-        const currentBonus = process.reinforcePassiveBonus ?? 0;
-        const newBonus = Math.min(maxBoost, currentBonus + addedBonus);
-        actualBonusAdded = newBonus - currentBonus;
-
-        await ctx.db
-          .update(colonizationProcesses)
-          .set({ reinforcePassiveBonus: newBonus, reinforceCompleted: true })
-          .where(eq(colonizationProcesses.id, process.id));
-
-        // Auto-resolve any pending 'raid' event
-        const [raidEvent] = await ctx.db
-          .select({ id: colonizationEvents.id })
-          .from(colonizationEvents)
-          .where(and(
-            eq(colonizationEvents.processId, process.id),
-            eq(colonizationEvents.status, 'pending'),
-            eq(colonizationEvents.eventType, 'raid'),
-          ))
-          .limit(1);
-
-        if (raidEvent) {
-          await ctx.colonizationService.resolveEvent(raidEvent.id, fleetEvent.userId);
-        }
+    if (!targetPlanet) {
+      // Planet no longer colonizing — return fleet with cargo
+      let reportId: string | undefined;
+      if (ctx.reportService) {
+        const [originPlanet] = await ctx.db.select({
+          galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
+        }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
+        const report = await ctx.reportService.create({
+          userId: fleetEvent.userId,
+          fleetEventId: fleetEvent.id,
+          missionType: 'colonize_reinforce',
+          title: `Renforcement echoue ${coords}`,
+          coordinates: {
+            galaxy: fleetEvent.targetGalaxy,
+            system: fleetEvent.targetSystem,
+            position: fleetEvent.targetPosition,
+          },
+          originCoordinates: originPlanet ? {
+            galaxy: originPlanet.galaxy,
+            system: originPlanet.system,
+            position: originPlanet.position,
+            planetName: originPlanet.name,
+          } : undefined,
+          fleet: { ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+          departureTime: fleetEvent.departureTime,
+          completionTime: fleetEvent.arrivalTime,
+          result: { aborted: true, reason: 'no_colonizing_planet' },
+        });
+        reportId = report.id;
       }
+      return {
+        scheduleReturn: true,
+        cargo: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
+        reportId,
+      };
+    }
+
+    // Deposit resources on the colonizing planet
+    await ctx.db
+      .update(planets)
+      .set({
+        minerai: String(Number(targetPlanet.minerai) + mineraiCargo),
+        silicium: String(Number(targetPlanet.silicium) + siliciumCargo),
+        hydrogene: String(Number(targetPlanet.hydrogene) + hydrogeneCargo),
+      })
+      .where(eq(planets.id, targetPlanet.id));
+
+    // Transfer ships to planetShips — atomic increment, safe under concurrent arrivals
+    const shipUpdates: Record<string, any> = {};
+    for (const [shipId, count] of Object.entries(ships)) {
+      if (count > 0 && shipId !== 'flagship') {
+        const col = planetShips[shipId as keyof typeof planetShips];
+        shipUpdates[shipId] = sql`${col} + ${count}`;
+      }
+    }
+    if (Object.keys(shipUpdates).length > 0) {
+      await ctx.db
+        .update(planetShips)
+        .set(shipUpdates)
+        .where(eq(planetShips.planetId, targetPlanet.id));
     }
 
     // Create mission report
-    const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     let reportId: string | undefined;
     if (ctx.reportService) {
-      const shipStatsMap = buildShipStatsMap(config);
       const [originPlanet] = await ctx.db.select({
         galaxy: planets.galaxy, system: planets.system, position: planets.position, name: planets.name,
       }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1);
@@ -120,7 +125,7 @@ export class ColonizeReinforceHandler implements MissionHandler {
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         missionType: 'colonize_reinforce',
-        title: `Securisation du secteur ${coords}`,
+        title: `Renforcement du secteur ${coords}`,
         coordinates: {
           galaxy: fleetEvent.targetGalaxy,
           system: fleetEvent.targetSystem,
@@ -132,18 +137,20 @@ export class ColonizeReinforceHandler implements MissionHandler {
           position: originPlanet.position,
           planetName: originPlanet.name,
         } : undefined,
-        fleet: { ships: fleetEvent.ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
+        fleet: { ships, totalCargo: totalCargoCapacity(ships, shipStatsMap) },
         departureTime: fleetEvent.departureTime,
         completionTime: fleetEvent.arrivalTime,
         result: {
-          combatShipsSent: combatShipCount,
-          passiveBonusAdded: Math.round(actualBonusAdded * 100),
-          raidResolved: false, // Will be true if a raid was auto-resolved
+          stationed: Object.fromEntries(
+            Object.entries(ships).filter(([, count]) => count > 0),
+          ),
+          deposited: { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo },
         },
       });
       reportId = report.id;
     }
 
-    return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
+    // Ships stay — no return trip
+    return { scheduleReturn: false, reportId };
   }
 }
