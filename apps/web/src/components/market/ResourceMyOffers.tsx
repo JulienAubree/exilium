@@ -14,9 +14,11 @@ import {
 
 interface ResourceMyOffersProps {
   planetId: string;
+  /** Filter by offer statuses. Shows all statuses when omitted. */
+  statuses?: string[];
 }
 
-export function ResourceMyOffers({ planetId: _planetId }: ResourceMyOffersProps) {
+export function ResourceMyOffers({ planetId: _planetId, statuses }: ResourceMyOffersProps) {
   const utils = trpc.useUtils();
   const addToast = useToastStore((s) => s.addToast);
 
@@ -31,7 +33,9 @@ export function ResourceMyOffers({ planetId: _planetId }: ResourceMyOffersProps)
     onError: (err) => addToast(err.message, 'error'),
   });
 
-  const resourceOffers = (myOffers ?? []).filter((o) => o.resourceType != null);
+  const resourceOffers = (myOffers ?? [])
+    .filter((o) => o.resourceType != null)
+    .filter((o) => !statuses || statuses.includes(o.status));
 
   return (
     <div>

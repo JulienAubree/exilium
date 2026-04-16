@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useOutletContext, useSearchParams, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { type MarketView, MARKET_VIEWS } from '@/components/market/MarketSidebar';
 import { ResourceBuy } from '@/components/market/ResourceBuy';
 import { ResourceSell } from '@/components/market/ResourceSell';
 import { ResourceMyOffers } from '@/components/market/ResourceMyOffers';
@@ -10,6 +9,34 @@ import { MarketReportsBuy } from '@/components/market/MarketReportsBuy';
 import { MarketReportsInventory } from '@/components/market/MarketReportsInventory';
 import { cn } from '@/lib/utils';
 import { getAssetUrl } from '@/lib/assets';
+
+// ── Types ────────────────────────────────────────────────────────────
+
+type MarketTab = 'buy' | 'sell' | 'my-offers' | 'history';
+
+const TABS: { key: MarketTab; label: string }[] = [
+  { key: 'buy', label: 'Acheter' },
+  { key: 'sell', label: 'Vendre' },
+  { key: 'my-offers', label: 'Mes offres' },
+  { key: 'history', label: 'Historique' },
+];
+
+/** Map legacy ?view= values to new tabs (backward compat). */
+function resolveInitialTab(param: string | null): MarketTab {
+  if (!param) return 'buy';
+  const map: Record<string, MarketTab> = {
+    'resource-buy': 'buy',
+    'resource-sell': 'sell',
+    'resource-my': 'my-offers',
+    'report-buy': 'buy',
+    'report-my': 'sell',
+    'buy': 'buy',
+    'sell': 'sell',
+    'my-offers': 'my-offers',
+    'history': 'history',
+  };
+  return map[param] ?? 'buy';
+}
 
 // ── KPI Tile ─────────────────────────────────────────────────────────
 
@@ -39,30 +66,14 @@ function KpiTile({ label, value, icon, color, onClick }: {
   );
 }
 
-// ── Tab config ───────────────────────────────────────────────────────
-
-const RESOURCE_TABS: { key: MarketView; label: string }[] = [
-  { key: 'resource-buy', label: 'Acheter' },
-  { key: 'resource-sell', label: 'Vendre' },
-  { key: 'resource-my', label: 'Mes offres' },
-];
-
-const REPORT_TABS: { key: MarketView; label: string }[] = [
-  { key: 'report-buy', label: 'Acheter' },
-  { key: 'report-my', label: 'Mes rapports' },
-];
-
 // ─────────────────────────────────────────────────────────────────────
 
 export default function Market() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
   const [searchParams] = useSearchParams();
-  const initialView = searchParams.get('view');
-  const [view, setView] = useState<MarketView>(
-    initialView && MARKET_VIEWS.includes(initialView as MarketView)
-      ? (initialView as MarketView)
-      : 'resource-buy',
+  const [tab, setTab] = useState<MarketTab>(
+    resolveInitialTab(searchParams.get('tab') ?? searchParams.get('view')),
   );
 
   const commissionPercent = Number(gameConfig?.universe?.market_commission_percent) || 5;
@@ -89,16 +100,13 @@ export default function Market() {
   );
 
   // KPI computations
-  const totalOffers = (offersData?.offers?.length ?? 0);
+  const totalOffers = offersData?.offers?.length ?? 0;
   const myActiveResourceOffers = (myOffers ?? []).filter((o: any) => o.status === 'active').length;
   const myListedReports = (reports ?? []).filter((r: any) => r.status === 'listed').length;
   const mySalesCount = myActiveResourceOffers + myListedReports;
   const soldResourceOffers = (myOffers ?? []).filter((o: any) => o.status === 'sold').length;
   const soldReports = (reports ?? []).filter((r: any) => r.status === 'sold').length;
   const totalTrades = soldResourceOffers + soldReports;
-
-  const isResources = view.startsWith('resource');
-  const subTabs = isResources ? RESOURCE_TABS : REPORT_TABS;
 
   // ── Locked state (building not constructed) ──────────────────────────
 
@@ -142,7 +150,6 @@ export default function Market() {
     <div className="space-y-4">
       {/* Hero banner */}
       <div className="relative overflow-hidden">
-        {/* Background: building image blurred, with gradient overlay */}
         <div className="absolute inset-0">
           <img
             src={getAssetUrl('buildings', 'galacticMarket')}
@@ -156,7 +163,6 @@ export default function Market() {
 
         <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
           <div className="flex items-start gap-5">
-            {/* Building thumbnail */}
             <img
               src={getAssetUrl('buildings', 'galacticMarket', 'thumb')}
               alt="Marche Galactique"
@@ -188,7 +194,7 @@ export default function Market() {
             label="Offres sur le marche"
             value={totalOffers}
             color="text-cyan-400"
-            onClick={() => setView('resource-buy')}
+            onClick={() => setTab('buy')}
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
@@ -200,7 +206,7 @@ export default function Market() {
             label="Mes ventes en cours"
             value={mySalesCount}
             color="text-emerald-400"
-            onClick={() => setView('resource-my')}
+            onClick={() => setTab('my-offers')}
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="1" x2="12" y2="23" />
@@ -212,7 +218,7 @@ export default function Market() {
             label="Echanges realises"
             value={totalTrades}
             color="text-amber-400"
-            onClick={() => setView('resource-my')}
+            onClick={() => setTab('history')}
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
@@ -221,57 +227,77 @@ export default function Market() {
           />
         </div>
 
-        {/* Section toggle + sub-tabs */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-0.5 bg-card/50 rounded-lg p-0.5 border border-border/30">
+        {/* Tabs */}
+        <div className="flex gap-0.5 bg-card/50 rounded-lg p-0.5 border border-border/30 w-fit">
+          {TABS.map(({ key, label }) => (
             <button
-              onClick={() => { if (!isResources) setView('resource-buy'); }}
+              key={key}
+              onClick={() => setTab(key)}
               className={cn(
                 'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                isResources ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground',
+                tab === key
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              Ressources
+              {label}
             </button>
-            <button
-              onClick={() => { if (isResources) setView('report-buy'); }}
-              className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                !isResources ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Rapports
-            </button>
-          </div>
-
-          <div className="h-5 w-px bg-border/40 hidden lg:block" />
-
-          <div className="flex flex-wrap gap-2">
-            {subTabs.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setView(key)}
-                className={cn(
-                  'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
-                  view === key
-                    ? 'border-primary/50 text-primary bg-primary/10 shadow-[0_0_8px_rgba(103,212,232,0.15)]'
-                    : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
 
-        {/* Content */}
-        <div className="glass-card p-4 lg:p-5">
-          {view === 'resource-buy' && planetId && <ResourceBuy planetId={planetId} />}
-          {view === 'resource-sell' && planetId && <ResourceSell planetId={planetId} commissionPercent={commissionPercent} />}
-          {view === 'resource-my' && planetId && <ResourceMyOffers planetId={planetId} />}
-          {view === 'report-buy' && planetId && <MarketReportsBuy planetId={planetId} />}
-          {view === 'report-my' && planetId && <MarketReportsInventory planetId={planetId} />}
-        </div>
+        {/* ── Tab content ──────────────────────────────────── */}
+
+        {tab === 'buy' && planetId && (
+          <div className="space-y-6">
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Ressources</h3>
+              <ResourceBuy planetId={planetId} />
+            </section>
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Rapports d'exploration</h3>
+              <MarketReportsBuy planetId={planetId} />
+            </section>
+          </div>
+        )}
+
+        {tab === 'sell' && planetId && (
+          <div className="space-y-6">
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Vendre des ressources</h3>
+              <ResourceSell planetId={planetId} commissionPercent={commissionPercent} />
+            </section>
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Vendre des rapports</h3>
+              <MarketReportsInventory planetId={planetId} sections={['inventory']} />
+            </section>
+          </div>
+        )}
+
+        {tab === 'my-offers' && planetId && (
+          <div className="space-y-6">
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Offres de ressources</h3>
+              <ResourceMyOffers planetId={planetId} statuses={['active', 'reserved']} />
+            </section>
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Rapports en vente</h3>
+              <MarketReportsInventory planetId={planetId} sections={['listed']} />
+            </section>
+          </div>
+        )}
+
+        {tab === 'history' && planetId && (
+          <div className="space-y-6">
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Ressources</h3>
+              <ResourceMyOffers planetId={planetId} statuses={['sold', 'expired', 'cancelled']} />
+            </section>
+            <section className="glass-card p-4 lg:p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Rapports</h3>
+              <MarketReportsInventory planetId={planetId} sections={['sold']} />
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );

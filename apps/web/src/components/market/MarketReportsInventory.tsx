@@ -87,11 +87,15 @@ function formatPrice(mi: number, si: number, h2: number) {
   return parts.join(' + ') || '0';
 }
 
+type SectionId = 'inventory' | 'listed' | 'sold';
+
 interface MarketReportsInventoryProps {
   planetId: string;
+  /** Show only these sections. Shows all when omitted. */
+  sections?: SectionId[];
 }
 
-export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps) {
+export function MarketReportsInventory({ planetId, sections }: MarketReportsInventoryProps) {
   const utils = trpc.useUtils();
   const addToast = useToastStore((s) => s.addToast);
   const { data: gameConfig } = useGameConfig();
@@ -333,10 +337,12 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
     );
   };
 
+  const show = (id: SectionId) => !sections || sections.includes(id);
+
   return (
     <div className="space-y-6">
       {/* ── Inventory section ──────────────────────────── */}
-      <section>
+      {show('inventory') && <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           En inventaire
         </h3>
@@ -436,10 +442,10 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
             })}
           </div>
         )}
-      </section>
+      </section>}
 
       {/* ── Listed section ─────────────────────────────── */}
-      <section>
+      {show('listed') && <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           En vente
         </h3>
@@ -492,10 +498,10 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
             })}
           </div>
         )}
-      </section>
+      </section>}
 
       {/* ── Sold section ───────────────────────────────── */}
-      <section>
+      {show('sold') && <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Vendus
         </h3>
@@ -522,7 +528,7 @@ export function MarketReportsInventory({ planetId }: MarketReportsInventoryProps
             })}
           </div>
         )}
-      </section>
+      </section>}
     </div>
   );
 }
