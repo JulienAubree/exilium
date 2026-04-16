@@ -3,7 +3,7 @@ import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { ArrowLeft, Ship, Gem, Sparkles, Wrench, RotateCcw, Crown, Shield } from 'lucide-react';
+import { ArrowLeft, Ship, Gem, Sparkles, Wrench, RotateCcw, Crown, Shield, Building2 } from 'lucide-react';
 import { useState } from 'react';
 
 function CoordinateEditor({
@@ -106,6 +106,69 @@ function ResourceEditor({
         className="admin-btn-primary py-1 px-3 text-xs"
       >
         {mutation.isPending ? '...' : 'Sauver'}
+      </button>
+    </div>
+  );
+}
+
+// ── Building level editor ──
+
+function BuildingEditor({
+  planetId,
+  buildingLevels,
+  buildingDefs,
+  onSaved,
+}: {
+  planetId: string;
+  buildingLevels: Record<string, number>;
+  buildingDefs: Record<string, { name: string }>;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState<Record<string, number>>(() => ({ ...buildingLevels }));
+  const mutation = trpc.playerAdmin.updateBuildingLevel.useMutation({ onSuccess: onSaved });
+  const [saving, setSaving] = useState(false);
+
+  const entries = Object.entries(form).sort(([a], [b]) => a.localeCompare(b));
+
+  async function handleSave() {
+    setSaving(true);
+    const changed = Object.entries(form).filter(([key, val]) => val !== (buildingLevels[key] ?? 0));
+    try {
+      await Promise.all(changed.map(([buildingId, level]) =>
+        mutation.mutateAsync({ planetId, buildingId, level }),
+      ));
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (entries.length === 0) return <div className="text-xs text-gray-500 mb-3">Aucun batiment.</div>;
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex items-center gap-2">
+            <label className="text-xs text-gray-400 w-24 text-right shrink-0 truncate" title={buildingDefs[key]?.name ?? key}>
+              {buildingDefs[key]?.name ?? key}
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={value}
+              onChange={(e) => setForm({ ...form, [key]: Number(e.target.value) })}
+              className="admin-input w-16 py-1 text-xs font-mono"
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="admin-btn-primary py-1 px-3 text-xs"
+      >
+        {saving ? '...' : 'Sauver batiments'}
       </button>
     </div>
   );
@@ -483,16 +546,16 @@ export default function PlayerDetail() {
             </div>
 
             {/* Building levels */}
-            <div className="text-xs text-gray-500 mb-1">Batiments</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-3">
-              {Object.entries(planet)
-                .filter(([key]) => key.endsWith('Level'))
-                .map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between bg-panel rounded px-2 py-1">
-                    <span className="text-xs text-gray-400 truncate">{key.replace('Level', '')}</span>
-                    <span className="font-mono text-xs text-gray-200 ml-1">{String(value)}</span>
-                  </div>
-                ))}
+            <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+              <Building2 className="w-3 h-3" /> Batiments
+            </div>
+            <div className="mb-3">
+              <BuildingEditor
+                planetId={planet.id}
+                buildingLevels={planet.buildingLevels ?? {}}
+                buildingDefs={gameConfig?.buildings ?? {}}
+                onSaved={refetch}
+              />
             </div>
 
             {/* Ships */}
