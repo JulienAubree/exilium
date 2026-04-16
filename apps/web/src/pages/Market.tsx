@@ -9,6 +9,7 @@ import { MarketReportsBuy } from '@/components/market/MarketReportsBuy';
 import { MarketReportsInventory } from '@/components/market/MarketReportsInventory';
 import { cn } from '@/lib/utils';
 import { getAssetUrl } from '@/lib/assets';
+import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ export default function Market() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
   const [searchParams] = useSearchParams();
+  const [helpOpen, setHelpOpen] = useState(false);
   const [tab, setTab] = useState<MarketTab>(
     resolveInitialTab(searchParams.get('tab') ?? searchParams.get('view')),
   );
@@ -180,12 +182,26 @@ export default function Market() {
 
         <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
           <div className="flex items-start gap-5">
-            <img
-              src={getAssetUrl('buildings', 'galacticMarket', 'thumb')}
-              alt="Marche Galactique"
-              className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 shrink-0"
-              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-            />
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="relative group shrink-0"
+              title="Comment fonctionne le marche ?"
+            >
+              <img
+                src={getAssetUrl('buildings', 'galacticMarket', 'thumb')}
+                alt="Marche Galactique"
+                className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 transition-opacity group-hover:opacity-80"
+                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <path d="M12 17h.01" />
+                </svg>
+              </div>
+            </button>
 
             <div className="flex-1 min-w-0 pt-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">Marche Galactique</h1>
@@ -312,6 +328,83 @@ export default function Market() {
           </section>
         )}
       </div>
+
+      {/* Help overlay */}
+      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Marche Galactique">
+        {/* Hero image */}
+        <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
+          <img
+            src={getAssetUrl('buildings', 'galacticMarket')}
+            alt=""
+            className="w-full h-40 object-cover"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          <div className="absolute bottom-3 left-5">
+            <p className="text-sm font-semibold text-foreground">Niveau {marketLevel}</p>
+            <p className="text-xs text-muted-foreground">Commission : {commissionPercent}%</p>
+          </div>
+        </div>
+
+        {/* Acheter */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
+              <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Acheter
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Parcourez les offres des autres joueurs en <span className="text-foreground font-medium">ressources</span> (minerai, silicium, hydrogene) et en <span className="text-foreground font-medium">rapports de planetes</span>. Pour acheter, vous devez envoyer une <span className="text-foreground font-medium">flotte marchande</span> chargee du prix demande vers la planete du vendeur.
+          </p>
+        </div>
+
+        {/* Vendre */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            Vendre
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Mettez en vente vos <span className="text-foreground font-medium">ressources excedentaires</span> ou vos <span className="text-foreground font-medium">rapports d&apos;exploration</span> en fixant votre prix. Une commission de <span className="text-foreground font-medium">{commissionPercent}%</span> est prelevee sur chaque vente. Vos offres restent actives jusqu&apos;a ce qu&apos;un acheteur les prenne ou que vous les annuliez.
+          </p>
+        </div>
+
+        {/* Livraison */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            Livraison
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Les echanges se font par <span className="text-foreground font-medium">flotte marchande</span>. L&apos;acheteur envoie ses cargos charges du paiement vers la planete du vendeur. Le temps de trajet depend de la <span className="text-foreground font-medium">distance</span> entre les deux planetes et de la <span className="text-foreground font-medium">vitesse</span> de la flotte.
+          </p>
+        </div>
+
+        {/* Rapports */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            Rapports d&apos;exploration
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Les rapports d&apos;exploration revelent les <span className="text-foreground font-medium">biomes</span> et les <span className="text-foreground font-medium">bonus</span> d&apos;une planete avant colonisation. Plus une planete est rare, plus son rapport a de valeur. Creez des rapports depuis la <span className="text-foreground font-medium">vue galaxie</span> en selectionnant une position exploree.
+          </p>
+        </div>
+      </EntityDetailOverlay>
     </div>
   );
 }
