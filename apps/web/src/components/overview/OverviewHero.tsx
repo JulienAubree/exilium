@@ -11,6 +11,14 @@ import { trpc } from '@/trpc';
 // Reuse BiomeBadge from existing Overview — it will be extracted in the main page rewrite
 // For now, accept biomes as render prop or inline
 
+interface GovernanceData {
+  colonyCount: number;
+  capacity: number;
+  overextend: number;
+  harvestMalus: number;
+  constructionMalus: number;
+}
+
 interface OverviewHeroProps {
   planet: {
     id: string;
@@ -29,11 +37,12 @@ interface OverviewHeroProps {
   flagshipOnPlanet: boolean;
   planetTypeName?: string;
   planetTypeBonus?: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number };
+  governance?: GovernanceData | null;
   renderBiomeBadge: (biome: any) => React.ReactNode;
   renderPlanetDetail: (planet: any) => React.ReactNode;
 }
 
-export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetTypeBonus, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
+export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetTypeBonus, governance, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -64,6 +73,12 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
     for (const e of biome.effects ?? []) {
       const key = biomeStat2Resource[e.stat];
       if (key) cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) + e.modifier;
+    }
+  }
+  // Apply governance harvest malus to resource bonuses
+  if (governance && governance.harvestMalus > 0) {
+    for (const key of ['minerai', 'silicium', 'hydrogene']) {
+      cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) - governance.harvestMalus;
     }
   }
   const hasBonuses = Object.keys(cumulatedBonuses).length > 0;
@@ -172,6 +187,12 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
                       </span>
                     );
                   })()}
+                  {governance && governance.harvestMalus > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 bg-amber-400/10 rounded px-1.5 py-0.5">
+                      <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+                      -{Math.round(governance.harvestMalus * 100)}%
+                    </span>
+                  )}
                 </div>
               )}
             </div>

@@ -39,11 +39,11 @@ const RARITY_LABELS: Record<string, string> = {
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',
-  production_hydrogene: 'Production hydrogene',
-  energy_production: 'Production energie',
+  production_hydrogene: 'Production hydrogène',
+  energy_production: 'Production énergie',
   storage_minerai: 'Stockage minerai',
   storage_silicium: 'Stockage silicium',
-  storage_hydrogene: 'Stockage hydrogene',
+  storage_hydrogene: 'Stockage hydrogène',
 };
 
 function BiomeBadge({ biome, size = 'sm' }: { biome: any; size?: 'sm' | 'xs' }) {
@@ -122,7 +122,7 @@ function BiomeBadge({ biome, size = 'sm' }: { biome: any; size?: 'sm' | 'xs' }) 
   );
 }
 
-function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any; resourceData: any; gameConfig: any }) {
+function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: { planet: any; resourceData: any; gameConfig: any; governance?: { colonyCount: number; capacity: number; overextend: number; harvestMalus: number; constructionMalus: number } | null }) {
   const biomes = (planet.biomes ?? []) as Array<{ id: string; name: string; rarity: string; effects?: Array<{ stat: string; modifier: number }> }>;
 
   // Aggregate all biome bonuses
@@ -145,13 +145,18 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
     if (typeBonus.hydrogeneBonus !== 1) typeBonusEntries.push({ stat: 'production_hydrogene', pct: Math.round((typeBonus.hydrogeneBonus - 1) * 100) });
   }
 
-  // Total cumulated bonuses (type deltas + biome deltas)
+  // Total cumulated bonuses (type deltas + biome deltas + governance malus)
   const totalBonuses: Record<string, number> = {};
   for (const entry of typeBonusEntries) {
     totalBonuses[entry.stat] = entry.pct / 100;
   }
   for (const [stat, mod] of Object.entries(biomeBonuses)) {
     totalBonuses[stat] = (totalBonuses[stat] ?? 0) + mod;
+  }
+  if (governance && governance.harvestMalus > 0) {
+    for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene']) {
+      totalBonuses[stat] = (totalBonuses[stat] ?? 0) - governance.harvestMalus;
+    }
   }
 
   return (
@@ -189,7 +194,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
 
       {/* Type de planete + ses bonus */}
       <div className="mt-4">
-        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Type de planete</div>
+        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Type de planète</div>
         <div className="rounded-md border border-border/30 bg-card/50 px-3 py-2.5">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-foreground">{planetTypeName}</span>
@@ -207,6 +212,24 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
           )}
         </div>
       </div>
+
+      {/* Gouvernance (surextension) */}
+      {governance && governance.overextend > 0 && (
+        <div className="mt-4">
+          <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Gouvernance</div>
+          <div className="rounded-md border border-amber-500/30 bg-amber-950/20 px-3 py-2.5 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs">
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+              <span className="text-amber-400 font-semibold">Surextension impériale</span>
+              <span className="text-amber-400/60 text-[10px] ml-auto">{governance.colonyCount}/{governance.capacity} colonies (+{governance.overextend})</span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 ml-5">
+              <span className="text-xs text-red-400">Malus récolte : -{Math.round(governance.harvestMalus * 100)}%</span>
+              <span className="text-xs text-red-400">Malus construction : +{Math.round(governance.constructionMalus * 100)}%</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Biomes + leurs bonus */}
       <div className="mt-4">
@@ -242,7 +265,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig }: { planet: any
             })}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">Aucun biome decouvert</p>
+          <p className="text-xs text-muted-foreground italic">Aucun biome découvert</p>
         )}
       </div>
     </>
@@ -322,20 +345,22 @@ export default function Overview() {
     { enabled: !!planetId },
   );
 
+  const { data: governance } = trpc.colonization.governance.useQuery();
+
   // ── Guards — all hooks above, conditional returns only below ──
 
   if (isLoading || !planets) return <OverviewSkeleton />;
   if (colonizationStatus) return <ColonizationProgress />;
   if (isError) return (
     <div className="p-4 space-y-4">
-      <QueryError error={{ message: 'Impossible de charger vos planetes.' }} retry={() => void refetch()} />
+      <QueryError error={{ message: 'Impossible de charger vos planètes.' }} retry={() => void refetch()} />
     </div>
   );
 
   const planet = planets?.find((p) => p.id === planetId) ?? planets?.[0];
   if (!planet) return (
     <div className="p-4">
-      <EmptyState title="Aucune planete trouvee" description="Aucune planete n'est associee a votre compte." />
+      <EmptyState title="Aucune planète trouvée" description="Aucune planète n'est associée à votre compte." />
     </div>
   );
 
@@ -362,6 +387,10 @@ export default function Overview() {
 
   const allMovementsForGrid = [...outboundMovements, ...ownInbound, ...peacefulInbound] as any[];
 
+  // Governance malus for the current planet (homeworld is exempt)
+  const isHomeworld = planet.planetClassId === 'homeworld';
+  const effectiveGovernance = governance && governance.overextend > 0 && !isHomeworld ? governance : null;
+
   return (
     <div className="space-y-3">
       {/* 1. Hero */}
@@ -370,8 +399,9 @@ export default function Overview() {
         flagshipOnPlanet={flagship?.planetId === planet.id}
         planetTypeName={resourceData?.planetTypeName}
         planetTypeBonus={resourceData?.planetTypeBonus}
+        governance={effectiveGovernance}
         renderBiomeBadge={(biome) => <BiomeBadge biome={biome} size="xs" />}
-        renderPlanetDetail={(p) => <PlanetDetailContent planet={p} resourceData={resourceData} gameConfig={gameConfig} />}
+        renderPlanetDetail={(p) => <PlanetDetailContent planet={p} resourceData={resourceData} gameConfig={gameConfig} governance={effectiveGovernance} />}
       />
 
       {/* Content with padding */}
