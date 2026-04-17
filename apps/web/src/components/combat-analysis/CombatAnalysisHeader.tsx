@@ -11,6 +11,7 @@ interface CombatAnalysisHeaderProps {
   defenderFP?: number;
   attackerUsername?: string;
   defenderUsername?: string;
+  onDownloadJson?: () => void;
 }
 
 export function CombatAnalysisHeader({
@@ -22,6 +23,7 @@ export function CombatAnalysisHeader({
   defenderFP,
   attackerUsername,
   defenderUsername,
+  onDownloadJson,
 }: CombatAnalysisHeaderProps) {
   const isPlayerVictory =
     outcome === 'draw'
@@ -75,9 +77,35 @@ export function CombatAnalysisHeader({
             </div>
           )}
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold ${outcomeColor} bg-white/5`}>
-          {outcomeLabel}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs font-bold ${outcomeColor} bg-white/5`}>
+            {outcomeLabel}
+          </span>
+          {onDownloadJson && (
+            <button
+              type="button"
+              onClick={onDownloadJson}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground bg-white/5 hover:bg-white/10 hover:text-foreground transition-colors"
+              title="Telecharger le rapport JSON"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              JSON
+            </button>
+          )}
+        </div>
       </div>
 
       {/* FP comparison */}

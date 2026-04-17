@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -85,6 +85,22 @@ export default function CombatAnalysis() {
     setExpandedUnitId(null);
   };
 
+  const handleDownloadJson = useCallback(() => {
+    const data = {
+      reportId,
+      coordinates: coords,
+      result,
+      detailedLog: detailedLog ?? undefined,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `combat-report-${reportId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [reportId, coords, result, detailedLog]);
+
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6 max-w-7xl mx-auto">
       <CombatAnalysisHeader
@@ -96,6 +112,7 @@ export default function CombatAnalysis() {
         defenderFP={result.defenderFP as number | undefined}
         attackerUsername={result.attackerUsername as string | undefined}
         defenderUsername={result.defenderUsername as string | undefined}
+        onDownloadJson={handleDownloadJson}
       />
 
       <CombatTimeline
