@@ -51,6 +51,19 @@ export function createReportService(db: Database) {
             sql`${missionReports.missionType}::text NOT IN ('attack', 'pirate')`,
           ),
         );
+
+      // Strip detailed_log from combat reports older than 30 days (heavy data, keep result summary)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      await db
+        .update(missionReports)
+        .set({ detailedLog: null })
+        .where(
+          and(
+            eq(missionReports.userId, userId),
+            lt(missionReports.createdAt, thirtyDaysAgo),
+            sql`${missionReports.detailedLog} IS NOT NULL`,
+          ),
+        );
     },
 
     async list(userId: string, options?: { cursor?: string; limit?: number; missionTypes?: string[] }) {
@@ -80,7 +93,23 @@ export function createReportService(db: Database) {
       }
 
       const reports = await db
-        .select()
+        .select({
+          id: missionReports.id,
+          userId: missionReports.userId,
+          fleetEventId: missionReports.fleetEventId,
+          pveMissionId: missionReports.pveMissionId,
+          messageId: missionReports.messageId,
+          missionType: missionReports.missionType,
+          title: missionReports.title,
+          coordinates: missionReports.coordinates,
+          originCoordinates: missionReports.originCoordinates,
+          fleet: missionReports.fleet,
+          departureTime: missionReports.departureTime,
+          completionTime: missionReports.completionTime,
+          result: missionReports.result,
+          read: missionReports.read,
+          createdAt: missionReports.createdAt,
+        })
         .from(missionReports)
         .where(and(...conditions))
         .orderBy(desc(missionReports.createdAt))
@@ -95,7 +124,23 @@ export function createReportService(db: Database) {
 
     async getById(userId: string, reportId: string) {
       const [report] = await db
-        .select()
+        .select({
+          id: missionReports.id,
+          userId: missionReports.userId,
+          fleetEventId: missionReports.fleetEventId,
+          pveMissionId: missionReports.pveMissionId,
+          messageId: missionReports.messageId,
+          missionType: missionReports.missionType,
+          title: missionReports.title,
+          coordinates: missionReports.coordinates,
+          originCoordinates: missionReports.originCoordinates,
+          fleet: missionReports.fleet,
+          departureTime: missionReports.departureTime,
+          completionTime: missionReports.completionTime,
+          result: missionReports.result,
+          read: missionReports.read,
+          createdAt: missionReports.createdAt,
+        })
         .from(missionReports)
         .where(and(eq(missionReports.id, reportId), eq(missionReports.userId, userId)))
         .limit(1);
@@ -121,7 +166,23 @@ export function createReportService(db: Database) {
 
     async getByMessageId(userId: string, messageId: string) {
       const [report] = await db
-        .select()
+        .select({
+          id: missionReports.id,
+          userId: missionReports.userId,
+          fleetEventId: missionReports.fleetEventId,
+          pveMissionId: missionReports.pveMissionId,
+          messageId: missionReports.messageId,
+          missionType: missionReports.missionType,
+          title: missionReports.title,
+          coordinates: missionReports.coordinates,
+          originCoordinates: missionReports.originCoordinates,
+          fleet: missionReports.fleet,
+          departureTime: missionReports.departureTime,
+          completionTime: missionReports.completionTime,
+          result: missionReports.result,
+          read: missionReports.read,
+          createdAt: missionReports.createdAt,
+        })
         .from(missionReports)
         .where(and(eq(missionReports.messageId, messageId), eq(missionReports.userId, userId)))
         .limit(1);
