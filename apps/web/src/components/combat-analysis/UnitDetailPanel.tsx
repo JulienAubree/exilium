@@ -97,37 +97,94 @@ export function UnitDetailPanel({
 
   const roundLabel = selectedRound === 0 ? 'Deploiement' : `Round ${selectedRound}`;
 
+  // Unit flow: engaged → start of round → losses → end of round
+  const startOfRound = selectedRound > 0 ? survivingCount + losses : initialCount;
+  const previousLosses = initialCount - startOfRound; // cumulated losses before this round
+
   return (
     <div className="glass-card p-4 space-y-4 min-h-[300px]">
       {/* Header */}
       <div>
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-base font-bold text-foreground">{unitName}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {survivingCount} survivants / {initialCount} engages — {roundLabel}
-            </p>
-          </div>
-          {selectedRound > 0 && (
-            <div className="flex gap-3 text-center">
-              <div>
-                <div className="text-lg font-bold text-emerald-400">{fmt(damageDealt)}</div>
-                <div className="text-[10px] text-muted-foreground">Infliges</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-red-400">{fmt(damageReceived)}</div>
-                <div className="text-[10px] text-muted-foreground">Subis</div>
-              </div>
-              {losses > 0 && (
-                <div>
-                  <div className="text-lg font-bold text-red-400">{losses}</div>
-                  <div className="text-[10px] text-muted-foreground">Pertes</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <h2 className="text-base font-bold text-foreground">{unitName}</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">{roundLabel}</p>
       </div>
+
+      {/* Unit flow visual */}
+      {selectedRound === 0 ? (
+        <div className="flex items-center justify-center gap-2 py-2">
+          <div className="flex items-center gap-1.5 rounded-md bg-white/5 border border-border/20 px-3 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground/60">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span className="text-lg font-bold text-foreground">{initialCount}</span>
+            <span className="text-[10px] text-muted-foreground">deployes</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 overflow-x-auto py-1">
+          {/* Engaged */}
+          <div className="text-center shrink-0">
+            <div className="rounded-md bg-white/5 border border-border/20 px-2.5 py-1.5">
+              <div className="text-sm font-bold text-foreground">{initialCount}</div>
+            </div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">Engages</div>
+          </div>
+
+          {/* Arrow with previous losses */}
+          {previousLosses > 0 ? (
+            <div className="flex flex-col items-center shrink-0">
+              <div className="text-[9px] text-red-400/70">-{previousLosses}</div>
+              <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="text-muted-foreground/30">
+                <path d="M0 5h13M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          ) : (
+            <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="text-muted-foreground/30 shrink-0">
+              <path d="M0 5h13M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+
+          {/* Start of round */}
+          <div className="text-center shrink-0">
+            <div className="rounded-md bg-blue-500/10 border border-blue-500/20 px-2.5 py-1.5">
+              <div className="text-sm font-bold text-blue-400">{startOfRound}</div>
+            </div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">Debut R{selectedRound}</div>
+          </div>
+
+          {/* Arrow */}
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="text-muted-foreground/30 shrink-0">
+            <path d="M0 5h13M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+
+          {/* Losses this round */}
+          <div className="text-center shrink-0">
+            <div className={`rounded-md px-2.5 py-1.5 ${losses > 0 ? 'bg-red-500/10 border border-red-500/20' : 'bg-white/5 border border-border/20'}`}>
+              <div className={`text-sm font-bold ${losses > 0 ? 'text-red-400' : 'text-muted-foreground/40'}`}>
+                {losses > 0 ? `-${losses}` : '0'}
+              </div>
+            </div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">Pertes</div>
+          </div>
+
+          {/* Arrow */}
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="text-muted-foreground/30 shrink-0">
+            <path d="M0 5h13M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+
+          {/* Surviving */}
+          <div className="text-center shrink-0">
+            <div className={`rounded-md px-2.5 py-1.5 ${survivingCount > 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+              <div className={`text-sm font-bold ${survivingCount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {survivingCount}
+              </div>
+            </div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">
+              {survivingCount > 0 ? 'Survivants' : 'Aneantis'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HP bars */}
       {hp && (
