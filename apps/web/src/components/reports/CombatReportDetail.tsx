@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
 import { getUnitName, getDefenseName } from '@/lib/entity-names';
 import { RoundDisplay } from '@/components/combat-guide/RoundDisplay';
+import { trpc } from '@/trpc';
 import type { CombatResult } from '@exilium/game-engine';
 
 const RESOURCE_COLORS: Record<string, string> = {
@@ -24,6 +25,13 @@ interface CombatReportDetailProps {
 
 export function CombatReportDetail({ result, missionType, gameConfig, coordinates, reportId }: CombatReportDetailProps) {
   const [replayOpen, setReplayOpen] = useState(false);
+
+  // Fetch detailed combat log (per-shot events) — only for PvP attacks with a reportId
+  const { data: detailedLogData } = trpc.report.detailedLog.useQuery(
+    { reportId: reportId! },
+    { enabled: !!reportId && missionType === 'attack' },
+  );
+  const detailedLog = detailedLogData as { events: any[]; snapshots: any[][]; initialUnits: any[] } | null | undefined;
 
   const outcome = result.outcome as string;
   const perspective = result.perspective as 'attacker' | 'defender' | undefined;
@@ -441,6 +449,7 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
                 initialDefender={{ ...(result.defenderFleet ?? {}), ...(result.defenderDefenses ?? {}) }}
                 autoPlayDelay={0}
                 perspective={perspective}
+                detailedLog={detailedLog}
               />
             </div>
           )}

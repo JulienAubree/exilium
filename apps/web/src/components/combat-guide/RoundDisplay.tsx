@@ -1,8 +1,15 @@
 // apps/web/src/components/combat-guide/RoundDisplay.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { CombatResult } from '@exilium/game-engine';
 import { getUnitName } from '@/lib/entity-names';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { RoundShotDetail } from './RoundShotDetail';
+
+interface DetailedCombatLog {
+  events: { round: number; shooterId: string; shooterType: string; targetId: string; targetType: string; damage: number; shieldAbsorbed: number; armorBlocked: number; hullDamage: number; targetDestroyed: boolean }[];
+  snapshots: { unitId: string; unitType: string; side: 'attacker' | 'defender'; shield: number; hull: number; destroyed: boolean }[][];
+  initialUnits: { unitId: string; unitType: string; side: 'attacker' | 'defender'; shield: number; hull: number; destroyed: boolean }[];
+}
 
 interface RoundDisplayProps {
   result: CombatResult;
@@ -15,6 +22,8 @@ interface RoundDisplayProps {
   onComplete?: () => void;
   /** Player perspective — swaps left/right sides when 'defender' */
   perspective?: 'attacker' | 'defender';
+  /** Detailed combat log with per-shot events (optional, from detailedLog endpoint) */
+  detailedLog?: DetailedCombatLog | null;
 }
 
 export function RoundDisplay({
@@ -24,10 +33,22 @@ export function RoundDisplay({
   autoPlayDelay = 1500,
   onComplete,
   perspective,
+  detailedLog,
 }: RoundDisplayProps) {
   const { data: gameConfig } = useGameConfig();
   const [displayedRound, setDisplayedRound] = useState(0); // 0 = initial state
+  const [shotDetailOpen, setShotDetailOpen] = useState(false);
   const totalRounds = result.rounds.length;
+
+  // Build a map of unitId -> side from the detailed log's initial units
+  const unitSideMap = useMemo(() => {
+    const map = new Map<string, 'attacker' | 'defender'>();
+    if (!detailedLog?.initialUnits) return map;
+    for (const u of detailedLog.initialUnits) {
+      map.set(u.unitId, u.side);
+    }
+    return map;
+  }, [detailedLog?.initialUnits]);
 
   // Reset when result changes (defensive — consumers should also use key prop)
   useEffect(() => {
@@ -165,6 +186,43 @@ export function RoundDisplay({
           </div>
         );
       })()}
+
+      {/* Detailed shot breakdown (who shot who) */}
+      {displayedRound > 0 && detailedLog && detailedLog.events.length > 0 && (
+        <div className="rounded-lg border border-border/20 overflow-hidden">
+          <button
+            type="button"
+            className="w-full px-3 py-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-colors"
+            onClick={() => setShotDetailOpen(!shotDetailOpen)}
+          >
+            <span>Detail des salves</span>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform ${shotDetailOpen ? 'rotate-180' : ''}`}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {shotDetailOpen && (
+            <div className="px-3 pb-3 pt-1 border-t border-border/20">
+              <RoundShotDetail
+                events={detailedLog.events}
+                round={displayedRound}
+                unitSideMap={unitSideMap}
+                gameConfig={gameConfig}
+                perspective={perspective}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Manual controls if no auto-play */}
       {autoPlayDelay === 0 && (
