@@ -135,8 +135,6 @@ describe('announcement.service', () => {
         message: 'Hello',
         variant: 'info',
         changelogId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
       state.selectResults.push([row]);
 
@@ -228,6 +226,56 @@ describe('announcement.service', () => {
 
       // No write should have happened.
       expect(state.updateCalls).toHaveLength(0);
+    });
+
+    it('clears changelog link when changelogId is explicitly null', async () => {
+      // existence check
+      state.selectResults.push([{ id: 'target' }]);
+      // returning for UPDATE
+      state.returningResults.push([{ id: 'target', changelogId: null }]);
+
+      await service.adminUpdate('target', { changelogId: null });
+
+      // Only the existence check select should have run (no changelog check for null).
+      expect(state.updateCalls).toHaveLength(1);
+      expect(state.updateCalls[0].set).toHaveProperty('changelogId', null);
+      expect(state.updateCalls[0].set.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('sets changelog link when changelogId is a valid uuid (runs existence check)', async () => {
+      const validUuid = '22222222-2222-2222-2222-222222222222';
+      // existence check on announcements
+      state.selectResults.push([{ id: 'target' }]);
+      // changelog existence check
+      state.selectResults.push([{ id: validUuid }]);
+      // returning for UPDATE
+      state.returningResults.push([{ id: 'target', changelogId: validUuid }]);
+
+      await service.adminUpdate('target', { changelogId: validUuid });
+
+      // Both selects consumed → queue empty.
+      expect(state.selectResults).toHaveLength(0);
+      expect(state.updateCalls).toHaveLength(1);
+      expect(state.updateCalls[0].set).toHaveProperty('changelogId', validUuid);
+      expect(state.updateCalls[0].set.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('omits changelogId from UPDATE payload when not provided', async () => {
+      // existence check only; no changelog check should fire.
+      state.selectResults.push([{ id: 'target' }]);
+      // A sentinel second entry to prove no further select was consumed.
+      state.selectResults.push([{ sentinel: true }]);
+      // returning for UPDATE
+      state.returningResults.push([{ id: 'target', message: 'new text' }]);
+
+      await service.adminUpdate('target', { message: 'new text' });
+
+      // Sentinel remains → only one select ran (the existence check).
+      expect(state.selectResults).toHaveLength(1);
+      expect(state.updateCalls).toHaveLength(1);
+      expect(state.updateCalls[0].set).toMatchObject({ message: 'new text' });
+      expect(state.updateCalls[0].set).not.toHaveProperty('changelogId');
+      expect(state.updateCalls[0].set.updatedAt).toBeInstanceOf(Date);
     });
   });
 

@@ -14,8 +14,6 @@ export function createAnnouncementService(db: Database) {
           message: announcements.message,
           variant: announcements.variant,
           changelogId: announcements.changelogId,
-          createdAt: announcements.createdAt,
-          updatedAt: announcements.updatedAt,
         })
         .from(announcements)
         .where(eq(announcements.active, true))
