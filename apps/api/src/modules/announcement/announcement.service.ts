@@ -17,6 +17,7 @@ export function createAnnouncementService(db: Database) {
         })
         .from(announcements)
         .where(eq(announcements.active, true))
+        .orderBy(desc(announcements.updatedAt))
         .limit(1);
 
       return row ?? null;
