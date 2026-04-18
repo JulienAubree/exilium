@@ -1,6 +1,7 @@
 import { eq, and, desc, lt, inArray, sql } from 'drizzle-orm';
 import { missionReports } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { compressDetailedLog, decompressDetailedLog } from './compact-log.js';
 
 export function createReportService(db: Database) {
   return {
@@ -34,7 +35,7 @@ export function createReportService(db: Database) {
           departureTime: data.departureTime,
           completionTime: data.completionTime,
           result: data.result,
-          detailedLog: data.detailedLog ?? null,
+          detailedLog: data.detailedLog ? compressDetailedLog(data.detailedLog) : null,
         })
         .returning();
       return report;
@@ -161,7 +162,7 @@ export function createReportService(db: Database) {
         .from(missionReports)
         .where(and(eq(missionReports.id, reportId), eq(missionReports.userId, userId)))
         .limit(1);
-      return report?.detailedLog ?? null;
+      return decompressDetailedLog(report?.detailedLog);
     },
 
     async getByMessageId(userId: string, messageId: string) {
