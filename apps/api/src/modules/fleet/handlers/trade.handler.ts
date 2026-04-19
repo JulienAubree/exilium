@@ -237,7 +237,9 @@ export class TradeHandler implements MissionHandler {
       if (report) {
         const reportBiomes = report.biomes as Array<{ id: string; name: string; rarity: string; effects: unknown }>;
 
-        // Write discovery data for the buyer
+        // Write discovery data for the buyer. selfExplored stays false — buying a report
+        // grants discovery but does not count as self-exploration (required to resell).
+        // onConflictDoNothing ensures we never downgrade an existing true flag.
         await ctx.db
           .insert(discoveredPositions)
           .values({
@@ -245,6 +247,7 @@ export class TradeHandler implements MissionHandler {
             galaxy: report.galaxy,
             system: report.system,
             position: report.position,
+            selfExplored: false,
           })
           .onConflictDoNothing();
 

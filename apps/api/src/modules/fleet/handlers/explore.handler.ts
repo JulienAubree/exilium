@@ -75,13 +75,18 @@ export class ExploreHandler implements PhasedMissionHandler {
     const explorerCount = metadata?.explorerCount ?? 1;
     const researchLevel = metadata?.researchLevel ?? 0;
 
-    // Mark this position as discovered for the player (regardless of biome roll outcome)
+    // Mark this position as discovered for the player (regardless of biome roll outcome).
+    // Upgrade to self-explored even if the position was previously acquired via a purchased report.
     await ctx.db.insert(discoveredPositions).values({
       userId: fleetEvent.userId,
       galaxy: fleetEvent.targetGalaxy,
       system: fleetEvent.targetSystem,
       position: fleetEvent.targetPosition,
-    }).onConflictDoNothing();
+      selfExplored: true,
+    }).onConflictDoUpdate({
+      target: [discoveredPositions.userId, discoveredPositions.galaxy, discoveredPositions.system, discoveredPositions.position],
+      set: { selfExplored: true },
+    });
 
     const biomeCatalogue: BiomeDefinition[] = (config.biomes ?? []).map((b: any) => ({
       id: b.id,

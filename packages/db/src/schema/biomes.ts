@@ -36,6 +36,7 @@ export const discoveredPositions = pgTable('discovered_positions', {
   galaxy: smallint('galaxy').notNull(),
   system: smallint('system').notNull(),
   position: smallint('position').notNull(),
+  selfExplored: boolean('self_explored').notNull().default(false),
 }, (t) => [
   primaryKey({ columns: [t.userId, t.galaxy, t.system, t.position] }),
 ]);

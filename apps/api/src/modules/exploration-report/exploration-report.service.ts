@@ -1,6 +1,6 @@
 import { eq, and, ne, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { explorationReports, discoveredPositions, discoveredBiomes, biomeDefinitions, planets, marketOffers, missionReports } from '@exilium/db';
+import { explorationReports, discoveredPositions, discoveredBiomes, biomeDefinitions, planets, marketOffers } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -29,34 +29,6 @@ export function createExplorationReportService(
   resourceService: ReturnType<typeof createResourceService>,
   gameConfigService: GameConfigService,
 ) {
-  /** Check that the player has discovered the given position. */
-  async function assertPositionDiscovered(
-    userId: string,
-    galaxy: number,
-    system: number,
-    position: number,
-  ): Promise<void> {
-    const [row] = await db
-      .select({ userId: discoveredPositions.userId })
-      .from(discoveredPositions)
-      .where(
-        and(
-          eq(discoveredPositions.userId, userId),
-          eq(discoveredPositions.galaxy, galaxy),
-          eq(discoveredPositions.system, system),
-          eq(discoveredPositions.position, position),
-        ),
-      )
-      .limit(1);
-
-    if (!row) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Position non decouverte',
-      });
-    }
-  }
-
   /** Check that no existing report (inventory or listed) already covers this position for the user. */
   async function assertNoDuplicateReport(
     userId: string,
@@ -174,29 +146,27 @@ export function createExplorationReportService(
       }
 
       // 2. Check the user EXPLORED this position themselves (not just via a purchased report).
-      // Use JSONB cast to integer for reliable comparison (coordinates are stored as JSON numbers).
-      const [exploreReport] = await db
-        .select({ id: missionReports.id })
-        .from(missionReports)
+      // The selfExplored flag is set by explore.handler / colonize.handler when the user
+      // actually sent a fleet; buying a market report leaves it false.
+      const [selfExplored] = await db
+        .select({ userId: discoveredPositions.userId })
+        .from(discoveredPositions)
         .where(
           and(
-            eq(missionReports.userId, userId),
-            eq(missionReports.missionType, 'explore'),
-            sql`(${missionReports.coordinates}->>'galaxy')::int = ${input.galaxy}`,
-            sql`(${missionReports.coordinates}->>'system')::int = ${input.system}`,
-            sql`(${missionReports.coordinates}->>'position')::int = ${input.position}`,
+            eq(discoveredPositions.userId, userId),
+            eq(discoveredPositions.galaxy, input.galaxy),
+            eq(discoveredPositions.system, input.system),
+            eq(discoveredPositions.position, input.position),
+            eq(discoveredPositions.selfExplored, true),
           ),
         )
         .limit(1);
-      if (!exploreReport) {
+      if (!selfExplored) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Vous devez avoir explore cette position vous-meme pour pouvoir vendre un rapport',
         });
       }
-
-      // 3. Check the user has discovered the position
-      await assertPositionDiscovered(userId, input.galaxy, input.system, input.position);
 
       // 4. Check no duplicate report in inventory/listed
       await assertNoDuplicateReport(userId, input.galaxy, input.system, input.position);
@@ -335,27 +305,10 @@ export function createExplorationReportService(
         return { canCreate: false, reason: 'Position deja colonisee', cost: 0 };
       }
 
-      // Check the user explored this position themselves
-      const [exploreReport] = await db
-        .select({ id: missionReports.id })
-        .from(missionReports)
-        .where(
-          and(
-            eq(missionReports.userId, userId),
-            eq(missionReports.missionType, 'explore'),
-            sql`(${missionReports.coordinates}->>'galaxy')::int = ${input.galaxy}`,
-            sql`(${missionReports.coordinates}->>'system')::int = ${input.system}`,
-            sql`(${missionReports.coordinates}->>'position')::int = ${input.position}`,
-          ),
-        )
-        .limit(1);
-      if (!exploreReport) {
-        return { canCreate: false, reason: 'Vous devez avoir explore cette position vous-meme', cost: 0 };
-      }
-
-      // Check position discovered
+      // Check position is discovered AND self-explored (required to resell).
+      // selfExplored=true implies the row exists, so a single query covers both conditions.
       const [discovered] = await db
-        .select({ userId: discoveredPositions.userId })
+        .select({ selfExplored: discoveredPositions.selfExplored })
         .from(discoveredPositions)
         .where(
           and(
@@ -369,6 +322,9 @@ export function createExplorationReportService(
 
       if (!discovered) {
         return { canCreate: false, reason: 'Position non decouverte', cost: 0 };
+      }
+      if (!discovered.selfExplored) {
+        return { canCreate: false, reason: 'Vous devez avoir explore cette position vous-meme', cost: 0 };
       }
 
       // Check no existing report in inventory/listed

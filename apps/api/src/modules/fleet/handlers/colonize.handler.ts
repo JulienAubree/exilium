@@ -198,13 +198,18 @@ export class ColonizeHandler implements MissionHandler {
       ).onConflictDoNothing();
     }
 
-    // Mark the colonized position as discovered for the colonizer
+    // Mark the colonized position as discovered (and self-explored) for the colonizer.
+    // Upgrade any pre-existing purchased discovery to self-explored.
     await ctx.db.insert(discoveredPositions).values({
       userId: fleetEvent.userId,
       galaxy: fleetEvent.targetGalaxy,
       system: fleetEvent.targetSystem,
       position: fleetEvent.targetPosition,
-    }).onConflictDoNothing();
+      selfExplored: true,
+    }).onConflictDoUpdate({
+      target: [discoveredPositions.userId, discoveredPositions.galaxy, discoveredPositions.system, discoveredPositions.position],
+      set: { selfExplored: true },
+    });
 
     // Transfer cargo to the new planet
     if (mineraiCargo > 0 || siliciumCargo > 0 || hydrogeneCargo > 0) {
