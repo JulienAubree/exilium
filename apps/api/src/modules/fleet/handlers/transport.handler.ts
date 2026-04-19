@@ -77,11 +77,8 @@ export class TransportHandler implements MissionHandler {
     if (targetPlanet.status === 'colonizing' && ctx.colonizationService) {
       const process = await ctx.colonizationService.getProcess(targetPlanet.id);
       if (process && !process.outpostEstablished) {
-        const config = await ctx.gameConfigService.getFullConfig();
-        const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-        const ipcLevel = await ctx.colonizationService.getIpcLevel(fleetEvent.userId);
-        const thresholdMinerai = Math.floor((Number(config.universe.colonization_outpost_threshold_minerai) || 500) * (1 + sf * ipcLevel));
-        const thresholdSilicium = Math.floor((Number(config.universe.colonization_outpost_threshold_silicium) || 250) * (1 + sf * ipcLevel));
+        const { minerai: thresholdMinerai, silicium: thresholdSilicium } =
+          await ctx.colonizationService.getOutpostThresholds(fleetEvent.userId);
 
         // Check if total resources on planet (after deposit) meet threshold
         const totalMinerai = Number(targetPlanet.minerai) + mineraiCargo;

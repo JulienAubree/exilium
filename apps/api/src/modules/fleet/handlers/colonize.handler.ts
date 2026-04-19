@@ -237,12 +237,19 @@ export class ColonizeHandler implements MissionHandler {
       difficultyMap,
     );
 
+    // If the colony ship's cargo already meets outpost thresholds, establish it immediately
+    const { minerai: thresholdMinerai, silicium: thresholdSilicium } =
+      await ctx.colonizationService!.getOutpostThresholds(fleetEvent.userId);
+    const outpostEstablished =
+      mineraiCargo >= thresholdMinerai && siliciumCargo >= thresholdSilicium;
+
     // Start colonization process (colony ship consumed when process reaches 100%)
     await ctx.colonizationService!.startProcess(
       newPlanet.id,
       fleetEvent.userId,
       fleetEvent.originPlanetId,
       difficulty,
+      outpostEstablished,
     );
 
     // Mark original event completed

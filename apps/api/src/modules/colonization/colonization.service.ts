@@ -135,6 +135,15 @@ export function createColonizationService(
         sf,
       );
 
+      // Grace period and outpost timeout deadlines
+      const gracePeriodHours = Number(config.universe.colonization_grace_period_hours) || 0;
+      const outpostTimeoutHours = Number(config.universe.colonization_outpost_timeout_hours) || 0;
+      const startedAtMs = new Date(process.startedAt).getTime();
+      const nowMs = Date.now();
+      const gracePeriodEndsAt = new Date(startedAtMs + gracePeriodHours * 60 * 60 * 1000);
+      const outpostTimeoutAt = new Date(startedAtMs + outpostTimeoutHours * 60 * 60 * 1000);
+      const inGracePeriod = nowMs < gracePeriodEndsAt.getTime();
+
       return {
         ...process,
         effectivePassiveRate: effectiveRate,
@@ -150,11 +159,20 @@ export function createColonizationService(
         ipcLevel,
         outpostThresholdMinerai,
         outpostThresholdSilicium,
+        gracePeriodEndsAt,
+        outpostTimeoutAt,
+        inGracePeriod,
       };
     },
 
     /** Start a new colonization process */
-    async startProcess(planetId: string, userId: string, originPlanetId: string, difficultyFactor: number) {
+    async startProcess(
+      planetId: string,
+      userId: string,
+      originPlanetId: string,
+      difficultyFactor: number,
+      outpostEstablished = false,
+    ) {
       const [process] = await db
         .insert(colonizationProcesses)
         .values({
@@ -162,9 +180,28 @@ export function createColonizationService(
           userId,
           colonyShipOriginPlanetId: originPlanetId,
           difficultyFactor,
+          outpostEstablished,
         })
         .returning();
       return process;
+    },
+
+    /** Compute outpost resource thresholds scaled by user's IPC level */
+    async getOutpostThresholds(userId: string) {
+      const config = await gameConfigService.getFullConfig();
+      const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
+      const ipcLevel = await this.getIpcLevel(userId);
+      const minerai = this.scaleCost(
+        Number(config.universe.colonization_outpost_threshold_minerai) || 500,
+        ipcLevel,
+        sf,
+      );
+      const silicium = this.scaleCost(
+        Number(config.universe.colonization_outpost_threshold_silicium) || 250,
+        ipcLevel,
+        sf,
+      );
+      return { minerai, silicium };
     },
 
     /** Consume resources from the colonizing planet */
@@ -181,6 +218,14 @@ export function createColonizationService(
       if (!process.outpostEstablished) return { stockSufficient: true };
 
       const config = await gameConfigService.getFullConfig();
+
+      // Grace period: no consumption for the first N hours after start
+      const gracePeriodHours = Number(config.universe.colonization_grace_period_hours) || 0;
+      const elapsedMs = Date.now() - new Date(process.startedAt).getTime();
+      if (elapsedMs < gracePeriodHours * 60 * 60 * 1000) {
+        return { stockSufficient: true };
+      }
+
       const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
       const ipcLevel = await this.getIpcLevel(process.userId);
 

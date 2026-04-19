@@ -142,6 +142,22 @@ function RaidCountdown({ arrivalTime }: { arrivalTime: string }) {
   );
 }
 
+// ── Deadline countdown (grace period / outpost timeout) ──
+
+function DeadlineCountdown({ target, tone }: { target: Date; tone: 'warn' | 'info' }) {
+  const display = useCountdown(target);
+  const hoursLeft = (target.getTime() - Date.now()) / (1000 * 60 * 60);
+  const urgent = hoursLeft < 4;
+  const colorClass = tone === 'warn'
+    ? urgent ? 'text-red-400' : hoursLeft < 12 ? 'text-orange-400' : 'text-amber-400'
+    : hoursLeft < 0.25 ? 'text-orange-400' : 'text-emerald-400';
+  return (
+    <span className={cn('font-mono text-sm tabular-nums font-bold', colorClass)}>
+      {display}
+    </span>
+  );
+}
+
 // ── Format helpers ──
 
 function formatHoursMinutes(hours: number): string {
@@ -436,6 +452,18 @@ export default function ColonizationProgress() {
             </div>
             <p className="text-[11px] text-muted-foreground">Minimum requis pour etablir l'avant-poste</p>
 
+            {status.outpostTimeoutAt && (
+              <div className="mx-auto max-w-sm rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-left">
+                  <IconAlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span className="text-[11px] text-red-300 leading-tight">
+                    Sans avant-poste, la colonie sera abandonnee dans
+                  </span>
+                </div>
+                <DeadlineCountdown target={new Date(status.outpostTimeoutAt)} tone="warn" />
+              </div>
+            )}
+
             <Button
               className="bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-500/20"
               onClick={() => navigate(fleetSendUrl('transport'))}
@@ -443,9 +471,42 @@ export default function ColonizationProgress() {
               <IconSend className="w-4 h-4 mr-2" />
               Envoyer un convoi
             </Button>
+
+            <div className="mx-auto max-w-md rounded-lg border border-border/30 bg-card/40 p-3 text-left space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Phases de la colonisation
+              </p>
+              <ol className="text-[11px] text-muted-foreground leading-relaxed space-y-1 list-decimal list-inside">
+                <li>Livrer les ressources minimales pour etablir l'avant-poste.</li>
+                <li>Sursis d'installation : pas de consommation pendant la 1re heure.</li>
+                <li>Progression passive, consommation active, raids possibles.</li>
+                <li>A 100 %, prendre possession de la colonie.</li>
+              </ol>
+            </div>
           </section>
         ) : (
           <>
+            {/* ════ GRACE PERIOD BANNER ════ */}
+            {status.inGracePeriod && status.gracePeriodEndsAt && (
+              <section className="rounded-xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 to-sky-900/5 px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/15 border border-sky-500/20 shrink-0">
+                    <IconClock className="h-4 w-4 text-sky-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-sky-300">Sursis d'installation</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight">
+                      Pas de consommation de ressources. Preparez vos convois.
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <DeadlineCountdown target={new Date(status.gracePeriodEndsAt)} tone="info" />
+                  <p className="text-[10px] text-muted-foreground">avant consommation</p>
+                </div>
+              </section>
+            )}
+
             {/* ════ LOGISTIQUE ════ */}
             <section className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-900/5 overflow-hidden">
               <div className="px-4 pt-4 pb-3 flex items-center justify-between">

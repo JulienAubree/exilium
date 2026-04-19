@@ -69,6 +69,18 @@ export function startColonizationWorker(
 
           if (!fresh || fresh.status !== 'active') continue;
 
+          // Compute deadlines from config
+          const fullConfig = await gameConfigService.getFullConfig();
+          const gracePeriodHours = Number(fullConfig.universe.colonization_grace_period_hours) || 0;
+          const outpostTimeoutHours = Number(fullConfig.universe.colonization_outpost_timeout_hours) || 0;
+          const startedAtMs = new Date(fresh.startedAt).getTime();
+          const nowMs = Date.now();
+          const gracePeriodEnded = nowMs >= startedAtMs + gracePeriodHours * 60 * 60 * 1000;
+          const outpostTimeoutExceeded =
+            !fresh.outpostEstablished &&
+            outpostTimeoutHours > 0 &&
+            nowMs >= startedAtMs + outpostTimeoutHours * 60 * 60 * 1000;
+
           // 5. Check completion (0.995 threshold to avoid floating-point near-miss)
           if (fresh.progress >= 0.995) {
             await colonizationService.finalize(process.id);
@@ -76,7 +88,7 @@ export function startColonizationWorker(
               type: 'colonization-complete',
               payload: { planetId: process.planetId },
             });
-          } else if (fresh.progress <= 0) {
+          } else if (outpostTimeoutExceeded || (fresh.outpostEstablished && gracePeriodEnded && fresh.progress <= 0)) {
             // 6. Handle failure -- return colony ship to origin
             const result = await colonizationService.fail(process.id);
             if (result) {

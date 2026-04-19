@@ -577,6 +577,8 @@ const UNIVERSE_CONFIG = [
   { key: 'colonization_consumption_silicium', value: 100 },
   { key: 'colonization_outpost_threshold_minerai', value: 500 },
   { key: 'colonization_outpost_threshold_silicium', value: 250 },
+  { key: 'colonization_grace_period_hours', value: 1 },
+  { key: 'colonization_outpost_timeout_hours', value: 24 },
   { key: 'colonization_raid_interval_min', value: 3600 },
   { key: 'colonization_raid_interval_max', value: 5400 },
   { key: 'colonization_raid_travel_min', value: 1800 },
