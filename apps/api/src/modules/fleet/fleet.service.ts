@@ -30,6 +30,7 @@ import { ScanHandler } from './handlers/scan.handler.js';
 import { ExploreHandler } from './handlers/explore.handler.js';
 import { ColonizeReinforceHandler } from './handlers/colonize-reinforce.handler.js';
 import { ColonizationRaidHandler } from './handlers/colonization-raid.handler.js';
+import { AbandonReturnHandler } from './handlers/abandon-return.handler.js';
 import { buildShipStatsMap } from './fleet.types.js';
 import type { FleetCompletionResult } from '../../workers/completion.types.js';
 import { env } from '../../config/env.js';
@@ -67,6 +68,7 @@ export function createFleetService(
     explore: new ExploreHandler(),
     colonize_reinforce: new ColonizeReinforceHandler(),
     colonization_raid: new ColonizationRaidHandler(),
+    abandon_return: new AbandonReturnHandler(),
   };
 
   const handlerCtx: MissionHandlerContext = {
