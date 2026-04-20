@@ -6,12 +6,15 @@ import {
   fleetEvents,
   marketOffers,
   flagships,
+  planetBuildings,
+  planetDefenses,
+  buildQueue,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import type { GameConfigService } from '../admin/game-config.service.js';
+import type { GameConfigService, GameConfig } from '../admin/game-config.service.js';
 import type { createReportService } from '../report/report.service.js';
 import { totalCargoCapacity, travelTime, fleetSpeed } from '@exilium/game-engine';
-import type { ShipStats } from '@exilium/game-engine';
+import type { ShipStats, FleetConfig } from '@exilium/game-engine';
 import { buildShipStatsMap } from '../fleet/fleet.types.js';
 import type { Queue } from 'bullmq';
 import type Redis from 'ioredis';
@@ -47,6 +50,30 @@ export function computeCargoLoad(stock: ResourceBundle, capacity: number): Cargo
       hydrogene: stock.hydrogene - loadedHydrogene,
     },
   };
+}
+
+function buildFleetConfig(config: GameConfig): FleetConfig {
+  return {
+    galaxyFactor: Number(config.universe.fleet_distance_galaxy_factor) || 20000,
+    systemBase: Number(config.universe.fleet_distance_system_base) || 2700,
+    systemFactor: Number(config.universe.fleet_distance_system_factor) || 95,
+    positionBase: Number(config.universe.fleet_distance_position_base) || 1000,
+    positionFactor: Number(config.universe.fleet_distance_position_factor) || 5,
+    samePositionDistance: Number(config.universe.fleet_same_position_distance) || 5,
+    speedFactor: Number(config.universe.fleet_speed_factor) || 35000,
+  };
+}
+
+function extractStationedShips(shipsRow: Record<string, unknown> | undefined): Record<string, number> {
+  const ships: Record<string, number> = {};
+  if (shipsRow) {
+    for (const [k, v] of Object.entries(shipsRow)) {
+      if (k === 'planetId' || k === 'createdAt' || k === 'updatedAt') continue;
+      const count = typeof v === 'number' ? v : 0;
+      if (count > 0) ships[k] = count;
+    }
+  }
+  return ships;
 }
 
 export type AbandonBlocker =
@@ -164,14 +191,7 @@ export function createPlanetAbandonService(
       const ctxData = await loadContext(userId, planetId, destinationPlanetId);
       const { planet, destination, shipsRow, flagship, flagshipIncluded } = ctxData;
 
-      const ships: Record<string, number> = {};
-      if (shipsRow) {
-        for (const [k, v] of Object.entries(shipsRow)) {
-          if (k === 'planetId' || k === 'createdAt' || k === 'updatedAt') continue;
-          const count = typeof v === 'number' ? v : 0;
-          if (count > 0) ships[k] = count;
-        }
-      }
+      const ships = extractStationedShips(shipsRow as Record<string, unknown> | undefined);
       if (flagshipIncluded) ships['flagship'] = 1;
 
       const config = await gameConfigService.getFullConfig();
@@ -210,15 +230,7 @@ export function createPlanetAbandonService(
       });
 
       // Travel time — only computable if destination exists
-      const fleetConfig = {
-        galaxyFactor: Number(config.universe.fleet_distance_galaxy_factor) || 20000,
-        systemBase: Number(config.universe.fleet_distance_system_base) || 2700,
-        systemFactor: Number(config.universe.fleet_distance_system_factor) || 95,
-        positionBase: Number(config.universe.fleet_distance_position_base) || 1000,
-        positionFactor: Number(config.universe.fleet_distance_position_factor) || 5,
-        samePositionDistance: Number(config.universe.fleet_same_position_distance) || 5,
-        speedFactor: Number(config.universe.fleet_speed_factor) || 35000,
-      };
+      const fleetConfig = buildFleetConfig(config);
       const originCoords = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
       let travelSeconds = 0;
       let arrivalTime = new Date();
@@ -233,21 +245,26 @@ export function createPlanetAbandonService(
       }
 
       // Count lost entities (best-effort; UI only — use separate SELECTs for clarity)
-      const buildingsRes = await db.execute<{ total: number }>(
-        sql`SELECT COALESCE(SUM(level), 0)::int AS total FROM planet_buildings WHERE planet_id = ${planetId}`,
-      );
-      const buildingsRows = ((buildingsRes as unknown) as { rows?: Array<{ total: number }> }).rows
-        ?? (buildingsRes as unknown as Array<{ total: number }>);
-      const defensesRes = await db.execute<{ total: number }>(
-        sql`SELECT COALESCE(SUM(count), 0)::int AS total FROM planet_defenses WHERE planet_id = ${planetId}`,
-      );
-      const defensesRows = ((defensesRes as unknown) as { rows?: Array<{ total: number }> }).rows
-        ?? (defensesRes as unknown as Array<{ total: number }>);
-      const queuesRes = await db.execute<{ total: number }>(
-        sql`SELECT COUNT(*)::int AS total FROM build_queue WHERE planet_id = ${planetId}`,
-      );
-      const queuesRows = ((queuesRes as unknown) as { rows?: Array<{ total: number }> }).rows
-        ?? (queuesRes as unknown as Array<{ total: number }>);
+      const [buildingsSum] = await db
+        .select({ total: sql<number>`COALESCE(SUM(${planetBuildings.level}), 0)::int` })
+        .from(planetBuildings)
+        .where(eq(planetBuildings.planetId, planetId));
+
+      const defensesColSum = sql<number>`COALESCE(
+        ${planetDefenses.rocketLauncher} +
+        ${planetDefenses.lightLaser} +
+        ${planetDefenses.heavyLaser} +
+        ${planetDefenses.electromagneticCannon} +
+        ${planetDefenses.plasmaTurret}, 0)::int`;
+      const [defensesSum] = await db
+        .select({ total: defensesColSum })
+        .from(planetDefenses)
+        .where(eq(planetDefenses.planetId, planetId));
+
+      const [queuesSum] = await db
+        .select({ total: sql<number>`COUNT(*)::int` })
+        .from(buildQueue)
+        .where(eq(buildQueue.planetId, planetId));
 
       return {
         planetId,
@@ -261,9 +278,9 @@ export function createPlanetAbandonService(
         travelSeconds,
         arrivalTime,
         flagshipIncluded,
-        buildingsLost: Number(buildingsRows?.[0]?.total ?? 0),
-        defensesLost: Number(defensesRows?.[0]?.total ?? 0),
-        queuesLost: Number(queuesRows?.[0]?.total ?? 0),
+        buildingsLost: Number(buildingsSum?.total ?? 0),
+        defensesLost: Number(defensesSum?.total ?? 0),
+        queuesLost: Number(queuesSum?.total ?? 0),
       };
     },
 
@@ -338,14 +355,7 @@ export function createPlanetAbandonService(
         }
 
         const [shipsRow] = await tx.select().from(planetShips).where(eq(planetShips.planetId, planetId)).limit(1);
-        const ships: Record<string, number> = {};
-        if (shipsRow) {
-          for (const [k, v] of Object.entries(shipsRow)) {
-            if (k === 'planetId' || k === 'createdAt' || k === 'updatedAt') continue;
-            const count = typeof v === 'number' ? v : 0;
-            if (count > 0) ships[k] = count;
-          }
-        }
+        const ships = extractStationedShips(shipsRow as Record<string, unknown> | undefined);
         if (flagshipIncluded && flagship) {
           ships['flagship'] = 1;
           shipStatsMap['flagship'] = {
@@ -365,15 +375,7 @@ export function createPlanetAbandonService(
         };
         const { loaded, overflow } = computeCargoLoad(stock, capacity);
 
-        const fleetConfig = {
-          galaxyFactor: Number(config.universe.fleet_distance_galaxy_factor) || 20000,
-          systemBase: Number(config.universe.fleet_distance_system_base) || 2700,
-          systemFactor: Number(config.universe.fleet_distance_system_factor) || 95,
-          positionBase: Number(config.universe.fleet_distance_position_base) || 1000,
-          positionFactor: Number(config.universe.fleet_distance_position_factor) || 5,
-          samePositionDistance: Number(config.universe.fleet_same_position_distance) || 5,
-          speedFactor: Number(config.universe.fleet_speed_factor) || 35000,
-        };
+        const fleetConfig = buildFleetConfig(config);
         // destination is non-null here (blockers would have triggered otherwise)
         const dest = destination!;
         const originCoords = { galaxy: planet.galaxy, system: planet.system, position: planet.position };
