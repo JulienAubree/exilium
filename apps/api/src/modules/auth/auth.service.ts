@@ -1,13 +1,15 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and, isNull, gt } from 'drizzle-orm';
 import { hash, verify } from 'argon2';
 import { SignJWT, jwtVerify } from 'jose';
 import { randomBytes, createHash } from 'crypto';
 import { TRPCError } from '@trpc/server';
-import { users, refreshTokens, loginEvents } from '@exilium/db';
+import { users, refreshTokens, loginEvents, passwordResetTokens } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
 import { env } from '../../config/env.js';
 import { enforceRateLimit } from '../../lib/rate-limit.js';
+import type { MailerService } from '../mailer/mailer.service.js';
+import { passwordResetEmail } from '../mailer/templates.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 
@@ -19,6 +21,12 @@ const LOCKOUT_DURATION_MINUTES = 15;
 const AUTH_RATE_LIMIT = 10;
 /** Auth endpoint rate limit window (seconds). */
 const AUTH_RATE_LIMIT_WINDOW_SECONDS = 60;
+/** How long a password reset token stays valid. */
+const PASSWORD_RESET_EXPIRES_MINUTES = 30;
+/** Max password reset requests allowed per email per hour — abuse mitigation. */
+const PASSWORD_RESET_PER_EMAIL_LIMIT = 3;
+/** Window (seconds) for PASSWORD_RESET_PER_EMAIL_LIMIT. */
+const PASSWORD_RESET_PER_EMAIL_WINDOW_SECONDS = 3600;
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -37,7 +45,7 @@ export interface AuthContext {
   userAgent?: string | null;
 }
 
-export function createAuthService(db: Database, redis: Redis) {
+export function createAuthService(db: Database, redis: Redis, mailer: MailerService) {
   async function recordLoginEvent(params: {
     userId: string | null;
     email: string;
@@ -206,6 +214,102 @@ export function createAuthService(db: Database, redis: Redis) {
     async logout(rawRefreshToken: string) {
       const tokenHash = hashToken(rawRefreshToken);
       await db.delete(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
+    },
+
+    /**
+     * Issue a password reset token and email it to the user.
+     * Always returns void from the caller's perspective — we never leak whether the
+     * email exists. Mailer failures are swallowed (logged server-side) for the same reason.
+     */
+    async requestPasswordReset(email: string, ctx: AuthContext = {}) {
+      // Per-IP rate limit (shared with other auth endpoints would be stronger, but we
+      // want this flow to stay usable even if the user just hit the login limit).
+      const ipKey = ctx.ip ?? 'unknown';
+      await enforceRateLimit(redis, {
+        key: `ratelimit:auth:forgot:${ipKey}`,
+        limit: AUTH_RATE_LIMIT,
+        windowSeconds: AUTH_RATE_LIMIT_WINDOW_SECONDS,
+      });
+      // Per-email rate limit: stops someone from spamming a victim with reset emails.
+      await enforceRateLimit(redis, {
+        key: `ratelimit:auth:forgot:email:${email.toLowerCase()}`,
+        limit: PASSWORD_RESET_PER_EMAIL_LIMIT,
+        windowSeconds: PASSWORD_RESET_PER_EMAIL_WINDOW_SECONDS,
+      });
+
+      const [user] = await db
+        .select({ id: users.id, email: users.email, username: users.username })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+      if (!user) return; // Silent no-op for unknown emails.
+
+      const rawToken = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MINUTES * 60_000);
+      await db.insert(passwordResetTokens).values({
+        userId: user.id,
+        tokenHash: hashToken(rawToken),
+        expiresAt,
+      });
+
+      const resetUrl = `${env.WEB_APP_URL.replace(/\/$/, '')}/reset-password?token=${rawToken}`;
+      const mail = passwordResetEmail({
+        username: user.username,
+        resetUrl,
+        expiresInMinutes: PASSWORD_RESET_EXPIRES_MINUTES,
+      });
+      try {
+        await mailer.send({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text });
+      } catch (err) {
+        console.error('[auth] password reset email failed:', err);
+      }
+    },
+
+    /**
+     * Consume a reset token and set a new password.
+     * On success, all existing refresh tokens for the user are revoked so every
+     * logged-in device is kicked out. Lockout state is also cleared.
+     */
+    async resetPassword(rawToken: string, newPassword: string) {
+      const tokenHash = hashToken(rawToken);
+      const [stored] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.tokenHash, tokenHash),
+            isNull(passwordResetTokens.usedAt),
+            gt(passwordResetTokens.expiresAt, new Date()),
+          ),
+        )
+        .limit(1);
+
+      if (!stored) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Lien invalide ou expiré. Demandez un nouveau lien de réinitialisation.',
+        });
+      }
+
+      const passwordHash = await hash(newPassword);
+
+      await db
+        .update(users)
+        .set({
+          passwordHash,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        })
+        .where(eq(users.id, stored.userId));
+
+      // Mark token as consumed.
+      await db
+        .update(passwordResetTokens)
+        .set({ usedAt: sql`now()` })
+        .where(eq(passwordResetTokens.id, stored.id));
+
+      // Revoke all existing sessions — force re-login everywhere.
+      await db.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
     },
 
     async verifyAccessToken(token: string): Promise<{ userId: string }> {

@@ -52,6 +52,16 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorFallback />,
   },
   {
+    path: '/forgot-password',
+    lazy: lazyLoad(() => import('./pages/ForgotPassword')),
+    errorElement: <RouteErrorFallback />,
+  },
+  {
+    path: '/reset-password',
+    lazy: lazyLoad(() => import('./pages/ResetPassword')),
+    errorElement: <RouteErrorFallback />,
+  },
+  {
     path: '/',
     element: (
       <AuthGuard>

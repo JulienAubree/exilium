@@ -57,5 +57,25 @@ export function createAuthRouter(
         await authService.logout(input.refreshToken);
         return { ok: true };
       }),
+
+    requestPasswordReset: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input, ctx }) => {
+        await authService.requestPasswordReset(input.email, authCtx(ctx));
+        // Always return the same response — do not leak whether the email exists.
+        return { ok: true };
+      }),
+
+    resetPassword: publicProcedure
+      .input(
+        z.object({
+          token: z.string().min(1),
+          password: z.string().min(8).max(128),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        await authService.resetPassword(input.token, input.password);
+        return { ok: true };
+      }),
   });
 }

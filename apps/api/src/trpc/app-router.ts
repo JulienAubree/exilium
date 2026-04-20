@@ -65,6 +65,7 @@ import { createExplorationReportService } from '../modules/exploration-report/ex
 import { createExplorationReportRouter } from '../modules/exploration-report/exploration-report.router.js';
 import { createColonizationService } from '../modules/colonization/colonization.service.js';
 import { createColonizationRouter } from '../modules/colonization/colonization.router.js';
+import { createMailerService } from '../modules/mailer/mailer.service.js';
 import { env } from '../config/env.js';
 import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
@@ -76,7 +77,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const exiliumService = createExiliumService(db, gameConfigService);
   const talentService = createTalentService(db, exiliumService, gameConfigService);
   const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
-  const authService = createAuthService(db, redis);
+  const mailerService = createMailerService();
+  const authService = createAuthService(db, redis, mailerService);
   const resourceService = createResourceService(db, gameConfigService, dailyQuestService, talentService);
   const planetService = createPlanetService(db, gameConfigService, env.ASSETS_DIR, resourceService);
   const buildingService = createBuildingService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, dailyQuestService);

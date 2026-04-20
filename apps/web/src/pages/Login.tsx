@@ -84,6 +84,11 @@ export default function Login() {
           <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
             {loginMutation.isPending ? 'Connexion...' : 'Se connecter'}
           </Button>
+          <p className="text-center text-sm">
+            <Link to="/forgot-password" className="text-muted-foreground hover:text-primary hover:underline">
+              Mot de passe oublié ?
+            </Link>
+          </p>
           <p className="text-center text-sm text-muted-foreground">
             Pas de compte ?{' '}
             <Link to="/register" className="text-primary hover:underline">

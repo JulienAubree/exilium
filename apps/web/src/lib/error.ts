@@ -28,6 +28,7 @@ export function formatApiError(message: string): string {
   if (message === 'Invalid credentials') return 'Email ou mot de passe incorrect';
   if (message === 'UNAUTHORIZED') return 'Email ou mot de passe incorrect';
   if (message === 'Account banned') return 'Ce compte a été banni';
+  if (message === 'TOO_MANY_REQUESTS') return 'Trop de tentatives. Réessayez dans une minute.';
 
   return message;
 }
