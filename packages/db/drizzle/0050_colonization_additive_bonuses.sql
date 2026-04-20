@@ -30,5 +30,5 @@ SET "difficulty_factor" = (
 )
 FROM "planets" p
 LEFT JOIN "planets" hw
-  ON hw."user_id" = cp."user_id" AND hw."planet_class_id" = 'homeworld'
+  ON hw."user_id" = p."user_id" AND hw."planet_class_id" = 'homeworld'
 WHERE cp."planet_id" = p."id" AND cp."status" = 'active';
