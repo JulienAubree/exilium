@@ -1,4 +1,4 @@
-import { eq, and, desc, or, sql } from 'drizzle-orm';
+import { eq, and, desc, or, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { messages, users, allianceMembers, alliances } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -408,59 +408,77 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
 
       if (threads.length === 0) return [];
 
-      // Step 2: For each thread, get last message + other user + unread count
-      const results = await Promise.all(
-        threads.map(async (t) => {
-          const [lastMsg] = await db
-            .select({
-              body: messages.body,
-              senderId: messages.senderId,
-              recipientId: messages.recipientId,
-              createdAt: messages.createdAt,
-            })
-            .from(messages)
-            .where(eq(messages.threadId, t.threadId!))
-            .orderBy(desc(messages.createdAt))
-            .limit(1);
+      const threadIds = threads.map((t) => t.threadId!);
 
-          if (!lastMsg) return null;
+      // Step 2: Batch-load last message per thread, counterpart users, and
+      // unread counts — three queries instead of 3×N.
+      const [lastMessages, unreadCounts] = await Promise.all([
+        db
+          .selectDistinctOn([messages.threadId], {
+            threadId: messages.threadId,
+            body: messages.body,
+            senderId: messages.senderId,
+            recipientId: messages.recipientId,
+            createdAt: messages.createdAt,
+          })
+          .from(messages)
+          .where(inArray(messages.threadId, threadIds))
+          .orderBy(messages.threadId, desc(messages.createdAt)),
+        db
+          .select({
+            threadId: messages.threadId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(messages)
+          .where(
+            and(
+              inArray(messages.threadId, threadIds),
+              eq(messages.recipientId, userId),
+              eq(messages.read, false),
+            ),
+          )
+          .groupBy(messages.threadId),
+      ]);
 
-          const otherUserId = lastMsg.senderId === userId ? lastMsg.recipientId : lastMsg.senderId;
-          if (!otherUserId) return null;
+      const lastByThread = new Map(lastMessages.map((m) => [m.threadId!, m]));
+      const unreadByThread = new Map(unreadCounts.map((u) => [u.threadId!, u.count]));
 
-          const [otherUser] = await db
-            .select({ id: users.id, username: users.username, avatarId: users.avatarId })
-            .from(users)
-            .where(eq(users.id, otherUserId))
-            .limit(1);
-
-          if (!otherUser) return null;
-
-          const [unreadResult] = await db
-            .select({ count: sql<number>`count(*)::int` })
-            .from(messages)
-            .where(
-              and(
-                eq(messages.threadId, t.threadId!),
-                eq(messages.recipientId, userId),
-                eq(messages.read, false),
-              ),
-            );
-
-          return {
-            threadId: t.threadId!,
-            otherUser: { id: otherUser.id, username: otherUser.username, avatarId: otherUser.avatarId },
-            lastMessage: {
-              body: lastMsg.body,
-              senderId: lastMsg.senderId,
-              createdAt: lastMsg.createdAt,
-            },
-            unreadCount: unreadResult?.count ?? 0,
-          };
-        }),
+      const otherUserIds = Array.from(
+        new Set(
+          lastMessages
+            .map((m) => (m.senderId === userId ? m.recipientId : m.senderId))
+            .filter((id): id is string => id != null),
+        ),
       );
 
-      return results.filter(Boolean);
+      const otherUsers = otherUserIds.length
+        ? await db
+            .select({ id: users.id, username: users.username, avatarId: users.avatarId })
+            .from(users)
+            .where(inArray(users.id, otherUserIds))
+        : [];
+      const usersById = new Map(otherUsers.map((u) => [u.id, u]));
+
+      return threads
+        .map((t) => {
+          const last = lastByThread.get(t.threadId!);
+          if (!last) return null;
+          const otherId = last.senderId === userId ? last.recipientId : last.senderId;
+          if (!otherId) return null;
+          const other = usersById.get(otherId);
+          if (!other) return null;
+          return {
+            threadId: t.threadId!,
+            otherUser: { id: other.id, username: other.username, avatarId: other.avatarId },
+            lastMessage: {
+              body: last.body,
+              senderId: last.senderId,
+              createdAt: last.createdAt,
+            },
+            unreadCount: unreadByThread.get(t.threadId!) ?? 0,
+          };
+        })
+        .filter(Boolean);
     },
 
     async deleteThread(userId: string, threadId: string) {

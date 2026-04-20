@@ -202,6 +202,120 @@ export function createPlanetService(
         .limit(1);
       const flagshipPlanetId = flagship?.planetId ?? null;
 
+      const activePlanetIds = planetList
+        .filter((p) => p.status !== 'colonizing')
+        .map((p) => p.id);
+      const activePlanetClassIds = Array.from(
+        new Set(
+          planetList
+            .filter((p) => p.status !== 'colonizing' && p.planetClassId)
+            .map((p) => p.planetClassId!),
+        ),
+      );
+
+      // Batch all per-planet lookups in parallel — one query per table instead
+      // of N×5. Empty activePlanetIds short-circuits to skip querying entirely.
+      const [biomeRows, buildRows, outboundRows, inboundFriendlyRows, inboundAttackRows, planetTypeRows] =
+        activePlanetIds.length === 0
+          ? [[], [], [], [], [], []]
+          : await Promise.all([
+              db
+                .select({
+                  planetId: planetBiomes.planetId,
+                  id: biomeDefinitions.id,
+                  name: biomeDefinitions.name,
+                  rarity: biomeDefinitions.rarity,
+                  effects: biomeDefinitions.effects,
+                })
+                .from(planetBiomes)
+                .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
+                .where(and(inArray(planetBiomes.planetId, activePlanetIds), eq(planetBiomes.active, true))),
+              db
+                .select({
+                  planetId: buildQueue.planetId,
+                  type: buildQueue.type,
+                  itemId: buildQueue.itemId,
+                  quantity: buildQueue.quantity,
+                  endTime: buildQueue.endTime,
+                  status: buildQueue.status,
+                  facilityId: buildQueue.facilityId,
+                })
+                .from(buildQueue)
+                .where(and(inArray(buildQueue.planetId, activePlanetIds), inArray(buildQueue.status, ['active', 'queued']))),
+              db
+                .select({
+                  planetId: fleetEvents.originPlanetId,
+                  count: sql<number>`count(*)::int`,
+                  earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
+                })
+                .from(fleetEvents)
+                .where(and(
+                  inArray(fleetEvents.originPlanetId, activePlanetIds),
+                  eq(fleetEvents.userId, userId),
+                  eq(fleetEvents.status, 'active'),
+                ))
+                .groupBy(fleetEvents.originPlanetId),
+              db
+                .select({
+                  planetId: fleetEvents.targetPlanetId,
+                  count: sql<number>`count(*)::int`,
+                  earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
+                })
+                .from(fleetEvents)
+                .where(and(
+                  inArray(fleetEvents.targetPlanetId, activePlanetIds),
+                  eq(fleetEvents.status, 'active'),
+                  sql`(${fleetEvents.userId} = ${userId} OR ${fleetEvents.mission} NOT IN ('attack', 'spy'))`,
+                ))
+                .groupBy(fleetEvents.targetPlanetId),
+              db
+                .select({
+                  planetId: fleetEvents.targetPlanetId,
+                  arrivalTime: sql<string>`min(${fleetEvents.arrivalTime})::text`,
+                })
+                .from(fleetEvents)
+                .where(and(
+                  inArray(fleetEvents.targetPlanetId, activePlanetIds),
+                  eq(fleetEvents.status, 'active'),
+                  inArray(fleetEvents.mission, ['attack', 'spy']),
+                  sql`${fleetEvents.userId} != ${userId}`,
+                ))
+                .groupBy(fleetEvents.targetPlanetId),
+              activePlanetClassIds.length === 0
+                ? Promise.resolve([])
+                : db
+                    .select({
+                      id: planetTypes.id,
+                      mineraiBonus: planetTypes.mineraiBonus,
+                      siliciumBonus: planetTypes.siliciumBonus,
+                      hydrogeneBonus: planetTypes.hydrogeneBonus,
+                    })
+                    .from(planetTypes)
+                    .where(inArray(planetTypes.id, activePlanetClassIds)),
+            ]);
+
+      type BiomeEntry = { id: string; name: string; rarity: string; effects: unknown };
+      const biomesByPlanet = new Map<string, BiomeEntry[]>();
+      for (const row of biomeRows) {
+        const entry = { id: row.id, name: row.name, rarity: row.rarity, effects: row.effects };
+        const list = biomesByPlanet.get(row.planetId);
+        if (list) list.push(entry);
+        else biomesByPlanet.set(row.planetId, [entry]);
+      }
+
+      type BuildEntry = typeof buildRows[number];
+      const buildsByPlanet = new Map<string, BuildEntry[]>();
+      for (const row of buildRows) {
+        const list = buildsByPlanet.get(row.planetId);
+        if (list) list.push(row);
+        else buildsByPlanet.set(row.planetId, [row]);
+      }
+
+      const outboundByPlanet = new Map(outboundRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
+      const inboundFriendlyByPlanet = new Map(inboundFriendlyRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
+      const inboundAttackByPlanet = new Map(inboundAttackRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
+      const planetTypeById = new Map(planetTypeRows.map((r) => [r.id, r]));
+
       const planetData = await Promise.all(
         planetList.map(async (planet) => {
           // Colonizing planets have no resources/buildings yet — return minimal data
@@ -237,49 +351,19 @@ export function createPlanetService(
               outboundFleets: null,
               inboundFriendlyFleets: null,
               inboundAttack: null,
-              biomes: [] as { id: string; name: string; rarity: string; effects: unknown }[],
+              biomes: [] as BiomeEntry[],
             };
           }
 
           const updated = await resourceService.materializeResources(planet.id, userId);
-
-          const bonus = planet.planetClassId
-            ? await db.select({
-                mineraiBonus: planetTypes.mineraiBonus,
-                siliciumBonus: planetTypes.siliciumBonus,
-                hydrogeneBonus: planetTypes.hydrogeneBonus,
-              }).from(planetTypes).where(eq(planetTypes.id, planet.planetClassId)).limit(1).then(r => r[0])
-            : undefined;
-
+          const bonus = planet.planetClassId ? planetTypeById.get(planet.planetClassId) : undefined;
           const rates = await resourceService.getProductionRates(planet.id, planet, bonus, userId);
 
-          const biomes = await db
-            .select({
-              id: biomeDefinitions.id,
-              name: biomeDefinitions.name,
-              rarity: biomeDefinitions.rarity,
-              effects: biomeDefinitions.effects,
-            })
-            .from(planetBiomes)
-            .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
-            .where(and(eq(planetBiomes.planetId, planet.id), eq(planetBiomes.active, true)));
-
-          const activeBuilds = await db
-            .select({
-              type: buildQueue.type,
-              itemId: buildQueue.itemId,
-              quantity: buildQueue.quantity,
-              endTime: buildQueue.endTime,
-              status: buildQueue.status,
-              facilityId: buildQueue.facilityId,
-            })
-            .from(buildQueue)
-            .where(and(eq(buildQueue.planetId, planet.id), inArray(buildQueue.status, ['active', 'queued'])));
-
-          // For each type, prefer the 'active' entry, fallback to first 'queued'
+          const biomes = biomesByPlanet.get(planet.id) ?? [];
+          const activeBuilds = buildsByPlanet.get(planet.id) ?? [];
           const findEntry = (type: string) =>
-            activeBuilds.find(b => b.type === type && b.status === 'active')
-            ?? activeBuilds.find(b => b.type === type)
+            activeBuilds.find((b) => b.type === type && b.status === 'active')
+            ?? activeBuilds.find((b) => b.type === type)
             ?? null;
 
           const activeBuild = findEntry('building');
@@ -287,49 +371,9 @@ export function createPlanetService(
           const activeShipyard = findEntry('ship');
           const activeDefense = findEntry('defense');
 
-          // Outbound fleets from this planet (count + earliest arrival)
-          const [outbound] = await db
-            .select({
-              count: sql<number>`count(*)::int`,
-              earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
-            })
-            .from(fleetEvents)
-            .where(and(
-              eq(fleetEvents.originPlanetId, planet.id),
-              eq(fleetEvents.userId, userId),
-              eq(fleetEvents.status, 'active'),
-            ));
-
-          // Inbound friendly fleets to this planet (not from this user = could be ally transport, etc.)
-          // Actually, inbound friendly = own fleets returning OR other players' non-attack missions
-          // Simplification: inbound from self (return legs) + inbound non-attack from others
-          const [inboundFriendly] = await db
-            .select({
-              count: sql<number>`count(*)::int`,
-              earliestArrival: sql<string>`min(${fleetEvents.arrivalTime})::text`,
-            })
-            .from(fleetEvents)
-            .where(and(
-              eq(fleetEvents.targetPlanetId, planet.id),
-              eq(fleetEvents.status, 'active'),
-              sql`(${fleetEvents.userId} = ${userId} OR ${fleetEvents.mission} NOT IN ('attack', 'spy'))`,
-            ));
-
-          // Inbound hostile fleets
-          const inboundAttacks = await db
-            .select({
-              arrivalTime: fleetEvents.arrivalTime,
-              mission: fleetEvents.mission,
-            })
-            .from(fleetEvents)
-            .where(and(
-              eq(fleetEvents.targetPlanetId, planet.id),
-              eq(fleetEvents.status, 'active'),
-              inArray(fleetEvents.mission, ['attack', 'spy']),
-              sql`${fleetEvents.userId} != ${userId}`,
-            ))
-            .orderBy(asc(fleetEvents.arrivalTime))
-            .limit(1);
+          const outbound = outboundByPlanet.get(planet.id);
+          const inboundFriendly = inboundFriendlyByPlanet.get(planet.id);
+          const inboundAttack = inboundAttackByPlanet.get(planet.id);
 
           return {
             id: planet.id,
@@ -367,14 +411,14 @@ export function createPlanetService(
             activeDefense: activeDefense
               ? { defenseId: activeDefense.itemId, quantity: activeDefense.quantity, endTime: activeDefense.endTime.toISOString() }
               : null,
-            outboundFleets: (outbound?.count ?? 0) > 0
-              ? { count: outbound!.count, earliestArrival: outbound!.earliestArrival }
+            outboundFleets: outbound && outbound.count > 0
+              ? { count: outbound.count, earliestArrival: outbound.earliestArrival }
               : null,
-            inboundFriendlyFleets: (inboundFriendly?.count ?? 0) > 0
-              ? { count: inboundFriendly!.count, earliestArrival: inboundFriendly!.earliestArrival }
+            inboundFriendlyFleets: inboundFriendly && inboundFriendly.count > 0
+              ? { count: inboundFriendly.count, earliestArrival: inboundFriendly.earliestArrival }
               : null,
-            inboundAttack: inboundAttacks[0]
-              ? { arrivalTime: inboundAttacks[0].arrivalTime.toISOString() }
+            inboundAttack: inboundAttack
+              ? { arrivalTime: inboundAttack.arrivalTime }
               : null,
             biomes,
           };

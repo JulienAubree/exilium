@@ -53,21 +53,35 @@ export function createPlayerAdminService(db: Database, fleetQueue?: Queue) {
         db.select().from(rankings).where(eq(rankings.userId, userId)),
       ]);
 
-      // Load ships, defenses, and building levels for each planet
-      const planetsWithUnits = await Promise.all(
-        playerPlanets.map(async (planet) => {
-          const [ships, defenses, buildingRows] = await Promise.all([
-            db.select().from(planetShips).where(eq(planetShips.planetId, planet.id)),
-            db.select().from(planetDefenses).where(eq(planetDefenses.planetId, planet.id)),
-            db.select().from(planetBuildings).where(eq(planetBuildings.planetId, planet.id)),
+      // Batch-load ships, defenses, and building levels across all planets in
+      // 3 queries instead of 3×N.
+      const planetIds = playerPlanets.map((p) => p.id);
+      const [shipsRows, defensesRows, buildingRows] = planetIds.length === 0
+        ? [[], [], []]
+        : await Promise.all([
+            db.select().from(planetShips).where(inArray(planetShips.planetId, planetIds)),
+            db.select().from(planetDefenses).where(inArray(planetDefenses.planetId, planetIds)),
+            db.select().from(planetBuildings).where(inArray(planetBuildings.planetId, planetIds)),
           ]);
-          const buildingLevels: Record<string, number> = {};
-          for (const row of buildingRows) {
-            buildingLevels[row.buildingId] = row.level;
-          }
-          return { ...planet, ships: ships[0] ?? null, defenses: defenses[0] ?? null, buildingLevels };
-        })
-      );
+
+      const shipsByPlanet = new Map(shipsRows.map((r) => [r.planetId, r]));
+      const defensesByPlanet = new Map(defensesRows.map((r) => [r.planetId, r]));
+      const buildingsByPlanet = new Map<string, Record<string, number>>();
+      for (const row of buildingRows) {
+        let levels = buildingsByPlanet.get(row.planetId);
+        if (!levels) {
+          levels = {};
+          buildingsByPlanet.set(row.planetId, levels);
+        }
+        levels[row.buildingId] = row.level;
+      }
+
+      const planetsWithUnits = playerPlanets.map((planet) => ({
+        ...planet,
+        ships: shipsByPlanet.get(planet.id) ?? null,
+        defenses: defensesByPlanet.get(planet.id) ?? null,
+        buildingLevels: buildingsByPlanet.get(planet.id) ?? {},
+      }));
 
       // Load flagship, exilium balance, and talents
       const [flagshipRow] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);

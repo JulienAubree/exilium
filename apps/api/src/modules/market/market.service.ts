@@ -437,47 +437,75 @@ export function createMarketService(
       const results = hasMore ? offers.slice(0, limit) : offers;
       const nextCursor = hasMore ? results[results.length - 1]?.createdAt.toISOString() : undefined;
 
-      // For each offer, check how many biomes the buyer already knows at the position
-      const enriched = await Promise.all(
-        results.map(async (r) => {
-          const biomes = r.reportBiomes as Array<{ id: string }>;
-          let knownBiomeCount = 0;
+      // Enrich each offer with how many biomes the buyer already knows at that
+      // position. Previously this ran one COUNT(*) query per offer (N+1);
+      // instead we fetch all relevant discovered biomes in a single query and
+      // intersect in memory.
+      const coordKey = (g: number, s: number, p: number) => `${g}:${s}:${p}`;
+      const discoveredByCoord = new Map<string, Set<string>>();
 
-          if (biomes.length > 0) {
-            const [countResult] = await db
-              .select({ count: sql<number>`count(*)::int` })
-              .from(discoveredBiomes)
-              .where(
-                and(
-                  eq(discoveredBiomes.userId, userId),
-                  eq(discoveredBiomes.galaxy, r.galaxy),
-                  eq(discoveredBiomes.system, r.system),
-                  eq(discoveredBiomes.position, r.position),
-                  sql`${discoveredBiomes.biomeId} IN (${sql.join(biomes.map(b => sql`${b.id}`), sql`, `)})`,
-                ),
-              );
-            knownBiomeCount = countResult?.count ?? 0;
+      const coordTuples = new Map<string, { g: number; s: number; p: number }>();
+      const allBiomeIds = new Set<string>();
+      for (const r of results) {
+        coordTuples.set(coordKey(r.galaxy, r.system, r.position), { g: r.galaxy, s: r.system, p: r.position });
+        for (const b of r.reportBiomes as Array<{ id: string }>) allBiomeIds.add(b.id);
+      }
+
+      if (coordTuples.size > 0 && allBiomeIds.size > 0) {
+        const tuples = Array.from(coordTuples.values());
+        const biomeIds = Array.from(allBiomeIds);
+        const rows = await db
+          .select({
+            galaxy: discoveredBiomes.galaxy,
+            system: discoveredBiomes.system,
+            position: discoveredBiomes.position,
+            biomeId: discoveredBiomes.biomeId,
+          })
+          .from(discoveredBiomes)
+          .where(
+            and(
+              eq(discoveredBiomes.userId, userId),
+              sql`(${discoveredBiomes.galaxy}, ${discoveredBiomes.system}, ${discoveredBiomes.position}) IN (${sql.join(
+                tuples.map((t) => sql`(${t.g}, ${t.s}, ${t.p})`),
+                sql`, `,
+              )})`,
+              sql`${discoveredBiomes.biomeId} IN (${sql.join(biomeIds.map((id) => sql`${id}`), sql`, `)})`,
+            ),
+          );
+        for (const row of rows) {
+          const key = coordKey(row.galaxy, row.system, row.position);
+          let set = discoveredByCoord.get(key);
+          if (!set) {
+            set = new Set();
+            discoveredByCoord.set(key, set);
           }
+          set.add(row.biomeId);
+        }
+      }
 
-          return {
-            offerId: r.offerId,
-            galaxy: r.galaxy,
-            system: r.system,
-            planetClassId: r.planetClassId,
-            biomeCount: r.biomeCount,
-            maxRarity: r.maxRarity,
-            isComplete: r.isComplete,
-            priceMinerai: Number(r.priceMinerai),
-            priceSilicium: Number(r.priceSilicium),
-            priceHydrogene: Number(r.priceHydrogene),
-            sellerUsername: r.sellerUsername,
-            sellerCoords: { galaxy: r.sellerGalaxy, system: r.sellerSystem, position: r.sellerPosition },
-            expiresAt: r.expiresAt.toISOString(),
-            createdAt: r.createdAt.toISOString(),
-            knownBiomeCount,
-          };
-        }),
-      );
+      const enriched = results.map((r) => {
+        const biomes = r.reportBiomes as Array<{ id: string }>;
+        const knownSet = discoveredByCoord.get(coordKey(r.galaxy, r.system, r.position));
+        const knownBiomeCount = knownSet ? biomes.reduce((n, b) => n + (knownSet.has(b.id) ? 1 : 0), 0) : 0;
+
+        return {
+          offerId: r.offerId,
+          galaxy: r.galaxy,
+          system: r.system,
+          planetClassId: r.planetClassId,
+          biomeCount: r.biomeCount,
+          maxRarity: r.maxRarity,
+          isComplete: r.isComplete,
+          priceMinerai: Number(r.priceMinerai),
+          priceSilicium: Number(r.priceSilicium),
+          priceHydrogene: Number(r.priceHydrogene),
+          sellerUsername: r.sellerUsername,
+          sellerCoords: { galaxy: r.sellerGalaxy, system: r.sellerSystem, position: r.sellerPosition },
+          expiresAt: r.expiresAt.toISOString(),
+          createdAt: r.createdAt.toISOString(),
+          knownBiomeCount,
+        };
+      });
 
       return { offers: enriched, nextCursor };
     },

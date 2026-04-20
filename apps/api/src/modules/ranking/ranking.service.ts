@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@exilium/db';
+import { eq } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
 import {
   calculateBuildingPoints,
@@ -10,60 +11,76 @@ import {
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 
-async function getBuildingLevels(db: Database, planetId: string): Promise<Record<string, number>> {
-  const rows = await db
-    .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
-    .from(planetBuildings)
-    .where(eq(planetBuildings.planetId, planetId));
-  const levels: Record<string, number> = {};
-  for (const row of rows) {
-    levels[row.buildingId] = row.level;
-  }
-  return levels;
-}
-
 export function createRankingService(db: Database, gameConfigService: GameConfigService) {
   return {
     async recalculateAll() {
-      const allUsers = await db.select({ id: users.id }).from(users);
       const config = await gameConfigService.getFullConfig();
       const pointsDivisor = Number(config.universe.ranking_points_divisor) || 1000;
 
+      // Load every row we need in 5 queries instead of N×M. We group by
+      // owner/planet in memory, then score each user from the pre-built maps.
+      const [allUsers, allPlanets, allBuildings, allResearch, allShips, allDefenses] = await Promise.all([
+        db.select({ id: users.id }).from(users),
+        db.select({ id: planets.id, userId: planets.userId }).from(planets),
+        db.select({ planetId: planetBuildings.planetId, buildingId: planetBuildings.buildingId, level: planetBuildings.level }).from(planetBuildings),
+        db.select().from(userResearch),
+        db.select().from(planetShips),
+        db.select().from(planetDefenses),
+      ]);
+
+      const planetsByUser = new Map<string, string[]>();
+      for (const p of allPlanets) {
+        const list = planetsByUser.get(p.userId);
+        if (list) list.push(p.id);
+        else planetsByUser.set(p.userId, [p.id]);
+      }
+
+      const buildingsByPlanet = new Map<string, Record<string, number>>();
+      for (const row of allBuildings) {
+        let levels = buildingsByPlanet.get(row.planetId);
+        if (!levels) {
+          levels = {};
+          buildingsByPlanet.set(row.planetId, levels);
+        }
+        levels[row.buildingId] = row.level;
+      }
+
+      const researchByUser = new Map<string, Record<string, number>>();
+      for (const row of allResearch) {
+        const { userId, ...levels } = row;
+        researchByUser.set(userId, levels as Record<string, number>);
+      }
+
+      const shipsByPlanet = new Map<string, Record<string, number>>();
+      for (const row of allShips) {
+        const { planetId, ...counts } = row;
+        shipsByPlanet.set(planetId, counts as Record<string, number>);
+      }
+
+      const defensesByPlanet = new Map<string, Record<string, number>>();
+      for (const row of allDefenses) {
+        const { planetId, ...counts } = row;
+        defensesByPlanet.set(planetId, counts as Record<string, number>);
+      }
+
       const pointsPerUser: { userId: string; totalPoints: number }[] = [];
-
       for (const user of allUsers) {
-        const userPlanets = await db.select().from(planets).where(eq(planets.userId, user.id));
+        const userPlanetIds = planetsByUser.get(user.id) ?? [];
+
         let buildingPoints = 0;
-        for (const planet of userPlanets) {
-          const buildingLevels = await getBuildingLevels(db, planet.id);
-          buildingPoints += calculateBuildingPoints(buildingLevels, config.buildings, pointsDivisor);
-        }
-
-        const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, user.id)).limit(1);
-        const researchPoints = research
-          ? (() => {
-              const { userId: _, ...levels } = research;
-              return calculateResearchPoints(levels as Record<string, number>, config.research, pointsDivisor);
-            })()
-          : 0;
-
         let fleetPoints = 0;
-        for (const planet of userPlanets) {
-          const [ships] = await db.select().from(planetShips).where(eq(planetShips.planetId, planet.id)).limit(1);
-          if (ships) {
-            const { planetId: _, ...counts } = ships;
-            fleetPoints += calculateFleetPoints(counts as Record<string, number>, config.ships, pointsDivisor);
-          }
+        let defensePoints = 0;
+        for (const planetId of userPlanetIds) {
+          const levels = buildingsByPlanet.get(planetId);
+          if (levels) buildingPoints += calculateBuildingPoints(levels, config.buildings, pointsDivisor);
+          const ships = shipsByPlanet.get(planetId);
+          if (ships) fleetPoints += calculateFleetPoints(ships, config.ships, pointsDivisor);
+          const defenses = defensesByPlanet.get(planetId);
+          if (defenses) defensePoints += calculateDefensePoints(defenses, config.defenses, pointsDivisor);
         }
 
-        let defensePoints = 0;
-        for (const planet of userPlanets) {
-          const [defenses] = await db.select().from(planetDefenses).where(eq(planetDefenses.planetId, planet.id)).limit(1);
-          if (defenses) {
-            const { planetId: _, ...counts } = defenses;
-            defensePoints += calculateDefensePoints(counts as Record<string, number>, config.defenses, pointsDivisor);
-          }
-        }
+        const research = researchByUser.get(user.id);
+        const researchPoints = research ? calculateResearchPoints(research, config.research, pointsDivisor) : 0;
 
         const total = calculateTotalPoints(buildingPoints, researchPoints, fleetPoints, defensePoints);
         pointsPerUser.push({ userId: user.id, totalPoints: total });
@@ -71,19 +88,31 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
 
       pointsPerUser.sort((a, b) => b.totalPoints - a.totalPoints);
 
-      const now = new Date();
-      for (let i = 0; i < pointsPerUser.length; i++) {
-        const { userId, totalPoints } = pointsPerUser[i];
-        const rank = i + 1;
-
-        await db
-          .insert(rankings)
-          .values({ userId, totalPoints, rank, calculatedAt: now })
-          .onConflictDoUpdate({
-            target: rankings.userId,
-            set: { totalPoints, rank, calculatedAt: now },
-          });
+      if (pointsPerUser.length === 0) {
+        console.log('[ranking] No users to rank');
+        return;
       }
+
+      const now = new Date();
+      const rows = pointsPerUser.map((p, i) => ({
+        userId: p.userId,
+        totalPoints: p.totalPoints,
+        rank: i + 1,
+        calculatedAt: now,
+      }));
+
+      // Single round-trip upsert. excluded.* refers to the incoming row.
+      await db
+        .insert(rankings)
+        .values(rows)
+        .onConflictDoUpdate({
+          target: rankings.userId,
+          set: {
+            totalPoints: sql`excluded.total_points`,
+            rank: sql`excluded.rank`,
+            calculatedAt: sql`excluded.calculated_at`,
+          },
+        });
 
       console.log(`[ranking] Recalculated rankings for ${pointsPerUser.length} users`);
     },
