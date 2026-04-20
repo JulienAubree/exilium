@@ -1,6 +1,6 @@
 import { eq, asc, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, userExilium, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings } from '@exilium/db';
+import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';

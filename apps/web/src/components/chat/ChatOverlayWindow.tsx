@@ -48,7 +48,7 @@ export function ChatOverlayWindow({ userId: otherUserId, username, avatarId, thr
       utils.message.unreadCount.invalidate();
       utils.message.conversations.invalidate();
     }
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [threadId]);
 
   const replyMutation = trpc.message.reply.useMutation({
     onSuccess: () => {

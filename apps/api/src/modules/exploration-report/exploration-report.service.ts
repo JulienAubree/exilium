@@ -93,12 +93,6 @@ export function createExplorationReportService(
     return pickPlanetTypeForPosition(maxTemp, typeRng);
   }
 
-  /** Compute the full biome count for a position (deterministic). */
-  function computeFullBiomeCount(galaxy: number, system: number, position: number): number {
-    const rng = seededRandom(coordinateSeed(galaxy, system, position));
-    return generateBiomeCount(rng);
-  }
-
   /** Compute the full biome set for a position (deterministic), using the game config catalogue. */
   function computeFullBiomes(
     galaxy: number,

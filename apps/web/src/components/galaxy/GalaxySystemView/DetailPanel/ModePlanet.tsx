@@ -12,7 +12,6 @@
  */
 
 import { useState, type ReactElement, type ReactNode } from 'react';
-import { useNavigate } from 'react-router';
 import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
 import { BiomeChips } from './BiomeChips';
@@ -372,7 +371,6 @@ function EmptyDiscoveredPanel({
   actions: DetailPanelActions;
   typeName: string;
 }) {
-  const navigate = useNavigate();
   const totalBiomes = view.biomes.length + (view.undiscoveredCount ?? 0);
   const discoveredCount = view.biomes.length;
   const isComplete = (view.undiscoveredCount ?? 0) === 0;

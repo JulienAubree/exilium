@@ -23,7 +23,7 @@ interface ReportCardProps {
   gameConfig: any;
 }
 
-export function ReportCard({ report, gameConfig }: ReportCardProps) {
+export function ReportCard({ report, gameConfig: _gameConfig }: ReportCardProps) {
   const navigate = useNavigate();
   const result = report.result ?? {};
   const isCombat = report.missionType === 'attack' || report.missionType === 'pirate';

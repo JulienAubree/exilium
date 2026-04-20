@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
 
 const TYPE_OPTIONS = [

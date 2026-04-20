@@ -14,7 +14,6 @@ const BTN_BASE =
 const BTN_EMERALD = `${BTN_BASE} bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25`;
 const BTN_CYAN = `${BTN_BASE} bg-cyan-500/15 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/25`;
 const BTN_AMBER = `${BTN_BASE} bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25`;
-const BTN_NEUTRAL = `${BTN_BASE} bg-white/5 text-foreground border-white/10 hover:bg-white/10`;
 const BTN_DISABLED = `${BTN_BASE} bg-white/5 text-muted-foreground border-white/5 cursor-not-allowed opacity-50`;
 
 function ActionButton({
@@ -246,9 +245,6 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
     rarities,
     planetTypeName,
   });
-
-  // coordsLabel kept for non-link usages; CoordsLink used in JSX
-  const coordsLabel = `[${coordinates.galaxy}:${coordinates.system}:${coordinates.position}]`;
 
   const statusBadge = isComplete
     ? { label: 'Cartographie complète', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' }

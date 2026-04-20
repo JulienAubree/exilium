@@ -22,7 +22,7 @@ const db = drizzle(client);
 
 async function main() {
   // 1. Ensure all planets have status 'active' (for pre-migration planets with NULL status)
-  const statusResult = await db
+  await db
     .update(planets)
     .set({ status: 'active' })
     .where(isNull(planets.status));

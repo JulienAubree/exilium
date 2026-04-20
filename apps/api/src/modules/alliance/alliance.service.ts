@@ -202,7 +202,7 @@ export function createAllianceService(db: Database, redis?: Redis) {
       return { success: true };
     },
 
-    async sendCircular(userId: string, subject: string, body: string) {
+    async sendCircular(userId: string, subject: string, _body: string) {
       const membership = await requireRole(db, userId, ['founder', 'officer']);
       const [sender] = await db.select({ username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
       const senderUsername = sender?.username ?? 'Officier';

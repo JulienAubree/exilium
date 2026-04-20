@@ -31,7 +31,7 @@ export function ChatView({ threadId, otherUsername, otherUserId, otherAvatarId, 
       utils.message.unreadCount.invalidate();
       utils.message.conversations.invalidate();
     }
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [threadId]);
 
   const replyMutation = trpc.message.reply.useMutation({
     onSuccess: () => {

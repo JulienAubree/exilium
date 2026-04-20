@@ -4,7 +4,7 @@ import { trpc } from '@/trpc';
 import { GameImage } from '@/components/common/GameImage';
 import { PrerequisiteList, type PrerequisiteItem } from '@/components/common/PrerequisiteList';
 import { type PlanetContext } from '@/lib/entity-details';
-import { getBuildingName, getResearchName } from '@/lib/entity-names';
+import { getBuildingName } from '@/lib/entity-names';
 import { buildProductionConfig } from '@/lib/production-config';
 import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,

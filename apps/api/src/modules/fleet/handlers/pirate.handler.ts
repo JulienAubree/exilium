@@ -1,8 +1,8 @@
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { fleetEvents, pveMissions, planets } from '@exilium/db';
 import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig, type ShipCombatConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, getCombatMultipliers, formatDuration } from '../fleet.types.js';
+import { buildShipStatsMap, getCombatMultipliers } from '../fleet.types.js';
 import { upsertDebris } from '../combat.helpers.js';
 import { publishNotification } from '../../notification/notification.publisher.js';
 
@@ -116,7 +116,6 @@ export class PirateHandler implements MissionHandler {
     }
 
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
-    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
     const outcomeText = result.outcome === 'attacker' ? 'Victoire' : 'Défaite';
 
     // Create structured combat report

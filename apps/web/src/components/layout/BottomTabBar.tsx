@@ -18,7 +18,6 @@ import {
   FlagshipIcon,
   EmpireIcon,
   HistoryIcon,
-  ReportsIcon,
 } from '@/lib/icons';
 import { MessageSquarePlus } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';

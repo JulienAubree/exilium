@@ -68,7 +68,7 @@ function inlineFormat(text: string): React.ReactNode {
       continue;
     }
     // Find next special char or end
-    const nextSpecial = remaining.search(/[\*`\[]/);
+    const nextSpecial = remaining.search(/[*`[]/);
     if (nextSpecial === -1) {
       tokens.push(<span key={key++}>{remaining}</span>);
       break;

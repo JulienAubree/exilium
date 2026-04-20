@@ -91,7 +91,7 @@ function EmptySlot({ label, cta, onClick }: { label: string; cta: string; onClic
 }
 
 export function OverviewActivities({
-  activeBuilding, shipyardQueue, commandCenterQueue, planetId, gameConfig,
+  activeBuilding, shipyardQueue, commandCenterQueue, planetId: _planetId, gameConfig,
   onBuildingComplete, onShipyardComplete, onCommandCenterComplete,
 }: OverviewActivitiesProps) {
   const navigate = useNavigate();

@@ -75,14 +75,6 @@ export function EmpireKpiBar({ totalRates, activeFleetCount, inboundAttackCount,
         : 'text-emerald-400'
     : 'text-foreground';
 
-  const govIconBg = governance
-    ? governance.colonyCount > governance.capacity
-      ? 'bg-destructive/10'
-      : governance.colonyCount === governance.capacity
-        ? 'bg-amber-400/10'
-        : 'bg-emerald-400/10'
-    : 'bg-muted';
-
   return (
     <div className="rounded-xl border border-border/30 bg-card/60 overflow-hidden">
       {/* KPI row — single line, compact */}

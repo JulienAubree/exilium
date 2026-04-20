@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/format';

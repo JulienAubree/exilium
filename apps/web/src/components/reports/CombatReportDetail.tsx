@@ -33,24 +33,13 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
   );
   const detailedLog = detailedLogData as { events: any[]; snapshots: any[][]; initialUnits: any[] } | null | undefined;
 
-  const outcome = result.outcome as string;
   const perspective = result.perspective as 'attacker' | 'defender' | undefined;
   const attackerUsername = result.attackerUsername as string | undefined;
   const defenderUsername = result.defenderUsername as string | undefined;
 
-  const isPlayerVictory = outcome === 'draw'
-    ? null
-    : perspective === 'defender'
-      ? outcome === 'defender'
-      : outcome === 'attacker'; // attacker perspective or undefined (backward compat)
-  const outcomeLabel = isPlayerVictory === null ? 'Match nul' : isPlayerVictory ? 'Victoire' : 'Défaite';
-  const outcomeColor = isPlayerVictory === null ? 'text-amber-400' : isPlayerVictory ? 'text-emerald-400' : 'text-red-400';
-  const outcomeBg = isPlayerVictory === null ? 'bg-amber-500/20' : isPlayerVictory ? 'bg-emerald-500/20' : 'bg-red-500/20';
-
   const attackerFP = result.attackerFP as number | undefined;
   const defenderFP = result.defenderFP as number | undefined;
   const totalFP = (attackerFP ?? 0) + (defenderFP ?? 0);
-  const attackerFPPct = totalFP > 0 ? ((attackerFP ?? 0) / totalFP) * 100 : 50;
 
   const roundCount = result.roundCount as number ?? 0;
   const shotsPerRound = result.shotsPerRound as { attacker: number; defender: number }[] | undefined;

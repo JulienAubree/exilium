@@ -159,7 +159,7 @@ export class SpyHandler implements MissionHandler {
           .from(flagshipTalents)
           .where(eq(flagshipTalents.flagshipId, defenderFlagship.id));
 
-        let bonusWeapons = 0, bonusShield = 0, bonusHull = 0, bonusCargo = 0, bonusArmor = 0, bonusShotCount = 0;
+        let bonusWeapons = 0, bonusShield = 0, bonusHull = 0, bonusCargo = 0;
         for (const row of talentRows) {
           if (row.currentRank <= 0) continue;
           const def = config.talents[row.talentId];
@@ -170,16 +170,12 @@ export class SpyHandler implements MissionHandler {
           else if (params.stat === 'shield') bonusShield += bonus;
           else if (params.stat === 'hull') bonusHull += bonus;
           else if (params.stat === 'cargoCapacity') bonusCargo += bonus;
-          else if (params.stat === 'baseArmor') bonusArmor += bonus;
-          else if (params.stat === 'shotCount') bonusShotCount += bonus;
         }
 
         // Apply hull passive bonuses
         const hullConfig = defenderFlagship.hullId ? (config.hulls?.[defenderFlagship.hullId] ?? null) : null;
         if (hullConfig) {
           bonusWeapons += (hullConfig.passiveBonuses?.bonus_weapons ?? 0);
-          bonusArmor += (hullConfig.passiveBonuses?.bonus_armor ?? 0);
-          bonusShotCount += (hullConfig.passiveBonuses?.bonus_shot_count ?? 0);
         }
 
         reportResult.flagship = {

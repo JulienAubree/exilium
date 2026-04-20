@@ -25,10 +25,6 @@ function formatDate(date: string | Date) {
   }).format(new Date(date));
 }
 
-function formatCoords(coords: { galaxy: number; system: number; position: number }) {
-  return `[${coords.galaxy}:${coords.system}:${coords.position}]`;
-}
-
 export default function ReportDetail() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
@@ -46,7 +42,7 @@ export default function ReportDetail() {
       utils.report.unreadCount.invalidate();
       utils.report.list.invalidate();
     }
-  }, [report?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [report?.id]);
 
   const deleteMutation = trpc.report.delete.useMutation({
     onSuccess: () => {

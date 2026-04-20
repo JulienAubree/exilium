@@ -23,7 +23,7 @@ export function createMarketService(
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
   exiliumService?: ReturnType<typeof createExiliumService>,
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
-  gameEventService?: ReturnType<typeof createGameEventService>,
+  _gameEventService?: ReturnType<typeof createGameEventService>,
 ) {
   async function getMarketLevel(planetId: string): Promise<number> {
     const [row] = await db

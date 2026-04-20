@@ -19,7 +19,7 @@ interface DamageGroup {
   hullDamage: number;
 }
 
-export function DamagePanel({ events, unitType, round, side, gameConfig }: DamagePanelProps) {
+export function DamagePanel({ events, unitType, round, side: _side, gameConfig }: DamagePanelProps) {
   // Damage dealt: events where shooterType matches and round matches
   const dealtEvents = events.filter(
     (e) => e.round === round && e.shooterType === unitType,

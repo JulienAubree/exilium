@@ -22,12 +22,6 @@ const RARITY_COLORS: Record<string, string> = {
 const RARITY_LABELS: Record<string, string> = {
   common: 'Commun', uncommon: 'Peu commun', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire',
 };
-const STAT_SHORT: Record<string, { label: string }> = {
-  production_minerai: { label: 'Minerai' }, production_silicium: { label: 'Silicium' },
-  production_hydrogene: { label: 'Hydrogène' }, energy_production: { label: 'Énergie' },
-  storage_minerai: { label: 'Stock. Fe' }, storage_silicium: { label: 'Stock. Si' },
-  storage_hydrogene: { label: 'Stock. H' },
-};
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Prod. minerai', production_silicium: 'Prod. silicium',
   production_hydrogene: 'Prod. hydrogène', energy_production: 'Prod. énergie',

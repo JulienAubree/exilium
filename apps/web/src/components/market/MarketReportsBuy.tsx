@@ -36,7 +36,7 @@ interface MarketReportsBuyProps {
   planetId: string;
 }
 
-export function MarketReportsBuy({ planetId }: MarketReportsBuyProps) {
+export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps) {
   const navigate = useNavigate();
   const { data: gameConfig } = useGameConfig();
 

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FlagshipIcon } from '@/lib/icons';
@@ -43,7 +42,6 @@ interface OverviewHeroProps {
 }
 
 export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetTypeBonus, governance, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
-  const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');

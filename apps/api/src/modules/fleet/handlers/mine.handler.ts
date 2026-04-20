@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@exilium/db';
 import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
-import { buildShipStatsMap, formatDuration } from '../fleet.types.js';
+import { buildShipStatsMap } from '../fleet.types.js';
 import { findShipsByRole } from '../../../lib/config-helpers.js';
 
 export class MineHandler implements PhasedMissionHandler {
@@ -244,7 +244,6 @@ export class MineHandler implements PhasedMissionHandler {
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
     const meta = fleetEvent.metadata as { originalDepartureTime?: string } | null;
     const originalDeparture = meta?.originalDepartureTime ? new Date(meta.originalDepartureTime) : fleetEvent.departureTime;
-    const totalDuration = formatDuration(Date.now() - originalDeparture.getTime());
 
     // Fetch origin planet for coordinates
     const [originPlanet] = await ctx.db.select({

@@ -2,7 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { debrisFields, planets } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { formatDuration, buildShipStatsMap } from '../fleet.types.js';
+import { buildShipStatsMap } from '../fleet.types.js';
 import { totalCargoCapacity } from '@exilium/game-engine';
 
 export class RecycleHandler implements MissionHandler {
@@ -132,7 +132,6 @@ export class RecycleHandler implements MissionHandler {
     }
 
     const coords = `[${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}]`;
-    const duration = formatDuration(fleetEvent.arrivalTime.getTime() - fleetEvent.departureTime.getTime());
 
     // Fetch origin planet for report
     const [originPlanet] = await ctx.db.select({

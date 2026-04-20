@@ -79,13 +79,6 @@ function ValueStars({ count }: { count: number }) {
   );
 }
 
-function formatPrice(mi: number, si: number, h2: number) {
-  const parts: string[] = [];
-  if (mi > 0) parts.push(`${mi.toLocaleString('fr-FR')} Mi`);
-  if (si > 0) parts.push(`${si.toLocaleString('fr-FR')} Si`);
-  if (h2 > 0) parts.push(`${h2.toLocaleString('fr-FR')} H2`);
-  return parts.join(' + ') || '0';
-}
 
 type SectionId = 'inventory' | 'listed' | 'sold';
 

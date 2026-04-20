@@ -13,7 +13,7 @@ interface MineReportDetailProps {
   gameConfig: any;
 }
 
-export function MineReportDetail({ result, fleet, gameConfig }: MineReportDetailProps) {
+export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: MineReportDetailProps) {
   const rewards = result.rewards ?? {};
   const gross = result.grossMined ?? {};
   const slagPct = Math.round((result.slagRate ?? 0) * 100);

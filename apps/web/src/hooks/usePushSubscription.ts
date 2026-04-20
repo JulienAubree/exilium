@@ -61,5 +61,5 @@ export function usePushSubscription() {
         // Push not supported or permission denied
       }
     })();
-  }, [keyData?.publicKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [keyData?.publicKey]);
 }

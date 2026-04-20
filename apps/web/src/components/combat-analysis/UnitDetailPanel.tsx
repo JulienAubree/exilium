@@ -80,12 +80,6 @@ export function UnitDetailPanel({
 
   // Compute total damage dealt and received by this unit type this round
   const roundEvents = events.filter((e) => e.round === selectedRound);
-  const damageDealt = roundEvents
-    .filter((e) => e.shooterType === selectedUnitType)
-    .reduce((sum, e) => sum + e.damage, 0);
-  const damageReceived = roundEvents
-    .filter((e) => e.targetType === selectedUnitType)
-    .reduce((sum, e) => sum + e.damage, 0);
   const losses = roundEvents.filter(
     (e) => e.targetType === selectedUnitType && e.targetDestroyed,
   ).length;

@@ -1,4 +1,4 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, buildQueue, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';

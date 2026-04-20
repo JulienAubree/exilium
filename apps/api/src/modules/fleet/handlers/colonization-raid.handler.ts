@@ -1,9 +1,9 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { planets, planetShips, colonizationProcesses } from '@exilium/db';
-import { simulateCombat, totalCargoCapacity } from '@exilium/game-engine';
+import { simulateCombat } from '@exilium/game-engine';
 import type { CombatInput } from '@exilium/game-engine';
-import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
+import type { MissionHandler, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
+import { buildShipCombatConfigs, buildShipCosts } from '../fleet.types.js';
 import {
   buildCombatConfig,
   parseUnitRow,
@@ -24,7 +24,6 @@ export class ColonizationRaidHandler implements MissionHandler {
     const noGarrisonPillage = Number(config.universe.colonization_raid_no_garrison_pillage) || 0.50;
     const garrisonPillage = Number(config.universe.colonization_raid_garrison_pillage) || 0.33;
 
-    const shipStatsMap = buildShipStatsMap(config);
     const shipCombatConfigs = buildShipCombatConfigs(config);
     const shipCostsMap = buildShipCosts(config);
     const shipIdSet = new Set(Object.keys(config.ships));

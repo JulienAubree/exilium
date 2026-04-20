@@ -83,7 +83,7 @@ function GridHeader({ icon: Icon, label, color, count }: { icon: any; label: str
 }
 
 export function OverviewGrid({
-  ships, defenses, movements, flagship, shieldLevel, currentPlanetId, currentPlanetName, currentPlanetCoords, gameConfig, onFleetTimerComplete,
+  ships, defenses, movements, flagship, shieldLevel, currentPlanetId, currentPlanetName: _currentPlanetName, currentPlanetCoords: _currentPlanetCoords, gameConfig, onFleetTimerComplete,
 }: OverviewGridProps) {
   const navigate = useNavigate();
   const totalShips = ships.reduce((sum, s) => sum + s.count, 0);

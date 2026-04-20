@@ -20,7 +20,6 @@ import {
   AllianceRankingIcon,
   EmpireIcon,
   HistoryIcon,
-  ReportsIcon,
 } from '@/lib/icons';
 
 interface NavItem {

@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, real, jsonb, uuid, primaryKey, pgEnum, smallint, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, jsonb, uuid, primaryKey, pgEnum, smallint, boolean } from 'drizzle-orm/pg-core';
 import { planets } from './planets.js';
 import { users } from './users.js';
 

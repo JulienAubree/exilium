@@ -27,14 +27,6 @@ const RARITY_COLORS: Record<string, string> = {
   legendary: '#eab308',
 };
 
-const RARITY_LABELS: Record<string, string> = {
-  common: 'Commun',
-  uncommon: 'Peu commun',
-  rare: 'Rare',
-  epic: 'Épique',
-  legendary: 'Légendaire',
-};
-
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',

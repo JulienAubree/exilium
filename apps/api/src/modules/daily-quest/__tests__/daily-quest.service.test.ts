@@ -54,8 +54,17 @@ const mockDbUpdate = vi.fn().mockImplementation(() => ({
   }),
 }));
 
+const mockDbSelect = vi.fn().mockImplementation(() => ({
+  from: vi.fn().mockReturnValue({
+    where: vi.fn().mockReturnValue({
+      limit: vi.fn().mockResolvedValue([{ isComplete: true }]),
+    }),
+  }),
+}));
+
 const mockDb = {
   update: mockDbUpdate,
+  select: mockDbSelect,
   transaction: mockTransaction,
 } as unknown;
 
