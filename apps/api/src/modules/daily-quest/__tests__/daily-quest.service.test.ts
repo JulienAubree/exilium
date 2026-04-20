@@ -24,19 +24,23 @@ function resetRecord(userId = 'user-1') {
   };
 }
 
-const mockTxUpdate = vi.fn().mockImplementation(() => {
-  const obj = {
-    set: vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(undefined),
+const mockTxUpdate = vi.fn().mockImplementation(() => ({
+  set: vi.fn().mockImplementation((values: Record<string, unknown>) => ({
+    where: vi.fn().mockImplementation(async () => {
+      // Simuler la persistance sur fakeRecord pour que les appels suivants
+      // voient l'etat mis a jour (essentiel pour l'accumulation cross-event).
+      if ('dailyQuests' in values) fakeRecord.dailyQuests = values.dailyQuests;
+      if ('lastDailyAt' in values) fakeRecord.lastDailyAt = values.lastDailyAt as Date;
     }),
-  };
-  return obj;
-});
+  })),
+}));
 
 const mockTxSelect = vi.fn().mockImplementation(() => ({
   from: vi.fn().mockReturnValue({
     where: vi.fn().mockReturnValue({
-      for: vi.fn().mockResolvedValue([{ lastDailyAt: fakeRecord.lastDailyAt }]),
+      for: vi.fn().mockImplementation(() =>
+        Promise.resolve([{ lastDailyAt: fakeRecord.lastDailyAt, dailyQuests: fakeRecord.dailyQuests }]),
+      ),
     }),
   }),
 }));
@@ -324,6 +328,52 @@ describe('daily-quest.service', () => {
         questName: 'Mineur assidu',
         reward: 1,
       });
+    });
+
+    it('l\'accumulation n\'ecrase pas une completion concurrente (race protection)', async () => {
+      // Scenario: Call B (resources:collected, accumulation) a lu un snapshot
+      // stale via getOrCreate (lastDailyAt=null, tout pending). Pendant ce
+      // temps Call A a commit une completion (ex: construction) qui a set
+      // lastDailyAt=today et marque builder:completed / miner:expired.
+      // Call B ne doit PAS ecraser l'etat avec son progress stale.
+      setupTodayQuests([
+        { id: 'miner', status: 'pending' },
+        { id: 'navigator', status: 'pending' },
+        { id: 'builder', status: 'pending' },
+      ]);
+
+      // La transaction-scoped select (avec .for('update')) doit voir l'etat
+      // FRAIS commit par Call A : lastDailyAt deja set.
+      const dayStart = new Date();
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const committedByCallA = {
+        generated_at: dayStart.toISOString(),
+        quests: [
+          { id: 'miner', status: 'expired' as const },
+          { id: 'navigator', status: 'expired' as const },
+          { id: 'builder', status: 'completed' as const, completed_at: new Date().toISOString() },
+        ],
+      };
+      mockTxSelect.mockImplementationOnce(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            for: vi.fn().mockResolvedValue([
+              { lastDailyAt: new Date(), dailyQuests: committedByCallA },
+            ]),
+          }),
+        }),
+      }));
+
+      const result = await service.processEvent({
+        type: 'resources:collected',
+        userId: 'user-1',
+        payload: { totalCollected: 1000 },
+      });
+
+      expect(result).toBeNull();
+      // L'ecriture non-transactionnelle avec un state stale ne doit PAS arriver.
+      // Le fix route toute persistance d'accumulation via db.transaction.
+      expect(mockDbUpdate).not.toHaveBeenCalled();
     });
 
     it('retourne null si pas de quetes generees pour aujourd\'hui', async () => {

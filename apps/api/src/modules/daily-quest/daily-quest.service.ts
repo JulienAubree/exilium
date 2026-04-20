@@ -110,28 +110,41 @@ export function createDailyQuestService(
         // L'evenement correspond-il a cette quete ?
         if (!def.events.includes(event.type)) continue;
 
-        // Accumulation : additionner le champ au progress de la journee
+        // Accumulation : calculer le progress tentatif a partir du snapshot
+        // pour le check uniquement. La persistance se fait sous lock dans un
+        // bloc transactionnel plus bas pour ne pas ecraser une completion
+        // concurrente sur une autre quete.
         let checkEvent = event;
+        let increment = 0;
         if (def.accumulate) {
-          const increment = Number(event.payload[def.accumulate]) || 0;
-          quest.progress = (quest.progress || 0) + increment;
-          checkEvent = { ...event, payload: { ...event.payload, [def.accumulate]: quest.progress } };
+          increment = Number(event.payload[def.accumulate]) || 0;
+          const tentativeProgress = (quest.progress || 0) + increment;
+          checkEvent = { ...event, payload: { ...event.payload, [def.accumulate]: tentativeProgress } };
         }
 
         // La condition est-elle remplie ?
         if (!def.check(checkEvent, config.universe)) {
-          // Persister le progress meme si le seuil n'est pas atteint
-          if (def.accumulate) {
-            const progressState: DailyQuestState = {
-              ...state,
-              quests: state.quests.map(q =>
-                q.id === quest.id ? { ...q, progress: quest.progress } : q,
-              ),
-            };
-            await db
-              .update(userExilium)
-              .set({ dailyQuests: progressState, updatedAt: new Date() })
-              .where(eq(userExilium.userId, event.userId));
+          if (def.accumulate && increment > 0) {
+            await db.transaction(async (tx) => {
+              const [fresh] = await tx
+                .select({ lastDailyAt: userExilium.lastDailyAt, dailyQuests: userExilium.dailyQuests })
+                .from(userExilium)
+                .where(eq(userExilium.userId, event.userId))
+                .for('update');
+              if (!fresh) return;
+              if (fresh.lastDailyAt && fresh.lastDailyAt >= dayStart) return;
+              const freshState = fresh.dailyQuests as DailyQuestState | null;
+              if (!freshState || new Date(freshState.generated_at) < dayStart) return;
+              const target = freshState.quests.find(q => q.id === quest.id);
+              if (!target || target.status !== 'pending') return;
+              const updatedQuests = freshState.quests.map(q =>
+                q.id === quest.id ? { ...q, progress: (q.progress || 0) + increment } : q,
+              );
+              await tx
+                .update(userExilium)
+                .set({ dailyQuests: { ...freshState, quests: updatedQuests }, updatedAt: new Date() })
+                .where(eq(userExilium.userId, event.userId));
+            });
           }
           continue;
         }
@@ -154,7 +167,13 @@ export function createDailyQuestService(
           // Marquer la quete completee, les autres expirees
           const updatedQuests = state.quests.map(q => {
             if (q.id === quest.id) {
-              return { ...q, status: 'completed' as const, completed_at: new Date().toISOString() };
+              const finalProgress = def.accumulate ? (q.progress || 0) + increment : q.progress;
+              return {
+                ...q,
+                status: 'completed' as const,
+                completed_at: new Date().toISOString(),
+                ...(finalProgress !== undefined ? { progress: finalProgress } : {}),
+              };
             }
             if (q.status === 'pending') {
               return { ...q, status: 'expired' as const };
