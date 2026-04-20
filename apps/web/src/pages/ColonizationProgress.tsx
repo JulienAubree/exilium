@@ -127,6 +127,92 @@ function IconCrosshair({ className }: { className?: string }) {
   );
 }
 
+function IconInfo({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
+function IconChevron({ open, className }: { open: boolean; className?: string }) {
+  return (
+    <svg
+      className={cn('transition-transform', open && 'rotate-180', className)}
+      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+// ── Expandable explainer ──
+
+function ExpandableInfo({
+  label,
+  accent,
+  children,
+}: {
+  label: string;
+  accent: 'amber' | 'emerald' | 'blue' | 'red' | 'muted';
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const colorMap = {
+    amber: 'text-amber-300 hover:text-amber-200 border-amber-500/30 bg-amber-500/5',
+    emerald: 'text-emerald-300 hover:text-emerald-200 border-emerald-500/30 bg-emerald-500/5',
+    blue: 'text-blue-300 hover:text-blue-200 border-blue-500/30 bg-blue-500/5',
+    red: 'text-red-300 hover:text-red-200 border-red-500/30 bg-red-500/5',
+    muted: 'text-muted-foreground hover:text-foreground border-border/30 bg-card/40',
+  };
+  const btnColor = {
+    amber: 'text-amber-400/70 hover:text-amber-300',
+    emerald: 'text-emerald-400/70 hover:text-emerald-300',
+    blue: 'text-blue-400/70 hover:text-blue-300',
+    red: 'text-red-400/70 hover:text-red-300',
+    muted: 'text-muted-foreground/70 hover:text-foreground',
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+          btnColor[accent],
+        )}
+      >
+        <IconInfo className="h-3 w-3" />
+        <span>{label}</span>
+        <IconChevron open={open} />
+      </button>
+      {open && (
+        <div className={cn('mt-2 rounded-lg border p-3 text-[11px] leading-relaxed space-y-2', colorMap[accent])}>
+          {children}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── Convoy countdown component ──
+
+function ConvoyCountdown({ arrivalTime }: { arrivalTime: string }) {
+  const display = useCountdown(new Date(arrivalTime));
+  const hoursLeft = (new Date(arrivalTime).getTime() - Date.now()) / (1000 * 60 * 60);
+  return (
+    <span className={cn(
+      'font-mono text-sm tabular-nums font-bold',
+      hoursLeft < 0.25 ? 'text-emerald-300' : 'text-emerald-400',
+    )}>
+      {display}
+    </span>
+  );
+}
+
 // ── Raid countdown component ──
 
 function RaidCountdown({ arrivalTime }: { arrivalTime: string }) {
@@ -207,6 +293,18 @@ export default function ColonizationProgress() {
       f.targetSystem === planet.system &&
       f.targetPosition === planet.position &&
       (f.mission === 'colonization_raid' || f.mission === 'pirate' || f.mission === 'attack'),
+    );
+  }, [inboundFleets, planet]);
+
+  // Friendly inbound convoys targeting this planet (supply + reinforcements)
+  const planetConvoys = useMemo(() => {
+    if (!inboundFleets || !planet) return [];
+    return inboundFleets.filter((f: any) =>
+      !f.hostile &&
+      f.targetGalaxy === planet.galaxy &&
+      f.targetSystem === planet.system &&
+      f.targetPosition === planet.position &&
+      (f.mission === 'transport' || f.mission === 'colonize_supply' || f.mission === 'colonize_reinforce'),
     );
   }, [inboundFleets, planet]);
 
@@ -417,6 +515,32 @@ export default function ColonizationProgress() {
                 <span>Estimation : <span className="text-foreground font-medium">{etaDisplay}</span></span>
               )}
             </div>
+            {!outpostNotEstablished && (
+              <div className="mt-2">
+                <ExpandableInfo label="Decomposition du taux" accent="amber">
+                  <div className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-[11px]">
+                    <span className="text-muted-foreground">Taux de base</span>
+                    <span className="tabular-nums font-medium">{(status.basePassiveRate * 100).toFixed(1)}%/h</span>
+                    <span className="text-muted-foreground">× Difficulte</span>
+                    <span className="tabular-nums font-medium">×{status.difficultyFactor.toFixed(2)}</span>
+                    <span className="text-muted-foreground">× Multiplicateur stock</span>
+                    <span className={cn('tabular-nums font-medium', status.stockSufficient ? 'text-emerald-300' : 'text-red-300')}>
+                      ×{status.stockSufficient ? '1.00' : '0.50'}
+                    </span>
+                    <span className="text-muted-foreground border-t border-border/30 pt-1">Taux effectif</span>
+                    <span className="tabular-nums font-bold text-amber-300 border-t border-border/30 pt-1">{passiveRatePct}%/h</span>
+                  </div>
+                  <p className="text-muted-foreground">
+                    A ce rythme, {Math.round((1 - status.progress) * 100)}% restants arrivent dans ~<span className="text-foreground font-medium">{etaDisplay.replace('~', '')}</span>.
+                  </p>
+                  {!status.stockSufficient && (
+                    <p className="text-red-300">
+                      Stock epuise : envoyez des ressources pour retrouver le plein rendement ({(status.basePassiveRate * status.difficultyFactor * 100).toFixed(1)}%/h).
+                    </p>
+                  )}
+                </ExpandableInfo>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -439,6 +563,27 @@ export default function ColonizationProgress() {
                 Envoyez un premier convoi de ressources pour etablir l'avant-poste
                 et demarrer la colonisation.
               </p>
+              <div className="mt-3 flex justify-center">
+                <ExpandableInfo label="Comment ca marche ?" accent="amber">
+                  <p>
+                    Des que le convoi livre au moins <span className="text-minerai font-medium">{formatNumber(status.outpostThresholdMinerai)} minerai</span> et{' '}
+                    <span className="text-silicium font-medium">{formatNumber(status.outpostThresholdSilicium)} silicium</span>, l'avant-poste est etabli et la colonisation demarre.
+                  </p>
+                  <p>
+                    Progression de base : <span className="font-medium text-foreground">{(status.basePassiveRate * 100).toFixed(0)}%/h</span>
+                    {' '}× difficulte <span className="font-medium text-foreground">×{status.difficultyFactor.toFixed(2)}</span>
+                    {' '}= <span className="font-medium text-amber-300">{(status.basePassiveRate * status.difficultyFactor * 100).toFixed(1)}%/h</span> (avec stock suffisant).
+                  </p>
+                  <p>
+                    Temps estime jusqu'a 100% sans rupture : ~<span className="font-medium text-foreground">{formatHoursMinutes(1 / (status.basePassiveRate * status.difficultyFactor))}</span>.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Apres livraison : 1h de sursis sans consommation, puis la planete consomme{' '}
+                    <span className="text-minerai">{formatNumber(status.consumptionMineraiPerHour)} minerai/h</span> et{' '}
+                    <span className="text-silicium">{formatNumber(status.consumptionSiliciumPerHour)} silicium/h</span>. Rupture = progression divisee par 2.
+                  </p>
+                </ExpandableInfo>
+              </div>
             </div>
 
             <div className="flex items-center justify-center gap-3 text-sm">
@@ -471,6 +616,61 @@ export default function ColonizationProgress() {
               <IconSend className="w-4 h-4 mr-2" />
               Envoyer un convoi
             </Button>
+
+            {planetConvoys.length > 0 && (
+              <div className="mx-auto max-w-md rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <IconTruck className="w-3.5 h-3.5" />
+                    Convois en approche
+                  </p>
+                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    {planetConvoys.length}
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {planetConvoys.map((f: any) => {
+                    const minerai = Number(f.mineraiCargo ?? 0);
+                    const silicium = Number(f.siliciumCargo ?? 0);
+                    const hydrogene = Number(f.hydrogeneCargo ?? 0);
+                    const shipCount = Object.values(f.ships as Record<string, number>).reduce((a, b) => a + b, 0);
+                    const missionLabel =
+                      f.mission === 'colonize_reinforce' ? 'Renforts' :
+                      f.mission === 'colonize_supply' ? 'Ravitaillement' :
+                      'Transport';
+                    return (
+                      <div
+                        key={f.id}
+                        className="rounded-md bg-card/60 border border-border/20 px-2.5 py-2 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-emerald-300">{missionLabel}</span>
+                            {f.originPlanetName && (
+                              <span className="text-[10px] text-muted-foreground truncate">
+                                · de {f.originPlanetName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums mt-0.5">
+                            {minerai > 0 && <span className="text-minerai">{formatNumber(minerai)} minerai</span>}
+                            {silicium > 0 && <span className="text-silicium">{formatNumber(silicium)} silicium</span>}
+                            {hydrogene > 0 && <span className="text-hydrogene">{formatNumber(hydrogene)} hydrogène</span>}
+                            {minerai === 0 && silicium === 0 && hydrogene === 0 && shipCount > 0 && (
+                              <span className="text-muted-foreground">{shipCount} vaisseau{shipCount > 1 ? 'x' : ''}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <IconClock className="w-3.5 h-3.5 text-emerald-400/60" />
+                          <ConvoyCountdown arrivalTime={f.arrivalTime} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="mx-auto max-w-md rounded-lg border border-border/30 bg-card/40 p-3 text-left space-y-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -509,7 +709,7 @@ export default function ColonizationProgress() {
 
             {/* ════ LOGISTIQUE ════ */}
             <section className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-900/5 overflow-hidden">
-              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div className="px-4 pt-4 pb-2 flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                   <IconTruck className="w-4 h-4" />
                   Logistique
@@ -533,6 +733,37 @@ export default function ColonizationProgress() {
                       <span className="text-[11px] text-red-400 font-medium">Rupture de stock — progression ralentie</span>
                     </>
                   )}
+                </div>
+              </div>
+
+              <div className="px-4 pb-2">
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  Envoyez des ressources pour prolonger l'autonomie et eviter la rupture de stock
+                  {!status.stockSufficient && <span className="text-red-300 font-medium"> (progression actuellement divisee par 2)</span>}.
+                </p>
+                <div className="mt-1.5">
+                  <ExpandableInfo label="Impact d'un convoi" accent="emerald">
+                    <p>
+                      Consommation : <span className="text-minerai font-medium">{formatNumber(status.consumptionMineraiPerHour)} minerai/h</span> +{' '}
+                      <span className="text-silicium font-medium">{formatNumber(status.consumptionSiliciumPerHour)} silicium/h</span>.
+                    </p>
+                    <div className="rounded-md bg-card/60 border border-border/20 p-2 space-y-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Prolongation d'autonomie</p>
+                      <p>
+                        1 000 minerai = +<span className="text-foreground font-medium">{formatHoursMinutes(1000 / Math.max(1, status.consumptionMineraiPerHour))}</span>
+                      </p>
+                      <p>
+                        10 000 minerai = +<span className="text-foreground font-medium">{formatHoursMinutes(10000 / Math.max(1, status.consumptionMineraiPerHour))}</span>
+                      </p>
+                      <p>
+                        1 000 silicium = +<span className="text-foreground font-medium">{formatHoursMinutes(1000 / Math.max(1, status.consumptionSiliciumPerHour))}</span>
+                      </p>
+                    </div>
+                    <p className="text-muted-foreground">
+                      Rupture = taux divise par 2 (vous perdez environ {((status.basePassiveRate * status.difficultyFactor * 0.5) * 100).toFixed(1)}%/h).
+                      L'autonomie la plus courte des deux ressources fait foi.
+                    </p>
+                  </ExpandableInfo>
                 </div>
               </div>
 
@@ -601,7 +832,7 @@ export default function ColonizationProgress() {
 
             {/* ════ GARNISON ════ */}
             <section className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-blue-900/5 overflow-hidden">
-              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div className="px-4 pt-4 pb-2 flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
                   <IconShield className="w-4 h-4" />
                   Garnison
@@ -609,6 +840,26 @@ export default function ColonizationProgress() {
                 <span className="text-xs font-bold text-blue-400 tabular-nums">
                   {formatNumber(status.stationedFP)} FP
                 </span>
+              </div>
+
+              <div className="px-4 pb-2">
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  Les vaisseaux stationnes defendent la colonie contre les raids pirates qui peuvent survenir pendant la colonisation.
+                </p>
+                <div className="mt-1.5">
+                  <ExpandableInfo label="Role de la garnison" accent="blue">
+                    <p>
+                      Votre garnison actuelle : <span className="text-blue-300 font-medium">{formatNumber(status.stationedFP)} FP</span>.
+                      Elle intercepte les raids pirates a leur arrivee.
+                    </p>
+                    <p>
+                      La taille des raids croit avec le niveau IPC (actuellement <span className="text-foreground font-medium">niv. {status.ipcLevel}</span>) et, dans une moindre mesure, avec votre garnison elle-meme. Maintenez un FP suffisant pour vaincre les raids sans surdimensionner.
+                    </p>
+                    <p className="text-muted-foreground">
+                      Conseil : envoyez des renforts des que vous voyez des menaces en approche. Sans garnison, les raids detruisent vos stocks et peuvent ralentir la colonisation.
+                    </p>
+                  </ExpandableInfo>
+                </div>
               </div>
 
               <div className="px-4 pb-3">
@@ -652,7 +903,7 @@ export default function ColonizationProgress() {
 
             {/* ════ MENACES ════ */}
             <section className="rounded-xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-red-900/5 overflow-hidden">
-              <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div className="px-4 pt-4 pb-2 flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
                   <IconAlertTriangle className="w-4 h-4" />
                   Menaces
@@ -662,6 +913,25 @@ export default function ColonizationProgress() {
                     {planetRaids.length} en approche
                   </span>
                 )}
+              </div>
+
+              <div className="px-4 pb-2">
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  Les pirates lancent des raids a intervalles irreguliers tant que la colonisation n'est pas terminee.
+                </p>
+                <div className="mt-1.5">
+                  <ExpandableInfo label="Comprendre les raids" accent="red">
+                    <p>
+                      Un raid peut survenir a tout moment apres l'etablissement de l'avant-poste. Votre niveau de detection (lie a vos batiments) determine les informations visibles : compte a rebours, composition, identite.
+                    </p>
+                    <p>
+                      Au combat : votre garnison affronte la flotte pirate. Si elle perd, les pirates pillent vos stocks (minerai + silicium) et la progression peut etre impactee.
+                    </p>
+                    <p className="text-muted-foreground">
+                      Defense : gardez une garnison a FP suffisant, surveillez les comptes a rebours et envoyez des renforts en avance quand une menace est detectee.
+                    </p>
+                  </ExpandableInfo>
+                </div>
               </div>
 
               <div className="px-4 pb-4">

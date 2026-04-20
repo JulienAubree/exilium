@@ -146,6 +146,7 @@ export function createColonizationService(
 
       return {
         ...process,
+        basePassiveRate: passiveRate,
         effectivePassiveRate: effectiveRate,
         estimatedCompletionHours,
         consumptionMineraiPerHour,

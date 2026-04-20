@@ -22,6 +22,7 @@ interface Planet {
   position: number;
   planetClassId: string | null;
   planetImageIndex: number | null;
+  status?: string;
 }
 
 function ResourceBadge({ label, value, glowClass, colorClass, icon }: {
@@ -198,27 +199,58 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
 
           {dropdownOpen && (
             <div className="fixed left-2 right-2 top-12 z-50 mt-1 sm:absolute sm:right-auto sm:left-0 sm:top-full sm:min-w-48 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
-              {planets.map((planet) => (
-                <button
-                  key={planet.id}
-                  onClick={() => handleSelectPlanet(planet.id)}
-                  className={cn(
-                    'flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent',
-                    planet.id === planetId && 'bg-primary/10 text-primary',
-                  )}
-                >
-                  {planet.planetClassId && planet.planetImageIndex != null ? (
-                    <img
-                      src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'icon')}
-                      alt=""
-                      className="w-5 h-5 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="w-5 h-5 rounded-full bg-primary/30 inline-block" />
-                  )}
-                  {planet.name} [{planet.galaxy}:{planet.system}:{planet.position}]
-                </button>
-              ))}
+              {planets.map((planet) => {
+                const isColonizing = planet.status === 'colonizing';
+                return (
+                  <button
+                    key={planet.id}
+                    onClick={() => handleSelectPlanet(planet.id)}
+                    className={cn(
+                      'flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent',
+                      planet.id === planetId && 'bg-primary/10 text-primary',
+                    )}
+                  >
+                    <span className="relative inline-flex">
+                      {planet.planetClassId && planet.planetImageIndex != null ? (
+                        <img
+                          src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'icon')}
+                          alt=""
+                          className={cn('w-5 h-5 rounded-full object-cover', isColonizing && 'ring-1 ring-amber-400/70')}
+                        />
+                      ) : (
+                        <span className={cn('w-5 h-5 rounded-full bg-primary/30 inline-block', isColonizing && 'ring-1 ring-amber-400/70')} />
+                      )}
+                    </span>
+                    <span className="flex-1 text-left">
+                      {planet.name} [{planet.galaxy}:{planet.system}:{planet.position}]
+                    </span>
+                    {isColonizing && (
+                      <span
+                        className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
+                        title="Colonisation en cours"
+                      >
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="animate-pulse"
+                        >
+                          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+                          <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+                          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+                          <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+                        </svg>
+                        Colonisation
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
