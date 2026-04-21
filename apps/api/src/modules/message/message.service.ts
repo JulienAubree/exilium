@@ -6,6 +6,7 @@ import type Redis from 'ioredis';
 import { publishNotification } from '../notification/notification.publisher.js';
 import type { createPushService } from '../push/push.service.js';
 import { enforceRateLimit } from '../../lib/rate-limit.js';
+import type { Blason } from '@exilium/shared';
 
 /** Per-user cap on messages sent (any combination of new/reply/alliance-chat). */
 const MESSAGE_SEND_LIMIT = 20;
@@ -562,7 +563,7 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
           ),
         );
 
-      return db
+      const rows = await db
         .select({
           id: messages.id,
           senderId: messages.senderId,
@@ -576,9 +577,15 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
           readBySender: messages.readBySender,
           threadId: messages.threadId,
           createdAt: messages.createdAt,
+          blasonShape: alliances.blasonShape,
+          blasonIcon: alliances.blasonIcon,
+          blasonColor1: alliances.blasonColor1,
+          blasonColor2: alliances.blasonColor2,
         })
         .from(messages)
         .leftJoin(users, eq(users.id, messages.senderId))
+        .leftJoin(allianceMembers, eq(allianceMembers.userId, messages.senderId))
+        .leftJoin(alliances, eq(alliances.id, allianceMembers.allianceId))
         .where(
           and(
             eq(messages.recipientId, userId),
@@ -587,6 +594,18 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
           ),
         )
         .orderBy(messages.createdAt);
+
+      return rows.map(({ blasonShape, blasonIcon, blasonColor1, blasonColor2, ...row }) => ({
+        ...row,
+        allianceBlason: blasonShape && blasonIcon && blasonColor1 && blasonColor2
+          ? {
+              shape: blasonShape as Blason['shape'],
+              icon: blasonIcon as Blason['icon'],
+              color1: blasonColor1,
+              color2: blasonColor2,
+            } satisfies Blason
+          : null,
+      }));
     },
   };
 }

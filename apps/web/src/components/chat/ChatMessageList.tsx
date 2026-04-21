@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { Blason } from '@exilium/shared';
 import { ChatBubble } from './ChatBubble';
 
 interface Message {
@@ -8,6 +9,7 @@ interface Message {
   senderAvatarId?: string | null;
   body: string;
   createdAt: Date | string;
+  allianceBlason?: Blason | null;
 }
 
 interface ChatMessageListProps {
@@ -58,6 +60,7 @@ export function ChatMessageList({ messages, currentUserId, className = '', showS
               isSent={msg.senderId === currentUserId}
               senderUsername={msg.senderId !== currentUserId ? (msg.senderUsername ?? undefined) : undefined}
               senderAvatarId={msg.senderId !== currentUserId ? (msg.senderAvatarId ?? undefined) : undefined}
+              allianceBlason={msg.senderId !== currentUserId ? (msg.allianceBlason ?? undefined) : undefined}
               createdAt={msg.createdAt}
               showName={showSenderName}
             />
