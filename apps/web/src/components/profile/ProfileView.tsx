@@ -9,7 +9,6 @@ import { ProfileAllianceCard } from './ProfileAllianceCard';
 import { ProfileSocialCard } from './ProfileSocialCard';
 import { ProfilePreferencesCard } from './ProfilePreferencesCard';
 import { AvatarPicker } from './AvatarPicker';
-import { generateDefaultBlason } from '@exilium/shared';
 import type { Blason } from '@exilium/shared';
 
 interface ProfileViewProps {
@@ -111,10 +110,10 @@ function OwnView() {
               allianceName={profile.allianceName}
               allianceTag={profile.allianceTag}
               blason={{
-                shape: (profile.blasonShape as Blason['shape']) ?? generateDefaultBlason(profile.allianceTag).shape,
-                icon: (profile.blasonIcon as Blason['icon']) ?? generateDefaultBlason(profile.allianceTag).icon,
-                color1: profile.blasonColor1 ?? generateDefaultBlason(profile.allianceTag).color1,
-                color2: profile.blasonColor2 ?? generateDefaultBlason(profile.allianceTag).color2,
+                shape: profile.blasonShape as Blason['shape'],
+                icon: profile.blasonIcon as Blason['icon'],
+                color1: profile.blasonColor1,
+                color2: profile.blasonColor2,
               }}
               allianceRole={profile.allianceRole}
               isOwn={true}
@@ -185,10 +184,10 @@ function OtherView({ userId }: { userId: string }) {
               allianceName={player.stats.allianceName}
               allianceTag={allianceTag}
               blason={{
-                shape: (player.stats.blasonShape as Blason['shape']) ?? generateDefaultBlason(allianceTag).shape,
-                icon: (player.stats.blasonIcon as Blason['icon']) ?? generateDefaultBlason(allianceTag).icon,
-                color1: player.stats.blasonColor1 ?? generateDefaultBlason(allianceTag).color1,
-                color2: player.stats.blasonColor2 ?? generateDefaultBlason(allianceTag).color2,
+                shape: player.stats.blasonShape as Blason['shape'],
+                icon: player.stats.blasonIcon as Blason['icon'],
+                color1: player.stats.blasonColor1,
+                color2: player.stats.blasonColor2,
               }}
               isOwn={false}
             />
