@@ -1,10 +1,5 @@
 # Alliance - Pistes d'ameliorations
 
-## 0. Nettoyage
-- Supprimer les circulaires (code mort) : `sendCircular` dans alliance.service.ts + UI dans Alliance.tsx + route dans alliance.router.ts. Le chat d'alliance remplit deja cette fonction.
-
----
-
 ## 1. Personnalisation visuelle
 
 ### Blason d'alliance
@@ -280,7 +275,6 @@ Critere de classement alternatif au total de points.
 
 | # | Piste | Impact | Effort |
 |---|---|---|---|
-| 0 | Supprimer circulaires | Nettoyage | Tres faible |
 | 1 | Blason + devise | Identite forte | Faible |
 | 2 | Logs d'alliance | Conscience collective, engagement | Moyen |
 | 3 | Tresor + dons + marche 0% | Base eco collective | Moyen |

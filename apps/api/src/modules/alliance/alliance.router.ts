@@ -63,15 +63,6 @@ export function createAllianceRouter(allianceService: ReturnType<typeof createAl
         return allianceService.respondApplication(ctx.userId!, input.applicationId, input.accept);
       }),
 
-    sendCircular: protectedProcedure
-      .input(z.object({
-        subject: z.string().min(1).max(255),
-        body: z.string().min(1).max(5000),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return allianceService.sendCircular(ctx.userId!, input.subject, input.body);
-      }),
-
     get: protectedProcedure
       .input(z.object({ allianceId: z.string().uuid() }))
       .query(async ({ input }) => {

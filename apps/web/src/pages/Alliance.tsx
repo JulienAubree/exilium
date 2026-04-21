@@ -133,8 +133,6 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<'info' | 'members' | 'manage'>('info');
   const [inviteUsername, setInviteUsername] = useState('');
-  const [circularSubject, setCircularSubject] = useState('');
-  const [circularBody, setCircularBody] = useState('');
   const [description, setDescription] = useState(alliance.description ?? '');
   const [showApplications, setShowApplications] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
@@ -157,7 +155,6 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   });
   const setRoleMutation = trpc.alliance.setRole.useMutation({ onSuccess: invalidateAll });
   const inviteMutation = trpc.alliance.invite.useMutation({ onSuccess: () => setInviteUsername('') });
-  const circularMutation = trpc.alliance.sendCircular.useMutation({ onSuccess: () => { setCircularSubject(''); setCircularBody(''); } });
   const updateMutation = trpc.alliance.update.useMutation({ onSuccess: invalidateAll });
   const respondAppMutation = trpc.alliance.respondApplication.useMutation({ onSuccess: invalidateAll });
 
@@ -260,17 +257,6 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
             Inviter
           </Button>
           {inviteMutation.error && <span className="text-sm text-destructive self-center">{inviteMutation.error.message}</span>}
-        </div>
-      </section>
-
-      <section className="glass-card p-4 space-y-3">
-        <h3 className="text-base font-semibold">Message circulaire</h3>
-        <div className="space-y-2">
-          <Input value={circularSubject} onChange={(e) => setCircularSubject(e.target.value)} placeholder="Sujet" />
-          <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" rows={3} value={circularBody} onChange={(e) => setCircularBody(e.target.value)} placeholder="Message..." />
-          <Button onClick={() => circularMutation.mutate({ subject: circularSubject, body: circularBody })} disabled={circularMutation.isPending || !circularSubject || !circularBody}>
-            Envoyer à tous
-          </Button>
         </div>
       </section>
 

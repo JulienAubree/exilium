@@ -356,8 +356,6 @@ export function useNotifications() {
           msg = `Invitation alliance [${payload.allianceTag}] reçue`;
         } else if (payload.action === 'application') {
           msg = `Candidature de ${payload.applicantUsername} [${payload.allianceTag}]`;
-        } else if (payload.action === 'circular') {
-          msg = `[Alliance] ${payload.senderUsername} : ${payload.subject}`;
         }
         if (msg && isToastEnabled(event.type)) {
           addToast(msg, 'info', '/alliance');

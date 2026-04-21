@@ -202,29 +202,6 @@ export function createAllianceService(db: Database, redis?: Redis) {
       return { success: true };
     },
 
-    async sendCircular(userId: string, subject: string, _body: string) {
-      const membership = await requireRole(db, userId, ['founder', 'officer']);
-      const [sender] = await db.select({ username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
-      const senderUsername = sender?.username ?? 'Officier';
-
-      const members = await db
-        .select({ userId: allianceMembers.userId })
-        .from(allianceMembers)
-        .where(eq(allianceMembers.allianceId, membership.allianceId));
-
-      for (const member of members) {
-        if (member.userId === userId) continue;
-        if (redis) {
-          publishNotification(redis, member.userId, {
-            type: 'alliance-activity',
-            payload: { action: 'circular', subject, senderUsername },
-          });
-        }
-      }
-
-      return { success: true, recipientCount: members.length - 1 };
-    },
-
     async get(allianceId: string) {
       const [alliance] = await db.select().from(alliances).where(eq(alliances.id, allianceId)).limit(1);
       if (!alliance) throw new TRPCError({ code: 'NOT_FOUND', message: 'Alliance introuvable.' });
