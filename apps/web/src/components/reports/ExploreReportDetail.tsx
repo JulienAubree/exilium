@@ -6,6 +6,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 import { CoordsLink } from '@/components/common/CoordsLink';
+import { BiomeCard } from '@/components/reports/shared/BiomeCard';
 
 // Button styles — mirrors ModePlanet.tsx so enabled/disabled states
 // stay consistent between the galaxy detail panel and the report view.
@@ -43,32 +44,6 @@ function ActionButton({
     </button>
   );
 }
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
-
-const RARITY_LABELS: Record<string, string> = {
-  common: 'Commun',
-  uncommon: 'Peu commun',
-  rare: 'Rare',
-  epic: 'Épique',
-  legendary: 'Légendaire',
-};
-
-const STAT_LABELS: Record<string, string> = {
-  production_minerai: 'Production minerai',
-  production_silicium: 'Production silicium',
-  production_hydrogene: 'Production hydrogène',
-  energy_production: 'Production énergie',
-  storage_minerai: 'Stockage minerai',
-  storage_silicium: 'Stockage silicium',
-  storage_hydrogene: 'Stockage hydrogène',
-};
 
 interface BiomeDiscovery {
   id: string;
@@ -320,54 +295,9 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
             {biomesSectionTitle}
           </h3>
           <div className="space-y-3">
-            {biomesToShow.map((biome) => {
-              const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
-              // Get effects from game config biome definition (authoritative source with modifiers)
-              const configBiome = gameConfig?.biomes?.find((b: any) => b.id === biome.id);
-              const effects: Array<{ stat: string; modifier: number }> =
-                (configBiome?.effects as Array<{ stat: string; modifier: number }>) ??
-                biome.effects ??
-                [];
-
-              return (
-                <div
-                  key={biome.id}
-                  className="rounded-lg border border-border/30 bg-card/40 p-3"
-                  style={{ borderLeftWidth: 3, borderLeftColor: color }}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-sm font-semibold" style={{ color }}>
-                      {biome.name}
-                    </span>
-                    <span
-                      className="text-[10px] rounded-full px-1.5 py-px font-medium"
-                      style={{ color, backgroundColor: `${color}20` }}
-                    >
-                      {RARITY_LABELS[biome.rarity] ?? biome.rarity}
-                    </span>
-                  </div>
-                  {effects.length > 0 && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 ml-4">
-                      {effects.map((e, i) => (
-                        <span key={i} className="text-xs">
-                          <span className={e.modifier > 0 ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>
-                            {e.modifier > 0 ? '+' : ''}{Math.round(e.modifier * 100)}%
-                          </span>
-                          {' '}
-                          <span className="text-muted-foreground">
-                            {STAT_LABELS[e.stat] ?? e.stat}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {biomesToShow.map((biome) => (
+              <BiomeCard key={biome.id} biome={biome} gameConfig={gameConfig} />
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,10 @@
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { ReportHero } from './shared/ReportHero';
+import { BiomeCard } from './shared/BiomeCard';
+import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 import { getShipName } from '@/lib/entity-names';
+import { usePlanetStore } from '@/stores/planet.store';
 
 interface Props {
   result: Record<string, any>;
@@ -34,14 +37,6 @@ function OccupiedIcon() {
   );
 }
 
-function Star({ filled }: { filled: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? '#fbbf24' : 'none'} stroke="#fbbf24" strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M12 2 L15 9 L22 9 L17 14 L19 22 L12 17 L5 22 L7 14 L2 9 L9 9 Z" />
-    </svg>
-  );
-}
-
 function ShipGrid({ ships, gameConfig }: { ships: Record<string, number>; gameConfig: any }) {
   const entries = Object.entries(ships).filter(([, n]) => n > 0);
   if (entries.length === 0) return null;
@@ -61,10 +56,38 @@ export function ColonizeReportDetail({ result, fleet, gameConfig, coordinates }:
   // Success
   if (result.success === true) {
     const planetId = result.planetId as string | undefined;
-    const difficulty = Number(result.difficulty ?? 0);
     const { data: planets } = trpc.planet.list.useQuery();
     const newPlanet = planetId ? planets?.find((p: any) => p.id === planetId) : undefined;
     const planetClassId = newPlanet?.planetClassId ?? undefined;
+    const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
+    const navigate = useNavigate();
+
+    const { data: systemData } = trpc.galaxy.system.useQuery({
+      galaxy: coordinates.galaxy,
+      system: coordinates.system,
+    });
+    const slot = systemData?.slots?.[coordinates.position - 1];
+    const knownBiomes =
+      slot && typeof slot === 'object' && 'biomes' in slot && Array.isArray((slot as any).biomes)
+        ? ((slot as any).biomes as Array<{
+            id: string;
+            name: string;
+            rarity: string;
+            effects?: Array<{ stat: string; modifier: number }>;
+          }>)
+        : [];
+
+    const planetType = planetClassId
+      ? gameConfig?.planetTypes?.find((t: any) => t.id === planetClassId)
+      : undefined;
+    const planetTypeName = planetType?.name;
+    const resourceBonuses = planetType
+      ? ([
+          { label: 'Minerai', bonus: Number(planetType.mineraiBonus ?? 1) },
+          { label: 'Silicium', bonus: Number(planetType.siliciumBonus ?? 1) },
+          { label: 'Hydrogène', bonus: Number(planetType.hydrogeneBonus ?? 1) },
+        ].filter((b) => b.bonus !== 1))
+      : [];
 
     return (
       <div className="space-y-4">
@@ -85,26 +108,68 @@ export function ColonizeReportDetail({ result, fleet, gameConfig, coordinates }:
             Les opérations de terraformation ont commencé.
           </p>
           {planetId && (
-            <Link
-              to={`/colonization/${planetId}`}
+            <button
+              type="button"
+              onClick={() => {
+                setActivePlanet(planetId);
+                navigate('/');
+              }}
               className="inline-block mt-3 text-sm text-cyan-400 hover:text-cyan-300 underline"
             >
               Suivre l'avancement →
-            </Link>
+            </button>
           )}
         </div>
 
         <div className="glass-card p-4">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Difficulté du monde
+            Monde découvert
           </h3>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((i) => <Star key={i} filled={i <= difficulty} />)}
-            <span className="ml-2 text-sm text-muted-foreground tabular-nums">{difficulty}/5</span>
+
+          <div className="flex items-center gap-3">
+            {planetClassId ? (
+              <>
+                <PlanetVisual
+                  planetClassId={planetClassId}
+                  planetImageIndex={null}
+                  size={48}
+                  variant="thumb"
+                />
+                <span className="text-sm font-medium text-foreground">{planetTypeName}</span>
+              </>
+            ) : (
+              <span className="text-sm font-medium text-foreground">Nouveau monde</span>
+            )}
           </div>
-          {difficulty >= 4 && (
-            <p className="text-[11px] text-muted-foreground mt-2 italic">
-              Colonisation longue, raids plus fréquents.
+
+          {resourceBonuses.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {resourceBonuses.map(({ label, bonus }) => {
+                const pct = Math.round((bonus - 1) * 100);
+                const sign = pct > 0 ? '+' : '';
+                const cls = bonus > 1 ? 'text-emerald-400' : 'text-red-400';
+                return (
+                  <span key={label} className={cls}>
+                    {sign}
+                    {pct}% {label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3 mb-2">
+            Biomes identifiés
+          </div>
+          {knownBiomes.length > 0 ? (
+            <div className="space-y-3">
+              {knownBiomes.map((b) => (
+                <BiomeCard key={b.id} biome={b} gameConfig={gameConfig} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              Planète non explorée — lancez une mission d'exploration pour cartographier ses biomes.
             </p>
           )}
         </div>
