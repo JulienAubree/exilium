@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { trpc } from '@/trpc';
+import { generateDefaultBlason, type Blason } from '@exilium/shared';
+import { BlasonPicker } from '@/components/alliance/BlasonPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -26,7 +28,18 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
+  const [blason, setBlason] = useState<Blason>(() => generateDefaultBlason('XXXX'));
+  const [motto, setMotto] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Regenerate the default blason whenever the tag changes (user can still customize after).
+  const lastAutoTagRef = useRef<string>('');
+  useEffect(() => {
+    if (tag.length >= 2 && tag !== lastAutoTagRef.current) {
+      lastAutoTagRef.current = tag;
+      setBlason(generateDefaultBlason(tag));
+    }
+  }, [tag]);
 
   const createMutation = trpc.alliance.create.useMutation({
     onSuccess: () => { utils.alliance.myAlliance.invalidate(); },
@@ -83,8 +96,19 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
               <label className="text-xs text-muted-foreground">Tag (2-8 caractères)</label>
               <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="TAG" />
             </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Blason & devise</label>
+              <BlasonPicker
+                blason={blason}
+                motto={motto}
+                onBlasonChange={setBlason}
+                onMottoChange={setMotto}
+                allianceName={name || 'Alliance'}
+                allianceTag={tag || 'TAG'}
+              />
+            </div>
             {createMutation.error && <p className="text-sm text-destructive">{createMutation.error.message}</p>}
-            <Button onClick={() => createMutation.mutate({ name, tag })} disabled={createMutation.isPending || name.length < 3 || tag.length < 2}>
+            <Button onClick={() => createMutation.mutate({ name, tag, blason, motto })} disabled={createMutation.isPending || name.length < 3 || tag.length < 2}>
               Créer
             </Button>
           </div>
