@@ -4,6 +4,7 @@ import type { Database } from '@exilium/db';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { TRPCError } from '@trpc/server';
+import type { Blason } from '@exilium/shared';
 
 export function createUserService(db: Database, assetsDir: string) {
   const service = {
@@ -140,10 +141,14 @@ export function createUserService(db: Database, assetsDir: string) {
         allianceTag: membership?.allianceTag ?? null,
         allianceId: membership?.allianceId ?? null,
         allianceRole: membership?.allianceRole ?? null,
-        blasonShape: membership?.blasonShape ?? null,
-        blasonIcon: membership?.blasonIcon ?? null,
-        blasonColor1: membership?.blasonColor1 ?? null,
-        blasonColor2: membership?.blasonColor2 ?? null,
+        allianceBlason: membership
+          ? {
+              shape: membership.blasonShape as Blason['shape'],
+              icon: membership.blasonIcon as Blason['icon'],
+              color1: membership.blasonColor1,
+              color2: membership.blasonColor2,
+            } satisfies Blason
+          : null,
       };
     },
 

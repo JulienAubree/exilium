@@ -9,7 +9,6 @@ import { ProfileAllianceCard } from './ProfileAllianceCard';
 import { ProfileSocialCard } from './ProfileSocialCard';
 import { ProfilePreferencesCard } from './ProfilePreferencesCard';
 import { AvatarPicker } from './AvatarPicker';
-import type { Blason } from '@exilium/shared';
 
 interface ProfileViewProps {
   userId: string;
@@ -105,16 +104,11 @@ function OwnView() {
             isSaving={updateMutation.isPending}
           />
 
-          {profile.allianceName && profile.allianceTag && (
+          {profile.allianceName && profile.allianceTag && profile.allianceBlason && (
             <ProfileAllianceCard
               allianceName={profile.allianceName}
               allianceTag={profile.allianceTag}
-              blason={{
-                shape: profile.blasonShape as Blason['shape'],
-                icon: profile.blasonIcon as Blason['icon'],
-                color1: profile.blasonColor1,
-                color2: profile.blasonColor2,
-              }}
+              blason={profile.allianceBlason}
               allianceRole={profile.allianceRole}
               isOwn={true}
             />
@@ -179,16 +173,11 @@ function OtherView({ userId }: { userId: string }) {
 
           <ProfileBioCard bio={player.bio} isOwn={false} />
 
-          {player.stats?.allianceName && allianceTag && (
+          {player.stats?.allianceName && allianceTag && player.stats.allianceBlason && (
             <ProfileAllianceCard
               allianceName={player.stats.allianceName}
               allianceTag={allianceTag}
-              blason={{
-                shape: player.stats.blasonShape as Blason['shape'],
-                icon: player.stats.blasonIcon as Blason['icon'],
-                color1: player.stats.blasonColor1,
-                color2: player.stats.blasonColor2,
-              }}
+              blason={player.stats.allianceBlason}
               isOwn={false}
             />
           )}
