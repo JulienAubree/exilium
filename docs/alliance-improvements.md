@@ -1,18 +1,6 @@
 # Alliance - Pistes d'ameliorations
 
-## 1. Personnalisation visuelle
-
-### Blason d'alliance
-Schema compose : forme (bouclier, losange, cercle...) + icone (epee, planete, crane...) + 2 couleurs.
-Stocke en DB comme `{ shape, icon, color1, color2 }`, rendu en SVG.
-Affiche : galaxie (a cote du tag), profil joueur, chat, classement.
-
-### Banniere / devise
-Texte court (max 100 chars) affiche sur la page publique de l'alliance, visible quand on clique sur un tag dans la galaxie.
-
----
-
-## 2. Utilite economique
+## 1. Utilite economique
 
 ### Tresor d'alliance
 Les membres peuvent donner des ressources au tresor commun (mutation `donate`).
@@ -29,7 +17,7 @@ Ressources prelevees et versees au tresor. Desactivable par defaut.
 
 ---
 
-## 3. Utilite militaire
+## 2. Utilite militaire
 
 ### Attaques coordonnees (ACS)
 Plusieurs membres envoient des flottes sur la meme cible avec timer de synchronisation.
@@ -46,7 +34,7 @@ Pendant la guerre : bonus de pillage +20%, pas de penalite de reputation, tablea
 
 ---
 
-## 4. Utilite recherche & production
+## 3. Utilite recherche & production
 
 ### Bonus de taille (membres actifs)
 - 5 membres : +2% production tous les membres
@@ -115,7 +103,7 @@ inaccessibles en solo. L'alliance debloque du contenu de jeu exclusif.
 
 ---
 
-## 5. Station spatiale d'alliance
+## 4. Station spatiale d'alliance
 
 ### Concept
 Entite physique sur la carte galactique, construite et upgradee collectivement.
@@ -150,7 +138,7 @@ Enjeu strategique : proteger sa station, attaquer celle de l'ennemi.
 
 ---
 
-## 6. Territoire & galaxie
+## 5. Territoire & galaxie
 
 ### Systemes revendiques
 Une alliance peut revendiquer un systeme solaire. Marque sur la carte galactique avec le blason.
@@ -158,12 +146,12 @@ Pas de blocage mecanique mais bonus defensif (+10% bouclier) dans un systeme rev
 Limite : 1 systeme par tranche de 5 membres.
 
 ### Siege d'alliance (QG)
-Remplace par la station spatiale (voir section 5). Le systeme ou est placee la station
+Remplace par la station spatiale (voir section 4). Le systeme ou est placee la station
 devient de facto le QG de l'alliance.
 
 ---
 
-## 7. Logs d'alliance (journal d'activite)
+## 6. Logs d'alliance (journal d'activite)
 
 ### Concept
 Fil d'activite en temps reel visible par tous les membres dans un onglet dedie de la page alliance.
@@ -209,7 +197,7 @@ Filtres par categorie (militaire, membres, progression, economie, diplomatie).
 
 ---
 
-## 8. Social & engagement
+## 7. Social & engagement
 
 ### Objectifs d'alliance (quetes hebdomadaires)
 Quetes collectives : "Piller 500k de minerai ensemble", "Coloniser 3 nouvelles planetes", "Gagner 10 combats".
@@ -221,7 +209,7 @@ Leaderboard au sein de l'alliance (points, production, combats gagnes).
 
 ---
 
-## 9. Diplomatie
+## 8. Diplomatie
 
 ### Pactes inter-alliances
 Systeme de pactes stocke en DB, propose par une alliance, accepte par l'autre.
@@ -235,19 +223,19 @@ Rupture avec delai de preavis (24h).
 
 ---
 
-## 10. Renseignement & cooperation
+## 9. Renseignement & cooperation
 
 ### Rapports d'espionnage partages
 Quand un membre espionne une cible, le rapport est automatiquement visible par les officers/fondateur
 dans un onglet "Renseignements" de la station. Intelligence collective sans copier-coller dans le chat.
 
 ### Radar de station
-Le module radar longue portee de la station (voir section 5) revele les mouvements de flottes
+Le module radar longue portee de la station (voir section 4) revele les mouvements de flottes
 hostiles dans les systemes environnants. Alerte en temps reel pour tous les membres.
 
 ---
 
-## 11. Gestion avancee
+## 10. Gestion avancee
 
 ### Grades personnalisables
 Au lieu de founder/officer/member, le fondateur peut creer des grades custom avec permissions granulaires :
@@ -275,22 +263,21 @@ Critere de classement alternatif au total de points.
 
 | # | Piste | Impact | Effort |
 |---|---|---|---|
-| 1 | Blason + devise | Identite forte | Faible |
-| 2 | Logs d'alliance | Conscience collective, engagement | Moyen |
-| 3 | Tresor + dons + marche 0% | Base eco collective | Moyen |
-| 4 | Bonus de taille | Raison mecanique | Faible |
-| 4b | Profil d'alliance (coques amiraux) | Identite mecanique emergente | Faible-moyen |
-| 4c | Vaisseaux d'alliance | Contenu exclusif, raison de rejoindre | Moyen-eleve |
-| 5 | Stationnement defensif | Cooperation militaire | Moyen |
-| 6 | Attaques coordonnees (ACS) | Game changer PvP | Eleve |
-| 7 | Recherche d'alliance | Progression collective | Moyen-eleve |
-| 8 | Station spatiale d'alliance | Ancrage physique, centralise tout | Eleve |
-| 9 | Vaisseau Batisseur | Prerequis pour la station | Moyen |
-| 10 | Systemes revendiques | Dimension territoriale | Moyen |
-| 11 | Guerre d'alliance | Endgame content | Eleve |
-| 12 | Objectifs collectifs | Retention | Moyen |
-| 13 | Diplomatie (NAP, pactes) | Relations inter-alliances | Moyen |
-| 14 | Rapports d'espionnage partages | Intelligence collective | Faible-moyen |
-| 15 | Grades personnalisables | Gestion fine | Moyen |
-| 16 | Systeme de mentor | Onboarding | Faible |
-| 17 | Prestige d'alliance | Progression long terme | Faible-moyen |
+| 1 | Logs d'alliance | Conscience collective, engagement | Moyen |
+| 2 | Tresor + dons + marche 0% | Base eco collective | Moyen |
+| 3 | Bonus de taille | Raison mecanique | Faible |
+| 3b | Profil d'alliance (coques amiraux) | Identite mecanique emergente | Faible-moyen |
+| 3c | Vaisseaux d'alliance | Contenu exclusif, raison de rejoindre | Moyen-eleve |
+| 4 | Stationnement defensif | Cooperation militaire | Moyen |
+| 5 | Attaques coordonnees (ACS) | Game changer PvP | Eleve |
+| 6 | Recherche d'alliance | Progression collective | Moyen-eleve |
+| 7 | Station spatiale d'alliance | Ancrage physique, centralise tout | Eleve |
+| 8 | Vaisseau Batisseur | Prerequis pour la station | Moyen |
+| 9 | Systemes revendiques | Dimension territoriale | Moyen |
+| 10 | Guerre d'alliance | Endgame content | Eleve |
+| 11 | Objectifs collectifs | Retention | Moyen |
+| 12 | Diplomatie (NAP, pactes) | Relations inter-alliances | Moyen |
+| 13 | Rapports d'espionnage partages | Intelligence collective | Faible-moyen |
+| 14 | Grades personnalisables | Gestion fine | Moyen |
+| 15 | Systeme de mentor | Onboarding | Faible |
+| 16 | Prestige d'alliance | Progression long terme | Faible-moyen |
