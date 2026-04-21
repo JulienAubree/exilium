@@ -14,6 +14,9 @@ import { ExploreReportDetail } from '@/components/reports/ExploreReportDetail';
 import { TradeReportDetail } from '@/components/reports/TradeReportDetail';
 import { TransportReportDetail } from '@/components/reports/TransportReportDetail';
 import { AbandonReportDetail } from '@/components/reports/AbandonReportDetail';
+import { ColonizeReportDetail } from '@/components/reports/ColonizeReportDetail';
+import { ColonizeReinforceReportDetail } from '@/components/reports/ColonizeReinforceReportDetail';
+import { ColonizationRaidReportDetail } from '@/components/reports/ColonizationRaidReportDetail';
 import { CoordsLink } from '@/components/common/CoordsLink';
 
 function formatDate(date: string | Date) {
@@ -151,8 +154,9 @@ export default function ReportDetail() {
         </div>
       )}
 
-      {/* Fleet summary (if non-empty) */}
-      {Object.keys(fleet.ships).length > 0 && (
+      {/* Fleet summary (hidden for colonization types — they render their own fleet) */}
+      {Object.keys(fleet.ships).length > 0 &&
+        !['colonize', 'colonize_reinforce', 'colonization_raid', 'abandon_return'].includes(report.missionType) && (
         <div className="glass-card p-4">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Flotte envoyée</h3>
           <div className="flex flex-wrap gap-3">
@@ -198,7 +202,16 @@ export default function ReportDetail() {
         <TransportReportDetail result={result} coordinates={coords} />
       )}
       {report.missionType === 'abandon_return' && (
-        <AbandonReportDetail result={result} gameConfig={gameConfig} />
+        <AbandonReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
+      )}
+      {report.missionType === 'colonize' && (
+        <ColonizeReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
+      )}
+      {report.missionType === 'colonize_reinforce' && (
+        <ColonizeReinforceReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
+      )}
+      {report.missionType === 'colonization_raid' && (
+        <ColonizationRaidReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} reportId={report.id} />
       )}
     </div>
   );
