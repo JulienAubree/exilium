@@ -23,3 +23,4 @@ export * from './formulas/biomes.js';
 export * from './formulas/exploration.js';
 export * from './formulas/planet-type.js';
 export * from './formulas/governance.js';
+export * from './sidebar-visibility.js';
