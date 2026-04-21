@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { Blason } from '@exilium/shared';
 import { BLASON_SHAPES, BLASON_ICONS, SHAPE_COMPONENTS, ICON_COMPONENTS } from '@exilium/shared';
 import { AllianceBlason } from './AllianceBlason';
@@ -26,6 +27,8 @@ function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
 export function BlasonPicker({
   blason,
   motto,
@@ -34,6 +37,12 @@ export function BlasonPicker({
   allianceName,
   allianceTag,
 }: Props) {
+  const [color1Text, setColor1Text] = useState(blason.color1);
+  const [color2Text, setColor2Text] = useState(blason.color2);
+
+  useEffect(() => { setColor1Text(blason.color1); }, [blason.color1]);
+  useEffect(() => { setColor2Text(blason.color2); }, [blason.color2]);
+
   const lowContrast = contrastRatio(blason.color1, blason.color2) < 3;
 
   return (
@@ -116,8 +125,11 @@ export function BlasonPicker({
                 className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent"
               />
               <Input
-                value={blason.color1}
-                onChange={(e) => onBlasonChange({ ...blason, color1: e.target.value })}
+                value={color1Text}
+                onChange={(e) => {
+                  setColor1Text(e.target.value);
+                  if (HEX_RE.test(e.target.value)) onBlasonChange({ ...blason, color1: e.target.value });
+                }}
                 className="flex-1 font-mono text-xs"
                 maxLength={7}
               />
@@ -133,8 +145,11 @@ export function BlasonPicker({
                 className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent"
               />
               <Input
-                value={blason.color2}
-                onChange={(e) => onBlasonChange({ ...blason, color2: e.target.value })}
+                value={color2Text}
+                onChange={(e) => {
+                  setColor2Text(e.target.value);
+                  if (HEX_RE.test(e.target.value)) onBlasonChange({ ...blason, color2: e.target.value });
+                }}
                 className="flex-1 font-mono text-xs"
                 maxLength={7}
               />
