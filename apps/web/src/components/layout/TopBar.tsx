@@ -25,18 +25,27 @@ interface Planet {
   status?: string;
 }
 
-function ResourceBadge({ label, value, glowClass, colorClass, icon }: {
+function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity }: {
   label: string;
   value: number;
   glowClass: string;
   colorClass: string;
   icon?: React.ReactNode;
+  capacity?: number;
 }) {
+  const overCap = capacity != null && value > capacity;
   return (
     <div className="flex items-center gap-2">
       {icon && <span className={colorClass}>{icon}</span>}
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn('text-sm font-semibold tabular-nums', colorClass, glowClass)}>
+      <span
+        className={cn(
+          'text-sm font-semibold tabular-nums',
+          overCap ? 'text-amber-400' : colorClass,
+          overCap ? '' : glowClass,
+        )}
+        title={overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined}
+      >
         {value.toLocaleString('fr-FR')}
       </span>
     </div>
@@ -257,9 +266,9 @@ export function TopBar({ planetId, planets }: { planetId: string | null; planets
 
         {/* Resources — desktop only */}
         <div className="hidden lg:flex items-center gap-4">
-          <ResourceBadge label="Minerai" value={resources.minerai} glowClass="glow-minerai" colorClass="text-minerai" icon={<MineraiIcon size={14} />} />
-          <ResourceBadge label="Silicium" value={resources.silicium} glowClass="glow-silicium" colorClass="text-silicium" icon={<SiliciumIcon size={14} />} />
-          <ResourceBadge label="Hydrogène" value={resources.hydrogene} glowClass="glow-hydrogene" colorClass="text-hydrogene" icon={<HydrogeneIcon size={14} />} />
+          <ResourceBadge label="Minerai" value={resources.minerai} glowClass="glow-minerai" colorClass="text-minerai" icon={<MineraiIcon size={14} />} capacity={data?.rates.storageMineraiCapacity} />
+          <ResourceBadge label="Silicium" value={resources.silicium} glowClass="glow-silicium" colorClass="text-silicium" icon={<SiliciumIcon size={14} />} capacity={data?.rates.storageSiliciumCapacity} />
+          <ResourceBadge label="Hydrogène" value={resources.hydrogene} glowClass="glow-hydrogene" colorClass="text-hydrogene" icon={<HydrogeneIcon size={14} />} capacity={data?.rates.storageHydrogeneCapacity} />
           <ResourceBadge
             label="Énergie"
             value={energyBalance}

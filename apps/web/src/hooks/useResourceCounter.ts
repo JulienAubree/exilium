@@ -40,19 +40,15 @@ export function useResourceCounter(input: ResourceCounterInput | undefined): Res
       const updatedAt = new Date(data.resourcesUpdatedAt).getTime();
       const elapsedHours = (now - updatedAt) / (3600 * 1000);
 
+      const accrue = (stock: number, perHour: number, capacity: number) =>
+        stock >= capacity
+          ? Math.floor(stock)
+          : Math.min(Math.floor(stock + perHour * elapsedHours), capacity);
+
       setResources({
-        minerai: Math.min(
-          Math.floor(data.minerai + data.mineraiPerHour * elapsedHours),
-          data.storageMineraiCapacity,
-        ),
-        silicium: Math.min(
-          Math.floor(data.silicium + data.siliciumPerHour * elapsedHours),
-          data.storageSiliciumCapacity,
-        ),
-        hydrogene: Math.min(
-          Math.floor(data.hydrogene + data.hydrogenePerHour * elapsedHours),
-          data.storageHydrogeneCapacity,
-        ),
+        minerai: accrue(data.minerai, data.mineraiPerHour, data.storageMineraiCapacity),
+        silicium: accrue(data.silicium, data.siliciumPerHour, data.storageSiliciumCapacity),
+        hydrogene: accrue(data.hydrogene, data.hydrogenePerHour, data.storageHydrogeneCapacity),
       });
     }
 

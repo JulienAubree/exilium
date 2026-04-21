@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { formatNumber } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
 
 interface ResourceBarProps {
@@ -41,9 +42,9 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
         className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-30 flex h-11 cursor-pointer items-center justify-around border-b border-white/5 bg-card/80 backdrop-blur-md px-3 lg:hidden"
         onClick={() => setDetailOpen(!detailOpen)}
       >
-        <ResourceCounter icon={<MineraiIcon size={14} className="text-minerai" />} value={resources.minerai} colorClass="text-minerai" />
-        <ResourceCounter icon={<SiliciumIcon size={14} className="text-silicium" />} value={resources.silicium} colorClass="text-silicium" />
-        <ResourceCounter icon={<HydrogeneIcon size={14} className="text-hydrogene" />} value={resources.hydrogene} colorClass="text-hydrogene" />
+        <ResourceCounter icon={<MineraiIcon size={14} className="text-minerai" />} value={resources.minerai} colorClass="text-minerai" capacity={data?.rates.storageMineraiCapacity} />
+        <ResourceCounter icon={<SiliciumIcon size={14} className="text-silicium" />} value={resources.silicium} colorClass="text-silicium" capacity={data?.rates.storageSiliciumCapacity} />
+        <ResourceCounter icon={<HydrogeneIcon size={14} className="text-hydrogene" />} value={resources.hydrogene} colorClass="text-hydrogene" capacity={data?.rates.storageHydrogeneCapacity} />
         <ResourceCounter icon={<EnergieIcon size={14} className="text-energy" />} value={energyBalance} colorClass={energyBalance < 0 ? 'text-red-400' : 'text-energy'} />
       </div>
 
@@ -66,11 +67,15 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
   );
 }
 
-function ResourceCounter({ icon, value, colorClass, suffix }: { icon: React.ReactNode; value: number; colorClass: string; suffix?: string }) {
+function ResourceCounter({ icon, value, colorClass, suffix, capacity }: { icon: React.ReactNode; value: number; colorClass: string; suffix?: string; capacity?: number }) {
+  const overCap = capacity != null && value > capacity;
   return (
     <div className="flex items-center gap-1">
       {icon}
-      <span className={`text-sm font-medium tabular-nums ${colorClass}`}>
+      <span
+        className={cn('text-sm font-medium tabular-nums', overCap ? 'text-amber-400' : colorClass)}
+        title={overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined}
+      >
         {formatNumber(Math.floor(value))}{suffix}
       </span>
     </div>
@@ -78,11 +83,20 @@ function ResourceCounter({ icon, value, colorClass, suffix }: { icon: React.Reac
 }
 
 function DetailRow({ label, value, perHour, capacity, colorClass }: { label: string; value: number; perHour: number; capacity: number; colorClass: string }) {
+  const overCap = value > capacity;
   return (
     <div className="flex items-center justify-between">
       <span className={colorClass}>{label}</span>
       <div className="flex gap-3 tabular-nums text-muted-foreground">
-        <span>{formatNumber(Math.floor(value))} / {formatNumber(capacity)}</span>
+        <span
+          title={overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined}
+        >
+          <span className={overCap ? 'text-amber-400' : undefined}>
+            {formatNumber(Math.floor(value))}
+          </span>
+          {' / '}
+          {formatNumber(capacity)}
+        </span>
         <span className="text-foreground">+{formatNumber(Math.round(perHour))}/h</span>
       </div>
     </div>
