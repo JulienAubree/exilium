@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BlasonSchema, MottoSchema } from '@exilium/shared';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createAllianceService } from './alliance.service.js';
 
@@ -8,15 +9,26 @@ export function createAllianceRouter(allianceService: ReturnType<typeof createAl
       .input(z.object({
         name: z.string().min(3).max(30),
         tag: z.string().min(2).max(8),
+        blason: BlasonSchema,
+        motto: MottoSchema,
       }))
       .mutation(async ({ ctx, input }) => {
-        return allianceService.create(ctx.userId!, input.name, input.tag);
+        return allianceService.create(ctx.userId!, input);
       }),
 
     update: protectedProcedure
       .input(z.object({ description: z.string().max(2000) }))
       .mutation(async ({ ctx, input }) => {
         return allianceService.update(ctx.userId!, input.description);
+      }),
+
+    updateBlason: protectedProcedure
+      .input(z.object({
+        blason: BlasonSchema,
+        motto: MottoSchema,
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return allianceService.updateBlason(ctx.userId!, input);
       }),
 
     leave: protectedProcedure

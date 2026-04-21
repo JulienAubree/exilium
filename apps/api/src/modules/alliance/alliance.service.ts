@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { alliances, allianceMembers, allianceInvitations, allianceApplications, users, rankings } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
+import type { Blason } from '@exilium/shared';
 import { publishNotification } from '../notification/notification.publisher.js';
 
 async function getMembership(db: Database, userId: string) {
@@ -27,11 +28,21 @@ async function requireRole(db: Database, userId: string, roles: string[]) {
 
 export function createAllianceService(db: Database, redis?: Redis) {
   return {
-    async create(userId: string, name: string, tag: string) {
+    async create(userId: string, params: { name: string; tag: string; blason: Blason; motto: string | null }) {
       const existing = await getMembership(db, userId);
       if (existing) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vous êtes déjà dans une alliance.' });
 
-      const [alliance] = await db.insert(alliances).values({ name, tag: tag.toUpperCase(), founderId: userId }).returning();
+      const { blason, motto } = params;
+      const [alliance] = await db.insert(alliances).values({
+        name: params.name,
+        tag: params.tag.toUpperCase(),
+        founderId: userId,
+        blasonShape: blason.shape,
+        blasonIcon: blason.icon,
+        blasonColor1: blason.color1,
+        blasonColor2: blason.color2,
+        motto,
+      }).returning();
       await db.insert(allianceMembers).values({ allianceId: alliance.id, userId, role: 'founder' });
       return alliance;
     },
@@ -39,6 +50,18 @@ export function createAllianceService(db: Database, redis?: Redis) {
     async update(userId: string, description: string) {
       const membership = await requireRole(db, userId, ['founder', 'officer']);
       await db.update(alliances).set({ description }).where(eq(alliances.id, membership.allianceId));
+      return { success: true };
+    },
+
+    async updateBlason(userId: string, params: { blason: Blason; motto: string | null }) {
+      const membership = await requireRole(db, userId, ['founder']);
+      await db.update(alliances).set({
+        blasonShape: params.blason.shape,
+        blasonIcon: params.blason.icon,
+        blasonColor1: params.blason.color1,
+        blasonColor2: params.blason.color2,
+        motto: params.motto,
+      }).where(eq(alliances.id, membership.allianceId));
       return { success: true };
     },
 
