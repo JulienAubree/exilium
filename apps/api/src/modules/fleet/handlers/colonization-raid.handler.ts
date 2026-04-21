@@ -214,7 +214,8 @@ export class ColonizationRaidHandler implements MissionHandler {
         defenderLosses,
         attackerSurvivors: computeAttackerSurvivors(pirateFleet, attackerLosses),
         repairedDefenses,
-        debris: result.debris,
+        // Pirate raids during colonization don't generate a recyclable debris field
+        debris: { minerai: 0, silicium: 0 },
         rounds,
         attackerStats: result.attackerStats,
         defenderStats: result.defenderStats,
