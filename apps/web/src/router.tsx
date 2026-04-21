@@ -243,6 +243,11 @@ export const router = createBrowserRouter([
         lazy: lazyLoad(() => import('./pages/PlayerProfile')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
+      {
+        path: 'settings/notifications',
+        lazy: lazyLoad(() => import('./pages/SettingsNotifications')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
     ],
   },
 ]);
