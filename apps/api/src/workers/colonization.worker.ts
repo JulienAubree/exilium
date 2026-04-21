@@ -212,7 +212,7 @@ async function createRaidFleetEvent(
       targetGalaxy: raidInfo.coordinates.galaxy,
       targetSystem: raidInfo.coordinates.system,
       targetPosition: raidInfo.coordinates.position,
-      mission: 'pirate',
+      mission: 'colonization_raid',
       phase: 'outbound',
       status: 'active',
       departureTime: now,

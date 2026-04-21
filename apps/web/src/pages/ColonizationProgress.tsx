@@ -862,6 +862,20 @@ export default function ColonizationProgress() {
                   </div>
                 </div>
 
+                {/* Hydrogène (stored, not consumed during colonization) */}
+                {status.currentHydrogene > 0 && (
+                  <div className="rounded-lg bg-card/60 border border-border/20 p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-hydrogene">Hydrogène</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="font-bold text-foreground tabular-nums">{formatNumber(Math.floor(status.currentHydrogene))}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stockout ETA */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">

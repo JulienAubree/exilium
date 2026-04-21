@@ -318,7 +318,9 @@ export function createPlanetService(
 
       const planetData = await Promise.all(
         planetList.map(async (planet) => {
-          // Colonizing planets have no resources/buildings yet — return minimal data
+          // Colonizing planets have no buildings/production yet, but may already
+          // hold resources delivered by the colony ship cargo or supply convoys.
+          // Surface the stored values so the TopBar / Empire card reflect reality.
           if (planet.status === 'colonizing') {
             return {
               id: planet.id,
@@ -332,9 +334,9 @@ export function createPlanetService(
               minTemp: planet.minTemp,
               maxTemp: planet.maxTemp,
               status: planet.status as string,
-              minerai: 0,
-              silicium: 0,
-              hydrogene: 0,
+              minerai: Number(planet.minerai),
+              silicium: Number(planet.silicium),
+              hydrogene: Number(planet.hydrogene),
               mineraiPerHour: 0,
               siliciumPerHour: 0,
               hydrogenePerHour: 0,

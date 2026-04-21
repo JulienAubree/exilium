@@ -65,13 +65,14 @@ export function createColonizationService(
 
       // Fetch planet resources
       const [planet] = await db
-        .select({ minerai: planets.minerai, silicium: planets.silicium })
+        .select({ minerai: planets.minerai, silicium: planets.silicium, hydrogene: planets.hydrogene })
         .from(planets)
         .where(eq(planets.id, planetId))
         .limit(1);
 
       const currentMinerai = planet ? Number(planet.minerai) : 0;
       const currentSilicium = planet ? Number(planet.silicium) : 0;
+      const currentHydrogene = planet ? Number(planet.hydrogene) : 0;
 
       const stockSufficient = currentMinerai > 0 && currentSilicium > 0;
 
@@ -176,6 +177,7 @@ export function createColonizationService(
         consumptionSiliciumPerHour,
         currentMinerai,
         currentSilicium,
+        currentHydrogene,
         hoursUntilStockout,
         stockSufficient,
         stationedShips,
