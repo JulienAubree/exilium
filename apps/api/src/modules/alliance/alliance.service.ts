@@ -290,21 +290,39 @@ export function createAllianceService(db: Database, redis?: Redis) {
       const limit = 20;
       const offset = (page - 1) * limit;
 
-      return db
+      const rows = await db
         .select({
           allianceId: alliances.id,
           name: alliances.name,
           tag: alliances.tag,
+          blasonShape: alliances.blasonShape,
+          blasonIcon: alliances.blasonIcon,
+          blasonColor1: alliances.blasonColor1,
+          blasonColor2: alliances.blasonColor2,
           memberCount: sql<number>`count(${allianceMembers.userId})::int`,
           totalPoints: sql<number>`coalesce(sum(${rankings.totalPoints}), 0)::int`,
         })
         .from(alliances)
         .innerJoin(allianceMembers, eq(allianceMembers.allianceId, alliances.id))
         .leftJoin(rankings, eq(rankings.userId, allianceMembers.userId))
-        .groupBy(alliances.id, alliances.name, alliances.tag)
+        .groupBy(alliances.id, alliances.name, alliances.tag, alliances.blasonShape, alliances.blasonIcon, alliances.blasonColor1, alliances.blasonColor2)
         .orderBy(desc(sql`coalesce(sum(${rankings.totalPoints}), 0)`))
         .limit(limit)
         .offset(offset);
+
+      return rows.map((row) => ({
+        allianceId: row.allianceId,
+        name: row.name,
+        tag: row.tag,
+        memberCount: row.memberCount,
+        totalPoints: row.totalPoints,
+        blason: {
+          shape: row.blasonShape as Blason['shape'],
+          icon: row.blasonIcon as Blason['icon'],
+          color1: row.blasonColor1,
+          color2: row.blasonColor2,
+        } satisfies Blason,
+      }));
     },
 
     async search(query: string) {

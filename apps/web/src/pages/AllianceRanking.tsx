@@ -4,6 +4,7 @@ import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { TablePageSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
+import { AllianceBlason } from '@/components/alliance/AllianceBlason';
 import { cn } from '@/lib/utils';
 
 const MEDALS = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
@@ -58,6 +59,7 @@ export default function AllianceRanking() {
                       rank
                     )}
                   </span>
+                  <AllianceBlason blason={entry.blason} size={32} />
                   <span className="text-sm">[{entry.tag}] {entry.name}</span>
                 </div>
                 <span className="text-sm text-muted-foreground">{entry.totalPoints.toLocaleString('fr-FR')}</span>
@@ -97,7 +99,12 @@ export default function AllianceRanking() {
                         rank
                       )}
                     </td>
-                    <td className="px-2 py-1">[{entry.tag}] {entry.name}</td>
+                    <td className="px-2 py-1">
+                      <div className="flex items-center gap-2">
+                        <AllianceBlason blason={entry.blason} size={32} />
+                        <span>[{entry.tag}] {entry.name}</span>
+                      </div>
+                    </td>
                     <td className="px-2 py-1 text-right">{entry.memberCount}</td>
                     <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
                   </tr>
