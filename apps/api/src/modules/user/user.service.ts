@@ -58,6 +58,7 @@ export function createUserService(db: Database, assetsDir: string) {
         id: user.id,
         username: user.username,
         avatarId: user.avatarId,
+        createdAt: user.createdAt,
         bio: (visibility.bio !== false) ? user.bio : null,
         playstyle: (visibility.playstyle !== false) ? user.playstyle : null,
         seekingAlliance: (visibility.playstyle !== false) ? user.seekingAlliance : null, // grouped with playstyle visibility
@@ -119,6 +120,9 @@ export function createUserService(db: Database, assetsDir: string) {
 
       const [membership] = await db.select({
         allianceName: alliances.name,
+        allianceTag: alliances.tag,
+        allianceId: alliances.id,
+        allianceRole: allianceMembers.role,
       }).from(allianceMembers)
         .innerJoin(alliances, eq(allianceMembers.allianceId, alliances.id))
         .where(eq(allianceMembers.userId, userId))
@@ -129,6 +133,9 @@ export function createUserService(db: Database, assetsDir: string) {
         totalPoints: ranking?.totalPoints ?? 0,
         planetCount: planetCount?.count ?? 0,
         allianceName: membership?.allianceName ?? null,
+        allianceTag: membership?.allianceTag ?? null,
+        allianceId: membership?.allianceId ?? null,
+        allianceRole: membership?.allianceRole ?? null,
       };
     },
 
