@@ -15,7 +15,7 @@ export function generateDefaultBlason(tag: string): Blason {
   const shape = BLASON_SHAPES[h % BLASON_SHAPES.length];
   const icon = BLASON_ICONS[(h >>> 4) % BLASON_ICONS.length];
   const c1Idx = (h >>> 8) % DEFAULT_PALETTE.length;
-  let c2Idx = (h >>> 12) % DEFAULT_PALETTE.length;
+  let c2Idx = (h >>> 16) % DEFAULT_PALETTE.length;
   if (c2Idx === c1Idx) c2Idx = (c2Idx + 1) % DEFAULT_PALETTE.length;
   return {
     shape,
