@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BlasonSchema, BLASON_SHAPES, BLASON_ICONS } from '../catalog.js';
+import { BlasonSchema, MottoSchema, BLASON_SHAPES, BLASON_ICONS } from '../catalog.js';
 
 describe('BlasonSchema', () => {
   it('accepts a valid blason', () => {
@@ -45,5 +45,19 @@ describe('BlasonSchema', () => {
   it('has 12 shapes and 17 icons', () => {
     expect(BLASON_SHAPES).toHaveLength(12);
     expect(BLASON_ICONS).toHaveLength(17);
+  });
+});
+
+describe('MottoSchema', () => {
+  it('accepts null', () => {
+    expect(MottoSchema.safeParse(null).success).toBe(true);
+  });
+
+  it('accepts an empty string', () => {
+    expect(MottoSchema.safeParse('').success).toBe(true);
+  });
+
+  it('rejects a string over 100 characters', () => {
+    expect(MottoSchema.safeParse('a'.repeat(101)).success).toBe(false);
   });
 });
