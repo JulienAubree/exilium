@@ -31,7 +31,7 @@ function PencilIcon() {
 
 function AvatarFallback({ username }: { username: string }) {
   return (
-    <span className="text-2xl font-bold text-white/90">
+    <span className="text-2xl font-bold text-primary">
       {username.slice(0, 2).toUpperCase()}
     </span>
   );
@@ -63,101 +63,89 @@ export function ProfileHero({
 }: ProfileHeroProps) {
   const phrase = tagline(bio, createdAt);
   const rankLine = rank != null ? `Capitaine · Rang ${rank}` : 'Capitaine';
+  const avatarUrl = avatarId ? `/assets/avatars/${avatarId}.webp` : null;
 
-  const avatar: ReactNode = avatarId ? (
+  const avatar: ReactNode = avatarUrl ? (
     <img
-      src={`/assets/avatars/${avatarId}.webp`}
+      src={avatarUrl}
       alt={username}
       className="w-full h-full object-cover"
     />
   ) : (
-    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-700 to-cyan-600">
+    <div className="w-full h-full flex items-center justify-center bg-card">
       <AvatarFallback username={username} />
     </div>
   );
 
   return (
-    <div
-      className="relative overflow-hidden rounded-lg border border-slate-500/30 px-5 py-5"
-      style={{ background: 'linear-gradient(180deg, #020617 0%, #1e1b4b 100%)', minHeight: '160px' }}
-    >
-      {/* Stars layer */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage: [
-            'radial-gradient(1px 1px at 15% 20%, white, transparent)',
-            'radial-gradient(1px 1px at 70% 40%, white, transparent)',
-            'radial-gradient(1px 1px at 30% 70%, white, transparent)',
-            'radial-gradient(1px 1px at 85% 80%, white, transparent)',
-            'radial-gradient(1.5px 1.5px at 50% 15%, #fbbf24, transparent)',
-          ].join(','),
-        }}
-      />
-
-      {/* Distant planet */}
-      <div
-        className="pointer-events-none absolute opacity-80"
-        style={{
-          right: '-30px',
-          top: '-10px',
-          width: '90px',
-          height: '90px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle at 30% 30%, #86efac 0%, #16a34a 50%, #052e16 100%)',
-        }}
-      />
+    <div className="relative overflow-hidden">
+      {/* Background image (blurred avatar) with gradient fallback */}
+      <div className="absolute inset-0">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+      </div>
 
       {/* Alliance monogram (top-right corner) */}
       {allianceTag && (
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 z-10 lg:top-4 lg:right-4">
           <AllianceTagBadge tag={allianceTag} size="sm" />
         </div>
       )}
 
       {/* Content row */}
-      <div className="relative flex items-center gap-4">
-        {/* Avatar with optional edit pencil */}
-        <div className="relative group shrink-0">
-          <div
-            className={cn(
-              'w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-slate-400/40',
-              onEditAvatar && 'cursor-pointer',
-            )}
-            onClick={onEditAvatar}
-            role={onEditAvatar ? 'button' : undefined}
-            aria-label={onEditAvatar ? 'Changer d\'avatar' : undefined}
-          >
-            {avatar}
-          </div>
-          {onEditAvatar && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onEditAvatar(); }}
-              className="absolute bottom-0 right-0 flex items-center justify-center w-7 h-7 rounded-full bg-slate-900/90 border border-cyan-400/40 text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Changer d'avatar"
+      <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
+        <div className="flex items-start gap-5">
+          {/* Avatar with optional edit pencil */}
+          <div className="relative group shrink-0">
+            <div
+              className={cn(
+                'h-20 w-20 lg:h-24 lg:w-24 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg shadow-primary/10',
+                onEditAvatar && 'cursor-pointer transition-all group-hover:ring-2 group-hover:ring-primary/40 group-hover:shadow-primary/20',
+              )}
+              onClick={onEditAvatar}
+              role={onEditAvatar ? 'button' : undefined}
+              aria-label={onEditAvatar ? 'Changer d\'avatar' : undefined}
             >
-              <PencilIcon />
-            </button>
-          )}
-        </div>
+              {avatar}
+            </div>
+            {onEditAvatar && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onEditAvatar(); }}
+                className="absolute bottom-0 right-0 flex items-center justify-center w-7 h-7 rounded-full bg-background/80 backdrop-blur-sm border border-primary/40 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Changer d'avatar"
+              >
+                <PencilIcon />
+              </button>
+            )}
+          </div>
 
-        {/* Text stack */}
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-200">{rankLine}</div>
-          <h2 className="text-[22px] font-bold text-white mt-1 truncate">{username}</h2>
-          <p className="text-[11px] italic text-slate-400 mt-1.5 leading-relaxed">{phrase}</p>
-          <div className="flex flex-wrap gap-1.5 mt-2.5">
-            {playstyle && (
-              <span className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">
-                {PLAYSTYLE_LABELS[playstyle] ?? playstyle}
-              </span>
-            )}
-            {seekingAlliance === true && (
-              <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
-                Cherche une alliance
-              </span>
-            )}
+          {/* Text stack */}
+          <div className="flex-1 min-w-0 pt-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">{username}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{rankLine}</p>
+            <p className="text-xs italic text-muted-foreground/80 mt-2 leading-relaxed">{phrase}</p>
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {playstyle && (
+                <span className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">
+                  {PLAYSTYLE_LABELS[playstyle] ?? playstyle}
+                </span>
+              )}
+              {seekingAlliance === true && (
+                <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+                  Cherche une alliance
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
