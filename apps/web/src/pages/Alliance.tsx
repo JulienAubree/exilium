@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { trpc } from '@/trpc';
 import { generateDefaultBlason, type Blason } from '@exilium/shared';
 import { BlasonPicker } from '@/components/alliance/BlasonPicker';
+import { AllianceBlason } from '@/components/alliance/AllianceBlason';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -153,7 +154,21 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
   );
 }
 
-function AllianceView({ alliance }: { alliance: { id: string; name: string; tag: string; description: string | null; myRole: string; members: { userId: string; username: string; role: string; joinedAt: string }[] } }) {
+function AllianceView({ alliance }: {
+  alliance: {
+    id: string;
+    name: string;
+    tag: string;
+    description: string | null;
+    myRole: string;
+    members: { userId: string; username: string; role: string; joinedAt: string }[];
+    blasonShape: string;
+    blasonIcon: string;
+    blasonColor1: string;
+    blasonColor2: string;
+    motto: string | null;
+  };
+}) {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<'info' | 'members' | 'manage'>('info');
   const [inviteUsername, setInviteUsername] = useState('');
@@ -161,6 +176,15 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   const [showApplications, setShowApplications] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [kickConfirm, setKickConfirm] = useState<string | null>(null);
+
+  const currentBlason: Blason = {
+    shape: alliance.blasonShape as Blason['shape'],
+    icon: alliance.blasonIcon as Blason['icon'],
+    color1: alliance.blasonColor1,
+    color2: alliance.blasonColor2,
+  };
+  const [editBlason, setEditBlason] = useState<Blason>(currentBlason);
+  const [editMotto, setEditMotto] = useState<string | null>(alliance.motto);
 
   const { data: applications } = trpc.alliance.applications.useQuery(undefined, {
     enabled: showApplications && (alliance.myRole === 'founder' || alliance.myRole === 'officer'),
@@ -181,6 +205,17 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   const inviteMutation = trpc.alliance.invite.useMutation({ onSuccess: () => setInviteUsername('') });
   const updateMutation = trpc.alliance.update.useMutation({ onSuccess: invalidateAll });
   const respondAppMutation = trpc.alliance.respondApplication.useMutation({ onSuccess: invalidateAll });
+  const updateBlasonMutation = trpc.alliance.updateBlason.useMutation({
+    onSuccess: invalidateAll,
+  });
+
+  const blasonDirty = useMemo(() => {
+    return editBlason.shape !== currentBlason.shape
+      || editBlason.icon !== currentBlason.icon
+      || editBlason.color1.toLowerCase() !== currentBlason.color1.toLowerCase()
+      || editBlason.color2.toLowerCase() !== currentBlason.color2.toLowerCase()
+      || (editMotto ?? '') !== (alliance.motto ?? '');
+  }, [editBlason, editMotto, currentBlason, alliance.motto]);
 
   const isLeader = alliance.myRole === 'founder' || alliance.myRole === 'officer';
   const isFounder = alliance.myRole === 'founder';
@@ -194,13 +229,31 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
   /* --- Section renderers --- */
 
   const renderInfoSection = () => (
-    <section className="glass-card p-4 space-y-3">
-      <h3 className="text-base font-semibold">Informations</h3>
-      {alliance.description && <p className="text-sm text-muted-foreground">{alliance.description}</p>}
-      <Button variant="destructive" size="sm" onClick={() => setLeaveConfirm(true)} disabled={leaveMutation.isPending}>
-        Quitter l&apos;alliance
-      </Button>
-    </section>
+    <>
+      <section className="glass-card p-6">
+        <div className="flex flex-wrap items-start gap-5">
+          <AllianceBlason blason={currentBlason} size={96} />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold">{alliance.name}</h2>
+            <div className="text-sm font-semibold text-primary mt-0.5">[{alliance.tag}]</div>
+            {alliance.description && (
+              <p className="text-sm text-muted-foreground mt-2">{alliance.description}</p>
+            )}
+            {alliance.motto && (
+              <p className="mt-3 border-l-2 border-primary/60 pl-3 italic text-sm text-foreground/90">
+                {alliance.motto}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+      <section className="glass-card p-4 space-y-3">
+        <h3 className="text-base font-semibold">Informations</h3>
+        <Button variant="destructive" size="sm" onClick={() => setLeaveConfirm(true)} disabled={leaveMutation.isPending}>
+          Quitter l&apos;alliance
+        </Button>
+      </section>
+    </>
   );
 
   const renderMembersSection = () => (
@@ -273,6 +326,38 @@ function AllianceView({ alliance }: { alliance: { id: string; name: string; tag:
 
   const renderManageSection = () => (
     <>
+      {isFounder && (
+        <section className="glass-card p-4 space-y-4">
+          <h3 className="text-base font-semibold">Blason &amp; devise</h3>
+          <BlasonPicker
+            blason={editBlason}
+            motto={editMotto}
+            onBlasonChange={setEditBlason}
+            onMottoChange={setEditMotto}
+            allianceName={alliance.name}
+            allianceTag={alliance.tag}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => { setEditBlason(currentBlason); setEditMotto(alliance.motto); }}
+              disabled={!blasonDirty || updateBlasonMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => updateBlasonMutation.mutate({ blason: editBlason, motto: editMotto })}
+              disabled={!blasonDirty || updateBlasonMutation.isPending}
+            >
+              Enregistrer
+            </Button>
+          </div>
+          {updateBlasonMutation.error && (
+            <p className="text-sm text-destructive">{updateBlasonMutation.error.message}</p>
+          )}
+        </section>
+      )}
+
       <section className="glass-card p-4 space-y-3">
         <h3 className="text-base font-semibold">Inviter un joueur</h3>
         <div className="flex flex-wrap gap-2">
