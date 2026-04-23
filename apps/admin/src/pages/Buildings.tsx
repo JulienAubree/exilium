@@ -7,6 +7,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { PrerequisitesEditor, type BuildingPrereq } from '@/components/ui/PrerequisitesEditor';
 import { Pencil, ChevronDown, ChevronRight, Plus, Trash2, Link } from 'lucide-react';
 import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
+import { PlanetTypeVariantsPanel } from '@/components/ui/PlanetTypeVariantsPanel';
 
 function getFields() {
   return [
@@ -239,6 +240,13 @@ export default function Buildings() {
                     </td>
                     <td className="!px-2">
                       <AdminImageUpload category="buildings" entityId={b.id} entityName={b.name} />
+                      <PlanetTypeVariantsPanel
+                        category="buildings"
+                        entityId={b.id}
+                        variantPlanetTypes={b.variantPlanetTypes ?? []}
+                        planetTypes={data.planetTypes?.map((pt) => ({ id: pt.id, name: pt.name })) ?? []}
+                        onChange={() => refetch()}
+                      />
                     </td>
                     <td className="font-mono text-xs text-gray-500">{b.id}</td>
                     <td className="font-medium">{b.name}</td>

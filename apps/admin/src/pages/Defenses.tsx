@@ -7,6 +7,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { PrerequisitesEditor, type MixedPrereq } from '@/components/ui/PrerequisitesEditor';
 import { Pencil, Plus, Trash2, Link } from 'lucide-react';
 import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
+import { PlanetTypeVariantsPanel } from '@/components/ui/PlanetTypeVariantsPanel';
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -114,6 +115,13 @@ export default function Defenses() {
               <tr key={d.id}>
                 <td className="!px-2">
                   <AdminImageUpload category="defenses" entityId={d.id} entityName={d.name} />
+                  <PlanetTypeVariantsPanel
+                    category="defenses"
+                    entityId={d.id}
+                    variantPlanetTypes={d.variantPlanetTypes ?? []}
+                    planetTypes={data.planetTypes?.map((pt) => ({ id: pt.id, name: pt.name })) ?? []}
+                    onChange={() => refetch()}
+                  />
                 </td>
                 <td className="font-mono text-xs text-gray-500">{d.id}</td>
                 <td className="font-medium">{d.name}</td>
