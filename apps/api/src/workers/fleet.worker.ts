@@ -20,6 +20,9 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
 
   const handlers: Record<string, (id: string) => Promise<FleetCompletionResult>> = {
     'arrive':        (id) => fleetService.processArrival(id),
+    // Legacy alias: some producers enqueued 'arrival' before the naming was unified.
+    // Keep this until we are confident no stale jobs remain in Redis.
+    'arrival':       (id) => fleetService.processArrival(id),
     'return':        (id) => fleetService.processReturn(id),
     'prospect-done': (id) => fleetService.processProspectDone(id),
     'mine-done':     (id) => fleetService.processMineDone(id),

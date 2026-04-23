@@ -30,16 +30,20 @@ export function FacilityHero({
       <div className="absolute inset-0">
         {hasPlanetImage ? (
           <img
-            src={getPlanetImageUrl(planetClassId!, planetImageIndex!)}
+            src={getPlanetImageUrl(planetClassId!, planetImageIndex!, 'thumb')}
             alt=""
             className="h-full w-full object-cover opacity-50 blur-sm scale-110"
+            decoding="async"
+            fetchPriority="low"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
           />
         ) : (
           <img
-            src={getAssetUrl('buildings', buildingId)}
+            src={getAssetUrl('buildings', buildingId, 'thumb')}
             alt=""
             className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+            decoding="async"
+            fetchPriority="low"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
           />
         )}

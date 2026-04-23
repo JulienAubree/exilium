@@ -14,7 +14,7 @@ import { registerAssetUploadRoute } from './modules/admin/asset-upload.route.js'
 const isProd = env.NODE_ENV === 'production';
 
 const server = Fastify({
-  maxParamLength: 500,
+  routerOptions: { maxParamLength: 500 },
   logger: {
     level: isProd ? 'warn' : 'info',
     // Redact anything that might contain a bearer token or short-lived SSE

@@ -224,9 +224,9 @@ async function createRaidFleetEvent(
 
   // Schedule fleet arrival processing
   await fleetQueue.add(
-    'arrival',
+    'arrive',
     { fleetEventId: raidEvent.id },
-    { delay: raidInfo.travelTime * 1000, jobId: `fleet-arrival-${raidEvent.id}` },
+    { delay: raidInfo.travelTime * 1000, jobId: `fleet-arrive-${raidEvent.id}` },
   );
 
   // Notify the player about the incoming raid
