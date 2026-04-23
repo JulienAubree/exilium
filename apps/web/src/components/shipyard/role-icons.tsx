@@ -22,13 +22,15 @@ export function RoleAllIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Glyphs mirror those used by MissionIcon (apps/web/src/components/fleet/MissionIcon.tsx)
+// so the filter chips read the same visually as their matching mission in the fleet UI.
+
 export function RoleTransportIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <path d="M3 7h13v10H3z" />
-      <path d="M16 10h4l1 3v4h-5z" />
-      <circle cx="7" cy="18" r="1.5" />
-      <circle cx="17" cy="18" r="1.5" />
+      <path d="M21 8L12 2 3 8v8l9 6 9-6V8z" />
+      <path d="M3 8l9 6 9-6" />
+      <path d="M12 14v8" />
     </svg>
   );
 }
@@ -36,9 +38,9 @@ export function RoleTransportIcon(props: SVGProps<SVGSVGElement>) {
 export function RoleMiningIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <path d="M14 3c2 0 4 1 5 3-1 0-2 1-2 2s1 2 2 2c-1 2-3 3-5 3" />
-      <path d="M14 13L4 21" />
-      <path d="M4 21l-1-3 3 1" />
+      <path d="M9 3l5 1 4 3 2 5-1 4-3 4-5 1-4-1-3-3-2-4 1-5 3-3z" />
+      <line x1="9" y1="10" x2="11" y2="14" strokeWidth={1.5} opacity={0.4} />
+      <line x1="14" y1="8" x2="15" y2="12" strokeWidth={1.5} opacity={0.4} />
     </svg>
   );
 }
@@ -46,12 +48,10 @@ export function RoleMiningIcon(props: SVGProps<SVGSVGElement>) {
 export function RoleRecyclingIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <path d="M7 19H4a1 1 0 0 1-.86-1.5L8 10" />
-      <path d="M3.5 15.5 8 10l4 2" />
-      <path d="M11 9.5 12.5 4a1 1 0 0 1 1.73 0l2.77 5" />
-      <path d="M16 4.5 19 9l-1 3" />
-      <path d="M20.27 15.5 18 20a1 1 0 0 1-.86.5H11" />
-      <path d="M17.5 19.5 11 20l1-4" />
+      <path d="M21 12a9 9 0 0 1-15 6.7" />
+      <path d="M3 12a9 9 0 0 1 15-6.7" />
+      <path d="M6 18.7l-3 1 1-3" />
+      <path d="M18 5.3l3-1-1 3" />
     </svg>
   );
 }
@@ -59,8 +59,9 @@ export function RoleRecyclingIcon(props: SVGProps<SVGSVGElement>) {
 export function RoleColonizationIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <path d="M4 21V4" />
-      <path d="M4 4h11l-2 4 2 4H4" />
+      <path d="M2 20a10 10 0 0 1 20 0" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+      <path d="M12 4l6 3-6 3" />
     </svg>
   );
 }
@@ -68,8 +69,9 @@ export function RoleColonizationIcon(props: SVGProps<SVGSVGElement>) {
 export function RoleExplorationIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <circle cx="12" cy="12" r="10" />
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88" />
+      <circle cx="11" cy="11" r="7" />
+      <line x1="16" y1="16" x2="21" y2="21" />
+      <circle cx="11" cy="11" r="3" fill="currentColor" fillOpacity={0.2} />
     </svg>
   );
 }
@@ -77,7 +79,7 @@ export function RoleExplorationIcon(props: SVGProps<SVGSVGElement>) {
 export function RoleEspionageIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...defaults} {...props}>
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
   );
