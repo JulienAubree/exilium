@@ -18,6 +18,7 @@ import { FacilityHero } from '@/components/common/FacilityHero';
 import { FacilityQueue } from '@/components/common/FacilityQueue';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { PlanetaryShieldBanner } from '@/components/arsenal/PlanetaryShieldBanner';
+import { ArsenalHelp } from '@/components/arsenal/ArsenalHelp';
 import { formatDuration } from '@/lib/format';
 import { getDefenseName } from '@/lib/entity-names';
 import { cn } from '@/lib/utils';
@@ -508,20 +509,7 @@ export default function Defense() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Arsenal planétaire">
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            L'Arsenal produit les <span className="text-foreground font-medium">défenses planétaires</span> qui protègent votre colonie contre les flottes hostiles. Chaque niveau débloque ou améliore certaines défenses.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Les défenses sont <span className="text-foreground font-medium">stationnaires</span> : elles ne peuvent pas être envoyées en mission. En cas d'attaque, elles se battent automatiquement aux côtés de la flotte présente sur la planète.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Le <span className="text-foreground font-medium">Bouclier planétaire</span>, s'il est construit, forme un champ de force indestructible régénéré à chaque round. Tant qu'il tient, vos défenses restent intouchables.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Annuler une production rembourse les ressources au <span className="text-foreground font-medium">prorata du temps restant</span>, plafonné à <span className="text-foreground font-medium">70&nbsp;%</span>. Les unités déjà produites sont conservées.
-          </p>
-        </div>
+        <ArsenalHelp level={arsenalLevel} />
       </EntityDetailOverlay>
 
       <ConfirmDialog

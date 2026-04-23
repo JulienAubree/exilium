@@ -14,6 +14,7 @@ import { FacilityQueue } from '@/components/common/FacilityQueue';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { ShipCard } from '@/components/shipyard/ShipCard';
 import { ShipMobileRow } from '@/components/shipyard/ShipMobileRow';
+import { CommandCenterHelp } from '@/components/command-center/CommandCenterHelp';
 import { getShipName } from '@/lib/entity-names';
 
 export default function CommandCenter() {
@@ -321,17 +322,7 @@ export default function CommandCenter() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Centre de commandement">
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Le Centre de commandement assemble les <span className="text-foreground font-medium">vaisseaux militaires</span> de votre empire&nbsp;: intercepteurs, frégates, croiseurs et cuirassés. Les vaisseaux industriels (transport, prospecteurs, sondes…) sont produits au Chantier spatial.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Chaque niveau débloque ou améliore les unités disponibles. Par défaut, un seul slot de production est actif&nbsp;; les <span className="text-foreground font-medium">talents militaires</span> (Production parallèle militaire) en débloquent davantage.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Annuler un lot rembourse les ressources au <span className="text-foreground font-medium">prorata du temps restant</span>, plafonné à <span className="text-foreground font-medium">70&nbsp;%</span>. Les vaisseaux déjà produits sont conservés dans votre hangar.
-          </p>
-        </div>
+        <CommandCenterHelp level={commandCenterLevel} />
       </EntityDetailOverlay>
 
       <ConfirmDialog
