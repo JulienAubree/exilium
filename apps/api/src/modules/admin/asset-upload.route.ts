@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import '@fastify/multipart';
 import { jwtVerify } from 'jose';
-import { eq } from 'drizzle-orm';
-import { users, planetTypes, buildingDefinitions, defenseDefinitions, type Database } from '@exilium/db';
+import { eq, sql } from 'drizzle-orm';
+import { users, planetTypes, type Database } from '@exilium/db';
 import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
@@ -99,18 +99,36 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
 
         files = await processBuildingVariant(buffer, category, entityId!, planetType, env.ASSETS_DIR);
 
-        const table = category === 'buildings' ? buildingDefinitions : defenseDefinitions;
-        const [row] = await db
-          .select({ variants: table.variantPlanetTypes })
-          .from(table)
-          .where(eq(table.id, entityId!))
-          .limit(1);
-        if (!row) {
+        // Atomic jsonb append-if-absent at the SQL level — avoids any
+        // driver-side ambiguity around how jsonb columns round-trip.
+        const payload = JSON.stringify([planetType]);
+        const result = category === 'buildings'
+          ? await db.execute(sql`
+              UPDATE building_definitions
+              SET variant_planet_types = CASE
+                WHEN variant_planet_types @> ${payload}::jsonb THEN variant_planet_types
+                ELSE COALESCE(variant_planet_types, '[]'::jsonb) || ${payload}::jsonb
+              END
+              WHERE id = ${entityId!}
+              RETURNING variant_planet_types
+            `)
+          : await db.execute(sql`
+              UPDATE defense_definitions
+              SET variant_planet_types = CASE
+                WHEN variant_planet_types @> ${payload}::jsonb THEN variant_planet_types
+                ELSE COALESCE(variant_planet_types, '[]'::jsonb) || ${payload}::jsonb
+              END
+              WHERE id = ${entityId!}
+              RETURNING variant_planet_types
+            `);
+        const returned = Array.isArray(result) ? result[0] : (result as { rows?: unknown[] }).rows?.[0];
+        request.log.info(
+          { category, entityId, planetType, returned },
+          'variant upload: DB state after jsonb append',
+        );
+        if (!returned) {
           return reply.status(404).send({ error: 'Entity not found' });
         }
-        const current = Array.isArray(row.variants) ? (row.variants as string[]) : [];
-        const updated = Array.from(new Set([...current, planetType]));
-        await db.update(table).set({ variantPlanetTypes: updated }).where(eq(table.id, entityId!));
       } else {
         files = await processImage(buffer, category, entityId!, env.ASSETS_DIR);
       }
@@ -325,15 +343,22 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
         if (existsSync(fp)) unlinkSync(fp);
       }
 
-      const table = category === 'buildings' ? buildingDefinitions : defenseDefinitions;
-      const [row] = await db
-        .select({ variants: table.variantPlanetTypes })
-        .from(table)
-        .where(eq(table.id, entityId))
-        .limit(1);
-      const current = Array.isArray(row?.variants) ? (row!.variants as string[]) : [];
-      const updated = current.filter((t) => t !== planetType);
-      await db.update(table).set({ variantPlanetTypes: updated }).where(eq(table.id, entityId));
+      // Atomic jsonb element removal; `jsonb - text` drops the matching
+      // element from the array (or key from an object). Safe when the value
+      // is absent — no-op.
+      if (category === 'buildings') {
+        await db.execute(sql`
+          UPDATE building_definitions
+          SET variant_planet_types = COALESCE(variant_planet_types, '[]'::jsonb) - ${planetType}
+          WHERE id = ${entityId}
+        `);
+      } else {
+        await db.execute(sql`
+          UPDATE defense_definitions
+          SET variant_planet_types = COALESCE(variant_planet_types, '[]'::jsonb) - ${planetType}
+          WHERE id = ${entityId}
+        `);
+      }
 
       return reply.send({ success: true });
     } catch (err) {
