@@ -118,6 +118,46 @@ export async function processAvatarImage(
   return files;
 }
 
+export async function processBuildingVariant(
+  buffer: Buffer,
+  category: 'buildings' | 'defenses',
+  entityId: string,
+  planetType: string,
+  assetsDir: string,
+): Promise<string[]> {
+  if (category !== 'buildings' && category !== 'defenses') {
+    throw new Error(`processBuildingVariant only supports buildings|defenses, got "${category}"`);
+  }
+  if (!/^[a-z0-9_-]+$/i.test(planetType)) {
+    throw new Error(`Invalid planetType "${planetType}"`);
+  }
+
+  const slug = toKebab(entityId);
+  const outputDir = path.join(assetsDir, category, slug);
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const files: string[] = [];
+  for (const size of SIZES) {
+    const filename = `${planetType}${size.suffix}.webp`;
+    const outPath = path.join(outputDir, filename);
+
+    let pipeline = sharp(buffer);
+    if (size.height) {
+      pipeline = pipeline.resize({
+        width: size.width,
+        height: size.height,
+        fit: 'cover',
+        position: 'centre',
+      });
+    } else {
+      pipeline = pipeline.resize({ width: size.width });
+    }
+    await pipeline.webp({ quality: size.quality }).toFile(outPath);
+    files.push(filename);
+  }
+  return files;
+}
+
 export async function processFlagshipImage(
   buffer: Buffer,
   hullId: string,

@@ -150,6 +150,7 @@ export interface BuildingConfig {
   sortOrder: number;
   role: string | null;
   allowedPlanetTypes: string[] | null;
+  variantPlanetTypes: string[];
   prerequisites: { buildingId: string; level: number }[];
 }
 
@@ -216,6 +217,7 @@ export interface DefenseConfig {
   flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;
+  variantPlanetTypes: string[];
   prerequisites: {
     buildings: { buildingId: string; level: number }[];
     research: { researchId: string; level: number }[];
@@ -368,6 +370,7 @@ export function createGameConfigService(db: Database) {
         sortOrder: b.sortOrder,
         role: b.role ?? null,
         allowedPlanetTypes: (b.allowedPlanetTypes as string[] | null) ?? null,
+        variantPlanetTypes: (b.variantPlanetTypes as string[] | null) ?? [],
         prerequisites: (buildingPrereqMap.get(b.id) ?? [])
           .map(p => ({ buildingId: p.requiredBuildingId, level: p.requiredLevel })),
       };
@@ -450,6 +453,7 @@ export function createGameConfigService(db: Database) {
         flavorText: d.flavorText ?? null,
         categoryId: d.categoryId,
         sortOrder: d.sortOrder,
+        variantPlanetTypes: (d.variantPlanetTypes as string[] | null) ?? [],
         prerequisites: {
           buildings: prereqs.filter(p => p.requiredBuildingId).map(p => ({ buildingId: p.requiredBuildingId!, level: p.requiredLevel })),
           research: prereqs.filter(p => p.requiredResearchId).map(p => ({ researchId: p.requiredResearchId!, level: p.requiredLevel })),
@@ -647,6 +651,7 @@ export function createGameConfigService(db: Database) {
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
         role: data.role ?? null,
+        variantPlanetTypes: [],
       });
       invalidateCache();
     },
@@ -709,7 +714,11 @@ export function createGameConfigService(db: Database) {
       sortOrder: number;
       role: string | null;
     }>) {
-      await db.update(buildingDefinitions).set(data).where(eq(buildingDefinitions.id, id));
+      // Defensive: never allow variantPlanetTypes to be overwritten via the
+      // regular edit form. The variant upload/delete endpoints manage that field.
+      const { variantPlanetTypes: _stripVariantPlanetTypes, ...safeData } = data as typeof data & { variantPlanetTypes?: unknown };
+      void _stripVariantPlanetTypes;
+      await db.update(buildingDefinitions).set(safeData).where(eq(buildingDefinitions.id, id));
       invalidateCache();
     },
 
@@ -948,6 +957,7 @@ export function createGameConfigService(db: Database) {
         flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
+        variantPlanetTypes: [],
       });
       invalidateCache();
     },
@@ -974,7 +984,11 @@ export function createGameConfigService(db: Database) {
       categoryId: string | null;
       sortOrder: number;
     }>) {
-      await db.update(defenseDefinitions).set(data).where(eq(defenseDefinitions.id, id));
+      // Defensive: never allow variantPlanetTypes to be overwritten via the
+      // regular edit form. The variant upload/delete endpoints manage that field.
+      const { variantPlanetTypes: _stripVariantPlanetTypes, ...safeData } = data as typeof data & { variantPlanetTypes?: unknown };
+      void _stripVariantPlanetTypes;
+      await db.update(defenseDefinitions).set(safeData).where(eq(defenseDefinitions.id, id));
       invalidateCache();
     },
 

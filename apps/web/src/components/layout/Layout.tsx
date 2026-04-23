@@ -82,7 +82,7 @@ export function Layout() {
             bottom of the viewport without position:fixed. */}
         <main className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto lg:max-w-6xl">
-            <Outlet context={{ planetId: resolvedPlanetId }} />
+            <Outlet context={{ planetId: resolvedPlanetId, planetClassId: activePlanet?.planetClassId ?? null }} />
           </div>
         </main>
 
