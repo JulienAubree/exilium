@@ -1,24 +1,43 @@
 import type { ReactNode } from 'react';
-import { getAssetUrl } from '@/lib/assets';
+import { getAssetUrl, getPlanetImageUrl } from '@/lib/assets';
 
 interface ShipyardHeroProps {
   level: number;
+  planetClassId?: string | null;
+  planetImageIndex?: number | null;
   onOpenHelp: () => void;
   upgradeCard?: ReactNode;
   children?: ReactNode;
 }
 
-export function ShipyardHero({ level, onOpenHelp, upgradeCard, children }: ShipyardHeroProps) {
+export function ShipyardHero({
+  level,
+  planetClassId,
+  planetImageIndex,
+  onOpenHelp,
+  upgradeCard,
+  children,
+}: ShipyardHeroProps) {
+  const hasPlanetImage = !!planetClassId && planetImageIndex != null;
   return (
     <div className="relative overflow-hidden">
       <div className="absolute inset-0">
-        <img
-          src={getAssetUrl('buildings', 'shipyard')}
-          alt=""
-          className="h-full w-full object-cover opacity-40 blur-sm scale-110"
-          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/60 via-slate-950/80 to-purple-950/60" />
+        {hasPlanetImage ? (
+          <img
+            src={getPlanetImageUrl(planetClassId!, planetImageIndex!)}
+            alt=""
+            className="h-full w-full object-cover opacity-50 blur-sm scale-110"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+        ) : (
+          <img
+            src={getAssetUrl('buildings', 'shipyard')}
+            alt=""
+            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-slate-950/70 to-purple-950/50" />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 

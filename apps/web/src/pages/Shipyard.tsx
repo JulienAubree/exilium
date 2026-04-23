@@ -223,6 +223,8 @@ export default function Shipyard() {
     <div className="space-y-4">
       <ShipyardHero
         level={shipyardLevel}
+        planetClassId={resourceData?.planetClassId}
+        planetImageIndex={resourceData?.planetImageIndex}
         onOpenHelp={() => setHelpOpen(true)}
         upgradeCard={shipyardBuilding && (
           <ShipyardUpgradeCard
