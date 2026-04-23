@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { trpc } from '@/trpc';
 import { generateDefaultBlason, type Blason } from '@exilium/shared';
-import { BlasonPicker } from '@/components/alliance/BlasonPicker';
+import { BlasonEditor } from '@/components/alliance/BlasonEditor';
 import { AllianceBlason } from '@/components/alliance/AllianceBlason';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,7 +99,7 @@ function NoAllianceView({ invitations }: { invitations: { id: string; allianceNa
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Blason & devise</label>
-              <BlasonPicker
+              <BlasonEditor
                 blason={blason}
                 motto={motto}
                 onBlasonChange={setBlason}
@@ -339,7 +339,7 @@ function AllianceView({ alliance }: {
       {isFounder && (
         <section className="glass-card p-4 space-y-4">
           <h3 className="text-base font-semibold">Blason &amp; devise</h3>
-          <BlasonPicker
+          <BlasonEditor
             blason={editBlason}
             motto={editMotto}
             onBlasonChange={setEditBlason}
