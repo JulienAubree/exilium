@@ -9,6 +9,8 @@ interface GameImageProps {
   size?: AssetSize;
   alt: string;
   className?: string;
+  planetType?: string;
+  hasVariant?: boolean;
 }
 
 const FALLBACK_COLORS = [
@@ -27,7 +29,7 @@ function getFallbackColor(id: string): string {
   return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
 }
 
-export function GameImage({ category, id, size = 'full', alt, className }: GameImageProps) {
+export function GameImage({ category, id, size = 'full', alt, className, planetType, hasVariant }: GameImageProps) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +52,7 @@ export function GameImage({ category, id, size = 'full', alt, className }: GameI
     <div className={cn('relative', className)}>
       {loading && <Skeleton className={cn('absolute inset-0', className)} />}
       <img
-        src={getAssetUrl(category, id, size)}
+        src={getAssetUrl(category, id, size, { planetType, hasVariant })}
         alt={alt}
         className={cn(className, loading && 'opacity-0')}
         onError={() => { setError(true); setLoading(false); }}

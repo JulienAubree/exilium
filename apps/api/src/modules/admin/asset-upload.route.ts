@@ -2,11 +2,12 @@ import type { FastifyInstance } from 'fastify';
 import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
-import { users, type Database } from '@exilium/db';
-import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, isValidCategory } from '../../lib/image-processing.js';
+import { users, planetTypes, buildingDefinitions, defenseDefinitions, type Database } from '@exilium/db';
+import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
 import { getNextAvatarIndex, listAvatarIndexes } from '../../lib/avatar-image.util.js';
+import { toKebab } from '@exilium/shared';
 import { unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 import { env } from '../../config/env.js';
@@ -48,6 +49,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
 
     const category = (data.fields.category as { value: string } | undefined)?.value;
     const entityId = (data.fields.entityId as { value: string } | undefined)?.value;
+    const planetType = (data.fields.planetType as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
       return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars' });
@@ -79,6 +81,36 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
         const hullId = entityId!;
         const nextIndex = getNextFlagshipImageIndex(hullId, env.ASSETS_DIR);
         files = await processFlagshipImage(buffer, hullId, nextIndex, env.ASSETS_DIR);
+      } else if (planetType) {
+        if (category !== 'buildings' && category !== 'defenses') {
+          return reply.status(400).send({ error: 'planetType only supported for buildings|defenses' });
+        }
+        if (!/^[a-z0-9_-]+$/i.test(planetType)) {
+          return reply.status(400).send({ error: 'Invalid planetType' });
+        }
+        const [pt] = await db
+          .select({ id: planetTypes.id })
+          .from(planetTypes)
+          .where(eq(planetTypes.id, planetType))
+          .limit(1);
+        if (!pt) {
+          return reply.status(400).send({ error: 'Unknown planetType' });
+        }
+
+        files = await processBuildingVariant(buffer, category, entityId!, planetType, env.ASSETS_DIR);
+
+        const table = category === 'buildings' ? buildingDefinitions : defenseDefinitions;
+        const [row] = await db
+          .select({ variants: table.variantPlanetTypes })
+          .from(table)
+          .where(eq(table.id, entityId!))
+          .limit(1);
+        if (!row) {
+          return reply.status(404).send({ error: 'Entity not found' });
+        }
+        const current = Array.isArray(row.variants) ? (row.variants as string[]) : [];
+        const updated = Array.from(new Set([...current, planetType]));
+        await db.update(table).set({ variantPlanetTypes: updated }).where(eq(table.id, entityId!));
       } else {
         files = await processImage(buffer, category, entityId!, env.ASSETS_DIR);
       }
@@ -239,6 +271,74 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     } catch (err) {
       request.log.error(err, 'Failed to delete avatar');
       return reply.status(500).send({ error: 'Failed to delete avatar' });
+    }
+  });
+
+  server.delete('/admin/asset-variant/:category/:entityId/:planetType', async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    let userId: string;
+    try {
+      const { payload } = await jwtVerify(authHeader.slice(7), JWT_SECRET);
+      userId = payload.userId as string;
+    } catch {
+      return reply.status(401).send({ error: 'Invalid token' });
+    }
+
+    const [user] = await db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!user?.isAdmin) {
+      return reply.status(403).send({ error: 'Admin access required' });
+    }
+
+    const { category, entityId, planetType } = request.params as {
+      category: string;
+      entityId: string;
+      planetType: string;
+    };
+    if (category !== 'buildings' && category !== 'defenses') {
+      return reply.status(400).send({ error: 'Invalid category' });
+    }
+    if (!/^[a-z0-9_-]+$/i.test(entityId)) {
+      return reply.status(400).send({ error: 'Invalid entityId' });
+    }
+    if (!/^[a-z0-9_-]+$/i.test(planetType)) {
+      return reply.status(400).send({ error: 'Invalid planetType' });
+    }
+
+    const slug = toKebab(entityId);
+    const dir = join(env.ASSETS_DIR, category, slug);
+    const heroPath = join(dir, `${planetType}.webp`);
+    if (!existsSync(heroPath)) {
+      return reply.status(404).send({ error: 'Variant not found' });
+    }
+
+    try {
+      for (const suffix of ['', '-thumb', '-icon']) {
+        const fp = join(dir, `${planetType}${suffix}.webp`);
+        if (existsSync(fp)) unlinkSync(fp);
+      }
+
+      const table = category === 'buildings' ? buildingDefinitions : defenseDefinitions;
+      const [row] = await db
+        .select({ variants: table.variantPlanetTypes })
+        .from(table)
+        .where(eq(table.id, entityId))
+        .limit(1);
+      const current = Array.isArray(row?.variants) ? (row!.variants as string[]) : [];
+      const updated = current.filter((t) => t !== planetType);
+      await db.update(table).set({ variantPlanetTypes: updated }).where(eq(table.id, entityId));
+
+      return reply.send({ success: true });
+    } catch (err) {
+      request.log.error(err, 'Failed to delete variant');
+      return reply.status(500).send({ error: 'Failed to delete variant' });
     }
   });
 }
