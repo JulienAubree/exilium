@@ -26,6 +26,7 @@ import { createMarketService } from '../modules/market/market.service.js';
 import { startMarketWorker } from './market.worker.js';
 import { createColonizationService } from '../modules/colonization/colonization.service.js';
 import { startColonizationWorker } from './colonization.worker.js';
+import { createAllianceLogService } from '../modules/alliance/alliance-log.service.js';
 import { eventCatchup } from '../cron/event-catchup.js';
 import { resourceTick } from '../cron/resource-tick.js';
 import { rankingUpdate } from '../cron/ranking-update.js';
@@ -60,7 +61,9 @@ const gameEventService = createGameEventService(db);
 // Colonization service
 const colonizationService = createColonizationService(db, gameConfigService);
 
-const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService);
+const allianceLogService = createAllianceLogService(db, redis);
+
+const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService);
 
 // Market service
 const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);

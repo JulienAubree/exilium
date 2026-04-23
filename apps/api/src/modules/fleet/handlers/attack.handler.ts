@@ -529,9 +529,9 @@ export class AttackHandler implements MissionHandler {
       defenderReportId = defenderReport.id;
     }
 
-    // Hook: alliance combat logs
+    // Hook: alliance combat logs (fire-and-forget — never poison processArrival)
     if (reportId && ctx.allianceLogService) {
-      await emitCombatAllianceLogs(ctx, {
+      emitCombatAllianceLogs(ctx, {
         attackerUserId: fleetEvent.userId,
         defenderUserId: targetPlanet.userId,
         attackerName: attackerUsername,
@@ -541,7 +541,7 @@ export class AttackHandler implements MissionHandler {
         coords: `${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}`,
         rawOutcome: outcome,
         reportId,
-      });
+      }).catch((err) => console.error('[alliance-log] combat emit failed:', err));
     }
 
     // Hook: daily quest detection for PvP battle

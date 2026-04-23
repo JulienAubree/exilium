@@ -36,6 +36,7 @@ async function getMembership(db: Database, userId: string) {
       id: allianceMembers.id,
       allianceId: allianceMembers.allianceId,
       role: allianceMembers.role,
+      joinedAt: allianceMembers.joinedAt,
     })
     .from(allianceMembers)
     .where(eq(allianceMembers.userId, userId))
@@ -463,7 +464,10 @@ export function createAllianceService(db: Database, redis: Redis | undefined, al
 
       const prefixes = args.categories ? categoriesToTypePrefixes(args.categories) : null;
 
-      const whereClauses = [eq(allianceLogs.allianceId, membership.allianceId)];
+      const whereClauses = [
+        eq(allianceLogs.allianceId, membership.allianceId),
+        gt(allianceLogs.createdAt, membership.joinedAt),
+      ];
       if (!canSeeOfficers) whereClauses.push(eq(allianceLogs.visibility, 'all'));
       if (args.cursor) whereClauses.push(lt(allianceLogs.createdAt, new Date(args.cursor)));
       if (prefixes && prefixes.length > 0) {
@@ -501,18 +505,20 @@ export function createAllianceService(db: Database, redis: Redis | undefined, al
       if (!membership) return { count: 0 };
 
       const [me] = await db
-        .select({ seenAt: allianceMembers.activitySeenAt })
+        .select({ seenAt: allianceMembers.activitySeenAt, joinedAt: allianceMembers.joinedAt })
         .from(allianceMembers)
         .where(eq(allianceMembers.id, membership.id))
         .limit(1);
 
       const seenAt = me!.seenAt;
+      const joinedAt = me!.joinedAt;
       const role = membership.role as 'founder' | 'officer' | 'member';
       const canSeeOfficers = canSeeVisibility(role, 'officers');
 
       const whereClauses = [
         eq(allianceLogs.allianceId, membership.allianceId),
         gt(allianceLogs.createdAt, seenAt),
+        gt(allianceLogs.createdAt, joinedAt),
       ];
       if (!canSeeOfficers) whereClauses.push(eq(allianceLogs.visibility, 'all'));
 

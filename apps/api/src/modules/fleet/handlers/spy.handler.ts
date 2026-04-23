@@ -333,16 +333,17 @@ export class SpyHandler implements MissionHandler {
     }
 
     if (detected && reportId && ctx.allianceLogService) {
-      const { attackerUsername: spyUsername, defenderUsername } = await fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId);
-      await emitEspionageAllianceLogs(ctx, {
-        spyUserId: fleetEvent.userId,
-        targetUserId: targetPlanet.userId,
-        spyName: spyUsername,
-        targetName: defenderUsername,
-        targetPlanetName: targetPlanet.name,
-        coords: `${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}`,
-        reportId,
-      });
+      fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId).then(({ attackerUsername: spyUsername, defenderUsername }) =>
+        emitEspionageAllianceLogs(ctx, {
+          spyUserId: fleetEvent.userId,
+          targetUserId: targetPlanet.userId,
+          spyName: spyUsername,
+          targetName: defenderUsername,
+          targetPlanetName: targetPlanet.name,
+          coords: `${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}`,
+          reportId,
+        })
+      ).catch((err) => console.error('[alliance-log] espionage emit failed:', err));
     }
 
     if (detected) {
