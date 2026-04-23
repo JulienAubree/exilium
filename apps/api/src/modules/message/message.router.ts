@@ -89,6 +89,12 @@ export function createMessageRouter(messageService: ReturnType<typeof createMess
         return messageService.getAllianceChat(ctx.userId!, input.allianceId);
       }),
 
+    recentAllianceChat: protectedProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(10).default(3) }).optional())
+      .query(async ({ ctx, input }) => {
+        return messageService.getRecentAllianceChat(ctx.userId!, input?.limit ?? 3);
+      }),
+
     sendAllianceChat: protectedProcedure
       .input(z.object({ body: z.string().min(1).max(5000) }))
       .mutation(async ({ ctx, input }) => {

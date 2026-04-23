@@ -617,5 +617,34 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
           : null,
       }));
     },
+
+    async getRecentAllianceChat(userId: string, limit: number) {
+      const [membership] = await db
+        .select({ allianceId: allianceMembers.allianceId })
+        .from(allianceMembers)
+        .where(eq(allianceMembers.userId, userId))
+        .limit(1);
+      if (!membership) return [];
+
+      const rows = await db
+        .select({
+          id: messages.id,
+          senderId: messages.senderId,
+          senderUsername: users.username,
+          body: messages.body,
+          createdAt: messages.createdAt,
+        })
+        .from(messages)
+        .leftJoin(users, eq(users.id, messages.senderId))
+        .where(and(
+          eq(messages.recipientId, userId),
+          eq(messages.threadId, membership.allianceId),
+          eq(messages.type, 'alliance'),
+        ))
+        .orderBy(desc(messages.createdAt))
+        .limit(limit);
+
+      return rows;
+    },
   };
 }
