@@ -9,6 +9,7 @@ export * from './messages.js';
 export * from './rankings.js';
 export * from './debris-fields.js';
 export * from './alliances.js';
+export * from './alliance-logs.js';
 export * from './game-config.js';
 export * from './game-events.js';
 export * from './planet-buildings.js';
