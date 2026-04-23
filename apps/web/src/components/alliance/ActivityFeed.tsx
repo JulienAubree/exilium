@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AllianceLogCategory } from '@exilium/shared';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ export function ActivityFeed({ unreadCount, onOpened }: Props) {
   const markSeen = trpc.alliance.activityMarkSeen.useMutation({
     onSuccess: () => {
       utils.alliance.activityUnreadCount.invalidate();
+      onOpened();
     },
   });
 
@@ -31,11 +32,13 @@ export function ActivityFeed({ unreadCount, onOpened }: Props) {
 
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
+  const hasMarkedSeen = useRef(false);
   useEffect(() => {
-    if (!query.isLoading) {
+    if (!query.isLoading && !hasMarkedSeen.current) {
+      hasMarkedSeen.current = true;
       markSeen.mutate();
-      onOpened();
     }
+    // Intentionally omit markSeen/onOpened — fire once when the initial load resolves.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.isLoading]);
 
