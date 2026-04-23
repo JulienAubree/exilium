@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -27,6 +27,7 @@ import { RESEARCH_CATEGORIES, RESEARCH_CATEGORY_MAP, type ResearchCategoryId } f
 
 export default function Research() {
   const planetId = usePlanetStore((s) => s.activePlanetId);
+  const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const tutorialTargetId = useTutorialTargetId();
@@ -44,6 +45,14 @@ export default function Research() {
   // ── Home planet (researchLab lives there) ─────────────────────────────
   const { data: planets } = trpc.planet.list.useQuery();
   const homePlanet = planets?.find((p) => p.planetClassId === 'homeworld');
+
+  // The researchLab only exists on the homeworld, so snap the active planet
+  // to home whenever this page is open.
+  useEffect(() => {
+    if (homePlanet?.id && planetId !== homePlanet.id) {
+      setActivePlanet(homePlanet.id);
+    }
+  }, [homePlanet?.id, planetId, setActivePlanet]);
   const { data: homeBuildings } = trpc.building.list.useQuery(
     { planetId: homePlanet?.id ?? '' },
     { enabled: !!homePlanet?.id },
