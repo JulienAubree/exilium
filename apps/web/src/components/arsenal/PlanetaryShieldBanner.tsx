@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
+import { GameImage } from '@/components/common/GameImage';
 import { formatDuration } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,8 @@ interface PlanetaryShieldBannerProps {
   isAnyUpgrading: boolean;
   upgradePending: boolean;
   cancelPending: boolean;
+  planetClassId?: string | null;
+  hasVariant?: boolean;
   onUpgrade: () => void;
   onCancel: () => void;
   onTimerComplete: () => void;
@@ -31,6 +34,8 @@ export function PlanetaryShieldBanner({
   isAnyUpgrading,
   upgradePending,
   cancelPending,
+  planetClassId,
+  hasVariant,
   onUpgrade,
   onCancel,
   onTimerComplete,
@@ -50,12 +55,19 @@ export function PlanetaryShieldBanner({
       <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
 
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        {/* Shield icon */}
+        {/* Shield visual */}
         <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-          <div className="relative shrink-0 flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
-              <path d="M12 2L3 6v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V6l-9-4z" />
-            </svg>
+          <div className="relative shrink-0 h-14 w-14 rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
+            <GameImage
+              category="buildings"
+              id="planetaryShield"
+              size="icon"
+              alt="Bouclier planétaire"
+              className="h-full w-full object-cover"
+              planetType={planetClassId ?? undefined}
+              hasVariant={hasVariant ?? false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/10 to-transparent pointer-events-none" />
           </div>
 
           <div className="flex-1 min-w-0">

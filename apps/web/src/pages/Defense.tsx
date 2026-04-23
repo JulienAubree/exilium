@@ -50,6 +50,9 @@ export default function Defense() {
   const arsenalLevel = arsenalBuilding?.currentLevel ?? 0;
   const shieldBuilding = buildings?.find((b) => b.id === 'planetaryShield');
 
+  const shieldVariants = gameConfig?.buildings?.planetaryShield?.variantPlanetTypes ?? [];
+  const shieldHasVariant = !!planetClassId && shieldVariants.includes(planetClassId);
+
   const { data: defenses, isLoading } = trpc.shipyard.defenses.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
@@ -305,6 +308,8 @@ export default function Defense() {
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
+            planetClassId={planetClassId}
+            hasVariant={shieldHasVariant}
             onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'planetaryShield' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {
