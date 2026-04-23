@@ -25,8 +25,7 @@ export function AllianceManagePage({ alliance }: AllianceManagePageProps) {
   const isLeader = alliance.myRole === 'founder' || alliance.myRole === 'officer';
   const isFounder = alliance.myRole === 'founder';
 
-  if (!isLeader) return <Navigate to="/alliance" replace />;
-
+  // All hooks called unconditionally before early return
   const utils = trpc.useUtils();
   const [description, setDescription] = useState(alliance.description ?? '');
 
@@ -47,15 +46,19 @@ export function AllianceManagePage({ alliance }: AllianceManagePageProps) {
       || (editMotto ?? '') !== (alliance.motto ?? '');
   }, [editBlason, editMotto, currentBlason, alliance.motto]);
 
+  const { data: applications } = trpc.alliance.applications.useQuery();
+
   const invalidate = () => {
     utils.alliance.myAlliance.invalidate();
     utils.alliance.applications.invalidate();
   };
 
-  const { data: applications } = trpc.alliance.applications.useQuery();
   const respondAppMutation = trpc.alliance.respondApplication.useMutation({ onSuccess: invalidate });
   const updateMutation = trpc.alliance.update.useMutation({ onSuccess: invalidate });
   const updateBlasonMutation = trpc.alliance.updateBlason.useMutation({ onSuccess: invalidate });
+
+  // Early return after all hooks
+  if (!isLeader) return <Navigate to="/alliance" replace />;
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
