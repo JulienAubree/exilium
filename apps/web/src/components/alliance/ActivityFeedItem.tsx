@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { Link } from 'react-router';
 import type { AllianceLog, AllianceLogPayload } from '@exilium/shared';
 import { timeAgo } from '@/lib/format';
 
@@ -100,6 +101,11 @@ function renderSentence(p: AllianceLogPayload): JSX.Element {
           <strong>{p.memberName}</strong> a été rétrogradé membre par <strong>{p.byName}</strong>.
         </span>
       );
+    default: {
+      const _never: never = p;
+      void _never;
+      return <span>Activité inconnue.</span>;
+    }
   }
 }
 
@@ -113,15 +119,15 @@ type Props = { log: AllianceLog };
 export function ActivityFeedItem({ log }: Props) {
   const p = log.payload;
   return (
-    <li className="flex items-start gap-3 border-b border-border/40 py-3 last:border-b-0">
+    <li className="flex items-start gap-3 py-3">
       <span className="mt-0.5 shrink-0 text-muted-foreground">{iconFor(p.type)}</span>
       <div className="min-w-0 flex-1 text-sm">
         <div className="text-xs text-muted-foreground">{timeAgo(log.createdAt)}</div>
         <div className="mt-0.5">{renderSentence(p)}</div>
         {hasReport(p) && (
-          <a href={`/reports/${p.reportId}`} className="mt-1 inline-block text-xs text-primary hover:underline">
+          <Link to={`/reports/${p.reportId}`} className="mt-1 inline-block text-xs text-primary hover:underline">
             Voir le rapport
-          </a>
+          </Link>
         )}
       </div>
     </li>

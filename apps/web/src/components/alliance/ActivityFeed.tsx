@@ -53,6 +53,8 @@ export function ActivityFeed() {
 
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
+      ) : query.isError ? (
+        <p className="text-sm text-destructive">Impossible de charger l'activité.</p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucune activité pour le moment.</p>
       ) : (
