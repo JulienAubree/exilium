@@ -24,6 +24,7 @@ export const allianceMembers = pgTable('alliance_members', {
   userId: uuid('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
   role: allianceRoleEnum('role').notNull().default('member'),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  activitySeenAt: timestamp('activity_seen_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('alliance_members_alliance_idx').on(table.allianceId),
 ]);
