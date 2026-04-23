@@ -172,9 +172,6 @@ export default function Shipyard() {
     );
   }
 
-  // ── Total units currently in production (for hero pill) ───────────────
-  const inProduction = shipQueue.reduce((sum, e) => sum + (e.quantity - (e.completedCount ?? 0)), 0);
-
   // ── Visible categories based on filter ────────────────────────────────
   const visibleCategories = filter === 'all' ? shipCategories : shipCategories.filter((c) => c.id === filter);
 
@@ -203,11 +200,7 @@ export default function Shipyard() {
   // ── Main layout ───────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <ShipyardHero
-        level={shipyardLevel}
-        inProduction={inProduction}
-        onOpenHelp={() => setHelpOpen(true)}
-      />
+      <ShipyardHero level={shipyardLevel} onOpenHelp={() => setHelpOpen(true)} />
 
       <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
         <ShipyardQueue
