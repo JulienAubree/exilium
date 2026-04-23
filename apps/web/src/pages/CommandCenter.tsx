@@ -2,44 +2,39 @@ import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
-import { Button } from '@/components/ui/button';
-import { ResourceCost } from '@/components/common/ResourceCost';
-import { QuantityStepper } from '@/components/common/QuantityStepper';
-import { Timer } from '@/components/common/Timer';
-import { GameImage } from '@/components/common/GameImage';
+import { useGameConfig } from '@/hooks/useGameConfig';
+import { useTutorialTargetId } from '@/hooks/useTutorialHighlight';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
+import { FacilityHero } from '@/components/common/FacilityHero';
+import { FacilityQueue } from '@/components/common/FacilityQueue';
+import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
+import { ShipCard } from '@/components/shipyard/ShipCard';
+import { ShipMobileRow } from '@/components/shipyard/ShipMobileRow';
 import { getShipName } from '@/lib/entity-names';
-import { useGameConfig } from '@/hooks/useGameConfig';
-import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
-import { cn } from '@/lib/utils';
-import { useTutorialTargetId } from '@/hooks/useTutorialHighlight';
-
 
 export default function CommandCenter() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  useEffect(() => { setQuantities({}); }, [planetId]);
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
   const { data: gameConfig } = useGameConfig();
   const tutorialTargetId = useTutorialTargetId();
 
-  const shipCategories = (gameConfig?.categories ?? [])
-    .filter((c) => c.entityType === 'ship' && c.id === 'ship_combat')
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  useEffect(() => { setQuantities({}); }, [planetId]);
+
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const { data: buildings } = trpc.building.list.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
   );
-  const commandCenterLevel = buildings?.find((b) => b.id === 'commandCenter')?.currentLevel ?? 0;
+  const commandCenterBuilding = buildings?.find((b) => b.id === 'commandCenter');
+  const commandCenterLevel = commandCenterBuilding?.currentLevel ?? 0;
 
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -120,8 +115,28 @@ export default function CommandCenter() {
     },
   });
 
-  const shipQueue = queue ?? [];
+  const upgradeMutation = trpc.building.upgrade.useMutation({
+    onSuccess: () => {
+      utils.building.list.invalidate({ planetId: planetId! });
+      utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
+      utils.tutorial.getCurrent.invalidate();
+    },
+  });
 
+  const buildingCancelMutation = trpc.building.cancel.useMutation({
+    onSuccess: () => {
+      utils.building.list.invalidate({ planetId: planetId! });
+      utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
+      utils.tutorial.getCurrent.invalidate();
+    },
+  });
+
+  const shipQueue = queue ?? [];
+  const isAnyBuildingUpgrading = buildings?.some((b) => b.isUpgrading) ?? false;
+
+  // ── Loading ───────────────────────────────────────────────────────────
   if (isLoading || !ships) {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
@@ -131,345 +146,192 @@ export default function CommandCenter() {
     );
   }
 
+  // ── Locked state ──────────────────────────────────────────────────────
   if (buildings && commandCenterLevel < 1) {
     return (
-      <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-        <PageHeader title="Centre de commandement" />
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            Avant de pouvoir accéder au centre de commandement, veuillez construire le <span className="text-foreground font-semibold">Centre de commandement</span>.
-          </p>
-          <Link to="/buildings" className="text-xs text-primary hover:underline">
-            Aller aux bâtiments
-          </Link>
+      <div className="space-y-4">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/80 via-slate-950 to-purple-950/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+          <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
+              <svg className="h-10 w-10 text-muted-foreground/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de commandement</h1>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md">
+              Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.
+            </p>
+            <Link
+              to="/buildings"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              Aller aux bâtiments
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ── Combat ships only (this page handles ship_combat; other ships are at shipyard) ──
+  const combatShips = ships.filter((s) => gameConfig?.ships[s.id]?.categoryId === 'ship_combat');
+
+  // ── Per-ship derivations ──────────────────────────────────────────────
+  const derivations = new Map<string, { qty: number; maxAffordable: number; canAfford: boolean; highlighted: boolean }>();
+  for (const ship of combatShips) {
+    const qty = quantities[ship.id] || 1;
+    const maxAffordable = Math.max(1, Math.min(
+      ship.cost.minerai > 0 ? Math.floor(resources.minerai / ship.cost.minerai) : 9999,
+      ship.cost.silicium > 0 ? Math.floor(resources.silicium / ship.cost.silicium) : 9999,
+      ship.cost.hydrogene > 0 ? Math.floor(resources.hydrogene / ship.cost.hydrogene) : 9999,
+      9999,
+    ));
+    const canAfford =
+      resources.minerai >= ship.cost.minerai * qty &&
+      resources.silicium >= ship.cost.silicium * qty &&
+      resources.hydrogene >= ship.cost.hydrogene * qty;
+    derivations.set(ship.id, { qty, maxAffordable, canAfford, highlighted: tutorialTargetId === ship.id });
+  }
+
+  // ── Main layout ───────────────────────────────────────────────────────
   return (
-    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title="Centre de commandement" />
+    <div className="space-y-4">
+      <FacilityHero
+        buildingId="commandCenter"
+        title="Centre de commandement"
+        level={commandCenterLevel}
+        planetClassId={resourceData?.planetClassId}
+        planetImageIndex={resourceData?.planetImageIndex}
+        onOpenHelp={() => setHelpOpen(true)}
+        upgradeCard={commandCenterBuilding && (
+          <BuildingUpgradeCard
+            currentLevel={commandCenterBuilding.currentLevel}
+            nextLevelCost={commandCenterBuilding.nextLevelCost}
+            nextLevelTime={commandCenterBuilding.nextLevelTime}
+            prerequisites={commandCenterBuilding.prerequisites as any}
+            isUpgrading={!!commandCenterBuilding.isUpgrading}
+            upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
+            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            buildingLevels={buildingLevels}
+            isAnyUpgrading={isAnyBuildingUpgrading}
+            upgradePending={upgradeMutation.isPending}
+            cancelPending={buildingCancelMutation.isPending}
+            gameConfig={gameConfig}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
+            onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
+            onTimerComplete={() => {
+              utils.building.list.invalidate({ planetId: planetId! });
+              utils.resource.production.invalidate({ planetId: planetId! });
+            }}
+          />
+        )}
+      >
+        <FacilityQueue
+          queue={shipQueue}
+          items={ships}
+          getItemName={(id) => getShipName(id, gameConfig)}
+          itemNoun="vaisseau"
+          itemNounPlural="vaisseaux"
+          onTimerComplete={() => {
+            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
+            utils.shipyard.ships.invalidate({ planetId: planetId! });
+          }}
+          onReduce={(batchId) => reduceMutation.mutate({ planetId: planetId!, batchId, removeCount: 1 })}
+          onCancel={(batchId) => setCancelConfirm(batchId)}
+          reducePending={reduceMutation.isPending}
+          cancelPending={cancelMutation.isPending}
+        />
+      </FacilityHero>
 
-      {shipQueue.length > 0 && (() => {
-        const activeEntries = shipQueue.filter(e => e.status === 'active');
-        const parallelSlots = activeEntries.length;
-
-        // Calculate total queue end time
-        let queueEndTime: Date | null = null;
-        let totalMs = 0;
-        const queuedItems = shipQueue.filter(e => e.status === 'queued');
-        const totalQueuedUnits = queuedItems.reduce((sum, e) => sum + (e.quantity - (e.completedCount ?? 0)), 0);
-        let longestActiveMs = 0;
-        for (const item of activeEntries) {
-          const remaining = item.quantity - (item.completedCount ?? 0);
-          if (item.endTime) {
-            const unitDurationMs = new Date(item.endTime).getTime() - new Date(item.startTime).getTime();
-            const itemMs = (new Date(item.endTime).getTime() - Date.now()) + unitDurationMs * (remaining - 1);
-            if (itemMs > longestActiveMs) longestActiveMs = itemMs;
-          }
-        }
-        totalMs = longestActiveMs;
-        if (totalQueuedUnits > 0 && parallelSlots > 0) {
-          const sampleShip = ships.find((s) => s.id === queuedItems[0]?.itemId);
-          if (sampleShip) {
-            totalMs += Math.ceil(totalQueuedUnits / Math.max(1, parallelSlots)) * sampleShip.timePerUnit * 1000;
-          }
-        }
-        if (totalMs > 0) queueEndTime = new Date(Date.now() + totalMs);
-
-        return (
-        <section className="glass-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold">File de construction</h2>
-              {parallelSlots > 1 && (
-                <span className="rounded bg-cyan-500/20 border border-cyan-500/50 px-2 py-0.5 text-[10px] font-semibold text-cyan-400">
-                  x{parallelSlots} parallele
-                </span>
-              )}
-            </div>
-            {queueEndTime && (
-              <span className="text-xs text-muted-foreground">
-                Fin : {queueEndTime.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
-              </span>
-            )}
-          </div>
-          <div className="space-y-3">
-            {shipQueue.map((item) => {
-              const name = getShipName(item.itemId, gameConfig);
-              const remaining = item.quantity - (item.completedCount ?? 0);
+      <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
+        <section className="glass-card p-4 lg:p-5">
+          {/* Mobile compact list */}
+          <div className="space-y-1 lg:hidden">
+            {combatShips.map((ship) => {
+              const { qty, maxAffordable, canAfford, highlighted } = derivations.get(ship.id)!;
               return (
-                <div key={item.id} className={cn(
-                  'space-y-1 border-l-4 pl-3',
-                  item.status === 'active' ? 'border-l-orange-500' : 'border-l-muted-foreground/30',
-                )}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">
-                      {remaining}x {name}
-                      {item.status === 'active' && parallelSlots > 1 && (
-                        <span className="ml-1.5 text-[10px] text-orange-400 font-normal">(slot actif)</span>
-                      )}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {remaining > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => reduceMutation.mutate({ planetId: planetId!, batchId: item.id, removeCount: 1 })}
-                          disabled={reduceMutation.isPending}
-                        >
-                          -1
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                        onClick={() => setCancelConfirm(item.id)}
-                        disabled={cancelMutation.isPending}
-                      >
-                        Annuler
-                      </Button>
-                    </div>
-                  </div>
-                  {item.status === 'active' && item.endTime && (
-                    <Timer
-                      endTime={new Date(item.endTime)}
-                      totalDuration={Math.floor((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 1000)}
-                      onComplete={() => {
-                        utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
-                        utils.shipyard.ships.invalidate({ planetId: planetId! });
-                      }}
-                    />
-                  )}
-                  {item.status === 'queued' && (
-                    <span className="text-xs text-muted-foreground">En attente</span>
-                  )}
-                </div>
+                <ShipMobileRow
+                  key={ship.id}
+                  ship={ship}
+                  quantity={qty}
+                  maxAffordable={maxAffordable}
+                  canAfford={canAfford}
+                  highlighted={highlighted}
+                  buildPending={buildMutation.isPending}
+                  onQuantityChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
+                  onBuild={() => buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty })}
+                  onOpenDetail={() => setDetailId(ship.id)}
+                />
+              );
+            })}
+          </div>
+
+          {/* Desktop vertical card grid */}
+          <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+            {combatShips.map((ship) => {
+              const { qty, maxAffordable, canAfford, highlighted } = derivations.get(ship.id)!;
+              return (
+                <ShipCard
+                  key={ship.id}
+                  ship={ship}
+                  quantity={qty}
+                  maxAffordable={maxAffordable}
+                  canAfford={canAfford}
+                  highlighted={highlighted}
+                  resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+                  gameConfig={gameConfig}
+                  buildingLevels={buildingLevels}
+                  researchLevels={researchLevels}
+                  buildPending={buildMutation.isPending}
+                  onQuantityChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
+                  onBuild={() => buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty })}
+                  onOpenDetail={() => setDetailId(ship.id)}
+                />
               );
             })}
           </div>
         </section>
-        );
-      })()}
+      </div>
 
-      {shipCategories.map((category) => {
-        const categoryShips = ships.filter((s) =>
-          gameConfig?.ships[s.id]?.categoryId === category.id,
-        );
-        if (categoryShips.length === 0) return null;
-        const isCollapsed = collapsed[category.id] ?? false;
-
-        return (
-          <div key={category.id}>
-            <button
-              onClick={() =>
-                setCollapsed((prev) => ({ ...prev, [category.id]: !prev[category.id] }))
-              }
-              className="flex w-full items-center justify-between py-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider"
-            >
-              <span>{category.name}</span>
-              <svg
-                className={`h-4 w-4 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            {!isCollapsed && (
-              <>
-                {/* Mobile compact list */}
-                <div className="space-y-1 lg:hidden">
-                  {categoryShips.map((ship) => {
-                    const qty = quantities[ship.id] || 1;
-                    const maxAffordable = Math.max(1, Math.min(
-                      ship.cost.minerai > 0 ? Math.floor(resources.minerai / ship.cost.minerai) : 9999,
-                      ship.cost.silicium > 0 ? Math.floor(resources.silicium / ship.cost.silicium) : 9999,
-                      ship.cost.hydrogene > 0 ? Math.floor(resources.hydrogene / ship.cost.hydrogene) : 9999,
-                      9999,
-                    ));
-                    const totalCost = {
-                      minerai: ship.cost.minerai * qty,
-                      silicium: ship.cost.silicium * qty,
-                      hydrogene: ship.cost.hydrogene * qty,
-                    };
-                    const canAfford =
-                      resources.minerai >= totalCost.minerai &&
-                      resources.silicium >= totalCost.silicium &&
-                      resources.hydrogene >= totalCost.hydrogene;
-
-                    const highlighted = tutorialTargetId === ship.id;
-
-                    return (
-                      <button
-                        key={ship.id}
-                        onClick={() => setDetailId(ship.id)}
-                        className={cn(
-                          'relative flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-accent/50 transition-colors',
-                          !ship.prerequisitesMet && 'opacity-50',
-                          highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
-                        )}
-                      >
-                        {highlighted && (
-                          <span className="absolute top-2 right-2 z-10 rounded bg-amber-500/20 border border-amber-500/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
-                            Objectif
-                          </span>
-                        )}
-                        <GameImage category="ships" id={ship.id} size="icon" alt={ship.name} className="h-8 w-8 rounded" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium truncate">{ship.name}</span>
-                            <span className="text-xs text-muted-foreground">x{ship.count}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                            <ResourceCost minerai={ship.cost.minerai} silicium={ship.cost.silicium} hydrogene={ship.cost.hydrogene} />
-                            <span className="font-mono text-[10px] shrink-0">{formatDuration(ship.timePerUnit)}</span>
-                          </div>
-                        </div>
-                        {ship.prerequisitesMet && (
-                          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <QuantityStepper
-                              value={qty}
-                              onChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
-                              max={maxAffordable}
-                              showMax={false}
-                            />
-                            <Button
-                              size="sm"
-                              className="h-7 px-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty });
-                              }}
-                              disabled={!canAfford || buildMutation.isPending}
-                            >
-                              OK
-                            </Button>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop: vertical card grid */}
-                <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
-                  {categoryShips.map((ship) => {
-                    const qty = quantities[ship.id] || 1;
-                    const maxAffordable = Math.max(1, Math.min(
-                      ship.cost.minerai > 0 ? Math.floor(resources.minerai / ship.cost.minerai) : 9999,
-                      ship.cost.silicium > 0 ? Math.floor(resources.silicium / ship.cost.silicium) : 9999,
-                      ship.cost.hydrogene > 0 ? Math.floor(resources.hydrogene / ship.cost.hydrogene) : 9999,
-                      9999,
-                    ));
-                    const totalCost = {
-                      minerai: ship.cost.minerai * qty,
-                      silicium: ship.cost.silicium * qty,
-                      hydrogene: ship.cost.hydrogene * qty,
-                    };
-                    const canAfford =
-                      resources.minerai >= totalCost.minerai &&
-                      resources.silicium >= totalCost.silicium &&
-                      resources.hydrogene >= totalCost.hydrogene;
-
-                    const highlighted = tutorialTargetId === ship.id;
-
-                    return (
-                      <button
-                        key={ship.id}
-                        onClick={() => setDetailId(ship.id)}
-                        className={cn(
-                          'retro-card relative text-left cursor-pointer overflow-hidden flex flex-col',
-                          !ship.prerequisitesMet && 'opacity-50',
-                          highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
-                        )}
-                      >
-                        {highlighted && (
-                          <span className="absolute top-2 right-2 z-10 rounded bg-amber-500/20 border border-amber-500/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
-                            Objectif
-                          </span>
-                        )}
-                        <div className="relative h-[130px] overflow-hidden">
-                          <GameImage
-                            category="ships"
-                            id={ship.id}
-                            size="full"
-                            alt={ship.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                            x{ship.count}
-                          </span>
-                        </div>
-
-                        <div className="p-3 flex flex-col flex-1 gap-1.5">
-                          <div className="text-[13px] font-semibold text-foreground truncate">
-                            {ship.name}
-                          </div>
-
-                          <div className="flex-1" />
-
-                          <ResourceCost
-                            minerai={ship.cost.minerai}
-                            silicium={ship.cost.silicium}
-                            hydrogene={ship.cost.hydrogene}
-                            currentMinerai={resources.minerai}
-                            currentSilicium={resources.silicium}
-                            currentHydrogene={resources.hydrogene}
-                          />
-                          <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="M12 6v6l4 2" />
-                            </svg>
-                            {formatDuration(ship.timePerUnit)}
-                          </div>
-                          {!ship.prerequisitesMet ? (
-                            <PrerequisiteList items={buildPrerequisiteItems(gameConfig?.ships[ship.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)} missingOnly />
-                          ) : (
-                            <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
-                              <QuantityStepper
-                                value={qty}
-                                onChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
-                                max={maxAffordable}
-                              />
-                              <Button
-                                variant="retro"
-                                size="sm"
-                                className="w-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty });
-                                }}
-                                disabled={!canAfford || buildMutation.isPending}
-                              >
-                                Construire
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })}
-
+      {/* Detail overlay */}
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
         title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
       >
-        {detailId && <ShipDetailContent shipId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} maxTemp={resourceData?.maxTemp} isHomePlanet={resourceData?.planetClassId === 'homeworld'} timePerUnit={ships?.find(s => s.id === detailId)?.timePerUnit} />}
+        {detailId && (
+          <ShipDetailContent
+            shipId={detailId}
+            researchLevels={researchLevels}
+            buildingLevels={buildingLevels}
+            maxTemp={resourceData?.maxTemp}
+            isHomePlanet={resourceData?.planetClassId === 'homeworld'}
+            timePerUnit={ships?.find((s) => s.id === detailId)?.timePerUnit}
+          />
+        )}
+      </EntityDetailOverlay>
+
+      {/* Help overlay */}
+      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Centre de commandement">
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Le Centre de commandement assemble les <span className="text-foreground font-medium">vaisseaux militaires</span> de votre empire&nbsp;: intercepteurs, frégates, croiseurs et cuirassés. Les vaisseaux industriels (transport, prospecteurs, sondes…) sont produits au Chantier spatial.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Chaque niveau débloque ou améliore les unités disponibles. Par défaut, un seul slot de production est actif&nbsp;; les <span className="text-foreground font-medium">talents militaires</span> (Production parallèle militaire) en débloquent davantage.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Annuler un lot rembourse les ressources au <span className="text-foreground font-medium">prorata du temps restant</span>, plafonné à <span className="text-foreground font-medium">70&nbsp;%</span>. Les vaisseaux déjà produits sont conservés dans votre hangar.
+          </p>
+        </div>
       </EntityDetailOverlay>
 
       <ConfirmDialog
