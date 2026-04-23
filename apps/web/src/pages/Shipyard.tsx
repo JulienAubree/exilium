@@ -200,9 +200,7 @@ export default function Shipyard() {
   // ── Main layout ───────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <ShipyardHero level={shipyardLevel} onOpenHelp={() => setHelpOpen(true)} />
-
-      <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
+      <ShipyardHero level={shipyardLevel} onOpenHelp={() => setHelpOpen(true)}>
         <ShipyardQueue
           queue={shipQueue}
           ships={ships}
@@ -216,7 +214,9 @@ export default function Shipyard() {
           reducePending={reduceMutation.isPending}
           cancelPending={cancelMutation.isPending}
         />
+      </ShipyardHero>
 
+      <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
         <ShipyardRoleFilter value={filter} onChange={setFilter} />
 
         <section className="glass-card p-4 lg:p-5 space-y-8">

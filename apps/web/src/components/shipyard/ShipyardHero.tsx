@@ -1,12 +1,14 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { getAssetUrl } from '@/lib/assets';
 
 interface ShipyardHeroProps {
   level: number;
   onOpenHelp: () => void;
+  children?: ReactNode;
 }
 
-export function ShipyardHero({ level, onOpenHelp }: ShipyardHeroProps) {
+export function ShipyardHero({ level, onOpenHelp, children }: ShipyardHeroProps) {
   return (
     <div className="relative overflow-hidden">
       <div className="absolute inset-0">
@@ -60,6 +62,7 @@ export function ShipyardHero({ level, onOpenHelp }: ShipyardHeroProps) {
                 Améliorer
               </Link>
             </div>
+            {children}
           </div>
         </div>
       </div>
