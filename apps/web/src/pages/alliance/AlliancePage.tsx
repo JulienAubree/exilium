@@ -4,7 +4,34 @@ import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { NoAllianceView } from './NoAllianceView';
 
-type Alliance = NonNullable<ReturnType<typeof trpc.alliance.myAlliance.useQuery>['data']>;
+export type Alliance = {
+  id: string;
+  createdAt: string;
+  name: string;
+  description: string | null;
+  tag: string;
+  founderId: string;
+  blasonShape: string;
+  blasonIcon: string;
+  blasonColor1: string;
+  blasonColor2: string;
+  motto: string | null;
+  myRole: 'founder' | 'officer' | 'member';
+  members: {
+    userId: string;
+    username: string;
+    role: 'founder' | 'officer' | 'member';
+    joinedAt: string;
+    totalPoints: number;
+  }[];
+  totalPoints: number;
+  rank: number;
+  recentMilitary: {
+    wins: number;
+    losses: number;
+    windowDays: number;
+  };
+};
 
 export default function AlliancePage() {
   const { data: myAlliance, isLoading } = trpc.alliance.myAlliance.useQuery();
@@ -24,6 +51,6 @@ export default function AlliancePage() {
   return <Outlet context={{ alliance: myAlliance } satisfies { alliance: Alliance }} />;
 }
 
-export function useAllianceContext() {
-  return useOutletContext<{ alliance: Alliance }>();
+export function useAllianceContext(): { alliance: Alliance } {
+  return useOutletContext() as { alliance: Alliance };
 }
