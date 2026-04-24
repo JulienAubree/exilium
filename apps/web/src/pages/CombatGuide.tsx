@@ -94,8 +94,8 @@ function BeginnerTab() {
               Se <span className="text-foreground">régénère à 100%</span> à chaque round.
             </li>
             <li>
-              <span className="text-foreground font-semibold">Armure</span> — réduction fixe de dégâts.
-              Quand un tir perce le bouclier, l'armure réduit les dégâts restants. Permanente.
+              <span className="text-foreground font-semibold">Armure</span> — réduction plate des dégâts.
+              Quand un tir perce le bouclier, l'armure réduit les dégâts restants. Améliorée par la recherche Protection.
             </li>
             <li>
               <span className="text-foreground font-semibold">Coque</span> — les points de vie du vaisseau.
@@ -260,9 +260,10 @@ function ReferenceTab() {
             <code className="block rounded bg-muted/50 p-2 text-foreground">
               armes_eff = armes_base × multiplicateur_armes<br />
               bouclier_eff = bouclier_base × multiplicateur_bouclier<br />
-              coque_eff = coque_base × multiplicateur_blindage
+              coque_eff = coque_base × multiplicateur_blindage<br />
+              armure_eff = armure_base × multiplicateur_blindage
             </code>
-            <p className="mt-1">L'armure n'est pas affectée par la recherche (réduction plate fixe).</p>
+            <p className="mt-1">La recherche <span className="text-foreground">Technologie Protection</span> augmente la coque <span className="text-foreground">et</span> l'armure.</p>
           </div>
 
           <div>
