@@ -158,6 +158,14 @@ export interface ResearchConfig {
   };
 }
 
+export interface WeaponProfileConfig {
+  damage: number;
+  shots: number;
+  targetCategory: string;
+  rafale?: { category: string; count: number };
+  hasChainKill?: boolean;
+}
+
 export interface ShipConfig {
   id: string;
   name: string;
@@ -174,6 +182,7 @@ export interface ShipConfig {
   hull: number;
   baseArmor: number;
   shotCount: number;
+  weaponProfiles: WeaponProfileConfig[];
   combatCategoryId: string | null;
   flavorText: string | null;
   categoryId: string | null;
@@ -197,6 +206,7 @@ export interface DefenseConfig {
   hull: number;
   baseArmor: number;
   shotCount: number;
+  weaponProfiles: WeaponProfileConfig[];
   combatCategoryId: string | null;
   maxPerPlanet: number | null;
   flavorText: string | null;

@@ -166,6 +166,7 @@ export function buildShipCombatConfigs(config: GameConfig): Record<string, ShipC
   const configs: Record<string, ShipCombatConfig> = {};
   for (const [id, ship] of Object.entries(config.ships)) {
     const isStationary = ship.isStationary ?? false;
+    const profiles = (ship.weaponProfiles ?? []) as ShipCombatConfig['weapons'];
     configs[id] = {
       shipType: id,
       categoryId: ship.combatCategoryId ?? 'support',
@@ -174,9 +175,11 @@ export function buildShipCombatConfigs(config: GameConfig): Record<string, ShipC
       baseHull: ship.hull,
       baseWeaponDamage: isStationary ? 0 : ship.weapons,
       baseShotCount: isStationary ? 0 : (ship.shotCount ?? 1),
+      ...(profiles && profiles.length > 0 ? { weapons: profiles } : {}),
     };
   }
   for (const [id, def] of Object.entries(config.defenses)) {
+    const profiles = (def.weaponProfiles ?? []) as ShipCombatConfig['weapons'];
     configs[id] = {
       shipType: id,
       categoryId: def.combatCategoryId ?? 'heavy',
@@ -185,6 +188,7 @@ export function buildShipCombatConfigs(config: GameConfig): Record<string, ShipC
       baseHull: def.hull,
       baseWeaponDamage: def.weapons,
       baseShotCount: def.shotCount ?? 1,
+      ...(profiles && profiles.length > 0 ? { weapons: profiles } : {}),
     };
   }
   return configs;
