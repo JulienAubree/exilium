@@ -617,9 +617,7 @@ export function createFleetService(
         : [];
 
       // Return flagship from mission if present (skip if origin planet was deleted)
-      console.log(`[processReturn] fleetEventId=${fleetEventId}, ships=`, JSON.stringify(ships));
       if (ships['flagship'] && ships['flagship'] > 0 && flagshipService && event.originPlanetId) {
-        console.log(`[processReturn] calling returnFromMission for userId=${event.userId}, originPlanetId=${event.originPlanetId}`);
         await flagshipService.returnFromMission(event.userId, event.originPlanetId);
       }
 

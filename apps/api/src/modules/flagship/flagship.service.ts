@@ -267,7 +267,6 @@ export function createFlagshipService(
       if (!homePlanet) return;
 
       const repairEndsAt = new Date(Date.now() + repairSeconds * 1000);
-      console.log(`[flagship] incapacitate: userId=${userId}, homePlanetId=${homePlanet.id}, repairEndsAt=${repairEndsAt.toISOString()}, repairSeconds=${repairSeconds}`);
 
       await db
         .update(flagships)
@@ -289,7 +288,6 @@ export function createFlagshipService(
     },
 
     async returnFromMission(userId: string, planetId: string) {
-      console.log(`[flagship] returnFromMission: userId=${userId}, planetId=${planetId}`);
       await db
         .update(flagships)
         .set({ status: 'active', planetId, updatedAt: new Date() })
