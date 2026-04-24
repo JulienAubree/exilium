@@ -1,4 +1,23 @@
+# Shared security headers snippet. Applied to both the game site and the admin
+# panel. The app has no third-party scripts, no eval, and no inline <script>
+# tags (Vite emits all scripts as external modules), so 'self' is sufficient
+# for script-src. React injects style attributes at runtime, so style-src
+# needs 'unsafe-inline' — acceptable since inline CSS carries far less risk
+# than inline JS.
+(security_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+		-Server
+	}
+}
+
 exilium-game.com, www.exilium-game.com {
+	import security_headers
+
 	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
 	handle @game_assets {
 		root * /opt/exilium/uploads
@@ -27,6 +46,8 @@ exilium-game.com, www.exilium-game.com {
 }
 
 admin.exilium-game.com {
+	import security_headers
+
 	handle /trpc/* {
 		reverse_proxy localhost:3000
 	}

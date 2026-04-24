@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
@@ -10,13 +10,20 @@ import { QueryError } from '@/components/common/QueryError';
 import { getPlanetImageUrl } from '@/lib/assets';
 import ColonizationProgress from './ColonizationProgress';
 
+// Above-the-fold: imported eagerly so first paint has the hero + KPIs.
 import { OverviewHero } from '@/components/overview/OverviewHero';
 import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
-import { OverviewActivities } from '@/components/overview/OverviewActivities';
-import { AttackAlert } from '@/components/overview/AttackAlert';
-import { GovernanceAlert } from '@/components/overview/GovernanceAlert';
-import { OverviewGrid } from '@/components/overview/OverviewGrid';
-import { OverviewEvents } from '@/components/overview/OverviewEvents';
+
+// Below-the-fold: split into separate chunks, fetched after the initial paint.
+// Placeholder is a subtle skeleton — users rarely notice since the hero is
+// already paintable while these resolve.
+const OverviewActivities = lazy(() => import('@/components/overview/OverviewActivities').then((m) => ({ default: m.OverviewActivities })));
+const AttackAlert = lazy(() => import('@/components/overview/AttackAlert').then((m) => ({ default: m.AttackAlert })));
+const GovernanceAlert = lazy(() => import('@/components/overview/GovernanceAlert').then((m) => ({ default: m.GovernanceAlert })));
+const OverviewGrid = lazy(() => import('@/components/overview/OverviewGrid').then((m) => ({ default: m.OverviewGrid })));
+const OverviewEvents = lazy(() => import('@/components/overview/OverviewEvents').then((m) => ({ default: m.OverviewEvents })));
+
+const LazySkel = () => <div className="h-20 rounded-md bg-panel-bg/40 animate-pulse" />;
 
 // ── Rarity / biome constants (used by BiomeBadge) ──
 
@@ -439,52 +446,54 @@ export default function Overview() {
         levels={resourceData?.levels}
       />
 
-      {/* 3. Activities */}
-      <OverviewActivities
-        activeBuilding={activeBuilding as any}
-        shipyardQueue={(shipyardQueue ?? []) as any[]}
-        commandCenterQueue={(commandCenterQueue ?? []) as any[]}
-        planetId={planetId!}
-        gameConfig={gameConfig}
-        onBuildingComplete={() => {
-          utils.building.list.invalidate({ planetId: planetId! });
-          utils.resource.production.invalidate({ planetId: planetId! });
-        }}
-        onShipyardComplete={() => {
-          utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
-          utils.shipyard.ships.invalidate({ planetId: planetId! });
-        }}
-        onCommandCenterComplete={() => {
-          utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
-          utils.shipyard.ships.invalidate({ planetId: planetId! });
-        }}
-      />
+      <Suspense fallback={<LazySkel />}>
+        {/* 3. Activities */}
+        <OverviewActivities
+          activeBuilding={activeBuilding as any}
+          shipyardQueue={(shipyardQueue ?? []) as any[]}
+          commandCenterQueue={(commandCenterQueue ?? []) as any[]}
+          planetId={planetId!}
+          gameConfig={gameConfig}
+          onBuildingComplete={() => {
+            utils.building.list.invalidate({ planetId: planetId! });
+            utils.resource.production.invalidate({ planetId: planetId! });
+          }}
+          onShipyardComplete={() => {
+            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
+            utils.shipyard.ships.invalidate({ planetId: planetId! });
+          }}
+          onCommandCenterComplete={() => {
+            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
+            utils.shipyard.ships.invalidate({ planetId: planetId! });
+          }}
+        />
 
-      {/* 4. Governance warning */}
-      <GovernanceAlert planetClassId={planet.planetClassId} />
+        {/* 4. Governance warning */}
+        <GovernanceAlert planetClassId={planet.planetClassId} />
 
-      {/* 5. Attack alert */}
-      <AttackAlert
-        hostileFleets={hostileInbound as any[]}
-        onTimerComplete={() => utils.fleet.inbound.invalidate()}
-      />
+        {/* 5. Attack alert */}
+        <AttackAlert
+          hostileFleets={hostileInbound as any[]}
+          onTimerComplete={() => utils.fleet.inbound.invalidate()}
+        />
 
-      {/* 6. Grid */}
-      <OverviewGrid
-        ships={stationaryShips}
-        defenses={stationaryDefenses}
-        movements={allMovementsForGrid}
-        flagship={flagship as any}
-        shieldLevel={buildings?.find((b) => b.id === 'planetaryShield')?.currentLevel ?? 0}
-        currentPlanetId={planet.id}
-        currentPlanetName={planet.name}
-        currentPlanetCoords={{ galaxy: planet.galaxy, system: planet.system, position: planet.position }}
-        gameConfig={gameConfig}
-        onFleetTimerComplete={() => utils.fleet.movements.invalidate()}
-      />
+        {/* 6. Grid */}
+        <OverviewGrid
+          ships={stationaryShips}
+          defenses={stationaryDefenses}
+          movements={allMovementsForGrid}
+          flagship={flagship as any}
+          shieldLevel={buildings?.find((b) => b.id === 'planetaryShield')?.currentLevel ?? 0}
+          currentPlanetId={planet.id}
+          currentPlanetName={planet.name}
+          currentPlanetCoords={{ galaxy: planet.galaxy, system: planet.system, position: planet.position }}
+          gameConfig={gameConfig}
+          onFleetTimerComplete={() => utils.fleet.movements.invalidate()}
+        />
 
-      {/* 7. Events */}
-      <OverviewEvents events={(recentEvents ?? []) as any[]} gameConfig={gameConfig} />
+        {/* 7. Events */}
+        <OverviewEvents events={(recentEvents ?? []) as any[]} gameConfig={gameConfig} />
+      </Suspense>
 
       </div>
     </div>

@@ -22,7 +22,8 @@ export const router = createBrowserRouter([
       </AdminGuard>
     ),
     children: [
-      { index: true, lazy: () => import('./pages/Buildings').then((m) => ({ Component: m.default })) },
+      { index: true, lazy: () => import('./pages/Dashboard').then((m) => ({ Component: m.default })) },
+      { path: 'dashboard', lazy: () => import('./pages/Dashboard').then((m) => ({ Component: m.default })) },
       { path: 'categories', lazy: () => import('./pages/Categories').then((m) => ({ Component: m.default })) },
       { path: 'buildings', lazy: () => import('./pages/Buildings').then((m) => ({ Component: m.default })) },
       { path: 'research', lazy: () => import('./pages/Research').then((m) => ({ Component: m.default })) },

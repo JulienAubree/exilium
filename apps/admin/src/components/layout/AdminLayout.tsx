@@ -5,10 +5,16 @@ import {
   Building2, FlaskConical, Rocket, Shield, Zap,
   Factory, Globe, Users, LogOut, LayoutGrid, Orbit,
   Skull, GraduationCap, Compass, Tag, Sparkles, MessageSquare, FileText, Bolt, Key,
-  Menu, X, CircleUserRound, Megaphone,
+  Menu, X, CircleUserRound, Megaphone, LayoutDashboard,
 } from 'lucide-react';
 
 const NAV_SECTIONS = [
+  {
+    title: 'Monitoring',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
   {
     title: 'Config Jeu',
     items: [

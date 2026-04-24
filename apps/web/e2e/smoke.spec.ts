@@ -11,6 +11,27 @@ test('landing page renders', async ({ page }) => {
   await expect(page).toHaveTitle(/Exilium/i);
 });
 
+test('no CSP violations on landing page', async ({ page }) => {
+  const cspErrors: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error' && /content security policy|csp|refused to (load|execute|connect)/i.test(msg.text())) {
+      cspErrors.push(msg.text());
+    }
+  });
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  expect(cspErrors, `CSP violations detected:\n${cspErrors.join('\n')}`).toHaveLength(0);
+});
+
+test('security headers are set', async ({ request }) => {
+  const res = await request.get('/');
+  const headers = res.headers();
+  expect(headers['content-security-policy']).toBeTruthy();
+  expect(headers['x-content-type-options']).toBe('nosniff');
+  expect(headers['x-frame-options']).toBe('DENY');
+  expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+});
+
 test('login page renders the form', async ({ page }) => {
   await page.goto('/login');
   // Either the landing→login flow or a direct login route should surface an

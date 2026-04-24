@@ -1,23 +1,29 @@
 // apps/web/src/pages/ReportDetail.tsx
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName } from '@/lib/entity-names';
-import { CombatReportDetail } from '@/components/reports/CombatReportDetail';
-import { MineReportDetail } from '@/components/reports/MineReportDetail';
-import { SpyReportDetail } from '@/components/reports/SpyReportDetail';
-import { RecycleReportDetail } from '@/components/reports/RecycleReportDetail';
-import { ExploreReportDetail } from '@/components/reports/ExploreReportDetail';
-import { TradeReportDetail } from '@/components/reports/TradeReportDetail';
-import { TransportReportDetail } from '@/components/reports/TransportReportDetail';
-import { AbandonReportDetail } from '@/components/reports/AbandonReportDetail';
-import { ColonizeReportDetail } from '@/components/reports/ColonizeReportDetail';
-import { ColonizeReinforceReportDetail } from '@/components/reports/ColonizeReinforceReportDetail';
-import { ColonizationRaidReportDetail } from '@/components/reports/ColonizationRaidReportDetail';
 import { CoordsLink } from '@/components/common/CoordsLink';
+
+// Each report type has its own component, and only ONE renders per page view.
+// Lazy-loading them means the user only downloads the variant matching their
+// missionType — the other 10 are never shipped to that session.
+const CombatReportDetail = lazy(() => import('@/components/reports/CombatReportDetail').then((m) => ({ default: m.CombatReportDetail })));
+const MineReportDetail = lazy(() => import('@/components/reports/MineReportDetail').then((m) => ({ default: m.MineReportDetail })));
+const SpyReportDetail = lazy(() => import('@/components/reports/SpyReportDetail').then((m) => ({ default: m.SpyReportDetail })));
+const RecycleReportDetail = lazy(() => import('@/components/reports/RecycleReportDetail').then((m) => ({ default: m.RecycleReportDetail })));
+const ExploreReportDetail = lazy(() => import('@/components/reports/ExploreReportDetail').then((m) => ({ default: m.ExploreReportDetail })));
+const TradeReportDetail = lazy(() => import('@/components/reports/TradeReportDetail').then((m) => ({ default: m.TradeReportDetail })));
+const TransportReportDetail = lazy(() => import('@/components/reports/TransportReportDetail').then((m) => ({ default: m.TransportReportDetail })));
+const AbandonReportDetail = lazy(() => import('@/components/reports/AbandonReportDetail').then((m) => ({ default: m.AbandonReportDetail })));
+const ColonizeReportDetail = lazy(() => import('@/components/reports/ColonizeReportDetail').then((m) => ({ default: m.ColonizeReportDetail })));
+const ColonizeReinforceReportDetail = lazy(() => import('@/components/reports/ColonizeReinforceReportDetail').then((m) => ({ default: m.ColonizeReinforceReportDetail })));
+const ColonizationRaidReportDetail = lazy(() => import('@/components/reports/ColonizationRaidReportDetail').then((m) => ({ default: m.ColonizationRaidReportDetail })));
+
+const ReportSkel = () => <div className="h-40 rounded-md bg-panel-bg/40 animate-pulse" />;
 
 function formatDate(date: string | Date) {
   return new Intl.DateTimeFormat('fr-FR', {
@@ -174,45 +180,47 @@ export default function ReportDetail() {
       )}
 
       {/* Type-specific detail */}
-      {(report.missionType === 'attack' || report.missionType === 'pirate') && (
-        <CombatReportDetail
-          result={result}
-          missionType={report.missionType as 'attack' | 'pirate'}
-          gameConfig={gameConfig}
-          coordinates={coords}
-          reportId={report.id}
-        />
-      )}
-      {report.missionType === 'mine' && (
-        <MineReportDetail result={result} fleet={fleet} gameConfig={gameConfig} />
-      )}
-      {(report.missionType === 'spy' || report.missionType === 'scan') && (
-        <SpyReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
-      )}
-      {report.missionType === 'recycle' && (
-        <RecycleReportDetail result={result} coordinates={coords} />
-      )}
-      {report.missionType === 'explore' && (
-        <ExploreReportDetail result={result} coordinates={coords} />
-      )}
-      {report.missionType === 'trade' && result.type === 'report-purchase' && (
-        <TradeReportDetail result={result} />
-      )}
-      {report.missionType === 'transport' && (
-        <TransportReportDetail result={result} coordinates={coords} />
-      )}
-      {report.missionType === 'abandon_return' && (
-        <AbandonReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
-      )}
-      {report.missionType === 'colonize' && (
-        <ColonizeReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
-      )}
-      {report.missionType === 'colonize_reinforce' && (
-        <ColonizeReinforceReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
-      )}
-      {report.missionType === 'colonization_raid' && (
-        <ColonizationRaidReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} reportId={report.id} />
-      )}
+      <Suspense fallback={<ReportSkel />}>
+        {(report.missionType === 'attack' || report.missionType === 'pirate') && (
+          <CombatReportDetail
+            result={result}
+            missionType={report.missionType as 'attack' | 'pirate'}
+            gameConfig={gameConfig}
+            coordinates={coords}
+            reportId={report.id}
+          />
+        )}
+        {report.missionType === 'mine' && (
+          <MineReportDetail result={result} fleet={fleet} gameConfig={gameConfig} />
+        )}
+        {(report.missionType === 'spy' || report.missionType === 'scan') && (
+          <SpyReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
+        )}
+        {report.missionType === 'recycle' && (
+          <RecycleReportDetail result={result} coordinates={coords} />
+        )}
+        {report.missionType === 'explore' && (
+          <ExploreReportDetail result={result} coordinates={coords} />
+        )}
+        {report.missionType === 'trade' && result.type === 'report-purchase' && (
+          <TradeReportDetail result={result} />
+        )}
+        {report.missionType === 'transport' && (
+          <TransportReportDetail result={result} coordinates={coords} />
+        )}
+        {report.missionType === 'abandon_return' && (
+          <AbandonReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
+        )}
+        {report.missionType === 'colonize' && (
+          <ColonizeReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
+        )}
+        {report.missionType === 'colonize_reinforce' && (
+          <ColonizeReinforceReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} />
+        )}
+        {report.missionType === 'colonization_raid' && (
+          <ColonizationRaidReportDetail result={result} fleet={fleet} gameConfig={gameConfig} coordinates={coords} reportId={report.id} />
+        )}
+      </Suspense>
     </div>
   );
 }

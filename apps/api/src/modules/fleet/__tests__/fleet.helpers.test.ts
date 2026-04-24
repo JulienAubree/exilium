@@ -42,8 +42,8 @@ describe('buildFleetConfig', () => {
 
 describe('buildSpeedMultipliers', () => {
   const stats: Record<string, ShipStats> = {
-    fighter: { baseSpeed: 12500, fuelConsumption: 20, cargoCapacity: 50, driveType: 'combustion' },
-    cruiser: { baseSpeed: 15000, fuelConsumption: 300, cargoCapacity: 800, driveType: 'impulse' },
+    fighter: { baseSpeed: 12500, fuelConsumption: 20, cargoCapacity: 50, driveType: 'combustion', miningExtraction: 0 },
+    cruiser: { baseSpeed: 15000, fuelConsumption: 300, cargoCapacity: 800, driveType: 'impulse', miningExtraction: 0 },
   };
 
   const bonuses: BonusDefinition[] = [

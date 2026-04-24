@@ -12,7 +12,7 @@ import { createResearchService } from '../modules/research/research.service.js';
 import { createResearchRouter } from '../modules/research/research.router.js';
 import { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import { createShipyardRouter } from '../modules/shipyard/shipyard.router.js';
-import { buildCompletionQueue, fleetQueue, marketQueue } from '../queues/queues.js';
+import { buildCompletionQueue, fleetQueue, marketQueue, colonizationQueue } from '../queues/queues.js';
 import { createGalaxyService } from '../modules/galaxy/galaxy.service.js';
 import { createGalaxyRouter } from '../modules/galaxy/galaxy.router.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
@@ -29,6 +29,8 @@ import { createGameConfigService } from '../modules/admin/game-config.service.js
 import { createGameConfigRouter } from '../modules/admin/game-config.router.js';
 import { createPlayerAdminService } from '../modules/admin/player-admin.service.js';
 import { createPlayerAdminRouter } from '../modules/admin/player-admin.router.js';
+import { createDashboardService } from '../modules/admin/dashboard.service.js';
+import { createDashboardRouter } from '../modules/admin/dashboard.router.js';
 import { createGameEventService } from '../modules/game-event/game-event.service.js';
 import { createGameEventRouter } from '../modules/game-event/game-event.router.js';
 import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
@@ -105,6 +107,12 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const allianceService = createAllianceService(db, redis, allianceLogService);
   const contactService = createContactService(db, friendService, allianceService);
   const playerAdminService = createPlayerAdminService(db, fleetQueue);
+  const dashboardService = createDashboardService(db, {
+    'build-completion': buildCompletionQueue,
+    fleet: fleetQueue,
+    market: marketQueue,
+    colonization: colonizationQueue,
+  });
   const tutorialService = createTutorialService(db, pveService, exiliumService);
   const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService, talentService, gameEventService);
   const feedbackService = createFeedbackService(db, redis);
@@ -126,6 +134,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const allianceRouter = createAllianceRouter(allianceService);
   const gameConfigRouter = createGameConfigRouter(gameConfigService, adminProcedure);
   const playerAdminRouter = createPlayerAdminRouter(playerAdminService, adminProcedure);
+  const dashboardRouter = createDashboardRouter(dashboardService, adminProcedure);
   const gameEventRouter = createGameEventRouter(gameEventService);
   const pveRouter = createPveRouter(pveService, asteroidBeltService, gameConfigService);
   const tutorialRouter = createTutorialRouter(tutorialService);
@@ -163,6 +172,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     alliance: allianceRouter,
     gameConfig: gameConfigRouter,
     playerAdmin: playerAdminRouter,
+    dashboard: dashboardRouter,
     gameEvent: gameEventRouter,
     pve: pveRouter,
     tutorial: tutorialRouter,
