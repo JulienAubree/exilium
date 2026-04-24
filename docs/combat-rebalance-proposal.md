@@ -124,7 +124,7 @@ Le FP des unites a 1 tir ne change pas. Celui des unites multi-tirs baisse pour 
 
 ## 3. Nouvelles mecaniques de combat
 
-Quatre mecaniques sont proposees, par ordre de priorite d'implementation. Chacune repond a un probleme precis et respecte un principe : **une phrase suffit a l'expliquer a un joueur**.
+Trois mecaniques sont proposees, par ordre de priorite d'implementation. Chacune repond a un probleme precis et respecte un principe : **une phrase suffit a l'expliquer a un joueur**.
 
 ---
 
@@ -216,97 +216,52 @@ Resultat : 1 intercepteur elimine **5 sondes** en un round au lieu de 3 normalem
 
 ### 3.3 Rafale
 
-> *"Contre certains types d'ennemis, chaque tir a une chance de declencher un tir supplementaire. Ce tir bonus peut lui aussi declencher une rafale."*
+> *"Rafale N [categorie] : cette batterie tire N coups supplementaires contre les cibles de cette categorie."*
 
-**Probleme resolu** : pas de counter-play. Aucune unite n'est specialement bonne ou mauvaise contre une autre. Le systeme de rafale cree des relations de predateur/proie entre categories.
+**Probleme resolu** : pas de counter-play. Aucune unite n'est specialement bonne ou mauvaise contre une autre. En donnant a certaines batteries un **bonus de tirs garanti** contre une categorie specifique, on cree des relations de predateur/proie sans introduire de RNG supplementaire.
 
 **Fonctionnement** :
-- Certaines unites ont "Rafale xN" contre une categorie specifique
-- Quand elles touchent une cible de cette categorie, chaque tir a une probabilite de `1 - 1/N` de declencher un tir supplementaire
-- Ce tir supplementaire **peut lui aussi declencher une rafale** (chaine probabiliste)
-- Le tir bonus cible un ennemi aleatoire de la meme categorie
-- La rafale ne s'applique qu'a la batterie concernee
-
-**Esperance mathematique** :
-- Rafale x3 (prob. 67%) : en moyenne 3 tirs par tir de base (serie geometrique 1/(1/3))
-- Rafale x4 (prob. 75%) : en moyenne 4 tirs par tir de base
-- Rafale x5 (prob. 80%) : en moyenne 5 tirs par tir de base
+- Une batterie peut avoir un champ optionnel `rafale: { category, count }`
+- Quand la batterie tire sur une cible de la categorie designee, elle effectue `shots + count` tirs
+- Quand elle tombe en fallback (pas de cible dans la categorie), seuls les `shots` de base s'appliquent
+- **Entierement deterministe** : pas de proba, pas de chaine, pas de RNG
 
 **Attributions** :
 
-| Unite    | Rafale                          | Sur quelle batterie | Justification narrative           |
-|----------|--------------------------------|:-------------------:|-----------------------------------|
-| Croiseur | Rafale x4 vs light             | Secondaire (5 degats)| Tourelles de point automatisees   |
-| Cuirasse | Rafale x3 vs medium            | Secondaire (10 degats)| Batteries anti-vaisseau moyennes |
+| Unite    | Batterie secondaire                             | DPS vs categorie ciblee | DPS en fallback |
+|----------|-------------------------------------------------|------------------------:|----------------:|
+| Croiseur | 5 dmg, 2 tirs, **Rafale 6 Leger** (8 vs Leger)  | 40                      | 10              |
+| Cuirasse | 10 dmg, 2 tirs, **Rafale 4 Medium** (6 vs Medium)| 60                      | 20              |
 
 **Exemple concret** -- Croiseur vs 10 intercepteurs :
-- Batterie principale : 35 degats sur un lourd (s'il y en a) ou fallback
-- Batterie secondaire : 2 tirs de base a 5 degats, chacun ciblant un intercepteur (light)
-  - Tir 1 : touche intercepteur A. Rafale ? RNG = 0.42 < 0.75 -> Oui, tir bonus
-  - Bonus 1 : touche intercepteur B. Rafale ? RNG = 0.81 > 0.75 -> Non, fin de chaine
-  - Tir 2 : touche intercepteur C. Rafale ? RNG = 0.15 < 0.75 -> Oui
-  - Bonus 2 : touche intercepteur D. Rafale ? RNG = 0.60 < 0.75 -> Oui
-  - Bonus 3 : touche intercepteur E. Rafale ? RNG = 0.92 > 0.75 -> Non
+- Bat. principale : 35 degats sur un heavy (ou fallback si pas de heavy)
+- Bat. secondaire : cible light disponible → `2 + 6 = 8 tirs` de 5 degats = 40 degats sur les intercepteurs
+- Si la flotte ennemie n'a **aucun** intercepteur : la batterie tombe en fallback sur medium/heavy et ne tire que 2 coups (10 degats)
 
-Ce round-ci, la tourelle secondaire a tire **5 coups** au lieu de 2, pour 25 degats contre les legers.
+**DPS effectif par contexte** :
 
-**DPS effectif moyen par contexte** :
+| Unite    | vs fleet 100% lourds | vs fleet 100% legers | vs fleet mixte heavy+light | vs fleet mixte heavy+medium |
+|----------|---------------------:|---------------------:|---------------------------:|----------------------------:|
+| Croiseur |                   45 |           35+40 = 75 |               35+40 = 75   |                  35+10 = 45 |
+| Cuirasse |                   70 |           50+20 = 70 |               50+20 = 70   |                 50+60 = 110 |
 
-| Unite    | vs fleet 100% lourds | vs fleet 100% legers | vs fleet mixte        |
-|----------|---------------------:|---------------------:|----------------------:|
-| Croiseur |                   45 |               35 + 40 = 75 | 35 + 40 = 75  |
-| Cuirasse |                   70 |               50 + 20 = 70 | 50 + 60 = 110 |
-
-Le croiseur est un predateur naturel des intercepteurs. Le cuirasse excelle contre les flottes mixtes medium/lourdes. Contre une flotte 100% lourde, aucun des deux n'a d'avantage supplementaire -- le DPS de base s'applique.
+Le croiseur est un predateur naturel des intercepteurs. Le cuirasse excelle contre les flottes medium/lourdes. Contre une flotte 100% lourde, le DPS de base s'applique.
 
 **Relations de contre-jeu creees** :
 
 ```
-Intercepteurs ──domines par──> Croiseurs (rafale x4)
-Fregates      ──dominees par──> Cuirasses (rafale x3)
-Cuirasses     ──lents contre──> Essaims d'intercepteurs (pas de rafale vs light)
+Intercepteurs ──domines par──> Croiseurs (Rafale 6 Leger)
+Fregates      ──dominees par──> Cuirasses (Rafale 4 Medium)
+Cuirasses     ──lents contre──> Essaims d'intercepteurs (pas de rafale vs Leger)
 ```
 
 Le joueur qui spam un seul type d'unite est punissable. La diversification est recompensee.
 
 **Presentation UI** : dans la fiche du vaisseau, sous la batterie concernee :
 ```
-  Tourelles defense   5 x2    cible : Leger    Rafale x4
+  Tourelles defense   5 dmg   x2    cible : Leger    [Rafale 6 Leger]
 ```
-Tooltip : *"Chaque tir contre un ennemi Leger a 75% de chance de declencher un tir supplementaire."*
-
----
-
-### 3.4 Coup critique
-
-> *"Chaque tir a une petite chance d'infliger des degats majores."*
-
-**Probleme resolu** : les combats sont 100% previsibles. Le RNG actuel ne porte que sur le choix de cible. Le coup critique ajoute des swings de fortune qui rendent les replays plus excitants, sans destabiliser l'equilibre global (la variance s'annule sur de grands nombres).
-
-**Regles** :
-- Chaque tir a une chance de base de **5%** d'etre un coup critique
-- Un coup critique inflige **150%** des degats
-- La chance critique s'applique **apres** le calcul de ciblage et **avant** l'absorption par le bouclier
-- La chance critique est la meme pour toutes les unites (pas de stat "crit" par vaisseau)
-- Le seed RNG garantit que les crits sont reproductibles en replay
-
-**Degats critiques par unite** :
-
-| Unite        | Degats normaux | Degats critiques (x1.5) |
-|--------------|---------------:|------------------------:|
-| Intercepteur |              4 |                       6 |
-| Fregate      |             12 |                      18 |
-| Croiseur bat. principale |  35 |                  52 |
-| Cuirasse bat. principale |  50 |                  75 |
-
-**Impact statistique** : sur un grand nombre de tirs, le crit ajoute en moyenne +2.5% de DPS (5% * 50% de bonus). C'est suffisant pour creer des moments memorables sans desequilibrer les matchups.
-
-**Evolution possible** : une recherche "Systemes de visee" pourrait augmenter la chance critique de +1% par niveau (max 10 niveaux -> 15% crit). Mais cette extension est **optionnelle** et non prioritaire.
-
-**Presentation UI** :
-- Dans la fiche : "Chance de coup critique : 5%"
-- En replay de combat : les tirs critiques sont visuellement distincts (couleur differente, indicateur "CRIT")
-- Dans le resume : "X coups critiques infliges ce round"
+Tooltip : *"Tire 6 coups supplementaires contre les cibles Leger (8 au total, 2 sinon)."*
 
 ---
 
@@ -319,30 +274,24 @@ INTERCEPTEUR (light)
   Avant : 4W x3 shots = 12 DPS | 8 shield, 12 hull, 1 armor
   Apres : Bat. 1 : 4W x3, cible light = 12 DPS
           Trait : Enchainement
-          Trait : Crit 5%
           Defensif : 8 shield, 12 hull, 1 armor (echelle avec recherche)
 
 FREGATE (medium)
   Avant : 12W x2 shots = 24 DPS | 16 shield, 30 hull, 2 armor
   Apres : Bat. 1 : 12W x1, cible medium = 12 DPS
           Bat. 2 :  6W x2, cible light  = 12 DPS
-          Trait : Crit 5%
           Defensif : 16 shield, 30 hull, 2 armor (echelle avec recherche)
 
 CROISEUR (heavy)
   Avant : 45W x1 shot = 45 DPS | 28 shield, 55 hull, 4 armor
   Apres : Bat. 1 : 35W x1, cible heavy = 35 DPS
-          Bat. 2 :  5W x2, cible light  = 10 DPS
-          Trait : Rafale x4 vs light (bat. 2)
-          Trait : Crit 5%
+          Bat. 2 :  5W x2, cible light, Rafale 6 Leger = 10/40 DPS
           Defensif : 28 shield, 55 hull, 4 armor (echelle avec recherche)
 
 CUIRASSE (heavy)
   Avant : 70W x1 shot = 70 DPS | 40 shield, 100 hull, 6 armor
   Apres : Bat. 1 : 50W x1, cible heavy  = 50 DPS
-          Bat. 2 : 10W x2, cible medium = 20 DPS
-          Trait : Rafale x3 vs medium (bat. 2)
-          Trait : Crit 5%
+          Bat. 2 : 10W x2, cible medium, Rafale 4 Medium = 20/60 DPS
           Defensif : 40 shield, 100 hull, 6 armor (echelle avec recherche)
 ```
 
@@ -401,17 +350,17 @@ Les defenses ripostent avec leur propre enchainement. Les lanceurs (6 degats) et
 **Round 1** :
 - 3 croiseurs tirent :
   - Bat. principale (35 degats x1 vs heavy) : pas de heavy, fallback -> cible un intercepteur. Degats massifs, destruction certaine.
-  - Bat. secondaire (5 degats x2 vs light, rafale x4) : chaque tir a 75% de rafale.
-    - Croiseur 1 : 2 base + ~6 bonus = ~8 tirs a 5 degats = 40 degats sur les legers
+  - Bat. secondaire (5 degats x2, Rafale 6 Leger) : cible light disponible, 8 tirs garantis.
+    - Croiseur 1 : 8 tirs a 5 degats = 40 degats sur les legers
     - Croiseur 2 : similaire
     - Croiseur 3 : similaire
-  - Total degats legers : ~120 + 3x35 = ~225 degats sur les intercepteurs
+  - Total degats legers : 120 + 3x35 = 225 degats sur les intercepteurs
   - 30 intercepteurs ont 30 * 20 = 600 PV total. ~37% elimines au round 1.
 
 - 30 intercepteurs ripostent (mais sur clones) :
   - 30 * 12 = 360 DPS. 3 croiseurs ont 3 * 83 = 249 PV. Destruction probable de 1-2 croiseurs.
 
-**Resultat** : le croiseur est efficace contre les intercepteurs grace a la rafale, mais un essaim de 30 peut quand meme submerger 3 croiseurs. Le ratio force l'attaquant a amener plus de croiseurs ou mixer avec des fregates. **La composition compte.**
+**Resultat** : le croiseur est efficace contre les intercepteurs grace a la rafale vs Leger, mais un essaim de 30 peut quand meme submerger 3 croiseurs. Le ratio force l'attaquant a amener plus de croiseurs ou mixer avec des fregates. **La composition compte.**
 
 ### Scenario C : Cuirasses vs fregates
 
@@ -421,17 +370,17 @@ Les defenses ripostent avec leur propre enchainement. Les lanceurs (6 degats) et
 **Round 1** :
 - 2 cuirasses tirent :
   - Bat. principale (50 degats x1, cible heavy) : pas de heavy, fallback -> medium (fregates). 50 degats vs fregate (16 shield + 30 hull = 46 PV, 2 armure). Tue la fregate facilement.
-  - Bat. secondaire (10 degats x2, cible medium, rafale x3) : chaque tir a 67% de rafale contre medium.
-    - Cuirasse 1 : 2 base + ~4 bonus = ~6 tirs a 10 degats = 60 degats sur fregates
+  - Bat. secondaire (10 degats x2, Rafale 4 Medium) : cible medium disponible, 6 tirs garantis.
+    - Cuirasse 1 : 6 tirs a 10 degats = 60 degats sur fregates
     - Cuirasse 2 : similaire
-  - Total degats medium : ~120 + 2*50 = ~220. 8 fregates ont 8*46 = 368 PV. ~60% elimines.
+  - Total degats medium : 120 + 2*50 = 220. 8 fregates ont 8*46 = 368 PV. ~60% elimines.
 
 - 8 fregates ripostent :
   - Bat. 1 (12 degats x1, medium) : 8 * 12 = 96 degats vs cuirasses. Pas suffisant pour tuer un cuirasse (40 shield + 100 hull = 140 PV).
   - Bat. 2 (6 degats x2, light) : pas de light -> fallback. 8 * 12 = 96 degats supplementaires.
   - Total : ~192 degats sur 2 cuirasses (280 PV total). 1 cuirasse probablement detruit.
 
-**Resultat** : les cuirasses dominent les fregates grace a la rafale x3, mais un seul cuirasse survit. Les fregates ne sont pas un bon counter aux cuirasses -- il faudrait des croiseurs (dont le canon principal cible le heavy) pour les contrer.
+**Resultat** : les cuirasses dominent les fregates grace a la rafale vs Medium, mais un seul cuirasse survit. Les fregates ne sont pas un bon counter aux cuirasses -- il faudrait des croiseurs (dont le canon principal cible le heavy) pour les contrer.
 
 ---
 
@@ -448,25 +397,21 @@ Chaque mecanique est concue pour etre expliquee en une phrase dans l'UI.
 
   ARMEMENT
   Canon principal    35 x1    Cible : Lourd
-  Tourelles defense   5 x2    Cible : Leger    [Rafale x4]
-
-  TRAITS
-  Coup critique : 5%
+  Tourelles defense   5 dmg   x2   Cible : Leger    [Rafale 6 Leger]
 ```
 
 ### Tooltip des traits
 
-| Trait         | Tooltip                                                                 |
-|---------------|-------------------------------------------------------------------------|
-| Enchainement  | Si le tir detruit sa cible, tire un coup bonus sur la meme categorie.   |
-| Rafale x4     | Chaque tir contre un Leger a 75% de chance de declencher un tir bonus.  |
-| Coup critique | 5% de chance d'infliger 150% de degats.                                 |
+| Trait           | Tooltip                                                                         |
+|-----------------|---------------------------------------------------------------------------------|
+| Enchainement    | Si le tir detruit sa cible, tire un coup bonus sur la meme categorie.           |
+| Rafale N [cat]  | Tire N coups supplementaires quand la cible appartient a cette categorie.       |
 
 ### Guide de combat (page existante)
 
 La page CombatGuide.tsx est deja implementee. Il suffit d'y ajouter trois sections courtes :
 1. **Armement multiple** : "Les vaisseaux avances ont deux batteries d'armes qui ciblent des categories differentes."
-2. **Traits de combat** : tableau simple Enchainement / Rafale / Critique avec icones et une phrase chacun.
+2. **Traits de combat** : tableau simple Enchainement / Rafale avec icones et une phrase chacun.
 3. **Qui bat qui ?** : schema visuel des relations de counter (intercepteur < croiseur < cuirasse < essaim intercepteurs).
 
 ---
@@ -481,39 +426,29 @@ Modifications du seed uniquement. Peut etre deploye en une session.
 2. Stats des defenses : mise a jour des constantes dans `seed-game-config.ts`
 3. Bouclier planetaire : changement du `30` en `50` dans `shield.ts`
 
-### Phase 2 -- Armement multiple
+### Phase 2 -- Armement multiple + Rafale
 
 Impact sur le code :
-- Nouveau type `WeaponProfile { damage, shots, targetCategory }` dans `combat.ts`
+- Nouveau type `WeaponProfile { damage, shots, targetCategory, rafale? }` dans `combat.ts`
 - `ShipCombatConfig` evolue de `{baseWeaponDamage, baseShotCount}` vers `{weapons: WeaponProfile[]}`
 - `fireSalvo` itere sur chaque profil d'arme au lieu d'un seul
 - `selectTarget` recoit la categorie de la batterie (plus de priorite globale du joueur)
+- Au moment du tir : si la cible appartient a `rafale.category`, utiliser `shots + rafale.count` au lieu de `shots`
 - `seed-game-config.ts` : restructuration des donnees de combat
 - Schema DB : ajouter table `weapon_profiles` ou champ JSON sur `ship_definitions`
 - UI : mise a jour des fiches vaisseaux
 
-### Phase 3 -- Enchainement + Coup critique
+### Phase 3 -- Enchainement
 
 Impact sur le code :
 - Nouveau champ `hasChainKill: boolean` sur `ShipCombatConfig`
 - Dans `fireShot` : si `target.destroyed && hasChainKill`, planifier 1 tir bonus
 - Dans `fireSalvo` : gerer le tir bonus (max 1 par tir de base)
-- Coup critique : dans `fireShot`, jet de de (5% via RNG) pour multiplier `damage * 1.5`
-- Nouveau tracking dans `CombatSideStats` : `criticalHits: number`
-
-### Phase 4 -- Rafale
-
-Impact sur le code :
-- Nouveau champ `rapidFire?: { categoryId: string, factor: number }` sur `WeaponProfile`
-- Dans `fireSalvo` : apres chaque tir sur une cible de la bonne categorie, jet de `1 - 1/factor` pour tir bonus. Boucle tant que le jet reussit.
-- Tracking dans les stats de round : `rapidFireShots: number`
-- Attention a la performance : limiter le nombre max de chaines (ex: 20) pour eviter les boucles extremes
 
 ### Estimation d'effort
 
 | Phase | Changements principaux                            | Risque |
 |-------|----------------------------------------------------|--------|
 | 1     | Seed + 1 ligne moteur                             | Bas    |
-| 2     | Refonte du modele d'armement, UI                   | Moyen  |
-| 3     | 2 mecaniques simples dans le moteur               | Bas    |
-| 4     | Rafale (boucle probabiliste, edge cases)           | Moyen  |
+| 2     | Refonte du modele d'armement + Rafale, UI         | Moyen  |
+| 3     | Enchainement (mecanique simple dans le moteur)    | Bas    |

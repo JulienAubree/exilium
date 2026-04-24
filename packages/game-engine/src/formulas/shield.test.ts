@@ -2,20 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { calculateShieldCapacity, calculateShieldEnergy } from './shield.js';
 
 describe('calculateShieldCapacity', () => {
-  it('returns 30 at level 1', () => {
-    expect(calculateShieldCapacity(1)).toBe(30);
+  it('returns 50 at level 1', () => {
+    expect(calculateShieldCapacity(1)).toBe(50);
   });
 
-  it('returns 39 at level 2 (floor(30 * 1.3))', () => {
-    expect(calculateShieldCapacity(2)).toBe(39);
+  it('returns 65 at level 2 (round(50 * 1.3))', () => {
+    expect(calculateShieldCapacity(2)).toBe(65);
   });
 
-  it('returns 51 at level 3', () => {
-    expect(calculateShieldCapacity(3)).toBe(51);
+  it('returns 85 at level 3', () => {
+    expect(calculateShieldCapacity(3)).toBe(85);
   });
 
-  it('returns 318 at level 10', () => {
-    expect(calculateShieldCapacity(10)).toBe(318);
+  it('returns 530 at level 10', () => {
+    expect(calculateShieldCapacity(10)).toBe(530);
   });
 
   it('returns 0 at level 0', () => {

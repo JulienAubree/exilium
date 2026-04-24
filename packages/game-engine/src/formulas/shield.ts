@@ -1,10 +1,10 @@
 /**
  * Planetary shield capacity based on building level.
- * Formula: round(30 * 1.3^(level-1))
+ * Formula: round(50 * 1.3^(level-1))
  */
 export function calculateShieldCapacity(level: number): number {
   if (level <= 0) return 0;
-  return Math.round(30 * Math.pow(1.3, level - 1));
+  return Math.round(50 * Math.pow(1.3, level - 1));
 }
 
 /**

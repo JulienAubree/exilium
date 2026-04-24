@@ -11,7 +11,7 @@ export interface ShipCombatConfig {
   shipType: string;
   categoryId: string;
   baseShield: number;
-  baseArmor: number;       // flat damage reduction — no research bonus
+  baseArmor: number;       // flat damage reduction — scaled by the armor research multiplier
   baseHull: number;
   baseWeaponDamage: number;
   baseShotCount: number;
@@ -166,7 +166,7 @@ function createUnits(
         category: config.categoryId,
         shield: maxShield,
         maxShield,
-        armor: config.baseArmor,
+        armor: config.baseArmor * multipliers.armor,
         hull: maxHull,
         maxHull,
         weaponDamage,
