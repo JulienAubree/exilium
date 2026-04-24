@@ -112,6 +112,15 @@ export interface GameConfig {
   talents: Record<string, TalentConfig>;
   hulls: Record<string, HullConfig>;
   biomes: BiomeConfig[];
+  /**
+   * Pre-parsed universe values that were previously `JSON.parse(String(...))` on
+   * every fleet-send / detection call. Cached here means they're built once
+   * per cache fill instead of on every request.
+   */
+  attackDetection: {
+    scoreThresholds: number[];
+    timingPercents: number[];
+  };
 }
 
 export interface BuildingConfig {

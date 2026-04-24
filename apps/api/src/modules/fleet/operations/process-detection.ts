@@ -40,7 +40,7 @@ export function createProcessDetection(deps: ProcessDetectionDeps) {
       .where(eq(fleetEvents.id, fleetEventId));
 
     const config = await gameConfigService.getFullConfig();
-    const scoreThresholds: number[] = JSON.parse(String(config.universe.attack_detection_score_thresholds ?? '[0,1,3,5,7]'));
+    const { scoreThresholds } = config.attackDetection;
 
     let tier = 0;
     const score = event.detectionScore ?? 0;

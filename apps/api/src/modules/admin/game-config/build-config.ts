@@ -342,7 +342,28 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
     talents,
     hulls,
     biomes,
+    attackDetection: {
+      scoreThresholds: coerceNumberArray(universe.attack_detection_score_thresholds, [0, 1, 3, 5, 7]),
+      timingPercents: coerceNumberArray(universe.attack_detection_timing, [20, 40, 60, 80, 100]),
+    },
   };
+}
+
+/**
+ * Accept either an already-decoded jsonb array (the happy path when the key
+ * exists in universe_config) or a JSON-encoded string (legacy rows / fallback
+ * default). Silently coerce malformed values back to the default — these are
+ * configuration tuning knobs, not data integrity.
+ */
+function coerceNumberArray(raw: unknown, fallback: number[]): number[] {
+  if (Array.isArray(raw) && raw.every((n) => typeof n === 'number')) return raw as number[];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.every((n) => typeof n === 'number')) return parsed;
+    } catch { /* fall through */ }
+  }
+  return fallback;
 }
 
 /** Group a flat list of rows by a key extracted from each row. */

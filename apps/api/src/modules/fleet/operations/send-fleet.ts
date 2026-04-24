@@ -359,8 +359,7 @@ export function createSendFleet(deps: SendFleetDeps) {
         const defSensor = defenderResearch?.sensorNetwork ?? 0;
         const atkStealth = researchLevels.stealthTech ?? 0;
 
-        const scoreThresholds: number[] = JSON.parse(String(config.universe.attack_detection_score_thresholds ?? '[0,1,3,5,7]'));
-        const timingPercents: number[] = JSON.parse(String(config.universe.attack_detection_timing ?? '[20,40,60,80,100]'));
+        const { scoreThresholds, timingPercents } = config.attackDetection;
 
         const detection = calculateAttackDetection(defSensor, atkStealth, scoreThresholds, timingPercents);
 

@@ -98,7 +98,7 @@ export function createListInboundFleets(deps: ListInboundDeps) {
 
     // Tier-based visibility masking for hostile fleets. Score thresholds are
     // configurable via universe_config; higher tiers reveal more details.
-    const scoreThresholds: number[] = JSON.parse(String(config.universe.attack_detection_score_thresholds ?? '[0,1,3,5,7]'));
+    const { scoreThresholds } = config.attackDetection;
 
     const hostileFleets = hostileRaw.map((f) => {
       let tier = 0;
