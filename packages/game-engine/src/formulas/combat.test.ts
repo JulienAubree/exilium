@@ -1,65 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { simulateCombat, calculateDebris, repairDefenses } from './combat.js';
-import type { CombatInput, ShipCombatConfig, CombatConfig, ShipCategory } from './combat.js';
-
-const CATEGORIES: ShipCategory[] = [
-  { id: 'light', name: 'Léger', targetable: true, targetOrder: 1 },
-  { id: 'medium', name: 'Moyen', targetable: true, targetOrder: 2 },
-  { id: 'heavy', name: 'Lourd', targetable: true, targetOrder: 3 },
-  { id: 'shield', name: 'Bouclier', targetable: true, targetOrder: 4 },
-  { id: 'defense', name: 'Défense', targetable: true, targetOrder: 5 },
-  { id: 'support', name: 'Support', targetable: false, targetOrder: 6 },
-];
-
-const COMBAT_CONFIG: CombatConfig = {
-  maxRounds: 4,
-  debrisRatio: 0.3,
-  defenseRepairRate: 0.7,
-  pillageRatio: 0.33,
-  minDamagePerHit: 1,
-  researchBonusPerLevel: 0.1,
-  categories: CATEGORIES,
-};
-
-const SHIP_CONFIGS: Record<string, ShipCombatConfig> = {
-  interceptor:          { shipType: 'interceptor',          categoryId: 'light',   baseShield: 8,  baseArmor: 1, baseHull: 12,  baseWeaponDamage: 4,  baseShotCount: 3 },
-  frigate:              { shipType: 'frigate',              categoryId: 'medium',  baseShield: 16, baseArmor: 2, baseHull: 30,  baseWeaponDamage: 12, baseShotCount: 2 },
-  cruiser:              { shipType: 'cruiser',              categoryId: 'heavy',   baseShield: 28, baseArmor: 4, baseHull: 55,  baseWeaponDamage: 45, baseShotCount: 1 },
-  battlecruiser:        { shipType: 'battlecruiser',        categoryId: 'heavy',   baseShield: 40, baseArmor: 6, baseHull: 100, baseWeaponDamage: 70, baseShotCount: 1 },
-  smallCargo:           { shipType: 'smallCargo',           categoryId: 'support', baseShield: 2,  baseArmor: 0, baseHull: 8,   baseWeaponDamage: 1,  baseShotCount: 1 },
-  rocketLauncher:       { shipType: 'rocketLauncher',       categoryId: 'defense', baseShield: 4,  baseArmor: 0, baseHull: 10,  baseWeaponDamage: 20, baseShotCount: 1 },
-  electromagneticCannon:{ shipType: 'electromagneticCannon',categoryId: 'defense', baseShield: 10, baseArmor: 2, baseHull: 25,  baseWeaponDamage: 40, baseShotCount: 1 },
-};
-
-const SHIP_IDS = new Set(['interceptor', 'frigate', 'cruiser', 'battlecruiser', 'smallCargo']);
-const DEFENSE_IDS = new Set(['rocketLauncher', 'electromagneticCannon']);
-const SHIP_COSTS: Record<string, { minerai: number; silicium: number }> = {
-  interceptor:   { minerai: 3000,  silicium: 1000 },
-  frigate:       { minerai: 6000,  silicium: 4000 },
-  cruiser:       { minerai: 20000, silicium: 7000 },
-  battlecruiser: { minerai: 45000, silicium: 15000 },
-  smallCargo:    { minerai: 2000,  silicium: 2000 },
-};
-
-const NO_BONUS = { weapons: 1, shielding: 1, armor: 1 };
-
-function makeInput(overrides: Partial<CombatInput> = {}): CombatInput {
-  return {
-    attackerFleet: {},
-    defenderFleet: {},
-    defenderDefenses: {},
-    attackerMultipliers: NO_BONUS,
-    defenderMultipliers: NO_BONUS,
-    attackerTargetPriority: 'light',
-    defenderTargetPriority: 'light',
-    combatConfig: COMBAT_CONFIG,
-    shipConfigs: SHIP_CONFIGS,
-    shipCosts: SHIP_COSTS,
-    shipIds: SHIP_IDS,
-    defenseIds: DEFENSE_IDS,
-    ...overrides,
-  };
-}
+import type { ShipCombatConfig } from './combat.js';
+import { SHIP_CONFIGS, SHIP_IDS, SHIP_COSTS, makeInput } from './combat.fixtures.js';
 
 describe('simulateCombat', () => {
   it('attacker wins against empty defender', () => {
@@ -340,5 +282,143 @@ describe('planetary shield', () => {
     }));
     // Attacker should win since defenses are destroyed and shield alone doesn't count
     expect(result.outcome).toBe('attacker');
+  });
+});
+
+describe('combat invariants', () => {
+  // Sommes sur tous les types (peu importe lesquels apparaissent)
+  const sumValues = (rec: Record<string, number>) => Object.values(rec).reduce((a, b) => a + b, 0);
+
+  it('attacker unit conservation: losses + survivors = initial count', () => {
+    const initial = { interceptor: 10, frigate: 5, cruiser: 2 };
+    const result = simulateCombat(makeInput({
+      attackerFleet: initial,
+      defenderFleet: { cruiser: 3, battlecruiser: 1 },
+      rngSeed: 101,
+    }));
+    const lastRound = result.rounds[result.rounds.length - 1];
+    for (const [type, start] of Object.entries(initial)) {
+      const surviving = lastRound.attackerShips[type] ?? 0;
+      const lost = result.attackerLosses[type] ?? 0;
+      expect(surviving + lost).toBe(start);
+    }
+  });
+
+  it('defender unit conservation: losses + survivors = initial count (ships + defenses)', () => {
+    const fleet = { frigate: 8 };
+    const defenses = { rocketLauncher: 10, electromagneticCannon: 2 };
+    const result = simulateCombat(makeInput({
+      attackerFleet: { battlecruiser: 4 },
+      defenderFleet: fleet,
+      defenderDefenses: defenses,
+      rngSeed: 202,
+    }));
+    const lastRound = result.rounds[result.rounds.length - 1];
+    for (const [type, start] of Object.entries({ ...fleet, ...defenses })) {
+      const surviving = lastRound.defenderShips[type] ?? 0;
+      const lost = result.defenderLosses[type] ?? 0;
+      expect(surviving + lost).toBe(start);
+    }
+  });
+
+  it('debris excludes defenses even when destroyed', () => {
+    const result = simulateCombat(makeInput({
+      attackerFleet: { battlecruiser: 10 },
+      defenderDefenses: { rocketLauncher: 20 }, // defenses détruites en masse
+      rngSeed: 303,
+    }));
+    // Toutes les défenses potentiellement détruites, mais debris ne les compte pas
+    expect(sumValues(result.defenderLosses)).toBeGreaterThan(0);
+    // Le seul debris possible vient des attaquants (ici aucun ne peut mourir face à des rocketLaunchers seules)
+    // On vérifie simplement que le debris = 30% des coûts des attaquants détruits, sans inclure les défenses
+    const expectedFromAttackerLosses =
+      (result.attackerLosses.battlecruiser ?? 0) * SHIP_COSTS.battlecruiser.minerai * 0.3;
+    expect(result.debris.minerai).toBe(Math.floor(expectedFromAttackerLosses));
+  });
+
+  it('fallback targeting: no light → medium hit before heavy', () => {
+    // Attaquant de type `light` visant `light` : aucune cible → fallback vers medium avant heavy
+    const result = simulateCombat(makeInput({
+      attackerFleet: { interceptor: 30 },
+      defenderFleet: { frigate: 3, cruiser: 3 },
+      attackerTargetPriority: 'light',
+      rngSeed: 404,
+    }));
+    const frigateLosses = result.defenderLosses.frigate ?? 0;
+    const cruiserLosses = result.defenderLosses.cruiser ?? 0;
+    // Les frégates doivent recevoir au moins autant de pertes que les croiseurs
+    expect(frigateLosses).toBeGreaterThanOrEqual(cruiserLosses);
+    // Et au moins une frégate doit tomber (elles sont ciblées en priorité par fallback)
+    expect(frigateLosses).toBeGreaterThan(0);
+  });
+
+  it('support units not targeted when targetable units remain', () => {
+    // Seul le cargo est `support` — tant qu'il reste du light, le cargo ne doit pas être ciblé
+    const result = simulateCombat(makeInput({
+      attackerFleet: { cruiser: 2 },
+      defenderFleet: { interceptor: 5, smallCargo: 5 },
+      attackerTargetPriority: 'light',
+      rngSeed: 505,
+    }));
+    // Round 1 : interceptors survivent probablement au moins partiellement
+    const r1 = result.rounds[0];
+    const interceptorsAlive = r1.defenderShips.interceptor ?? 0;
+    const cargosAlive = r1.defenderShips.smallCargo ?? 0;
+    if (interceptorsAlive > 0) {
+      // Aucun cargo ne doit avoir été touché
+      expect(cargosAlive).toBe(5);
+    }
+  });
+
+  it('minimum damage per hit still applies when armor > weapon damage', () => {
+    // Une unité avec beaucoup d'armure vs une arme très faible → sans le min, rien ne passe
+    const configs: Record<string, ShipCombatConfig> = {
+      ...SHIP_CONFIGS,
+      tank: { shipType: 'tank', categoryId: 'light', baseShield: 0, baseArmor: 50, baseHull: 10, baseWeaponDamage: 1, baseShotCount: 1 },
+      pea:  { shipType: 'pea',  categoryId: 'light', baseShield: 0, baseArmor: 0,  baseHull: 100, baseWeaponDamage: 1, baseShotCount: 3 },
+    };
+    const result = simulateCombat(makeInput({
+      attackerFleet: { pea: 1 },
+      defenderFleet: { tank: 1 },
+      shipConfigs: configs,
+      shipIds: new Set([...SHIP_IDS, 'tank', 'pea']),
+      rngSeed: 606,
+    }));
+    // Avec 3 tirs/round × 1 dmg minimum × 4 rounds max = 12 dmg ≥ 10 hull → tank détruit
+    expect(result.defenderLosses.tank).toBe(1);
+  });
+
+  it('planetary shield absorption is bounded by capacity per round', () => {
+    const capacity = 50;
+    const result = simulateCombat(makeInput({
+      attackerFleet: { interceptor: 10 },
+      defenderDefenses: { rocketLauncher: 5 },
+      planetaryShieldCapacity: capacity,
+      rngSeed: 707,
+    }));
+    // Le bouclier planétaire régénère à 100% chaque round → absorption ≤ capacité par round
+    for (const r of result.rounds) {
+      expect(r.shieldAbsorbed ?? 0).toBeLessThanOrEqual(capacity);
+      expect(r.shieldAbsorbed ?? 0).toBeGreaterThanOrEqual(0);
+    }
+    // Et il doit y avoir eu au moins un round où il a absorbé du dégât
+    const anyAbsorption = result.rounds.some(r => (r.shieldAbsorbed ?? 0) > 0);
+    expect(anyAbsorption).toBe(true);
+  });
+
+  it('weapon research doubles damage output (sanity check on multiplier)', () => {
+    const base = simulateCombat(makeInput({
+      attackerFleet: { cruiser: 5 },
+      defenderFleet: { cruiser: 5 },
+      rngSeed: 808,
+    }));
+    const buffed = simulateCombat(makeInput({
+      attackerFleet: { cruiser: 5 },
+      defenderFleet: { cruiser: 5 },
+      attackerMultipliers: { weapons: 2, shielding: 1, armor: 1 },
+      rngSeed: 808,
+    }));
+    // Avec 2x armes côté attaquant, les pertes défenseur doivent être strictement supérieures
+    expect(sumValues(buffed.defenderLosses)).toBeGreaterThan(sumValues(base.defenderLosses));
   });
 });
