@@ -1,9 +1,8 @@
-# Shared security headers snippet. Applied to both the game site and the admin
-# panel. The app has no third-party scripts, no eval, and no inline <script>
-# tags (Vite emits all scripts as external modules), so 'self' is sufficient
-# for script-src. React injects style attributes at runtime, so style-src
-# needs 'unsafe-inline' — acceptable since inline CSS carries far less risk
-# than inline JS.
+# Shared security headers snippet. Applied to all hosts. The app has no
+# third-party scripts, no eval, and no inline <script> tags (Vite emits all
+# scripts as external modules), so 'self' is sufficient for script-src.
+# React injects style attributes at runtime, so style-src needs 'unsafe-inline'
+# — acceptable since inline CSS carries far less risk than inline JS.
 (security_headers) {
 	header {
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
@@ -14,6 +13,13 @@
 		-Server
 	}
 }
+
+# Basic auth snippet loaded from an out-of-repo file so the bcrypt hash never
+# lands in git. The file is created during setup from /etc/caddy/caddy.env
+# and defines `(basic_gate)`. Applied to hosts that should not be publicly
+# reachable (admin panel, staging) — prevents crawler indexation and reduces
+# the attack surface for brute-force attempts against the app login form.
+import /etc/caddy/basic-auth.conf
 
 exilium-game.com, www.exilium-game.com {
 	import security_headers
@@ -47,6 +53,7 @@ exilium-game.com, www.exilium-game.com {
 
 admin.exilium-game.com {
 	import security_headers
+	import basic_gate
 
 	handle /trpc/* {
 		reverse_proxy localhost:3000
@@ -64,6 +71,65 @@ admin.exilium-game.com {
 
 	handle {
 		root * /opt/exilium/apps/admin/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Staging mirrors the prod routing but points at the separate API (port 3001),
+# separate code checkout, and separate assets dir. Gated behind basic auth so
+# no crawler indexes it and no random user lands on it.
+staging.exilium-game.com {
+	import security_headers
+	import basic_gate
+
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	handle @game_assets {
+		root * /opt/exilium-staging/uploads
+		file_server
+	}
+
+	handle /trpc/* {
+		reverse_proxy localhost:3001
+	}
+
+	handle /sse {
+		reverse_proxy localhost:3001 {
+			flush_interval -1
+		}
+	}
+
+	handle /health {
+		reverse_proxy localhost:3001
+	}
+
+	handle {
+		root * /opt/exilium-staging/apps/web/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+admin-staging.exilium-game.com {
+	import security_headers
+	import basic_gate
+
+	handle /trpc/* {
+		reverse_proxy localhost:3001
+	}
+
+	handle /admin/* {
+		reverse_proxy localhost:3001
+	}
+
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	handle @game_assets {
+		root * /opt/exilium-staging/uploads
+		file_server
+	}
+
+	handle {
+		root * /opt/exilium-staging/apps/admin/dist
 		try_files {path} /index.html
 		file_server
 	}
