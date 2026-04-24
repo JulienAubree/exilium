@@ -32,7 +32,6 @@ export default function Fleet() {
   const [selectedShips, setSelectedShips] = useState<Record<string, number>>({});
   const [cargo, setCargo] = useState({ minerai: 0, silicium: 0, hydrogene: 0 });
   const [confirmSend, setConfirmSend] = useState(false);
-  const [targetPriority, setTargetPriority] = useState('light');
 
   // PvE mode
   const [pveMissionId, setPveMissionId] = useState<string | null>(null);
@@ -161,7 +160,6 @@ export default function Fleet() {
       hydrogeneCargo: cargo.hydrogene,
       ...(pveMissionId ? { pveMissionId } : {}),
       ...(tradeId ? { tradeId } : {}),
-      ...((mission === 'attack' || mission === 'pirate') ? { targetPriority } : {}),
     });
   };
 
@@ -427,36 +425,6 @@ export default function Fleet() {
           ))}
         </div>
       </div>
-
-      {/* Target Priority — combat missions only */}
-      {(mission === 'attack' || mission === 'pirate') && (
-        <div className="rounded-lg border border-gray-700/60 bg-gray-800/40 p-4">
-          <h3 className="mb-3 text-sm font-medium text-gray-300">Priorité de cible</h3>
-          <div className="flex gap-2">
-            {[
-              { id: 'light', label: 'Légers' },
-              { id: 'medium', label: 'Moyens' },
-              { id: 'heavy', label: 'Lourds' },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setTargetPriority(cat.id)}
-                className={cn(
-                  'flex-1 rounded-md border px-3 py-2 text-sm transition-colors',
-                  targetPriority === cat.id
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                    : 'border-gray-600 bg-gray-700/40 text-gray-400 hover:bg-gray-700/60',
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Votre flotte ciblera en priorité les vaisseaux de cette catégorie.
-          </p>
-        </div>
-      )}
 
       {/* Validation Error */}
       {validationError && mission && (

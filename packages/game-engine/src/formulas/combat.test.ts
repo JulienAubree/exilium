@@ -65,11 +65,11 @@ describe('damage resolution', () => {
 });
 
 describe('target priority', () => {
-  it('attacks priority category first', () => {
+  it('attacks heavy category first when primary battery targets heavy', () => {
+    // Battlecruiser primary battery targets heavy → the cruiser is hit before interceptors
     const result = simulateCombat(makeInput({
       attackerFleet: { battlecruiser: 5 },
       defenderFleet: { interceptor: 5, cruiser: 3 },
-      attackerTargetPriority: 'heavy',
     }));
     const cruiserLosses = result.defenderLosses.cruiser ?? 0;
     expect(cruiserLosses).toBeGreaterThan(0);
@@ -79,7 +79,6 @@ describe('target priority', () => {
     const result = simulateCombat(makeInput({
       attackerFleet: { cruiser: 3 },
       defenderFleet: { interceptor: 5, smallCargo: 10 },
-      attackerTargetPriority: 'light',
     }));
     const interceptorLosses = result.defenderLosses.interceptor ?? 0;
     expect(interceptorLosses).toBeGreaterThan(0);
@@ -247,15 +246,13 @@ describe('planetary shield', () => {
   });
 
   it('fleet targeted before shield, shield before defenses (new targeting order)', () => {
-    // With default attackerTargetPriority = 'light', attackers should target
-    // light fleet ships first, then medium, then heavy, then shield, then defenses
-    // Here we use a fleet that can only kill a few units per round to observe ordering
+    // Cruiser secondary battery targets light → interceptors are hit first by fallback,
+    // then shield, then defenses. This validates the natural targeting order.
     const result = simulateCombat(makeInput({
       attackerFleet: { cruiser: 2 },
       defenderFleet: { interceptor: 3 },
       defenderDefenses: { rocketLauncher: 3 },
       planetaryShieldCapacity: 100,
-      attackerTargetPriority: 'light',
       rngSeed: 55,
     }));
     // Interceptors (light, targetOrder 1) should be hit first
@@ -337,11 +334,10 @@ describe('combat invariants', () => {
   });
 
   it('fallback targeting: no light → medium hit before heavy', () => {
-    // Attaquant de type `light` visant `light` : aucune cible → fallback vers medium avant heavy
+    // Interceptor battery targets light : aucune cible light → fallback vers medium avant heavy
     const result = simulateCombat(makeInput({
       attackerFleet: { interceptor: 30 },
       defenderFleet: { frigate: 3, cruiser: 3 },
-      attackerTargetPriority: 'light',
       rngSeed: 404,
     }));
     const frigateLosses = result.defenderLosses.frigate ?? 0;
@@ -357,7 +353,6 @@ describe('combat invariants', () => {
     const result = simulateCombat(makeInput({
       attackerFleet: { cruiser: 2 },
       defenderFleet: { interceptor: 5, smallCargo: 5 },
-      attackerTargetPriority: 'light',
       rngSeed: 505,
     }));
     // Round 1 : interceptors survivent probablement au moins partiellement
@@ -420,5 +415,119 @@ describe('combat invariants', () => {
     }));
     // Avec 2x armes côté attaquant, les pertes défenseur doivent être strictement supérieures
     expect(sumValues(buffed.defenderLosses)).toBeGreaterThan(sumValues(base.defenderLosses));
+  });
+});
+
+describe('multi-battery weapons', () => {
+  const sumValues = (rec: Record<string, number>) => Object.values(rec).reduce((a, b) => a + b, 0);
+
+  it('rafale boosts shot count when target matches rafale category', () => {
+    // Cibles contrôlées "paper" (1 hull, 0 shield) : chaque tir tue 1 cible.
+    // Batterie unique : 1 dmg ×2, rafale 5 vs Léger → 7 tirs par round quand cible = light.
+    const configs: Record<string, ShipCombatConfig> = {
+      ...SHIP_CONFIGS,
+      rafaleTester: {
+        shipType: 'rafaleTester', categoryId: 'heavy',
+        baseShield: 0, baseArmor: 0, baseHull: 100,
+        baseWeaponDamage: 0, baseShotCount: 0,
+        weapons: [
+          { damage: 1, shots: 2, targetCategory: 'light', rafale: { category: 'light', count: 5 } },
+        ],
+      },
+      paper: {
+        shipType: 'paper', categoryId: 'light',
+        baseShield: 0, baseArmor: 0, baseHull: 1,
+        baseWeaponDamage: 0, baseShotCount: 0,
+        weapons: [],
+      },
+    };
+    const r = simulateCombat(makeInput({
+      attackerFleet: { rafaleTester: 1 },
+      defenderFleet: { paper: 50 }, // large pool pour éviter le manque de cibles
+      shipConfigs: configs,
+      shipIds: new Set([...SHIP_IDS, 'rafaleTester', 'paper']),
+      rngSeed: 909,
+    }));
+    // 1 tester, rafale active: round 1 tue exactement 7 cibles (2 base + 5 rafale)
+    const destroyedRound1 = 50 - (r.rounds[0].defenderShips.paper ?? 0);
+    expect(destroyedRound1).toBe(7);
+  });
+
+  it('rafale does NOT trigger when falling back to a different category', () => {
+    // Batterie cible light avec rafale 5 light, MAIS pas de light en face →
+    // la batterie tombe en fallback sur medium et ne tire que ses 2 shots de base.
+    const configs: Record<string, ShipCombatConfig> = {
+      ...SHIP_CONFIGS,
+      rafaleTester: {
+        shipType: 'rafaleTester', categoryId: 'heavy',
+        baseShield: 0, baseArmor: 0, baseHull: 100,
+        baseWeaponDamage: 0, baseShotCount: 0,
+        weapons: [
+          { damage: 1, shots: 2, targetCategory: 'light', rafale: { category: 'light', count: 5 } },
+        ],
+      },
+      paperMedium: {
+        shipType: 'paperMedium', categoryId: 'medium',
+        baseShield: 0, baseArmor: 0, baseHull: 1,
+        baseWeaponDamage: 0, baseShotCount: 0,
+        weapons: [],
+      },
+    };
+    const r = simulateCombat(makeInput({
+      attackerFleet: { rafaleTester: 1 },
+      defenderFleet: { paperMedium: 20 },
+      shipConfigs: configs,
+      shipIds: new Set([...SHIP_IDS, 'rafaleTester', 'paperMedium']),
+      rngSeed: 910,
+    }));
+    // Pas de rafale (fallback) → exactement 2 kills round 1
+    const destroyedRound1 = 20 - (r.rounds[0].defenderShips.paperMedium ?? 0);
+    expect(destroyedRound1).toBe(2);
+    // silence sumValues unused warning
+    expect(sumValues({ x: destroyedRound1 })).toBe(destroyedRound1);
+  });
+
+  it('chainkill fires a bonus shot when a shot destroys its target', () => {
+    // Interceptors (bat: 4×3 light + chainkill) vs 6 frégates.
+    // Les frégates ont 16 shield + 30 hull. Pas directement "one-shot" par un intercepteur.
+    // Pour prouver chainkill, on confronte interceptors à des cibles qui peuvent être
+    // tuées en 1 shot: des sondes génériques. On synthétise un type custom.
+    const configs: Record<string, ShipCombatConfig> = {
+      ...SHIP_CONFIGS,
+      chainTest: {
+        shipType: 'chainTest', categoryId: 'light',
+        baseShield: 0, baseArmor: 0, baseHull: 3,
+        baseWeaponDamage: 0, baseShotCount: 0,
+        weapons: [],
+      },
+    };
+    const withChain = simulateCombat(makeInput({
+      attackerFleet: { interceptor: 1 },
+      defenderFleet: { chainTest: 10 },
+      shipConfigs: configs,
+      shipIds: new Set([...SHIP_IDS, 'chainTest']),
+      rngSeed: 911,
+    }));
+    // 1 intercepteur = 3 tirs de 4 dmg + jusqu'à 3 chainkills (1 par tir)
+    // Chaque chainTest (3 HP) tombe en 1 tir. Donc max 6 kills en round 1.
+    const destroyedRound1 = 10 - (withChain.rounds[0].defenderShips.chainTest ?? 0);
+    expect(destroyedRound1).toBeGreaterThanOrEqual(4); // au moins 3 de base + quelques chainkill
+    expect(destroyedRound1).toBeLessThanOrEqual(6);    // max 3 + 3 chainkills
+  });
+
+  it('multi-battery: each weapon selects its own target independently', () => {
+    // Frégate: bat1 (12×1 medium) + bat2 (6×2 light).
+    // Contre 1 frégate (medium) + 3 intercepteurs (light) : les deux batteries ont chacune leurs cibles.
+    const r = simulateCombat(makeInput({
+      attackerFleet: { frigate: 1 },
+      defenderFleet: { frigate: 1, interceptor: 3 },
+      rngSeed: 912,
+    }));
+    // On vérifie que round 1 a infligé des dégâts à la fois à la frégate ET aux intercepteurs
+    const damageByType = r.rounds[0].defenderDamageByType ?? {};
+    const damageToFrigate = (damageByType.frigate?.shieldDamage ?? 0) + (damageByType.frigate?.hullDamage ?? 0);
+    const damageToInterceptor = (damageByType.interceptor?.shieldDamage ?? 0) + (damageByType.interceptor?.hullDamage ?? 0);
+    expect(damageToFrigate).toBeGreaterThan(0);
+    expect(damageToInterceptor).toBeGreaterThan(0);
   });
 });

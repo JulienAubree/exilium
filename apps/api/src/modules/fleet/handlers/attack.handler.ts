@@ -274,8 +274,6 @@ export class AttackHandler implements MissionHandler {
         defenderDefenses,
         attackerMultipliers,
         defenderMultipliers,
-        attackerTargetPriority: fleetEvent.targetPriority ?? 'light',
-        defenderTargetPriority: 'light',
         combatConfig,
         shipConfigs: shipCombatConfigs,
         shipCosts: shipCostsMap,

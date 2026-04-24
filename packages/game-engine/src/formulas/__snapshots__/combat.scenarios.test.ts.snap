@@ -46,25 +46,23 @@ exports[`combat scenarios (snapshot) > scenario 02: mirror match — 1 intercept
 
 exports[`combat scenarios (snapshot) > scenario 03: interceptor swarm vs frigate wall 1`] = `
 {
-  "attackerLosses": {
-    "interceptor": 2,
-  },
+  "attackerLosses": {},
   "debris": {
-    "minerai": 9000,
-    "silicium": 5400,
+    "minerai": 7200,
+    "silicium": 4800,
   },
   "defenderLosses": {
     "frigate": 4,
   },
   "outcome": "attacker",
   "repairedDefenses": {},
-  "roundsPlayed": 3,
-  "totalArmorBlockedAttacker": 18,
+  "roundsPlayed": 2,
+  "totalArmorBlockedAttacker": 11,
   "totalArmorBlockedDefender": 120,
   "totalOverkillAttacker": 0,
-  "totalOverkillDefender": 7,
-  "totalShieldAbsorbedAttacker": 128,
-  "totalShieldAbsorbedDefender": 144,
+  "totalOverkillDefender": 0,
+  "totalShieldAbsorbedAttacker": 144,
+  "totalShieldAbsorbedDefender": 128,
 }
 `;
 
@@ -72,21 +70,21 @@ exports[`combat scenarios (snapshot) > scenario 04: cruiser sweep vs interceptor
 {
   "attackerLosses": {},
   "debris": {
-    "minerai": 10800,
-    "silicium": 3600,
+    "minerai": 18000,
+    "silicium": 6000,
   },
   "defenderLosses": {
-    "interceptor": 12,
+    "interceptor": 20,
   },
-  "outcome": "draw",
+  "outcome": "attacker",
   "repairedDefenses": {},
   "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 306,
-  "totalArmorBlockedDefender": 12,
-  "totalOverkillAttacker": 288,
+  "totalArmorBlockedAttacker": 261,
+  "totalArmorBlockedDefender": 66,
+  "totalOverkillAttacker": 241,
   "totalOverkillDefender": 0,
-  "totalShieldAbsorbedAttacker": 336,
-  "totalShieldAbsorbedDefender": 96,
+  "totalShieldAbsorbedAttacker": 324,
+  "totalShieldAbsorbedDefender": 343,
 }
 `;
 
@@ -102,39 +100,40 @@ exports[`combat scenarios (snapshot) > scenario 05: battlecruisers vs frigates (
   },
   "outcome": "attacker",
   "repairedDefenses": {},
-  "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 114,
-  "totalArmorBlockedDefender": 16,
-  "totalOverkillAttacker": 176,
+  "roundsPlayed": 3,
+  "totalArmorBlockedAttacker": 132,
+  "totalArmorBlockedDefender": 52,
+  "totalOverkillAttacker": 72,
   "totalOverkillDefender": 0,
-  "totalShieldAbsorbedAttacker": 276,
-  "totalShieldAbsorbedDefender": 128,
+  "totalShieldAbsorbedAttacker": 236,
+  "totalShieldAbsorbedDefender": 266,
 }
 `;
 
 exports[`combat scenarios (snapshot) > scenario 06: balanced mixed fleet vs balanced mixed fleet 1`] = `
 {
   "attackerLosses": {
-    "frigate": 5,
+    "frigate": 3,
     "interceptor": 10,
   },
   "debris": {
-    "minerai": 36000,
-    "silicium": 18000,
+    "minerai": 33000,
+    "silicium": 14100,
   },
   "defenderLosses": {
-    "frigate": 5,
+    "cruiser": 1,
+    "frigate": 2,
     "interceptor": 10,
   },
   "outcome": "draw",
   "repairedDefenses": {},
   "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 58,
-  "totalArmorBlockedDefender": 61,
-  "totalOverkillAttacker": 191,
-  "totalOverkillDefender": 235,
-  "totalShieldAbsorbedAttacker": 252,
-  "totalShieldAbsorbedDefender": 252,
+  "totalArmorBlockedAttacker": 125,
+  "totalArmorBlockedDefender": 112,
+  "totalOverkillAttacker": 43,
+  "totalOverkillDefender": 18,
+  "totalShieldAbsorbedAttacker": 533,
+  "totalShieldAbsorbedDefender": 491,
 }
 `;
 
@@ -148,22 +147,22 @@ exports[`combat scenarios (snapshot) > scenario 07: defended planet (fleet + def
     "silicium": 13200,
   },
   "defenderLosses": {
-    "electromagneticCannon": 2,
+    "electromagneticCannon": 3,
     "frigate": 4,
-    "rocketLauncher": 6,
+    "rocketLauncher": 10,
   },
-  "outcome": "draw",
+  "outcome": "attacker",
   "repairedDefenses": {
-    "electromagneticCannon": 2,
+    "electromagneticCannon": 3,
     "rocketLauncher": 5,
   },
   "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 123,
-  "totalArmorBlockedDefender": 20,
-  "totalOverkillAttacker": 558,
-  "totalOverkillDefender": 45,
-  "totalShieldAbsorbedAttacker": 576,
-  "totalShieldAbsorbedDefender": 379,
+  "totalArmorBlockedAttacker": 97,
+  "totalArmorBlockedDefender": 32,
+  "totalOverkillAttacker": 333,
+  "totalOverkillDefender": 46,
+  "totalShieldAbsorbedAttacker": 564,
+  "totalShieldAbsorbedDefender": 511,
 }
 `;
 
@@ -201,14 +200,14 @@ exports[`combat scenarios (snapshot) > scenario 09: massive raid overwhelms smal
   },
   "outcome": "attacker",
   "repairedDefenses": {
-    "electromagneticCannon": 6,
+    "electromagneticCannon": 5,
   },
   "roundsPlayed": 1,
-  "totalArmorBlockedAttacker": 12,
-  "totalArmorBlockedDefender": 16,
-  "totalOverkillAttacker": 283,
+  "totalArmorBlockedAttacker": 18,
+  "totalArmorBlockedDefender": 28,
+  "totalOverkillAttacker": 131,
   "totalOverkillDefender": 0,
-  "totalShieldAbsorbedAttacker": 240,
+  "totalShieldAbsorbedAttacker": 200,
   "totalShieldAbsorbedDefender": 130,
 }
 `;
@@ -225,47 +224,45 @@ exports[`combat scenarios (snapshot) > scenario 10: overkill showcase — battle
   },
   "outcome": "attacker",
   "repairedDefenses": {},
-  "roundsPlayed": 4,
+  "roundsPlayed": 3,
   "totalArmorBlockedAttacker": 24,
-  "totalArmorBlockedDefender": 25,
-  "totalOverkillAttacker": 1225,
+  "totalArmorBlockedDefender": 55,
+  "totalOverkillAttacker": 683,
   "totalOverkillDefender": 0,
-  "totalShieldAbsorbedAttacker": 592,
-  "totalShieldAbsorbedDefender": 200,
+  "totalShieldAbsorbedAttacker": 496,
+  "totalShieldAbsorbedDefender": 272,
 }
 `;
 
 exports[`combat scenarios (snapshot) > scenario 11: late-game fight with researched fleets 1`] = `
 {
   "attackerLosses": {
-    "battlecruiser": 1,
+    "battlecruiser": 3,
     "cruiser": 5,
     "frigate": 10,
     "interceptor": 20,
   },
   "debris": {
-    "minerai": 144900,
-    "silicium": 60000,
+    "minerai": 171900,
+    "silicium": 69000,
   },
   "defenderLosses": {
     "battlecruiser": 2,
     "cruiser": 4,
-    "electromagneticCannon": 2,
     "frigate": 8,
     "rocketLauncher": 5,
   },
-  "outcome": "draw",
+  "outcome": "defender",
   "repairedDefenses": {
-    "electromagneticCannon": 1,
     "rocketLauncher": 4,
   },
   "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 349.5,
-  "totalArmorBlockedDefender": 278.0999999999999,
-  "totalOverkillAttacker": 818.4000000000001,
-  "totalOverkillDefender": 704.4000000000003,
-  "totalShieldAbsorbedAttacker": 1590.3999999999996,
-  "totalShieldAbsorbedDefender": 1352,
+  "totalArmorBlockedAttacker": 460.5,
+  "totalArmorBlockedDefender": 430.5,
+  "totalOverkillAttacker": 376,
+  "totalOverkillDefender": 619.4000000000001,
+  "totalShieldAbsorbedAttacker": 1653.4,
+  "totalShieldAbsorbedDefender": 1346,
 }
 `;
 
@@ -273,20 +270,21 @@ exports[`combat scenarios (snapshot) > scenario 12: support units survive when p
 {
   "attackerLosses": {},
   "debris": {
-    "minerai": 7200,
-    "silicium": 2400,
+    "minerai": 10200,
+    "silicium": 5400,
   },
   "defenderLosses": {
     "interceptor": 8,
+    "smallCargo": 5,
   },
   "outcome": "draw",
   "repairedDefenses": {},
   "roundsPlayed": 4,
-  "totalArmorBlockedAttacker": 45,
-  "totalArmorBlockedDefender": 8,
-  "totalOverkillAttacker": 192,
+  "totalArmorBlockedAttacker": 42,
+  "totalArmorBlockedDefender": 28,
+  "totalOverkillAttacker": 184,
   "totalOverkillDefender": 0,
-  "totalShieldAbsorbedAttacker": 196,
-  "totalShieldAbsorbedDefender": 64,
+  "totalShieldAbsorbedAttacker": 154,
+  "totalShieldAbsorbedDefender": 147,
 }
 `;

@@ -274,7 +274,6 @@ export function createSendFleet(deps: SendFleetDeps) {
           siliciumCargo: String(siliciumCargo),
           hydrogeneCargo: String(hydrogeneCargo),
           ships: input.ships,
-          targetPriority: input.targetPriority ?? null,
           pveMissionId: input.pveMissionId ?? null,
           tradeId: input.tradeId ?? null,
         })

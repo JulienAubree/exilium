@@ -95,8 +95,6 @@ export function buildCombatInput(
     defenderDefenses: {},
     attackerMultipliers: NEUTRAL_MULTIPLIERS,
     defenderMultipliers: NEUTRAL_MULTIPLIERS,
-    attackerTargetPriority: 'light',
-    defenderTargetPriority: 'light',
     combatConfig: buildCombatConfig(gameConfig.universe),
     shipConfigs,
     shipCosts,

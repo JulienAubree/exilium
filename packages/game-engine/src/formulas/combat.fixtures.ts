@@ -20,13 +20,52 @@ export const COMBAT_CONFIG: CombatConfig = {
 };
 
 export const SHIP_CONFIGS: Record<string, ShipCombatConfig> = {
-  interceptor:          { shipType: 'interceptor',          categoryId: 'light',   baseShield: 8,  baseArmor: 1, baseHull: 12,  baseWeaponDamage: 4,  baseShotCount: 3 },
-  frigate:              { shipType: 'frigate',              categoryId: 'medium',  baseShield: 16, baseArmor: 2, baseHull: 30,  baseWeaponDamage: 12, baseShotCount: 2 },
-  cruiser:              { shipType: 'cruiser',              categoryId: 'heavy',   baseShield: 28, baseArmor: 4, baseHull: 55,  baseWeaponDamage: 45, baseShotCount: 1 },
-  battlecruiser:        { shipType: 'battlecruiser',        categoryId: 'heavy',   baseShield: 40, baseArmor: 6, baseHull: 100, baseWeaponDamage: 70, baseShotCount: 1 },
-  smallCargo:           { shipType: 'smallCargo',           categoryId: 'support', baseShield: 2,  baseArmor: 0, baseHull: 8,   baseWeaponDamage: 1,  baseShotCount: 1 },
-  rocketLauncher:       { shipType: 'rocketLauncher',       categoryId: 'defense', baseShield: 4,  baseArmor: 0, baseHull: 10,  baseWeaponDamage: 20, baseShotCount: 1 },
-  electromagneticCannon:{ shipType: 'electromagneticCannon',categoryId: 'defense', baseShield: 10, baseArmor: 2, baseHull: 25,  baseWeaponDamage: 40, baseShotCount: 1 },
+  interceptor: {
+    shipType: 'interceptor', categoryId: 'light',
+    baseShield: 8, baseArmor: 1, baseHull: 12, baseWeaponDamage: 4, baseShotCount: 3,
+    weapons: [
+      { damage: 4, shots: 3, targetCategory: 'light', hasChainKill: true },
+    ],
+  },
+  frigate: {
+    shipType: 'frigate', categoryId: 'medium',
+    baseShield: 16, baseArmor: 2, baseHull: 30, baseWeaponDamage: 12, baseShotCount: 2,
+    weapons: [
+      { damage: 12, shots: 1, targetCategory: 'medium' },
+      { damage: 6,  shots: 2, targetCategory: 'light' },
+    ],
+  },
+  cruiser: {
+    shipType: 'cruiser', categoryId: 'heavy',
+    baseShield: 28, baseArmor: 4, baseHull: 55, baseWeaponDamage: 45, baseShotCount: 1,
+    weapons: [
+      { damage: 35, shots: 1, targetCategory: 'heavy' },
+      { damage: 5,  shots: 2, targetCategory: 'light', rafale: { category: 'light', count: 6 } },
+    ],
+  },
+  battlecruiser: {
+    shipType: 'battlecruiser', categoryId: 'heavy',
+    baseShield: 40, baseArmor: 6, baseHull: 100, baseWeaponDamage: 70, baseShotCount: 1,
+    weapons: [
+      { damage: 50, shots: 1, targetCategory: 'heavy' },
+      { damage: 10, shots: 2, targetCategory: 'medium', rafale: { category: 'medium', count: 4 } },
+    ],
+  },
+  smallCargo: {
+    shipType: 'smallCargo', categoryId: 'support',
+    baseShield: 2, baseArmor: 0, baseHull: 8, baseWeaponDamage: 1, baseShotCount: 1,
+    // Cargo: no explicit profile → legacy single-battery auto-synthesis.
+  },
+  rocketLauncher: {
+    shipType: 'rocketLauncher', categoryId: 'defense',
+    baseShield: 4, baseArmor: 0, baseHull: 10, baseWeaponDamage: 20, baseShotCount: 1,
+    // Test fixture: intentionally boosted damage to verify legacy/auto-synthesis path.
+  },
+  electromagneticCannon: {
+    shipType: 'electromagneticCannon', categoryId: 'defense',
+    baseShield: 10, baseArmor: 2, baseHull: 25, baseWeaponDamage: 40, baseShotCount: 1,
+    // Test fixture: legacy single-battery path.
+  },
 };
 
 export const SHIP_IDS = new Set(['interceptor', 'frigate', 'cruiser', 'battlecruiser', 'smallCargo']);
@@ -49,8 +88,6 @@ export function makeInput(overrides: Partial<CombatInput> = {}): CombatInput {
     defenderDefenses: {},
     attackerMultipliers: NO_BONUS,
     defenderMultipliers: NO_BONUS,
-    attackerTargetPriority: 'light',
-    defenderTargetPriority: 'light',
     combatConfig: COMBAT_CONFIG,
     shipConfigs: SHIP_CONFIGS,
     shipCosts: SHIP_COSTS,

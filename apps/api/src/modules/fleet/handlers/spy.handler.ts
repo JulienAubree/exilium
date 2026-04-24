@@ -379,8 +379,6 @@ export class SpyHandler implements MissionHandler {
         defenderDefenses,
         attackerMultipliers,
         defenderMultipliers,
-        attackerTargetPriority: 'light',
-        defenderTargetPriority: 'light',
         combatConfig,
         shipConfigs: shipCombatConfigs,
         shipCosts: shipCostsMap,

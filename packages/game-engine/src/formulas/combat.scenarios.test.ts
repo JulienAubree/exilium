@@ -139,7 +139,6 @@ describe('combat scenarios (snapshot)', () => {
     const r = simulateCombat(makeInput({
       attackerFleet: { cruiser: 2 },
       defenderFleet: { interceptor: 8, smallCargo: 10 },
-      attackerTargetPriority: 'light',
       rngSeed: 1012,
     }));
     expect(summarize(r)).toMatchSnapshot();

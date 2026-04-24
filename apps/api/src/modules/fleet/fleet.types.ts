@@ -34,7 +34,6 @@ export interface SendFleetInput {
   hydrogeneCargo?: number;
   pveMissionId?: string;
   tradeId?: string;
-  targetPriority?: string;  // combat category ID for target priority
 }
 
 export interface ResourceCargo {
@@ -65,7 +64,6 @@ export type FleetEvent = {
   metadata: unknown;
   pveMissionId: string | null;
   tradeId: string | null;
-  targetPriority: string | null;
 };
 
 // ── Handler context ──

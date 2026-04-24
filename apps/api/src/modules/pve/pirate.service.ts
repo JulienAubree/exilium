@@ -137,8 +137,6 @@ export function createPirateService(db: Database, gameConfigService: GameConfigS
         defenderDefenses: {},
         attackerMultipliers: playerMultipliers,
         defenderMultipliers: pirateMultipliers,
-        attackerTargetPriority: 'light',
-        defenderTargetPriority: 'light',
         combatConfig,
         shipConfigs: shipCombatConfigs,
         shipCosts,

@@ -7,6 +7,22 @@ export interface ShipCategory {
   targetOrder: number;
 }
 
+/**
+ * A weapon battery on a combat unit. Each battery has its own damage/shots
+ * and a preferred target category. Optional traits:
+ * - `rafale`: bonus shots when the current target matches a given category
+ *            (deterministic, on top of the base `shots`).
+ * - `hasChainKill`: when a shot destroys its target, fires 1 bonus shot on
+ *                  another unit of the same category as the one just killed.
+ */
+export interface WeaponProfile {
+  damage: number;
+  shots: number;
+  targetCategory: string;
+  rafale?: { category: string; count: number };
+  hasChainKill?: boolean;
+}
+
 export interface ShipCombatConfig {
   shipType: string;
   categoryId: string;
@@ -15,6 +31,9 @@ export interface ShipCombatConfig {
   baseHull: number;
   baseWeaponDamage: number;
   baseShotCount: number;
+  /** Multi-battery profile. If absent, a single battery is synthesized from
+   *  baseWeaponDamage/baseShotCount + the side's fallback target priority. */
+  weapons?: WeaponProfile[];
 }
 
 export interface CombatConfig {
@@ -39,8 +58,6 @@ export interface CombatInput {
   defenderDefenses: Record<string, number>;
   attackerMultipliers: CombatMultipliers;
   defenderMultipliers: CombatMultipliers;
-  attackerTargetPriority: string;
-  defenderTargetPriority: string;
   combatConfig: CombatConfig;
   shipConfigs: Record<string, ShipCombatConfig>;
   shipCosts: Record<string, { minerai: number; silicium: number }>;
@@ -60,8 +77,7 @@ interface CombatUnit {
   armor: number;
   hull: number;
   maxHull: number;
-  weaponDamage: number;
-  shotCount: number;
+  weapons: WeaponProfile[];
   destroyed: boolean;
 }
 
@@ -145,6 +161,11 @@ export interface DetailedCombatLog {
 
 // ── Private helpers ──
 
+/** Default target category for unit types that don't yet have an explicit
+ *  weapon profile (single-battery legacy units). Once every unit declares its
+ *  own `weapons: WeaponProfile[]`, this constant becomes unused. */
+const DEFAULT_FALLBACK_CATEGORY = 'light';
+
 function createUnits(
   fleet: Record<string, number>,
   multipliers: CombatMultipliers,
@@ -156,10 +177,19 @@ function createUnits(
   for (const [type, count] of Object.entries(fleet)) {
     const config = shipConfigs[type];
     if (!config || count <= 0) continue;
+    // Build the weapon profile list. If the config has explicit batteries, use them
+    // (applying the weapons research multiplier to each battery's damage). Otherwise
+    // synthesize a single battery from the legacy baseWeaponDamage/baseShotCount fields.
+    const profiles: WeaponProfile[] = config.weapons && config.weapons.length > 0
+      ? config.weapons.map(w => ({ ...w, damage: w.damage * multipliers.weapons }))
+      : [{
+          damage: config.baseWeaponDamage * multipliers.weapons,
+          shots: config.baseShotCount,
+          targetCategory: DEFAULT_FALLBACK_CATEGORY,
+        }];
     for (let i = 0; i < count; i++) {
       const maxShield = config.baseShield * multipliers.shielding;
       const maxHull = config.baseHull * multipliers.armor;
-      const weaponDamage = config.baseWeaponDamage * multipliers.weapons;
       units.push({
         id: `${type}-${counter++}`,
         shipType: type,
@@ -169,8 +199,7 @@ function createUnits(
         armor: config.baseArmor * multipliers.armor,
         hull: maxHull,
         maxHull,
-        weaponDamage,
-        shotCount: config.baseShotCount,
+        weapons: profiles,
         destroyed: false,
       });
     }
@@ -234,15 +263,14 @@ function emptySideStats(): CombatSideStats {
 function fireShot(
   attacker: CombatUnit,
   target: CombatUnit,
+  damage: number,
   minDamage: number,
   attackerStats: CombatSideStats,
   defenderStats: CombatSideStats,
   targetDamageByType: Record<string, UnitTypeDamageReceived>,
   round?: number,
   eventAccumulator?: CombatEvent[],
-): void {
-  const damage = attacker.weaponDamage;
-
+): boolean {
   // Track per-type damage
   const entry = targetDamageByType[target.shipType] ??= { shieldDamage: 0, hullDamage: 0, destroyed: 0 };
 
@@ -265,7 +293,7 @@ function fireShot(
         targetDestroyed: false,
       });
     }
-    return;
+    return false;
   }
 
   let surplus = damage;
@@ -292,11 +320,13 @@ function fireShot(
   defenderStats.damageReceivedByCategory[attacker.category] =
     (defenderStats.damageReceivedByCategory[attacker.category] ?? 0) + hullDamage;
 
+  let destroyed = false;
   if (target.hull <= 0) {
     if (target.hull < 0) attackerStats.overkillWasted += Math.abs(target.hull);
     target.hull = 0;
     target.destroyed = true;
     entry.destroyed += 1;
+    destroyed = true;
   }
 
   if (eventAccumulator && round !== undefined) {
@@ -310,15 +340,15 @@ function fireShot(
       shieldAbsorbed: shotShieldAbsorbed,
       armorBlocked: shotArmorBlocked,
       hullDamage,
-      targetDestroyed: target.hull <= 0,
+      targetDestroyed: destroyed,
     });
   }
+  return destroyed;
 }
 
 function fireSalvo(
   attacker: CombatUnit,
   enemies: CombatUnit[],
-  priorityCategoryId: string,
   categories: ShipCategory[],
   minDamage: number,
   attackerStats: CombatSideStats,
@@ -328,10 +358,38 @@ function fireSalvo(
   round?: number,
   eventAccumulator?: CombatEvent[],
 ): void {
-  for (let shot = 0; shot < attacker.shotCount; shot++) {
-    const target = selectTarget(enemies, priorityCategoryId, categories, rng);
-    if (!target) return;
-    fireShot(attacker, target, minDamage, attackerStats, defenderStats, targetDamageByType, round, eventAccumulator);
+  for (const weapon of attacker.weapons) {
+    // Pick the first target to know whether rafale should trigger.
+    const firstTarget = selectTarget(enemies, weapon.targetCategory, categories, rng);
+    if (!firstTarget) continue;
+
+    const rafaleTriggered = weapon.rafale !== undefined && firstTarget.category === weapon.rafale.category;
+    const totalShots = weapon.shots + (rafaleTriggered ? weapon.rafale!.count : 0);
+
+    for (let shot = 0; shot < totalShots; shot++) {
+      const target = shot === 0
+        ? firstTarget
+        : selectTarget(enemies, weapon.targetCategory, categories, rng);
+      if (!target) break;
+
+      const destroyed = fireShot(
+        attacker, target, weapon.damage, minDamage,
+        attackerStats, defenderStats, targetDamageByType, round, eventAccumulator,
+      );
+
+      // Enchaînement: on kill, fire one bonus shot on another unit of the same
+      // category as the one just destroyed. Not chainable (max 1 per base shot).
+      if (destroyed && weapon.hasChainKill) {
+        const sameCategoryTargets = enemies.filter(u => !u.destroyed && u.category === target.category);
+        if (sameCategoryTargets.length > 0) {
+          const bonus = sameCategoryTargets[Math.floor(rng() * sameCategoryTargets.length)];
+          fireShot(
+            attacker, bonus, weapon.damage, minDamage,
+            attackerStats, defenderStats, targetDamageByType, round, eventAccumulator,
+          );
+        }
+      }
+    }
   }
 }
 
@@ -398,7 +456,6 @@ export function simulateCombat(input: CombatInput): CombatResult {
   const {
     attackerFleet, defenderFleet, defenderDefenses,
     attackerMultipliers, defenderMultipliers,
-    attackerTargetPriority, defenderTargetPriority,
     combatConfig, shipConfigs, shipCosts, shipIds, defenseIds,
     rngSeed, planetaryShieldCapacity,
   } = input;
@@ -425,8 +482,7 @@ export function simulateCombat(input: CombatInput): CombatResult {
       armor: 0,
       hull: 1,
       maxHull: 1,
-      weaponDamage: 0,
-      shotCount: 0,
+      weapons: [],
       destroyed: false,
     });
   }
@@ -473,7 +529,7 @@ export function simulateCombat(input: CombatInput): CombatResult {
 
     // Attackers fire at defender clones
     for (const attacker of aliveAttackers) {
-      fireSalvo(attacker, defendersForAttackerFire, attackerTargetPriority,
+      fireSalvo(attacker, defendersForAttackerFire,
         sortedCategories, combatConfig.minDamagePerHit, roundAttackerStats, roundDefenderStats, rng, defenderDamageByType, round, eventAccumulator);
     }
 
@@ -487,7 +543,7 @@ export function simulateCombat(input: CombatInput): CombatResult {
 
     // Defenders fire at attacker clones
     for (const defender of aliveDefenders) {
-      fireSalvo(defender, attackersForDefenderFire, defenderTargetPriority,
+      fireSalvo(defender, attackersForDefenderFire,
         sortedCategories, combatConfig.minDamagePerHit, roundDefenderStats, roundAttackerStats, rng, attackerDamageByType, round, eventAccumulator);
     }
 

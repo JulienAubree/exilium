@@ -134,8 +134,6 @@ export class ColonizationRaidHandler implements MissionHandler {
       defenderDefenses: {},
       attackerMultipliers: { weapons: 1, shielding: 1, armor: 1 },
       defenderMultipliers: { weapons: 1, shielding: 1, armor: 1 },
-      attackerTargetPriority: 'light',
-      defenderTargetPriority: 'light',
       combatConfig,
       shipConfigs: shipCombatConfigs,
       shipCosts: shipCostsMap,
