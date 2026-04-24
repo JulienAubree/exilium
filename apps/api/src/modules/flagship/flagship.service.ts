@@ -50,12 +50,9 @@ export function createFlagshipService(
 
       if (!flagship) return null;
 
-      console.log(`[flagship] get: id=${flagship.id}, status=${flagship.status}, planetId=${flagship.planetId}, repairEndsAt=${flagship.repairEndsAt?.toISOString() ?? 'null'}`);
-
       // Verification lazy de la reparation
       if (flagship.status === 'incapacitated' && flagship.repairEndsAt) {
         const now = new Date();
-        console.log(`[flagship] lazy-repair check: status=${flagship.status}, repairEndsAt=${flagship.repairEndsAt.toISOString()}, now=${now.toISOString()}, expired=${now >= flagship.repairEndsAt}`);
         if (now >= flagship.repairEndsAt) {
           // Ensure flagship returns to home planet after repair
           const [homePlanet] = await db
@@ -65,7 +62,6 @@ export function createFlagshipService(
             .orderBy(asc(planets.createdAt))
             .limit(1);
           const repairedPlanetId = homePlanet?.id ?? flagship.planetId;
-          console.log(`[flagship] lazy-repair: repairing flagship ${flagship.id}, planetId=${repairedPlanetId}`);
           await db
             .update(flagships)
             .set({ status: 'active', repairEndsAt: null, planetId: repairedPlanetId, updatedAt: new Date() })
