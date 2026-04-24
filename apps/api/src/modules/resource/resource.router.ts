@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { protectedProcedure, router } from '../../trpc/router.js';
-import { planets, planetTypes, planetShips, userResearch, planetBiomes, biomeDefinitions } from '@exilium/db';
+import { planets, planetShips, userResearch, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createResourceService } from './resource.service.js';
 import type { createPlanetService } from '../planet/planet.service.js';
@@ -24,20 +24,17 @@ export function createResourceRouter(
       .query(async ({ ctx, input }) => {
         const planet = await planetService.getPlanet(ctx.userId!, input.planetId);
 
+        const config = await gameConfigService.getFullConfig();
+
         let bonus: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number } | undefined;
         let planetTypeName: string | undefined;
         if (planet.planetClassId) {
-          const [pt] = await db.select({
-            mineraiBonus: planetTypes.mineraiBonus,
-            siliciumBonus: planetTypes.siliciumBonus,
-            hydrogeneBonus: planetTypes.hydrogeneBonus,
-            name: planetTypes.name,
-          }).from(planetTypes).where(eq(planetTypes.id, planet.planetClassId)).limit(1);
-          bonus = pt ?? undefined;
-          planetTypeName = pt?.name;
+          const pt = config.planetTypes.find((t) => t.id === planet.planetClassId);
+          if (pt) {
+            bonus = { mineraiBonus: pt.mineraiBonus, siliciumBonus: pt.siliciumBonus, hydrogeneBonus: pt.hydrogeneBonus };
+            planetTypeName = pt.name;
+          }
         }
-
-        const config = await gameConfigService.getFullConfig();
         const mineraiMineId = findBuildingByRole(config, 'producer_minerai').id;
         const siliciumMineId = findBuildingByRole(config, 'producer_silicium').id;
         const hydrogeneSynthId = findBuildingByRole(config, 'producer_hydrogene').id;
@@ -48,18 +45,16 @@ export function createResourceRouter(
           .from(planetShips).where(eq(planetShips.planetId, input.planetId)).limit(1);
         const rates = await resourceService.getProductionRates(input.planetId, planet, bonus, ctx.userId!);
 
-        // Load biomes for this planet
-        const biomes = await db
-          .select({
-            id: biomeDefinitions.id,
-            name: biomeDefinitions.name,
-            description: biomeDefinitions.description,
-            rarity: biomeDefinitions.rarity,
-            effects: biomeDefinitions.effects,
-          })
+        // Load biomes for this planet — enrich with cached config instead of joining biome_definitions.
+        const planetBiomeRows = await db
+          .select({ biomeId: planetBiomes.biomeId })
           .from(planetBiomes)
-          .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
           .where(and(eq(planetBiomes.planetId, input.planetId), eq(planetBiomes.active, true)));
+        const biomesById = new Map(config.biomes.map((b) => [b.id, b]));
+        const biomes = planetBiomeRows
+          .map((r) => biomesById.get(r.biomeId))
+          .filter((b): b is NonNullable<typeof b> => b != null)
+          .map((b) => ({ id: b.id, name: b.name, description: b.description, rarity: b.rarity, effects: b.effects }));
 
         // Protected resources calculation
         const storageMineraiId = findBuildingByRole(config, 'storage_minerai').id;

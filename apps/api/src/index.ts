@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import Redis from 'ioredis';
+import { sql } from 'drizzle-orm';
 import { createDb } from '@exilium/db';
 import { buildAppRouter } from './trpc/app-router.js';
 import { createContext } from './trpc/context.js';
@@ -59,13 +60,36 @@ await server.register(multipart, {
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-server.get('/health', async () => {
-  return { status: 'ok', timestamp: new Date().toISOString() };
-});
-
 const db = createDb(env.DATABASE_URL);
 const redis = new Redis(env.REDIS_URL);
 const { router: appRouter, authService } = buildAppRouter(db, redis);
+
+// Liveness + dependency probe. Returns 503 when any dependency is unreachable
+// so external uptime monitors can alert without parsing the body.
+server.get('/health', async (_req, reply) => {
+  const checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }> = {};
+
+  const dbStart = Date.now();
+  try {
+    await db.execute(sql`select 1`);
+    checks.db = { ok: true, latencyMs: Date.now() - dbStart };
+  } catch (err) {
+    checks.db = { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  const redisStart = Date.now();
+  try {
+    const pong = await redis.ping();
+    checks.redis = { ok: pong === 'PONG', latencyMs: Date.now() - redisStart };
+  } catch (err) {
+    checks.redis = { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  const allOk = Object.values(checks).every((c) => c.ok);
+  return reply
+    .status(allOk ? 200 : 503)
+    .send({ status: allOk ? 'ok' : 'degraded', timestamp: new Date().toISOString(), checks });
+});
 
 await server.register(fastifyTRPCPlugin, {
   prefix: '/trpc',

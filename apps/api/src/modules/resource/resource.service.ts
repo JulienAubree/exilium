@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetTypes, planetBuildings, planetShips, userResearch, planetBiomes, biomeDefinitions } from '@exilium/db';
+import { planets, planetBuildings, planetShips, userResearch, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
@@ -14,17 +14,18 @@ import {
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
-import type { GameConfigService } from '../admin/game-config.service.js';
+import type { GameConfig, GameConfigService } from '../admin/game-config.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
-async function loadPlanetTypeBonus(db: Database, planetClassId: string | null): Promise<PlanetTypeBonus | undefined> {
+function lookupPlanetTypeBonus(config: GameConfig, planetClassId: string | null): PlanetTypeBonus | undefined {
   if (!planetClassId) return undefined;
-  const [pt] = await db.select({
-    mineraiBonus: planetTypes.mineraiBonus,
-    siliciumBonus: planetTypes.siliciumBonus,
-    hydrogeneBonus: planetTypes.hydrogeneBonus,
-  }).from(planetTypes).where(eq(planetTypes.id, planetClassId)).limit(1);
-  return pt ?? undefined;
+  const pt = config.planetTypes.find((t) => t.id === planetClassId);
+  if (!pt) return undefined;
+  return {
+    mineraiBonus: pt.mineraiBonus,
+    siliciumBonus: pt.siliciumBonus,
+    hydrogeneBonus: pt.hydrogeneBonus,
+  };
 }
 
 async function getBuildingLevels(db: Database, planetId: string): Promise<Record<string, number>> {
@@ -48,14 +49,14 @@ async function getSolarSatelliteCount(db: Database, planetId: string): Promise<n
   return row?.solarSatellite ?? 0;
 }
 
-async function loadBiomeBonuses(db: Database, planetId: string): Promise<Record<string, number>> {
+async function loadBiomeBonuses(db: Database, planetId: string, config: GameConfig): Promise<Record<string, number>> {
   const rows = await db
-    .select({ effects: biomeDefinitions.effects })
+    .select({ biomeId: planetBiomes.biomeId })
     .from(planetBiomes)
-    .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
     .where(and(eq(planetBiomes.planetId, planetId), eq(planetBiomes.active, true)));
 
-  const allEffects: BiomeEffect[] = rows.flatMap(r => r.effects as BiomeEffect[]);
+  const effectsByBiome = new Map(config.biomes.map((b) => [b.id, b.effects as unknown as BiomeEffect[]]));
+  const allEffects: BiomeEffect[] = rows.flatMap((r) => effectsByBiome.get(r.biomeId) ?? []);
   return aggregateBiomeBonuses(allEffects);
 }
 
@@ -144,13 +145,13 @@ export function createResourceService(
         return planet; // No resource production on colonizing planets
       }
 
-      const bonus = await loadPlanetTypeBonus(db, planet.planetClassId);
+      const config = await gameConfigService.getFullConfig();
+      const bonus = lookupPlanetTypeBonus(config, planet.planetClassId);
       const roleMap = await getRoleMap();
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
-      const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
-      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      const biomeBonuses = await loadBiomeBonuses(db, planetId, config);
       for (const [key, value] of Object.entries(biomeBonuses)) {
         talentCtx[key] = (talentCtx[key] ?? 0) + value;
       }
@@ -233,13 +234,13 @@ export function createResourceService(
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
 
-      const bonus = await loadPlanetTypeBonus(db, planet.planetClassId);
+      const config = await gameConfigService.getFullConfig();
+      const bonus = lookupPlanetTypeBonus(config, planet.planetClassId);
       const roleMap = await getRoleMap();
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
-      const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
-      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      const biomeBonuses = await loadBiomeBonuses(db, planetId, config);
       for (const [key, value] of Object.entries(biomeBonuses)) {
         talentCtx[key] = (talentCtx[key] ?? 0) + value;
       }
@@ -364,7 +365,7 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
       const talentCtx: Record<string, number> = talentService && userId ? await talentService.computeTalentContext(userId, planetId) : {};
-      const biomeBonuses = await loadBiomeBonuses(db, planetId);
+      const biomeBonuses = await loadBiomeBonuses(db, planetId, config);
       for (const [key, value] of Object.entries(biomeBonuses)) {
         talentCtx[key] = (talentCtx[key] ?? 0) + value;
       }

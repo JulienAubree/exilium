@@ -1,6 +1,6 @@
 import { eq, asc, desc, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetShips, planetDefenses, planetTypes, buildQueue, fleetEvents, flagships, planetBiomes, biomeDefinitions } from '@exilium/db';
+import { planets, planetBuildings, planetShips, planetDefenses, buildQueue, fleetEvents, flagships, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -104,23 +104,21 @@ export function createPlanetService(
       if (planetList.length === 0) return [];
 
       const planetIds = planetList.map((p) => p.id);
-      const biomeRows = await db
-        .select({
-          planetId: planetBiomes.planetId,
-          id: biomeDefinitions.id,
-          name: biomeDefinitions.name,
-          description: biomeDefinitions.description,
-          rarity: biomeDefinitions.rarity,
-          effects: biomeDefinitions.effects,
-        })
+      const planetBiomeRows = await db
+        .select({ planetId: planetBiomes.planetId, biomeId: planetBiomes.biomeId })
         .from(planetBiomes)
-        .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
         .where(and(inArray(planetBiomes.planetId, planetIds), eq(planetBiomes.active, true)));
 
-      const biomesByPlanet = new Map<string, typeof biomeRows>();
-      for (const row of biomeRows) {
+      const config = await gameConfigService.getFullConfig();
+      const biomeDefsById = new Map(config.biomes.map((b) => [b.id, b]));
+      type BiomeRow = { planetId: string; id: string; name: string; description: string; rarity: string; effects: unknown };
+      const biomesByPlanet = new Map<string, BiomeRow[]>();
+      for (const row of planetBiomeRows) {
+        const def = biomeDefsById.get(row.biomeId);
+        if (!def) continue;
+        const entry: BiomeRow = { planetId: row.planetId, id: def.id, name: def.name, description: def.description, rarity: def.rarity, effects: def.effects };
         const list = biomesByPlanet.get(row.planetId) ?? [];
-        list.push(row);
+        list.push(entry);
         biomesByPlanet.set(row.planetId, list);
       }
 
@@ -215,20 +213,15 @@ export function createPlanetService(
 
       // Batch all per-planet lookups in parallel — one query per table instead
       // of N×5. Empty activePlanetIds short-circuits to skip querying entirely.
-      const [biomeRows, buildRows, outboundRows, inboundFriendlyRows, inboundAttackRows, planetTypeRows] =
+      // biomeRows and planetTypeRows are enriched from the cached game config
+      // (config.biomes / config.planetTypes) instead of re-querying those tables.
+      const [planetBiomeRows, buildRows, outboundRows, inboundFriendlyRows, inboundAttackRows] =
         activePlanetIds.length === 0
-          ? [[], [], [], [], [], []]
+          ? [[], [], [], [], []]
           : await Promise.all([
               db
-                .select({
-                  planetId: planetBiomes.planetId,
-                  id: biomeDefinitions.id,
-                  name: biomeDefinitions.name,
-                  rarity: biomeDefinitions.rarity,
-                  effects: biomeDefinitions.effects,
-                })
+                .select({ planetId: planetBiomes.planetId, biomeId: planetBiomes.biomeId })
                 .from(planetBiomes)
-                .innerJoin(biomeDefinitions, eq(biomeDefinitions.id, planetBiomes.biomeId))
                 .where(and(inArray(planetBiomes.planetId, activePlanetIds), eq(planetBiomes.active, true))),
               db
                 .select({
@@ -281,23 +274,17 @@ export function createPlanetService(
                   sql`${fleetEvents.userId} != ${userId}`,
                 ))
                 .groupBy(fleetEvents.targetPlanetId),
-              activePlanetClassIds.length === 0
-                ? Promise.resolve([])
-                : db
-                    .select({
-                      id: planetTypes.id,
-                      mineraiBonus: planetTypes.mineraiBonus,
-                      siliciumBonus: planetTypes.siliciumBonus,
-                      hydrogeneBonus: planetTypes.hydrogeneBonus,
-                    })
-                    .from(planetTypes)
-                    .where(inArray(planetTypes.id, activePlanetClassIds)),
             ]);
+
+      const cfg = await gameConfigService.getFullConfig();
+      const biomeDefsById = new Map(cfg.biomes.map((b) => [b.id, b]));
 
       type BiomeEntry = { id: string; name: string; rarity: string; effects: unknown };
       const biomesByPlanet = new Map<string, BiomeEntry[]>();
-      for (const row of biomeRows) {
-        const entry = { id: row.id, name: row.name, rarity: row.rarity, effects: row.effects };
+      for (const row of planetBiomeRows) {
+        const def = biomeDefsById.get(row.biomeId);
+        if (!def) continue;
+        const entry: BiomeEntry = { id: def.id, name: def.name, rarity: def.rarity, effects: def.effects };
         const list = biomesByPlanet.get(row.planetId);
         if (list) list.push(entry);
         else biomesByPlanet.set(row.planetId, [entry]);
@@ -314,7 +301,11 @@ export function createPlanetService(
       const outboundByPlanet = new Map(outboundRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
       const inboundFriendlyByPlanet = new Map(inboundFriendlyRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
       const inboundAttackByPlanet = new Map(inboundAttackRows.filter((r) => r.planetId).map((r) => [r.planetId!, r]));
-      const planetTypeById = new Map(planetTypeRows.map((r) => [r.id, r]));
+      const planetTypeById = new Map(
+        cfg.planetTypes
+          .filter((t) => activePlanetClassIds.includes(t.id))
+          .map((t) => [t.id, { id: t.id, mineraiBonus: t.mineraiBonus, siliciumBonus: t.siliciumBonus, hydrogeneBonus: t.hydrogeneBonus }]),
+      );
 
       const planetData = await Promise.all(
         planetList.map(async (planet) => {
