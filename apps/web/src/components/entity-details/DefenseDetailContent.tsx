@@ -47,6 +47,8 @@ export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels
       shieldMult,
       hull: Math.floor(details.combat.hull * armorMult),
       hullMult: armorMult,
+      armor: Math.floor(details.combat.baseArmor * armorMult),
+      armorMult,
     };
   }, [researchLevels, details, gameConfig?.bonuses]);
 
@@ -99,10 +101,12 @@ export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels
           multiplier={effective.shieldMult}
           variant="shield"
         />
-        <StatCell
+        <EffectiveStatCell
           icon={<ArmorIcon />}
           label="Blindage"
-          value={details.combat.baseArmor}
+          base={details.combat.baseArmor}
+          effective={effective.armor}
+          multiplier={effective.armorMult}
           variant="armor"
         />
         <EffectiveStatCell

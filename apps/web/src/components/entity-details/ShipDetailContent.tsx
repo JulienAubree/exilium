@@ -57,6 +57,8 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
       shieldMult,
       hull: Math.floor(details.combat.hull * armorMult),
       hullMult: armorMult,
+      armor: Math.floor(details.combat.baseArmor * armorMult),
+      armorMult,
       speed: Math.floor(details.stats.baseSpeed * speedMult),
       speedMult,
       mining: Math.floor(details.stats.miningExtraction * miningMult),
@@ -119,10 +121,12 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
           multiplier={effective.shieldMult}
           variant="shield"
         />
-        <StatCell
+        <EffectiveStatCell
           icon={<ArmorIcon />}
           label="Blindage"
-          value={details.combat.baseArmor}
+          base={details.combat.baseArmor}
+          effective={effective.armor}
+          multiplier={effective.armorMult}
           variant="armor"
         />
         <EffectiveStatCell
