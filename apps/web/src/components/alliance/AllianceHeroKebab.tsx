@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { MoreIcon } from '@/lib/icons';
+import { useOutsideClick } from '@/hooks/useOutsideClick';
 
 interface AllianceHeroKebabProps {
   onLeave: () => void;
@@ -8,15 +9,7 @@ interface AllianceHeroKebabProps {
 export function AllianceHeroKebab({ onLeave }: AllianceHeroKebabProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    window.addEventListener('mousedown', onClickOutside);
-    return () => window.removeEventListener('mousedown', onClickOutside);
-  }, [open]);
+  useOutsideClick(ref, open, () => setOpen(false));
 
   return (
     <div ref={ref} className="relative">
