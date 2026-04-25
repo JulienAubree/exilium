@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router';
+import { Send, Package, Play, ArrowRight, Diamond, Check } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -136,20 +137,7 @@ export default function FleetDashboard() {
             to="/fleet/send"
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path d="M22 2L11 13" />
-              <path d="M22 2L15 22 11 13 2 9l20-7z" />
-            </svg>
+            <Send className="h-4 w-4" aria-hidden="true" />
             Envoyer une flotte
           </Link>
         }
@@ -162,19 +150,7 @@ export default function FleetDashboard() {
       <div className="flex flex-wrap gap-3">
         {/* Fleet slots badge */}
         <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3.5 w-3.5 text-muted-foreground"
-            aria-hidden="true"
-          >
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          </svg>
+          <Package className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
           <span className="text-muted-foreground">Slots flotte</span>
           <span className="font-semibold tabular-nums">
             {fleetSlots?.current ?? 0}
@@ -187,34 +163,9 @@ export default function FleetDashboard() {
           to="/missions"
           className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3.5 w-3.5 text-amber-400"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="10 8 16 12 10 16 10 8" />
-          </svg>
+          <Play className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
           <span className="text-muted-foreground">Missions PvE</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3 w-3 text-muted-foreground/50"
-            aria-hidden="true"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          <ArrowRight className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
         </Link>
       </div>
 
@@ -288,19 +239,14 @@ export default function FleetDashboard() {
                           loading="lazy"
                         />
                       ) : (
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-amber-400/60">
-                          <path d="M12 2L3 9l9 13 9-13-9-7z" fill="currentColor" opacity={0.3} />
-                          <path d="M12 2L3 9l9 13 9-13-9-7z" stroke="currentColor" strokeWidth={1.5} fill="none" />
-                        </svg>
+                        <Diamond className="h-12 w-12 text-amber-400/60" strokeWidth={1.5} />
                       )}
                       <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
                         x1
                       </span>
                       {selectedIds.has('flagship') && (
                         <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                          <svg className="h-3 w-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
                         </div>
                       )}
                     </div>
