@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { AlertTriangle, Wrench, Search, Zap, Navigation } from 'lucide-react';
+import { OverviewIcon } from '@/lib/icons';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/common/Skeleton';
@@ -110,11 +112,7 @@ function IncapacitatedBanner({
               </div>
             )}
             <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-red-500/30">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <AlertTriangle className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
             </div>
           </div>
 
@@ -204,9 +202,7 @@ function HullRefitBanner({
       <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 lg:p-5">
         <div className="relative shrink-0">
           <div className="h-20 w-20 rounded-xl bg-amber-950/40 flex items-center justify-center text-2xl font-bold text-amber-500/40 border border-amber-500/30">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400/60">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-            </svg>
+            <Wrench className="h-8 w-8 text-amber-400/60" />
           </div>
         </div>
 
@@ -329,9 +325,7 @@ function ActiveAbilityCard({ ability, cooldownData, styles, isActive, scanTarget
           totalSeconds={cooldownTotal}
           size={56}
           icon={
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={styles.badgeText}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-            </svg>
+            <Search className={cn('h-7 w-7', styles.badgeText)} strokeWidth={1.5} />
           }
         />
         {onCooldown && (
@@ -439,7 +433,7 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
       {/* Passive effects — inline */}
       <div className={cn('glass-card p-4 lg:p-5 border', styles.border)}>
         <SectionHeader
-          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>}
+          icon={<OverviewIcon width={14} height={14} />}
           label="Effets passifs"
           color={styles.badgeText}
         />
@@ -460,9 +454,7 @@ function HullAbilitiesPanel({ flagship, hullConfig, hullId }: {
       {hasActiveAbilities && (
         <div>
           <div className="flex items-center gap-2 mb-3 px-1">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.badgeText}>
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
+            <Zap className={cn('h-3.5 w-3.5', styles.badgeText)} />
             <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.badgeText)}>Capacites actives</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -876,7 +868,7 @@ export default function FlagshipProfile() {
         {/* Deplacement */}
         <div>
           <SectionHeader
-            icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><polygon points="3,11 22,2 13,21 11,13" /></svg>}
+            icon={<Navigation className="h-3.5 w-3.5 text-slate-500" />}
             label="Deplacement"
             color="text-slate-500"
           />

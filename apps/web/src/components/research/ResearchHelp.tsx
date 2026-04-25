@@ -1,4 +1,5 @@
 import { FacilityHelp, FacilityHelpSection } from '@/components/common/FacilityHelp';
+import { FlaskConical, LayoutGrid, Activity, Zap, Home, XCircle } from 'lucide-react';
 
 interface ResearchHelpProps {
   level: number;
@@ -9,11 +10,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
     <FacilityHelp buildingId="researchLab" level={level}>
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400">
-            <path d="M9 3h6" />
-            <path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3" />
-            <path d="M7.5 15h9" />
-          </svg>
+          <FlaskConical className="h-3.5 w-3.5 text-violet-400" />
         }
         title="Rôle"
       >
@@ -22,12 +19,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
 
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-          </svg>
+          <LayoutGrid className="h-3.5 w-3.5 text-cyan-400" />
         }
         title="Domaines"
       >
@@ -36,9 +28,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
 
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
+          <Activity className="h-3.5 w-3.5 text-amber-400" />
         }
         title="Une recherche à la fois"
       >
@@ -47,9 +37,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
 
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
-            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
+          <Zap className="h-3.5 w-3.5 text-emerald-400" />
         }
         title="Vitesse de recherche"
       >
@@ -58,10 +46,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
 
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
+          <Home className="h-3.5 w-3.5 text-primary" />
         }
         title="Laboratoires annexes"
       >
@@ -70,11 +55,7 @@ export function ResearchHelp({ level }: ResearchHelpProps) {
 
       <FacilityHelpSection
         icon={
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
+          <XCircle className="h-3.5 w-3.5 text-destructive" />
         }
         title="Annulation"
       >
