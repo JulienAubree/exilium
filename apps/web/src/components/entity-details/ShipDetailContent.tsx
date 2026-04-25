@@ -13,6 +13,7 @@ import {
   StatCell, EffectiveStatCell, SectionHeader, CostPills,
 } from './stat-components';
 import { WeaponBatteryList } from './WeaponBatteryList';
+import { ClockIcon } from '@/components/icons/utility-icons';
 import { ROLE_LABELS, ARMOR_LABELS } from '@/config/ship-labels';
 
 const COMBAT_CATEGORY_LABELS: Record<string, string> = {
@@ -265,7 +266,7 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
         <CostPills cost={details.cost} />
         {timePerUnit != null && (
           <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400">
-            <svg className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+            <ClockIcon className="h-3.5 w-3.5 text-slate-500" />
             {formatDuration(timePerUnit)}
           </div>
         )}

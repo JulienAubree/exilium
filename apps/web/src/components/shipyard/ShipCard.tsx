@@ -3,6 +3,7 @@ import { ResourceCost } from '@/components/common/ResourceCost';
 import { QuantityStepper } from '@/components/common/QuantityStepper';
 import { GameImage } from '@/components/common/GameImage';
 import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
+import { ClockIcon } from '@/components/icons/utility-icons';
 import { formatDuration } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -84,10 +85,7 @@ export function ShipCard({
           currentHydrogene={resources.hydrogene}
         />
         <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
-          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <ClockIcon className="h-3 w-3" />
           {formatDuration(ship.timePerUnit)}
         </div>
         {!ship.prerequisitesMet ? (

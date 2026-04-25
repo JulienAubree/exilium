@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
+import { ClockIcon } from '@/components/icons/utility-icons';
 import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -396,10 +397,7 @@ export default function Research() {
                                 currentHydrogene={resources.hydrogene}
                               />
                               <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
-                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="M12 6v6l4 2" />
-                                </svg>
+                                <ClockIcon className="h-3 w-3" />
                                 {formatDuration(tech.nextLevelTime)}
                               </div>
                               {!tech.prerequisitesMet ? (

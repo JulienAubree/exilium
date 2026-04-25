@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Timer } from '@/components/common/Timer';
+import { ClockIcon } from '@/components/icons/utility-icons';
 import { cn } from '@/lib/utils';
 
 type QueueEntry = {
@@ -116,10 +117,7 @@ export function FacilityQueue({
         aria-expanded={expanded}
       >
         <div className="relative shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <ClockIcon width={18} height={18} className="text-cyan-400" />
           {parallelSlots > 0 && (
             <span className="absolute -top-1 -right-1 inline-flex h-2 w-2 rounded-full bg-cyan-400 shadow shadow-cyan-400/40 animate-pulse" />
           )}
