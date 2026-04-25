@@ -1,60 +1,60 @@
-# Refonte du systeme de combat
+# Refonte du système de combat
 
-## Une nouvelle facon de penser vos flottes
+## Une nouvelle façon de penser vos flottes
 
-Le systeme de combat est entierement repense. Fini le "le plus gros portefeuille gagne" : chaque type de vaisseau a maintenant un role precis, des forces et des faiblesses. La composition de flotte devient un vrai choix strategique.
+Le système de combat est entièrement repensé. Fini le « le plus gros portefeuille gagne » : chaque type de vaisseau a maintenant un rôle précis, des forces et des faiblesses. La composition de flotte devient un vrai choix stratégique.
 
 ---
 
 ## Armement multi-batteries
 
-Les vaisseaux militaires possedent desormais **une ou deux batteries d'armes**, chacune avec son propre profil :
+Les vaisseaux militaires possèdent désormais **une ou deux batteries d'armes**, chacune avec son propre profil :
 
-- **Canon principal** : gros degats, cible une categorie precise (Leger / Moyen / Lourd)
-- **Batterie secondaire** : degats plus faibles mais plus de tirs, vise une autre categorie
+- **Canon principal** : gros dégâts, cible une catégorie précise (Léger / Moyen / Lourd)
+- **Batterie secondaire** : dégâts plus faibles mais plus de tirs, vise une autre catégorie
 
-Chaque batterie tire en parallele dans le round. Plus besoin de choisir une priorite de cible — chaque arme a sa cible naturelle.
+Chaque batterie tire en parallèle dans le round. Plus besoin de choisir une priorité de cible — chaque arme a sa cible naturelle.
 
 ### Profils des vaisseaux militaires
 
 | Vaisseau | Canon principal | Batterie secondaire |
 |---|---|---|
-| **Intercepteur** | 4 dmg ×3 vs Leger + Enchainement | — |
-| **Fregate** | 12 dmg ×1 vs Moyen | 6 dmg ×2 vs Leger |
-| **Croiseur** | 35 dmg ×1 vs Lourd | 6 dmg ×2 vs Leger + Rafale 6 |
-| **Cuirasse** | 50 dmg ×1 vs Lourd | 10 dmg ×2 vs Moyen + Rafale 4 |
+| **Intercepteur** | 4 dmg ×3 vs Léger + Enchaînement | — |
+| **Frégate** | 12 dmg ×1 vs Moyen | 6 dmg ×2 vs Léger |
+| **Croiseur** | 35 dmg ×1 vs Lourd | 6 dmg ×2 vs Léger + Rafale 6 |
+| **Cuirassé** | 50 dmg ×1 vs Lourd | 10 dmg ×2 vs Moyen + Rafale 4 |
 
-### Profils des defenses planetaires
+### Profils des défenses planétaires
 
-| Defense | Armement |
+| Défense | Armement |
 |---|---|
-| Lanceur de missiles | 6 dmg ×2 vs Leger + Enchainement |
-| Laser leger | 7 dmg ×3 vs Leger + Enchainement |
+| Lanceur de missiles | 6 dmg ×2 vs Léger + Enchaînement |
+| Laser léger | 7 dmg ×3 vs Léger + Enchaînement |
 | Laser lourd | 15 dmg ×2 vs Moyen |
-| Canon electromagnetique | 55 dmg ×1 vs Lourd |
-| Artillerie a ions | 90 dmg ×1 vs Lourd |
+| Canon électromagnétique | 55 dmg ×1 vs Lourd |
+| Artillerie à ions | 90 dmg ×1 vs Lourd |
 
 ---
 
 ## Nouveaux traits de combat
 
-### Rafale N Categorie
+### Rafale N Catégorie
 
-Quand une batterie tire sur sa categorie de predilection, elle effectue **N coups supplementaires** (en plus de ses tirs de base).
+Quand une batterie tire sur sa catégorie de prédilection, elle effectue **N coups supplémentaires** (en plus de ses tirs de base).
 
-**Exemple** : la batterie secondaire du croiseur a `Rafale 6 Leger`. Elle tire normalement 2 coups, mais quand sa cible est un vaisseau leger, elle tire **8 coups** (2 + 6 bonus).
+**Exemple** : la batterie secondaire du croiseur a `Rafale 6 Léger`. Elle tire normalement 2 coups, mais quand sa cible est un vaisseau léger, elle tire **8 coups** (2 + 6 bonus).
 
-C'est entierement deterministe : pas de RNG, pas de chaine. Le bonus s'applique uniquement quand la cible matche la categorie.
+C'est entièrement déterministe : pas de RNG, pas de chaîne. Le bonus s'applique uniquement quand la cible matche la catégorie.
 
-### Enchainement
+### Enchaînement
 
-Quand un tir detruit sa cible, l'unite tire **un coup bonus** sur une autre unite de la meme categorie. Maximum un bonus par tir de base — pas de chaine infinie.
+Quand un tir détruit sa cible, l'unité tire **un coup bonus** sur une autre unité de la même catégorie. Maximum un bonus par tir de base — pas de chaîne infinie.
 
-C'est l'identite des unites legeres : intercepteur, lanceur de missiles, laser leger. Elles excellent a nettoyer les essaims de cibles fragiles.
+C'est l'identité des unités légères : intercepteur, lanceur de missiles, laser léger. Elles excellent à nettoyer les essaims de cibles fragiles.
 
 ### Affichage en jeu
 
-Dans la fiche de chaque vaisseau, les batteries et leurs traits sont affiches avec des badges colores. Survolez un trait avec la souris pour afficher un popover explicatif avec exemple concret.
+Dans la fiche de chaque vaisseau, les batteries et leurs traits sont affichés avec des badges colorés. Survolez un trait avec la souris pour afficher un popover explicatif avec exemple concret.
 
 ---
 
@@ -63,171 +63,171 @@ Dans la fiche de chaque vaisseau, les batteries et leurs traits sont affiches av
 La pyramide de force est claire :
 
 ```
-Intercepteurs ──domines par──> Croiseurs (Rafale 6 Leger)
-Fregates      ──dominees par──> Cuirasses (Rafale 4 Moyen)
-Cuirasses     ──submerges par──> Essaims d'intercepteurs
+Intercepteurs ──dominés par──> Croiseurs (Rafale 6 Léger)
+Frégates      ──dominées par──> Cuirassés (Rafale 4 Moyen)
+Cuirassés     ──submergés par──> Essaims d'intercepteurs
 ```
 
-Le joueur qui spam un seul type d'unite est punissable. La diversification est recompensee. Une flotte qui mixe intercepteurs + frégates + croiseurs est plus solide qu'une mono-composition de meme valeur.
+Le joueur qui spam un seul type d'unité est punissable. La diversification est récompensée. Une flotte qui mixe intercepteurs + frégates + croiseurs est plus solide qu'une mono-composition de même valeur.
 
 ---
 
-## Recherche Protection ameliore aussi le blindage
+## La recherche Protection améliore aussi le blindage
 
-La recherche **Technologie Protection** (et son extension **Blindage composite** sur Laboratoire Aride) augmentait deja la coque. Elle augmente desormais aussi le **blindage** (la reduction plate de degats).
+La recherche **Technologie Protection** (et son extension **Blindage composite** sur Laboratoire Aride) augmentait déjà la coque. Elle augmente désormais aussi le **blindage** (la réduction plate de dégâts).
 
-Concretement, vos vaisseaux deviennent plus resistants aux tirs faibles. Un cuirasse au niveau 10 de Protection a 12 d'armure au lieu de 6 — il bloque deux fois plus de degats par tir percant.
+Concrètement, vos vaisseaux deviennent plus résistants aux tirs faibles. Un cuirassé au niveau 10 de Protection a 12 d'armure au lieu de 6 — il bloque deux fois plus de dégâts par tir perçant.
 
-L'effet est visible dans la fiche de chaque vaisseau et defense : le blindage affiche son bonus actif comme la coque et le bouclier.
+L'effet est visible dans la fiche de chaque vaisseau et défense : le blindage affiche son bonus actif comme la coque et le bouclier.
 
 ---
 
-## Bouclier planetaire renforce
+## Bouclier planétaire renforcé
 
-### Capacite de base augmentee
+### Capacité de base augmentée
 
-La capacite du bouclier planetaire au niveau 1 passe de **30 a 50**. Aux niveaux superieurs, la progression suit le meme facteur de croissance, ce qui rend le bouclier utile des l'early-game.
+La capacité du bouclier planétaire au niveau 1 passe de **30 à 50**. Aux niveaux supérieurs, la progression suit le même facteur de croissance, ce qui rend le bouclier utile dès l'early-game.
 
-| Niveau | Capacite avant | Capacite apres |
+| Niveau | Capacité avant | Capacité après |
 |---|---:|---:|
 | 1 | 30 | **50** |
 | 3 | 51 | **85** |
 | 5 | 86 | **143** |
 | 10 | 319 | **530** |
 
-### Bonus de recherche applique
+### Bonus de recherche appliqué
 
-Le bouclier planetaire beneficie maintenant du **multiplicateur de recherche Blindage** comme tous les autres boucliers. Un defenseur avec recherche Blindage 5 (+50%) voit la capacite effective de son bouclier augmenter d'autant.
+Le bouclier planétaire bénéficie maintenant du **multiplicateur de recherche Blindage** comme tous les autres boucliers. Un défenseur avec recherche Blindage 5 (+50%) voit la capacité effective de son bouclier augmenter d'autant.
 
-La capacite effective est affichee directement dans le bandeau du bouclier sur la page Defense, avec l'indicateur de bonus a cote.
+La capacité effective est affichée directement dans le bandeau du bouclier sur la page Défense, avec l'indicateur de bonus à côté.
 
 ### Description revue
 
-La fiche du batiment mentionne explicitement que la recherche Blindage augmente la capacite en combat — fini les surprises sur la valeur reelle.
+La fiche du bâtiment mentionne explicitement que la recherche Blindage augmente la capacité en combat — fini les surprises sur la valeur réelle.
 
 ---
 
-## Defenses planetaires rebalancees
+## Défenses planétaires rééquilibrées
 
-Les defenses lourdes etaient sous-utilisees. Leurs stats ont ete ajustees pour les rendre comparables aux defenses legeres en termes de DPS par credit :
+Les défenses lourdes étaient sous-utilisées. Leurs stats ont été ajustées pour les rendre comparables aux défenses légères en termes de DPS par crédit :
 
-| Defense | Avant | Apres |
+| Défense | Avant | Après |
 |---|---|---|
 | Lanceur de missiles | 5 dmg ×2, 6 shield, 10 hull | **6 dmg ×2, 8 shield, 14 hull** |
-| Canon electromagnetique | 50 dmg, 30 shield, 60 hull | **55 dmg, 35 shield, 70 hull** |
-| Artillerie a ions | 80 dmg, 50 shield, 120 hull | **90 dmg, 60 shield, 140 hull** |
+| Canon électromagnétique | 50 dmg, 30 shield, 60 hull | **55 dmg, 35 shield, 70 hull** |
+| Artillerie à ions | 80 dmg, 50 shield, 120 hull | **90 dmg, 60 shield, 140 hull** |
 
-Le laser leger et le laser lourd restent inchanges en stats — ils etaient deja correctement positionnes.
+Le laser léger et le laser lourd restent inchangés en stats — ils étaient déjà correctement positionnés.
 
 ---
 
-## Equilibrage post-simulation
+## Équilibrage post-simulation
 
-Apres 200 simulations × 24 scenarios, on a constate que la defense etait sur-puissante (meta 80/20 defense/attaque). Plusieurs ajustements remetent les pendules a l'heure :
+Après 200 simulations × 24 scénarios, on a constaté que la défense était sur-puissante (méta 80/20 défense/attaque). Plusieurs ajustements remettent les pendules à l'heure :
 
 ### Config combat
 
-| Parametre | Avant | Apres |
+| Paramètre | Avant | Après |
 |---|---:|---:|
-| Taux de reparation des defenses post-combat | 70% | **50%** |
+| Taux de réparation des défenses post-combat | 70% | **50%** |
 | Nombre de rounds maximum | 4 | **6** |
-| Champ de debris | 30% | **35%** |
+| Champ de débris | 30% | **35%** |
 
-Le defenseur paie maintenant 50% de ses defenses detruites au lieu de 30% — l'anti-harcelement reste preserve mais l'invincibilite economique disparait. Les combats de flottes equivalentes se concluent au lieu de finir en match nul.
+Le défenseur paie maintenant 50% de ses défenses détruites au lieu de 30% — l'anti-harcèlement reste préservé mais l'invincibilité économique disparaît. Les combats de flottes équivalentes se concluent au lieu de finir en match nul.
 
 ### Stats vaisseaux militaires
 
-| Vaisseau | Stat | Avant | Apres |
+| Vaisseau | Stat | Avant | Après |
 |---|---|---:|---:|
 | Intercepteur | bouclier | 8 | **6** |
 | Croiseur | bouclier | 28 | **32** |
 | Croiseur | bat. sec. dmg | 5 | **6** |
-| Cuirasse | coque | 100 | **120** |
+| Cuirassé | coque | 100 | **120** |
 
-L'intercepteur perd un peu de survie pour casser l'invincibilite du spam. Le croiseur gagne en resistance et en DPS contre les legers (Rafale x6 sur 6 dmg = 48 DPS vs leger). Le cuirasse devient un vrai tank avec +20% de coque.
+L'intercepteur perd un peu de survie pour casser l'invincibilité du spam. Le croiseur gagne en résistance et en DPS contre les légers (Rafale ×6 sur 6 dmg = 48 DPS vs léger). Le cuirassé devient un vrai tank avec +20% de coque.
 
-### Coûts defenses (nerf cost-efficiency)
+### Coûts défenses (nerf cost-efficiency)
 
-| Defense | Coût avant | Coût apres |
+| Défense | Coût avant | Coût après |
 |---|---:|---:|
 | Lanceur de missiles | 2 000 | **3 000** |
-| Laser leger | 2 000 | **3 000** |
+| Laser léger | 2 000 | **3 000** |
 | Laser lourd | 8 000 | **7 500** |
 | Canon EM | 37 000 | **30 000** |
-| Artillerie a ions | 130 000 | **97 500** |
+| Artillerie à ions | 130 000 | **97 500** |
 
-Les defenses legeres etaient 2-3× plus rentables au DPS/credit que les vaisseaux equivalents — d'ou la dominance defensive. Leur cout est revalue pour rester accessible mais sans ecraser la concurrence.
+Les défenses légères étaient 2-3× plus rentables au DPS/crédit que les vaisseaux équivalents — d'où la dominance défensive. Leur coût est revalué pour rester accessible mais sans écraser la concurrence.
 
 ---
 
-## Construction acceleree et plus accessible
+## Construction accélérée et plus accessible
 
-Les temps de construction late-game etaient un blocker (24h pour un cuirasse, 40h pour une artillerie a ions). La majorite des coûts d'unites ont ete reduits de 25%, et la formule de temps a ete revisee.
+Les temps de construction late-game étaient un blocker (24h pour un cuirassé, 40h pour une artillerie à ions). La majorité des coûts d'unités ont été réduits de 25%, et la formule de temps a été révisée.
 
 ### Coûts vaisseaux (-25%)
 
-| Vaisseau | Coût avant | Coût apres |
+| Vaisseau | Coût avant | Coût après |
 |---|---:|---:|
 | Intercepteur | 4 000 | **3 000** |
-| Fregate | 10 000 | **7 500** |
+| Frégate | 10 000 | **7 500** |
 | Croiseur | 29 000 | **21 750** |
-| Cuirasse | 60 000 | **45 000** |
+| Cuirassé | 60 000 | **45 000** |
 | Petit transporteur | 4 000 | **3 000** |
 | Grand transporteur | 12 000 | **9 000** |
 | Recycleur | 18 000 | **13 500** |
 | Vaisseau de colonisation | 40 000 | **30 000** |
 | Sonde d'espionnage | 1 000 | **750** |
 
-Les defenses legeres restent au prix post-rebalance pour ne pas annuler le nerf cost-efficiency.
+Les défenses légères restent au prix post-rebalance pour ne pas annuler le nerf cost-efficiency.
 
 ### Nouveaux temps de construction
 
-Le multiplicateur de temps global a ete augmente. Resultat : ~58% de temps en moins pour la majorite des unites.
+Le multiplicateur de temps global a été augmenté. Résultat : ~58% de temps en moins pour la majorité des unités.
 
-| Unite | Temps avant | Temps apres |
+| Unité | Temps avant | Temps après |
 |---|---:|---:|
 | Intercepteur | 1h36 | **40 min** |
-| Fregate | 4h00 | **1h40** |
+| Frégate | 4h00 | **1h40** |
 | Croiseur | 10h48 | **4h30** |
-| Cuirasse | 24h00 | **10h00** |
+| Cuirassé | 24h00 | **10h00** |
 | Lanceur de missiles | 1h12 | **40 min** |
-| Laser leger | 1h12 | **40 min** |
-| Canon electromagnetique | 15h12 | **6h20** |
-| Artillerie a ions | 40h00 | **16h40** |
+| Laser léger | 1h12 | **40 min** |
+| Canon électromagnétique | 15h12 | **6h20** |
+| Artillerie à ions | 40h00 | **16h40** |
 
 Construction de flottes beaucoup plus fluide. La reconstruction post-combat n'est plus un parcours d'obstacles.
 
 ---
 
-## Disparition de la priorite de cible joueur
+## Disparition de la priorité de cible joueur
 
-Le toggle "Priorité de cible" sur la page Flotte a ete retire. Avec le systeme multi-batteries, chaque arme a deja sa cible naturelle — il n'y a plus rien a choisir.
+Le toggle « Priorité de cible » sur la page Flotte a été retiré. Avec le système multi-batteries, chaque arme a déjà sa cible naturelle — il n'y a plus rien à choisir.
 
-Si vous aviez l'habitude de selectionner "Lourd" pour cibler les vaisseaux ennemis specifiques, sachez que vos batteries principales ciblent automatiquement les vaisseaux lourds en priorite (canon principal du croiseur et du cuirasse).
-
----
-
-## Guide de combat actualise
-
-La page **Guide de combat** a ete reecrite pour refleter le nouveau systeme :
-- Section "Stats d'un vaisseau" reformulee avec les batteries
-- Nouvelle section **"Traits de combat"** avec badges Rafale/Enchainement et exemples
-- Phrases de counter-play pour vous aider a composer vos flottes
-- Formule du Facteur de Puissance simplifiee (DPS × durabilite)
+Si vous aviez l'habitude de sélectionner « Lourd » pour cibler les vaisseaux ennemis spécifiques, sachez que vos batteries principales ciblent automatiquement les vaisseaux lourds en priorité (canon principal du croiseur et du cuirassé).
 
 ---
 
-## En resume
+## Guide de combat actualisé
 
-| Avant | Apres |
+La page **Guide de combat** a été réécrite pour refléter le nouveau système :
+- Section « Stats d'un vaisseau » reformulée avec les batteries
+- Nouvelle section **« Traits de combat »** avec badges Rafale/Enchaînement et exemples
+- Phrases de counter-play pour vous aider à composer vos flottes
+- Formule du Facteur de Puissance simplifiée (DPS × durabilité)
+
+---
+
+## En résumé
+
+| Avant | Après |
 |---|---|
 | Une seule arme par vaisseau | Une ou deux batteries selon le vaisseau |
-| Une seule cible par tir | Chaque batterie cible sa categorie naturelle |
-| Combats previsibles | Counter-play actif (croiseur > intercepteur, cuirasse > fregate) |
-| Defense quasi-invincible economiquement | Defense forte mais payante en cas de breche |
-| 24h pour construire un cuirasse | 10h pour construire un cuirasse |
-| Bouclier planetaire faible et statique | Bouclier renforce et boostable par recherche |
+| Une seule cible par tir | Chaque batterie cible sa catégorie naturelle |
+| Combats prévisibles | Counter-play actif (croiseur > intercepteur, cuirassé > frégate) |
+| Défense quasi-invincible économiquement | Défense forte mais payante en cas de brèche |
+| 24h pour construire un cuirassé | 10h pour construire un cuirassé |
+| Bouclier planétaire faible et statique | Bouclier renforcé et boostable par recherche |
 
-La fenetre d'attaque rentable s'ouvre a partir de **3× le budget defensif** au lieu de 13× auparavant. La defense reste avantageuse — c'est l'esprit du jeu — mais elle n'est plus une forteresse imprenable.
+La fenêtre d'attaque rentable s'ouvre à partir de **3× le budget défensif** au lieu de 13× auparavant. La défense reste avantageuse — c'est l'esprit du jeu — mais elle n'est plus une forteresse imprenable.
 
-A vous de jouer.
+À vous de jouer.
