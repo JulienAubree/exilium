@@ -6,7 +6,14 @@ export function defaultBranchForm(): Record<string, string | number> {
   return { id: '', name: '', description: '', color: '#ef4444', sortOrder: 0 };
 }
 
-export function branchToForm(b: any): Record<string, string | number> {
+interface BranchLike {
+  name: string;
+  description?: string | null;
+  color: string;
+  sortOrder?: number | null;
+}
+
+export function branchToForm(b: BranchLike): Record<string, string | number> {
   return { name: b.name, description: b.description ?? '', color: b.color, sortOrder: b.sortOrder ?? 0 };
 }
 
@@ -36,7 +43,20 @@ export function defaultTalentForm(branchId?: string): Record<string, string | nu
   };
 }
 
-export function talentToForm(t: any): Record<string, string | number> {
+interface TalentLike {
+  branchId: string;
+  tier: number;
+  position: string;
+  name: string;
+  description?: string | null;
+  maxRanks?: number | null;
+  prerequisiteId?: string | null;
+  effectType: string;
+  effectParams: unknown;
+  sortOrder?: number | null;
+}
+
+export function talentToForm(t: TalentLike): Record<string, string | number> {
   return {
     branchId: t.branchId, tier: t.tier, position: t.position,
     name: t.name, description: t.description ?? '', maxRanks: t.maxRanks ?? 1,
@@ -62,11 +82,21 @@ export function formToTalentData(values: Record<string, string | number>) {
   };
 }
 
-export function effectParamsSummary(effectType: string, params: any): string {
+interface EffectParams {
+  stat?: string;
+  valuePerRank?: number;
+  percentPerRank?: number;
+  value?: number;
+  durationSeconds?: number;
+  key?: string;
+  [k: string]: unknown;
+}
+
+export function effectParamsSummary(effectType: string, params: EffectParams | null | undefined): string {
   if (!params) return '';
-  if (effectType === 'modify_stat') return `${params.stat}: ${params.valuePerRank > 0 ? '+' : ''}${params.valuePerRank}/rang`;
-  if (effectType === 'global_bonus') return `${params.stat}: ${params.percentPerRank > 0 ? '+' : ''}${params.percentPerRank}%/rang`;
-  if (effectType === 'planet_bonus') return `${params.stat}: ${params.percentPerRank > 0 ? '+' : ''}${params.percentPerRank}%/rang`;
+  if (effectType === 'modify_stat') return `${params.stat}: ${(params.valuePerRank ?? 0) > 0 ? '+' : ''}${params.valuePerRank}/rang`;
+  if (effectType === 'global_bonus') return `${params.stat}: ${(params.percentPerRank ?? 0) > 0 ? '+' : ''}${params.percentPerRank}%/rang`;
+  if (effectType === 'planet_bonus') return `${params.stat}: ${(params.percentPerRank ?? 0) > 0 ? '+' : ''}${params.percentPerRank}%/rang`;
   if (effectType === 'timed_buff') return `${params.stat}: ${params.value} (${params.durationSeconds}s)`;
   if (effectType === 'unlock') return `${params.key}`;
   return JSON.stringify(params);

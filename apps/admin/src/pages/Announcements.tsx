@@ -35,6 +35,23 @@ interface FormState {
   activate: boolean;
 }
 
+interface AnnouncementItem {
+  id: string;
+  message?: string | null;
+  variant?: string | null;
+  changelogId?: string | null;
+  active?: boolean;
+  createdAt: string | Date;
+}
+
+interface ChangelogItem {
+  id: string;
+  title?: string | null;
+  date?: string | Date | null;
+  createdAt: string | Date;
+  published?: boolean;
+}
+
 const EMPTY_FORM: FormState = {
   message: '',
   variant: 'info',
@@ -44,7 +61,7 @@ const EMPTY_FORM: FormState = {
 
 export default function Announcements() {
   // Modal state: null = closed, 'create' = creating, object = editing that item
-  const [modalItem, setModalItem] = useState<'create' | any | null>(null);
+  const [modalItem, setModalItem] = useState<'create' | AnnouncementItem | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -80,14 +97,14 @@ export default function Announcements() {
     },
   });
 
-  const publishedChangelogs = (changelogsData ?? []).filter((c: any) => c.published === true);
+  const publishedChangelogs = ((changelogsData ?? []) as ChangelogItem[]).filter((c) => c.published === true);
 
   const handleOpenCreate = () => {
     setForm(EMPTY_FORM);
     setModalItem('create');
   };
 
-  const handleOpenEdit = (item: any) => {
+  const handleOpenEdit = (item: AnnouncementItem) => {
     setForm({
       message: item.message ?? '',
       variant: (item.variant ?? 'info') as Variant,
@@ -118,7 +135,7 @@ export default function Announcements() {
     }
   };
 
-  const handleToggleActive = (item: any) => {
+  const handleToggleActive = (item: AnnouncementItem) => {
     setActiveMutation.mutate({ id: item.id, active: !item.active });
   };
 
@@ -155,10 +172,10 @@ export default function Announcements() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item: any) => {
+            {(items as AnnouncementItem[]).map((item) => {
               const variant = (item.variant ?? 'info') as Variant;
               const linkedChangelog = item.changelogId
-                ? (changelogsData ?? []).find((c: any) => c.id === item.changelogId)
+                ? ((changelogsData ?? []) as ChangelogItem[]).find((c) => c.id === item.changelogId)
                 : null;
               return (
                 <tr key={item.id}>
@@ -280,7 +297,7 @@ export default function Announcements() {
                   className="admin-input"
                 >
                   <option value="">Aucun</option>
-                  {publishedChangelogs.map((c: any) => (
+                  {publishedChangelogs.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.title} — {formatDate(c.date ?? c.createdAt)}
                     </option>

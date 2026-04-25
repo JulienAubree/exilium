@@ -15,6 +15,23 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   fleet_unlock: { label: 'Deblocage mission', color: 'text-amber-400 bg-amber-900/30 border-amber-800/30' },
 };
 
+interface Ability {
+  id: string;
+  name?: string;
+  description?: string;
+  type?: string;
+  cooldownSeconds?: number;
+  unlockedMissions?: string[];
+  miningExtractionEqualsCargo?: boolean;
+  params?: Record<string, unknown>;
+}
+
+interface Hull {
+  id: string;
+  name?: string;
+  abilities?: Ability[];
+}
+
 function AbilityEditModal({ ability, hullId, open, onClose, onSave, saving }: {
   ability: any;
   hullId: string;
@@ -180,11 +197,11 @@ export default function HullAbilities() {
   const saveAbility = (hullId: string, updatedAbility: any, originalId?: string) => {
     const hull = hulls[hullId];
     if (!hull) return;
-    const newAbilities = (hull.abilities ?? []).map((a: any) =>
+    const newAbilities = (hull.abilities ?? []).map((a: { id: string }) =>
       a.id === (originalId ?? updatedAbility.id) ? updatedAbility : a
     );
     const newHull = { ...hull, abilities: newAbilities };
-    const newHulls = hullList.map((h: any) => h.id === hullId ? newHull : h);
+    const newHulls = hullList.map((h: { id: string }) => h.id === hullId ? newHull : h);
     updateMutation.mutate({ key: 'hulls', value: newHulls });
   };
 
@@ -200,15 +217,15 @@ export default function HullAbilities() {
       params: {},
     };
     const newHull = { ...hull, abilities: [...(hull.abilities ?? []), newAbility] };
-    const newHulls = hullList.map((h: any) => h.id === hullId ? newHull : h);
+    const newHulls = hullList.map((h: { id: string }) => h.id === hullId ? newHull : h);
     updateMutation.mutate({ key: 'hulls', value: newHulls });
   };
 
   const deleteAbility = (hullId: string, abilityId: string) => {
     const hull = hulls[hullId];
     if (!hull) return;
-    const newHull = { ...hull, abilities: (hull.abilities ?? []).filter((a: any) => a.id !== abilityId) };
-    const newHulls = hullList.map((h: any) => h.id === hullId ? newHull : h);
+    const newHull = { ...hull, abilities: (hull.abilities ?? []).filter((a: { id: string }) => a.id !== abilityId) };
+    const newHulls = hullList.map((h: { id: string }) => h.id === hullId ? newHull : h);
     updateMutation.mutate({ key: 'hulls', value: newHulls });
   };
 
@@ -225,9 +242,9 @@ export default function HullAbilities() {
         Gerez les capacites actives et passives de chaque coque. Les modifications prennent effet immediatement.
       </p>
 
-      {hullList.map((hull: any) => {
+      {(hullList as Hull[]).map((hull) => {
         const colors = HULL_COLORS[hull.id] ?? HULL_COLORS.combat;
-        const abilities = hull.abilities ?? [];
+        const abilities: Ability[] = hull.abilities ?? [];
 
         return (
           <div key={hull.id} className="admin-card mb-6">
@@ -253,8 +270,8 @@ export default function HullAbilities() {
               </div>
             ) : (
               <div className="divide-y divide-panel-border">
-                {abilities.map((ability: any) => {
-                  const typeStyle = TYPE_LABELS[ability.type] ?? TYPE_LABELS.active;
+                {abilities.map((ability) => {
+                  const typeStyle = TYPE_LABELS[ability.type ?? 'active'] ?? TYPE_LABELS.active;
                   return (
                     <div key={ability.id} className="p-4 hover:bg-gray-800/30 transition-colors">
                       <div className="flex items-start justify-between gap-4">

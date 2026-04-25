@@ -17,9 +17,9 @@ export function HullConfigSection({ hulls, onUpdated }: { hulls: Record<string, 
 
   const hullList = Object.values(hulls);
 
-  const handleSave = (updated: any) => {
+  const handleSave = (updated: { id: string }) => {
     // Replace the edited hull in the full list and save as array
-    const newList = hullList.map((h: any) => h.id === updated.id ? updated : h);
+    const newList = hullList.map((h: { id: string }) => h.id === updated.id ? updated : h);
     updateMutation.mutate({ key: 'hulls', value: newList });
   };
 
@@ -31,7 +31,7 @@ export function HullConfigSection({ hulls, onUpdated }: { hulls: Record<string, 
         <span className="text-xs text-gray-500">({hullList.length})</span>
       </div>
       <div className="divide-y divide-panel-border">
-        {hullList.map((hull: any) => {
+        {hullList.map((hull) => {
           const hullStyle = HULL_TYPES.find(h => h.id === hull.id);
           return (
             <div key={hull.id} className="p-4 space-y-3">

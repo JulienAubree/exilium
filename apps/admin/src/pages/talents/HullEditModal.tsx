@@ -34,7 +34,7 @@ export function HullEditModal({ hull, open, onClose, onSave, saving }: {
   });
   const addBonusLabel = () => setForm((f: any) => ({ ...f, bonusLabels: [...(f.bonusLabels ?? []), ''] }));
   const removeBonusLabel = (i: number) => setForm((f: any) => ({
-    ...f, bonusLabels: (f.bonusLabels ?? []).filter((_: any, idx: number) => idx !== i),
+    ...f, bonusLabels: (f.bonusLabels ?? []).filter((_: unknown, idx: number) => idx !== i),
   }));
 
   return (
@@ -120,7 +120,7 @@ export function HullEditModal({ hull, open, onClose, onSave, saving }: {
                   setField('abilities', abilities);
                 };
                 const removeAbility = () => {
-                  setField('abilities', (form.abilities ?? []).filter((_: any, idx: number) => idx !== i));
+                  setField('abilities', (form.abilities ?? []).filter((_: unknown, idx: number) => idx !== i));
                 };
                 return (
                   <div key={i} className="border border-gray-700/50 rounded-lg p-3 space-y-2 bg-gray-800/30">

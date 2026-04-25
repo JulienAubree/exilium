@@ -147,8 +147,19 @@ function truncate(str: string, max: number): string {
   return str.slice(0, max) + '...';
 }
 
+interface ChangelogItem {
+  id: string;
+  title?: string | null;
+  content?: string | null;
+  published?: boolean;
+  date?: string | Date | null;
+  createdAt: string | Date;
+  commentCount?: number;
+  _count?: { comments?: number };
+}
+
 export default function Changelogs() {
-  const [editItem, setEditItem] = useState<any | null>(null);
+  const [editItem, setEditItem] = useState<ChangelogItem | null>(null);
   const [editForm, setEditForm] = useState({ title: '', content: '', published: false });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -166,7 +177,7 @@ export default function Changelogs() {
     onSuccess: () => { refetch(); setDeleteId(null); },
   });
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: ChangelogItem) => {
     setEditItem(item);
     setEditForm({ title: item.title ?? '', content: item.content ?? '', published: !!item.published });
   };
@@ -181,7 +192,7 @@ export default function Changelogs() {
     });
   };
 
-  const handleTogglePublish = (item: any) => {
+  const handleTogglePublish = (item: ChangelogItem) => {
     updateMutation.mutate({ id: item.id, published: !item.published });
   };
 
@@ -218,7 +229,7 @@ export default function Changelogs() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item: any) => (
+            {(items as ChangelogItem[]).map((item) => (
               <tr key={item.id}>
                 <td className="text-sm text-gray-400 whitespace-nowrap">{formatDate(item.date ?? item.createdAt)}</td>
                 <td className="font-medium max-w-[300px] truncate">{truncate(item.title ?? '', 60)}</td>

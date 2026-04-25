@@ -3,15 +3,25 @@ import { RotateCcw } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
+interface PlayerTalent {
+  talentId: string;
+  currentRank: number;
+}
+
+interface TalentDef {
+  name?: string;
+  maxRanks?: number;
+}
+
 export function TalentsSection({
   talents,
   flagshipId,
   gameConfig,
   onSaved,
 }: {
-  talents: any[];
+  talents: PlayerTalent[];
   flagshipId: string;
-  gameConfig: any;
+  gameConfig: { talents?: Record<string, TalentDef> } | null | undefined;
   onSaved: () => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
@@ -20,7 +30,7 @@ export function TalentsSection({
   });
 
   const talentDefs = gameConfig?.talents ?? {};
-  const invested = talents.filter((t: any) => t.currentRank > 0);
+  const invested = talents.filter((t) => t.currentRank > 0);
 
   return (
     <div className="admin-card p-4 mb-8">
@@ -28,7 +38,7 @@ export function TalentsSection({
         <div className="text-sm text-gray-500">Aucun talent investi.</div>
       ) : (
         <div className="space-y-1 mb-3">
-          {invested.map((t: any) => {
+          {invested.map((t) => {
             const def = talentDefs[t.talentId];
             return (
               <div key={t.talentId} className="flex items-center justify-between bg-panel rounded px-3 py-1.5">
