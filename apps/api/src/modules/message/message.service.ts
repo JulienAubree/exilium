@@ -95,7 +95,7 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
         title: 'Nouveau message',
         body: `Message de ${sender?.username ?? 'Inconnu'}`,
         url: '/messages',
-      });
+      }, 'new-message');
 
       return msg;
     },
@@ -165,7 +165,7 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
         title: 'Nouveau message',
         body: `Message de ${sender?.username ?? 'Inconnu'}`,
         url: '/messages',
-      });
+      }, 'new-reply');
 
       return msg;
     },

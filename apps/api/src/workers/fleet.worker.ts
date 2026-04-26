@@ -69,7 +69,7 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
           title: result.eventType.includes('arrive') ? 'Flotte arrivée' : result.eventType.includes('return') ? 'Flotte de retour' : 'Événement de flotte',
           body: String(result.notificationPayload.targetCoords ?? result.notificationPayload.originName ?? ''),
           url: '/fleet',
-        });
+        }, result.eventType);
 
         await db.insert(gameEvents).values({
           userId: result.userId,
@@ -91,7 +91,7 @@ export function startFleetWorker(db: Database, redis: Redis, services: Services)
               title: notify.type.includes('attack') ? 'Planète attaquée !' : 'Flotte en approche',
               body: String(notify.payload.targetCoords ?? ''),
               url: notify.type.includes('attack') ? '/reports' : '/fleet',
-            });
+            }, notify.type);
           }
         }
 

@@ -69,7 +69,7 @@ export function startBuildCompletionWorker(db: Database, redis: Redis, services:
           title: labels[pushCategory],
           body: `${name}${level}`,
           url: pushCategory === 'building' ? '/buildings' : pushCategory === 'research' ? '/research' : '/shipyard',
-        });
+        }, result.eventType);
       }
 
       await db.insert(gameEvents).values({
