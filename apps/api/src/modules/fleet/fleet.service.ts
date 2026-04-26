@@ -1,10 +1,7 @@
-import { eq, and, inArray, count as dbCount, sql, ne } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch, pveMissions, users, allianceMembers, alliances, marketOffers, fleetPhaseEnum } from '@exilium/db';
+import { planets, planetShips, fleetEvents, userResearch, fleetPhaseEnum } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { fleetSpeed, travelTime, distance, fuelConsumption, totalCargoCapacity, resolveBonus, calculateAttackDetection, detectionDelay } from '@exilium/game-engine';
-import type { ShipStats } from '@exilium/game-engine';
-import { buildFleetConfig, buildSpeedMultipliers } from './fleet.helpers.js';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -17,7 +14,6 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type Redis from 'ioredis';
-import { publishNotification } from '../notification/notification.publisher.js';
 import { TransportHandler } from './handlers/transport.handler.js';
 import { StationHandler } from './handlers/station.handler.js';
 import { SpyHandler } from './handlers/spy.handler.js';
@@ -32,7 +28,6 @@ import { ExploreHandler } from './handlers/explore.handler.js';
 import { ColonizeReinforceHandler } from './handlers/colonize-reinforce.handler.js';
 import { ColonizationRaidHandler } from './handlers/colonization-raid.handler.js';
 import { AbandonReturnHandler } from './handlers/abandon-return.handler.js';
-import { buildShipStatsMap } from './fleet.types.js';
 import { createSendFleet } from './operations/send-fleet.js';
 import { createListInboundFleets } from './operations/list-inbound.js';
 import { createRecallFleet } from './operations/recall-fleet.js';
@@ -41,7 +36,7 @@ import { createFleetQueries } from './operations/fleet-queries.js';
 import { createProcessDetection } from './operations/process-detection.js';
 import type { FleetCompletionResult } from '../../workers/completion.types.js';
 import { env } from '../../config/env.js';
-import type { PhasedMissionHandler, MissionHandler, MissionHandlerContext, SendFleetInput, FleetEvent as HandlerFleetEvent } from './fleet.types.js';
+import type { PhasedMissionHandler, MissionHandler, MissionHandlerContext, FleetEvent as HandlerFleetEvent } from './fleet.types.js';
 import type { AllianceLogService } from '../alliance/alliance-log.service.js';
 
 export function createFleetService(

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, smallint, timestamp, numeric, jsonb, pgEnum, index, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, smallint, timestamp, numeric, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { planets } from './planets.js';
 import { pveMissions } from './pve-missions.js';

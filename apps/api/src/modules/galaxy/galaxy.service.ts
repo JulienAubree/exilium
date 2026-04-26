@@ -3,7 +3,6 @@ import { planets, users, debrisFields, allianceMembers, alliances, planetBiomes,
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { seededRandom, coordinateSeed, generateBiomeCount, pickPlanetTypeForPosition, calculateMaxTemp } from '@exilium/game-engine';
-import type { Blason } from '@exilium/shared';
 
 export function createGalaxyService(db: Database, gameConfigService: GameConfigService) {
   return {

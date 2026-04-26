@@ -185,7 +185,7 @@ interface SelectContext {
   joinedWith: TableMarker | null;
 }
 
-function buildSelectChain(projection?: Record<string, unknown>) {
+function buildSelectChain(_projection?: Record<string, unknown>) {
   const ctx: SelectContext = { table: null, joinedWith: null };
 
   function results(): unknown[] {

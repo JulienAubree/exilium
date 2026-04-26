@@ -36,8 +36,6 @@ export function ActivityFeed({ unreadCount, onOpened }: Props) {
       hasMarkedSeen.current = true;
       markSeen.mutate();
     }
-    // Intentionally omit markSeen/onOpened — fire once when the initial load resolves.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.isLoading]);
 
   return (

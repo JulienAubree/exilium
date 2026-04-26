@@ -744,7 +744,7 @@ const HULLS = [
 
 // ── Talent Definitions ──
 
-const TALENT_DEFINITIONS: any[] = [
+const TALENT_DEFINITIONS: Record<string, unknown>[] = [
   // === MILITAIRE === (combat, attaque, defense)
   // Tier 1
   { id: 'mil_weapons', branchId: 'militaire', tier: 1, position: 'left', name: 'Armes renforcees', description: '+2 armes par rang', maxRanks: 3, prerequisiteId: null, effectType: 'modify_stat', effectParams: { stat: 'weapons', perRank: 2 }, sortOrder: 0 },

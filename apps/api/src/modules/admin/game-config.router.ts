@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { router, publicProcedure } from '../../trpc/router.js';
 import type { GameConfigService } from './game-config.service.js';
 import {
-  idSchema,
   nonEmptyString,
   optionalInt,
   optionalNullableString,

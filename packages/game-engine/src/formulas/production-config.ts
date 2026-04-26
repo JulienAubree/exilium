@@ -1,6 +1,14 @@
 import type { ProductionConfig } from './resources.js';
 
-export function buildProductionConfig(gameConfig: { production: Record<string, any>; universe: Record<string, unknown> }): ProductionConfig {
+interface ProductionEntry {
+  baseProduction?: number | null;
+  exponentBase?: number | null;
+  energyConsumption?: number | null;
+  tempCoeffA?: number | null;
+  tempCoeffB?: number | null;
+}
+
+export function buildProductionConfig(gameConfig: { production: Record<string, ProductionEntry>; universe: Record<string, unknown> }): ProductionConfig {
   const mc = gameConfig.production['mineraiMine'];
   const sc = gameConfig.production['siliciumMine'];
   const hc = gameConfig.production['hydrogeneSynth'];
