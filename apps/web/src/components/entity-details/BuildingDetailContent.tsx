@@ -129,7 +129,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       )}
 
       {/* 3b. Annex lab explanation */}
-      {configDef?.allowedPlanetTypes && configDef.allowedPlanetTypes.length > 0 && !configDef.allowedPlanetTypes.includes('homeworld') && (() => {
+      {configDef?.allowedPlanetTypes && configDef.allowedPlanetTypes.length > 0 && !configDef.allowedPlanetTypes.includes('homeworld') && configDef.categoryId === 'building_recherche' && (() => {
         // Find the exclusive research unlocked by this annex
         const annexType = configDef.allowedPlanetTypes[0];
         const exclusiveResearch = gameConfig ? Object.values(gameConfig.research).find(
