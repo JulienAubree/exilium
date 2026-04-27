@@ -13,7 +13,10 @@ Ce document décrit comment diagnostiquer et résoudre les incidents les plus pr
 - **DNS** : OVH (ns200.anycast.me)
 - **Repo** : https://github.com/JulienAubree/exilium
 - **Services système** : Caddy (TLS + reverse proxy), Postgres 17, Redis 7, PM2
-- **Users PM2** : `exilium-api` (port 3000), `exilium-worker`, `exilium-api-staging` (port 3001), `exilium-worker-staging`
+- **Process PM2** :
+  - `exilium-api` (port 3000) : **cluster 4 instances** (1 par cœur). `pm2 list` montre 4 lignes avec le même nom mais des PID différents — c'est normal.
+  - `exilium-worker` : fork 1 instance (BullMQ + crons)
+  - `exilium-api-staging` (port 3001) + `exilium-worker-staging` : fork 1 chacun
 
 ## Checks de santé
 

@@ -231,58 +231,83 @@ Cela permet un demarrage rapide tout en conservant la progression exponentielle 
 
 ## 5. Systeme de bonus
 
-Les bonus proviennent des batiments et recherches. Ils sont **multiplicatifs** entre eux.
+Les bonus proviennent des batiments et recherches. Ils sont **multiplicatifs** entre eux. Le calcul **diffère selon la source** — c'est important :
 
 ### Calcul
 
-Pour chaque source de bonus applicable :
-
 ```
-modificateur = max(0.01, 1 + (pourcentParNiveau / 100) * niveauSource)
+batiment :   modificateur = 1 / (1 + niveau)         ← diminishing returns
+recherche :  modificateur = max(0.01, 1 + (pct/100) * niveau)   ← linéaire
 ```
 
-Le multiplicateur final est le **produit** de tous les modificateurs applicables, avec un plancher a 0.01 (1%).
+Le multiplicateur final est le **produit** de tous les modificateurs applicables, avec un plancher à 0.01 (1%).
+
+**Pourquoi cette différence** : les bâtiments donnent un gain énorme aux premiers niveaux puis ralentissent (encourager les early upgrades), les recherches scalent linéairement (encourager l'investissement long terme).
+
+### Exemples chiffrés
+
+**Usine de robots (bâtiment, réduit le temps de construction)** :
+- Niv 1 : `1/(1+1) = 0.50` → temps × 0.50 (−50 %)
+- Niv 3 : `1/(1+3) = 0.25` → temps × 0.25 (−75 %)
+- Niv 5 : `1/(1+5) ≈ 0.167` → temps × 0.167 (−83 %)
+- Niv 10 : `1/11 ≈ 0.091` → temps × 0.091 (−91 %)
+
+**Recherche Armes (linéaire +10 %/niv)** :
+- Niv 1 : `1 + 0.10*1 = 1.10` (+10 %)
+- Niv 5 : `1 + 0.10*5 = 1.50` (+50 %)
+- Niv 10 : `1 + 0.10*10 = 2.00` (+100 %)
 
 ### Filtrage par categorie
 
 Certains bonus ont une categorie (ex: `combustion`, `build_military`). Ils ne s'appliquent qu'aux entites de cette categorie. Les bonus sans categorie (`null`) s'appliquent a tout.
 
-Exemple : le chantier naval donne -15%/niveau sur le temps de construction des vaisseaux industriels (`build_industrial`), tandis que le centre de commandement donne -15%/niveau sur les vaisseaux militaires (`build_military`).
+Exemple : le chantier naval donne sa réduction sur les vaisseaux industriels (`build_industrial`), tandis que le centre de commandement la donne sur les vaisseaux militaires (`build_military`).
 
 ### Liste des bonus
 
-**Temps de construction :**
+> Source de vérité : table `bonus_definitions` (admin) + `packages/game-engine/src/formulas/bonus.ts`. Le champ `percentPerLevel` n'a d'effet que pour les bonus de type `research` ; pour les `building`, l'effet est toujours `1/(1+level)` quel que soit le `percentPerLevel` configuré.
 
-| Source | Stat | Effet/niveau | Categorie |
-|--------|------|-------------|-----------|
-| Usine de robots | building_time | -15% | toutes |
-| Laboratoire | research_time | -15% | toutes |
-| Chantier naval | ship_build_time | -15% | industriels |
-| Centre de commandement | ship_build_time | -15% | militaires |
-| Arsenal | defense_build_time | -15% | toutes |
+**Temps de construction (bâtiments, diminishing) :**
 
-**Combat :**
+| Source | Stat | Categorie |
+|--------|------|-----------|
+| Usine de robots | building_time | toutes |
+| Laboratoire | research_time | toutes |
+| Chantier naval | ship_build_time | industriels |
+| Centre de commandement | ship_build_time | militaires |
+| Arsenal | defense_build_time | toutes |
+
+**Combat (recherches, linéaires) :**
 
 | Source | Stat | Effet/niveau |
 |--------|------|-------------|
-| Recherche armes | weapons | +10% |
-| Recherche bouclier | shielding | +10% |
-| Recherche blindage | armor | +10% |
+| Recherche armes | weapons | +10 % |
+| Recherche bouclier | shielding | +10 % |
+| Recherche blindage | armor | +10 % |
 
-**Vitesse des vaisseaux :**
+**Vitesse des vaisseaux (recherches, linéaires) :**
 
 | Source | Stat | Effet/niveau | Categorie |
 |--------|------|-------------|-----------|
-| Reacteur a combustion | ship_speed | +10% | combustion |
-| Reacteur a impulsion | ship_speed | +20% | impulse |
-| Propulsion hyperespace | ship_speed | +30% | hyperspaceDrive |
+| Reacteur a combustion | ship_speed | +10 % | combustion |
+| Reacteur a impulsion | ship_speed | +20 % | impulse |
+| Propulsion hyperespace | ship_speed | +30 % | hyperspaceDrive |
 
-**Autres :**
+**Autres (recherches) :**
 
 | Source | Stat | Effet/niveau |
 |--------|------|-------------|
 | Technologie informatique | fleet_count | +1 flotte simultanee |
-| Fracturation rocheuse | mining_duration | -10% (plancher -80% au niveau 8) |
+| Fracturation rocheuse | mining_duration | −10 % par niveau (plancher 1 %) |
+
+### Bonus annexes (laboratoires de recherche par biome)
+
+Mécanique séparée du `resolveBonus` ci-dessus. Cf. `packages/game-engine/src/formulas/bonus.ts` :
+
+- `researchAnnexBonus(totalAnnexLevels, 5)` — chaque niveau d'annexe (toutes biomes confondus) donne **−5 % linéaire** sur le temps de toute recherche
+- `researchBiomeBonus(totalDiscoveredBiomes, 1)` — chaque biome découvert (toutes planètes confondues) donne **−1 %** linéaire sur le temps de toute recherche
+
+Plancher 1 % combiné.
 
 ---
 
@@ -410,29 +435,44 @@ Les positions 8 et 16 de chaque systeme sont des **ceintures d'asteroides**. Ell
 
 La mission se deroule en deux phases :
 
-**Phase 1 - Prospection** :
+**Phase 1 — Prospection** :
 
 ```
 duree (min) = 5 + floor(quantite_totale_depot / 10 000) * 2
 ```
 
-**Phase 2 - Extraction** :
+**Phase 2 — Extraction (mining)** :
 
 ```
-duree (min) = max(5, 16 - niveau_centre_mission) * bonus_fracturation
+duree (min) = max(5, capacite_cargo_flotte / extraction_flotte * 10) * bonus_fracturation
 ```
 
-Le bonus de fracturation rocheuse reduit la duree (-10%/niveau, plancher a 20% de la duree).
+> Source : `packages/game-engine/src/formulas/pve.ts:miningDuration`
+
+Plus la flotte a de cargo à remplir et peu d'extraction, plus le minage est long. La recherche **Fracturation rocheuse** réduit la durée via `bonus_fracturation` (planchier 1 %).
 
 ### Quantite extraite
 
+L'extraction est répartie proportionnellement entre minerai / silicium / hydrogène selon les quantités restantes du dépôt :
+
 ```
-extraction_base = 2 000 + 800 * (niveau_centre_mission - 1)
-prospecteurs_effectifs = min(nombre_prospecteurs, 10)
-extrait = min(extraction_base * prospecteurs_effectifs, capacite_cargo_flotte, quantite_restante_depot)
+extraction_max = min(extraction_flotte, cargo_effective)
+cargo_effective = cargo_flotte * (1 - slag_rate)   // perte par scories
+ratio_M = minerai_restant / (M+S+H restants)
+quantite_M = floor(extraction_max * ratio_M)       // idem S, le H reçoit le reste
 ```
 
-Au-dela de 10 prospecteurs, les supplementaires sont ignores.
+> Source : `packages/game-engine/src/formulas/pve.ts:computeMiningExtraction`
+
+- `extraction_flotte` = somme de `miningExtraction` de chaque vaisseau présent (les prospecteurs ont la valeur la plus élevée)
+- `slag_rate` = fraction perdue en scories, dépend de la position du dépôt (8 ou 16) et de la recherche `Deep Space Refining` (chaque niveau réduit le slag de 15 %, plancher 0 %)
+- Si `extraction_max >= total_restant`, tout le dépôt est vidé
+
+### Composition d'un dépôt
+
+Quantité totale : `floor((15 000 + 5 000 * (niveau_centre - 1)) * variance)`
+
+Composition par défaut : 60 % minerai, 30 % silicium, 10 % hydrogène (ajustée par offsets aléatoires, hydrogène ≥ 2 %).
 
 ### Pool de missions visibles
 
@@ -485,7 +525,6 @@ Le combat utilise exactement le meme moteur que le PvP. Les pirates ont des nive
    - Un type determine par la position (volcanique, aride, temperee, glaciale, gazeuse)
    - Un diametre aleatoire dans la fourchette du type
    - Une temperature calculee selon la position avec une variation aleatoire de +/-20
-   - Des champs max calcules a partir du diametre
    - 0 ressources de depart
 3. Les vaisseaux restants de la flotte **retournent a l'origine**
 
@@ -516,23 +555,19 @@ Les positions basses (1-3) sont chaudes, les positions hautes (13-15) sont froid
 
 ### Types de planete
 
-| Type | Positions | Bonus minerai | Bonus silicium | Bonus hydrogene | Bonus champs |
-|------|-----------|---------------|----------------|-----------------|--------------|
-| Volcanique | 1-3 | 1.0x | 1.2x | 0.7x | 1.1x |
-| Aride | 4-6 | 1.2x | 1.1x | 0.8x | 0.9x |
-| Temperee | 7, 9 | 1.0x | 1.0x | 1.0x | 1.0x |
-| Glaciale | 10-12 | 0.8x | 1.0x | 1.3x | 0.9x |
-| Gazeuse | 13-15 | 0.9x | 0.9x | 1.1x | 1.1x |
+| Type | Positions | Bonus minerai | Bonus silicium | Bonus hydrogene |
+|------|-----------|---------------|----------------|-----------------|
+| Volcanique | 1-3 | 1.0× | 1.2× | 0.7× |
+| Aride | 4-6 | 1.2× | 1.1× | 0.8× |
+| Temperee | 7, 9 | 1.0× | 1.0× | 1.0× |
+| Glaciale | 10-12 | 0.8× | 1.0× | 1.3× |
+| Gazeuse | 13-15 | 0.9× | 0.9× | 1.1× |
 
-Les bonus de ressources s'appliquent a la production. Le bonus de champs affecte le nombre maximal de cases constructibles.
+Les bonus de ressources s'appliquent à la production de la planète.
 
-### Diametre et champs
+### Diametre
 
-```
-champs_max = floor((diametre / 1000)^2 * bonus_champs)
-```
-
-Exemple : diametre 12 000, bonus 1.0 -> floor(144 * 1.0) = 144 champs.
+Le diamètre est stocké sur la planète mais **aucune mécanique de "champs max" / cases constructibles n'est implémentée à ce jour** (héritage OGame non porté). Toutes les planètes peuvent construire tous les bâtiments sans limite de cases. Si une telle limite était introduite, ce serait via une nouvelle colonne et un check côté `building.service`.
 
 ### Boucliers planetaires
 
