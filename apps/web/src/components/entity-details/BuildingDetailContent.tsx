@@ -172,6 +172,34 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
         );
       })()}
 
+      {/* 3b-bis. Mission relay explanation */}
+      {buildingId === 'missionRelay' && (
+        <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 p-3 space-y-2">
+          <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Relais de missions</div>
+          <div className="text-xs text-slate-300 space-y-2">
+            <p>Avant-poste relié au <span className="text-amber-400 font-medium">Centre de missions</span> de la planète mère. Augmente les <span className="text-amber-400 font-medium">récompenses PvE</span> selon le biome de la colonie.</p>
+
+            <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
+              <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Bonus par biome (par niveau)</div>
+              <ul className="space-y-1 text-slate-300">
+                <li><span className="text-amber-400 font-medium">Volcanique</span> : +2% minerai sur le butin minier</li>
+                <li><span className="text-cyan-400 font-medium">Aride</span> : +2% silicium sur le butin minier</li>
+                <li><span className="text-fuchsia-400 font-medium">Gazeuse</span> : +2% hydrogène sur le butin minier</li>
+                <li><span className="text-emerald-400 font-medium">Tempérée</span> : +1% sur chaque ressource minière</li>
+                <li><span className="text-rose-400 font-medium">Glaciale</span> : +2% sur le butin pirate (toutes ressources)</li>
+              </ul>
+            </div>
+
+            <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
+              <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Bonus de diversité</div>
+              <p className="text-slate-300">Tous les bonus relais sont multipliés par <span className="text-violet-400 font-medium">+5% par biome distinct</span> couvert par au moins un relais. Avec les 5 biomes représentés : <span className="text-violet-400 font-medium">×1.25</span> sur l&apos;ensemble.</p>
+            </div>
+
+            <p className="text-slate-500 text-[11px]">Les bonus de plusieurs relais sur le même biome se cumulent. Le bonus s&apos;additionne au talent <span className="text-slate-400">pve_loot</span>.</p>
+          </div>
+        </div>
+      )}
+
       {/* 3c. Main lab explanation */}
       {buildingId === 'researchLab' && (
         <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
