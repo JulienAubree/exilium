@@ -1,4 +1,7 @@
 dist
 node_modules
 .turbo
+coverage
+uploads
+*.log
 pnpm-lock.yaml
