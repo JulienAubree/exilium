@@ -69,6 +69,24 @@ export function createPveService(
       return Number(result[0]?.max_level ?? 0);
     },
 
+    async getMissionRelayLevelSum(userId: string): Promise<number> {
+      const result = await db.execute(sql`
+        SELECT COALESCE(SUM(pb.level), 0) as total
+        FROM planet_buildings pb
+        JOIN planets p ON p.id = pb.planet_id
+        WHERE p.user_id = ${userId}
+          AND pb.building_id = 'missionRelay'
+      `);
+      return Number(result[0]?.total ?? 0);
+    },
+
+    async getMiningCap(userId: string): Promise<number> {
+      const config = await gameConfigService.getFullConfig();
+      const base = Number(config.universe.pve_max_concurrent_missions) || 3;
+      const relayBonus = await this.getMissionRelayLevelSum(userId);
+      return base + relayBonus;
+    },
+
     async startMission(missionId: string) {
       await db.update(pveMissions)
         .set({ status: 'in_progress' })
@@ -150,7 +168,9 @@ export function createPveService(
       const countByType: Record<string, number> = {};
       for (const row of missionCounts) countByType[row.missionType] = row.count;
 
-      const MINING_CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
+      const MINING_CAP_BASE = Number(config.universe.pve_max_concurrent_missions) || 3;
+      const relayBonus = await this.getMissionRelayLevelSum(userId);
+      const MINING_CAP = MINING_CAP_BASE + relayBonus;
       const PIRATE_CAP = Number(config.universe.pve_max_pirate_missions) || 2;
 
       // Get player's home planet for coordinates

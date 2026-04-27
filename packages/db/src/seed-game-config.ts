@@ -76,7 +76,8 @@ const BUILDINGS = [
   { id: 'storageMinerai', name: 'Entrepôt de minerai', description: 'Augmente le stockage de minerai.', baseCostMinerai: 1000, baseCostSilicium: 0, baseCostHydrogene: 0, costFactor: 2, baseTime: 60, categoryId: 'building_stockage', sortOrder: 0, role: 'storage_minerai', flavorText: "De vastes entrepots blindes permettent de stocker des quantites croissantes de minerai en toute securite.", prerequisites: [] },
   { id: 'storageSilicium', name: 'Entrepôt de silicium', description: 'Augmente le stockage de silicium.', baseCostMinerai: 1000, baseCostSilicium: 500, baseCostHydrogene: 0, costFactor: 2, baseTime: 60, categoryId: 'building_stockage', sortOrder: 1, role: 'storage_silicium', flavorText: "Ces chambres a environnement controle preservent le silicium dans des conditions optimales.", prerequisites: [] },
   { id: 'storageHydrogene', name: "Réservoir d'hydrogène", description: "Augmente le stockage d'hydrogène.", baseCostMinerai: 1000, baseCostSilicium: 1000, baseCostHydrogene: 0, costFactor: 2, baseTime: 60, categoryId: 'building_stockage', sortOrder: 2, role: 'storage_hydrogene', flavorText: "Des reservoirs cryogeniques haute pression maintiennent l'hydrogene a l'etat liquide pour un stockage maximal.", prerequisites: [] },
-  { id: 'missionCenter', name: 'Centre de missions', description: "Découvre des gisements miniers toutes les 6h (−1h/niveau, min 1h). Détecte aussi les menaces pirates.", baseCostMinerai: 5000, baseCostSilicium: 3000, baseCostHydrogene: 1000, costFactor: 1.8, baseTime: 300, categoryId: 'building_exploration', sortOrder: 0, role: 'mission_center', flavorText: "Le centre de missions scanne en permanence les ceintures d'asteroides a la recherche de gisements exploitables. Chaque amelioration accelere la frequence des decouvertes et la taille des gisements detectes.", prerequisites: [{ buildingId: 'shipyard', level: 2 }] },
+  { id: 'missionCenter', name: 'Centre de missions', description: "Découvre des gisements miniers toutes les 6h (−1h/niveau, min 1h). Détecte aussi les menaces pirates. Bâtiment principal sur la planète mère.", baseCostMinerai: 5000, baseCostSilicium: 3000, baseCostHydrogene: 1000, costFactor: 1.8, baseTime: 300, categoryId: 'building_exploration', sortOrder: 0, role: 'mission_center', flavorText: "Centre névralgique des opérations exterieures de l'empire, le centre de missions scanne en permanence les ceintures d'astéroïdes à la recherche de gisements exploitables. Chaque amélioration accélère la fréquence des découvertes et la taille des gisements détectés. Construit uniquement sur la planète mère, il pilote l'ensemble des relais déployés sur les colonies.", prerequisites: [{ buildingId: 'shipyard', level: 2 }], allowedPlanetTypes: ['homeworld'] },
+  { id: 'missionRelay', name: 'Relais de missions', description: "Avant-poste de coordination construit sur les colonies. Chaque niveau augmente de +1 le nombre maximum de gisements détectables simultanément.", baseCostMinerai: 2500, baseCostSilicium: 1500, baseCostHydrogene: 500, costFactor: 1.6, baseTime: 240, categoryId: 'building_exploration', sortOrder: 1, role: null, flavorText: "Relié au centre de missions de la planète mère, ce poste avancé permet de suivre davantage de gisements en parallèle. Chaque relais déployé sur une colonie augmente la capacité de coordination de l'empire.", prerequisites: [{ buildingId: 'missionCenter', level: 2 }], allowedPlanetTypes: ['volcanic', 'arid', 'temperate', 'glacial', 'gaseous'] },
   {
     id: 'galacticMarket',
     name: 'Marché Galactique',
@@ -989,6 +990,18 @@ async function seed() {
     )
   `);
   console.log(`  ✓ Migrated home planets to homeworld type`);
+
+  // 15b. Convert any missionCenter previously built on a non-homeworld colony into a missionRelay (idempotent).
+  // missionCenter is now restricted to homeworld; the level on the colony becomes the relay level.
+  const relayMigration = await db.execute(sql`
+    UPDATE planet_buildings pb
+    SET building_id = 'missionRelay'
+    FROM planets p
+    WHERE pb.planet_id = p.id
+      AND pb.building_id = 'missionCenter'
+      AND p.planet_class_id IS DISTINCT FROM 'homeworld'
+  `);
+  console.log(`  ✓ Migrated ${(relayMigration as { count?: number }).count ?? 0} colony missionCenter rows to missionRelay`);
 
   // 16. Talent branches
   await db.delete(talentDefinitions);

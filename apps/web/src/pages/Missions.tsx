@@ -89,6 +89,7 @@ export default function Missions() {
   }
 
   const centerLevel = data?.centerLevel ?? 0;
+  const miningCap = data?.miningCap ?? 3;
   const missions = data?.missions ?? [];
   const nextDiscoveryAt = data?.nextDiscoveryAt ? new Date(data.nextDiscoveryAt) : null;
   const nextDiscoveryInFuture = nextDiscoveryAt && nextDiscoveryAt.getTime() > Date.now();
@@ -201,7 +202,7 @@ export default function Missions() {
         <div className="grid grid-cols-3 gap-3">
           <KpiTile
             label="Gisements actifs"
-            value={`${miningMissions.length}/3`}
+            value={`${miningMissions.length}/${miningCap}`}
             color="text-amber-400"
             onClick={() => setFilter('mine')}
             icon={
@@ -265,7 +266,7 @@ export default function Missions() {
                 <div className="flex items-center gap-2 mb-4">
                   <Sun className="h-4 w-4 text-amber-400" />
                   <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                    Gisements ({miningMissions.length}/3)
+                    Gisements ({miningMissions.length}/{miningCap})
                   </h3>
                 </div>
               )}

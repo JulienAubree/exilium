@@ -318,6 +318,11 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                     </th>
                   </>
                 )}
+                {tableData.type === 'missionRelay' && (
+                  <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
+                    Slots gisements en +
+                  </th>
+                )}
                 {tableData.type === 'market' && (
                   <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
                     Offres max
@@ -396,6 +401,18 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                     </td>
                     <td className="px-2 py-1.5 text-right text-cyan-400">{row.cooldown}h</td>
                     <td className="px-2 py-1.5 text-right">{fmt(row.depositSize)}</td>
+                  </tr>
+                ))}
+              {tableData.type === 'missionRelay' &&
+                tableData.rows.map((row, i) => (
+                  <tr
+                    key={row.level}
+                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                  >
+                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
+                      {row.level}{i === 0 ? ' \u25C4' : ''}
+                    </td>
+                    <td className="px-2 py-1.5 text-right text-amber-400">+{row.bonusSlots}</td>
                   </tr>
                 ))}
               {tableData.type === 'market' &&
