@@ -17,16 +17,18 @@ export interface MineRow { level: number; production: number; gain: number | nul
 export interface SolarRow { level: number; production: number; gain: number | null }
 export interface StorageRow { level: number; capacity: number; gain: number | null; armored: number }
 export interface MissionCenterRow { level: number; cooldown: number; depositSize: number }
-export interface MissionRelayRow { level: number; bonusSlots: number }
+export interface MissionRelayRow { level: number; minerai: number; silicium: number; hydrogene: number; pirate: number }
 export interface MarketRow { level: number; maxOffers: number }
 export interface ShieldRow { level: number; shield: number; energy: number }
+
+export type MissionRelayBiome = 'volcanic' | 'arid' | 'temperate' | 'glacial' | 'gaseous' | null;
 
 export type TableData =
   | { type: 'mine'; title: string; rows: MineRow[] }
   | { type: 'solar'; title: string; rows: SolarRow[] }
   | { type: 'storage'; title: string; rows: StorageRow[] }
   | { type: 'missionCenter'; title: string; rows: MissionCenterRow[] }
-  | { type: 'missionRelay'; title: string; rows: MissionRelayRow[] }
+  | { type: 'missionRelay'; title: string; rows: MissionRelayRow[]; biome: MissionRelayBiome }
   | { type: 'market'; title: string; rows: MarketRow[] }
   | { type: 'shield'; title: string; rows: ShieldRow[] };
 
@@ -38,6 +40,7 @@ export function getContextualTable(
   prodConfig?: ReturnType<typeof buildProductionConfig>,
   protectedBaseRatio?: number,
   armoredMultiplier?: number,
+  planetClassId?: string | null,
 ): TableData | null {
   const pf = productionFactor;
   const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
@@ -117,15 +120,31 @@ export function getContextualTable(
           depositSize: depositSize(level, 1.0),
         })),
       };
-    case 'missionRelay':
+    case 'missionRelay': {
+      const biome = (planetClassId ?? null) as MissionRelayBiome;
+      const perLevel = (() => {
+        switch (biome) {
+          case 'volcanic':  return { minerai: 0.02, silicium: 0,    hydrogene: 0,    pirate: 0 };
+          case 'arid':      return { minerai: 0,    silicium: 0.02, hydrogene: 0,    pirate: 0 };
+          case 'gaseous':   return { minerai: 0,    silicium: 0,    hydrogene: 0.02, pirate: 0 };
+          case 'temperate': return { minerai: 0.01, silicium: 0.01, hydrogene: 0.01, pirate: 0 };
+          case 'glacial':   return { minerai: 0,    silicium: 0,    hydrogene: 0,    pirate: 0.02 };
+          default:          return { minerai: 0,    silicium: 0,    hydrogene: 0,    pirate: 0 };
+        }
+      })();
       return {
         type: 'missionRelay',
-        title: 'Slots de gisements supplémentaires',
+        title: 'Bonus de récompenses PvE',
+        biome,
         rows: levels.map((level) => ({
           level,
-          bonusSlots: level,
+          minerai:   perLevel.minerai   * level,
+          silicium:  perLevel.silicium  * level,
+          hydrogene: perLevel.hydrogene * level,
+          pirate:    perLevel.pirate    * level,
         })),
       };
+    }
     case 'galacticMarket':
       return {
         type: 'market',

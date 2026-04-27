@@ -98,8 +98,9 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
         prodConfig,
         protectedBaseRatio,
         armoredMultiplier,
+        planetClassId,
       ),
-    [buildingId, currentLevel, planetContext?.maxTemp, effectiveProductionFactor, prodConfig, protectedBaseRatio, armoredMultiplier],
+    [buildingId, currentLevel, planetContext?.maxTemp, effectiveProductionFactor, prodConfig, protectedBaseRatio, armoredMultiplier, planetClassId],
   );
 
   return (
@@ -319,9 +320,30 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                   </>
                 )}
                 {tableData.type === 'missionRelay' && (
-                  <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
-                    Slots gisements en +
-                  </th>
+                  <>
+                    {tableData.biome === 'volcanic' && (
+                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Bonus minerai</th>
+                    )}
+                    {tableData.biome === 'arid' && (
+                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">Bonus silicium</th>
+                    )}
+                    {tableData.biome === 'gaseous' && (
+                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-fuchsia-400">Bonus hydrogène</th>
+                    )}
+                    {tableData.biome === 'temperate' && (
+                      <>
+                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Minerai</th>
+                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">Silicium</th>
+                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-fuchsia-400">Hydrogène</th>
+                      </>
+                    )}
+                    {tableData.biome === 'glacial' && (
+                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-rose-400">Bonus butin pirate</th>
+                    )}
+                    {!tableData.biome && (
+                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-slate-400">Bonus</th>
+                    )}
+                  </>
                 )}
                 {tableData.type === 'market' && (
                   <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
@@ -404,17 +426,41 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                   </tr>
                 ))}
               {tableData.type === 'missionRelay' &&
-                tableData.rows.map((row, i) => (
-                  <tr
-                    key={row.level}
-                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
-                  >
-                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
-                      {row.level}{i === 0 ? ' \u25C4' : ''}
-                    </td>
-                    <td className="px-2 py-1.5 text-right text-amber-400">+{row.bonusSlots}</td>
-                  </tr>
-                ))}
+                tableData.rows.map((row, i) => {
+                  const pct = (n: number) => `+${(n * 100).toFixed(0)}%`;
+                  return (
+                    <tr
+                      key={row.level}
+                      className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
+                    >
+                      <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
+                        {row.level}{i === 0 ? ' \u25C4' : ''}
+                      </td>
+                      {tableData.biome === 'volcanic' && (
+                        <td className="px-2 py-1.5 text-right text-amber-500">{pct(row.minerai)}</td>
+                      )}
+                      {tableData.biome === 'arid' && (
+                        <td className="px-2 py-1.5 text-right text-cyan-400">{pct(row.silicium)}</td>
+                      )}
+                      {tableData.biome === 'gaseous' && (
+                        <td className="px-2 py-1.5 text-right text-fuchsia-400">{pct(row.hydrogene)}</td>
+                      )}
+                      {tableData.biome === 'temperate' && (
+                        <>
+                          <td className="px-2 py-1.5 text-right text-amber-500">{pct(row.minerai)}</td>
+                          <td className="px-2 py-1.5 text-right text-cyan-400">{pct(row.silicium)}</td>
+                          <td className="px-2 py-1.5 text-right text-fuchsia-400">{pct(row.hydrogene)}</td>
+                        </>
+                      )}
+                      {tableData.biome === 'glacial' && (
+                        <td className="px-2 py-1.5 text-right text-rose-400">{pct(row.pirate)}</td>
+                      )}
+                      {!tableData.biome && (
+                        <td className="px-2 py-1.5 text-right text-slate-400">—</td>
+                      )}
+                    </tr>
+                  );
+                })}
               {tableData.type === 'market' &&
                 tableData.rows.map((row, i) => (
                   <tr

@@ -17,7 +17,6 @@ export function createPveRouter(
       }
       const missions = await pveService.getMissions(ctx.userId!);
       const discoveryState = await pveService.getDiscoveryState(ctx.userId!);
-      const miningCap = centerLevel > 0 ? await pveService.getMiningCap(ctx.userId!) : 0;
       const enrichedMissions = missions.map(m => {
         if (m.missionType === 'pirate') {
           const params = m.parameters as { pirateFP?: number };
@@ -29,7 +28,6 @@ export function createPveRouter(
       return {
         missions: enrichedMissions,
         centerLevel,
-        miningCap,
         nextDiscoveryAt: discoveryState?.nextDiscoveryAt?.toISOString() ?? null,
       };
     }),

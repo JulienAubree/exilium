@@ -69,22 +69,43 @@ export function createPveService(
       return Number(result[0]?.max_level ?? 0);
     },
 
-    async getMissionRelayLevelSum(userId: string): Promise<number> {
-      const result = await db.execute(sql`
-        SELECT COALESCE(SUM(pb.level), 0) as total
+    /**
+     * Multipliers contributed by missionRelay buildings to PvE rewards.
+     * Each level on a colony adds a percentage based on the planet biome:
+     *  - volcanic  → +2% / lvl on minerai mining loot
+     *  - arid      → +2% / lvl on silicium mining loot
+     *  - gaseous   → +2% / lvl on hydrogene mining loot
+     *  - temperate → +1% / lvl on each of the three mining resources
+     *  - glacial   → +2% / lvl on pirate combat loot (all three resources)
+     * Returned values are additive percentages (0.04 = +4%).
+     */
+    async getMissionRelayBonuses(userId: string): Promise<{
+      minerai: number; silicium: number; hydrogene: number; pirate: number;
+    }> {
+      const rows = await db.execute(sql`
+        SELECT p.planet_class_id AS biome, pb.level AS level
         FROM planet_buildings pb
         JOIN planets p ON p.id = pb.planet_id
         WHERE p.user_id = ${userId}
           AND pb.building_id = 'missionRelay'
-      `);
-      return Number(result[0]?.total ?? 0);
-    },
+      `) as Array<{ biome: string | null; level: number }>;
 
-    async getMiningCap(userId: string): Promise<number> {
-      const config = await gameConfigService.getFullConfig();
-      const base = Number(config.universe.pve_max_concurrent_missions) || 3;
-      const relayBonus = await this.getMissionRelayLevelSum(userId);
-      return base + relayBonus;
+      const bonuses = { minerai: 0, silicium: 0, hydrogene: 0, pirate: 0 };
+      for (const row of rows) {
+        const lvl = Number(row.level) || 0;
+        switch (row.biome) {
+          case 'volcanic':  bonuses.minerai   += 0.02 * lvl; break;
+          case 'arid':      bonuses.silicium  += 0.02 * lvl; break;
+          case 'gaseous':   bonuses.hydrogene += 0.02 * lvl; break;
+          case 'temperate':
+            bonuses.minerai   += 0.01 * lvl;
+            bonuses.silicium  += 0.01 * lvl;
+            bonuses.hydrogene += 0.01 * lvl;
+            break;
+          case 'glacial':   bonuses.pirate    += 0.02 * lvl; break;
+        }
+      }
+      return bonuses;
     },
 
     async startMission(missionId: string) {
@@ -168,9 +189,7 @@ export function createPveService(
       const countByType: Record<string, number> = {};
       for (const row of missionCounts) countByType[row.missionType] = row.count;
 
-      const MINING_CAP_BASE = Number(config.universe.pve_max_concurrent_missions) || 3;
-      const relayBonus = await this.getMissionRelayLevelSum(userId);
-      const MINING_CAP = MINING_CAP_BASE + relayBonus;
+      const MINING_CAP = Number(config.universe.pve_max_concurrent_missions) || 3;
       const PIRATE_CAP = Number(config.universe.pve_max_pirate_missions) || 2;
 
       // Get player's home planet for coordinates
@@ -284,12 +303,13 @@ export function createPveService(
         belt.id, cappedTotal, cappedComposition,
       );
 
-      // Apply talent pve_loot bonus to resource rewards
+      // Apply talent pve_loot (uniform) + relay bonuses (per-resource biome dependent)
       const talentCtx = talentService ? await talentService.computeTalentContext(userId) : {};
-      const lootMultiplier = 1 + (talentCtx['pve_loot'] ?? 0);
-      minerai = Math.floor(minerai * lootMultiplier);
-      silicium = Math.floor(silicium * lootMultiplier);
-      hydrogene = Math.floor(hydrogene * lootMultiplier);
+      const talentLoot = talentCtx['pve_loot'] ?? 0;
+      const relayBonuses = await this.getMissionRelayBonuses(userId);
+      minerai  = Math.floor(minerai  * (1 + talentLoot + relayBonuses.minerai));
+      silicium = Math.floor(silicium * (1 + talentLoot + relayBonuses.silicium));
+      hydrogene = Math.floor(hydrogene * (1 + talentLoot + relayBonuses.hydrogene));
 
       // rewards = total deposit size (for display to the player, not per-trip extraction)
       await db.insert(pveMissions).values({
@@ -399,10 +419,11 @@ export function createPveService(
       const baseFP = computeFleetFP(templateShips, shipStats, fpConfig);
       const rewardRatio = baseFP > 0 ? pirateFP / baseFP : 1;
 
-      // Apply pve_loot_multiplier + talent bonus at generation time so stored rewards = what the player sees
+      // Apply pve_loot_multiplier + talent bonus + glacial relay bonus at generation time so stored rewards = what the player sees
       const pveLootMultiplier = Number(config.universe['pve_loot_multiplier'] ?? 0.1);
       const pirateTalentCtx = talentService ? await talentService.computeTalentContext(userId) : {};
-      const pirateLootBonus = 1 + (pirateTalentCtx['pve_loot'] ?? 0);
+      const pirateRelayBonuses = await this.getMissionRelayBonuses(userId);
+      const pirateLootBonus = 1 + (pirateTalentCtx['pve_loot'] ?? 0) + pirateRelayBonuses.pirate;
       const scaledRewards = {
         minerai: Math.floor(templateRewards.minerai * rewardRatio * pveLootMultiplier * pirateLootBonus),
         silicium: Math.floor(templateRewards.silicium * rewardRatio * pveLootMultiplier * pirateLootBonus),
