@@ -6,13 +6,7 @@ import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import {
-  OverviewIcon,
-  ResourcesIcon,
-  BuildingsIcon,
   ResearchIcon,
-  ShipyardIcon,
-  CommandCenterIcon,
-  DefenseIcon,
   FleetIcon,
   FlagshipIcon,
   GalaxyIcon,
@@ -39,22 +33,6 @@ const sections: { title: string; items: NavItem[] }[] = [
       { label: 'Empire', path: '/empire', icon: EmpireIcon },
       { label: 'Recherche', path: '/research', icon: ResearchIcon },
       { label: 'Vaisseau amiral', path: '/flagship', icon: FlagshipIcon },
-    ],
-  },
-  {
-    title: 'Planète',
-    items: [
-      { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-      { label: 'Énergie', path: '/energy', icon: ResourcesIcon },
-      { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
-    ],
-  },
-  {
-    title: 'Production',
-    items: [
-      { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
-      { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
-      { label: 'Défense', path: '/defense', icon: DefenseIcon },
     ],
   },
   {

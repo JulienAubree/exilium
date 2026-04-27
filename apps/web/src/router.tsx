@@ -92,12 +92,17 @@ export const router = createBrowserRouter([
       },
       {
         path: 'resources',
-        element: <Navigate to="/energy" replace />,
+        lazy: lazyLoad(() => import('./pages/Resources')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
+        path: 'infrastructures',
+        lazy: lazyLoad(() => import('./pages/Infrastructures')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'buildings',
-        lazy: lazyLoad(() => import('./pages/Buildings')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/resources" replace />,
       },
       {
         path: 'research',

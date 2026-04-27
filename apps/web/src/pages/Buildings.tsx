@@ -144,7 +144,16 @@ function estimateRefund(
   };
 }
 
-export default function Buildings() {
+interface BuildingsListProps {
+  /** Page header title */
+  title: string;
+  /** Optional whitelist of category IDs to display. Undefined = all building categories. */
+  categoryIds?: string[];
+  /** Optional list of building IDs to exclude (e.g. shipyard which has its own page). */
+  excludeBuildingIds?: string[];
+}
+
+export function BuildingsList({ title, categoryIds, excludeBuildingIds }: BuildingsListProps) {
   const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const [cancelConfirm, setCancelConfirm] = useState(false);
@@ -208,7 +217,7 @@ export default function Buildings() {
   if (isLoading || !buildings) {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-        <PageHeader title="Bâtiments" />
+        <PageHeader title={title} />
         <CardGridSkeleton count={6} />
       </div>
     );
@@ -223,7 +232,9 @@ export default function Buildings() {
 
   const buildingCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'building')
+    .filter((c) => !categoryIds || categoryIds.includes(c.id))
     .sort((a, b) => a.sortOrder - b.sortOrder);
+  const excludedSet = new Set(excludeBuildingIds ?? []);
 
   const getBuildingVariantProps = (buildingId: string) => {
     const def = gameConfig?.buildings?.[buildingId];
@@ -234,7 +245,7 @@ export default function Buildings() {
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title="Bâtiments" />
+      <PageHeader title={title} />
 
       {upgradingBuilding && (
         <section className="glass-card p-4">
@@ -268,7 +279,8 @@ export default function Buildings() {
 
       {buildingCategories.map((category) => {
         const categoryBuildings = buildings.filter((b) =>
-          gameConfig?.buildings[b.id]?.categoryId === category.id,
+          gameConfig?.buildings[b.id]?.categoryId === category.id
+          && !excludedSet.has(b.id),
         );
         if (categoryBuildings.length === 0) return null;
         const isCollapsed = collapsed[category.id] ?? false;
@@ -610,4 +622,9 @@ export default function Buildings() {
       </ConfirmDialog>
     </div>
   );
+}
+
+/** Legacy default export — kept for the /buildings legacy route which redirects to /resources. */
+export default function Buildings() {
+  return <BuildingsList title="Bâtiments" />;
 }

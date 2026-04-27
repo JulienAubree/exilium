@@ -4,6 +4,7 @@ import { TopBar } from './TopBar';
 import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
+import { PlanetSubnav } from './PlanetSubnav';
 import { Toaster } from '@/components/ui/Toaster';
 import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
@@ -20,7 +21,7 @@ import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 // Pages that are planet-specific and should redirect when the active planet
 // is being colonized.  Empire-wide pages (/empire, /fleet, etc.) are NOT
 // redirected — only pages that operate on a single planet.
-const PLANET_PAGES = ['/', '/buildings', '/energy', '/shipyard', '/command-center', '/defense'];
+const PLANET_PAGES = ['/', '/resources', '/infrastructures', '/energy', '/shipyard', '/command-center', '/defense'];
 
 export function Layout() {
   const { data: planets } = trpc.planet.list.useQuery();
@@ -75,6 +76,7 @@ export function Layout() {
         <EmailVerificationBanner />
         <AnnouncementBanner />
         <ResourceBar planetId={resolvedPlanetId} />
+        <PlanetSubnav />
         <HostileAlertBanner hostileFleets={hostileFleets} fixed />
 
         {/* Page content — scrolls independently; the mobile BottomTabBar

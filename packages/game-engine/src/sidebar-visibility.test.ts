@@ -6,14 +6,15 @@ describe('getVisibleSidebarPaths', () => {
     const visible = getVisibleSidebarPaths({ chapterOrder: 1, isComplete: false, colonyCount: 1 });
     expect(visible).toEqual(new Set(ALWAYS_VISIBLE_PATHS));
     expect(visible.has('/')).toBe(true);
-    expect(visible.has('/buildings')).toBe(true);
+    expect(visible.has('/resources')).toBe(true);
+    expect(visible.has('/infrastructures')).toBe(true);
     expect(visible.has('/energy')).toBe(true);
     expect(visible.has('/messages')).toBe(true);
     expect(visible.has('/changelog')).toBe(true);
     expect(visible.has('/feedback')).toBe(true);
     expect(visible.has('/research')).toBe(false);
     expect(visible.has('/shipyard')).toBe(false);
-    expect(visible.size).toBe(6);
+    expect(visible.size).toBe(7);
   });
 
   it('chapter 2: adds research and shipyard', () => {
@@ -62,8 +63,8 @@ describe('getVisibleSidebarPaths', () => {
     expect(visible.has('/empire')).toBe(false);
   });
 
-  it('fully unlocked state: all 19 items visible', () => {
+  it('fully unlocked state: all 20 items visible', () => {
     const visible = getVisibleSidebarPaths({ chapterOrder: 4, isComplete: true, colonyCount: 2 });
-    expect(visible.size).toBe(19);
+    expect(visible.size).toBe(20);
   });
 });
