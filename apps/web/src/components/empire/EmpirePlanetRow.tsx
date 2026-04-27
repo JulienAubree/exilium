@@ -9,7 +9,7 @@ import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 import { AbandonColonyModal, type AbandonModalPlanet } from '@/components/empire/AbandonColonyModal';
-import type { PlanetFleetData } from '@/components/empire/EmpireFleetBanner';
+import type { EmpireViewMode, PlanetFleetData } from '@/components/empire/empire-types';
 
 interface EmpirePlanet {
   id: string;
@@ -43,7 +43,7 @@ function formatRate(value: number): string {
   return String(Math.floor(value));
 }
 
-export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet }: { planet: EmpirePlanet; isFirst: boolean; isLast: boolean; allPlanets: AbandonModalPlanet[]; fleet?: PlanetFleetData }) {
+export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, viewMode }: { planet: EmpirePlanet; isFirst: boolean; isLast: boolean; allPlanets: AbandonModalPlanet[]; fleet?: PlanetFleetData; viewMode: EmpireViewMode }) {
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const { data: gameConfig } = useGameConfig();
@@ -154,18 +154,26 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet }: 
                 <Timer endTime={new Date(badge.endTime)} className="inline" />
               </div>
             )}
-            {fleet && fleet.totalShips > 0 && (
-              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span><strong className="font-mono text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</strong> vsx</span>
-                <span>FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
-              </div>
-            )}
           </div>
-          <div className="flex flex-col items-end gap-0.5 text-xs">
-            <span className="text-minerai font-semibold">{formatRate(planet.minerai)}</span>
-            <span className="text-silicium font-semibold">{formatRate(planet.silicium)}</span>
-            <span className="text-hydrogene font-semibold">{formatRate(planet.hydrogene)}</span>
-          </div>
+          {viewMode === 'resources' ? (
+            <div className="flex flex-col items-end gap-0.5 text-xs">
+              <span className="text-minerai font-semibold">{formatRate(planet.minerai)}</span>
+              <span className="text-silicium font-semibold">{formatRate(planet.silicium)}</span>
+              <span className="text-hydrogene font-semibold">{formatRate(planet.hydrogene)}</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-end gap-0.5 text-xs leading-tight">
+              {fleet && fleet.totalShips > 0 ? (
+                <>
+                  <span className="font-mono font-semibold text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</span>
+                  <span className="text-[10px] text-muted-foreground">vsx</span>
+                  <span className="text-[10px]">FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
+                </>
+              ) : (
+                <span className="text-[10px] text-muted-foreground/60 italic">vide</span>
+              )}
+            </div>
+          )}
           {!canAbandon && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />}
         </button>
         {canAbandon && (

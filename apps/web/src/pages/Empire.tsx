@@ -3,10 +3,11 @@ import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { EmpireKpiBar } from '@/components/empire/EmpireKpiBar';
-import { EmpireFleetBanner, type PlanetFleetData } from '@/components/empire/EmpireFleetBanner';
 import { EmpirePlanetCard } from '@/components/empire/EmpirePlanetCard';
 import { EmpirePlanetRow } from '@/components/empire/EmpirePlanetRow';
+import { EmpireViewToggle } from '@/components/empire/EmpireViewToggle';
 import { ReorderableEmpireGrid } from '@/components/empire/ReorderableEmpireGrid';
+import type { EmpireViewMode, PlanetFleetData } from '@/components/empire/empire-types';
 import { ArrowUpDown } from 'lucide-react';
 
 export default function Empire() {
@@ -15,6 +16,7 @@ export default function Empire() {
   const { data: fleetOverview } = trpc.shipyard.empireOverview.useQuery();
   const { data: governance } = trpc.colonization.governance.useQuery();
   const [isReordering, setIsReordering] = useState(false);
+  const [viewMode, setViewMode] = useState<EmpireViewMode>('resources');
 
   const fleetByPlanet = useMemo(() => {
     const map = new Map<string, PlanetFleetData>();
@@ -53,15 +55,20 @@ export default function Empire() {
         title="Empire"
         description="Vue d'ensemble de vos colonies"
         actions={
-          !isReordering && data.planets.length > 1 ? (
-            <button
-              type="button"
-              onClick={() => setIsReordering(true)}
-              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              Reorganiser
-            </button>
+          !isReordering ? (
+            <div className="flex items-center gap-2">
+              <EmpireViewToggle mode={viewMode} onChange={setViewMode} />
+              {data.planets.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setIsReordering(true)}
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">Reorganiser</span>
+                </button>
+              )}
+            </div>
           ) : undefined
         }
       />
@@ -73,10 +80,6 @@ export default function Empire() {
         governance={governance}
         planets={data.planets}
       />
-
-      {fleetOverview && fleetOverview.empireTotals.shipsByType.length > 0 && (
-        <EmpireFleetBanner overview={fleetOverview} />
-      )}
 
       {isReordering ? (
         <ReorderableEmpireGrid
@@ -96,6 +99,7 @@ export default function Empire() {
                 isFirst={i === 0}
                 allPlanets={data.planets}
                 fleet={fleetByPlanet.get(planet.id)}
+                viewMode={viewMode}
               />
             ))}
           </div>
@@ -110,6 +114,7 @@ export default function Empire() {
                 isLast={i === data.planets.length - 1}
                 allPlanets={data.planets}
                 fleet={fleetByPlanet.get(planet.id)}
+                viewMode={viewMode}
               />
             ))}
           </div>
