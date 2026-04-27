@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, ShieldPlus, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPlanetImageUrl } from '@/lib/assets';
+import { getAssetUrl, getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
 import { ShipyardIcon, FlagshipIcon } from '@/lib/icons';
 import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 import { AbandonColonyModal, type AbandonModalPlanet } from '@/components/empire/AbandonColonyModal';
+import type { PlanetFleetData } from '@/components/empire/EmpireFleetBanner';
 
 interface EmpirePlanet {
   id: string;
@@ -48,7 +49,7 @@ function formatRate(value: number): string {
   return String(Math.floor(value));
 }
 
-export function EmpirePlanetCard({ planet, isFirst, allPlanets }: { planet: EmpirePlanet; isFirst: boolean; allPlanets: AbandonModalPlanet[] }) {
+export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet }: { planet: EmpirePlanet; isFirst: boolean; allPlanets: AbandonModalPlanet[]; fleet?: PlanetFleetData }) {
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const { data: gameConfig } = useGameConfig();
@@ -294,6 +295,45 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets }: { planet: Empi
           </div>
         )}
       </div>
+
+      {/* Stationed fleet (compact) */}
+      {fleet && fleet.totalShips > 0 && (
+        <button
+          type="button"
+          onClick={() => goTo('/fleet/stationed')}
+          className="mx-3.5 mb-2.5 rounded-lg border border-border/30 bg-background/30 p-2 text-left transition-colors hover:bg-background/50 hover:border-border/60"
+        >
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Flotte stationnée</span>
+            <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+              <span><strong className="font-mono text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</strong> vsx</span>
+              <span>FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {fleet.ships.slice(0, 6).map((s) => (
+              <div
+                key={s.id}
+                className="flex items-center gap-1.5 rounded bg-background/40 px-1.5 py-1"
+                title={`${s.count.toLocaleString('fr-FR')} ${s.name}`}
+              >
+                <img
+                  src={getAssetUrl('ships', s.id, 'thumb')}
+                  alt=""
+                  className="h-4 w-4 rounded-sm object-cover shrink-0"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+                <span className="font-mono text-[11px] font-semibold text-foreground">{s.count.toLocaleString('fr-FR')}</span>
+              </div>
+            ))}
+            {fleet.ships.length > 6 && (
+              <div className="flex items-center justify-center rounded bg-background/40 px-1.5 py-1 text-[10px] text-muted-foreground">
+                +{fleet.ships.length - 6} types
+              </div>
+            )}
+          </div>
+        </button>
+      )}
 
       {/* Nav shortcuts */}
       <div className="mt-auto flex border-t border-border/30">

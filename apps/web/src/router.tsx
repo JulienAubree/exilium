@@ -131,8 +131,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'fleet/overview',
-        lazy: lazyLoad(() => import('./pages/FleetOverview')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/empire" replace />,
       },
       {
         path: 'fleet/send',

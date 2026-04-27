@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { EmpireKpiBar } from '@/components/empire/EmpireKpiBar';
+import { EmpireFleetBanner, type PlanetFleetData } from '@/components/empire/EmpireFleetBanner';
 import { EmpirePlanetCard } from '@/components/empire/EmpirePlanetCard';
 import { EmpirePlanetRow } from '@/components/empire/EmpirePlanetRow';
 import { ReorderableEmpireGrid } from '@/components/empire/ReorderableEmpireGrid';
@@ -11,8 +12,23 @@ import { ArrowUpDown } from 'lucide-react';
 export default function Empire() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.planet.empire.useQuery();
+  const { data: fleetOverview } = trpc.shipyard.empireOverview.useQuery();
   const { data: governance } = trpc.colonization.governance.useQuery();
   const [isReordering, setIsReordering] = useState(false);
+
+  const fleetByPlanet = useMemo(() => {
+    const map = new Map<string, PlanetFleetData>();
+    if (!fleetOverview) return map;
+    for (const p of fleetOverview.planets) {
+      map.set(p.id, {
+        ships: p.ships,
+        totalShips: p.totalShips,
+        totalFP: p.totalFP,
+        totalCargo: p.totalCargo,
+      });
+    }
+    return map;
+  }, [fleetOverview]);
 
   const reorderMutation = trpc.planet.reorder.useMutation({
     onSuccess: () => {
@@ -58,6 +74,10 @@ export default function Empire() {
         planets={data.planets}
       />
 
+      {fleetOverview && fleetOverview.empireTotals.shipsByType.length > 0 && (
+        <EmpireFleetBanner overview={fleetOverview} />
+      )}
+
       {isReordering ? (
         <ReorderableEmpireGrid
           planets={data.planets}
@@ -70,7 +90,13 @@ export default function Empire() {
           {/* Desktop grid */}
           <div className="hidden lg:grid lg:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] lg:gap-4">
             {data.planets.map((planet, i) => (
-              <EmpirePlanetCard key={planet.id} planet={planet} isFirst={i === 0} allPlanets={data.planets} />
+              <EmpirePlanetCard
+                key={planet.id}
+                planet={planet}
+                isFirst={i === 0}
+                allPlanets={data.planets}
+                fleet={fleetByPlanet.get(planet.id)}
+              />
             ))}
           </div>
 
@@ -83,6 +109,7 @@ export default function Empire() {
                 isFirst={i === 0}
                 isLast={i === data.planets.length - 1}
                 allPlanets={data.planets}
+                fleet={fleetByPlanet.get(planet.id)}
               />
             ))}
           </div>

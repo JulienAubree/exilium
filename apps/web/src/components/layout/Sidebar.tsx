@@ -62,7 +62,6 @@ const sections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
       { label: 'Flotte', path: '/fleet', icon: FleetIcon },
-      { label: 'Vue de la flotte', path: '/fleet/overview', icon: FleetIcon },
       { label: 'Missions', path: '/missions', icon: MissionsIcon },
       { label: 'Marché', path: '/market', icon: MarketIcon },
     ],

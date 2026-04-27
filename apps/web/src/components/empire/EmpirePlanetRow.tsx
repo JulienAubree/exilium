@@ -9,6 +9,7 @@ import { Timer } from '@/components/common/Timer';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 import { AbandonColonyModal, type AbandonModalPlanet } from '@/components/empire/AbandonColonyModal';
+import type { PlanetFleetData } from '@/components/empire/EmpireFleetBanner';
 
 interface EmpirePlanet {
   id: string;
@@ -42,7 +43,7 @@ function formatRate(value: number): string {
   return String(Math.floor(value));
 }
 
-export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets }: { planet: EmpirePlanet; isFirst: boolean; isLast: boolean; allPlanets: AbandonModalPlanet[] }) {
+export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet }: { planet: EmpirePlanet; isFirst: boolean; isLast: boolean; allPlanets: AbandonModalPlanet[]; fleet?: PlanetFleetData }) {
   const navigate = useNavigate();
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const { data: gameConfig } = useGameConfig();
@@ -151,6 +152,12 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets }: { plane
               <div className={cn('mt-0.5 flex items-center gap-1 text-[11px]', badge.className)}>
                 <badge.icon className="h-3 w-3" width={12} height={12} />
                 <Timer endTime={new Date(badge.endTime)} className="inline" />
+              </div>
+            )}
+            {fleet && fleet.totalShips > 0 && (
+              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span><strong className="font-mono text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</strong> vsx</span>
+                <span>FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
               </div>
             )}
           </div>
