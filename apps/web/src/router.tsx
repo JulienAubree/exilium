@@ -130,6 +130,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'fleet/overview',
+        lazy: lazyLoad(() => import('./pages/FleetOverview')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'fleet/send',
         lazy: lazyLoad(() => import('./pages/Fleet')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

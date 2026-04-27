@@ -1,8 +1,9 @@
 import { eq, and, inArray, asc, sql, gt } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings } from '@exilium/db';
+import { planets, planetShips, planetDefenses, buildQueue, userResearch, planetBuildings, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus } from '@exilium/game-engine';
+import { shipCost, shipTime, defenseCost, defenseTime, checkShipPrerequisites, checkDefensePrerequisites, resolveBonus, computeFleetFP } from '@exilium/game-engine';
+import type { FPConfig, UnitCombatStats } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
@@ -98,6 +99,134 @@ export function createShipyardService(
             role: def.role ?? null,
           };
         });
+    },
+
+    async empireOverview(userId: string) {
+      const config = await gameConfigService.getFullConfig();
+
+      const userPlanets = await db
+        .select({
+          id: planets.id,
+          name: planets.name,
+          galaxy: planets.galaxy,
+          system: planets.system,
+          position: planets.position,
+          planetClassId: planets.planetClassId,
+          planetImageIndex: planets.planetImageIndex,
+        })
+        .from(planets)
+        .where(and(eq(planets.userId, userId), eq(planets.status, 'active')))
+        .orderBy(asc(planets.galaxy), asc(planets.system), asc(planets.position));
+
+      const [flagshipRow] = await db
+        .select()
+        .from(flagships)
+        .where(eq(flagships.userId, userId))
+        .limit(1);
+
+      // Build FP / cargo helpers once
+      const unitCombatStats: Record<string, UnitCombatStats> = {};
+      for (const [id, ship] of Object.entries(config.ships)) {
+        unitCombatStats[id] = {
+          weapons: ship.weapons,
+          shotCount: ship.shotCount ?? 1,
+          shield: ship.shield,
+          hull: ship.hull,
+          weaponProfiles: ship.weaponProfiles,
+        };
+      }
+      const fpConfig: FPConfig = {
+        shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+        divisor: Number(config.universe.fp_divisor) || 100,
+      };
+
+      const sortedShipDefs = Object.values(config.ships).sort((a, b) => a.sortOrder - b.sortOrder);
+
+      if (userPlanets.length === 0) {
+        return {
+          planets: [],
+          empireTotals: { shipsByType: [], totalShips: 0, totalFP: 0, totalCargo: 0 },
+          flagship: flagshipRow
+            ? { status: flagshipRow.status, planetId: flagshipRow.planetId, planetName: null }
+            : null,
+        };
+      }
+
+      const planetIds = userPlanets.map((p) => p.id);
+      const allShipsRows = await db
+        .select()
+        .from(planetShips)
+        .where(inArray(planetShips.planetId, planetIds));
+      const shipsByPlanet = new Map(allShipsRows.map((r) => [r.planetId, r]));
+
+      const empireShipCounts: Record<string, number> = {};
+
+      const planetsResult = userPlanets.map((p) => {
+        const shipsRow = shipsByPlanet.get(p.id);
+        const shipsList: { id: string; name: string; count: number; role: string | null; cargoCapacity: number }[] = [];
+        const fleet: Record<string, number> = {};
+        let totalShips = 0;
+        let totalCargo = 0;
+
+        for (const def of sortedShipDefs) {
+          const count = shipsRow ? Number((shipsRow as Record<string, unknown>)[def.countColumn] ?? 0) : 0;
+          if (count <= 0) continue;
+          shipsList.push({ id: def.id, name: def.name, count, role: def.role ?? null, cargoCapacity: def.cargoCapacity ?? 0 });
+          fleet[def.id] = count;
+          totalShips += count;
+          totalCargo += count * (def.cargoCapacity ?? 0);
+          empireShipCounts[def.id] = (empireShipCounts[def.id] ?? 0) + count;
+        }
+
+        const totalFP = computeFleetFP(fleet, unitCombatStats, fpConfig);
+        const hasFlagship =
+          !!flagshipRow && flagshipRow.status === 'active' && flagshipRow.planetId === p.id;
+
+        return {
+          id: p.id,
+          name: p.name,
+          galaxy: p.galaxy,
+          system: p.system,
+          position: p.position,
+          planetClassId: p.planetClassId,
+          planetImageIndex: p.planetImageIndex,
+          ships: shipsList,
+          totalShips,
+          totalCargo,
+          totalFP,
+          hasFlagship,
+        };
+      });
+
+      const shipsByType = sortedShipDefs
+        .filter((def) => (empireShipCounts[def.id] ?? 0) > 0)
+        .map((def) => ({
+          id: def.id,
+          name: def.name,
+          count: empireShipCounts[def.id] ?? 0,
+          role: def.role ?? null,
+        }));
+
+      const totalEmpireShips = Object.values(empireShipCounts).reduce((s, c) => s + c, 0);
+      const totalEmpireFP = computeFleetFP(empireShipCounts, unitCombatStats, fpConfig);
+      const totalEmpireCargo = planetsResult.reduce((s, p) => s + p.totalCargo, 0);
+
+      return {
+        planets: planetsResult,
+        empireTotals: {
+          shipsByType,
+          totalShips: totalEmpireShips,
+          totalFP: totalEmpireFP,
+          totalCargo: totalEmpireCargo,
+        },
+        flagship: flagshipRow
+          ? {
+              status: flagshipRow.status,
+              planetId: flagshipRow.planetId,
+              planetName: planetsResult.find((p) => p.id === flagshipRow.planetId)?.name ?? null,
+            }
+          : null,
+      };
     },
 
     async listDefenses(userId: string, planetId: string) {

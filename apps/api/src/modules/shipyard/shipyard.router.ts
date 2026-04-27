@@ -11,6 +11,11 @@ export function createShipyardRouter(shipyardService: ReturnType<typeof createSh
         return shipyardService.listShips(ctx.userId!, input.planetId);
       }),
 
+    empireOverview: protectedProcedure
+      .query(async ({ ctx }) => {
+        return shipyardService.empireOverview(ctx.userId!);
+      }),
+
     defenses: protectedProcedure
       .input(z.object({ planetId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
