@@ -48,6 +48,7 @@ export function BuildingUpgradeCard({
   onTimerComplete,
 }: BuildingUpgradeCardProps) {
   const nextLevel = currentLevel + 1;
+  const isConstruction = currentLevel === 0;
 
   const canAfford =
     resources.minerai >= nextLevelCost.minerai &&
@@ -64,7 +65,7 @@ export function BuildingUpgradeCard({
     return (
       <div className="w-full sm:w-64 shrink-0 rounded-xl border border-amber-500/40 bg-black/30 backdrop-blur-sm p-3 space-y-2 shadow-lg shadow-amber-500/5">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">Amélioration en cours</span>
+          <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">{isConstruction ? 'Construction en cours' : 'Amélioration en cours'}</span>
           <span className="text-[10px] font-mono text-muted-foreground">Niv. {currentLevel} → {nextLevel}</span>
         </div>
         <Timer
@@ -98,7 +99,7 @@ export function BuildingUpgradeCard({
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Amélioration</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{isConstruction ? 'Construction' : 'Amélioration'}</span>
         <span className="text-[10px] font-mono text-muted-foreground">Niv. {currentLevel} → {nextLevel}</span>
       </div>
 
@@ -135,7 +136,7 @@ export function BuildingUpgradeCard({
           disabled={!canAfford || isAnyUpgrading || upgradePending}
         >
           <ArrowUp className="h-3 w-3 mr-1" />
-          Améliorer
+          {isConstruction ? 'Construire' : 'Améliorer'}
         </Button>
       )}
     </div>

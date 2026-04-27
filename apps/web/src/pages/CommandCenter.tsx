@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useOutletContext, Link } from 'react-router';
-import { Layers, Home } from 'lucide-react';
+import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -17,6 +16,7 @@ import { ShipCard } from '@/components/shipyard/ShipCard';
 import { ShipMobileRow } from '@/components/shipyard/ShipMobileRow';
 import { CommandCenterHelp } from '@/components/command-center/CommandCenterHelp';
 import { getShipName } from '@/lib/entity-names';
+import { getAssetUrl } from '@/lib/assets';
 
 export default function CommandCenter() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -151,26 +151,53 @@ export default function CommandCenter() {
   // ── Locked state ──────────────────────────────────────────────────────
   if (buildings && commandCenterLevel < 1) {
     return (
-      <div className="space-y-4">
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/80 via-slate-950 to-purple-950/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
-              <Layers className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de commandement</h1>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.
-            </p>
-            <Link
-              to="/buildings"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Home className="h-3.5 w-3.5" />
-              Aller aux bâtiments
-            </Link>
-          </div>
+      <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)]">
+        <div className="absolute inset-0">
+          <img
+            src={getAssetUrl('buildings', 'commandCenter', 'full')}
+            alt=""
+            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+            decoding="async"
+            fetchPriority="low"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-slate-950/70 to-purple-950/50" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+
+        <div className="relative flex flex-col items-center px-5 py-12 lg:py-16 text-center">
+          <img
+            src={getAssetUrl('buildings', 'commandCenter', 'thumb')}
+            alt="Centre de commandement"
+            className="h-24 w-24 lg:h-28 lg:w-28 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 mb-5"
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de commandement</h1>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md">
+            Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.
+          </p>
+          {commandCenterBuilding && (
+            <BuildingUpgradeCard
+              currentLevel={commandCenterBuilding.currentLevel}
+              nextLevelCost={commandCenterBuilding.nextLevelCost}
+              nextLevelTime={commandCenterBuilding.nextLevelTime}
+              prerequisites={commandCenterBuilding.prerequisites as any}
+              isUpgrading={!!commandCenterBuilding.isUpgrading}
+              upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
+              resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+              buildingLevels={buildingLevels}
+              isAnyUpgrading={isAnyBuildingUpgrading}
+              upgradePending={upgradeMutation.isPending}
+              cancelPending={buildingCancelMutation.isPending}
+              gameConfig={gameConfig}
+              onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
+              onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
+              onTimerComplete={() => {
+                utils.building.list.invalidate({ planetId: planetId! });
+                utils.resource.production.invalidate({ planetId: planetId! });
+              }}
+            />
+          )}
         </div>
       </div>
     );
