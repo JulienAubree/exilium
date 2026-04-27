@@ -1,6 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router';
-import { FlaskConical, Home } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -21,6 +19,7 @@ import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/Pr
 import { cn } from '@/lib/utils';
 import { useTutorialTargetId } from '@/hooks/useTutorialHighlight';
 import { FacilityHero } from '@/components/common/FacilityHero';
+import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { ResearchActivePanel } from '@/components/research/ResearchActivePanel';
 import { ResearchRoleFilter, type ResearchFilter } from '@/components/research/ResearchRoleFilter';
@@ -152,28 +151,34 @@ export default function Research() {
   // ── Locked state (lab not built) ──────────────────────────────────────
   if (bonuses && labLevel < 1) {
     return (
-      <div className="space-y-4">
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/80 via-slate-950 to-purple-950/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
-              <FlaskConical className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Laboratoire de recherche</h1>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              Construisez le <span className="text-foreground font-semibold">Laboratoire de recherche</span> sur votre planète-mère pour démarrer le programme scientifique de votre empire.
-            </p>
-            <Link
-              to="/buildings"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Home className="h-3.5 w-3.5" />
-              Aller aux bâtiments
-            </Link>
-          </div>
-        </div>
-      </div>
+      <FacilityLockedHero
+        buildingId="researchLab"
+        title="Laboratoire de recherche"
+        description={<>Construisez le <span className="text-foreground font-semibold">Laboratoire de recherche</span> sur votre planète-mère pour démarrer le programme scientifique de votre empire.</>}
+      >
+        {researchLabBuilding && homePlanet && (
+          <BuildingUpgradeCard
+            currentLevel={researchLabBuilding.currentLevel}
+            nextLevelCost={researchLabBuilding.nextLevelCost}
+            nextLevelTime={researchLabBuilding.nextLevelTime}
+            prerequisites={researchLabBuilding.prerequisites as any}
+            isUpgrading={!!researchLabBuilding.isUpgrading}
+            upgradeEndTime={researchLabBuilding.upgradeEndTime ?? null}
+            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            buildingLevels={buildingLevels}
+            isAnyUpgrading={isAnyBuildingUpgrading}
+            upgradePending={upgradeMutation.isPending}
+            cancelPending={buildingCancelMutation.isPending}
+            gameConfig={gameConfig}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: homePlanet.id, buildingId: 'researchLab' as any })}
+            onCancel={() => buildingCancelMutation.mutate({ planetId: homePlanet.id })}
+            onTimerComplete={() => {
+              if (homePlanet.id) utils.building.list.invalidate({ planetId: homePlanet.id });
+              utils.resource.production.invalidate();
+            }}
+          />
+        )}
+      </FacilityLockedHero>
     );
   }
 

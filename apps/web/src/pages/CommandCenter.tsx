@@ -10,13 +10,13 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { FacilityHero } from '@/components/common/FacilityHero';
+import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
 import { FacilityQueue } from '@/components/common/FacilityQueue';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { ShipCard } from '@/components/shipyard/ShipCard';
 import { ShipMobileRow } from '@/components/shipyard/ShipMobileRow';
 import { CommandCenterHelp } from '@/components/command-center/CommandCenterHelp';
 import { getShipName } from '@/lib/entity-names';
-import { getAssetUrl } from '@/lib/assets';
 
 export default function CommandCenter() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
@@ -151,55 +151,34 @@ export default function CommandCenter() {
   // ── Locked state ──────────────────────────────────────────────────────
   if (buildings && commandCenterLevel < 1) {
     return (
-      <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)]">
-        <div className="absolute inset-0">
-          <img
-            src={getAssetUrl('buildings', 'commandCenter', 'full')}
-            alt=""
-            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
-            decoding="async"
-            fetchPriority="low"
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+      <FacilityLockedHero
+        buildingId="commandCenter"
+        title="Centre de commandement"
+        description={<>Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.</>}
+      >
+        {commandCenterBuilding && (
+          <BuildingUpgradeCard
+            currentLevel={commandCenterBuilding.currentLevel}
+            nextLevelCost={commandCenterBuilding.nextLevelCost}
+            nextLevelTime={commandCenterBuilding.nextLevelTime}
+            prerequisites={commandCenterBuilding.prerequisites as any}
+            isUpgrading={!!commandCenterBuilding.isUpgrading}
+            upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
+            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            buildingLevels={buildingLevels}
+            isAnyUpgrading={isAnyBuildingUpgrading}
+            upgradePending={upgradeMutation.isPending}
+            cancelPending={buildingCancelMutation.isPending}
+            gameConfig={gameConfig}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
+            onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
+            onTimerComplete={() => {
+              utils.building.list.invalidate({ planetId: planetId! });
+              utils.resource.production.invalidate({ planetId: planetId! });
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-slate-950/70 to-purple-950/50" />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-
-        <div className="relative flex flex-col items-center px-5 py-12 lg:py-16 text-center">
-          <img
-            src={getAssetUrl('buildings', 'commandCenter', 'thumb')}
-            alt="Centre de commandement"
-            className="h-24 w-24 lg:h-28 lg:w-28 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 mb-5"
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-          />
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de commandement</h1>
-          <p className="text-sm text-muted-foreground mb-6 max-w-md">
-            Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.
-          </p>
-          {commandCenterBuilding && (
-            <BuildingUpgradeCard
-              currentLevel={commandCenterBuilding.currentLevel}
-              nextLevelCost={commandCenterBuilding.nextLevelCost}
-              nextLevelTime={commandCenterBuilding.nextLevelTime}
-              prerequisites={commandCenterBuilding.prerequisites as any}
-              isUpgrading={!!commandCenterBuilding.isUpgrading}
-              upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
-              resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
-              buildingLevels={buildingLevels}
-              isAnyUpgrading={isAnyBuildingUpgrading}
-              upgradePending={upgradeMutation.isPending}
-              cancelPending={buildingCancelMutation.isPending}
-              gameConfig={gameConfig}
-              onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
-              onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
-              onTimerComplete={() => {
-                utils.building.list.invalidate({ planetId: planetId! });
-                utils.resource.production.invalidate({ planetId: planetId! });
-              }}
-            />
-          )}
-        </div>
-      </div>
+        )}
+      </FacilityLockedHero>
     );
   }
 

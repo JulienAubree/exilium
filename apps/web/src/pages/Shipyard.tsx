@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useOutletContext, Link } from 'react-router';
-import { Lock, Home } from 'lucide-react';
+import { useOutletContext } from 'react-router';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -11,6 +10,7 @@ import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ShipDetailContent } from '@/components/entity-details/ShipDetailContent';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { FacilityHero } from '@/components/common/FacilityHero';
+import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
 import { FacilityQueue } from '@/components/common/FacilityQueue';
 import { getShipName } from '@/lib/entity-names';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
@@ -152,29 +152,36 @@ export default function Shipyard() {
 
   // ── Locked (shipyard not built) ───────────────────────────────────────
   if (buildings && shipyardLevel < 1) {
+    const isAnyBuildingUpgrading = buildings.some((b) => b.isUpgrading);
     return (
-      <div className="space-y-4">
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/80 via-slate-950 to-purple-950/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
-              <Lock className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Chantier spatial</h1>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              Construisez le <span className="text-foreground font-semibold">Chantier spatial</span> pour assembler les vaisseaux industriels de votre empire.
-            </p>
-            <Link
-              to="/buildings"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Home className="h-3.5 w-3.5" />
-              Aller aux bâtiments
-            </Link>
-          </div>
-        </div>
-      </div>
+      <FacilityLockedHero
+        buildingId="shipyard"
+        title="Chantier spatial"
+        description={<>Construisez le <span className="text-foreground font-semibold">Chantier spatial</span> pour assembler les vaisseaux industriels de votre empire.</>}
+      >
+        {shipyardBuilding && (
+          <BuildingUpgradeCard
+            currentLevel={shipyardBuilding.currentLevel}
+            nextLevelCost={shipyardBuilding.nextLevelCost}
+            nextLevelTime={shipyardBuilding.nextLevelTime}
+            prerequisites={shipyardBuilding.prerequisites as any}
+            isUpgrading={!!shipyardBuilding.isUpgrading}
+            upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
+            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            buildingLevels={buildingLevels}
+            isAnyUpgrading={isAnyBuildingUpgrading}
+            upgradePending={upgradeMutation.isPending}
+            cancelPending={buildingCancelMutation.isPending}
+            gameConfig={gameConfig}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })}
+            onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
+            onTimerComplete={() => {
+              utils.building.list.invalidate({ planetId: planetId! });
+              utils.resource.production.invalidate({ planetId: planetId! });
+            }}
+          />
+        )}
+      </FacilityLockedHero>
     );
   }
 
