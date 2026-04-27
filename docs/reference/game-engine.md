@@ -1,5 +1,5 @@
 > **⚠️ Doc partiellement obsolète** — état au 2026-04-27 :
-> - **Section 6 (Combat)** : entièrement remplacée par la [refonte du 2026-04-25](../patchnotes/2026-04-25-refonte-combat.md) — multi-batteries, catégories Léger/Moyen/Lourd, traits Rafale/Enchaînement. Voir aussi [`reference/combat.md`](combat.md).
+> - **Section 6 (Combat)** : entièrement remplacée par la refonte du 2026-04-25. Voir [`reference/combat.md`](combat.md) pour la doc à jour.
 > - **Sections 2-3 (Bâtiments/Recherches), formules de temps** : la formule documentée `(M+C)/(divisor*(1+level))*3600` ignore le **phase multiplier** appliqué dans `packages/game-engine/src/formulas/{building,research,shipyard}-cost.ts`. Aux premiers niveaux (1-2), la phase divise encore le temps (~×0.35), c'est pourquoi en pratique les premiers niveaux sont 3-4× plus rapides que la formule simple ne le laisse penser.
 > - **Section 2 (Emplacements)** : la formule `floor((diametre/1000)^2)` n'est **pas implémentée** dans le code — toutes les planètes peuvent construire sans limite de cases. À supprimer ou implémenter.
 > - **Système de bonus** : les bâtiments utilisent `1/(1+level)` (diminishing returns), les recherches `1+(pct/100)*level` (linéaire). Voir [`reference/game-mechanics.md` section 5](game-mechanics.md#5-systeme-de-bonus).
