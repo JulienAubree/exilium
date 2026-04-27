@@ -10,7 +10,9 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 import { AbandonColonyModal, type AbandonModalPlanet } from '@/components/empire/AbandonColonyModal';
 import { ShipChipPopover } from '@/components/empire/ShipChipPopover';
+import { SendFleetOverlay } from '@/components/empire/SendFleetOverlay';
 import type { EmpireViewMode, PlanetFleetData } from '@/components/empire/empire-types';
+import { Send } from 'lucide-react';
 
 interface EmpirePlanet {
   id: string;
@@ -57,6 +59,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
   const hasAttack = !!planet.inboundAttack;
   const [menuOpen, setMenuOpen] = useState(false);
   const [abandonOpen, setAbandonOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const canAbandon = planet.planetClassId !== 'homeworld' && planet.status === 'active';
 
@@ -234,41 +237,60 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
           })}
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => goTo('/fleet/stationed')}
-          className="mx-3.5 mb-2.5 rounded-lg border border-border/30 bg-background/30 p-2 text-left transition-colors hover:bg-background/50 hover:border-border/60"
-        >
+        <div className="mx-3.5 mb-2.5 rounded-lg border border-border/30 bg-background/30 p-2">
           <div className="flex items-center justify-between gap-2 mb-1.5 text-[10px]">
-            <span className="uppercase tracking-wider text-muted-foreground font-semibold">Flotte stationnée</span>
+            <button
+              type="button"
+              onClick={() => goTo('/fleet/stationed')}
+              className="flex-1 text-left uppercase tracking-wider text-muted-foreground font-semibold hover:text-foreground transition-colors"
+            >
+              Flotte stationnée
+            </button>
             {fleet && fleet.totalShips > 0 ? (
               <span className="flex items-center gap-2 text-muted-foreground">
                 <span><strong className="font-mono text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</strong> vsx</span>
                 <span>FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
+                {allPlanets.filter((p) => p.id !== planet.id && p.status === 'active').length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSendOpen(true)}
+                    className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                    title="Envoyer une flotte vers une autre planète"
+                  >
+                    <Send className="h-3 w-3" />
+                    Envoyer
+                  </button>
+                )}
               </span>
             ) : (
               <span className="text-muted-foreground/60 italic">vide</span>
             )}
           </div>
           {fleet && fleet.ships.length > 0 ? (
-            <div className="grid grid-cols-3 gap-1">
-              {fleet.ships.map((s) => (
-                <ShipChipPopover
-                  key={s.id}
-                  shipId={s.id}
-                  name={s.name}
-                  count={s.count}
-                  cargoCapacity={s.cargoCapacity}
-                  role={s.role}
-                />
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => goTo('/fleet/stationed')}
+              className="block w-full text-left"
+            >
+              <div className="grid grid-cols-3 gap-1">
+                {fleet.ships.map((s) => (
+                  <ShipChipPopover
+                    key={s.id}
+                    shipId={s.id}
+                    name={s.name}
+                    count={s.count}
+                    cargoCapacity={s.cargoCapacity}
+                    role={s.role}
+                  />
+                ))}
+              </div>
+            </button>
           ) : (
             <div className="rounded border border-dashed border-border/30 py-2 text-center text-[10px] text-muted-foreground/60">
               Aucun vaisseau stationné
             </div>
           )}
-        </button>
+        </div>
       )}
 
       {/* Status badges */}
@@ -363,6 +385,26 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         allPlanets={allPlanets}
         open={abandonOpen}
         onOpenChange={setAbandonOpen}
+      />
+    )}
+    {fleet && (
+      <SendFleetOverlay
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        originPlanetId={planet.id}
+        originName={planet.name}
+        availableShips={fleet.ships}
+        availablePlanets={allPlanets
+          .filter((p) => p.id !== planet.id && p.status === 'active')
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            galaxy: p.galaxy,
+            system: p.system,
+            position: p.position,
+            planetClassId: p.planetClassId,
+            planetImageIndex: null,
+          }))}
       />
     )}
     </>
