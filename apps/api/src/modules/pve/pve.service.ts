@@ -77,10 +77,15 @@ export function createPveService(
      *  - gaseous   → +2% / lvl on hydrogene mining loot
      *  - temperate → +1% / lvl on each of the three mining resources
      *  - glacial   → +2% / lvl on pirate combat loot (all three resources)
+     *
+     * Diversity bonus: the sum of per-biome bonuses is multiplied by
+     * (1 + 0.05 × number of distinct biomes hosting at least one relay).
+     * Reaching 5 distinct biomes yields a ×1.25 multiplier on every relay bonus.
+     *
      * Returned values are additive percentages (0.04 = +4%).
      */
     async getMissionRelayBonuses(userId: string): Promise<{
-      minerai: number; silicium: number; hydrogene: number; pirate: number;
+      minerai: number; silicium: number; hydrogene: number; pirate: number; diversityMult: number;
     }> {
       const rows = await db.execute(sql`
         SELECT p.planet_class_id AS biome, pb.level AS level
@@ -91,21 +96,31 @@ export function createPveService(
       `) as Array<{ biome: string | null; level: number }>;
 
       const bonuses = { minerai: 0, silicium: 0, hydrogene: 0, pirate: 0 };
+      const distinctBiomes = new Set<string>();
       for (const row of rows) {
         const lvl = Number(row.level) || 0;
+        if (lvl <= 0 || !row.biome) continue;
         switch (row.biome) {
-          case 'volcanic':  bonuses.minerai   += 0.02 * lvl; break;
-          case 'arid':      bonuses.silicium  += 0.02 * lvl; break;
-          case 'gaseous':   bonuses.hydrogene += 0.02 * lvl; break;
+          case 'volcanic':  bonuses.minerai   += 0.02 * lvl; distinctBiomes.add('volcanic');  break;
+          case 'arid':      bonuses.silicium  += 0.02 * lvl; distinctBiomes.add('arid');      break;
+          case 'gaseous':   bonuses.hydrogene += 0.02 * lvl; distinctBiomes.add('gaseous');   break;
           case 'temperate':
             bonuses.minerai   += 0.01 * lvl;
             bonuses.silicium  += 0.01 * lvl;
             bonuses.hydrogene += 0.01 * lvl;
+            distinctBiomes.add('temperate');
             break;
-          case 'glacial':   bonuses.pirate    += 0.02 * lvl; break;
+          case 'glacial':   bonuses.pirate    += 0.02 * lvl; distinctBiomes.add('glacial');   break;
         }
       }
-      return bonuses;
+      const diversityMult = 1 + 0.05 * distinctBiomes.size;
+      return {
+        minerai:   bonuses.minerai   * diversityMult,
+        silicium:  bonuses.silicium  * diversityMult,
+        hydrogene: bonuses.hydrogene * diversityMult,
+        pirate:    bonuses.pirate    * diversityMult,
+        diversityMult,
+      };
     },
 
     async startMission(missionId: string) {
