@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { PlanetSelectorDropdown } from './topbar/PlanetSelectorDropdown';
 import { TopBarActions } from './topbar/TopBarActions';
+import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 import {
   OverviewIcon,
   ResourcesIcon,
@@ -167,6 +168,9 @@ export function PlanetSubnav() {
               colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
               icon={<EnergieIcon size={14} />}
             />
+            {activePlanetId && (
+              <ImportResourcesButton targetPlanetId={activePlanetId} size="sm" />
+            )}
           </div>
         </div>
 

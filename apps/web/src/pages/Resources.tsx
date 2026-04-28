@@ -19,7 +19,6 @@ import { BuildingDetailContent } from '@/components/entity-details/BuildingDetai
 import { ResourcesHelp } from '@/components/resources/ResourcesHelp';
 import { ResourceCard } from '@/components/resources/ResourceCard';
 import { EnergyCard } from '@/components/resources/EnergyCard';
-import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { BuildingsList } from './Buildings';
@@ -179,24 +178,15 @@ export default function Resources() {
             </button>
 
             <div className="flex-1 min-w-0 pt-1">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Ressources</h1>
-                  {activePlanet && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      <span className="text-foreground font-medium">{activePlanet.name}</span>
-                      <span className="ml-1.5 font-mono text-primary/70">
-                        [{activePlanet.galaxy}:{activePlanet.system}:{activePlanet.position}]
-                      </span>
-                    </p>
-                  )}
-                </div>
-                {planetId && (
-                  <div className="hidden lg:block shrink-0">
-                    <ImportResourcesButton targetPlanetId={planetId} />
-                  </div>
-                )}
-              </div>
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">Ressources</h1>
+              {activePlanet && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  <span className="text-foreground font-medium">{activePlanet.name}</span>
+                  <span className="ml-1.5 font-mono text-primary/70">
+                    [{activePlanet.galaxy}:{activePlanet.system}:{activePlanet.position}]
+                  </span>
+                </p>
+              )}
 
               <BuildingQueuePanel
                 upgradingBuilding={upgradingBuilding}
