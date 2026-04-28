@@ -290,7 +290,7 @@ export default function Infrastructures() {
 
       {/* Content */}
       <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr gap-3 lg:gap-4">
           {slots.map((slot) => (
             <InfrastructureCard
               key={slot.id + (slot.locked ? '-locked' : '')}
