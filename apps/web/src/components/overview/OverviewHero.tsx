@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, HelpCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FlagshipIcon } from '@/lib/icons';
@@ -178,18 +178,26 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
         <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
           <div className="flex items-start gap-5">
             {/* Thumbnail — clickable for detail overlay */}
-            <button type="button" onClick={() => setShowDetail(true)} className="shrink-0 cursor-pointer group">
+            <button
+              type="button"
+              onClick={() => setShowDetail(true)}
+              className="relative group shrink-0"
+              title="Voir les détails de la planète"
+            >
               {planet.planetClassId && planet.planetImageIndex != null ? (
                 <img
                   src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
                   alt={planet.name}
-                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-primary/10 transition-all group-hover:ring-2 group-hover:ring-primary/40 group-hover:shadow-primary/20"
+                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-primary/10 transition-opacity group-hover:opacity-80"
                 />
               ) : (
                 <div className="flex h-20 w-20 lg:h-24 lg:w-24 items-center justify-center rounded-full border-2 border-primary/30 bg-card text-2xl font-bold text-primary shadow-lg shadow-primary/10">
                   {planet.name.charAt(0)}
                 </div>
               )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                <HelpCircle className="h-5 w-5 text-white" />
+              </div>
             </button>
 
             {/* Title + info */}

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
+import { HelpCircle } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { estimateRefund } from '@/lib/refund';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -99,19 +100,22 @@ export default function Resources() {
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
+              className="relative group shrink-0"
               title="Comment fonctionnent les ressources ?"
-              className="shrink-0 group cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400/50"
             >
               {planetThumb ? (
                 <img
                   src={planetThumb}
                   alt={activePlanet?.name ?? ''}
-                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/15 transition-all group-hover:ring-2 group-hover:ring-amber-400/50 group-hover:shadow-amber-500/30"
+                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/15 transition-opacity group-hover:opacity-80"
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                 />
               ) : (
-                <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 bg-card/60 shadow-lg shadow-amber-500/10 transition-all group-hover:ring-2 group-hover:ring-amber-400/50" />
+                <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 bg-card/60 shadow-lg shadow-amber-500/10" />
               )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                <HelpCircle className="h-5 w-5 text-white" />
+              </div>
             </button>
 
             <div className="flex-1 min-w-0 pt-1">
