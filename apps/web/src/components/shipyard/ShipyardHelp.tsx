@@ -4,11 +4,12 @@ import { ClockIcon } from '@/components/icons/utility-icons';
 
 interface ShipyardHelpProps {
   level: number;
+  planetClassId?: string | null;
 }
 
-export function ShipyardHelp({ level }: ShipyardHelpProps) {
+export function ShipyardHelp({ level, planetClassId }: ShipyardHelpProps) {
   return (
-    <FacilityHelp buildingId="shipyard" level={level}>
+    <FacilityHelp buildingId="shipyard" level={level} planetClassId={planetClassId}>
       <FacilityHelpSection
         icon={<LayoutGrid className="h-3.5 w-3.5 text-cyan-400" />}
         title="Rôles de mission"

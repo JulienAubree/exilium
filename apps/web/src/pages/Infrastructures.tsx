@@ -355,7 +355,7 @@ export default function Infrastructures() {
         onClose={() => setHelpOpen(false)}
         title="Infrastructures"
       >
-        <InfrastructuresHelp />
+        <InfrastructuresHelp planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       {/* Detail overlay */}

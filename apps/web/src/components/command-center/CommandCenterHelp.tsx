@@ -4,11 +4,12 @@ import { ClockIcon } from '@/components/icons/utility-icons';
 
 interface CommandCenterHelpProps {
   level: number;
+  planetClassId?: string | null;
 }
 
-export function CommandCenterHelp({ level }: CommandCenterHelpProps) {
+export function CommandCenterHelp({ level, planetClassId }: CommandCenterHelpProps) {
   return (
-    <FacilityHelp buildingId="commandCenter" level={level}>
+    <FacilityHelp buildingId="commandCenter" level={level} planetClassId={planetClassId}>
       <FacilityHelpSection
         icon={<Layers className="h-3.5 w-3.5 text-cyan-400" />}
         title="Rôle"

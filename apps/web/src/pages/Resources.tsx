@@ -378,7 +378,7 @@ export default function Resources() {
         onClose={() => setHelpOpen(false)}
         title="Ressources"
       >
-        <ResourcesHelp />
+        <ResourcesHelp planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       {/* Building detail overlay */}

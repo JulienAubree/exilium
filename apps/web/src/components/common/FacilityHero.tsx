@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { HelpCircle } from 'lucide-react';
-import { getAssetUrl, getPlanetImageUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl, getPlanetImageUrl } from '@/lib/assets';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface FacilityHeroProps {
   buildingId: string;
@@ -25,6 +26,7 @@ export function FacilityHero({
   upgradeCard,
   children,
 }: FacilityHeroProps) {
+  const { data: gameConfig } = useGameConfig();
   const hasPlanetImage = !!planetClassId && planetImageIndex != null;
   return (
     <div className="relative overflow-hidden">
@@ -40,7 +42,7 @@ export function FacilityHero({
           />
         ) : (
           <img
-            src={getAssetUrl('buildings', buildingId, 'thumb')}
+            src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'thumb')}
             alt=""
             className="h-full w-full object-cover opacity-40 blur-sm scale-110"
             decoding="async"
@@ -62,7 +64,7 @@ export function FacilityHero({
               title={helpTitle ?? `Comment fonctionne ${title} ?`}
             >
               <img
-                src={getAssetUrl('buildings', buildingId, 'thumb')}
+                src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'thumb')}
                 alt={title}
                 className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 transition-opacity group-hover:opacity-80"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

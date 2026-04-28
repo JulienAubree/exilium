@@ -3,11 +3,12 @@ import { FacilityHelp, FacilityHelpSection } from '@/components/common/FacilityH
 
 interface ArsenalHelpProps {
   level: number;
+  planetClassId?: string | null;
 }
 
-export function ArsenalHelp({ level }: ArsenalHelpProps) {
+export function ArsenalHelp({ level, planetClassId }: ArsenalHelpProps) {
   return (
-    <FacilityHelp buildingId="arsenal" level={level}>
+    <FacilityHelp buildingId="arsenal" level={level} planetClassId={planetClassId}>
       <FacilityHelpSection
         icon={<Shield className="h-3.5 w-3.5 text-cyan-400" />}
         title="Rôle"

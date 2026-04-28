@@ -181,6 +181,7 @@ export default function Defense() {
       <FacilityLockedHero
         buildingId="arsenal"
         title="Arsenal planétaire"
+        planetClassId={planetClassId}
         description={<>Construisez l'<span className="text-foreground font-semibold">Arsenal planétaire</span> pour produire les défenses qui protègent votre colonie.</>}
       >
         {arsenalBuilding && (
@@ -525,7 +526,7 @@ export default function Defense() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Arsenal planétaire">
-        <ArsenalHelp level={arsenalLevel} />
+        <ArsenalHelp level={arsenalLevel} planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       <ConfirmDialog

@@ -1,6 +1,7 @@
 import { Pickaxe, Zap, Database, Hammer, XCircle } from 'lucide-react';
 import { FacilityHelpSection } from '@/components/common/FacilityHelp';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 /**
  * Aide pédagogique de la page Ressources : explique la production, le stockage,
@@ -10,12 +11,13 @@ import { getAssetUrl } from '@/lib/assets';
  * bâtiments (mines, centrale solaire, entrepôts) — pas de "niveau" unique
  * à afficher dans le header.
  */
-export function ResourcesHelp() {
+export function ResourcesHelp({ planetClassId }: { planetClassId?: string | null } = {}) {
+  const { data: gameConfig } = useGameConfig();
   return (
     <>
       <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
         <img
-          src={getAssetUrl('buildings', 'mineraiMine')}
+          src={getBuildingIllustrationUrl(gameConfig, 'mineraiMine', planetClassId)}
           alt=""
           className="w-full h-40 object-cover"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

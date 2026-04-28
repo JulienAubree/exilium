@@ -19,7 +19,7 @@ import { CommandCenterHelp } from '@/components/command-center/CommandCenterHelp
 import { getShipName } from '@/lib/entity-names';
 
 export default function CommandCenter() {
-  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const tutorialTargetId = useTutorialTargetId();
@@ -154,6 +154,7 @@ export default function CommandCenter() {
       <FacilityLockedHero
         buildingId="commandCenter"
         title="Centre de commandement"
+        planetClassId={planetClassId}
         description={<>Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.</>}
       >
         {commandCenterBuilding && (
@@ -322,7 +323,7 @@ export default function CommandCenter() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Centre de commandement">
-        <CommandCenterHelp level={commandCenterLevel} />
+        <CommandCenterHelp level={commandCenterLevel} planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       <ConfirmDialog

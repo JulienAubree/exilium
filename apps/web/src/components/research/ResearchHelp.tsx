@@ -3,11 +3,12 @@ import { FlaskConical, LayoutGrid, Activity, Zap, Home, XCircle } from 'lucide-r
 
 interface ResearchHelpProps {
   level: number;
+  planetClassId?: string | null;
 }
 
-export function ResearchHelp({ level }: ResearchHelpProps) {
+export function ResearchHelp({ level, planetClassId }: ResearchHelpProps) {
   return (
-    <FacilityHelp buildingId="researchLab" level={level}>
+    <FacilityHelp buildingId="researchLab" level={level} planetClassId={planetClassId}>
       <FacilityHelpSection
         icon={
           <FlaskConical className="h-3.5 w-3.5 text-violet-400" />

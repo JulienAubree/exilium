@@ -168,6 +168,7 @@ export default function Research() {
       <FacilityLockedHero
         buildingId={annex?.id ?? 'researchLab'}
         title={annex ? annex.name : 'Recherche'}
+        planetClassId={currentPlanet?.planetClassId}
         description={
           annex ? (
             <>Le programme scientifique principal s'exécute depuis votre <span className="text-foreground font-semibold">planète-mère</span>. Cette colonie peut héberger une annexe spécialisée qui boostera l'ensemble de votre recherche.</>
@@ -219,6 +220,7 @@ export default function Research() {
       <FacilityLockedHero
         buildingId="researchLab"
         title="Laboratoire de recherche"
+        planetClassId={homePlanet?.planetClassId}
         description={<>Construisez le <span className="text-foreground font-semibold">Laboratoire de recherche</span> sur votre planète-mère pour démarrer le programme scientifique de votre empire.</>}
       >
         {researchLabBuilding && homePlanet && (
@@ -505,7 +507,7 @@ export default function Research() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Laboratoire de recherche">
-        <ResearchHelp level={labLevel} />
+        <ResearchHelp level={labLevel} planetClassId={homePlanet?.planetClassId} />
       </EntityDetailOverlay>
 
       <ConfirmDialog

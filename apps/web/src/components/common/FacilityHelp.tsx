@@ -1,19 +1,22 @@
 import type { ReactNode } from 'react';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface FacilityHelpProps {
   buildingId: string;
   level: number;
+  planetClassId?: string | null;
   /** Organized sections, typically via <FacilityHelpSection />. */
   children: ReactNode;
 }
 
-export function FacilityHelp({ buildingId, level, children }: FacilityHelpProps) {
+export function FacilityHelp({ buildingId, level, planetClassId, children }: FacilityHelpProps) {
+  const { data: gameConfig } = useGameConfig();
   return (
     <>
       <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
         <img
-          src={getAssetUrl('buildings', buildingId)}
+          src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId)}
           alt=""
           className="w-full h-40 object-cover"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

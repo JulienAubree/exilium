@@ -10,7 +10,7 @@ import { ResourceMyOffers } from '@/components/market/ResourceMyOffers';
 import { MarketReportsBuy } from '@/components/market/MarketReportsBuy';
 import { MarketReportsInventory } from '@/components/market/MarketReportsInventory';
 import { cn } from '@/lib/utils';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { KpiTile } from '@/components/common/KpiTile';
 import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
@@ -61,7 +61,7 @@ function resolveInitialFilter(param: string | null, viewParam: string | null): M
 // ─────────────────────────────────────────────────────────────────────
 
 export default function Market() {
-  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const { data: gameConfig } = useGameConfig();
   const [searchParams] = useSearchParams();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -158,6 +158,7 @@ export default function Market() {
       <FacilityLockedHero
         buildingId="galacticMarket"
         title="Marché Galactique"
+        planetClassId={planetClassId}
         description={<>Construisez le <span className="text-foreground font-semibold">Marché Galactique</span> sur cette planète pour échanger des ressources et des rapports d'exploration avec les autres joueurs.</>}
       >
         {marketBuilding && (
@@ -194,7 +195,7 @@ export default function Market() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={getAssetUrl('buildings', 'galacticMarket')}
+            src={getBuildingIllustrationUrl(gameConfig, 'galacticMarket', planetClassId)}
             alt=""
             className="h-full w-full object-cover opacity-40 blur-sm scale-110"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -212,7 +213,7 @@ export default function Market() {
               title="Comment fonctionne le marche ?"
             >
               <img
-                src={getAssetUrl('buildings', 'galacticMarket', 'thumb')}
+                src={getBuildingIllustrationUrl(gameConfig, 'galacticMarket', planetClassId, 'thumb')}
                 alt="Marche Galactique"
                 className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 transition-opacity group-hover:opacity-80"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -345,7 +346,7 @@ export default function Market() {
         {/* Hero image */}
         <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
           <img
-            src={getAssetUrl('buildings', 'galacticMarket')}
+            src={getBuildingIllustrationUrl(gameConfig, 'galacticMarket', planetClassId)}
             alt=""
             className="w-full h-40 object-cover"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

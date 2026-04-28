@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface FacilityLockedHeroProps {
   buildingId: string;
   title: string;
   description: ReactNode;
+  planetClassId?: string | null;
   children?: ReactNode;
 }
 
@@ -12,13 +14,15 @@ export function FacilityLockedHero({
   buildingId,
   title,
   description,
+  planetClassId,
   children,
 }: FacilityLockedHeroProps) {
+  const { data: gameConfig } = useGameConfig();
   return (
     <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)]">
       <div className="absolute inset-0">
         <img
-          src={getAssetUrl('buildings', buildingId, 'full')}
+          src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'full')}
           alt=""
           className="h-full w-full object-cover opacity-40 blur-sm scale-110"
           decoding="async"
@@ -31,7 +35,7 @@ export function FacilityLockedHero({
 
       <div className="relative flex flex-col items-center px-5 py-12 lg:py-16 text-center">
         <img
-          src={getAssetUrl('buildings', buildingId, 'thumb')}
+          src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'thumb')}
           alt={title}
           className="h-24 w-24 lg:h-28 lg:w-28 rounded-full border-2 border-primary/30 object-cover shadow-lg shadow-cyan-500/10 mb-5"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

@@ -8,7 +8,7 @@ import { Timer } from '@/components/common/Timer';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
 
 const fmt = (n: number) => Number(n).toLocaleString('fr-FR');
 
@@ -152,7 +152,7 @@ export default function Missions() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={getAssetUrl('buildings', 'missionCenter')}
+            src={getBuildingIllustrationUrl(gameConfig, 'missionCenter', 'homeworld')}
             alt=""
             className="h-full w-full object-cover opacity-40 blur-sm scale-110"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -170,7 +170,7 @@ export default function Missions() {
               title="Comment fonctionnent les missions ?"
             >
               <img
-                src={getAssetUrl('buildings', 'missionCenter', 'thumb')}
+                src={getBuildingIllustrationUrl(gameConfig, 'missionCenter', 'homeworld', 'thumb')}
                 alt="Centre de missions"
                 className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/10 transition-opacity group-hover:opacity-80"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -513,7 +513,7 @@ export default function Missions() {
         {/* Hero image */}
         <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
           <img
-            src={getAssetUrl('buildings', 'missionCenter')}
+            src={getBuildingIllustrationUrl(gameConfig, 'missionCenter', 'homeworld')}
             alt=""
             className="w-full h-40 object-cover"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

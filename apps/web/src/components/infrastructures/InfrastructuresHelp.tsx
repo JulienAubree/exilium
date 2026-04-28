@@ -1,18 +1,20 @@
 import { Wrench, FlaskConical, Compass, Coins, Crown, Shield } from 'lucide-react';
 import { FacilityHelpSection } from '@/components/common/FacilityHelp';
-import { getAssetUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
+import { useGameConfig } from '@/hooks/useGameConfig';
 
 /**
  * Aide pédagogique de la page Infrastructures : présente les 6 piliers
  * d'une planète (industrie, recherche, exploration, commerce, gouvernance,
  * défense) et leur rôle.
  */
-export function InfrastructuresHelp() {
+export function InfrastructuresHelp({ planetClassId }: { planetClassId?: string | null } = {}) {
+  const { data: gameConfig } = useGameConfig();
   return (
     <>
       <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
         <img
-          src={getAssetUrl('buildings', 'imperialPowerCenter')}
+          src={getBuildingIllustrationUrl(gameConfig, 'imperialPowerCenter', planetClassId)}
           alt=""
           className="w-full h-40 object-cover"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

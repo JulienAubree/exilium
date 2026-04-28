@@ -21,7 +21,7 @@ import { ShipyardHelp } from '@/components/shipyard/ShipyardHelp';
 import { SHIPYARD_ROLES, SHIPYARD_ROLE_MAP, type ShipyardRoleId } from '@/components/shipyard/role-icons';
 
 export default function Shipyard() {
-  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const tutorialTargetId = useTutorialTargetId();
@@ -157,6 +157,7 @@ export default function Shipyard() {
       <FacilityLockedHero
         buildingId="shipyard"
         title="Chantier spatial"
+        planetClassId={planetClassId}
         description={<>Construisez le <span className="text-foreground font-semibold">Chantier spatial</span> pour assembler les vaisseaux industriels de votre empire.</>}
       >
         {shipyardBuilding && (
@@ -363,7 +364,7 @@ export default function Shipyard() {
 
       {/* Help overlay */}
       <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Chantier spatial">
-        <ShipyardHelp level={shipyardLevel} />
+        <ShipyardHelp level={shipyardLevel} planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       {/* Cancel confirm */}
