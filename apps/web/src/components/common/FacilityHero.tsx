@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { HelpCircle } from 'lucide-react';
-import { getBuildingIllustrationUrl, getPlanetImageUrl } from '@/lib/assets';
+import { getBuildingIllustrationUrl } from '@/lib/assets';
 import { useGameConfig } from '@/hooks/useGameConfig';
 
 interface FacilityHeroProps {
@@ -8,6 +8,8 @@ interface FacilityHeroProps {
   title: string;
   level: number;
   planetClassId?: string | null;
+  /** Kept for backwards compat with callers — ignored: the hero always uses
+   *  the building illustration as backdrop for an immersive look. */
   planetImageIndex?: number | null;
   helpTitle?: string;
   onOpenHelp: () => void;
@@ -20,36 +22,23 @@ export function FacilityHero({
   title,
   level,
   planetClassId,
-  planetImageIndex,
   helpTitle,
   onOpenHelp,
   upgradeCard,
   children,
 }: FacilityHeroProps) {
   const { data: gameConfig } = useGameConfig();
-  const hasPlanetImage = !!planetClassId && planetImageIndex != null;
   return (
     <div className="relative overflow-hidden">
       <div className="absolute inset-0">
-        {hasPlanetImage ? (
-          <img
-            src={getPlanetImageUrl(planetClassId!, planetImageIndex!, 'thumb')}
-            alt=""
-            className="h-full w-full object-cover opacity-50 blur-sm scale-110"
-            decoding="async"
-            fetchPriority="low"
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-          />
-        ) : (
-          <img
-            src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'thumb')}
-            alt=""
-            className="h-full w-full object-cover opacity-40 blur-sm scale-110"
-            decoding="async"
-            fetchPriority="low"
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-          />
-        )}
+        <img
+          src={getBuildingIllustrationUrl(gameConfig, buildingId, planetClassId, 'full')}
+          alt=""
+          className="h-full w-full object-cover opacity-40 blur-sm scale-110"
+          decoding="async"
+          fetchPriority="low"
+          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+        />
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-slate-950/70 to-purple-950/50" />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
