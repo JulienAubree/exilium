@@ -4,10 +4,9 @@ import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { usePlanetStore } from '@/stores/planet.store';
 import { KpiTile } from '@/components/common/KpiTile';
-import { Timer } from '@/components/common/Timer';
-import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
+import { BuildingQueuePanel } from '@/components/common/BuildingQueuePanel';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { getPlanetImageUrl } from '@/lib/assets';
@@ -135,6 +134,17 @@ export default function Resources() {
               <p className="text-xs text-muted-foreground/70 mt-2 max-w-lg leading-relaxed hidden lg:block">
                 Extraction (mines), production d&apos;énergie (centrale solaire) et stockage de la planète sélectionnée.
               </p>
+
+              {/* Compact construction queue, same visual language as ResearchActivePanel */}
+              <BuildingQueuePanel
+                upgradingBuilding={upgradingBuilding}
+                onTimerComplete={() => {
+                  if (planetId) utils.building.list.invalidate({ planetId });
+                }}
+                onCancel={() => setCancelConfirm(true)}
+                cancelPending={cancelMutation.isPending}
+                onOpenDetail={() => upgradingBuilding && setDetailId(upgradingBuilding.id)}
+              />
             </div>
           </div>
         </div>
@@ -142,49 +152,6 @@ export default function Resources() {
 
       {/* Content */}
       <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
-        {/* File de construction (placée AVANT les KPIs, pattern Recherche) */}
-        {upgradingBuilding && upgradingBuilding.upgradeEndTime && (
-          <section className="glass-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                File de construction
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setDetailId(upgradingBuilding.id)}
-              className="flex w-full items-center gap-3 rounded-md bg-card/50 p-3 border-l-4 border-l-orange-500 text-left hover:bg-card/70 transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {upgradingBuilding.name}{' '}
-                  <span className="text-muted-foreground">
-                    Niv. {upgradingBuilding.currentLevel + 1}
-                  </span>
-                </p>
-                <Timer
-                  endTime={new Date(upgradingBuilding.upgradeEndTime)}
-                  totalDuration={upgradingBuilding.nextLevelTime}
-                  onComplete={() => {
-                    utils.building.list.invalidate({ planetId: planetId! });
-                  }}
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCancelConfirm(true);
-                }}
-              >
-                Annuler
-              </Button>
-            </button>
-          </section>
-        )}
-
         {/* KPI tiles cliquables → ouvrent le détail du bâtiment correspondant */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiTile
