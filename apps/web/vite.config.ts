@@ -8,7 +8,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'assets/**/*'],
       manifest: {
         name: 'Exilium',
         short_name: 'Exilium',
