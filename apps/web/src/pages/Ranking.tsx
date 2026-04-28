@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router';
+import { Info } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { TablePageSkeleton } from '@/components/common/PageSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
 
 const MEDALS = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
@@ -17,6 +19,8 @@ export default function Ranking() {
 
   const { data: rankings, isLoading } = trpc.ranking.list.useQuery({ page, limit });
   const { data: myRank } = trpc.ranking.me.useQuery();
+  const { data: gameConfig } = useGameConfig();
+  const pointsDivisor = Number(gameConfig?.universe?.ranking_points_divisor ?? 1000);
 
   if (isLoading) {
     return <TablePageSkeleton />;
@@ -47,6 +51,39 @@ export default function Ranking() {
         <div className="text-sm text-muted-foreground">
           Votre classement : <span className="font-bold text-primary">#{myRank.rank}</span> — {myRank.totalPoints.toLocaleString('fr-FR')} points
         </div>
+      )}
+
+      {!isAllianceRanking && (
+        <details className="glass-card group">
+          <summary className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm font-medium text-foreground/90 hover:text-foreground">
+            <Info className="h-4 w-4 text-primary" aria-hidden="true" />
+            Comment sont calculés les points ?
+            <span className="ml-auto text-xs text-muted-foreground transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="space-y-3 border-t border-border/50 px-4 py-3 text-sm text-muted-foreground">
+            <p>
+              Chaque tranche de <span className="font-semibold text-foreground">{pointsDivisor.toLocaleString('fr-FR')} ressources investies</span> rapporte{' '}
+              <span className="font-semibold text-foreground">1 point</span>. On additionne minerai, silicium et hydrogène, puis on divise.
+            </p>
+            <ul className="space-y-1.5 pl-4">
+              <li>
+                <span className="font-semibold text-foreground">Bâtiments</span> : somme des coûts cumulés de chaque niveau construit, sur toutes vos planètes.
+              </li>
+              <li>
+                <span className="font-semibold text-foreground">Recherches</span> : somme des coûts cumulés de chaque niveau débloqué.
+              </li>
+              <li>
+                <span className="font-semibold text-foreground">Flotte</span> : coût total des vaisseaux que vous possédez (les vaisseaux détruits ne comptent plus).
+              </li>
+              <li>
+                <span className="font-semibold text-foreground">Défenses</span> : coût total des défenses planétaires.
+              </li>
+            </ul>
+            <p className="text-xs">
+              Le total est rafraîchi périodiquement. Détruire ou perdre des unités fait baisser le score, améliorer un bâtiment ou une recherche le fait monter durablement.
+            </p>
+          </div>
+        </details>
       )}
 
       <div className="glass-card p-4">
