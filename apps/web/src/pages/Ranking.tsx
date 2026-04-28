@@ -73,6 +73,9 @@ export default function Ranking() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     {entry.username}
+                    {entry.allianceTag && (
+                      <span className="ml-1.5 text-xs text-muted-foreground">[{entry.allianceTag}]</span>
+                    )}
                   </Link>
                 </div>
                 <span className="text-sm text-muted-foreground">{entry.totalPoints.toLocaleString('fr-FR')}</span>
@@ -93,6 +96,7 @@ export default function Ranking() {
               <tr className="border-b text-left text-muted-foreground">
                 <th className="px-2 py-1 w-16">Rang</th>
                 <th className="px-2 py-1">Joueur</th>
+                <th className="px-2 py-1">Alliance</th>
                 <th className="px-2 py-1 text-right">Points</th>
               </tr>
             </thead>
@@ -122,13 +126,16 @@ export default function Ranking() {
                         {entry.username}
                       </Link>
                     </td>
+                    <td className="px-2 py-1 text-xs text-muted-foreground">
+                      {entry.allianceTag ? `[${entry.allianceTag}]` : '—'}
+                    </td>
                     <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
                   </tr>
                 );
               })}
               {(!rankings || rankings.length === 0) && (
                 <tr>
-                  <td colSpan={3} className="px-2 py-4 text-center text-muted-foreground">
+                  <td colSpan={4} className="px-2 py-4 text-center text-muted-foreground">
                     Aucun classement disponible.
                   </td>
                 </tr>

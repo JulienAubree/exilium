@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings } from '@exilium/db';
+import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings, allianceMembers, alliances } from '@exilium/db';
 import { eq } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
 import {
@@ -131,9 +131,12 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
           username: users.username,
           totalPoints: rankings.totalPoints,
           calculatedAt: rankings.calculatedAt,
+          allianceTag: alliances.tag,
         })
         .from(rankings)
         .innerJoin(users, eq(users.id, rankings.userId))
+        .leftJoin(allianceMembers, eq(allianceMembers.userId, rankings.userId))
+        .leftJoin(alliances, eq(alliances.id, allianceMembers.allianceId))
         .orderBy(rankings.rank)
         .limit(limit)
         .offset(offset);
