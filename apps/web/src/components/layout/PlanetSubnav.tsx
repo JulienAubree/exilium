@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { NavLink } from 'react-router';
-import { Zap } from 'lucide-react';
+import { ChevronRight, Zap } from 'lucide-react';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
+import { usePlanetStore } from '@/stores/planet.store';
 import { cn } from '@/lib/utils';
+import { getPlanetImageUrl } from '@/lib/assets';
 import {
   OverviewIcon,
   ResourcesIcon,
@@ -39,6 +41,7 @@ const PLANET_NAV_ITEMS: PlanetNavItem[] = [
 export function PlanetSubnav() {
   const { data: tutorialData } = trpc.tutorial.getCurrent.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
+  const activePlanetId = usePlanetStore((s) => s.activePlanetId);
 
   const isComplete = tutorialData?.isComplete ?? false;
   const parsedChapter = tutorialData?.chapter
@@ -57,12 +60,38 @@ export function PlanetSubnav() {
   const items = PLANET_NAV_ITEMS.filter((item) => visiblePaths.has(item.path));
   if (items.length === 0) return null;
 
+  const activePlanet = planets?.find((p) => p.id === activePlanetId);
+
   return (
     <nav
       aria-label="Navigation planète"
-      className="sticky top-14 z-30 hidden lg:block border-b border-white/10 bg-card/80 backdrop-blur-md"
+      className="sticky top-14 z-30 hidden lg:block border-b border-primary/15 bg-gradient-to-r from-primary/[0.06] via-card/80 to-card/80 backdrop-blur-md"
     >
       <ul className="flex items-center gap-1 px-4 py-1.5 overflow-x-auto">
+        {activePlanet && (
+          <>
+            <li className="shrink-0 flex items-center gap-2 pl-1 pr-3 py-1">
+              {activePlanet.planetClassId && activePlanet.planetImageIndex != null ? (
+                <img
+                  src={getPlanetImageUrl(activePlanet.planetClassId, activePlanet.planetImageIndex, 'icon')}
+                  alt=""
+                  className="h-6 w-6 rounded-full object-cover ring-1 ring-primary/40 shadow-[0_0_8px_-2px_hsl(var(--accent-glow))]"
+                />
+              ) : (
+                <span className="h-6 w-6 rounded-full bg-primary/30 inline-block ring-1 ring-primary/40" />
+              )}
+              <span className="flex flex-col leading-tight">
+                <span className="text-sm font-semibold text-foreground">{activePlanet.name}</span>
+                <span className="text-[10px] font-mono text-primary/70">
+                  [{activePlanet.galaxy}:{activePlanet.system}:{activePlanet.position}]
+                </span>
+              </span>
+            </li>
+            <li aria-hidden="true" className="shrink-0">
+              <ChevronRight className="h-4 w-4 text-primary/40" />
+            </li>
+          </>
+        )}
         {items.map((item) => (
           <li key={item.path} className="shrink-0">
             <NavLink
