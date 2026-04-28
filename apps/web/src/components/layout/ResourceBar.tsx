@@ -4,6 +4,7 @@ import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
+import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 
 interface ResourceBarProps {
   planetId: string | null;
@@ -63,6 +64,11 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
                 <span className="text-energy">Énergie</span>
                 <span className="text-energy tabular-nums">{data?.rates.energyProduced ?? 0} / {data?.rates.energyConsumed ?? 0}</span>
               </div>
+              {planetId && (
+                <div className="flex justify-end border-t border-white/5 pt-2">
+                  <ImportResourcesButton targetPlanetId={planetId} size="sm" />
+                </div>
+              )}
             </div>
           </div>
         </div>

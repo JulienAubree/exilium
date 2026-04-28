@@ -134,6 +134,72 @@ export function createPlanetService(
       }));
     },
 
+    async getSummaries(userId: string) {
+      const planetRows = await db
+        .select({
+          id: planets.id,
+          name: planets.name,
+          galaxy: planets.galaxy,
+          system: planets.system,
+          position: planets.position,
+          status: planets.status,
+          minerai: planets.minerai,
+          silicium: planets.silicium,
+          hydrogene: planets.hydrogene,
+        })
+        .from(planets)
+        .where(and(eq(planets.userId, userId), eq(planets.status, 'active')))
+        .orderBy(asc(planets.sortOrder), asc(planets.createdAt));
+
+      if (planetRows.length === 0) return [];
+
+      const planetIds = planetRows.map((p) => p.id);
+      const shipRows = await db
+        .select()
+        .from(planetShips)
+        .where(inArray(planetShips.planetId, planetIds));
+
+      const config = await gameConfigService.getFullConfig();
+      const transportShipIds = Object.values(config.ships)
+        .filter((s) => s.role === 'transport')
+        .map((s) => s.id);
+
+      const shipsByPlanet = new Map<string, Record<string, number>>();
+      for (const row of shipRows) {
+        const { planetId, ...counts } = row as Record<string, unknown> & { planetId: string };
+        const numericCounts: Record<string, number> = {};
+        for (const [k, v] of Object.entries(counts)) {
+          if (typeof v === 'number') numericCounts[k] = v;
+        }
+        shipsByPlanet.set(planetId, numericCounts);
+      }
+
+      return planetRows.map((p) => {
+        const ships = shipsByPlanet.get(p.id) ?? {};
+        const cargoShips: Record<string, number> = {};
+        let cargoCapacity = 0;
+        for (const shipId of transportShipIds) {
+          const count = ships[shipId] ?? 0;
+          if (count > 0) {
+            cargoShips[shipId] = count;
+            cargoCapacity += count * (config.ships[shipId]?.cargoCapacity ?? 0);
+          }
+        }
+        return {
+          id: p.id,
+          name: p.name,
+          galaxy: p.galaxy,
+          system: p.system,
+          position: p.position,
+          minerai: Math.floor(Number(p.minerai)),
+          silicium: Math.floor(Number(p.silicium)),
+          hydrogene: Math.floor(Number(p.hydrogene)),
+          ships: cargoShips,
+          cargoCapacity,
+        };
+      });
+    },
+
     async getPlanet(userId: string, planetId: string) {
       const [planet] = await db
         .select()

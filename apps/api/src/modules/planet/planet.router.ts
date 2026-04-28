@@ -21,6 +21,10 @@ export function createPlanetRouter(
       return planetService.listPlanets(ctx.userId!);
     }),
 
+    summaries: protectedProcedure.query(async ({ ctx }) => {
+      return planetService.getSummaries(ctx.userId!);
+    }),
+
     get: protectedProcedure
       .input(z.object({ planetId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
