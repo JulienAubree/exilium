@@ -145,15 +145,19 @@ function estimateRefund(
 }
 
 interface BuildingsListProps {
-  /** Page header title */
+  /** Page header title — ignored when hideHeader is true. */
   title: string;
   /** Optional whitelist of category IDs to display. Undefined = all building categories. */
   categoryIds?: string[];
   /** Optional list of building IDs to exclude (e.g. shipyard which has its own page). */
   excludeBuildingIds?: string[];
+  /** Hide the default PageHeader so the parent can render a richer hero/KPI block. */
+  hideHeader?: boolean;
+  /** When provided, wrap the rendered content in this className instead of the default page padding. */
+  containerClassName?: string;
 }
 
-export function BuildingsList({ title, categoryIds, excludeBuildingIds }: BuildingsListProps) {
+export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHeader, containerClassName }: BuildingsListProps) {
   const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const [cancelConfirm, setCancelConfirm] = useState(false);
@@ -216,8 +220,8 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds }: Buildi
 
   if (isLoading || !buildings) {
     return (
-      <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-        <PageHeader title={title} />
+      <div className={containerClassName ?? 'space-y-4 p-4 lg:space-y-6 lg:p-6'}>
+        {!hideHeader && <PageHeader title={title} />}
         <CardGridSkeleton count={6} />
       </div>
     );
@@ -244,8 +248,8 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds }: Buildi
   };
 
   return (
-    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title={title} />
+    <div className={containerClassName ?? 'space-y-4 p-4 lg:space-y-6 lg:p-6'}>
+      {!hideHeader && <PageHeader title={title} />}
 
       {upgradingBuilding && (
         <section className="glass-card p-4">
