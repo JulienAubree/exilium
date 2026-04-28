@@ -28,6 +28,7 @@ interface OverviewActivitiesProps {
   shipyardQueue: QueueItem[];
   commandCenterQueue: QueueItem[];
   planetId: string;
+  planetClassId?: string | null;
   gameConfig: any;
   onBuildingComplete: () => void;
   onShipyardComplete: () => void;
@@ -91,7 +92,7 @@ function EmptySlot({ label, cta, onClick }: { label: string; cta: string; onClic
 }
 
 export function OverviewActivities({
-  activeBuilding, shipyardQueue, commandCenterQueue, planetId: _planetId, gameConfig,
+  activeBuilding, shipyardQueue, commandCenterQueue, planetId: _planetId, planetClassId, gameConfig,
   onBuildingComplete, onShipyardComplete, onCommandCenterComplete,
 }: OverviewActivitiesProps) {
   const navigate = useNavigate();
@@ -104,7 +105,7 @@ export function OverviewActivities({
       {/* Construction slot */}
       {activeBuilding ? (
         <ActiveSlot
-          icon={<GameImage category="buildings" id={activeBuilding.id} size="icon" alt={activeBuilding.name} className="w-5 h-5 rounded flex-shrink-0" />}
+          icon={<GameImage category="buildings" id={activeBuilding.id} size="icon" alt={activeBuilding.name} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
           label={activeBuilding.name}
           sublabel={`Niv. ${activeBuilding.currentLevel + 1}`}
           endTime={activeBuilding.upgradeEndTime}
@@ -120,7 +121,7 @@ export function OverviewActivities({
       {/* Shipyard slot */}
       {activeShipyard ? (
         <ActiveSlot
-          icon={<GameImage category={activeShipyard.type === 'defense' ? 'defenses' : 'ships'} id={activeShipyard.itemId} size="icon" alt={getUnitName(activeShipyard.itemId, gameConfig)} className="w-5 h-5 rounded flex-shrink-0" />}
+          icon={<GameImage category={activeShipyard.type === 'defense' ? 'defenses' : 'ships'} id={activeShipyard.itemId} size="icon" alt={getUnitName(activeShipyard.itemId, gameConfig)} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
           label={getUnitName(activeShipyard.itemId, gameConfig)}
           sublabel={`x${activeShipyard.quantity - (activeShipyard.completedCount ?? 0)}`}
           endTime={activeShipyard.endTime!}
@@ -137,7 +138,7 @@ export function OverviewActivities({
       {/* Command center slot */}
       {activeCommandCenter ? (
         <ActiveSlot
-          icon={<GameImage category={activeCommandCenter.type === 'defense' ? 'defenses' : 'ships'} id={activeCommandCenter.itemId} size="icon" alt={getUnitName(activeCommandCenter.itemId, gameConfig)} className="w-5 h-5 rounded flex-shrink-0" />}
+          icon={<GameImage category={activeCommandCenter.type === 'defense' ? 'defenses' : 'ships'} id={activeCommandCenter.itemId} size="icon" alt={getUnitName(activeCommandCenter.itemId, gameConfig)} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
           label={getUnitName(activeCommandCenter.itemId, gameConfig)}
           sublabel={`x${activeCommandCenter.quantity - (activeCommandCenter.completedCount ?? 0)}`}
           endTime={activeCommandCenter.endTime!}

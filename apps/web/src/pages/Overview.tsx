@@ -462,6 +462,7 @@ export default function Overview() {
           shipyardQueue={(shipyardQueue ?? []) as any[]}
           commandCenterQueue={(commandCenterQueue ?? []) as any[]}
           planetId={planetId!}
+          planetClassId={planet.planetClassId}
           gameConfig={gameConfig}
           onBuildingComplete={() => {
             utils.building.list.invalidate({ planetId: planetId! });
