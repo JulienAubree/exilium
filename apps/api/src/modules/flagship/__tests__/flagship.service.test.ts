@@ -207,6 +207,27 @@ describe('FlagshipService', () => {
       expect(result).not.toBeNull();
       expect(result!.status).toBe('incapacitated');
     });
+
+    it('auto-recupere si in_mission sans fleet event actif', async () => {
+      const row = createMockFlagshipRow({ status: 'in_mission' });
+      db._setFlagship(row);
+      // get() does 2 selects when in_mission: flagships, fleetEvents
+      db._setSelectResults([[row], []]);
+
+      const result = await service.get('user-1');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('active');
+    });
+
+    it('reste in_mission tant qu\'un fleet event actif transporte le flagship', async () => {
+      const row = createMockFlagshipRow({ status: 'in_mission' });
+      db._setFlagship(row);
+      db._setSelectResults([[row], [{ id: 'fleet-1' }]]);
+
+      const result = await service.get('user-1');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('in_mission');
+    });
   });
 
   describe('create', () => {

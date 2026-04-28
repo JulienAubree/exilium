@@ -1,6 +1,6 @@
-import { eq, asc, and } from 'drizzle-orm';
+import { eq, asc, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings } from '@exilium/db';
+import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -81,6 +81,29 @@ export function createFlagshipService(
           })
           .where(eq(flagships.id, flagship.id));
         Object.assign(flagship, { status: 'active', refitEndsAt: null });
+      }
+
+      // Lazy recovery: in_mission with no matching active fleet event means the
+      // mission ended without resetting the flagship (server crash, lost queue
+      // job, or unhandled exception). Snap back to active so the player isn't
+      // permanently locked out.
+      if (flagship.status === 'in_mission') {
+        const [activeFleet] = await db
+          .select({ id: fleetEvents.id })
+          .from(fleetEvents)
+          .where(and(
+            eq(fleetEvents.userId, userId),
+            eq(fleetEvents.status, 'active'),
+            sql`COALESCE((${fleetEvents.ships}->>'flagship')::int, 0) > 0`,
+          ))
+          .limit(1);
+        if (!activeFleet) {
+          await db
+            .update(flagships)
+            .set({ status: 'active', updatedAt: new Date() })
+            .where(eq(flagships.id, flagship.id));
+          Object.assign(flagship, { status: 'active' });
+        }
       }
 
       // Appliquer les bonus de talents si le service est disponible
