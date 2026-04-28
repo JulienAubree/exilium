@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { BuildingQueuePanel } from '@/components/common/BuildingQueuePanel';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
+import { ResourcesHelp } from '@/components/resources/ResourcesHelp';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { BuildingsList } from './Buildings';
@@ -56,6 +57,7 @@ export default function Resources() {
 
   const [detailId, setDetailId] = useState<string | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const upgradingBuilding = useMemo(
     () => buildings?.find((b) => b.isUpgrading && b.upgradeEndTime) ?? null,
@@ -94,16 +96,23 @@ export default function Resources() {
 
         <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
           <div className="flex items-start gap-4 sm:gap-5">
-            {planetThumb ? (
-              <img
-                src={planetThumb}
-                alt={activePlanet?.name ?? ''}
-                className="shrink-0 h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/15"
-                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-              />
-            ) : (
-              <div className="shrink-0 h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 bg-card/60 shadow-lg shadow-amber-500/10" />
-            )}
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              title="Comment fonctionnent les ressources ?"
+              className="shrink-0 group cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+            >
+              {planetThumb ? (
+                <img
+                  src={planetThumb}
+                  alt={activePlanet?.name ?? ''}
+                  className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/15 transition-all group-hover:ring-2 group-hover:ring-amber-400/50 group-hover:shadow-amber-500/30"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+              ) : (
+                <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 bg-card/60 shadow-lg shadow-amber-500/10 transition-all group-hover:ring-2 group-hover:ring-amber-400/50" />
+              )}
+            </button>
 
             <div className="flex-1 min-w-0 pt-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">Ressources</h1>
@@ -179,6 +188,15 @@ export default function Resources() {
           />
         </section>
       </div>
+
+      {/* Help overlay — opened by clicking the planet thumb */}
+      <EntityDetailOverlay
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="Ressources"
+      >
+        <ResourcesHelp />
+      </EntityDetailOverlay>
 
       {/* Detail overlay opened from KPI clicks (and from upgrade queue card click) */}
       <EntityDetailOverlay
