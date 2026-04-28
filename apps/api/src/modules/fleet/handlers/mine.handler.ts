@@ -263,7 +263,7 @@ export class MineHandler implements PhasedMissionHandler {
         name: 'deepSpaceRefining',
         level: refiningLevel,
         bonusType: 'slag_reduction',
-        description: `Scories reduites a ${Math.round(slagRate * 100)}%`,
+        description: `Taux de scories : ${Math.round(slagRate * 100)}%`,
       });
     }
     if (extractionMultiplier > 1) {
