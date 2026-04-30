@@ -108,7 +108,20 @@ CREATE UNIQUE INDEX anomalies_one_active_per_user
 - `1` après avoir vaincu le nœud 1
 - `next_node_at` est le timestamp à partir duquel le nœud `current_depth + 1` peut être résolu via `advance`
 
-**Sémantique `fleet`** : un compteur de ships restants. **Pas de tracking de hull partiel** entre nœuds en V1 — chaque combat repart avec les ships à pleine vie (mais en effectif réduit par les pertes accumulées). Ça simplifie énormément l'implémentation et reste fidèle à l'esprit roguelite.
+**Sémantique `fleet`** : pour chaque type de ship, on stocke `count` (effectif restant) **et** `hullPercent` (0-1, hull moyen restant sur le groupe). Le hull se cumule entre nœuds — un fighter qui a pris 30% de dégâts au nœud 1 entre dans le combat du nœud 2 avec ce hull réduit.
+
+Format JSONB :
+```json
+{
+  "smallcargo":   { "count": 4, "hullPercent": 1.0 },
+  "lightfighter": { "count": 22, "hullPercent": 0.78 },
+  "flagship":     { "count": 1, "hullPercent": 0.65 }
+}
+```
+
+**Mécanique du tracking** : à chaque combat, on construit un `shipConfigs` modifié où `baseHull[type] = original × hullPercent[type]`. À la fin du combat, on extrait `attackerHPByType.hullRemaining / hullMax` du dernier round pour mettre à jour `hullPercent`. C'est une approximation par groupe (tous les fighters du même type partagent un hull moyen) mais c'est cohérent avec la façon dont `simulateCombat` traite déjà les ships en agrégat.
+
+**Conséquence gameplay** : un nœud "Sanctuaire" pourrait restaurer une partie du hull (en V2). En V1 sans sanctuaire, le hull n'est jamais réparé pendant le run — seule la mort des ships endommagés "remet à zéro" la moyenne du groupe (un seul fighter survivant à 30% de hull tire le pourcentage du groupe avec lui).
 
 ### Module structure
 
@@ -165,7 +178,9 @@ apps/web/src/components/anomaly/
      - Flagship libéré (status='active', planetId=homeworld)
 ```
 
-**Note flagship** : pendant le run, le flagship.status est mis à `in_mission`. Si un combat tue le flagship dans `simulateCombat`, on déclenche un wipe immédiat (peu importe les autres ships) et le flagship est `incapacitated` avec son timer de réparation classique — exactement la même mécanique que les pertes flagship en combat normal.
+**Note flagship** : pendant le run, le flagship.status est mis à `in_mission`. Son `hullPercent` est tracké comme les autres ships dans `fleet`. Si un combat le tue dans `simulateCombat` (hullPercent → 0), on déclenche un wipe immédiat (peu importe les autres ships) et le flagship est `incapacitated` avec son timer de réparation classique — exactement la même mécanique que les pertes flagship en combat normal.
+
+**Note retour** : quand le joueur `retreat` ou que le boss est vaincu, les ships réinjectés dans `planet_ships` du homeworld le sont **avec leur hull partiel**. Or le système actuel ne tracke pas le hull des ships stationnés — un fighter en stock = un fighter à 100%. Pour V1, on prend le parti pragmatique : les ships rentrent **considérés à 100%** (le voyage de retour suffit aux réparations). Ça évite de modifier le schéma `planet_ships`. Si on veut plus tard du tracking persistant, c'est un projet à part.
 
 ---
 
@@ -205,13 +220,88 @@ anomaly: router({
 
 ## 5. UI
 
+### Entrée sidebar dédiée
+
+Les anomalies sont **une catégorie à part dans la sidebar**, pas dans la page Missions. Cohérent avec leur nature : ce n'est pas un type de mission PvE asynchrone parmi d'autres, c'est une activité de fond rogue-lite avec son propre rythme.
+
+**Position** : groupe *Espace* de la sidebar, juste après *Missions* :
+```
+Espace
+├── Galaxie
+├── Flotte
+├── Missions
+├── Anomalies   ← NOUVEAU
+└── Marché
+```
+
+**Visibilité** : `atChapter(4)` (même rule que Centre de commandement / Défense) — endgame uniquement, pour ne pas overwhelmer les joueurs en plein tutoriel.
+
+Mise à jour requise :
+- `packages/game-engine/src/sidebar-visibility.ts` → nouvelle rule `'/anomalies': atChapter(4)`
+- `apps/web/src/components/layout/Sidebar.tsx` → nouvel item dans le groupe *Espace*
+- `apps/web/src/lib/icons.tsx` → nouvelle icône `AnomalyIcon` (à créer, style portail/spirale en SVG custom selon la convention du projet)
+- `apps/web/src/router.tsx` → route `/anomalies`
+
+### Page `/anomalies`
+
+Comportement adaptatif selon l'état :
+
+#### A. Aucune anomalie active — écran d'intro
+
+```
+┌────────────────────────────────────────────────────┐
+│ ANOMALIES GRAVITATIONNELLES                         │
+├────────────────────────────────────────────────────┤
+│                                                     │
+│   [ illustration spirale / portail / vide quantique ]│
+│                                                     │
+│   Les anomalies gravitationnelles sont des poches   │
+│   instables de l'espace-temps. Votre vaisseau mère  │
+│   peut en provoquer l'ouverture en injectant de     │
+│   l'Exilium — une opération risquée mais lucrative. │
+│                                                     │
+│   Comment ça marche                                  │
+│   ───────────────                                    │
+│   1. Engagez votre vaisseau mère + une flotte de    │
+│      votre choix. Ils sont bloqués jusqu'au retour. │
+│   2. À l'intérieur de l'anomalie, des combats se    │
+│      succèdent — chacun plus dur que le précédent,   │
+│      mais aussi plus lucratif.                       │
+│   3. Après chaque combat gagné, vous décidez :       │
+│      continuer pour empocher plus, ou rentrer        │
+│      avec votre butin.                               │
+│   4. Si votre flotte est anéantie, tout est perdu —  │
+│      sauf votre vaisseau mère qui sera incapacité.   │
+│                                                     │
+│   Coût d'entrée : 5 Exilium                          │
+│   (remboursés si vous rentrez vivant)                │
+│                                                     │
+│   [ ⚡ Engager une anomalie ]                        │
+│                                                     │
+│   Historique : 3 anomalies traversées (1 wipe)      │
+└────────────────────────────────────────────────────┘
+```
+
+Le bouton ouvre la modal de sélection de flotte (voir ci-dessous).
+
+#### B. Anomalie en cours — vue de run
+
+L'écran d'intro est remplacé par la vue du run actif (voir section *Run en cours* ci-dessous).
+
+#### C. Historique des runs (en bas de la page, toujours visible)
+
+Liste compacte des dernières anomalies terminées :
+```
+🏆 Profondeur 7 atteinte · +1.2M ressources · +8 ships  · il y a 2 jours
+🛑 Profondeur 4 (abandon) · +320k ressources · +3 ships · il y a 4 jours
+💀 Profondeur 5 (wipe)   · -42 ships          · il y a 1 semaine
+```
+
+Permet au joueur de voir sa progression et son taux de réussite.
+
 ### Activation — `AnomalyEngageModal`
 
-Bouton "Anomalie Gravitationnelle" sur :
-- Page Missions, à côté des autres types
-- Carte planète Empire (si flagship sur cette planète)
-
-Modal :
+Modal ouverte depuis le bouton "Engager une anomalie" :
 ```
 ┌────────────────────────────────────────┐
 │ ANOMALIE GRAVITATIONNELLE               │
