@@ -591,6 +591,16 @@ export function createFlagshipService(
         espionageBonus,
       };
 
+      // 9b. Attach target planet name + owner for report title and detail
+      const [targetOwner] = await db
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, targetPlanet.userId))
+        .limit(1);
+      const targetOwnerName = targetOwner?.username ?? 'Inconnu';
+      reportResult.targetPlanetName = targetPlanet.name;
+      reportResult.targetOwnerName = targetOwnerName;
+
       // 10. Create report
       let reportId: string | undefined;
       if (reportService) {
@@ -598,7 +608,7 @@ export function createFlagshipService(
         const report = await reportService.create({
           userId,
           missionType: 'scan',
-          title: `Rapport de scan ${coords}`,
+          title: `Rapport de scan — ${targetPlanet.name} ${coords} · ${targetOwnerName}`,
           coordinates: { galaxy: targetGalaxy, system: targetSystem, position: targetPosition },
           fleet: { ships: {}, totalCargo: 0 },
           departureTime: new Date(),

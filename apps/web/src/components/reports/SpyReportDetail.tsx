@@ -28,8 +28,34 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
   const thresholds = [1, 3, 5, 7, 9];
   const thresholdLabels = ['Ressources', 'Flotte', 'Défenses', 'Bâtiments', 'Recherches'];
 
+  const targetPlanetName: string | undefined = result.targetPlanetName;
+  const targetOwnerName: string | undefined = result.targetOwnerName;
+
   return (
     <div className="space-y-4">
+      {/* Target banner */}
+      {(targetPlanetName || targetOwnerName) && (
+        <div className="glass-card flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Cible</div>
+            <div className="text-sm">
+              {targetPlanetName && <span className="font-semibold text-foreground">{targetPlanetName}</span>}
+              {coordinates && (
+                <span className="ml-1.5 font-mono text-xs text-primary/70">
+                  [{coordinates.galaxy}:{coordinates.system}:{coordinates.position}]
+                </span>
+              )}
+            </div>
+          </div>
+          {targetOwnerName && (
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Propriétaire</div>
+              <div className="text-sm font-semibold text-foreground">{targetOwnerName}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Quick actions */}
       {coordinates && (
         <div className="flex flex-wrap gap-2">

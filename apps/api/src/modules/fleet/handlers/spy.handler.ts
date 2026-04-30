@@ -306,6 +306,13 @@ export class SpyHandler implements MissionHandler {
         }).from(planets).where(eq(planets.id, fleetEvent.originPlanetId)).limit(1)
       : [];
 
+    // Fetch usernames for report title, detail, alliance logs and combat reports
+    const { attackerUsername: spyUsername, defenderUsername: targetOwnerName } = await fetchUsernames(
+      ctx.db, fleetEvent.userId, targetPlanet.userId,
+    );
+    reportResult.targetPlanetName = targetPlanet.name;
+    reportResult.targetOwnerName = targetOwnerName;
+
     // Create structured mission report
     let reportId: string | undefined;
     if (ctx.reportService) {
@@ -313,7 +320,7 @@ export class SpyHandler implements MissionHandler {
         userId: fleetEvent.userId,
         fleetEventId: fleetEvent.id,
         missionType: 'spy',
-        title: `Rapport d'espionnage ${coords}`,
+        title: `Rapport d'espionnage — ${targetPlanet.name} ${coords} · ${targetOwnerName}`,
         coordinates: {
           galaxy: fleetEvent.targetGalaxy,
           system: fleetEvent.targetSystem,
@@ -337,18 +344,16 @@ export class SpyHandler implements MissionHandler {
     }
 
     if (reportId && ctx.allianceLogService) {
-      fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId).then(({ attackerUsername: spyUsername, defenderUsername }) =>
-        emitEspionageAllianceLogs(ctx, {
-          spyUserId: fleetEvent.userId,
-          targetUserId: targetPlanet.userId,
-          spyName: spyUsername,
-          targetName: defenderUsername,
-          targetPlanetName: targetPlanet.name,
-          coords: `${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}`,
-          reportId,
-          detected,
-        })
-      ).catch((err) => console.error('[alliance-log] espionage emit failed:', err));
+      emitEspionageAllianceLogs(ctx, {
+        spyUserId: fleetEvent.userId,
+        targetUserId: targetPlanet.userId,
+        spyName: spyUsername,
+        targetName: targetOwnerName,
+        targetPlanetName: targetPlanet.name,
+        coords: `${fleetEvent.targetGalaxy}:${fleetEvent.targetSystem}:${fleetEvent.targetPosition}`,
+        reportId,
+        detected,
+      }).catch((err) => console.error('[alliance-log] espionage emit failed:', err));
     }
 
     if (detected) {
@@ -408,8 +413,9 @@ export class SpyHandler implements MissionHandler {
       // Compute shots per round
       const shotsPerRound = computeShotsPerRound(config, ships, defenderFleet, defenderDefenses, rounds);
 
-      // Fetch usernames for combat reports
-      const { attackerUsername, defenderUsername } = await fetchUsernames(ctx.db, fleetEvent.userId, targetPlanet.userId);
+      // Usernames already fetched above (spyUsername = attacker, targetOwnerName = defender)
+      const attackerUsername = spyUsername;
+      const defenderUsername = targetOwnerName;
 
       const outcomeLabel = outcomeText(outcome);
       const defenderOutcomeText = defenderOutcome(outcome);
@@ -446,7 +452,7 @@ export class SpyHandler implements MissionHandler {
           userId: fleetEvent.userId,
           fleetEventId: fleetEvent.id,
           missionType: 'spy',
-          title: `Espionnage ${coords} — Combat ${outcomeLabel}`,
+          title: `Espionnage — ${targetPlanet.name} ${coords} · ${targetOwnerName} — Combat ${outcomeLabel}`,
           coordinates: {
             galaxy: fleetEvent.targetGalaxy,
             system: fleetEvent.targetSystem,
@@ -472,7 +478,7 @@ export class SpyHandler implements MissionHandler {
         const defenderReport = await ctx.reportService.create({
           userId: targetPlanet.userId,
           missionType: 'spy',
-          title: `Espionnage détecté ${coords} — ${defenderOutcomeText}`,
+          title: `Espionnage détecté — ${targetPlanet.name} ${coords} — ${defenderOutcomeText}`,
           coordinates: {
             galaxy: fleetEvent.targetGalaxy,
             system: fleetEvent.targetSystem,
