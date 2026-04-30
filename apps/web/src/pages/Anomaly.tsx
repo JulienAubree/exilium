@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { Link } from 'react-router';
 import { Zap, ChevronRight, Trophy, Skull, X, Swords, FileText } from 'lucide-react';
 import { trpc } from '@/trpc';
@@ -212,6 +212,17 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
   const hydrogene = Math.floor(Number(anomaly.lootHydrogene));
 
   const nextAt = anomaly.nextNodeAt ? new Date(anomaly.nextNodeAt) : null;
+  const nextAtMs = nextAt?.getTime() ?? null;
+  // Force a re-render exactly when the cooldown expires, so the "Lancer le
+  // combat" button appears without waiting for the next 30s poll.
+  const [, forceTick] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    if (!nextAtMs) return;
+    const delay = nextAtMs - Date.now();
+    if (delay <= 0) return;
+    const id = setTimeout(forceTick, delay);
+    return () => clearTimeout(id);
+  }, [nextAtMs]);
   const ready = !nextAt || nextAt <= new Date();
 
   const totalShips = Object.values(fleet).reduce((s, e) => s + e.count, 0);
