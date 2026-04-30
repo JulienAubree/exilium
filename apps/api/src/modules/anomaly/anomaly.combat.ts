@@ -55,10 +55,69 @@ export interface AnomalyCombatResult {
 }
 
 /**
+ * Generate an enemy fleet for an anomaly node at a given depth. Returns the
+ * fleet composition + estimated FP. Used both to pre-generate the next enemy
+ * for UI preview and to actually run the combat.
+ */
+export async function generateAnomalyEnemy(
+  db: Database,
+  gameConfigService: GameConfigService,
+  args: {
+    fleet: Record<string, FleetEntry>;
+    depth: number;
+  },
+): Promise<{ enemyFleet: Record<string, number>; enemyFP: number; playerFP: number }> {
+  const config = await gameConfigService.getFullConfig();
+
+  const baseShipConfigs = buildShipCombatConfigs(config);
+  const playerShipCounts: Record<string, number> = {};
+  for (const [shipId, entry] of Object.entries(args.fleet)) {
+    if (entry.count > 0) playerShipCounts[shipId] = entry.count;
+  }
+
+  // Apply hullPercent to the player's effective stats so enemy scaling is
+  // proportional to the *real* current power, not pristine values.
+  const shipStatsForFP: Record<string, UnitCombatStats> = {};
+  for (const [id, sc] of Object.entries(baseShipConfigs)) {
+    const hullPct = args.fleet[id]?.hullPercent ?? 1;
+    shipStatsForFP[id] = {
+      weapons: sc.baseWeaponDamage,
+      shotCount: sc.baseShotCount,
+      shield: sc.baseShield,
+      hull: Math.max(1, Math.floor(sc.baseHull * hullPct)),
+    };
+  }
+  const fpConfig: FPConfig = {
+    shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+    divisor: Number(config.universe.fp_divisor) || 100,
+  };
+  const playerFP = computeFleetFP(playerShipCounts, shipStatsForFP, fpConfig);
+
+  const growth = Number(config.universe.anomaly_difficulty_growth) || 1.3;
+  const targetEnemyFP = anomalyEnemyFP(playerFP, args.depth, growth);
+
+  const templates = await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'medium'));
+  const fallbackTemplates = templates.length > 0
+    ? templates
+    : await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'easy'));
+  if (fallbackTemplates.length === 0) {
+    throw new Error('No pirate templates available for anomaly combat');
+  }
+  const template = fallbackTemplates[Math.floor(Math.random() * fallbackTemplates.length)];
+  const templateShips = template.ships as Record<string, number>;
+
+  const enemyFleet = scaleFleetToFP(templateShips, Math.max(1, Math.round(targetEnemyFP)), shipStatsForFP, fpConfig);
+  const enemyFP = computeFleetFP(enemyFleet, shipStatsForFP, fpConfig);
+
+  return { enemyFleet, enemyFP, playerFP };
+}
+
+/**
  * Resolve a single anomaly node combat. Builds a custom shipConfigs where each
  * player ship type has baseHull = original × hullPercent[type] (the cumulative
- * damage carried over from previous nodes). Picks an enemy from the pirate
- * templates, scaled to the target FP via the standard scaleFleetToFP helper.
+ * damage carried over from previous nodes). Uses a pre-defined enemy fleet
+ * (passed in args) so the player can see exactly what they're fighting before
+ * confirming.
  */
 export async function runAnomalyNode(
   db: Database,
@@ -67,6 +126,7 @@ export async function runAnomalyNode(
     userId: string;
     fleet: Record<string, FleetEntry>;
     depth: number;
+    predefinedEnemy: { fleet: Record<string, number>; fp: number };
   },
 ): Promise<AnomalyCombatResult> {
   const config = await gameConfigService.getFullConfig();
@@ -105,24 +165,9 @@ export async function runAnomalyNode(
   };
   const playerFP = computeFleetFP(playerShipCounts, shipStatsForFP, fpConfig);
 
-  // 4. Target enemy FP from formula
-  const growth = Number(config.universe.anomaly_difficulty_growth) || 1.3;
-  const targetEnemyFP = anomalyEnemyFP(playerFP, args.depth, growth);
-
-  // 5. Pick an enemy template (mid tier — anomalies are an endgame activity)
-  const templates = await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'medium'));
-  const fallbackTemplates = templates.length > 0
-    ? templates
-    : await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'easy'));
-  if (fallbackTemplates.length === 0) {
-    throw new Error('No pirate templates available for anomaly combat');
-  }
-  const template = fallbackTemplates[Math.floor(Math.random() * fallbackTemplates.length)];
-  const templateShips = template.ships as Record<string, number>;
-
-  // 6. Scale enemy to target FP
-  const enemyFleet = scaleFleetToFP(templateShips, Math.max(1, Math.round(targetEnemyFP)), shipStatsForFP, fpConfig);
-  const enemyFP = computeFleetFP(enemyFleet, shipStatsForFP, fpConfig);
+  // 4. Use the pre-defined enemy (already scaled at the previous transition)
+  const enemyFleet = args.predefinedEnemy.fleet;
+  const enemyFP = args.predefinedEnemy.fp;
 
   // 7. Combat
   const combatConfig = buildCombatConfig(config.universe, { pillageRatio: 0 });

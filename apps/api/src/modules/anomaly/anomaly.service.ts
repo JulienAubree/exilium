@@ -11,7 +11,7 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createReportService } from '../report/report.service.js';
 import { buildCombatReportData } from '../fleet/combat.helpers.js';
-import { runAnomalyNode, type FleetEntry } from './anomaly.combat.js';
+import { runAnomalyNode, generateAnomalyEnemy, type FleetEntry } from './anomaly.combat.js';
 
 type AnomalyRow = typeof anomalies.$inferSelect;
 type FleetMap = Record<string, FleetEntry>;
@@ -132,7 +132,13 @@ export function createAnomalyService(
         }
       }
 
-      // 9. Insert anomaly row
+      // 9. Pre-generate the depth-1 enemy so the player can preview it
+      const firstEnemy = await generateAnomalyEnemy(db, gameConfigService, {
+        fleet,
+        depth: 1,
+      });
+
+      // 10. Insert anomaly row
       const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
       const [created] = await db.insert(anomalies).values({
         userId,
@@ -142,6 +148,8 @@ export function createAnomalyService(
         fleet,
         exiliumPaid: cost,
         nextNodeAt,
+        nextEnemyFleet: firstEnemy.enemyFleet,
+        nextEnemyFp: Math.round(firstEnemy.enemyFP),
       }).returning();
 
       return created;
@@ -162,11 +170,28 @@ export function createAnomalyService(
       const fleet = row.fleet as FleetMap;
       const newDepth = row.currentDepth + 1;
 
-      // Run combat
+      // Use the pre-generated enemy that the player has been previewing.
+      // Fallback: regenerate one (legacy rows without next_enemy_fleet).
+      let predefinedEnemy: { fleet: Record<string, number>; fp: number };
+      if (row.nextEnemyFleet && row.nextEnemyFp != null) {
+        predefinedEnemy = {
+          fleet: row.nextEnemyFleet as Record<string, number>,
+          fp: row.nextEnemyFp,
+        };
+      } else {
+        const generated = await generateAnomalyEnemy(db, gameConfigService, {
+          fleet,
+          depth: newDepth,
+        });
+        predefinedEnemy = { fleet: generated.enemyFleet, fp: Math.round(generated.enemyFP) };
+      }
+
+      // Run combat with the locked-in enemy
       const result = await runAnomalyNode(db, gameConfigService, {
         userId,
         fleet,
         depth: newDepth,
+        predefinedEnemy,
       });
 
       const config = await gameConfigService.getFullConfig();
@@ -228,6 +253,8 @@ export function createAnomalyService(
           reportIds: updatedReportIds,
           completedAt: new Date(),
           nextNodeAt: null,
+          nextEnemyFleet: null,
+          nextEnemyFp: null,
         }).where(eq(anomalies.id, row.id));
 
         // Incapacitate flagship if it was destroyed in combat
@@ -262,6 +289,12 @@ export function createAnomalyService(
         mergedLootShips[shipId] = (mergedLootShips[shipId] ?? 0) + count;
       }
 
+      // Pre-generate the enemy for the next depth based on the surviving fleet.
+      const nextEnemy = await generateAnomalyEnemy(db, gameConfigService, {
+        fleet: result.attackerSurvivors,
+        depth: newDepth + 1,
+      });
+
       const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
       await db.update(anomalies).set({
         currentDepth: newDepth,
@@ -272,6 +305,8 @@ export function createAnomalyService(
         lootShips: mergedLootShips,
         reportIds: updatedReportIds,
         nextNodeAt,
+        nextEnemyFleet: nextEnemy.enemyFleet,
+        nextEnemyFp: Math.round(nextEnemy.enemyFP),
       }).where(eq(anomalies.id, row.id));
 
       return {

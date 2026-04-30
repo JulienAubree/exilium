@@ -181,6 +181,8 @@ interface AnomalyRow {
   nextNodeAt: string | Date | null;
   reportIds?: unknown;
   completedAt?: string | Date | null;
+  nextEnemyFleet?: unknown;
+  nextEnemyFp?: number | null;
 }
 
 function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending, cost }: {
@@ -290,9 +292,34 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
           </div>
         )}
 
-        {/* Next node */}
-        <div className="border-t border-border/30 pt-3">
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Prochain combat</h3>
+        {/* Next node — enemy preview */}
+        <div className="border-t border-border/30 pt-3 space-y-2">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Prochain combat (profondeur {anomaly.currentDepth + 1})</h3>
+
+          {anomaly.nextEnemyFleet && Object.keys(anomaly.nextEnemyFleet as Record<string, number>).length > 0 ? (
+            <div className="rounded-md border border-rose-500/20 bg-rose-500/5 p-3 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Ennemi détecté</span>
+                <span className="text-rose-300 font-semibold tabular-nums">
+                  {anomaly.nextEnemyFp != null ? `~${formatNumber(anomaly.nextEnemyFp)} FP` : ''}
+                </span>
+              </div>
+              <div className="space-y-1 text-sm">
+                {Object.entries(anomaly.nextEnemyFleet as Record<string, number>).map(([shipId, count]) => {
+                  const def = gameConfig?.ships?.[shipId];
+                  return (
+                    <div key={shipId} className="flex items-center justify-between">
+                      <span className="text-foreground/80">{def?.name ?? shipId}</span>
+                      <span className="text-rose-300 tabular-nums">×{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground/70">Composition ennemie non disponible.</div>
+          )}
+
           {ready ? (
             <Button
               onClick={onAdvance}
@@ -304,7 +331,7 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
             </Button>
           ) : (
             <div className="rounded-md border border-violet-500/20 bg-violet-500/5 p-3 flex items-center justify-center gap-2 text-sm">
-              <span className="text-muted-foreground">Prochain palier dans</span>
+              <span className="text-muted-foreground">Combat disponible dans</span>
               <Timer endTime={nextAt!} className="font-mono text-violet-300 tabular-nums" />
             </div>
           )}

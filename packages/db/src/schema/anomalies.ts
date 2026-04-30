@@ -24,6 +24,9 @@ export const anomalies = pgTable('anomalies', {
   exiliumPaid: integer('exilium_paid').notNull(),
   nextNodeAt: timestamp('next_node_at', { withTimezone: true }),
   reportIds: jsonb('report_ids').notNull().default(sql`'[]'::jsonb`),
+  /** Pre-generated enemy fleet for the next node (so the player can see what's coming). */
+  nextEnemyFleet: jsonb('next_enemy_fleet'),
+  nextEnemyFp: integer('next_enemy_fp'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
 });
