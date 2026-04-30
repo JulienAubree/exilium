@@ -5,7 +5,6 @@ import {
   mineraiProduction,
   siliciumProduction,
   hydrogeneProduction,
-  solarPlantEnergy,
 } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { estimateRefund } from '@/lib/refund';
@@ -18,8 +17,7 @@ import { BuildingQueuePanel } from '@/components/common/BuildingQueuePanel';
 import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { ResourcesHelp } from '@/components/resources/ResourcesHelp';
 import { ResourceCard } from '@/components/resources/ResourceCard';
-import { EnergyCard } from '@/components/resources/EnergyCard';
-import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { BuildingsList } from './Buildings';
 
@@ -33,7 +31,6 @@ const BUILDING_IDS = {
   minerai: 'mineraiMine',
   silicium: 'siliciumMine',
   hydrogene: 'hydrogeneSynth',
-  energy: 'solarPlant',
 } as const;
 
 export default function Resources() {
@@ -116,7 +113,6 @@ export default function Resources() {
   const mineraiBuilding = findBuilding(BUILDING_IDS.minerai);
   const siliciumBuilding = findBuilding(BUILDING_IDS.silicium);
   const hydrogeneBuilding = findBuilding(BUILDING_IDS.hydrogene);
-  const solarBuilding = findBuilding(BUILDING_IDS.energy);
 
   // Compute "next level" production via game-engine formulas. Uses the same
   // productionFactor returned by the API so all biome/type/research bonuses
@@ -312,34 +308,6 @@ export default function Resources() {
             onOpenDetail={() => setDetailId(BUILDING_IDS.hydrogene)}
           />
         </div>
-
-        {/* Energy card — full width, more horizontal */}
-        <EnergyCard
-          icon={<EnergieIcon size={22} className="text-energy" />}
-          buildingId={BUILDING_IDS.energy}
-          planetClassId={planetClassId}
-          produced={resourceData?.rates.energyProduced ?? 0}
-          consumed={resourceData?.rates.energyConsumed ?? 0}
-          productionAtCurrentLevel={
-            solarBuilding && solarBuilding.currentLevel > 0
-              ? solarPlantEnergy(solarBuilding.currentLevel)
-              : undefined
-          }
-          productionAtNextLevel={
-            solarBuilding ? solarPlantEnergy(solarBuilding.currentLevel + 1) : undefined
-          }
-          building={solarBuilding}
-          resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
-          buildingLevels={buildingLevels}
-          isAnyUpgrading={isAnyBuildingUpgrading}
-          upgradePending={upgradeMutation.isPending}
-          cancelPending={cancelMutation.isPending}
-          gameConfig={gameConfig}
-          onUpgrade={handleUpgrade(BUILDING_IDS.energy)}
-          onCancel={handleCancel}
-          onTimerComplete={handleTimerComplete}
-          onOpenDetail={() => setDetailId(BUILDING_IDS.energy)}
-        />
 
         {/* Detailed buildings list — collapsed by default */}
         <section className="glass-card overflow-hidden">

@@ -1,20 +1,26 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { buildProductionConfig } from '@/lib/production-config';
-import { solarSatelliteEnergy, calculateShieldCapacity } from '@exilium/game-engine';
+import { solarSatelliteEnergy, calculateShieldCapacity, solarPlantEnergy } from '@exilium/game-engine';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { BuildingDetailContent } from '@/components/entity-details/BuildingDetailContent';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { DefenseIcon } from '@/lib/icons';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { EnergyBar } from '@/components/energy/EnergyBar';
+import { EnergyCard } from '@/components/resources/EnergyCard';
 import { FluxView } from '@/components/energy/FluxView';
 import { TableView } from '@/components/energy/TableView';
 import { EnergyHelp } from '@/components/energy/EnergyHelp';
+
+const SOLAR_PLANT_ID = 'solarPlant';
 
 type View = 'flux' | 'table';
 
@@ -100,10 +106,12 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
 }
 
 export default function Energy() {
-  const { planetId } = useOutletContext<{ planetId?: string }>();
+  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const [activeView, setActiveView] = useState<View>('flux');
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
 
   const { data, isLoading } = trpc.resource.production.useQuery(
     { planetId: planetId! },
@@ -122,6 +130,58 @@ export default function Energy() {
   const setShieldMutation = trpc.resource.setShieldPercent.useMutation({
     onSuccess: () => utils.resource.production.invalidate({ planetId: planetId! }),
   });
+
+  const cancelMutation = trpc.building.cancel.useMutation({
+    onSuccess: () => {
+      utils.building.list.invalidate({ planetId: planetId! });
+      utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
+    },
+  });
+
+  const upgradeMutation = trpc.building.upgrade.useMutation({
+    onSuccess: () => {
+      utils.building.list.invalidate({ planetId: planetId! });
+      utils.resource.production.invalidate({ planetId: planetId! });
+      utils.planet.empire.invalidate();
+      utils.tutorial.getCurrent.invalidate();
+    },
+  });
+
+  const handleUpgrade = useCallback((buildingId: string) => () => {
+    if (!planetId) return;
+    upgradeMutation.mutate({ planetId, buildingId: buildingId as never });
+  }, [planetId, upgradeMutation]);
+
+  const handleCancel = useCallback(() => setCancelConfirm(true), []);
+  const handleTimerComplete = useCallback(() => {
+    if (planetId) utils.building.list.invalidate({ planetId });
+  }, [planetId, utils.building.list]);
+
+  const buildingLevels = useMemo(() => {
+    const levels: Record<string, number> = {};
+    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    return levels;
+  }, [buildings]);
+
+  const isAnyBuildingUpgrading = buildings?.some((b) => b.isUpgrading) ?? false;
+
+  const liveResources = useResourceCounter(
+    data
+      ? {
+          minerai: data.minerai,
+          silicium: data.silicium,
+          hydrogene: data.hydrogene,
+          resourcesUpdatedAt: data.resourcesUpdatedAt,
+          mineraiPerHour: data.rates.mineraiPerHour,
+          siliciumPerHour: data.rates.siliciumPerHour,
+          hydrogenePerHour: data.rates.hydrogenePerHour,
+          storageMineraiCapacity: data.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: data.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: data.rates.storageHydrogeneCapacity,
+        }
+      : undefined,
+  );
 
   const [localPercents, setLocalPercents] = useState<Record<string, number>>({});
 
@@ -404,6 +464,41 @@ export default function Energy() {
         </div>
       </div>
 
+      {/* Solar plant — build/upgrade entry point (was on Resources page before) */}
+      {(() => {
+        const solarBuilding = buildings?.find((b) => b.id === SOLAR_PLANT_ID);
+        return (
+          <div className="px-4 lg:px-0">
+            <EnergyCard
+              icon={<EnergieIcon size={22} className="text-energy" />}
+              buildingId={SOLAR_PLANT_ID}
+              planetClassId={planetClassId}
+              produced={data.rates.energyProduced}
+              consumed={data.rates.energyConsumed}
+              productionAtCurrentLevel={
+                solarBuilding && solarBuilding.currentLevel > 0
+                  ? solarPlantEnergy(solarBuilding.currentLevel)
+                  : undefined
+              }
+              productionAtNextLevel={
+                solarBuilding ? solarPlantEnergy(solarBuilding.currentLevel + 1) : undefined
+              }
+              building={solarBuilding}
+              resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
+              buildingLevels={buildingLevels}
+              isAnyUpgrading={isAnyBuildingUpgrading}
+              upgradePending={upgradeMutation.isPending}
+              cancelPending={cancelMutation.isPending}
+              gameConfig={gameConfig}
+              onUpgrade={handleUpgrade(SOLAR_PLANT_ID)}
+              onCancel={handleCancel}
+              onTimerComplete={handleTimerComplete}
+              onOpenDetail={() => setDetailId(SOLAR_PLANT_ID)}
+            />
+          </div>
+        );
+      })()}
+
       {/* Energy budget bar */}
       <div className="px-4 lg:px-0">
         <EnergyBar
@@ -472,6 +567,42 @@ export default function Energy() {
           planetImageIndex={data.planetImageIndex}
         />
       </EntityDetailOverlay>
+
+      {/* Building detail overlay (solar plant) */}
+      <EntityDetailOverlay
+        open={!!detailId}
+        onClose={() => setDetailId(null)}
+        title={detailId ? gameConfig?.buildings[detailId]?.name ?? '' : ''}
+      >
+        {detailId && buildings && (
+          <BuildingDetailContent
+            buildingId={detailId}
+            buildings={buildings}
+            planetClassId={planetClassId}
+            planetContext={
+              data
+                ? {
+                    maxTemp: data.maxTemp,
+                    productionFactor: data.rates.productionFactor,
+                  }
+                : undefined
+            }
+          />
+        )}
+      </EntityDetailOverlay>
+
+      {/* Cancel confirm */}
+      <ConfirmDialog
+        open={cancelConfirm}
+        onConfirm={() => {
+          cancelMutation.mutate({ planetId: planetId! });
+          setCancelConfirm(false);
+        }}
+        onCancel={() => setCancelConfirm(false)}
+        title="Annuler la construction ?"
+        description="Vous récupérerez une partie des ressources investies."
+        variant="destructive"
+      />
     </div>
   );
 }
