@@ -163,10 +163,11 @@ export function createPveService(
       const now = new Date();
       const cooldownBase = Number(config.universe.pve_discovery_cooldown_base) || 7;
       const cooldownMs = discoveryCooldown(centerLevel, { base: cooldownBase, minimum: 1 }) * 3600 * 1000;
-      // Pirate timer offset: 50% of cooldown so they never spawn at the same time as mining
-      const pirateOffsetMs = Math.floor(cooldownMs / 2);
-      // Exploration timer offset: 25% of cooldown — out of phase with mining and pirate
-      const explorationOffsetMs = Math.floor(cooldownMs / 4);
+      // Three mission types share one cooldown and are spaced evenly:
+      // mining @ 0%, pirate @ 1/3, exploration @ 2/3.
+      // With a 6h cooldown that's one mission every 2h.
+      const pirateOffsetMs = Math.floor(cooldownMs / 3);
+      const explorationOffsetMs = Math.floor((cooldownMs * 2) / 3);
 
       // Get or create state
       let [state] = await db.select().from(missionCenterState)

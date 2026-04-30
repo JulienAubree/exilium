@@ -29,31 +29,42 @@ const FILTERS: { key: MissionFilter; label: string }[] = [
   { key: 'exploration', label: 'Exploration' },
 ];
 
-// ── KPI Tile ─────────────────────────────────────────────────────────
+// ── Category KPI: count + next-discovery countdown ──────────────────
 
-function KpiTile({ label, value, icon, color, onClick }: {
+function CategoryKpi({ label, count, color, icon, nextAt, inFuture, onClick, onTimerEnd }: {
   label: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
+  count: string;
   color: string;
-  onClick?: () => void;
+  icon: React.ReactNode;
+  nextAt: Date | null;
+  inFuture: boolean;
+  onClick: () => void;
+  onTimerEnd: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        'rounded-xl border border-border/30 bg-card/60 px-4 py-3 text-left transition-colors',
-        onClick ? 'hover:bg-card/80 hover:border-primary/20 cursor-pointer' : 'cursor-default',
-      )}
+      className="rounded-xl border border-border/30 bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card/80 hover:border-primary/20"
     >
       <div className="flex items-center gap-3">
         <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg bg-white/5', color)}>
           {icon}
         </div>
-        <div className="min-w-0">
-          <div className={cn('text-lg font-bold tabular-nums leading-tight', color)}>{value}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-tight">{label}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className={cn('text-lg font-bold tabular-nums leading-tight', color)}>{count}</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+          </div>
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground/80">
+            <Clock className="h-3 w-3" />
+            <span>Prochaine dans</span>
+            {inFuture && nextAt ? (
+              <Timer endTime={nextAt} onComplete={onTimerEnd} className="font-mono tabular-nums text-foreground" />
+            ) : (
+              <span className="font-mono text-foreground/60">--:--</span>
+            )}
+          </div>
         </div>
       </div>
     </button>
@@ -91,8 +102,10 @@ export default function Missions() {
 
   const centerLevel = data?.centerLevel ?? 0;
   const missions = data?.missions ?? [];
-  const nextDiscoveryAt = data?.nextDiscoveryAt ? new Date(data.nextDiscoveryAt) : null;
-  const nextDiscoveryInFuture = nextDiscoveryAt && nextDiscoveryAt.getTime() > Date.now();
+  const nextMiningAt = data?.nextDiscoveryAt ? new Date(data.nextDiscoveryAt) : null;
+  const nextPirateAt = data?.nextPirateDiscoveryAt ? new Date(data.nextPirateDiscoveryAt) : null;
+  const nextExplorationAt = data?.nextExplorationDiscoveryAt ? new Date(data.nextExplorationDiscoveryAt) : null;
+  const inFuture = (d: Date | null) => !!d && d.getTime() > Date.now();
 
   const miningMissions = missions.filter((m) => m.missionType === 'mine');
   const pirateMissions = missions.filter((m) => m.missionType === 'pirate');
@@ -199,52 +212,37 @@ export default function Missions() {
       {/* Content with padding */}
       <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
 
-        {/* KPI tiles */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiTile
-            label="Gisements actifs"
-            value={`${miningMissions.length}/3`}
+        {/* KPI tiles — one per mission type, with the next-discovery countdown */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <CategoryKpi
+            label="Gisements"
+            count={`${miningMissions.length}/3`}
             color="text-amber-400"
+            icon={<Sun className="h-[18px] w-[18px]" />}
+            nextAt={nextMiningAt}
+            inFuture={inFuture(nextMiningAt)}
             onClick={() => setFilter('mine')}
-            icon={
-              <Sun className="h-[18px] w-[18px]" />
-            }
+            onTimerEnd={() => utils.pve.getMissions.invalidate()}
           />
-          <KpiTile
-            label="Repaires pirates"
-            value={`${pirateMissions.length}/2`}
+          <CategoryKpi
+            label="Pirates"
+            count={`${pirateMissions.length}/2`}
             color="text-rose-400"
+            icon={<Frown className="h-[18px] w-[18px]" />}
+            nextAt={nextPirateAt}
+            inFuture={inFuture(nextPirateAt)}
             onClick={() => setFilter('pirate')}
-            icon={
-              <Frown className="h-[18px] w-[18px]" />
-            }
+            onTimerEnd={() => utils.pve.getMissions.invalidate()}
           />
-          <KpiTile
+          <CategoryKpi
             label="Reconnaissances"
-            value={`${explorationMissions.length}/2`}
+            count={`${explorationMissions.length}/2`}
             color="text-cyan-300"
+            icon={<Telescope className="h-[18px] w-[18px]" />}
+            nextAt={nextExplorationAt}
+            inFuture={inFuture(nextExplorationAt)}
             onClick={() => setFilter('exploration')}
-            icon={
-              <Telescope className="h-[18px] w-[18px]" />
-            }
-          />
-          <KpiTile
-            label="Prochaine découverte"
-            value={
-              nextDiscoveryInFuture ? (
-                <Timer
-                  endTime={nextDiscoveryAt}
-                  onComplete={() => utils.pve.getMissions.invalidate()}
-                  className="text-lg font-bold tabular-nums leading-tight text-cyan-400"
-                />
-              ) : (
-                '--:--'
-              )
-            }
-            color="text-cyan-400"
-            icon={
-              <Clock className="h-[18px] w-[18px]" />
-            }
+            onTimerEnd={() => utils.pve.getMissions.invalidate()}
           />
         </div>
 
