@@ -33,8 +33,18 @@ export default function Anomaly() {
       utils.anomaly.current.invalidate();
       utils.anomaly.history.invalidate();
       utils.flagship.get.invalidate();
+      utils.exilium.getBalance.invalidate();
+      utils.planet.list.invalidate();
+      utils.shipyard.empireOverview.invalidate();
       if (data.outcome === 'wiped') {
-        addToast('💀 Votre flotte a été anéantie. Anomalie effondrée.', 'error');
+        addToast('💀 Votre flotte a été anéantie. Tout est perdu.', 'error');
+      } else if (data.outcome === 'forced_retreat') {
+        addToast(
+          data.flagshipLost
+            ? '⚠️ Vaisseau mère perdu — retour forcé avec votre flotte. Loot et Exilium récupérés.'
+            : '⚠️ Combat perdu — retour forcé. Loot et Exilium récupérés.',
+          'warning',
+        );
       } else {
         addToast(`⚔️ Combat remporté — profondeur ${data.depth}`, 'success');
       }

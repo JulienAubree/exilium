@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { pirateTemplates } from '@exilium/db';
+import { pirateTemplates, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   simulateCombat,
@@ -20,6 +20,28 @@ import {
   getCombatMultipliers,
 } from '../fleet/fleet.types.js';
 import { buildCombatConfig } from '@exilium/game-engine';
+
+/**
+ * Loads the flagship's combat config and forces categoryId='capital' so it
+ * is targeted only as the last resort (after the whole escort has fallen).
+ */
+async function loadFlagshipCombatConfig(
+  db: Database,
+  userId: string,
+  hullPercent: number,
+): Promise<ShipCombatConfig | null> {
+  const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+  if (!flagship) return null;
+  return {
+    shipType: 'flagship',
+    categoryId: 'capital', // Toujours targeté en dernier ressort
+    baseShield: flagship.shield,
+    baseArmor: flagship.baseArmor ?? 0,
+    baseHull: Math.max(1, Math.floor(flagship.hull * hullPercent)),
+    baseWeaponDamage: flagship.weapons,
+    baseShotCount: flagship.shotCount ?? 1,
+  };
+}
 
 export interface FleetEntry {
   count: number;
@@ -63,6 +85,7 @@ export async function generateAnomalyEnemy(
   db: Database,
   gameConfigService: GameConfigService,
   args: {
+    userId: string;
     fleet: Record<string, FleetEntry>;
     depth: number;
   },
@@ -70,6 +93,14 @@ export async function generateAnomalyEnemy(
   const config = await gameConfigService.getFullConfig();
 
   const baseShipConfigs = buildShipCombatConfigs(config);
+
+  // Inject flagship config so its FP is included in the player's total
+  const flagshipEntry = args.fleet['flagship'];
+  if (flagshipEntry && flagshipEntry.count > 0) {
+    const flagshipConfig = await loadFlagshipCombatConfig(db, args.userId, flagshipEntry.hullPercent);
+    if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
+  }
+
   const playerShipCounts: Record<string, number> = {};
   for (const [shipId, entry] of Object.entries(args.fleet)) {
     if (entry.count > 0) playerShipCounts[shipId] = entry.count;
@@ -80,11 +111,13 @@ export async function generateAnomalyEnemy(
   const shipStatsForFP: Record<string, UnitCombatStats> = {};
   for (const [id, sc] of Object.entries(baseShipConfigs)) {
     const hullPct = args.fleet[id]?.hullPercent ?? 1;
+    // Flagship config is already hull-adjusted; don't double-apply.
+    const hullToUse = id === 'flagship' ? sc.baseHull : Math.max(1, Math.floor(sc.baseHull * hullPct));
     shipStatsForFP[id] = {
       weapons: sc.baseWeaponDamage,
       shotCount: sc.baseShotCount,
       shield: sc.baseShield,
-      hull: Math.max(1, Math.floor(sc.baseHull * hullPct)),
+      hull: hullToUse,
     };
   }
   const fpConfig: FPConfig = {
@@ -137,16 +170,28 @@ export async function runAnomalyNode(
     if (entry.count > 0) playerShipCounts[shipId] = entry.count;
   }
 
-  // 2. Build base ship configs, then override hull with current hullPercent
+  // 2. Build base ship configs, then override hull with current hullPercent.
+  //    Le flagship est ajouté manuellement avec catégorie 'capital' (ciblé en
+  //    dernier) — sans ça, il n'aurait aucune stat dans le combat.
   const baseShipConfigs = buildShipCombatConfigs(config);
+  const flagshipEntry = args.fleet['flagship'];
+  if (flagshipEntry && flagshipEntry.count > 0) {
+    const flagshipConfig = await loadFlagshipCombatConfig(db, args.userId, flagshipEntry.hullPercent);
+    if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
+  }
   const shipConfigs: Record<string, ShipCombatConfig> = { ...baseShipConfigs };
   for (const [shipId, entry] of Object.entries(args.fleet)) {
     const base = baseShipConfigs[shipId];
     if (!base) continue;
-    shipConfigs[shipId] = {
-      ...base,
-      baseHull: Math.max(1, Math.floor(base.baseHull * entry.hullPercent)),
-    };
+    // Flagship config is already hull-adjusted; for others, apply hullPercent here.
+    if (shipId === 'flagship') {
+      shipConfigs[shipId] = base;
+    } else {
+      shipConfigs[shipId] = {
+        ...base,
+        baseHull: Math.max(1, Math.floor(base.baseHull * entry.hullPercent)),
+      };
+    }
   }
 
   // 3. Compute player FP on the *current* (degraded) stats
@@ -177,6 +222,11 @@ export async function runAnomalyNode(
   const shipStatsMap = buildShipStatsMap(config);
   void shipStatsMap; // built for future use; not needed for combat input
 
+  const shipCosts = buildShipCosts(config);
+  shipCosts['flagship'] = { minerai: 0, silicium: 0 }; // No debris from flagship
+  const shipIdSet = new Set(Object.keys(config.ships));
+  shipIdSet.add('flagship');
+
   const combatInput: CombatInput = {
     attackerFleet: playerShipCounts,
     defenderFleet: enemyFleet,
@@ -185,8 +235,8 @@ export async function runAnomalyNode(
     defenderMultipliers: enemyMultipliers,
     combatConfig,
     shipConfigs,
-    shipCosts: buildShipCosts(config),
-    shipIds: new Set(Object.keys(config.ships)),
+    shipCosts,
+    shipIds: shipIdSet,
     defenseIds: new Set(Object.keys(config.defenses)),
   };
   const result = simulateCombat(combatInput);

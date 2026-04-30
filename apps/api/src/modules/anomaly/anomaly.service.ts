@@ -134,6 +134,7 @@ export function createAnomalyService(
 
       // 9. Pre-generate the depth-1 enemy so the player can preview it
       const firstEnemy = await generateAnomalyEnemy(db, gameConfigService, {
+        userId,
         fleet,
         depth: 1,
       });
@@ -180,6 +181,7 @@ export function createAnomalyService(
         };
       } else {
         const generated = await generateAnomalyEnemy(db, gameConfigService, {
+          userId,
           fleet,
           depth: newDepth,
         });
@@ -196,12 +198,17 @@ export function createAnomalyService(
 
       const config = await gameConfigService.getFullConfig();
 
-      // Wipe conditions:
-      // - flagship destroyed (no longer in survivors)
-      // - or no surviving ships at all
+      // Outcome taxonomy:
+      //   - totalWipe   : aucun survivant côté joueur → tout perdu
+      //   - forcedRetreat : flagship détruit OU combat perdu, mais des ships
+      //                     survivent → retour forcé avec ce qui reste +
+      //                     loot rendu + Exilium remboursé. Le flagship est
+      //                     incapacité s'il a été détruit.
+      //   - survived     : flagship vivant + combat gagné → on peut continuer
       const flagshipSurvived = !!result.attackerSurvivors['flagship'];
       const anySurvivor = Object.keys(result.attackerSurvivors).length > 0;
-      const wiped = !flagshipSurvived || !anySurvivor || result.outcome !== 'attacker';
+      const totalWipe = !anySurvivor;
+      const forcedRetreat = !totalWipe && (!flagshipSurvived || result.outcome !== 'attacker');
 
       // ── Build a combat report so the player can review what happened ──
       const [user] = await db.select({ username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
@@ -229,7 +236,11 @@ export function createAnomalyService(
         shotsPerRound: result.shotsPerRound,
         extra: { anomalyDepth: newDepth, anomalyId: row.id },
       });
-      const outcomeLabel = wiped ? 'Défaite' : 'Victoire';
+      const outcomeLabel = totalWipe
+        ? 'Défaite totale'
+        : (!flagshipSurvived || result.outcome !== 'attacker')
+          ? 'Retraite forcée'
+          : 'Victoire';
       const report = await reportService.create({
         userId,
         missionType: 'anomaly',
@@ -246,7 +257,8 @@ export function createAnomalyService(
       const existingReportIds = (row.reportIds ?? []) as string[];
       const updatedReportIds = [...existingReportIds, report.id];
 
-      if (wiped) {
+      if (totalWipe) {
+        // Tout est mort : pas de retour, Exilium perdu, flagship incapacité.
         await db.update(anomalies).set({
           status: 'wiped',
           fleet: result.attackerSurvivors,
@@ -256,15 +268,7 @@ export function createAnomalyService(
           nextEnemyFleet: null,
           nextEnemyFp: null,
         }).where(eq(anomalies.id, row.id));
-
-        // Incapacitate flagship if it was destroyed in combat
-        if (!flagshipSurvived) {
-          await flagshipService.incapacitate(userId);
-        } else {
-          // Otherwise just release it back to home
-          const home = await getHomeworld(userId);
-          if (home) await flagshipService.returnFromMission(userId, home.id);
-        }
+        await flagshipService.incapacitate(userId);
 
         return {
           outcome: 'wiped' as const,
@@ -272,6 +276,83 @@ export function createAnomalyService(
           enemyFP: result.enemyFP,
           combatRounds: result.combatRounds,
           reportId: report.id,
+        };
+      }
+
+      if (forcedRetreat) {
+        // Flagship perdu OU combat perdu mais ships survivants → retour forcé
+        // avec ce qu'on a (équivalent d'un retreat() volontaire). Loot rendu,
+        // Exilium remboursé. Flagship incapacité s'il a été détruit.
+        const home = await getHomeworld(userId);
+        if (!home) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Planète mère introuvable' });
+        }
+
+        await db.update(anomalies).set({
+          status: 'completed',
+          fleet: result.attackerSurvivors,
+          reportIds: updatedReportIds,
+          completedAt: new Date(),
+          nextNodeAt: null,
+          nextEnemyFleet: null,
+          nextEnemyFp: null,
+        }).where(eq(anomalies.id, row.id));
+
+        // Refund Exilium
+        if (row.exiliumPaid > 0) {
+          await exiliumService.earn(userId, row.exiliumPaid, 'pve', { source: 'anomaly_forced_retreat' });
+        }
+
+        // Crédite ressources accumulées
+        const lootMinerai = Number(row.lootMinerai);
+        const lootSilicium = Number(row.lootSilicium);
+        const lootHydrogene = Number(row.lootHydrogene);
+        if (lootMinerai > 0 || lootSilicium > 0 || lootHydrogene > 0) {
+          await db.update(planets).set({
+            minerai: sql`${planets.minerai} + ${lootMinerai}`,
+            silicium: sql`${planets.silicium} + ${lootSilicium}`,
+            hydrogene: sql`${planets.hydrogene} + ${lootHydrogene}`,
+          }).where(eq(planets.id, home.id));
+        }
+
+        // Réinjecte ships survivants (sauf flagship) + recovered ships
+        const lootShipsMap = (row.lootShips ?? {}) as LootShipsMap;
+        const shipIncrements: Record<string, unknown> = {};
+        for (const [shipId, entry] of Object.entries(result.attackerSurvivors)) {
+          if (shipId === 'flagship') continue;
+          if (entry.count > 0) {
+            const col = (planetShips as unknown as Record<string, unknown>)[shipId];
+            if (col) shipIncrements[shipId] = sql`${col} + ${entry.count}`;
+          }
+        }
+        for (const [shipId, count] of Object.entries(lootShipsMap)) {
+          if (count > 0) {
+            const col = (planetShips as unknown as Record<string, unknown>)[shipId];
+            if (col) {
+              const survivorCount = result.attackerSurvivors[shipId]?.count ?? 0;
+              shipIncrements[shipId] = sql`${col} + ${survivorCount + count}`;
+            }
+          }
+        }
+        if (Object.keys(shipIncrements).length > 0) {
+          await db.update(planetShips).set(shipIncrements as never)
+            .where(eq(planetShips.planetId, home.id));
+        }
+
+        // Flagship : incapacity si détruit, sinon return home
+        if (!flagshipSurvived) {
+          await flagshipService.incapacitate(userId);
+        } else {
+          await flagshipService.returnFromMission(userId, home.id);
+        }
+
+        return {
+          outcome: 'forced_retreat' as const,
+          fleet: result.attackerSurvivors,
+          enemyFP: result.enemyFP,
+          combatRounds: result.combatRounds,
+          reportId: report.id,
+          flagshipLost: !flagshipSurvived,
         };
       }
 
@@ -291,6 +372,7 @@ export function createAnomalyService(
 
       // Pre-generate the enemy for the next depth based on the surviving fleet.
       const nextEnemy = await generateAnomalyEnemy(db, gameConfigService, {
+        userId,
         fleet: result.attackerSurvivors,
         depth: newDepth + 1,
       });
