@@ -39,7 +39,7 @@ export function ResourcesHelp({ planetClassId }: { planetClassId?: string | null
         icon={<Zap className="h-3.5 w-3.5 text-energy" />}
         title="Énergie"
       >
-        Chaque mine consomme de l'énergie. La <span className="text-foreground font-medium">centrale solaire</span> et les <span className="text-foreground font-medium">satellites solaires</span> en produisent. Si l'énergie nette est <span className="text-destructive font-medium">négative</span>, vos mines tournent au ralenti — surveillez la KPI d'énergie au-dessus.
+        Chaque mine consomme de l'énergie. La <span className="text-foreground font-medium">centrale solaire</span> et les <span className="text-foreground font-medium">satellites solaires</span> en produisent. Si l'énergie disponible est <span className="text-destructive font-medium">négative</span>, vos mines tournent au ralenti — surveillez la KPI d'énergie au-dessus.
       </FacilityHelpSection>
 
       <FacilityHelpSection

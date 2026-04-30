@@ -113,7 +113,7 @@ export function EnergyCard({
           <span className="shrink-0">{icon}</span>
           <div className="min-w-0">
             <div className="flex items-baseline gap-2">
-              <span className="text-sm font-semibold text-foreground">Énergie nette</span>
+              <span className="text-sm font-semibold text-foreground">Énergie disponible</span>
               <span
                 className={cn(
                   'font-mono text-2xl font-bold tabular-nums',
