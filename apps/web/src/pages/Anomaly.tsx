@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Zap, ChevronRight, Trophy, Skull, X, Swords, FileText } from 'lucide-react';
 import { trpc } from '@/trpc';
@@ -23,7 +23,9 @@ interface FleetEntry {
 export default function Anomaly() {
   const { data: gameConfig } = useGameConfig();
   const { data: current, isLoading: loadingCurrent } = trpc.anomaly.current.useQuery(undefined, {
-    refetchInterval: 30_000, // poll while engaged so timer updates
+    // 10s poll: short enough to surface server-side node-type changes
+    // (combat→event after a win) without spamming the API.
+    refetchInterval: 10_000,
   });
   const { data: history } = trpc.anomaly.history.useQuery({ limit: 10 });
   const utils = trpc.useUtils();
@@ -51,7 +53,19 @@ export default function Anomaly() {
         addToast(`⚔️ Combat remporté — profondeur ${data.depth}`, 'success');
       }
     },
-    onError: (err) => addToast(err.message ?? 'Combat impossible', 'error'),
+    onError: (err) => {
+      // Always refetch on error: the server may have advanced the anomaly state
+      // (e.g. into an event node) since the UI's last poll. Refetching ensures
+      // the player sees the up-to-date node type instead of a stale combat button.
+      utils.anomaly.current.invalidate();
+      const isEventPending = (err.message ?? '').includes('événement');
+      addToast(
+        isEventPending
+          ? '✨ Un événement est apparu — la page se met à jour'
+          : err.message ?? 'Combat impossible',
+        isEventPending ? 'success' : 'error',
+      );
+    },
   });
 
   const retreatMutation = trpc.anomaly.retreat.useMutation({
@@ -335,26 +349,13 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
 
         {/* Next node — event card OR enemy preview, depending on nextNodeType */}
         {anomaly.nextNodeType === 'event' && anomaly.nextEventId ? (
-          <div className="border-t border-border/30 pt-3">
-            {(() => {
-              const event = content?.events.find((e) => e.id === anomaly.nextEventId);
-              if (!event) {
-                return (
-                  <div className="text-xs text-muted-foreground">
-                    Événement en cours de chargement…
-                  </div>
-                );
-              }
-              return (
-                <AnomalyEventCard
-                  event={event}
-                  ready={ready}
-                  disabled={retreatPending}
-                  nextAt={nextAt}
-                />
-              );
-            })()}
-          </div>
+          <EventNodeBlock
+            eventId={anomaly.nextEventId}
+            event={content?.events.find((e) => e.id === anomaly.nextEventId)}
+            ready={ready}
+            disabled={retreatPending}
+            nextAt={nextAt}
+          />
         ) : (
         <div className="border-t border-border/30 pt-3 space-y-2">
           <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Prochain combat (profondeur {nextDepth})</h3>
@@ -435,6 +436,76 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Event node wrapper ──────────────────────────────────────────────────────
+// Wraps the event card and auto-scrolls into view the first time a given
+// event id appears, so the player never has to look for it after a combat.
+
+interface AnomalyEventShape {
+  id: string;
+  enabled: boolean;
+  tier: 'early' | 'mid' | 'deep';
+  image: string;
+  title: string;
+  description: string;
+  choices: Array<{
+    label: string;
+    hidden: boolean;
+    outcome: {
+      minerai: number;
+      silicium: number;
+      hydrogene: number;
+      exilium: number;
+      hullDelta: number;
+      shipsGain: Record<string, number>;
+      shipsLoss: Record<string, number>;
+    };
+    resolutionText: string;
+  }>;
+}
+
+function EventNodeBlock({
+  eventId,
+  event,
+  ready,
+  disabled,
+  nextAt,
+}: {
+  eventId: string;
+  event: AnomalyEventShape | undefined;
+  ready: boolean;
+  disabled: boolean;
+  nextAt: Date | null;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [eventId]);
+
+  if (!event) {
+    return (
+      <div ref={containerRef} className="border-t border-border/30 pt-3">
+        <div className="text-xs text-muted-foreground">Événement en cours de chargement…</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="border-t border-border/30 pt-3 rounded-md ring-2 ring-violet-500/30 bg-violet-500/[0.03] -mx-2 px-2"
+    >
+      <AnomalyEventCard
+        event={event}
+        ready={ready}
+        disabled={disabled}
+        nextAt={nextAt}
+      />
     </div>
   );
 }
