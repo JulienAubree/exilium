@@ -24,4 +24,5 @@ export * from './formulas/exploration.js';
 export * from './formulas/planet-type.js';
 export * from './formulas/governance.js';
 export * from './formulas/anomaly.js';
+export * from './formulas/anomaly-events.js';
 export * from './sidebar-visibility.js';

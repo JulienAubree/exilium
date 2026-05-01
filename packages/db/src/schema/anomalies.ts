@@ -27,6 +27,16 @@ export const anomalies = pgTable('anomalies', {
   /** Pre-generated enemy fleet for the next node (so the player can see what's coming). */
   nextEnemyFleet: jsonb('next_enemy_fleet'),
   nextEnemyFp: integer('next_enemy_fp'),
+  /** 'combat' | 'event' — type of the pending node. */
+  nextNodeType: varchar('next_node_type', { length: 8 }).notNull().default('combat'),
+  /** When nextNodeType='event', id of the picked event in anomaly_content.events. */
+  nextEventId: varchar('next_event_id', { length: 40 }),
+  /** Event ids already shown in this run (no-repeat). */
+  seenEventIds: jsonb('seen_event_ids').notNull().default(sql`'[]'::jsonb`),
+  /** Decrements at each combat won; when 0, next node becomes an event. */
+  combatsUntilNextEvent: smallint('combats_until_next_event').notNull().default(3),
+  /** Resolved events: [{ depth, eventId, choiceIndex, outcomeApplied, resolvedAt }]. */
+  eventLog: jsonb('event_log').notNull().default(sql`'[]'::jsonb`),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
 });

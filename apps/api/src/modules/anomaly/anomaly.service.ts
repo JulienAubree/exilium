@@ -5,11 +5,16 @@ import type { Database } from '@exilium/db';
 import {
   anomalyLoot,
   anomalyEnemyRecoveryCount,
+  applyOutcomeToFleet,
+  pickEventForTier,
+  pickEventGap,
+  tierForDepth,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createReportService } from '../report/report.service.js';
+import type { createAnomalyContentService } from '../anomaly-content/anomaly-content.service.js';
 import { buildCombatReportData } from '../fleet/combat.helpers.js';
 import { runAnomalyNode, generateAnomalyEnemy, type FleetEntry } from './anomaly.combat.js';
 
@@ -23,6 +28,7 @@ export function createAnomalyService(
   exiliumService: ReturnType<typeof createExiliumService>,
   flagshipService: ReturnType<typeof createFlagshipService>,
   reportService: ReturnType<typeof createReportService>,
+  anomalyContentService: ReturnType<typeof createAnomalyContentService>,
 ) {
   async function loadActive(userId: string): Promise<AnomalyRow | null> {
     const [row] = await db.select().from(anomalies)
@@ -181,7 +187,8 @@ export function createAnomalyService(
           depth: 1,
         });
 
-        // 10. Insert anomaly row
+        // 10. Insert anomaly row — first node is always combat; pre-roll the
+        // gap to the first event (uniform {2,3,4} → ~6-7 events on a 20-deep run).
         const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
         const [created] = await tx.insert(anomalies).values({
           userId,
@@ -193,6 +200,8 @@ export function createAnomalyService(
           nextNodeAt,
           nextEnemyFleet: firstEnemy.enemyFleet,
           nextEnemyFp: Math.round(firstEnemy.enemyFP),
+          nextNodeType: 'combat',
+          combatsUntilNextEvent: pickEventGap(Math.random),
         }).returning();
 
         return created;
@@ -215,6 +224,12 @@ export function createAnomalyService(
           .limit(1);
         if (!row) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune anomalie active' });
+        }
+        if (row.nextNodeType === 'event') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Un événement est en attente — résolvez-le avant de combattre',
+          });
         }
         if (row.nextNodeAt && row.nextNodeAt > new Date()) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Anomalie pas encore prête — attendez le prochain noeud' });
@@ -449,11 +464,39 @@ export function createAnomalyService(
         mergedLootShips[shipId] = (mergedLootShips[shipId] ?? 0) + count;
       }
 
-      const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
-        userId,
-        fleet: result.attackerSurvivors,
-        depth: newDepth + 1,
-      });
+      // ── Decide next node : event vs combat ───────────────────────────────
+      // Decrement counter; when it hits 0 try to pick an event of the upcoming
+      // tier. If pool is exhausted for that tier, fallback to combat (no error).
+      const newCounter = Math.max(0, row.combatsUntilNextEvent - 1);
+      const seenEventIds = new Set((row.seenEventIds ?? []) as string[]);
+      let nextNodeType: 'combat' | 'event' = 'combat';
+      let nextEventId: string | null = null;
+      let nextEnemyFleet: Record<string, number> | null = null;
+      let nextEnemyFp: number | null = null;
+      let nextCounter = newCounter;
+
+      if (newCounter === 0) {
+        const content = await anomalyContentService.getContent();
+        const tier = tierForDepth(newDepth + 1);
+        const pickedEvent = pickEventForTier(content.events, tier, seenEventIds, Math.random);
+        if (pickedEvent) {
+          nextNodeType = 'event';
+          nextEventId = pickedEvent.id;
+          // Re-roll the spacing to the *next* event after this one resolves.
+          nextCounter = pickEventGap(Math.random);
+        }
+      }
+
+      // Generate the combat preview only when the next node is a combat.
+      if (nextNodeType === 'combat') {
+        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+          userId,
+          fleet: result.attackerSurvivors,
+          depth: newDepth + 1,
+        });
+        nextEnemyFleet = nextEnemy.enemyFleet;
+        nextEnemyFp = Math.round(nextEnemy.enemyFP);
+      }
 
       const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
       const survivedRows = await tx.update(anomalies).set({
@@ -465,8 +508,11 @@ export function createAnomalyService(
         lootShips: mergedLootShips,
         reportIds: updatedReportIds,
         nextNodeAt,
-        nextEnemyFleet: nextEnemy.enemyFleet,
-        nextEnemyFp: Math.round(nextEnemy.enemyFP),
+        nextEnemyFleet,
+        nextEnemyFp,
+        nextNodeType,
+        nextEventId,
+        combatsUntilNextEvent: nextCounter,
       }).where(and(
         eq(anomalies.id, row.id),
         eq(anomalies.status, 'active'),
@@ -485,11 +531,196 @@ export function createAnomalyService(
         recoveredShips: recovered,
         depth: newDepth,
         nextNodeAt: nextNodeAt.toISOString(),
+        nextNodeType,
+        nextEventId,
         reportId: report.id,
       };
       });
     },
 
+
+    /**
+     * Resolve a narrative event by clicking one of its choices. Pure outcomes
+     * (resources, hull, ships, exilium) — no combat. Wrapped in a transaction
+     * with advisory lock + SELECT FOR UPDATE + WHERE-guards so a concurrent
+     * resolve / advance / retreat from the same user is serialized and rejected.
+     *
+     * Fallback : if the event id has been removed from anomalyContent (admin
+     * action mid-run), we silently switch the run to a combat node and surface
+     * an explicit error so the UI can refresh.
+     */
+    async resolveEvent(userId: string, input: { choiceIndex: number }) {
+      const choiceIndex = Math.floor(input.choiceIndex);
+      if (choiceIndex < 0 || choiceIndex > 2) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Indice de choix invalide' });
+      }
+
+      return await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
+
+        const [row] = await tx.select().from(anomalies)
+          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .for('update')
+          .limit(1);
+        if (!row) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune anomalie active' });
+        }
+        if (row.nextNodeType !== 'event' || !row.nextEventId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun événement à résoudre' });
+        }
+        if (row.nextNodeAt && row.nextNodeAt > new Date()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Anomalie pas encore prête — attendez la fin du transit' });
+        }
+
+        const content = await anomalyContentService.getContent();
+        const event = content.events.find((e) => e.id === row.nextEventId);
+
+        // Admin removed/disabled the event mid-run → fallback to a combat node
+        // so the player isn't stuck. Surface an error to trigger a UI refresh.
+        if (!event || !event.enabled) {
+          const enemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+            userId,
+            fleet: row.fleet as FleetMap,
+            depth: row.currentDepth + 1,
+          });
+          const config = await gameConfigService.getFullConfig();
+          const newNextAt = new Date(Date.now() + nodeTravelMs(config));
+          await tx.update(anomalies).set({
+            nextNodeType: 'combat',
+            nextEventId: null,
+            nextEnemyFleet: enemy.enemyFleet,
+            nextEnemyFp: Math.round(enemy.enemyFP),
+            nextNodeAt: newNextAt,
+          }).where(and(
+            eq(anomalies.id, row.id),
+            eq(anomalies.status, 'active'),
+            eq(anomalies.nextNodeType, 'event'),
+          ));
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Cet événement n\'est plus disponible — un combat l\'a remplacé',
+          });
+        }
+
+        if (choiceIndex >= event.choices.length) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Choix inexistant pour cet événement' });
+        }
+
+        const choice = event.choices[choiceIndex];
+        const outcome = choice.outcome;
+
+        // Apply outcome (pure) on the fleet snapshot.
+        const fleetBefore = row.fleet as FleetMap;
+        const applied = applyOutcomeToFleet(fleetBefore, outcome);
+
+        // Clamp loot at 0 (the run loot can't go negative even with negative deltas).
+        const lootMinerai = Math.max(0, Number(row.lootMinerai) + applied.lootDeltas.minerai);
+        const lootSilicium = Math.max(0, Number(row.lootSilicium) + applied.lootDeltas.silicium);
+        const lootHydrogene = Math.max(0, Number(row.lootHydrogene) + applied.lootDeltas.hydrogene);
+
+        // Apply exilium delta on the user balance (clamp at 0 for negative).
+        let exiliumApplied = 0;
+        if (applied.exiliumDelta !== 0) {
+          const [exRecord] = await tx.select({ balance: userExilium.balance })
+            .from(userExilium)
+            .where(eq(userExilium.userId, userId))
+            .for('update')
+            .limit(1);
+          const currentBalance = exRecord?.balance ?? 0;
+          if (applied.exiliumDelta > 0) {
+            await tx.update(userExilium).set({
+              balance: sql`${userExilium.balance} + ${applied.exiliumDelta}`,
+              totalEarned: sql`${userExilium.totalEarned} + ${applied.exiliumDelta}`,
+              updatedAt: new Date(),
+            }).where(eq(userExilium.userId, userId));
+            exiliumApplied = applied.exiliumDelta;
+          } else {
+            // Spend — clamp to current balance so we never go negative.
+            const toSpend = Math.min(currentBalance, -applied.exiliumDelta);
+            if (toSpend > 0) {
+              await tx.update(userExilium).set({
+                balance: sql`${userExilium.balance} - ${toSpend}`,
+                totalSpent: sql`${userExilium.totalSpent} + ${toSpend}`,
+                updatedAt: new Date(),
+              }).where(eq(userExilium.userId, userId));
+              exiliumApplied = -toSpend;
+            }
+          }
+          if (exiliumApplied !== 0) {
+            await tx.insert(exiliumLog).values({
+              userId,
+              amount: exiliumApplied,
+              source: 'pve',
+              details: { source: 'anomaly_event', eventId: event.id, choiceIndex },
+            });
+          }
+        }
+
+        // Generate the next combat preview based on the *updated* fleet.
+        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+          userId,
+          fleet: applied.fleet,
+          depth: row.currentDepth + 1,
+        });
+
+        const config = await gameConfigService.getFullConfig();
+        const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
+
+        const seenSet = new Set((row.seenEventIds ?? []) as string[]);
+        seenSet.add(event.id);
+        const eventLog = (row.eventLog ?? []) as Array<Record<string, unknown>>;
+        const newLogEntry = {
+          depth: row.currentDepth,
+          eventId: event.id,
+          choiceIndex,
+          outcomeApplied: {
+            minerai: applied.lootDeltas.minerai,
+            silicium: applied.lootDeltas.silicium,
+            hydrogene: applied.lootDeltas.hydrogene,
+            exilium: exiliumApplied,
+            hullDelta: outcome.hullDelta ?? 0,
+            shipsGain: outcome.shipsGain ?? {},
+            shipsLoss: outcome.shipsLoss ?? {},
+          },
+          resolvedAt: new Date().toISOString(),
+        };
+
+        // WHERE-guards: status='active' AND nextNodeType='event' AND
+        // nextEventId=row.nextEventId — guard against a parallel resolve
+        // that would have already advanced the state.
+        const updatedRows = await tx.update(anomalies).set({
+          fleet: applied.fleet,
+          lootMinerai: String(lootMinerai),
+          lootSilicium: String(lootSilicium),
+          lootHydrogene: String(lootHydrogene),
+          nextNodeType: 'combat',
+          nextEventId: null,
+          nextEnemyFleet: nextEnemy.enemyFleet,
+          nextEnemyFp: Math.round(nextEnemy.enemyFP),
+          nextNodeAt,
+          seenEventIds: Array.from(seenSet),
+          eventLog: [...eventLog, newLogEntry],
+        }).where(and(
+          eq(anomalies.id, row.id),
+          eq(anomalies.status, 'active'),
+          eq(anomalies.nextNodeType, 'event'),
+          eq(anomalies.nextEventId, row.nextEventId),
+        )).returning({ id: anomalies.id });
+        if (updatedRows.length === 0) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'État de l\'anomalie a changé entre-temps' });
+        }
+
+        return {
+          outcome: 'event_resolved' as const,
+          eventId: event.id,
+          choiceIndex,
+          resolutionText: choice.resolutionText,
+          outcomeApplied: newLogEntry.outcomeApplied,
+          nextNodeAt: nextNodeAt.toISOString(),
+          nextEnemyFp: Math.round(nextEnemy.enemyFP),
+        };
+      });
+    },
 
     /**
      * Voluntarily abandon the run: refund Exilium, return ships + loot to homeworld.

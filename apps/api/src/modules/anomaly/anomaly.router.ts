@@ -20,6 +20,12 @@ export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnom
       return anomalyService.advance(ctx.userId!);
     }),
 
+    resolveEvent: protectedProcedure
+      .input(z.object({ choiceIndex: z.number().int().min(0).max(2) }))
+      .mutation(async ({ ctx, input }) => {
+        return anomalyService.resolveEvent(ctx.userId!, input);
+      }),
+
     retreat: protectedProcedure.mutation(async ({ ctx }) => {
       return anomalyService.retreat(ctx.userId!);
     }),

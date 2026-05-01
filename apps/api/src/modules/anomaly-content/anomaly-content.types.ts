@@ -1,7 +1,44 @@
 import { z } from 'zod';
+import { DEFAULT_ANOMALY_EVENTS } from './anomaly-events.seed.js';
 
 /** Maximum depth supported by the V1 of the Anomaly mode. */
 export const ANOMALY_MAX_DEPTH = 20;
+
+/** Tier of an event — gates which events spawn at a given depth. */
+export const ANOMALY_EVENT_TIERS = ['early', 'mid', 'deep'] as const;
+export type AnomalyEventTier = (typeof ANOMALY_EVENT_TIERS)[number];
+
+/**
+ * Outcome of a single choice. Every field is optional and additive — the
+ * engine clamps loot at 0, hull in [0.01, 1.0], ship counts at 0. The
+ * `flagship` shipId is rejected at validation time (flagship loss is
+ * reserved for combat).
+ */
+const shipDeltaSchema = z
+  .record(z.string(), z.number().int().min(0))
+  .refine((m) => !('flagship' in m), 'flagship not allowed in event outcomes');
+
+const outcomeSchema = z.object({
+  minerai: z.number().int().default(0),
+  silicium: z.number().int().default(0),
+  hydrogene: z.number().int().default(0),
+  exilium: z.number().int().default(0),
+  /** Ratio applied uniformly to every fleet group's hullPercent, clamp[0.01, 1]. */
+  hullDelta: z.number().min(-1).max(1).default(0),
+  /** shipId → count to add (combat ships only). */
+  shipsGain: shipDeltaSchema.default({}),
+  /** shipId → count to remove. */
+  shipsLoss: shipDeltaSchema.default({}),
+});
+
+const choiceSchema = z.object({
+  label: z.string().min(1).max(80),
+  /** When true, the outcome is shown as `???` until clicked. */
+  hidden: z.boolean().default(false),
+  outcome: outcomeSchema.default({}),
+  /** Narrative shown after resolution ("Vous récupérez 1500 minerai…"). */
+  resolutionText: z.string().max(500).default(''),
+});
 
 /**
  * One depth illustration. The image path is the public path returned by the
@@ -16,16 +53,17 @@ const depthEntrySchema = z.object({
 });
 
 /**
- * Random-event entry — empty pool in V1, populated in V3. Schema lives here
- * already so we don't have to migrate the JSONB blob shape later.
+ * Narrative event — appears between combats with 2-3 choices. Tagged by
+ * tier (early/mid/deep) so the difficulty curve matches the run depth.
  */
 const eventEntrySchema = z.object({
   id: z.string().min(1).max(40),
+  enabled: z.boolean().default(true),
+  tier: z.enum(ANOMALY_EVENT_TIERS),
   image: z.string().max(500).default(''),
   title: z.string().min(1).max(80),
   description: z.string().min(1).max(1000),
-  /** Future: weighted choice when picking events at a node. */
-  weight: z.number().int().min(0).max(100).default(10),
+  choices: z.array(choiceSchema).min(2).max(3),
 });
 
 export const anomalyContentSchema = z.object({
@@ -36,18 +74,30 @@ export const anomalyContentSchema = z.object({
 export type AnomalyContent = z.infer<typeof anomalyContentSchema>;
 export type AnomalyDepthEntry = z.infer<typeof depthEntrySchema>;
 export type AnomalyEventEntry = z.infer<typeof eventEntrySchema>;
+export type AnomalyEventChoice = z.infer<typeof choiceSchema>;
+export type AnomalyEventOutcome = z.infer<typeof outcomeSchema>;
 
 /**
- * Default content: 20 empty depth slots, no events. Admin uploads images
- * progressively. The game-side falls back to the violet hero gradient when
- * `image` is empty — so missing entries are never a hard failure.
+ * Input shape (pre-default-application) — used by the seed where outcome
+ * fields are mostly omitted. Zod fills in the defaults at parse time.
  */
-export const DEFAULT_ANOMALY_CONTENT: AnomalyContent = {
+export type AnomalyEventEntryInput = z.input<typeof eventEntrySchema>;
+
+/**
+ * Default content: 20 empty depth slots, 30 seed events covering all tiers.
+ * Admin uploads images and refines text via the admin UI. The game-side
+ * falls back to a generic gradient when `image` is empty — missing assets
+ * are never a hard failure.
+ *
+ * Parsed through the Zod schema at module init so all defaults
+ * (resource deltas = 0, hullDelta = 0, etc.) are filled in.
+ */
+export const DEFAULT_ANOMALY_CONTENT: AnomalyContent = anomalyContentSchema.parse({
   depths: Array.from({ length: ANOMALY_MAX_DEPTH }, (_, i) => ({
     depth: i + 1,
     image: '',
     title: '',
     description: '',
   })),
-  events: [],
-};
+  events: DEFAULT_ANOMALY_EVENTS,
+});

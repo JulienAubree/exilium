@@ -12,6 +12,8 @@ import { AnomalyIcon } from '@/lib/icons';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { AnomalyEngageModal } from '@/components/anomaly/AnomalyEngageModal';
+import { AnomalyEventCard } from '@/components/anomaly/AnomalyEventCard';
+import { AnomalyEventLog } from '@/components/anomaly/AnomalyEventLog';
 
 interface FleetEntry {
   count: number;
@@ -193,6 +195,9 @@ interface AnomalyRow {
   completedAt?: string | Date | null;
   nextEnemyFleet?: unknown;
   nextEnemyFp?: number | null;
+  nextNodeType?: string;
+  nextEventId?: string | null;
+  eventLog?: unknown;
 }
 
 function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending, cost }: {
@@ -206,6 +211,13 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
   const fleet = (anomaly.fleet ?? {}) as Record<string, FleetEntry>;
   const lootShips = (anomaly.lootShips ?? {}) as Record<string, number>;
   const reportIds = (anomaly.reportIds ?? []) as string[];
+  const eventLog = (anomaly.eventLog ?? []) as Array<{
+    depth: number;
+    eventId: string;
+    choiceIndex: number;
+    outcomeApplied: Record<string, unknown>;
+    resolvedAt: string;
+  }>;
   const { data: gameConfig } = useGameConfig();
   const { data: content } = trpc.anomalyContent.get.useQuery();
   const nextDepth = anomaly.currentDepth + 1;
@@ -297,6 +309,11 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
           </div>
         )}
 
+        {/* Événements résolus pendant la run (V3) */}
+        {eventLog.length > 0 && content?.events && (
+          <AnomalyEventLog log={eventLog as never} events={content.events} />
+        )}
+
         {/* Rapports de combat (1 par profondeur) */}
         {reportIds.length > 0 && (
           <div>
@@ -316,7 +333,29 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
           </div>
         )}
 
-        {/* Next node — enemy preview */}
+        {/* Next node — event card OR enemy preview, depending on nextNodeType */}
+        {anomaly.nextNodeType === 'event' && anomaly.nextEventId ? (
+          <div className="border-t border-border/30 pt-3">
+            {(() => {
+              const event = content?.events.find((e) => e.id === anomaly.nextEventId);
+              if (!event) {
+                return (
+                  <div className="text-xs text-muted-foreground">
+                    Événement en cours de chargement…
+                  </div>
+                );
+              }
+              return (
+                <AnomalyEventCard
+                  event={event}
+                  ready={ready}
+                  disabled={retreatPending}
+                  nextAt={nextAt}
+                />
+              );
+            })()}
+          </div>
+        ) : (
         <div className="border-t border-border/30 pt-3 space-y-2">
           <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Prochain combat (profondeur {nextDepth})</h3>
 
@@ -381,6 +420,7 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
             </div>
           )}
         </div>
+        )}
 
         {/* Retreat */}
         <div className="border-t border-border/30 pt-3">
