@@ -48,19 +48,6 @@ export interface FleetEntry {
   hullPercent: number;
 }
 
-/**
- * Map an anomaly depth to a pirate template tier so the late game faces
- * heavier, more diverse compositions (battlecruisers, cruisers) instead of
- * the same scaled-up "war party of frigates".
- *   depth 1-7  → easy   (interceptors, small frigates)
- *   depth 8-14 → medium (frigates + cruisers)
- *   depth 15+  → hard   (cruisers + battlecruisers)
- */
-export function anomalyTemplateTier(depth: number): 'easy' | 'medium' | 'hard' {
-  if (depth <= 7) return 'easy';
-  if (depth <= 14) return 'medium';
-  return 'hard';
-}
 
 export interface AnomalyCombatResult {
   outcome: 'attacker' | 'defender' | 'draw';
@@ -148,10 +135,11 @@ export async function generateAnomalyEnemy(
     maxRatio: Number(config.universe.anomaly_enemy_max_ratio) || undefined,
   });
 
-  // Tier templates by depth so the visual variety matches the difficulty
-  // arc: scouts at the top, war parties in the middle, armadas at the bottom.
-  const tier = anomalyTemplateTier(args.depth);
-  const templates = await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, tier));
+  // Anomaly compositions are always drawn from the `hard` pool — even at
+  // depth 1 you face cruiser/battlecruiser-led groups (just scaled down to
+  // ~70% of player FP). Reinforces the "this is the dangerous part of
+  // space" fantasy. The FP scaling does the difficulty work.
+  const templates = await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'hard'));
   const fallbackTemplates = templates.length > 0
     ? templates
     : await db.select().from(pirateTemplates).where(eq(pirateTemplates.tier, 'medium'));
