@@ -78,46 +78,60 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-violet-300 font-semibold">
-        <Sparkles className="h-3.5 w-3.5" />
-        <span>Événement narratif</span>
-        <span className="text-muted-foreground/70 normal-case font-normal">— résolution instantanée</span>
-      </div>
-
-      {event.image && (
-        <div className="relative overflow-hidden rounded-md border border-violet-500/30">
-          <img
-            src={event.image}
-            alt={event.title}
-            className="block w-full h-44 object-cover"
-            loading="lazy"
-          />
+    <div className="border-t border-border/30 pt-4 -mx-2">
+      <div className="relative overflow-hidden rounded-xl border border-violet-500/30 bg-gradient-to-b from-violet-950/40 via-slate-950/60 to-slate-950">
+        {/* Illustration bandeau, même langage que AnomalyCombatPreview */}
+        <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden">
+          {event.image ? (
+            <img
+              src={event.image}
+              alt={event.title}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-900/70 via-slate-900 to-indigo-900/60" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+          <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
+            <div className="inline-flex items-center gap-2 rounded-md border border-violet-300/30 bg-slate-950/70 backdrop-blur px-2.5 py-1">
+              <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+              <span className="text-[10px] uppercase tracking-[0.18em] text-violet-200 font-semibold">
+                Événement narratif
+              </span>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-3 space-y-2">
-        <h3 className="text-base font-bold text-violet-100">{event.title}</h3>
-        <p className="text-sm text-foreground/80 whitespace-pre-line">{event.description}</p>
-      </div>
-
-      <div className="space-y-2">
-        {event.choices.map((choice, idx) => (
-          <ChoiceButton
-            key={idx}
-            choice={choice}
-            disabled={disabled || !ready || resolveMutation.isPending}
-            onClick={() => handleChoice(idx, choice.hidden)}
-          />
-        ))}
-      </div>
-
-      {!ready && nextAt && (
-        <div className="rounded-md border border-violet-500/20 bg-violet-500/5 p-3 flex items-center justify-center gap-2 text-sm">
-          <span className="text-muted-foreground">Disponible dans</span>
-          <Timer endTime={nextAt} className="font-mono text-violet-300 tabular-nums" />
+        {/* Texte narratif — toujours présent pour les events */}
+        <div className="px-4 pt-4 pb-3 sm:px-5 space-y-2 border-b border-violet-500/15">
+          <h3 className="text-base sm:text-lg font-bold text-violet-100 tracking-tight">
+            {event.title}
+          </h3>
+          <p className="text-sm text-foreground/75 italic leading-relaxed whitespace-pre-line">
+            {event.description}
+          </p>
         </div>
-      )}
+
+        {/* Choix */}
+        <div className="px-4 sm:px-5 py-3 space-y-2">
+          {event.choices.map((choice, idx) => (
+            <ChoiceButton
+              key={idx}
+              choice={choice}
+              disabled={disabled || !ready || resolveMutation.isPending}
+              onClick={() => handleChoice(idx, choice.hidden)}
+            />
+          ))}
+
+          {!ready && nextAt && (
+            <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.06] p-3 flex items-center justify-center gap-2 text-sm">
+              <span className="text-muted-foreground">Stabilisation en cours —</span>
+              <Timer endTime={nextAt} className="font-mono text-violet-200 tabular-nums font-semibold" />
+            </div>
+          )}
+        </div>
+      </div>
 
       {pendingHidden !== null && (
         <ConfirmHiddenModal

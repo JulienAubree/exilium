@@ -1,11 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Zap, ChevronRight, Trophy, Skull, X, Swords, FileText } from 'lucide-react';
+import { Zap, ChevronRight, Trophy, Skull, X, FileText } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { Button } from '@/components/ui/button';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
-import { Timer } from '@/components/common/Timer';
 import { useToastStore } from '@/stores/toast.store';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 import { AnomalyIcon } from '@/lib/icons';
@@ -14,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { AnomalyEngageModal } from '@/components/anomaly/AnomalyEngageModal';
 import { AnomalyEventCard } from '@/components/anomaly/AnomalyEventCard';
 import { AnomalyEventLog } from '@/components/anomaly/AnomalyEventLog';
+import { AnomalyCombatPreview } from '@/components/anomaly/AnomalyCombatPreview';
 
 interface FleetEntry {
   count: number;
@@ -347,7 +347,7 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
           </div>
         )}
 
-        {/* Next node — event card OR enemy preview, depending on nextNodeType */}
+        {/* Next node — event card OR combat preview, depending on nextNodeType */}
         {anomaly.nextNodeType === 'event' && anomaly.nextEventId ? (
           <EventNodeBlock
             eventId={anomaly.nextEventId}
@@ -357,70 +357,18 @@ function RunView({ anomaly, onAdvance, onRetreat, advancePending, retreatPending
             nextAt={nextAt}
           />
         ) : (
-        <div className="border-t border-border/30 pt-3 space-y-2">
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Prochain combat (profondeur {nextDepth})</h3>
-
-          {nextDepthContent?.image && (
-            <div className="relative overflow-hidden rounded-md border border-violet-500/20">
-              <img
-                src={nextDepthContent.image}
-                alt={nextDepthContent.title || `Profondeur ${nextDepth}`}
-                className="block w-full h-40 object-cover"
-                loading="lazy"
-              />
-              {(nextDepthContent.title || nextDepthContent.description) && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-3 pt-8 pb-2">
-                  {nextDepthContent.title && (
-                    <div className="text-sm font-bold text-violet-100">{nextDepthContent.title}</div>
-                  )}
-                  {nextDepthContent.description && (
-                    <div className="text-[11px] text-muted-foreground line-clamp-2">{nextDepthContent.description}</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {anomaly.nextEnemyFleet && Object.keys(anomaly.nextEnemyFleet as Record<string, number>).length > 0 ? (
-            <div className="rounded-md border border-rose-500/20 bg-rose-500/5 p-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Ennemi détecté</span>
-                <span className="text-rose-300 font-semibold tabular-nums">
-                  {anomaly.nextEnemyFp != null ? `~${formatNumber(anomaly.nextEnemyFp)} FP` : ''}
-                </span>
-              </div>
-              <div className="space-y-1 text-sm">
-                {Object.entries(anomaly.nextEnemyFleet as Record<string, number>).map(([shipId, count]) => {
-                  const def = gameConfig?.ships?.[shipId];
-                  return (
-                    <div key={shipId} className="flex items-center justify-between">
-                      <span className="text-foreground/80">{def?.name ?? shipId}</span>
-                      <span className="text-rose-300 tabular-nums">×{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-muted-foreground/70">Composition ennemie non disponible.</div>
-          )}
-
-          {ready ? (
-            <Button
-              onClick={onAdvance}
-              disabled={advancePending || retreatPending || totalShips === 0}
-              className="w-full bg-violet-600 hover:bg-violet-700"
-            >
-              <Swords className="h-4 w-4 mr-2" />
-              {advancePending ? 'Combat en cours...' : 'Lancer le combat'}
-            </Button>
-          ) : (
-            <div className="rounded-md border border-violet-500/20 bg-violet-500/5 p-3 flex items-center justify-center gap-2 text-sm">
-              <span className="text-muted-foreground">Combat disponible dans</span>
-              <Timer endTime={nextAt!} className="font-mono text-violet-300 tabular-nums" />
-            </div>
-          )}
-        </div>
+          <AnomalyCombatPreview
+            depth={nextDepth}
+            depthContent={nextDepthContent}
+            enemyFleet={anomaly.nextEnemyFleet as Record<string, number> | null}
+            enemyFp={anomaly.nextEnemyFp ?? null}
+            ready={ready}
+            disabled={retreatPending}
+            totalShips={totalShips}
+            nextAt={nextAt}
+            advancePending={advancePending}
+            onAdvance={onAdvance}
+          />
         )}
 
         {/* Retreat */}
@@ -496,10 +444,7 @@ function EventNodeBlock({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="border-t border-border/30 pt-3 rounded-md ring-2 ring-violet-500/30 bg-violet-500/[0.03] -mx-2 px-2"
-    >
+    <div ref={containerRef}>
       <AnomalyEventCard
         event={event}
         ready={ready}
