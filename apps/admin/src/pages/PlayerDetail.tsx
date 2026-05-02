@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router';
 import { useState } from 'react';
-import { ArrowLeft, Ship, Gem, Sparkles } from 'lucide-react';
+import { ArrowLeft, Ship, Gem, Sparkles, Wrench } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
@@ -19,8 +19,21 @@ export default function PlayerDetail() {
   );
   const { data: gameConfig } = useGameConfig();
   const [capitalConfirm, setCapitalConfirm] = useState<{ planetId: string; name: string } | null>(null);
+  const [repairOrphanConfirm, setRepairOrphanConfirm] = useState(false);
+  const [repairOrphanResult, setRepairOrphanResult] = useState<string | null>(null);
   const setCapitalMut = trpc.playerAdmin.setCapital.useMutation({
     onSuccess: () => { refetch(); setCapitalConfirm(null); },
+  });
+  const repairOrphanMut = trpc.playerAdmin.repairOrphanHomeworld.useMutation({
+    onSuccess: (result) => {
+      setRepairOrphanConfirm(false);
+      setRepairOrphanResult(`Planete creee : [${result.galaxy}:${result.system}:${result.position}]`);
+      refetch();
+    },
+    onError: (err) => {
+      setRepairOrphanConfirm(false);
+      setRepairOrphanResult(`Erreur : ${err.message}`);
+    },
   });
 
   if (isLoading) return <PageSkeleton />;
@@ -42,6 +55,33 @@ export default function PlayerDetail() {
       <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">
         Planetes ({data.planets?.length ?? 0})
       </h2>
+
+      {/* Orphan recovery — appears only when the user has zero planets, which
+          happens for accounts that registered before the 2026-05-02 atomicity
+          fix and lost their homeworld insertion. */}
+      {(data.planets?.length ?? 0) === 0 && (
+        <div className="admin-card p-4 mb-4 border border-amber-500/30 bg-amber-500/5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="text-sm">
+              <div className="font-medium text-amber-300 mb-1">Compte sans planete mere</div>
+              <div className="text-xs text-gray-400">
+                L'inscription a casse avant la creation de la homeworld. La reparation spawn une nouvelle planete a coordonnees libres pour ce joueur.
+              </div>
+              {repairOrphanResult && (
+                <div className="text-xs text-emerald-300 mt-2 font-mono">{repairOrphanResult}</div>
+              )}
+            </div>
+            <button
+              onClick={() => { setRepairOrphanResult(null); setRepairOrphanConfirm(true); }}
+              disabled={repairOrphanMut.isPending}
+              className="admin-btn-primary py-1 px-3 text-xs flex items-center gap-1 shrink-0"
+            >
+              <Wrench className="w-3 h-3" />
+              {repairOrphanMut.isPending ? '...' : 'Reparer planete mere'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4 mb-8">
         {data.planets?.map((planet: any) => (
@@ -105,6 +145,17 @@ export default function PlayerDetail() {
           }
         }}
         onCancel={() => setCapitalConfirm(null)}
+      />
+
+      <ConfirmDialog
+        open={repairOrphanConfirm}
+        title="Reparer la planete mere ?"
+        message="Une nouvelle homeworld sera spawn a coordonnees libres pour ce joueur. A n'utiliser que si le compte est vraiment sans planete."
+        confirmLabel={repairOrphanMut.isPending ? '...' : 'Reparer'}
+        onConfirm={() => {
+          if (id) repairOrphanMut.mutate({ userId: id });
+        }}
+        onCancel={() => setRepairOrphanConfirm(false)}
       />
     </div>
   );
