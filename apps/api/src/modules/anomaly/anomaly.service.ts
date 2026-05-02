@@ -9,8 +9,10 @@ import {
   pickEventForTier,
   pickEventGap,
   tierForDepth,
+  type UnitCombatStats,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createReportService } from '../report/report.service.js';
@@ -452,12 +454,42 @@ export function createAnomalyService(
       // Survived
       const lootBase = Number(config.universe.anomaly_loot_base) || 5000;
       const lootGrowth = Number(config.universe.anomaly_loot_growth) || 1.4;
-      // Default 0.08 (down from 0.15) + per-type cap = depth — see
-      // packages/game-engine/src/formulas/anomaly.ts for rationale.
-      const recoveryRatio = Number(config.universe.anomaly_enemy_recovery_ratio) || 0.08;
 
       const loot = anomalyLoot(newDepth, lootBase, lootGrowth);
-      const recovered = anomalyEnemyRecoveryCount(result.enemyDestroyed, newDepth, recoveryRatio);
+
+      // Recovery now scales with each ship's FP (heavier = better salvage),
+      // capped at 25%. Build the same shipStats as the FP calc so the
+      // formula sees the V2 traits (rafale, capital, etc.).
+      const baseShipConfigs = buildShipCombatConfigs(config);
+      const recoveryStats: Record<string, UnitCombatStats> = {};
+      for (const [id, ship] of Object.entries(config.ships)) {
+        const baseSc = baseShipConfigs[id];
+        recoveryStats[id] = {
+          weapons: ship.weapons,
+          shotCount: ship.shotCount ?? 1,
+          shield: ship.shield,
+          hull: ship.hull,
+          armor: baseSc?.baseArmor ?? 0,
+          weaponProfiles: ship.weaponProfiles,
+          categoryId: baseSc?.categoryId,
+        };
+      }
+      const fpConfigForRecovery = {
+        shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+        divisor: Number(config.universe.fp_divisor) || 100,
+      };
+      // Tunable via universe_config — use defaults from the engine if absent.
+      const recoveryOptions = {
+        baseRatio: Number(config.universe.anomaly_recovery_base_ratio) || undefined,
+        fpFactor: Number(config.universe.anomaly_recovery_fp_factor) || undefined,
+        maxRatio: Number(config.universe.anomaly_recovery_max_ratio) || undefined,
+      };
+      const recovered = anomalyEnemyRecoveryCount(
+        result.enemyDestroyed,
+        recoveryStats,
+        fpConfigForRecovery,
+        recoveryOptions,
+      );
 
       const currentLootShips = (row.lootShips ?? {}) as LootShipsMap;
       const mergedLootShips: LootShipsMap = { ...currentLootShips };

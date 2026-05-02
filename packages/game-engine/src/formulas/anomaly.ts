@@ -62,27 +62,56 @@ export function anomalyLoot(depth: number, base = 5000, growth = 1.4): AnomalyLo
   };
 }
 
+import { computeUnitFP, type UnitCombatStats, type FPConfig } from './fp.js';
+
+export interface RecoveryConfig {
+  /** Baseline percentage applied to every ship type. */
+  baseRatio: number;
+  /** Per-FP boost: ratio = baseRatio + unitFP × fpFactor.
+   *  0.001 means a 100-FP ship gets +10 percentage points. */
+  fpFactor: number;
+  /** Hard ceiling on the resulting ratio (cap rare units' recovery). */
+  maxRatio: number;
+}
+
+export const DEFAULT_RECOVERY: RecoveryConfig = {
+  baseRatio: 0.05,
+  fpFactor: 0.001,
+  maxRatio: 0.25,
+};
+
 /**
- * Number of enemy ships recovered after a victory.
- * Two-stage clamp:
- *   - `ratio` (default 8%) of defeated count, floored
- *   - hard cap per ship type = `depth` (so depth 5 = max 5 of any type)
+ * Number of enemy ships recovered after a victory, weighted by ship value.
  *
- * This prevents the late game from showering the player with dozens of
- * cruisers/battlecruisers per fight when the rebalanced difficulty makes
- * deep runs reachable.
+ * Per-type ratio = clamp( baseRatio + unitFP × fpFactor , 0 , maxRatio )
+ *
+ * With defaults (5% base, +0.1% per FP point, 25% cap), known ships :
+ *   interceptor   (FP   2) → 5.2%
+ *   frigate       (FP  11) → 6.1%
+ *   cruiser       (FP  57) → 10.7%
+ *   battlecruiser (FP 144) → 19.4%
+ *
+ * Heavy ships are rare on the battlefield but recovered more often, so the
+ * investment/reward balance feels right : losing 1000 cruisers in a deep
+ * run can now realistically be offset by the recovered haul.
  */
 export function anomalyEnemyRecoveryCount(
   defeatedShips: Record<string, number>,
-  depth: number,
-  ratio = 0.08,
+  shipStats: Record<string, UnitCombatStats>,
+  fpConfig: FPConfig,
+  recovery: Partial<RecoveryConfig> = {},
 ): Record<string, number> {
-  const cap = Math.max(1, depth);
+  const baseRatio = recovery.baseRatio ?? DEFAULT_RECOVERY.baseRatio;
+  const fpFactor = recovery.fpFactor ?? DEFAULT_RECOVERY.fpFactor;
+  const maxRatio = recovery.maxRatio ?? DEFAULT_RECOVERY.maxRatio;
+
   const out: Record<string, number> = {};
   for (const [shipId, count] of Object.entries(defeatedShips)) {
     if (count <= 0) continue;
-    const rawRecovered = Math.floor(count * ratio);
-    const recovered = Math.min(cap, rawRecovered);
+    const stats = shipStats[shipId];
+    const unitFP = stats ? computeUnitFP(stats, fpConfig) : 0;
+    const ratio = Math.max(0, Math.min(maxRatio, baseRatio + unitFP * fpFactor));
+    const recovered = Math.floor(count * ratio);
     if (recovered > 0) out[shipId] = recovered;
   }
   return out;

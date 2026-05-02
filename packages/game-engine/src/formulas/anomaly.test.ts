@@ -58,32 +58,116 @@ describe('anomalyLoot', () => {
 });
 
 describe('anomalyEnemyRecoveryCount', () => {
-  it('8% par défaut, floor', () => {
-    const r = anomalyEnemyRecoveryCount({ interceptor: 100, cruiser: 50 }, 5);
-    // 100 × 0.08 = 8 (cap depth=5 → 5), 50 × 0.08 = 4 (sous cap)
-    expect(r).toEqual({ interceptor: 5, cruiser: 4 });
+  const fpConfig = { shotcountExponent: 1.5, divisor: 100 };
+
+  // Reference stats matching the prod ship roster (with V2 FP traits).
+  const stats = {
+    interceptor: {
+      weapons: 4, shotCount: 3, shield: 6, hull: 12,
+      weaponProfiles: [{ damage: 4, shots: 3, targetCategory: 'light', hasChainKill: true }],
+    },
+    frigate: {
+      weapons: 12, shotCount: 2, shield: 16, hull: 30,
+      weaponProfiles: [
+        { damage: 12, shots: 1, targetCategory: 'medium' },
+        { damage: 6, shots: 2, targetCategory: 'light' },
+      ],
+    },
+    cruiser: {
+      weapons: 45, shotCount: 1, shield: 32, hull: 55,
+      weaponProfiles: [
+        { damage: 35, shots: 1, targetCategory: 'heavy' },
+        { damage: 6, shots: 2, targetCategory: 'light',
+          rafale: { category: 'light', count: 6 } },
+      ],
+    },
+    battlecruiser: {
+      weapons: 70, shotCount: 1, shield: 40, hull: 120,
+      weaponProfiles: [
+        { damage: 50, shots: 1, targetCategory: 'heavy' },
+        { damage: 10, shots: 2, targetCategory: 'medium',
+          rafale: { category: 'medium', count: 4 } },
+      ],
+    },
+  };
+
+  it('ratio croît avec le FP du vaisseau (light cheap, heavy précieux)', () => {
+    const r = anomalyEnemyRecoveryCount(
+      { interceptor: 100, frigate: 100, cruiser: 100, battlecruiser: 100 },
+      stats,
+      fpConfig,
+    );
+    // base 0.05 + FP × 0.001 :
+    //   interceptor (FP ~2)   → 0.052 → 5
+    //   frigate     (FP 11)   → 0.061 → 6
+    //   cruiser     (FP 57)   → 0.107 → 10
+    //   battlecruiser (FP 144) → 0.194 → 19
+    expect(r.interceptor).toBeGreaterThanOrEqual(4);
+    expect(r.interceptor).toBeLessThanOrEqual(7);
+    expect(r.frigate).toBeGreaterThanOrEqual(5);
+    expect(r.cruiser).toBeGreaterThanOrEqual(9);
+    expect(r.battlecruiser).toBeGreaterThanOrEqual(15);
+    // Order check : heavier = higher recovered count
+    expect(r.battlecruiser).toBeGreaterThan(r.cruiser);
+    expect(r.cruiser).toBeGreaterThan(r.frigate);
+    expect(r.frigate).toBeGreaterThan(r.interceptor);
   });
-  it('cap = depth pour chaque type de vaisseau', () => {
-    // Au depth 3, max 3 ships par type récupérés même si 8% en demanderait plus
-    const r = anomalyEnemyRecoveryCount({ interceptor: 200 }, 3);
-    expect(r).toEqual({ interceptor: 3 });
+
+  it('big haul scenario : 500 BCs killed → ~95 recovered', () => {
+    const r = anomalyEnemyRecoveryCount({ battlecruiser: 500 }, stats, fpConfig);
+    // BC ratio ~0.194 → floor(500 × 0.194) = 97
+    expect(r.battlecruiser).toBeGreaterThan(80);
+    expect(r.battlecruiser).toBeLessThanOrEqual(100);
   });
-  it('cap minimum de 1 (depth 0 ou négatif → cap à 1)', () => {
-    const r = anomalyEnemyRecoveryCount({ interceptor: 100 }, 0);
-    expect(r).toEqual({ interceptor: 1 });
+
+  it('cap maxRatio à 25% par défaut', () => {
+    // FP very high stat → ratio would be > 25%, capped
+    const overpoweredStats = {
+      titan: { weapons: 0, shotCount: 1, shield: 1000, hull: 1000,
+        weaponProfiles: [
+          { damage: 100, shots: 1, targetCategory: 'heavy' },
+          { damage: 100, shots: 1, targetCategory: 'medium' },
+        ],
+      },
+    };
+    const r = anomalyEnemyRecoveryCount({ titan: 100 }, overpoweredStats, fpConfig);
+    // 100 × 0.25 = 25 (capped)
+    expect(r.titan).toBe(25);
   });
-  it('ratio custom', () => {
-    // Note: signature change → depth en 2e position, ratio en 3e
-    expect(anomalyEnemyRecoveryCount({ ship: 10 }, 5, 0.5)).toEqual({ ship: 5 });
+
+  it('options custom (override partiel)', () => {
+    const r = anomalyEnemyRecoveryCount(
+      { cruiser: 100 }, stats, fpConfig,
+      { baseRatio: 0.20 },  // base 20% au lieu de 5%
+    );
+    // 0.20 + 57×0.001 = 0.257 → cap 25% → 25
+    expect(r.cruiser).toBe(25);
   });
-  it('ships count < 1/ratio sont absents (pas de loot 0)', () => {
-    // 8 × 0.08 = 0.64 → floor 0 → absent
-    expect(anomalyEnemyRecoveryCount({ rare: 8 }, 5)).toEqual({});
-  });
-  it('input vide → output vide', () => {
-    expect(anomalyEnemyRecoveryCount({}, 5)).toEqual({});
-  });
+
   it('count <= 0 ignoré', () => {
-    expect(anomalyEnemyRecoveryCount({ a: 0, b: -5, c: 100 }, 10)).toEqual({ c: 8 });
+    const r = anomalyEnemyRecoveryCount(
+      { interceptor: 0, cruiser: -5, battlecruiser: 100 },
+      stats, fpConfig,
+    );
+    expect(r.interceptor).toBeUndefined();
+    expect(r.cruiser).toBeUndefined();
+    expect(r.battlecruiser).toBeGreaterThan(0);
+  });
+
+  it('ship inconnu (pas dans stats) → ratio 0 → absent', () => {
+    const r = anomalyEnemyRecoveryCount({ unknown: 100 }, stats, fpConfig);
+    // unitFP = 0 → ratio = baseRatio (0.05) → 100 × 0.05 = 5
+    // Actually baseRatio still applies even without stats
+    expect(r.unknown).toBe(5);
+  });
+
+  it('input vide → output vide', () => {
+    expect(anomalyEnemyRecoveryCount({}, stats, fpConfig)).toEqual({});
+  });
+
+  it('floor à 0 quand le résultat < 1 (pas de loot symbolique)', () => {
+    // 5 cruisers × ~10.7% = 0.535 → floor 0 → absent
+    const r = anomalyEnemyRecoveryCount({ cruiser: 5 }, stats, fpConfig);
+    expect(r.cruiser).toBeUndefined();
   });
 });
