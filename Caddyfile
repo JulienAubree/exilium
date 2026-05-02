@@ -25,9 +25,13 @@ import /etc/caddy/basic-auth.conf
 exilium-game.com, www.exilium-game.com {
 	import security_headers
 
-	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/* /assets/landing/* /assets/anomaly/*
 	handle @game_assets {
 		root * /opt/exilium/uploads
+		# Admin-uploaded assets can change at any time. Tell browsers to
+		# revalidate before serving from cache so a fresh upload appears
+		# immediately instead of waiting for an opaque heuristic to expire.
+		header Cache-Control "no-cache, must-revalidate"
 		file_server
 	}
 
@@ -66,9 +70,13 @@ admin.exilium-game.com {
 		reverse_proxy localhost:3000
 	}
 
-	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/* /assets/landing/* /assets/anomaly/*
 	handle @game_assets {
 		root * /opt/exilium/uploads
+		# Admin-uploaded assets can change at any time. Tell browsers to
+		# revalidate before serving from cache so a fresh upload appears
+		# immediately instead of waiting for an opaque heuristic to expire.
+		header Cache-Control "no-cache, must-revalidate"
 		file_server
 	}
 
@@ -101,9 +109,10 @@ staging.exilium-game.com {
 		reverse_proxy localhost:3001
 	}
 
-	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/* /assets/landing/* /assets/anomaly/*
 	handle @game_assets {
 		root * /opt/exilium-staging/uploads
+		header Cache-Control "no-cache, must-revalidate"
 		file_server
 	}
 
@@ -126,9 +135,10 @@ admin-staging.exilium-game.com {
 		reverse_proxy localhost:3001
 	}
 
-	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/*
+	@game_assets path /assets/buildings/* /assets/buildings/*/* /assets/research/* /assets/ships/* /assets/defenses/* /assets/defenses/*/* /assets/planets/* /assets/planets/*/* /assets/flagships/* /assets/avatars/* /assets/landing/* /assets/anomaly/*
 	handle @game_assets {
 		root * /opt/exilium-staging/uploads
+		header Cache-Control "no-cache, must-revalidate"
 		file_server
 	}
 
