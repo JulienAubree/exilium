@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { fleetEvents, pveMissions, planets } from '@exilium/db';
 import { totalCargoCapacity, computeFleetFP, type UnitCombatStats, type FPConfig, type ShipCombatConfig } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
-import { buildShipStatsMap, getCombatMultipliers } from '../fleet.types.js';
+import { buildShipStatsMap, buildShipCombatConfigs, getCombatMultipliers } from '../fleet.types.js';
 import { upsertDebris } from '../combat.helpers.js';
 import { publishNotification } from '../../notification/notification.publisher.js';
 
@@ -121,10 +121,21 @@ export class PirateHandler implements MissionHandler {
     // Create structured combat report
     let reportId: string | undefined;
     if (ctx.reportService) {
-      // Compute FP
+      // Compute FP — pass weaponProfiles + categoryId so the V2 formula
+      // applies rafale/chainKill bonuses, armor durability, capital mult.
+      const baseShipConfigs = buildShipCombatConfigs(config);
       const shipStats: Record<string, UnitCombatStats> = {};
       for (const [id, ship] of Object.entries(config.ships)) {
-        shipStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
+        const baseSc = baseShipConfigs[id];
+        shipStats[id] = {
+          weapons: ship.weapons,
+          shotCount: ship.shotCount ?? 1,
+          shield: ship.shield,
+          hull: ship.hull,
+          armor: baseSc?.baseArmor ?? 0,
+          weaponProfiles: ship.weaponProfiles,
+          categoryId: baseSc?.categoryId,
+        };
       }
       const fpConfig: FPConfig = {
         shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
@@ -137,6 +148,9 @@ export class PirateHandler implements MissionHandler {
           shotCount: flagshipCombatConfig.baseShotCount,
           shield: flagshipCombatConfig.baseShield,
           hull: flagshipCombatConfig.baseHull,
+          armor: flagshipCombatConfig.baseArmor,
+          weaponProfiles: flagshipCombatConfig.weapons,
+          categoryId: flagshipCombatConfig.categoryId,
         };
       }
       const attackerFP = computeFleetFP(ships, shipStats, fpConfig);

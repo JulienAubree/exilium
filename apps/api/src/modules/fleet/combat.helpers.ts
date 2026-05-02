@@ -133,21 +133,27 @@ export function computeBothFP(
 ): { attackerFP: number; defenderFP: number } {
   const unitCombatStats: Record<string, UnitCombatStats> = {};
   for (const [id, ship] of Object.entries(config.ships)) {
+    const sc = shipCombatConfigs[id];
     unitCombatStats[id] = {
       weapons: ship.weapons,
       shotCount: ship.shotCount ?? 1,
       shield: ship.shield,
       hull: ship.hull,
+      armor: sc?.baseArmor ?? 0,
       weaponProfiles: ship.weaponProfiles,
+      categoryId: sc?.categoryId,
     };
   }
   for (const [id, def] of Object.entries(config.defenses)) {
+    const sc = shipCombatConfigs[id];
     unitCombatStats[id] = {
       weapons: def.weapons,
       shotCount: def.shotCount ?? 1,
       shield: def.shield,
       hull: def.hull,
+      armor: sc?.baseArmor ?? 0,
       weaponProfiles: def.weaponProfiles,
+      categoryId: sc?.categoryId,
     };
   }
   // Include flagship in FP calculation if present
@@ -158,7 +164,9 @@ export function computeBothFP(
       shotCount: fc.baseShotCount,
       shield: fc.baseShield,
       hull: fc.baseHull,
+      armor: fc.baseArmor,
       weaponProfiles: fc.weapons,
+      categoryId: fc.categoryId,
     };
   }
   const fpConfig: FPConfig = {

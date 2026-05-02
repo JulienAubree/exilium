@@ -109,6 +109,9 @@ export async function generateAnomalyEnemy(
 
   // Apply hullPercent to the player's effective stats so enemy scaling is
   // proportional to the *real* current power, not pristine values.
+  // Pass full ship config (weaponProfiles, armor, categoryId) so the V2 FP
+  // formula can apply rafale/chainKill bonuses, armor durability and the
+  // capital ship multiplier.
   const shipStatsForFP: Record<string, UnitCombatStats> = {};
   for (const [id, sc] of Object.entries(baseShipConfigs)) {
     const hullPct = args.fleet[id]?.hullPercent ?? 1;
@@ -119,6 +122,9 @@ export async function generateAnomalyEnemy(
       shotCount: sc.baseShotCount,
       shield: sc.baseShield,
       hull: hullToUse,
+      armor: sc.baseArmor,
+      weaponProfiles: sc.weapons,
+      categoryId: sc.categoryId,
     };
   }
   const fpConfig: FPConfig = {

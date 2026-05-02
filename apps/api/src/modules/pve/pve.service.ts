@@ -19,6 +19,7 @@ import type { createPirateService } from './pirate.service.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { findBuildingByRole } from '../../lib/config-helpers.js';
+import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 
 export function createPveService(
   db: Database,
@@ -455,10 +456,22 @@ export function createPveService(
         position = 1 + Math.floor(Math.random() * universePositions);
       } while (beltSet.has(position));
 
-      // Build ship stats map for FP computation
+      // Build ship stats map for FP computation — pass weaponProfiles +
+      // categoryId so the V2 formula applies trait bonuses (rafale,
+      // chainKill, capital multiplier).
+      const baseShipConfigs = buildShipCombatConfigs(config);
       const shipStats: Record<string, UnitCombatStats> = {};
       for (const [id, ship] of Object.entries(config.ships)) {
-        shipStats[id] = { weapons: ship.weapons, shotCount: ship.shotCount ?? 1, shield: ship.shield, hull: ship.hull };
+        const baseSc = baseShipConfigs[id];
+        shipStats[id] = {
+          weapons: ship.weapons,
+          shotCount: ship.shotCount ?? 1,
+          shield: ship.shield,
+          hull: ship.hull,
+          armor: baseSc?.baseArmor ?? 0,
+          weaponProfiles: ship.weaponProfiles,
+          categoryId: baseSc?.categoryId,
+        };
       }
       const fpConfig: FPConfig = {
         shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,

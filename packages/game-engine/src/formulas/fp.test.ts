@@ -47,6 +47,121 @@ describe('computeUnitFP', () => {
   });
 });
 
+describe('computeUnitFP V2 (weaponProfiles)', () => {
+  it('uses weaponProfiles when provided (no legacy exponent)', () => {
+    // DPS = 4×3 = 12 × 0.7 (specialist penalty) = 8.4
+    // durability = 6+12 = 18
+    // FP = round(8.4 * 18 / 100) = round(1.512) = 2
+    expect(computeUnitFP({
+      weapons: 4, shotCount: 3, shield: 6, hull: 12,
+      weaponProfiles: [{ damage: 4, shots: 3, targetCategory: 'light' }],
+    }, DEFAULT_FP_CONFIG)).toBe(2);
+  });
+
+  it('specialist penalty: single targetCategory → DPS × 0.7', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 50, hull: 50,
+      weaponProfiles: [{ damage: 10, shots: 10, targetCategory: 'light' }],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 100 × 0.7 = 70, durability = 100, FP = round(70*100/100) = 70
+    expect(fp).toBe(70);
+  });
+
+  it('no specialist penalty when 2+ distinct categories', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 50, hull: 50,
+      weaponProfiles: [
+        { damage: 10, shots: 5, targetCategory: 'light' },
+        { damage: 10, shots: 5, targetCategory: 'medium' },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 100 × 1 = 100, durability = 100, FP = 100
+    expect(fp).toBe(100);
+  });
+
+  it('rafale bonus weighted at 0.5 of raw damage', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 50, hull: 50,
+      weaponProfiles: [
+        { damage: 10, shots: 1, targetCategory: 'heavy' },
+        // Add a 2nd weapon with rafale to avoid specialist penalty
+        { damage: 5, shots: 1, targetCategory: 'light',
+          rafale: { category: 'light', count: 4 } },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 10 + (5 + 4×5×0.5) = 10 + (5 + 10) = 25, durability = 100, FP = 25
+    expect(fp).toBe(25);
+  });
+
+  it('chainKill multiplies that weapon DPS by 1.3', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 50, hull: 50,
+      weaponProfiles: [
+        { damage: 10, shots: 1, targetCategory: 'heavy' },
+        { damage: 10, shots: 1, targetCategory: 'light', hasChainKill: true },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 10 + (10 × 1.3) = 23, durability = 100, FP = 23
+    expect(fp).toBe(23);
+  });
+
+  it('armor adds 4× per point to durability', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 30, hull: 50, armor: 5,
+      weaponProfiles: [
+        { damage: 10, shots: 5, targetCategory: 'light' },
+        { damage: 10, shots: 5, targetCategory: 'medium' },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 100, durability = 30 + 50 + 5×4 = 100, FP = 100
+    expect(fp).toBe(100);
+  });
+
+  it('capital category doubles durability', () => {
+    const fp = computeUnitFP({
+      weapons: 0, shotCount: 1, shield: 100, hull: 100,
+      categoryId: 'capital',
+      weaponProfiles: [
+        { damage: 10, shots: 5, targetCategory: 'heavy' },
+        { damage: 10, shots: 5, targetCategory: 'medium' },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 100, durability = 200 × 2 = 400, FP = 400
+    expect(fp).toBe(400);
+  });
+
+  it('cruiser-like ship (rafale + 2 cats) — all V2 effects together', () => {
+    const fp = computeUnitFP({
+      weapons: 45, shotCount: 1, shield: 32, hull: 55,
+      weaponProfiles: [
+        { damage: 35, shots: 1, targetCategory: 'heavy' },
+        { damage: 6, shots: 2, targetCategory: 'light',
+          rafale: { category: 'light', count: 6 } },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 35 + (12 + 6×6×0.5) = 35 + 12 + 18 = 65 (no penalty: 2 cats)
+    // Durability = 32 + 55 = 87
+    // FP = round(65 × 87 / 100) = 57
+    expect(fp).toBe(57);
+  });
+
+  it('battlecruiser-like — capital + rafale + 2 cats', () => {
+    const fp = computeUnitFP({
+      weapons: 70, shotCount: 1, shield: 40, hull: 120,
+      categoryId: 'capital',
+      weaponProfiles: [
+        { damage: 50, shots: 1, targetCategory: 'heavy' },
+        { damage: 10, shots: 2, targetCategory: 'medium',
+          rafale: { category: 'medium', count: 4 } },
+      ],
+    }, DEFAULT_FP_CONFIG);
+    // DPS = 50 + (20 + 4×10×0.5) = 50 + 20 + 20 = 90
+    // Durability = 40 + 120 = 160 × 2 (capital) = 320
+    // FP = round(90 × 320 / 100) = 288
+    expect(fp).toBe(288);
+  });
+});
+
 describe('computeFleetFP', () => {
   it('sums FP for a mixed fleet', () => {
     const shipStats = {

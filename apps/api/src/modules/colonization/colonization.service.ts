@@ -4,6 +4,7 @@ import { colonizationProcesses, planets, planetBuildings, planetBiomes, discover
 import type { Database } from '@exilium/db';
 import { calculateGovernancePenalty, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 
 export function createColonizationService(
   db: Database,
@@ -100,14 +101,19 @@ export function createColonizationService(
           if (count > 0) stationedShips[key] = count;
         }
 
-        // Compute stationed FP
+        // Compute stationed FP — V2 formula via weaponProfiles + categoryId
+        const baseShipConfigs = buildShipCombatConfigs(config);
         const shipStats: Record<string, UnitCombatStats> = {};
         for (const [id, ship] of Object.entries(config.ships)) {
+          const baseSc = baseShipConfigs[id];
           shipStats[id] = {
             weapons: ship.weapons,
             shotCount: ship.shotCount ?? 1,
             shield: ship.shield,
             hull: ship.hull,
+            armor: baseSc?.baseArmor ?? 0,
+            weaponProfiles: ship.weaponProfiles,
+            categoryId: baseSc?.categoryId,
           };
         }
         const fpConfig: FPConfig = {

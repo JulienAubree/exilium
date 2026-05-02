@@ -7,6 +7,7 @@ import type { FPConfig, UnitCombatStats } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 
@@ -124,15 +125,21 @@ export function createShipyardService(
         .where(eq(flagships.userId, userId))
         .limit(1);
 
-      // Build FP / cargo helpers once
+      // Build FP / cargo helpers once. Pass weaponProfiles + categoryId so
+      // the V2 FP formula applies trait bonuses (rafale, chainKill, capital
+      // multiplier) — keeps the empire FP display consistent with combat.
+      const baseShipConfigs = buildShipCombatConfigs(config);
       const unitCombatStats: Record<string, UnitCombatStats> = {};
       for (const [id, ship] of Object.entries(config.ships)) {
+        const baseSc = baseShipConfigs[id];
         unitCombatStats[id] = {
           weapons: ship.weapons,
           shotCount: ship.shotCount ?? 1,
           shield: ship.shield,
           hull: ship.hull,
+          armor: baseSc?.baseArmor ?? 0,
           weaponProfiles: ship.weaponProfiles,
+          categoryId: baseSc?.categoryId,
         };
       }
       // Inject flagship combat stats (uses base stats — talents/research bonuses
@@ -144,6 +151,10 @@ export function createShipyardService(
           shotCount: flagshipRow.shotCount ?? 1,
           shield: flagshipRow.shield,
           hull: flagshipRow.hull,
+          armor: flagshipRow.baseArmor ?? 0,
+          // categoryId 'capital' so the durability multiplier applies in
+          // the empire view too.
+          categoryId: 'capital',
         };
       }
       const fpConfig: FPConfig = {

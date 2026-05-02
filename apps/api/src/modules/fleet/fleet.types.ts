@@ -164,7 +164,7 @@ export function buildShipStatsMap(config: GameConfig): Record<string, ShipStats>
 
 export function buildShipCombatConfigs(config: GameConfig): Record<string, ShipCombatConfig> {
   const configs: Record<string, ShipCombatConfig> = {};
-  for (const [id, ship] of Object.entries(config.ships)) {
+  for (const [id, ship] of Object.entries(config.ships ?? {})) {
     const isStationary = ship.isStationary ?? false;
     const profiles = (ship.weaponProfiles ?? []) as ShipCombatConfig['weapons'];
     configs[id] = {
@@ -178,7 +178,7 @@ export function buildShipCombatConfigs(config: GameConfig): Record<string, ShipC
       ...(profiles && profiles.length > 0 ? { weapons: profiles } : {}),
     };
   }
-  for (const [id, def] of Object.entries(config.defenses)) {
+  for (const [id, def] of Object.entries(config.defenses ?? {})) {
     const profiles = (def.weaponProfiles ?? []) as ShipCombatConfig['weapons'];
     configs[id] = {
       shipType: id,
