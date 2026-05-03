@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Key, Search, Zap, Shield, FlaskConical, Factory, Coins } from 'lucide-react';
+import { Key, Search, Zap, Shield, FlaskConical, Factory } from 'lucide-react';
 
 // ── Complete registry of all gameplay keys ──
 
@@ -19,7 +19,6 @@ const CATEGORIES = [
   { id: 'hull_time', label: 'Reductions de temps (coque)', icon: Zap, color: 'text-cyan-400' },
   { id: 'building_bonus', label: 'Bonus batiments (resolveBonus)', icon: Factory, color: 'text-orange-400' },
   { id: 'research_bonus', label: 'Bonus recherches (resolveBonus)', icon: FlaskConical, color: 'text-green-400' },
-  { id: 'economy', label: 'Economie & marche', icon: Coins, color: 'text-yellow-400' },
 ];
 
 const KEYS: GameplayKey[] = [

@@ -91,7 +91,7 @@ export function createPlayerAdminService(
         buildingLevels: buildingsByPlanet.get(planet.id) ?? {},
       }));
 
-      // Load flagship + exilium balance (talents removed 2026-05-03 — see Task 7 for admin UI cleanup)
+      // Load flagship + exilium balance (talents removed 2026-05-03)
       const [flagshipRow] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
       const [exiliumRow] = await db.select().from(userExilium).where(eq(userExilium.userId, userId)).limit(1);
 
@@ -102,7 +102,6 @@ export function createPlayerAdminService(
         ranking: ranking[0] ?? null,
         flagship: flagshipRow ?? null,
         exilium: exiliumRow ?? null,
-        flagshipTalents: [] as { talentId: string; currentRank: number }[],
       };
     },
 
@@ -242,10 +241,6 @@ export function createPlayerAdminService(
       await db.update(planets)
         .set({ planetClassId: 'homeworld' })
         .where(eq(planets.id, newCapitalPlanetId));
-    },
-
-    async resetFlagshipTalents(_flagshipId: string) {
-      // No-op (talents removed 2026-05-03). Router endpoint kept until Task 7 strips the admin UI.
     },
 
     /**

@@ -144,13 +144,6 @@ export function createPlayerAdminRouter(
         return { success: true };
       }),
 
-    resetFlagshipTalents: adminProcedure
-      .input(z.object({ flagshipId: z.string().uuid() }))
-      .mutation(async ({ input }) => {
-        await playerAdminService.resetFlagshipTalents(input.flagshipId);
-        return { success: true };
-      }),
-
     updatePlanetShips: adminProcedure
       .input(z.object({
         planetId: z.string().uuid(),
