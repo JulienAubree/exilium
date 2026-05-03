@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
+import { Sparkles, AlertTriangle, Loader2, Lock, Package } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -7,6 +7,27 @@ import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 import { Timer } from '@/components/common/Timer';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
+
+type HullId = 'combat' | 'industrial' | 'scientific';
+type ModuleRarity = 'common' | 'rare' | 'epic';
+
+const HULL_LABELS: Record<HullId, string> = {
+  combat: 'Combat',
+  industrial: 'Industrielle',
+  scientific: 'Scientifique',
+};
+
+const RARITY_LABELS: Record<ModuleRarity, string> = {
+  common: 'Commun',
+  rare: 'Rare',
+  epic: 'Épique',
+};
+
+const RARITY_COLORS: Record<ModuleRarity, string> = {
+  common: 'text-slate-300',
+  rare: 'text-sky-300',
+  epic: 'text-violet-300',
+};
 
 interface AnomalyEvent {
   id: string;
@@ -26,8 +47,11 @@ interface AnomalyEvent {
       hullDelta: number;
       shipsGain: Record<string, number>;
       shipsLoss: Record<string, number>;
+      moduleDrop?: ModuleRarity;
     };
     resolutionText: string;
+    requiredHull?: HullId;
+    requiredResearch?: { researchId: string; minLevel: number };
   }>;
 }
 
@@ -49,6 +73,35 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
   const utils = trpc.useUtils();
   const addToast = useToastStore((s) => s.addToast);
   const [pendingHidden, setPendingHidden] = useState<number | null>(null);
+
+  // V4 : pré-validation gating côté front pour griser les choix non éligibles.
+  const { data: flagship } = trpc.flagship.get.useQuery();
+  const { data: researchData } = trpc.research.list.useQuery();
+  const flagshipHullId = (flagship?.hullId ?? null) as HullId | null;
+  const researchLevels: Record<string, number> = {};
+  for (const r of researchData?.items ?? []) {
+    researchLevels[r.id] = r.currentLevel;
+  }
+
+  function getResearchLevel(researchId: string): number {
+    return researchLevels[researchId] ?? 0;
+  }
+
+  function getIneligibilityReason(
+    choice: AnomalyEvent['choices'][number],
+  ): string | null {
+    if (choice.requiredHull && flagshipHullId !== choice.requiredHull) {
+      const label = HULL_LABELS[choice.requiredHull] ?? choice.requiredHull;
+      return `Réservé à la coque ${label}`;
+    }
+    if (
+      choice.requiredResearch &&
+      getResearchLevel(choice.requiredResearch.researchId) < choice.requiredResearch.minLevel
+    ) {
+      return `Requiert ${choice.requiredResearch.researchId} niv. ${choice.requiredResearch.minLevel}`;
+    }
+    return null;
+  }
 
   const resolveMutation = trpc.anomaly.resolveEvent.useMutation({
     onSuccess: (data) => {
@@ -115,14 +168,19 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
 
         {/* Choix */}
         <div className="px-4 sm:px-5 py-3 space-y-2">
-          {event.choices.map((choice, idx) => (
-            <ChoiceButton
-              key={idx}
-              choice={choice}
-              disabled={disabled || !ready || resolveMutation.isPending}
-              onClick={() => handleChoice(idx, choice.hidden)}
-            />
-          ))}
+          {event.choices.map((choice, idx) => {
+            const ineligibilityReason = getIneligibilityReason(choice);
+            const eligible = ineligibilityReason === null;
+            return (
+              <ChoiceButton
+                key={idx}
+                choice={choice}
+                disabled={disabled || !ready || resolveMutation.isPending || !eligible}
+                ineligibilityReason={ineligibilityReason}
+                onClick={() => eligible && handleChoice(idx, choice.hidden)}
+              />
+            );
+          })}
 
           {!ready && nextAt && (
             <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.06] p-3 flex items-center justify-center gap-2 text-sm">
@@ -148,35 +206,60 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
 function ChoiceButton({
   choice,
   disabled,
+  ineligibilityReason,
   onClick,
 }: {
   choice: AnomalyEvent['choices'][number];
   disabled: boolean;
+  ineligibilityReason: string | null;
   onClick: () => void;
 }) {
+  const ineligible = ineligibilityReason !== null;
   const summary = choice.hidden ? null : <OutcomeSummary outcome={choice.outcome} />;
+  const moduleRarity = choice.outcome.moduleDrop;
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      title={ineligibilityReason ?? undefined}
       className={cn(
         'w-full text-left rounded-md border px-3 py-2.5 transition-colors',
         choice.hidden
           ? 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
           : 'border-border/50 bg-card/40 hover:bg-card/70',
         disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent',
+        ineligible && 'opacity-40 cursor-not-allowed hover:bg-transparent',
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-semibold text-foreground/90 flex-1">{choice.label}</span>
-        {choice.hidden && (
-          <span className="text-[11px] uppercase tracking-wider text-amber-400 flex items-center gap-1 shrink-0">
-            <AlertTriangle className="h-3 w-3" /> ???
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {moduleRarity && (
+            <span
+              className={cn(
+                'text-[11px] uppercase tracking-wider flex items-center gap-1 rounded border border-violet-400/30 bg-violet-500/10 px-1.5 py-0.5',
+                RARITY_COLORS[moduleRarity],
+              )}
+            >
+              <Package className="h-3 w-3" />
+              Module {RARITY_LABELS[moduleRarity]}
+            </span>
+          )}
+          {choice.hidden && (
+            <span className="text-[11px] uppercase tracking-wider text-amber-400 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" /> ???
+            </span>
+          )}
+        </div>
       </div>
       {summary && <div className="mt-1.5">{summary}</div>}
+      {ineligible && (
+        <div className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-400/80">
+          <Lock className="h-3 w-3" />
+          {ineligibilityReason}
+        </div>
+      )}
     </button>
   );
 }
