@@ -47,17 +47,22 @@ export function createTalentService(
         const hullConfig = config.hulls[flagship.hullId];
         if (hullConfig) {
           for (const [key, value] of Object.entries(hullConfig.passiveBonuses)) {
-            // Conserver le préfixe `hull_` pour les bonus de réduction temps
-            // (utilisés par les consumers existants comme `hull_combat_build_time_reduction`)
-            if (key.endsWith('_time_reduction') || key.endsWith('_build_time_reduction')) {
+            // `repair_time_reduction` a sa propre clé dédiée (`flagship_repair_time`) —
+            // traité en premier pour éviter d'être capturé par le matcher générique
+            // `_time_reduction` ci-dessous (sinon double-write avec orphan `hull_repair_time_reduction`).
+            if (key === 'repair_time_reduction') {
+              ctx['flagship_repair_time'] = value;
+            } else if (key.endsWith('_time_reduction') || key.endsWith('_build_time_reduction')) {
+              // Conserver le préfixe `hull_` pour les bonus de réduction temps
+              // (utilisés par les consumers existants comme `hull_combat_build_time_reduction`)
               ctx[`hull_${key}`] = value;
+            } else if (key === 'mining_speed_bonus') {
+              // Bonus mining/prospection NEW : exposés sans préfixe pour remplacer
+              // les anciennes clés talent (mining_speed, prospection_speed).
+              ctx['mining_speed'] = value;
+            } else if (key === 'prospection_speed_bonus') {
+              ctx['prospection_speed'] = value;
             }
-            // Bonus mining/prospection/repair NEW : exposés sans préfixe pour
-            // remplacer les anciennes clés talent (mining_speed, prospection_speed,
-            // flagship_repair_time).
-            if (key === 'mining_speed_bonus')      ctx['mining_speed']         = value;
-            if (key === 'prospection_speed_bonus') ctx['prospection_speed']    = value;
-            if (key === 'repair_time_reduction')   ctx['flagship_repair_time'] = value;
           }
         }
       }
