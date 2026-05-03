@@ -116,51 +116,54 @@ export function createFlagshipService(
         }
       }
 
-      // Appliquer les bonus de talents si le service est disponible
-      if (talentService) {
-        const config = await gameConfigService.getFullConfig();
-        const talentData = await talentService.list(userId);
-        const statBonuses = talentService.getStatBonuses(talentData.ranks, config.talents);
+      const config = await gameConfigService.getFullConfig();
 
-        const effectiveStats = {
-          weapons: flagship.weapons + (statBonuses.weapons ?? 0),
-          shield: flagship.shield + (statBonuses.shield ?? 0),
-          hull: flagship.hull + (statBonuses.hull ?? 0),
-          baseArmor: flagship.baseArmor + (statBonuses.baseArmor ?? 0),
-          shotCount: flagship.shotCount + (statBonuses.shotCount ?? 0),
-          cargoCapacity: flagship.cargoCapacity + (statBonuses.cargoCapacity ?? 0),
-          fuelConsumption: Math.max(0, flagship.fuelConsumption + (statBonuses.fuelConsumption ?? 0)),
-          baseSpeed: Math.round(flagship.baseSpeed * (1 + (statBonuses.speedPercent ?? 0))),
-          driveType: flagship.driveType,
-        };
+      // Always return hull config + effective stats for display
+      const hullConfig = flagship.hullId ? (config.hulls[flagship.hullId] ?? null) : null;
 
-        // Gestion des unlocks (propulsion)
-        for (const [talentId, rank] of Object.entries(talentData.ranks)) {
-          if (rank <= 0) continue;
-          const def = config.talents[talentId];
-          if (!def || def.effectType !== 'unlock') continue;
-          const params = def.effectParams as { key: string };
-          if (params.key === 'drive_impulse') {
-            effectiveStats.driveType = 'impulse';
-          } else if (params.key === 'drive_hyperspace') {
-            effectiveStats.driveType = 'hyperspaceDrive';
-          }
-        }
+      const effectiveStats = {
+        weapons: flagship.weapons,
+        shield: flagship.shield,
+        hull: flagship.hull,
+        baseArmor: flagship.baseArmor,
+        shotCount: flagship.shotCount,
+        cargoCapacity: flagship.cargoCapacity,
+        fuelConsumption: flagship.fuelConsumption,
+        baseSpeed: flagship.baseSpeed,
+        driveType: flagship.driveType,
+      };
 
-        // Always return hull config for display
-        const hullConfig = flagship.hullId ? (config.hulls[flagship.hullId] ?? null) : null;
-
-        // Apply hull combat bonuses (only when stationed)
-        if (hullConfig && flagship.status === 'active') {
-          effectiveStats.weapons += (hullConfig.passiveBonuses.bonus_weapons ?? 0);
-          effectiveStats.baseArmor += (hullConfig.passiveBonuses.bonus_armor ?? 0);
-          effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);
-        }
-
-        return { ...flagship, talentBonuses: statBonuses, effectiveStats, hullConfig };
+      // Apply hull combat bonuses (only when stationed)
+      if (hullConfig && flagship.status === 'active') {
+        effectiveStats.weapons   += (hullConfig.passiveBonuses.bonus_weapons   ?? 0);
+        effectiveStats.baseArmor += (hullConfig.passiveBonuses.bonus_armor     ?? 0);
+        effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);
       }
 
-      return flagship;
+      // Fetch active cooldowns for hull abilities (replaces the talent.list cooldowns
+      // path used pre-removal). The flagship_cooldowns table is preserved — its
+      // talent_id column now stores the ability id (e.g. 'scan_mission') rather
+      // than a talent id.
+      const cooldownRows = await db
+        .select({
+          abilityId: flagshipCooldowns.talentId,
+          activatedAt: flagshipCooldowns.activatedAt,
+          expiresAt: flagshipCooldowns.expiresAt,
+          cooldownEnds: flagshipCooldowns.cooldownEnds,
+        })
+        .from(flagshipCooldowns)
+        .where(eq(flagshipCooldowns.flagshipId, flagship.id));
+
+      const cooldowns: Record<string, { activatedAt: string; expiresAt: string; cooldownEnds: string }> = {};
+      for (const cd of cooldownRows) {
+        cooldowns[cd.abilityId] = {
+          activatedAt: cd.activatedAt.toISOString(),
+          expiresAt: cd.expiresAt.toISOString(),
+          cooldownEnds: cd.cooldownEnds.toISOString(),
+        };
+      }
+
+      return { ...flagship, talentBonuses: {}, effectiveStats, hullConfig, cooldowns };
     },
 
     async create(userId: string, name: string, hullId: string, description?: string) {

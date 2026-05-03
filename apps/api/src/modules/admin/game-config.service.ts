@@ -18,8 +18,6 @@ import {
   tutorialQuestDefinitions,
   missionDefinitions,
   uiLabels,
-  talentBranchDefinitions,
-  talentDefinitions,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
@@ -695,81 +693,6 @@ export function createGameConfigService(db: Database, redis?: Redis) {
 
     async deleteMission(id: string) {
       await db.delete(missionDefinitions).where(eq(missionDefinitions.id, id));
-      invalidateCache();
-    },
-
-    // ── Talent branches ──
-
-    async createTalentBranch(data: { id: string; name: string; description?: string; color: string; sortOrder?: number }) {
-      await db.insert(talentBranchDefinitions).values({
-        id: data.id,
-        name: data.name,
-        description: data.description ?? '',
-        color: data.color,
-        sortOrder: data.sortOrder ?? 0,
-      });
-      invalidateCache();
-    },
-
-    async updateTalentBranch(id: string, data: Partial<{ name: string; description: string; color: string; sortOrder: number }>) {
-      await db.update(talentBranchDefinitions).set(data).where(eq(talentBranchDefinitions.id, id));
-      invalidateCache();
-    },
-
-    async deleteTalentBranch(id: string) {
-      await db.delete(talentBranchDefinitions).where(eq(talentBranchDefinitions.id, id));
-      invalidateCache();
-    },
-
-    // ── Talents ──
-
-    async createTalent(data: {
-      id: string;
-      branchId: string;
-      tier: number;
-      position: string;
-      name: string;
-      description?: string;
-      maxRanks?: number;
-      prerequisiteId?: string | null;
-      effectType: string;
-      effectParams: unknown;
-      sortOrder?: number;
-    }) {
-      await db.insert(talentDefinitions).values({
-        id: data.id,
-        branchId: data.branchId,
-        tier: data.tier,
-        position: data.position,
-        name: data.name,
-        description: data.description ?? '',
-        maxRanks: data.maxRanks ?? 1,
-        prerequisiteId: data.prerequisiteId ?? null,
-        effectType: data.effectType,
-        effectParams: data.effectParams,
-        sortOrder: data.sortOrder ?? 0,
-      });
-      invalidateCache();
-    },
-
-    async updateTalent(id: string, data: Partial<{
-      branchId: string;
-      tier: number;
-      position: string;
-      name: string;
-      description: string;
-      maxRanks: number;
-      prerequisiteId: string | null;
-      effectType: string;
-      effectParams: unknown;
-      sortOrder: number;
-    }>) {
-      await db.update(talentDefinitions).set(data).where(eq(talentDefinitions.id, id));
-      invalidateCache();
-    },
-
-    async deleteTalent(id: string) {
-      await db.delete(talentDefinitions).where(eq(talentDefinitions.id, id));
       invalidateCache();
     },
 

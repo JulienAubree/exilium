@@ -16,8 +16,6 @@ import {
   tutorialQuestDefinitions,
   missionDefinitions,
   uiLabels,
-  talentBranchDefinitions,
-  talentDefinitions,
   biomeDefinitions,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -67,8 +65,6 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
     bonusRows,
     missionsRows,
     labelsRows,
-    talentBranchRows,
-    talentRows,
     biomeRows,
   ] = await Promise.all([
     db.select().from(entityCategories),
@@ -88,8 +84,6 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
     db.select().from(bonusDefinitions),
     db.select().from(missionDefinitions).orderBy(missionDefinitions.sortOrder),
     db.select().from(uiLabels),
-    db.select().from(talentBranchDefinitions).orderBy(talentBranchDefinitions.sortOrder),
-    db.select().from(talentDefinitions),
     db.select().from(biomeDefinitions).orderBy(biomeDefinitions.id),
   ]);
 
@@ -285,30 +279,11 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
   const labels: Record<string, string> = {};
   for (const l of labelsRows) labels[l.key] = l.label;
 
-  const talentBranches: TalentBranchConfig[] = talentBranchRows.map((b) => ({
-    id: b.id,
-    name: b.name,
-    description: b.description,
-    color: b.color,
-    sortOrder: b.sortOrder,
-  }));
-
+  // Talent system removed (2026-05-03). Empty constants kept so the GameConfig
+  // shape stays stable for any front consumer reading config.talents /
+  // config.talentBranches — they get an empty list rather than a runtime crash.
+  const talentBranches: TalentBranchConfig[] = [];
   const talents: Record<string, TalentConfig> = {};
-  for (const t of talentRows) {
-    talents[t.id] = {
-      id: t.id,
-      branchId: t.branchId,
-      tier: t.tier,
-      position: t.position,
-      name: t.name,
-      description: t.description,
-      maxRanks: t.maxRanks,
-      prerequisiteId: t.prerequisiteId,
-      effectType: t.effectType,
-      effectParams: (t.effectParams ?? {}) as Record<string, unknown>,
-      sortOrder: t.sortOrder,
-    };
-  }
 
   // Hulls live as a JSON blob in universe_config keyed 'hulls'
   const hulls: Record<string, HullConfig> = {};
