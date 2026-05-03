@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router';
 import { useState } from 'react';
-import { ArrowLeft, Ship, Gem, Sparkles, Wrench } from 'lucide-react';
+import { ArrowLeft, Ship, Gem, Wrench } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
@@ -9,7 +9,6 @@ import { PlanetCard } from './player-detail/PlanetCard';
 import { ResearchSection } from './player-detail/ResearchSection';
 import { FlagshipSection } from './player-detail/FlagshipSection';
 import { ExiliumSection } from './player-detail/ExiliumSection';
-import { TalentsSection } from './player-detail/TalentsSection';
 
 export default function PlayerDetail() {
   const { id } = useParams();
@@ -118,21 +117,6 @@ export default function PlayerDetail() {
         <Gem className="w-4 h-4" /> Exilium
       </h2>
       <ExiliumSection exilium={data.exilium} userId={data.user.id} onSaved={refetch} />
-
-      {/* Talents */}
-      {data.flagship && (
-        <>
-          <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Talents Flagship
-          </h2>
-          <TalentsSection
-            talents={data.flagshipTalents ?? []}
-            flagshipId={data.flagship.id}
-            gameConfig={gameConfig}
-            onSaved={refetch}
-          />
-        </>
-      )}
 
       <ConfirmDialog
         open={!!capitalConfirm}
