@@ -1,4 +1,5 @@
-import { pgTable, uuid, varchar, integer, smallint, timestamp, uniqueIndex, text } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, smallint, timestamp, uniqueIndex, text, jsonb } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { users } from './users.js';
 import { planets } from './planets.js';
 
@@ -38,6 +39,11 @@ export const flagships = pgTable('flagships', {
   hullChangedAt: timestamp('hull_changed_at', { withTimezone: true }),
   hullChangeAvailableAt: timestamp('hull_change_available_at', { withTimezone: true }),
   refitEndsAt: timestamp('refit_ends_at', { withTimezone: true }),
+
+  // Modules
+  moduleLoadout:        jsonb('module_loadout').notNull().default(sql`'{}'::jsonb`),
+  epicChargesCurrent:   smallint('epic_charges_current').notNull().default(0),
+  epicChargesMax:       smallint('epic_charges_max').notNull().default(1),
 
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

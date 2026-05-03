@@ -37,6 +37,10 @@ export const anomalies = pgTable('anomalies', {
   combatsUntilNextEvent: smallint('combats_until_next_event').notNull().default(3),
   /** Resolved events: [{ depth, eventId, choiceIndex, outcomeApplied, resolvedAt }]. */
   eventLog: jsonb('event_log').notNull().default(sql`'[]'::jsonb`),
+  /** Snapshot of equipped modules at run start: Record<slotIndex, moduleId>. */
+  equippedModules:    jsonb('equipped_modules').notNull().default(sql`'{}'::jsonb`),
+  /** Pending epic effect to apply on next combat (set by epic module activation). */
+  pendingEpicEffect:  jsonb('pending_epic_effect'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
 });
