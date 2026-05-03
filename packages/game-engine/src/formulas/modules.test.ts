@@ -32,6 +32,34 @@ describe('parseLoadout', () => {
     const result = parseLoadout({ combat: { epic: 'm3', rare: [], common: [] } }, 'scientific', POOL);
     expect(result.equipped).toEqual([]);
   });
+
+  it('ignore les `null` placeholders dans rare et common (fixed-length arrays)', () => {
+    // Fixed-length arrays with null placeholders — the new on-disk shape.
+    // Previously, `null` would be silently turned into a sparse array which
+    // crashed schema parsing on read.
+    const loadout = {
+      combat: {
+        epic: null,
+        rare: [null, 'm2', null],
+        common: [null, null, 'm1', null, null],
+      },
+    };
+    const result = parseLoadout(loadout, 'combat', POOL);
+    expect(result.equipped.map((m) => m.id).sort()).toEqual(['m1', 'm2']);
+  });
+
+  it('équipe seulement à un index non-leftmost (repro C1)', () => {
+    // Reproduction of the C1 sparse-array bug : equipping into rare[2] only.
+    const loadout = {
+      combat: {
+        epic: null,
+        rare: [null, null, 'm2'],
+        common: [null, null, null, null, null],
+      },
+    };
+    const result = parseLoadout(loadout, 'combat', POOL);
+    expect(result.equipped.map((m) => m.id)).toEqual(['m2']);
+  });
 });
 
 describe('applyModulesToStats', () => {
@@ -182,12 +210,20 @@ describe('applyModulesToStats — additional triggers and pending abilities', ()
     expect(r.damage).toBe(100);
   });
 
-  it('conditional last_round déclenché à roundIndex >= 4', () => {
-    const r = applyModulesToStats(baseStats, [
-      { id: 'lr', hullId: 'combat', rarity: 'rare', enabled: true,
-        effect: { type: 'conditional', trigger: 'last_round',
-          effect: { stat: 'damage', value: 0.30 } } },
-    ], { ...ctx, roundIndex: 4 });
-    expect(r.damage).toBeCloseTo(130);
+  it('trigger inconnu (legacy `last_round` retiré) ne déclenche jamais', () => {
+    // The `last_round` trigger was removed because the engine doesn't re-apply
+    // modules per-round (loadFlagshipCombatConfig is called once with
+    // roundIndex=1, so it never fired in practice). Any module persisted with
+    // an unknown trigger should silently no-op rather than crash.
+    const legacyModule = {
+      id: 'lr', hullId: 'combat', rarity: 'rare' as const, enabled: true,
+      // Cast through `unknown` because the type system has been narrowed to
+      // exclude `last_round`. This simulates a row that survived in the DB
+      // from before the trigger was retired.
+      effect: { type: 'conditional', trigger: 'last_round',
+        effect: { stat: 'damage', value: 0.30 } } as unknown,
+    } as unknown as ModuleDefinitionLite;
+    const r = applyModulesToStats(baseStats, [legacyModule], { ...ctx, roundIndex: 4 });
+    expect(r.damage).toBe(100);
   });
 });

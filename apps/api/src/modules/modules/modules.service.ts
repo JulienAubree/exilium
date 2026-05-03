@@ -6,11 +6,46 @@ import {
 import type { Database } from '@exilium/db';
 import { parseLoadout, getMaxCharges, type ModuleDefinitionLite } from '@exilium/game-engine';
 import {
-  moduleDefinitionSchema, moduleLoadoutSchema, hullSlotSchema,
+  moduleDefinitionSchema, hullSlotSchema,
   type ModuleDefinition, type ModuleLoadoutDb,
 } from './modules.types.js';
 
 type SlotType = 'epic' | 'rare' | 'common';
+
+/** Fixed lengths enforced by hullSlotSchema. Kept here so the tolerant pad-on-read
+ *  helper below stays in sync if we ever expand a slot. */
+const RARE_LEN = 3;
+const COMMON_LEN = 5;
+
+/** Pad legacy variable-length arrays with explicit `null` placeholders so they
+ *  satisfy the new fixed-length schema. Tolerates both shorter rows (legacy
+ *  Task 8 starter pack) and longer-than-expected rows (defensive — truncated
+ *  to the max). */
+function padToLen<T>(arr: readonly (T | null | undefined)[] | undefined, len: number): (T | null)[] {
+  const out: (T | null)[] = Array.from({ length: len }, () => null);
+  if (!arr) return out;
+  for (let i = 0; i < Math.min(arr.length, len); i++) {
+    const v = arr[i];
+    out[i] = v === undefined ? null : v;
+  }
+  return out;
+}
+
+/** Pad-on-read coercion. Read raw JSONB → produce a schema-valid loadout. */
+function coerceLoadout(raw: unknown): ModuleLoadoutDb {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: ModuleLoadoutDb = {};
+  for (const [hullId, slot] of Object.entries(raw as Record<string, unknown>)) {
+    if (!slot || typeof slot !== 'object') continue;
+    const s = slot as { epic?: string | null; rare?: unknown; common?: unknown };
+    out[hullId as keyof ModuleLoadoutDb] = {
+      epic: typeof s.epic === 'string' ? s.epic : s.epic === null ? null : null,
+      rare: padToLen(Array.isArray(s.rare) ? (s.rare as (string | null | undefined)[]) : [], RARE_LEN),
+      common: padToLen(Array.isArray(s.common) ? (s.common as (string | null | undefined)[]) : [], COMMON_LEN),
+    };
+  }
+  return out;
+}
 
 export function createModulesService(db: Database) {
   /** Fetch all enabled modules for use as the engine pool. Pass a transaction
@@ -61,11 +96,14 @@ export function createModulesService(db: Database) {
       const [flagship] = await db.select({ loadout: flagships.moduleLoadout, current: flagships.epicChargesCurrent, max: flagships.epicChargesMax })
         .from(flagships).where(eq(flagships.userId, userId)).limit(1);
       if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
-      const parsed = moduleLoadoutSchema.safeParse(flagship.loadout);
-      const loadout = parsed.success ? parsed.data : {};
+      // Pad-on-read: legacy rows may have variable-length arrays. Coerce to
+      // fixed length with explicit nulls so the schema validates and the
+      // front receives a stable shape.
+      const loadout = coerceLoadout(flagship.loadout);
+      const empty = { epic: null, rare: padToLen([], RARE_LEN), common: padToLen([], COMMON_LEN) } as const;
       return {
         hullId,
-        slot: loadout[hullId as keyof typeof loadout] ?? { epic: null, rare: [], common: [] },
+        slot: loadout[hullId as keyof typeof loadout] ?? empty,
         epicChargesCurrent: flagship.current,
         epicChargesMax: flagship.max,
       };
@@ -103,16 +141,22 @@ export function createModulesService(db: Database) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Module non possédé' });
         }
 
-        const loadout = (moduleLoadoutSchema.safeParse(flagship.moduleLoadout).success
-          ? moduleLoadoutSchema.parse(flagship.moduleLoadout)
-          : {}) as ModuleLoadoutDb;
-        const slot = loadout[input.hullId as keyof ModuleLoadoutDb] ?? { epic: null, rare: [], common: [] };
+        // Pad-on-read: legacy rows may have variable-length arrays without
+        // null placeholders. Always normalize first so subsequent index ops
+        // are safe (no sparse-array trap on JSON.stringify).
+        const loadout = coerceLoadout(flagship.moduleLoadout);
+        const slot = loadout[input.hullId as keyof ModuleLoadoutDb] ?? {
+          epic: null,
+          rare: padToLen([], RARE_LEN),
+          common: padToLen([], COMMON_LEN),
+        };
 
-        // Reject if already equipped in another slot of same hull (no double-equip even with duplicates)
+        // Reject if already equipped in another slot of same hull (no double-equip even with duplicates).
+        // Filter out nulls so they don't accidentally count as "equipped".
         const allEquipped = [
           ...(slot.epic ? [slot.epic] : []),
-          ...slot.rare,
-          ...slot.common,
+          ...slot.rare.filter((x): x is string => typeof x === 'string'),
+          ...slot.common.filter((x): x is string => typeof x === 'string'),
         ];
         if (allEquipped.includes(input.moduleId)) {
           // Allow if it's THIS exact slot being overridden (same module already there)
@@ -126,24 +170,21 @@ export function createModulesService(db: Database) {
           }
         }
 
-        // Apply slot mutation
-        const newSlot = { ...slot };
+        // Apply slot mutation. Always copy from the (already-padded) slot so
+        // assigning at an index never creates a sparse hole.
+        const newSlot = { ...slot, rare: [...slot.rare], common: [...slot.common] };
         if (input.slotType === 'epic') {
           newSlot.epic = input.moduleId;
         } else if (input.slotType === 'rare') {
-          if (input.slotIndex < 0 || input.slotIndex > 2) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..2 pour rare' });
+          if (input.slotIndex < 0 || input.slotIndex > RARE_LEN - 1) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${RARE_LEN - 1} pour rare` });
           }
-          const rare = [...newSlot.rare];
-          rare[input.slotIndex] = input.moduleId;
-          newSlot.rare = rare;
+          newSlot.rare[input.slotIndex] = input.moduleId;
         } else {
-          if (input.slotIndex < 0 || input.slotIndex > 4) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..4 pour common' });
+          if (input.slotIndex < 0 || input.slotIndex > COMMON_LEN - 1) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${COMMON_LEN - 1} pour common` });
           }
-          const common = [...newSlot.common];
-          common[input.slotIndex] = input.moduleId;
-          newSlot.common = common;
+          newSlot.common[input.slotIndex] = input.moduleId;
         }
 
         const newLoadout = { ...loadout, [input.hullId]: newSlot };
@@ -171,27 +212,29 @@ export function createModulesService(db: Database) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Loadout verrouillé : flagship en mission' });
         }
 
-        const loadout = (moduleLoadoutSchema.safeParse(flagship.moduleLoadout).success
-          ? moduleLoadoutSchema.parse(flagship.moduleLoadout)
-          : {}) as ModuleLoadoutDb;
-        const slot = loadout[input.hullId as keyof ModuleLoadoutDb] ?? { epic: null, rare: [], common: [] };
-        const newSlot = { ...slot };
+        // Pad-on-read: legacy rows may have variable-length arrays.
+        const loadout = coerceLoadout(flagship.moduleLoadout);
+        const slot = loadout[input.hullId as keyof ModuleLoadoutDb] ?? {
+          epic: null,
+          rare: padToLen([], RARE_LEN),
+          common: padToLen([], COMMON_LEN),
+        };
+        // Replace `delete arr[i]` (which creates a sparse array) with explicit
+        // `arr[i] = null` so JSON.stringify doesn't emit `null` placeholders
+        // that the schema then rejects.
+        const newSlot = { ...slot, rare: [...slot.rare], common: [...slot.common] };
         if (input.slotType === 'epic') {
           newSlot.epic = null;
         } else if (input.slotType === 'rare') {
-          if (input.slotIndex < 0 || input.slotIndex > 2) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..2 pour rare' });
+          if (input.slotIndex < 0 || input.slotIndex > RARE_LEN - 1) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${RARE_LEN - 1} pour rare` });
           }
-          const rare = [...newSlot.rare];
-          delete rare[input.slotIndex];
-          newSlot.rare = rare.filter((x): x is string => typeof x === 'string');
+          newSlot.rare[input.slotIndex] = null;
         } else {
-          if (input.slotIndex < 0 || input.slotIndex > 4) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..4 pour common' });
+          if (input.slotIndex < 0 || input.slotIndex > COMMON_LEN - 1) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${COMMON_LEN - 1} pour common` });
           }
-          const common = [...newSlot.common];
-          delete common[input.slotIndex];
-          newSlot.common = common.filter((x): x is string => typeof x === 'string');
+          newSlot.common[input.slotIndex] = null;
         }
 
         const newLoadout = { ...loadout, [input.hullId]: newSlot };

@@ -42,15 +42,23 @@ async function main() {
     }
 
     // ── Step 1: seed modules ───────────────────────────────────────────────
+    // On conflict, we only re-apply *taxonomy* fields (hull/rarity/name/desc/effect).
+    // `image` and `enabled` are admin-managed via /admin/modules — overwriting
+    // them on each deploy would silently revert uploaded images and re-enable
+    // disabled modules. New modules added to the seed file still get inserted
+    // because INSERT runs first; only the ON CONFLICT path is narrowed.
     console.log(`Seeding ${DEFAULT_MODULES.length} modules...`);
     for (const m of DEFAULT_MODULES) {
       const parsed = moduleDefinitionSchema.parse(m);
       await db.insert(moduleDefinitions).values(parsed).onConflictDoUpdate({
         target: moduleDefinitions.id,
         set: {
-          hullId: parsed.hullId, rarity: parsed.rarity, name: parsed.name,
-          description: parsed.description, image: parsed.image,
-          enabled: parsed.enabled, effect: parsed.effect,
+          hullId: parsed.hullId,
+          rarity: parsed.rarity,
+          name: parsed.name,
+          description: parsed.description,
+          effect: parsed.effect,
+          // Intentionally NOT updating: image, enabled (admin-managed).
         },
       });
     }

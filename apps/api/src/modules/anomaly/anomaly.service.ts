@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { anomalies, flagships, moduleDefinitions, planets, planetShips, users, userExilium, exiliumLog } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { DEFAULT_HULL_ID } from '@exilium/shared';
 import {
   anomalyLoot,
   anomalyEnemyRecoveryCount,
@@ -78,7 +79,7 @@ export function createAnomalyService(
     if (!flagshipForFinal) return [];
 
     const finalDropIds = await modulesService.rollPerRunFinalDrop({
-      flagshipHullId: flagshipForFinal.hullId ?? 'combat',
+      flagshipHullId: flagshipForFinal.hullId ?? DEFAULT_HULL_ID,
       depth,
       executor: tx as unknown as Database,
     });
@@ -581,7 +582,7 @@ export function createAnomalyService(
       // with the anomaly state if the WHERE-guard later fails.
       const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
         .from(flagships).where(eq(flagships.userId, userId)).limit(1);
-      const dropHullId = flagshipForDrop?.hullId ?? 'combat';
+      const dropHullId = flagshipForDrop?.hullId ?? DEFAULT_HULL_ID;
       const droppedModuleId = await modulesService.rollPerCombatDrop({
         flagshipHullId: dropHullId,
         executor: tx as unknown as Database,
@@ -1088,7 +1089,7 @@ export function createAnomalyService(
         // same shape `resolveEquippedModules` expects.
         const snapshot = (active.equippedModules ?? {}) as Record<
           string,
-          { epic?: string | null; rare?: string[]; common?: string[] }
+          { epic?: string | null; rare?: (string | null)[]; common?: (string | null)[] }
         >;
         const epicId = snapshot[hullId]?.epic ?? null;
         if (!epicId) {

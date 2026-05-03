@@ -9,8 +9,10 @@ interface ModuleLite {
 
 interface Slot {
   epic: string | null;
-  rare: string[];
-  common: string[];
+  /** Fixed-length 3 with `null` placeholders for empty slots. */
+  rare: (string | null)[];
+  /** Fixed-length 5 with `null` placeholders for empty slots. */
+  common: (string | null)[];
 }
 
 interface Props {

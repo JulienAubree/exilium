@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText } from 'lucide-react';
+import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { Button } from '@/components/ui/button';
@@ -476,6 +476,9 @@ interface AnomalyRow {
   nextNodeType?: string;
   nextEventId?: string | null;
   eventLog?: unknown;
+  /** Snapshot of equipped modules at engage : Record<hullId, { epic, rare[], common[] }>. */
+  equippedModules?: unknown;
+  pendingEpicEffect?: unknown;
 }
 
 function RunView({
@@ -501,6 +504,10 @@ function RunView({
   }>;
   const { data: gameConfig } = useGameConfig();
   const { data: content } = trpc.anomalyContent.get.useQuery();
+  const equippedModules = (anomaly.equippedModules ?? {}) as Record<
+    string,
+    { epic?: string | null; rare?: (string | null)[]; common?: (string | null)[] }
+  >;
   const nextDepth = anomaly.currentDepth + 1;
   const nextDepthContent = content?.depths.find((d) => d.depth === nextDepth);
   const minerai = Math.floor(Number(anomaly.lootMinerai));
@@ -527,7 +534,11 @@ function RunView({
     // Stacked on mobile so the player sees the action card first.
     <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-3 lg:gap-4">
       {/* ─── Action zone ─────────────────────────────────────────────────── */}
-      <main className="min-w-0">
+      <main className="min-w-0 space-y-3">
+        <EpicActivateButton
+          equippedModules={equippedModules}
+          actionInFlight={advancePending || retreatPending}
+        />
         {anomaly.nextNodeType === 'event' && anomaly.nextEventId ? (
           <EventNodeBlock
             eventId={anomaly.nextEventId}
@@ -574,6 +585,96 @@ function RunView({
         )}
         {reportIds.length > 0 && <ReportsCard reportIds={reportIds} />}
       </aside>
+    </div>
+  );
+}
+
+// ─── Epic ability activation ────────────────────────────────────────────────
+
+/**
+ * Compact button that lets the player trigger their equipped epic module's
+ * ability during an active anomaly run. Self-fetches the flagship row to read
+ * `epicChargesCurrent` (live, decremented per use) and `hullId` (snapshot
+ * lookup key on `equippedModules`), and the modules pool to resolve the epic
+ * id to its display name.
+ *
+ * Visibility rules :
+ *   - hidden if no flagship, no epic equipped on the run's snapshot for the
+ *     player's hull, or charges are at 0.
+ *   - disabled while the activate mutation is pending OR while another action
+ *     (advance / retreat) is in flight, to avoid racing the same advisory lock.
+ */
+function EpicActivateButton({
+  equippedModules,
+  actionInFlight,
+}: {
+  equippedModules: Record<
+    string,
+    { epic?: string | null; rare?: (string | null)[]; common?: (string | null)[] }
+  >;
+  actionInFlight: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const addToast = useToastStore((s) => s.addToast);
+  const { data: flagship } = trpc.flagship.get.useQuery();
+  const { data: allModules } = trpc.modules.list.useQuery();
+  const moduleMap = useMemo(() => {
+    const m = new Map<string, { id: string; name: string }>();
+    for (const mod of allModules ?? []) m.set(mod.id, { id: mod.id, name: mod.name });
+    return m;
+  }, [allModules]);
+
+  const hullId = (flagship?.hullId ?? 'industrial') as string;
+  const epicId = equippedModules[hullId]?.epic ?? null;
+  const charges = (flagship as { epicChargesCurrent?: number } | null | undefined)?.epicChargesCurrent ?? 0;
+  const maxCharges = (flagship as { epicChargesMax?: number } | null | undefined)?.epicChargesMax ?? 0;
+
+  const activateMutation = trpc.anomaly.activateEpic.useMutation({
+    onSuccess: (data) => {
+      utils.flagship.get.invalidate();
+      utils.anomaly.current.invalidate();
+      const where = data.applied === 'immediate' ? 'effet immédiat' : 'effet appliqué au prochain combat';
+      const epicName = epicId ? moduleMap.get(epicId)?.name ?? data.ability : data.ability;
+      addToast(`⚡ ${epicName} activée — ${where}`, 'success');
+    },
+    onError: (err) => {
+      addToast(err.message ?? 'Activation impossible', 'error');
+    },
+  });
+
+  // Hide entirely when not actionable. Charges == 0 still happens often (1
+  // charge baseline, consumed once) so a silent hide is the right default.
+  if (!flagship || !epicId || charges <= 0) return null;
+
+  const epicName = moduleMap.get(epicId)?.name ?? epicId;
+  const disabled = activateMutation.isPending || actionInFlight;
+
+  return (
+    <div className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-950/30 to-orange-950/20 p-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-950/50">
+          <Sparkles className="h-5 w-5 text-amber-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300/80">
+            Module épique
+          </div>
+          <div className="text-sm font-semibold text-amber-100 truncate">{epicName}</div>
+        </div>
+        <div className="shrink-0 text-xs font-mono tabular-nums text-amber-200">
+          {charges}/{maxCharges}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={disabled}
+          onClick={() => activateMutation.mutate({ hullId })}
+          className="shrink-0 border-amber-500/50 text-amber-100 hover:bg-amber-950/40 hover:border-amber-400/70"
+        >
+          <Zap className="h-3.5 w-3.5 mr-1" />
+          {activateMutation.isPending ? 'Activation…' : 'Activer'}
+        </Button>
+      </div>
     </div>
   );
 }

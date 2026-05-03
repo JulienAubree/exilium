@@ -186,10 +186,12 @@ function ModulesTab({ activeHullId }: { activeHullId: string }) {
   }, [allModules]);
 
   const slot = loadout?.slot ?? { epic: null, rare: [], common: [] };
-  const equippedIds = new Set([
+  // Slots are fixed-length arrays with `null` placeholders for empty cells —
+  // filter so the equipped set only contains real ids.
+  const equippedIds = new Set<string>([
     ...(slot.epic ? [slot.epic] : []),
-    ...slot.rare,
-    ...slot.common,
+    ...(slot.rare as (string | null)[]).filter((x): x is string => typeof x === 'string'),
+    ...(slot.common as (string | null)[]).filter((x): x is string => typeof x === 'string'),
   ]);
 
   const detailModule = detailId

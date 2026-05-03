@@ -6,7 +6,7 @@
 export type StatKey =
   | 'damage' | 'hull' | 'shield' | 'armor' | 'cargo' | 'speed' | 'regen' | 'epic_charges_max';
 
-export type TriggerKey = 'first_round' | 'low_hull' | 'enemy_fp_above' | 'last_round';
+export type TriggerKey = 'first_round' | 'low_hull' | 'enemy_fp_above';
 
 export type AbilityKey =
   | 'repair' | 'shield_burst' | 'overcharge' | 'scan' | 'skip' | 'damage_burst';
@@ -27,8 +27,10 @@ export interface ModuleDefinitionLite {
 
 export interface HullSlot {
   epic: string | null;
-  rare: string[];
-  common: string[];
+  /** Fixed-length 3 with explicit `null` placeholders for empty slots. */
+  rare: (string | null)[];
+  /** Fixed-length 5 with explicit `null` placeholders for empty slots. */
+  common: (string | null)[];
 }
 
 export type ModuleLoadout = Partial<Record<string, HullSlot>>;
@@ -39,7 +41,8 @@ export interface ParsedLoadout {
 
 /**
  * Resolve a loadout (ids) to actual module definitions for one hull.
- * Silently ignores unknown ids and disabled modules.
+ * Silently ignores unknown ids, disabled modules, and `null` placeholders
+ * (used for fixed-length slot arrays — see hullSlotSchema in modules.types.ts).
  */
 export function parseLoadout(
   loadout: ModuleLoadout,
@@ -49,9 +52,10 @@ export function parseLoadout(
   const slot = loadout[hullId];
   if (!slot) return { equipped: [] };
 
+  const isString = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
   const ids: string[] = [
-    ...(slot.common ?? []),
-    ...(slot.rare ?? []),
+    ...((slot.common ?? []) as (string | null | undefined)[]).filter(isString),
+    ...((slot.rare ?? []) as (string | null | undefined)[]).filter(isString),
     ...(slot.epic ? [slot.epic] : []),
   ];
 
@@ -145,9 +149,8 @@ function checkTrigger(
   context: CombatContext,
 ): boolean {
   switch (trigger) {
-    case 'first_round': return context.roundIndex === 1;
-    case 'last_round':  return context.roundIndex >= 4; // matches combat_max_rounds default
-    case 'low_hull':    return context.currentHullPercent <= (threshold ?? 0.30);
+    case 'first_round':    return context.roundIndex === 1;
+    case 'low_hull':       return context.currentHullPercent <= (threshold ?? 0.30);
     case 'enemy_fp_above': return context.enemyFP > (threshold ?? 0);
     default: return false;
   }

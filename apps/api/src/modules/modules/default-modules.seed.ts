@@ -189,8 +189,8 @@ export const DEFAULT_MODULES: ModuleDefinitionInput[] = [
     name: 'Défense blindée', description: 'Plaques additionnelles. +25% armor.',
     effect: { type: 'stat', stat: 'armor', value: 0.25 } },
   { id: 'indus-overdrive',            hullId: 'industrial', rarity: 'rare',
-    name: 'Surrégime', description: 'Sortie d\'urgence en force. last_round → +30% damage.',
-    effect: { type: 'conditional', trigger: 'last_round', effect: { stat: 'damage', value: 0.30 } } },
+    name: 'Surrégime', description: 'Surcharge industrielle face aux flottes massives. enemy_fp_above 800 → +25% damage.',
+    effect: { type: 'conditional', trigger: 'enemy_fp_above', threshold: 800, effect: { stat: 'damage', value: 0.25 } } },
 
   // Épiques
   { id: 'indus-quantum-jump',         hullId: 'industrial', rarity: 'epic',

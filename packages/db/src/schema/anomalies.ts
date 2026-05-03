@@ -37,7 +37,10 @@ export const anomalies = pgTable('anomalies', {
   combatsUntilNextEvent: smallint('combats_until_next_event').notNull().default(3),
   /** Resolved events: [{ depth, eventId, choiceIndex, outcomeApplied, resolvedAt }]. */
   eventLog: jsonb('event_log').notNull().default(sql`'[]'::jsonb`),
-  /** Snapshot of equipped modules at run start: Record<slotIndex, moduleId>. */
+  /** Snapshot of equipped modules at run start. Shape:
+   *  Record<hullId, { epic: string | null; rare: (string|null)[]; common: (string|null)[] }>.
+   *  Fixed-length arrays with `null` placeholders for empty slots — see
+   *  hullSlotSchema in apps/api/src/modules/modules/modules.types.ts. */
   equippedModules:    jsonb('equipped_modules').notNull().default(sql`'{}'::jsonb`),
   /** Pending epic effect to apply on next combat (set by epic module activation). */
   pendingEpicEffect:  jsonb('pending_epic_effect'),

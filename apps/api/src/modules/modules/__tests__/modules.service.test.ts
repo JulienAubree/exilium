@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createModulesService } from '../modules.service.js';
-import type { ModuleDefinitionLite } from '@exilium/game-engine';
+import { parseLoadout, type ModuleDefinitionLite } from '@exilium/game-engine';
+import { hullSlotSchema, moduleLoadoutSchema } from '../modules.types.js';
 
 // Mock DB stub : we only test pure logic (rollPerCombatDrop, rollPerRunFinalDrop).
 // Real equip/unequip tested in E2E because they require a real flagship row.
@@ -106,5 +107,191 @@ describe('rollPerRunFinalDrop', () => {
     const rngNoEpic = () => [0, 0.50][counter++]; // pick rare, roll for epic (fail)
     const r2 = await svc.rollPerRunFinalDrop({ flagshipHullId: 'combat', depth: 10, rng: rngNoEpic });
     expect(r2.length).toBe(1);
+  });
+});
+
+// ─── C1 / I5 : equip → engage → unequip cycle ───────────────────────────────
+//
+// Regression test for the sparse-array bug : equipping into a non-leftmost
+// slot (e.g. rare[2]) used to produce `[<empty>, <empty>, "id"]` which
+// JSON.stringify rendered as `[null, null, "id"]` — but the schema rejected
+// it on read, silently wiping the loadout. The fix : fixed-length arrays
+// with explicit `null` placeholders, padded both on read (legacy rows) and
+// on write (new equip/unequip).
+//
+// The test below uses a thin FIFO-queue mock-DB (same pattern as
+// anomaly.activateEpic.test.ts) so we can script the exact rows the service
+// observes across each select() call.
+
+describe('equip → unequip cycle (C1 sparse-array fix)', () => {
+  type Loadout = Record<string, { epic: string | null; rare: (string | null)[]; common: (string | null)[] }>;
+
+  interface State {
+    /** Mutable copy of the flagship row (updated by the service's `update`). */
+    flagship: {
+      id: string;
+      userId: string;
+      status: string;
+      moduleLoadout: unknown;
+      epicChargesCurrent: number;
+      epicChargesMax: number;
+    };
+    /** Queue of rows returned by successive select() invocations, in order. */
+    selectQueue: unknown[][];
+    /** Captured `update().set(...)` payloads. */
+    loadoutUpdates: Array<Record<string, unknown>>;
+  }
+
+  function buildMockDb(state: State) {
+    const db: any = {
+      select: vi.fn().mockImplementation(() => {
+        const chain: any = {};
+        const respond = () => state.selectQueue.shift() ?? [];
+        const attachThen = (t: any) => {
+          t.then = (resolve: any) => resolve(respond());
+        };
+        chain.from = vi.fn().mockImplementation(() => chain);
+        chain.innerJoin = vi.fn().mockImplementation(() => chain);
+        chain.where = vi.fn().mockImplementation(() => {
+          attachThen(chain);
+          chain.for = vi.fn().mockImplementation(() => {
+            attachThen(chain);
+            chain.limit = vi.fn().mockImplementation(() => {
+              attachThen(chain);
+              return chain;
+            });
+            return chain;
+          });
+          chain.limit = vi.fn().mockImplementation(() => {
+            attachThen(chain);
+            return chain;
+          });
+          chain.orderBy = vi.fn().mockImplementation(() => {
+            attachThen(chain);
+            chain.limit = vi.fn().mockImplementation(() => {
+              attachThen(chain);
+              return chain;
+            });
+            return chain;
+          });
+          return chain;
+        });
+        attachThen(chain);
+        return chain;
+      }),
+
+      update: vi.fn().mockImplementation(() => {
+        const chain: any = {};
+        let payload: Record<string, unknown> = {};
+        chain.set = vi.fn().mockImplementation((data: Record<string, unknown>) => {
+          payload = data;
+          return chain;
+        });
+        chain.where = vi.fn().mockImplementation(() => {
+          state.loadoutUpdates.push(payload);
+          if ('moduleLoadout' in payload) state.flagship.moduleLoadout = payload.moduleLoadout;
+          if ('epicChargesMax' in payload) state.flagship.epicChargesMax = Number(payload.epicChargesMax);
+          chain.then = (resolve: any) => resolve(undefined);
+          return chain;
+        });
+        chain.then = (resolve: any) => resolve(undefined);
+        return chain;
+      }),
+
+      transaction: vi.fn().mockImplementation(async (fn: (tx: any) => Promise<any>) => fn(db)),
+    };
+    return db as Parameters<typeof createModulesService>[0];
+  }
+
+  /** Helper : queue the 4 rows the equip flow reads, in order :
+   *  flagship → moduleDef → inventory → pool. */
+  function queueEquipReads(state: State, moduleDef: { id: string; hullId: string; rarity: string }) {
+    state.selectQueue.push(
+      [state.flagship],
+      [{
+        id: moduleDef.id, hullId: moduleDef.hullId, rarity: moduleDef.rarity,
+        enabled: true, effect: { type: 'stat', stat: 'damage', value: 0.20 },
+        name: moduleDef.id, description: '', image: '', createdAt: new Date(),
+      }],
+      [{ count: 1 }],
+      // Pool : minimal, just the equipped module so getMaxCharges/parseLoadout work.
+      [{
+        id: moduleDef.id, hullId: moduleDef.hullId, rarity: moduleDef.rarity,
+        enabled: true, effect: { type: 'stat', stat: 'damage', value: 0.20 },
+        name: moduleDef.id, description: '', image: '', createdAt: new Date(),
+      }],
+    );
+  }
+
+  /** Helper : queue the 2 rows the unequip flow reads, in order :
+   *  flagship → pool. */
+  function queueUnequipReads(state: State) {
+    state.selectQueue.push(
+      [state.flagship],
+      [], // pool — empty is fine for getMaxCharges (returns baseline 1).
+    );
+  }
+
+  it('équipe à rare[2] (slot non-leftmost) et reparse correctement (C1 repro)', async () => {
+    const state: State = {
+      flagship: {
+        id: 'fs1', userId: 'u1', status: 'active',
+        moduleLoadout: {}, epicChargesCurrent: 1, epicChargesMax: 1,
+      },
+      selectQueue: [],
+      loadoutUpdates: [],
+    };
+    queueEquipReads(state, { id: 'c-r1', hullId: 'combat', rarity: 'rare' });
+    const svc = createModulesService(buildMockDb(state));
+
+    // Equip the rare module at rare[2] — the index that used to break.
+    const result = await svc.equip('u1', { hullId: 'combat', slotType: 'rare', slotIndex: 2, moduleId: 'c-r1' });
+
+    // The persisted loadout must roundtrip through the (stricter) schema.
+    const loadout = result.loadout as Loadout;
+    expect(moduleLoadoutSchema.safeParse(loadout).success).toBe(true);
+
+    const slot = loadout.combat;
+    expect(slot.rare).toEqual([null, null, 'c-r1']);
+    expect(slot.common).toEqual([null, null, null, null, null]);
+    expect(slot.epic).toBeNull();
+
+    // Engine must resolve the equipped module from index 2.
+    const parsed = parseLoadout(loadout, 'combat', FAKE_POOL);
+    expect(parsed.equipped.map((m) => m.id)).toEqual(['c-r1']);
+  });
+
+  it('unequip remplace par null sans compresser les autres slots', async () => {
+    // Pre-seed a loadout with two rares at indices 0 and 2 (not 1).
+    const state: State = {
+      flagship: {
+        id: 'fs1', userId: 'u1', status: 'active',
+        moduleLoadout: { combat: { epic: null, rare: ['c-r1', null, 'c-r1'], common: [null, null, null, null, null] } },
+        epicChargesCurrent: 1, epicChargesMax: 1,
+      },
+      selectQueue: [],
+      loadoutUpdates: [],
+    };
+    queueUnequipReads(state);
+    const svc = createModulesService(buildMockDb(state));
+
+    const result = await svc.unequip('u1', { hullId: 'combat', slotType: 'rare', slotIndex: 0 });
+
+    const loadout = result.loadout as Loadout;
+    // Index 2 preserved, no compaction. Index 0 is now null.
+    expect(loadout.combat.rare).toEqual([null, null, 'c-r1']);
+    // Schema still validates — no sparse holes.
+    expect(moduleLoadoutSchema.safeParse(loadout).success).toBe(true);
+  });
+
+  it('hullSlotSchema rejette les longueurs incorrectes (defensive)', () => {
+    // Length-3 + length-5 are enforced strictly. Any legacy short array
+    // that slips past the pad-on-read coercion would fail the contract,
+    // which is precisely the failure mode we want to catch on write.
+    const bad = { epic: null, rare: ['x'], common: ['y'] };
+    expect(hullSlotSchema.safeParse(bad).success).toBe(false);
+
+    const good = { epic: null, rare: [null, null, 'x'], common: [null, null, null, null, 'y'] };
+    expect(hullSlotSchema.safeParse(good).success).toBe(true);
   });
 });

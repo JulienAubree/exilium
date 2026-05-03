@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { StatKey, TriggerKey, AbilityKey } from '@exilium/game-engine';
 
 const STAT_KEYS = ['damage', 'hull', 'shield', 'armor', 'cargo', 'speed', 'regen', 'epic_charges_max'] as const satisfies readonly StatKey[];
-const TRIGGER_KEYS = ['first_round', 'low_hull', 'enemy_fp_above', 'last_round'] as const satisfies readonly TriggerKey[];
+const TRIGGER_KEYS = ['first_round', 'low_hull', 'enemy_fp_above'] as const satisfies readonly TriggerKey[];
 const ABILITY_KEYS = ['repair', 'shield_burst', 'overcharge', 'scan', 'skip', 'damage_burst'] as const satisfies readonly AbilityKey[];
 
 const HULL_IDS = ['combat', 'scientific', 'industrial'] as const;
@@ -48,10 +48,18 @@ export const HULL_LIST = HULL_IDS;
 export const RARITY_LIST = RARITIES;
 
 // Loadout shape persisted on flagships.module_loadout.
+//
+// `rare` and `common` are FIXED-LENGTH arrays where empty slots are stored as
+// explicit `null` placeholders. This avoids a sparse-array trap : assigning
+// `arr[2] = "id"` on an empty array produces `[<empty>, <empty>, "id"]` which
+// `JSON.stringify` serialises to `[null, null, "id"]` — the original Zod
+// schema (`z.array(z.string())`) then rejected the parsed value, silently
+// wiping the loadout on read. We now enforce explicit nulls on write AND
+// pad on parse for legacy rows that were stored without padding.
 export const hullSlotSchema = z.object({
   epic:   z.string().nullable(),
-  rare:   z.array(z.string()).max(3),
-  common: z.array(z.string()).max(5),
+  rare:   z.array(z.string().nullable()).length(3),
+  common: z.array(z.string().nullable()).length(5),
 });
 
 export const moduleLoadoutSchema = z.object({

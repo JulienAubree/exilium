@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { DEFAULT_HULL_ID } from '@exilium/shared';
 import {
   simulateCombat,
   computeFleetFP,
@@ -110,7 +111,7 @@ async function resolveEquippedModules(
   if (!args.equippedModules) return [];
   const [flagshipRow] = await db.select({ hullId: flagships.hullId })
     .from(flagships).where(eq(flagships.userId, args.userId)).limit(1);
-  const hullId = flagshipRow?.hullId ?? 'combat';
+  const hullId = flagshipRow?.hullId ?? DEFAULT_HULL_ID;
   const pool = await modulesService._getPool(db);
   const equippedSnapshot = (args.equippedModules ?? {}) as Parameters<typeof parseLoadout>[0];
   return parseLoadout(equippedSnapshot, hullId, pool).equipped;
