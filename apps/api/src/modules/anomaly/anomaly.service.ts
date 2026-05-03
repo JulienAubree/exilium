@@ -825,23 +825,9 @@ export function createAnomalyService(
         const seenSet = new Set((row.seenEventIds ?? []) as string[]);
         seenSet.add(event.id);
         const eventLog = (row.eventLog ?? []) as Array<Record<string, unknown>>;
-        const newLogEntry = {
-          depth: row.currentDepth,
-          eventId: event.id,
-          choiceIndex,
-          outcomeApplied: {
-            minerai: applied.lootDeltas.minerai,
-            silicium: applied.lootDeltas.silicium,
-            hydrogene: applied.lootDeltas.hydrogene,
-            exilium: exiliumApplied,
-            hullDelta: outcome.hullDelta ?? 0,
-            shipsGain: outcome.shipsGain ?? {},
-            shipsLoss: outcome.shipsLoss ?? {},
-          },
-          resolvedAt: new Date().toISOString(),
-        };
 
         // V4 : moduleDrop outcome — grant 1 module of requested rarity
+        // Doit être calculé AVANT newLogEntry pour persister le drop dans eventLog (audit/replay).
         let droppedEventModule: { id: string; name: string; rarity: string; image: string } | null = null;
         if (choice.outcome.moduleDrop) {
           const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
@@ -862,6 +848,23 @@ export function createAnomalyService(
             }
           }
         }
+
+        const newLogEntry = {
+          depth: row.currentDepth,
+          eventId: event.id,
+          choiceIndex,
+          outcomeApplied: {
+            minerai: applied.lootDeltas.minerai,
+            silicium: applied.lootDeltas.silicium,
+            hydrogene: applied.lootDeltas.hydrogene,
+            exilium: exiliumApplied,
+            hullDelta: outcome.hullDelta ?? 0,
+            shipsGain: outcome.shipsGain ?? {},
+            shipsLoss: outcome.shipsLoss ?? {},
+            moduleDropId: droppedEventModule?.id ?? null,  // V4 : trace du drop pour audit
+          },
+          resolvedAt: new Date().toISOString(),
+        };
 
         // WHERE-guards: status='active' AND nextNodeType='event' AND
         // nextEventId=row.nextEventId — guard against a parallel resolve
