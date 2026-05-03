@@ -56,7 +56,6 @@ import { createExiliumRouter } from '../modules/exilium/exilium.router.js';
 import { createFlagshipService } from '../modules/flagship/flagship.service.js';
 import { createFlagshipRouter } from '../modules/flagship/flagship.router.js';
 import { createTalentService } from '../modules/flagship/talent.service.js';
-import { createTalentRouter } from '../modules/flagship/talent.router.js';
 import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
 import { createDailyQuestRouter } from '../modules/daily-quest/daily-quest.router.js';
 import { createFeedbackService } from '../modules/feedback/feedback.service.js';
@@ -87,7 +86,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
 
   const gameConfigService = createGameConfigService(db, redis);
   const exiliumService = createExiliumService(db, gameConfigService);
-  const talentService = createTalentService(db, exiliumService, gameConfigService);
+  const talentService = createTalentService(db, gameConfigService);
   const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
   const mailerService = createMailerService();
   const authService = createAuthService(db, redis, mailerService);
@@ -156,7 +155,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const pushRouter = createPushRouter(pushService);
   const exiliumRouter = createExiliumRouter(exiliumService);
   const flagshipRouter = createFlagshipRouter(flagshipService, tutorialService);
-  const talentRouter = createTalentRouter(talentService);
   const dailyQuestRouter = createDailyQuestRouter(dailyQuestService, gameConfigService);
   const feedbackRouter = createFeedbackRouter(feedbackService, adminProcedure);
   const changelogRouter = createChangelogRouter(changelogService, adminProcedure);
@@ -199,7 +197,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
     push: pushRouter,
     exilium: exiliumRouter,
     flagship: flagshipRouter,
-    talent: talentRouter,
     dailyQuest: dailyQuestRouter,
     feedback: feedbackRouter,
     changelog: changelogRouter,

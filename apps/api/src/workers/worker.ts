@@ -51,7 +51,7 @@ const tutorialService = createTutorialService(db, pveService);
 
 // Talent & flagship services
 const flagshipService = createFlagshipService(db, exiliumService, gameConfigService);
-const talentService = createTalentService(db, exiliumService, gameConfigService);
+const talentService = createTalentService(db, gameConfigService);
 
 // Build services (receive the unified build queue)
 const buildingService = createBuildingService(db, resourceService, buildCompletionQueue, gameConfigService);
