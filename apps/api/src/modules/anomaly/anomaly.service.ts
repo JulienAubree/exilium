@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { anomalies, flagships, moduleDefinitions, planets, planetShips, users, userExilium, exiliumLog } from '@exilium/db';
+import { anomalies, flagships, moduleDefinitions, planets, planetShips, users, userExilium, exiliumLog, userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { DEFAULT_HULL_ID } from '@exilium/shared';
 import {
@@ -726,6 +726,42 @@ export function createAnomalyService(
         }
 
         const choice = event.choices[choiceIndex];
+
+        // V4 : gating par hull
+        if (choice.requiredHull) {
+          const [flagshipHull] = await tx.select({ hullId: flagships.hullId })
+            .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+          if (flagshipHull?.hullId !== choice.requiredHull) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Choix réservé à la coque ${choice.requiredHull}`,
+            });
+          }
+        }
+
+        // V4 : gating par recherche — `researchId` correspond à un nom de
+        // colonne camelCase sur la table user_research (ex: 'weapons',
+        // 'energyTech'). On lit la ligne complète puis on extrait dynamiquement.
+        if (choice.requiredResearch) {
+          const researchKey = choice.requiredResearch.researchId as keyof typeof userResearch;
+          const column = userResearch[researchKey];
+          if (!column || typeof column !== 'object' || !('name' in column)) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Recherche inconnue : ${choice.requiredResearch.researchId}`,
+            });
+          }
+          const [research] = await tx.select().from(userResearch)
+            .where(eq(userResearch.userId, userId)).limit(1);
+          const level = (research?.[researchKey as keyof typeof research] as number | undefined) ?? 0;
+          if (level < choice.requiredResearch.minLevel) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Recherche ${choice.requiredResearch.researchId} niveau ${choice.requiredResearch.minLevel} requis`,
+            });
+          }
+        }
+
         const outcome = choice.outcome;
 
         // Apply outcome (pure) on the fleet snapshot.
@@ -805,6 +841,28 @@ export function createAnomalyService(
           resolvedAt: new Date().toISOString(),
         };
 
+        // V4 : moduleDrop outcome — grant 1 module of requested rarity
+        let droppedEventModule: { id: string; name: string; rarity: string; image: string } | null = null;
+        if (choice.outcome.moduleDrop) {
+          const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
+            .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+          if (flagshipForDrop && flagshipForDrop.hullId) {
+            const moduleId = await modulesService.rollByRarity({
+              flagshipHullId: flagshipForDrop.hullId,
+              rarity: choice.outcome.moduleDrop,
+              executor: tx as unknown as Database,
+            });
+            if (moduleId) {
+              await modulesService.grantModule(flagshipForDrop.id, moduleId, tx as unknown as Database);
+              const [def] = await tx.select({
+                id: moduleDefinitions.id, name: moduleDefinitions.name,
+                rarity: moduleDefinitions.rarity, image: moduleDefinitions.image,
+              }).from(moduleDefinitions).where(eq(moduleDefinitions.id, moduleId)).limit(1);
+              if (def) droppedEventModule = def;
+            }
+          }
+        }
+
         // WHERE-guards: status='active' AND nextNodeType='event' AND
         // nextEventId=row.nextEventId — guard against a parallel resolve
         // that would have already advanced the state.
@@ -838,6 +896,7 @@ export function createAnomalyService(
           outcomeApplied: newLogEntry.outcomeApplied,
           nextNodeAt: nextNodeAt.toISOString(),
           nextEnemyFp: Math.round(nextEnemy.enemyFP),
+          droppedModule: droppedEventModule,  // V4
         };
       });
     },

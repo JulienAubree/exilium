@@ -328,6 +328,28 @@ export function createModulesService(db: Database) {
     },
 
     /**
+     * V4 (2026-05-03) : pick a random module of the given rarity from the flagship's
+     * hull pool. Used by anomaly events with `outcome.moduleDrop`.
+     * Returns null if the pool is empty for the (hull, rarity) combination.
+     */
+    async rollByRarity(
+      args: {
+        flagshipHullId: string;
+        rarity: 'common' | 'rare' | 'epic';
+        rng?: () => number;
+        executor?: Database;
+      },
+    ): Promise<string | null> {
+      const rng = args.rng ?? Math.random;
+      const pool = await getPool(args.executor ?? db);
+      const cands = pool.filter(
+        (m) => m.hullId === args.flagshipHullId && m.rarity === args.rarity,
+      );
+      if (cands.length === 0) return null;
+      return cands[Math.floor(rng() * cands.length)].id;
+    },
+
+    /**
      * Insert (or count++) a module in a flagship's inventory.
      *
      * Pass `executor` (a tx) when called inside a transaction so the write

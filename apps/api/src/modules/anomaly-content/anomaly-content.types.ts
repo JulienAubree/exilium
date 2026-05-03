@@ -25,10 +25,12 @@ const outcomeSchema = z.object({
   exilium: z.number().int().default(0),
   /** Ratio applied uniformly to every fleet group's hullPercent, clamp[0.01, 1]. */
   hullDelta: z.number().min(-1).max(1).default(0),
-  /** shipId → count to add (combat ships only). */
+  /** shipId → count to add (combat ships only). KEPT for legacy events (now disabled). */
   shipsGain: shipDeltaSchema.default({}),
-  /** shipId → count to remove. */
+  /** shipId → count to remove. KEPT for legacy events (now disabled). */
   shipsLoss: shipDeltaSchema.default({}),
+  /** V4 : si set, grant 1 module de la rareté demandée (random pick dans le pool de la coque). */
+  moduleDrop: z.enum(['common', 'rare', 'epic']).optional(),
 });
 
 const choiceSchema = z.object({
@@ -38,6 +40,13 @@ const choiceSchema = z.object({
   outcome: outcomeSchema.default({}),
   /** Narrative shown after resolution ("Vous récupérez 1500 minerai…"). */
   resolutionText: z.string().max(500).default(''),
+  /** V4 : restreint l'éligibilité à un hull spécifique. */
+  requiredHull: z.enum(['combat', 'industrial', 'scientific']).optional(),
+  /** V4 : restreint l'éligibilité à un niveau de recherche. */
+  requiredResearch: z.object({
+    researchId: z.string(),
+    minLevel: z.number().int().min(1),
+  }).optional(),
 });
 
 /**
