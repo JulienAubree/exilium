@@ -14,6 +14,7 @@ import { AnomalyEngageModal } from '@/components/anomaly/AnomalyEngageModal';
 import { AnomalyEventCard } from '@/components/anomaly/AnomalyEventCard';
 import { AnomalyEventLog } from '@/components/anomaly/AnomalyEventLog';
 import { AnomalyCombatPreview } from '@/components/anomaly/AnomalyCombatPreview';
+import { AnomalyLootSummaryModal } from '@/components/anomaly/AnomalyLootSummaryModal';
 
 interface FleetEntry {
   count: number;
@@ -21,6 +22,13 @@ interface FleetEntry {
 }
 
 const MAX_DEPTH = 20;
+
+interface LootSummaryState {
+  drops: Array<{ id: string; name: string; rarity: string; image: string; isFinal?: boolean }>;
+  resources: { minerai: number; silicium: number; hydrogene: number };
+  exiliumRefunded: number;
+  outcome: 'survived' | 'wiped' | 'forced_retreat';
+}
 
 export default function Anomaly() {
   const { data: gameConfig } = useGameConfig();
@@ -31,17 +39,52 @@ export default function Anomaly() {
   const utils = trpc.useUtils();
   const addToast = useToastStore((s) => s.addToast);
   const [engageOpen, setEngageOpen] = useState(false);
+  const [lootSummary, setLootSummary] = useState<LootSummaryState | null>(null);
+
+  // Snapshot of the active anomaly row, refreshed each render. We read from
+  // it inside mutation onSuccess to recover the loot/exilium values that the
+  // server wipes from the row when finalizing the run (the mutation response
+  // doesn't echo them back for V1).
+  const currentRef = useRef(current);
+  currentRef.current = current;
+
+  function snapshotResources() {
+    const row = currentRef.current;
+    return {
+      minerai: Math.floor(Number(row?.lootMinerai ?? 0)),
+      silicium: Math.floor(Number(row?.lootSilicium ?? 0)),
+      hydrogene: Math.floor(Number(row?.lootHydrogene ?? 0)),
+    };
+  }
 
   const advanceMutation = trpc.anomaly.advance.useMutation({
     onSuccess: (data) => {
+      const preMutationRow = currentRef.current;
       utils.anomaly.current.invalidate();
       utils.anomaly.history.invalidate();
       utils.flagship.get.invalidate();
       utils.exilium.getBalance.invalidate();
       utils.planet.list.invalidate();
       utils.shipyard.empireOverview.invalidate();
+
+      // In-run drop toast (per-combat module dropped on a survived combat)
+      if (data.outcome === 'survived' && data.droppedModule) {
+        addToast(
+          `✨ +1 module : ${data.droppedModule.name} (${data.droppedModule.rarity})`,
+          'success',
+        );
+      }
+
       if (data.outcome === 'wiped') {
         addToast('💀 Votre flotte a été anéantie. Tout est perdu.', 'error');
+        // Wipe = no resources recovered, exilium lost. finalDrops is [] but
+        // surface the modal anyway so the player sees the run summary.
+        setLootSummary({
+          drops: data.finalDrops ?? [],
+          resources: { minerai: 0, silicium: 0, hydrogene: 0 },
+          exiliumRefunded: 0,
+          outcome: 'wiped',
+        });
       } else if (data.outcome === 'forced_retreat') {
         const message = data.flagshipLost
           ? '⚠️ Vaisseau mère perdu — retour forcé. Loot et Exilium récupérés.'
@@ -49,8 +92,33 @@ export default function Anomaly() {
             ? '⚠️ Combat indécis — retour avec votre flotte. Loot et Exilium récupérés.'
             : '⚠️ Combat perdu — retour forcé. Loot et Exilium récupérés.';
         addToast(message, 'warning');
+        setLootSummary({
+          drops: data.finalDrops ?? [],
+          resources: snapshotResources(),
+          exiliumRefunded: preMutationRow?.exiliumPaid ?? 0,
+          outcome: 'forced_retreat',
+        });
       } else {
         addToast(`⚔️ Combat remporté — profondeur ${data.depth}`, 'success');
+        // Run completed at MAX_DEPTH — surface the same end-of-run modal as a
+        // voluntary retreat. The API includes the new combat's loot in
+        // `nodeLoot` but it has not yet been merged into the row snapshot, so
+        // we add it on top of the pre-mutation resource totals.
+        const finalDrops = data.finalDrops ?? [];
+        if (finalDrops.length > 0 || data.runComplete) {
+          const base = snapshotResources();
+          const nodeLoot = data.nodeLoot ?? { minerai: 0, silicium: 0, hydrogene: 0 };
+          setLootSummary({
+            drops: finalDrops,
+            resources: {
+              minerai: base.minerai + Math.floor(Number(nodeLoot.minerai ?? 0)),
+              silicium: base.silicium + Math.floor(Number(nodeLoot.silicium ?? 0)),
+              hydrogene: base.hydrogene + Math.floor(Number(nodeLoot.hydrogene ?? 0)),
+            },
+            exiliumRefunded: preMutationRow?.exiliumPaid ?? 0,
+            outcome: 'survived',
+          });
+        }
       }
     },
     onError: (err) => {
@@ -66,7 +134,8 @@ export default function Anomaly() {
   });
 
   const retreatMutation = trpc.anomaly.retreat.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const preMutationRow = currentRef.current;
       utils.anomaly.current.invalidate();
       utils.anomaly.history.invalidate();
       utils.exilium.getBalance.invalidate();
@@ -74,6 +143,12 @@ export default function Anomaly() {
       utils.planet.list.invalidate();
       utils.shipyard.empireOverview.invalidate();
       addToast('🛑 Retour avec votre butin. Anomalie scellée.', 'success');
+      setLootSummary({
+        drops: data.finalDrops ?? [],
+        resources: snapshotResources(),
+        exiliumRefunded: preMutationRow?.exiliumPaid ?? 0,
+        outcome: 'survived',
+      });
     },
     onError: (err) => addToast(err.message ?? 'Retraite impossible', 'error'),
   });
@@ -106,6 +181,14 @@ export default function Anomaly() {
           </div>
         )}
         <AnomalyEngageModal open={engageOpen} onClose={() => setEngageOpen(false)} />
+        <AnomalyLootSummaryModal
+          open={!!lootSummary}
+          onClose={() => setLootSummary(null)}
+          drops={lootSummary?.drops ?? []}
+          resources={lootSummary?.resources ?? { minerai: 0, silicium: 0, hydrogene: 0 }}
+          exiliumRefunded={lootSummary?.exiliumRefunded ?? 0}
+          outcome={lootSummary?.outcome ?? 'survived'}
+        />
       </div>
     );
   }
@@ -136,6 +219,14 @@ export default function Anomaly() {
       )}
 
       <AnomalyEngageModal open={engageOpen} onClose={() => setEngageOpen(false)} />
+      <AnomalyLootSummaryModal
+        open={!!lootSummary}
+        onClose={() => setLootSummary(null)}
+        drops={lootSummary?.drops ?? []}
+        resources={lootSummary?.resources ?? { minerai: 0, silicium: 0, hydrogene: 0 }}
+        exiliumRefunded={lootSummary?.exiliumRefunded ?? 0}
+        outcome={lootSummary?.outcome ?? 'survived'}
+      />
     </div>
   );
 }
