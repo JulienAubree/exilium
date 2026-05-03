@@ -10,6 +10,10 @@ import { FlagshipIdentityCard } from '@/components/flagship/FlagshipIdentityCard
 import { FlagshipStatsCard } from '@/components/flagship/FlagshipStatsCard';
 import { FlagshipImagePicker } from '@/components/flagship/FlagshipImagePicker';
 import { FlagshipSkeleton } from '@/components/flagship/FlagshipSkeleton';
+import { ModuleLoadoutGrid } from '@/components/flagship/ModuleLoadoutGrid';
+import { ModuleInventoryPanel } from '@/components/flagship/ModuleInventoryPanel';
+import { ModuleDetailModal } from '@/components/flagship/ModuleDetailModal';
+import { ModuleHullTabs } from '@/components/flagship/ModuleHullTabs';
 
 interface PlanetLite {
   id: string;
@@ -136,6 +140,8 @@ export default function FlagshipProfile() {
         driveType={driveType}
       />
 
+      <ModulesTab activeHullId={flagship.hullId ?? 'combat'} />
+
       <TalentTree showGuide />
 
       <FlagshipImagePicker
@@ -151,6 +157,82 @@ export default function FlagshipProfile() {
         open={showHullChange}
         onClose={() => setShowHullChange(false)}
         flagship={flagship}
+      />
+    </div>
+  );
+}
+
+function ModulesTab({ activeHullId }: { activeHullId: string }) {
+  const [selectedHull, setSelectedHull] = useState(activeHullId);
+  const [pendingSlot, setPendingSlot] = useState<{ slotType: 'epic' | 'rare' | 'common'; slotIndex: number } | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  const { data: inventory } = trpc.modules.inventory.list.useQuery();
+  const { data: loadout, refetch: refetchLoadout } = trpc.modules.loadout.get.useQuery({ hullId: selectedHull });
+  const { data: allModules } = trpc.modules.list.useQuery();
+  const utils = trpc.useUtils();
+
+  const equipMutation = trpc.modules.loadout.equip.useMutation({
+    onSuccess: () => { utils.modules.loadout.get.invalidate(); refetchLoadout(); setPendingSlot(null); },
+  });
+  const unequipMutation = trpc.modules.loadout.unequip.useMutation({
+    onSuccess: () => { utils.modules.loadout.get.invalidate(); refetchLoadout(); },
+  });
+
+  const inventoryMap = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; image: string; rarity: string }>();
+    for (const m of allModules ?? []) map.set(m.id, { id: m.id, name: m.name, image: m.image, rarity: m.rarity });
+    return map;
+  }, [allModules]);
+
+  const slot = loadout?.slot ?? { epic: null, rare: [], common: [] };
+  const equippedIds = new Set([
+    ...(slot.epic ? [slot.epic] : []),
+    ...slot.rare,
+    ...slot.common,
+  ]);
+
+  const detailModule = detailId
+    ? (inventory?.items ?? []).find((i) => i.moduleId === detailId)
+    : null;
+
+  return (
+    <div className="space-y-4">
+      <ModuleHullTabs activeHullId={activeHullId} selectedHull={selectedHull} onSelect={setSelectedHull} />
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
+        <div>
+          <ModuleLoadoutGrid
+            slot={slot}
+            inventory={inventoryMap}
+            onSlotClick={(slotType, slotIndex) => setPendingSlot({ slotType, slotIndex })}
+            onUnequip={(slotType, slotIndex) => unequipMutation.mutate({ hullId: selectedHull, slotType, slotIndex })}
+          />
+          {loadout && (
+            <div className="mt-4 text-center text-xs text-muted-foreground font-mono">
+              ⚡ Charges épiques : {loadout.epicChargesCurrent} / {loadout.epicChargesMax}
+            </div>
+          )}
+        </div>
+        <ModuleInventoryPanel
+          items={(inventory?.items ?? []).filter((i) => i.hullId === selectedHull)}
+          hullFilter={selectedHull}
+          selectedSlotType={pendingSlot?.slotType ?? null}
+          equippedIds={equippedIds}
+          onEquip={(moduleId) => {
+            if (pendingSlot) {
+              equipMutation.mutate({ hullId: selectedHull, ...pendingSlot, moduleId });
+            }
+          }}
+          onDetails={(moduleId) => setDetailId(moduleId)}
+        />
+      </div>
+      <ModuleDetailModal
+        module={detailModule ? {
+          id: detailModule.moduleId, name: detailModule.name, description: detailModule.description,
+          rarity: detailModule.rarity, hullId: detailModule.hullId, image: detailModule.image,
+          effect: detailModule.effect, count: detailModule.count,
+        } : null}
+        onClose={() => setDetailId(null)}
       />
     </div>
   );
