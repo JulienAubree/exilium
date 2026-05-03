@@ -277,17 +277,9 @@ export function createAnomalyService(
 
       const config = await gameConfigService.getFullConfig();
 
-      // Outcome taxonomy:
-      //   - totalWipe   : aucun survivant côté joueur → tout perdu
-      //   - forcedRetreat : flagship détruit OU combat perdu, mais des ships
-      //                     survivent → retour forcé avec ce qui reste +
-      //                     loot rendu + Exilium remboursé. Le flagship est
-      //                     incapacité s'il a été détruit.
-      //   - survived     : flagship vivant + combat gagné → on peut continuer
+      // V4 : flagship-only. Pas de "forced_retreat" partiel — flagship détruit = wipe radical.
       const flagshipSurvived = !!result.attackerSurvivors['flagship'];
-      const anySurvivor = Object.keys(result.attackerSurvivors).length > 0;
-      const totalWipe = !anySurvivor;
-      const forcedRetreat = !totalWipe && (!flagshipSurvived || result.outcome !== 'attacker');
+      const wipe = !flagshipSurvived;
 
       // ── Build a combat report so the player can review what happened ──
       const [user] = await tx.select({ username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
@@ -315,15 +307,13 @@ export function createAnomalyService(
         shotsPerRound: result.shotsPerRound,
         extra: { anomalyDepth: newDepth, anomalyId: row.id },
       });
-      const outcomeLabel = totalWipe
+      const outcomeLabel = wipe
         ? 'Défaite totale'
-        : !flagshipSurvived
-          ? 'Vaisseau mère perdu'
-          : result.outcome === 'draw'
-            ? 'Combat indécis'
-            : result.outcome === 'defender'
-              ? 'Combat perdu'
-              : 'Victoire';
+        : result.outcome === 'draw'
+          ? 'Combat indécis'
+          : result.outcome === 'defender'
+            ? 'Combat perdu'
+            : 'Victoire';
       const report = await reportService.create({
         userId,
         missionType: 'anomaly',
@@ -340,21 +330,23 @@ export function createAnomalyService(
       const existingReportIds = (row.reportIds ?? []) as string[];
       const updatedReportIds = [...existingReportIds, report.id];
 
-      if (totalWipe) {
-        // Tout est mort : pas de retour, Exilium perdu, flagship incapacité.
-        // WHERE guards : status='active' AND current_depth=oldDepth → guard
-        // contre une advance/retreat parallèle qui aurait déjà transitionné
-        // l'état (en pratique impossible grâce au advisory lock, mais
-        // ceinture-bretelles).
+      if (wipe) {
+        // V4 wipe semantics :
+        //  - status 'wiped'
+        //  - Exilium engagé : non remboursé (perdu)
+        //  - Loot ressources accumulé : non rendu à la planète (perdu)
+        //  - Modules drops déjà obtenus : restent en inventaire (committed à chaque grant)
+        //  - Pas de drop sur ce combat fatal (pas de roll dans le wipe branch)
+        //  - Pas de per-run final drop (réservé à retreat/runComplete)
+        //  - Flagship → incapacitated (30 min de réparation)
         const wipedRows = await tx.update(anomalies).set({
           status: 'wiped',
-          fleet: result.attackerSurvivors,
+          fleet: result.attackerSurvivors,  // = {} (flagship détruit)
           reportIds: updatedReportIds,
           completedAt: new Date(),
           nextNodeAt: null,
           nextEnemyFleet: null,
           nextEnemyFp: null,
-          // Clear pending epic effect (consumed even on wipe)
           ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
         }).where(and(
           eq(anomalies.id, row.id),
@@ -364,8 +356,6 @@ export function createAnomalyService(
         if (wipedRows.length === 0) {
           throw new TRPCError({ code: 'CONFLICT', message: 'État de l\'anomalie a changé entre-temps' });
         }
-        // Note: incapacitate() opens its own context but the advisory lock
-        // is per-user, not on flagship row. It's safe.
         await flagshipService.incapacitate(userId);
 
         return {
@@ -374,107 +364,8 @@ export function createAnomalyService(
           enemyFP: result.enemyFP,
           combatRounds: result.combatRounds,
           reportId: report.id,
-          // No drops on wipe — return consistent shape so the front always
-          // gets `droppedModule` / `finalDrops` keys.
           droppedModule: null,
-          finalDrops: [] as Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>,
-        };
-      }
-
-      if (forcedRetreat) {
-        const home = await getHomeworld(userId);
-        if (!home) {
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Planète mère introuvable' });
-        }
-
-        // Roll per-run final drops based on the current depth (the player
-        // didn't reach a deeper node before being forced out). Clamp at 1
-        // so a wipe on the very first node still grants a tier-1 common —
-        // otherwise the player would walk away with literally nothing.
-        const finalDrops = await rollFinalDropsForRun(tx, userId, Math.max(1, row.currentDepth));
-
-        const updatedRows = await tx.update(anomalies).set({
-          status: 'completed',
-          fleet: result.attackerSurvivors,
-          reportIds: updatedReportIds,
-          completedAt: new Date(),
-          nextNodeAt: null,
-          nextEnemyFleet: null,
-          nextEnemyFp: null,
-          // Clear pending epic effect (consumed even on forced retreat)
-          ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
-        }).where(and(
-          eq(anomalies.id, row.id),
-          eq(anomalies.status, 'active'),
-          eq(anomalies.currentDepth, row.currentDepth),
-        )).returning({ id: anomalies.id });
-        if (updatedRows.length === 0) {
-          throw new TRPCError({ code: 'CONFLICT', message: 'État de l\'anomalie a changé entre-temps' });
-        }
-
-        // Refund Exilium inline (transaction-safe)
-        if (row.exiliumPaid > 0) {
-          await tx.update(userExilium).set({
-            balance: sql`${userExilium.balance} + ${row.exiliumPaid}`,
-            totalEarned: sql`${userExilium.totalEarned} + ${row.exiliumPaid}`,
-            updatedAt: new Date(),
-          }).where(eq(userExilium.userId, userId));
-          await tx.insert(exiliumLog).values({
-            userId, amount: row.exiliumPaid, source: 'pve',
-            details: { source: 'anomaly_forced_retreat' },
-          });
-        }
-
-        const lootMinerai = Number(row.lootMinerai);
-        const lootSilicium = Number(row.lootSilicium);
-        const lootHydrogene = Number(row.lootHydrogene);
-        if (lootMinerai > 0 || lootSilicium > 0 || lootHydrogene > 0) {
-          await tx.update(planets).set({
-            minerai: sql`${planets.minerai} + ${lootMinerai}`,
-            silicium: sql`${planets.silicium} + ${lootSilicium}`,
-            hydrogene: sql`${planets.hydrogene} + ${lootHydrogene}`,
-          }).where(eq(planets.id, home.id));
-        }
-
-        // Réinjecte ships survivants (sauf flagship) + recovered ships en 1 update
-        const lootShipsMap = (row.lootShips ?? {}) as LootShipsMap;
-        const totalToInject: Record<string, number> = {};
-        for (const [shipId, entry] of Object.entries(result.attackerSurvivors)) {
-          if (shipId === 'flagship') continue;
-          if (!validShipColumn(shipId)) continue;
-          if (entry.count > 0) totalToInject[shipId] = (totalToInject[shipId] ?? 0) + entry.count;
-        }
-        for (const [shipId, count] of Object.entries(lootShipsMap)) {
-          if (!validShipColumn(shipId)) continue;
-          if (count > 0) totalToInject[shipId] = (totalToInject[shipId] ?? 0) + count;
-        }
-        if (Object.keys(totalToInject).length > 0) {
-          const incrementUpdate: Record<string, unknown> = {};
-          for (const [shipId, count] of Object.entries(totalToInject)) {
-            const col = (planetShips as unknown as Record<string, unknown>)[shipId];
-            if (col) incrementUpdate[shipId] = sql`${col} + ${count}`;
-          }
-          await tx.update(planetShips).set(incrementUpdate as never)
-            .where(eq(planetShips.planetId, home.id));
-        }
-
-        if (!flagshipSurvived) {
-          await flagshipService.incapacitate(userId);
-        } else {
-          await flagshipService.returnFromMission(userId, home.id);
-        }
-
-        return {
-          outcome: 'forced_retreat' as const,
-          fleet: result.attackerSurvivors,
-          enemyFP: result.enemyFP,
-          combatRounds: result.combatRounds,
-          reportId: report.id,
-          flagshipLost: !flagshipSurvived,
-          combatOutcome: result.outcome, // 'attacker' | 'defender' | 'draw'
-          // No per-combat drop on a lost combat — just final drops.
-          droppedModule: null,
-          finalDrops,
+          finalDrops: [],
         };
       }
 
@@ -906,9 +797,11 @@ export function createAnomalyService(
     },
 
     /**
-     * Voluntarily abandon the run: refund Exilium, return ships + loot to homeworld.
-     * Wrapped in a transaction with advisory lock + WHERE status='active' guard
-     * so concurrent retreat / advance / engage from the same user are serialized.
+     * Voluntarily abandon the run: return ships + loot to homeworld + roll
+     * per-run final drops. V4 : Exilium engagé est NON remboursé (le run est
+     * considéré comme consommé). Wrapped in a transaction with advisory lock
+     * + WHERE status='active' guard so concurrent retreat / advance / engage
+     * from the same user are serialized.
      */
     async retreat(userId: string) {
       return await db.transaction(async (tx) => {
@@ -949,19 +842,6 @@ export function createAnomalyService(
         )).returning({ id: anomalies.id });
         if (updatedRows.length === 0) {
           throw new TRPCError({ code: 'CONFLICT', message: 'État de l\'anomalie a changé entre-temps' });
-        }
-
-        // Refund Exilium inline
-        if (row.exiliumPaid > 0) {
-          await tx.update(userExilium).set({
-            balance: sql`${userExilium.balance} + ${row.exiliumPaid}`,
-            totalEarned: sql`${userExilium.totalEarned} + ${row.exiliumPaid}`,
-            updatedAt: new Date(),
-          }).where(eq(userExilium.userId, userId));
-          await tx.insert(exiliumLog).values({
-            userId, amount: row.exiliumPaid, source: 'pve',
-            details: { source: 'anomaly_retreat' },
-          });
         }
 
         // Credit resources to homeworld
