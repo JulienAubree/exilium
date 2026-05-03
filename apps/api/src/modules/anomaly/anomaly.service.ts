@@ -187,6 +187,7 @@ export function createAnomalyService(
           userId,
           fleet,
           depth: 1,
+          equippedModules: equippedSnapshot,
         });
 
         // 9. Insert anomaly row — V4 flagship-only with repair charges

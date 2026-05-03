@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 import { flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { DEFAULT_HULL_ID } from '@exilium/shared';
@@ -319,8 +320,12 @@ export async function runAnomalyNode(
   // 1. V4 : flagship-only. Tout autre ship dans args.fleet est ignoré (legacy data).
   const flagshipEntry = args.fleet['flagship'];
   if (!flagshipEntry || flagshipEntry.count <= 0) {
-    // Cas impossible si engage V4 a fait son job, mais défensif
-    throw new Error('V4 anomaly: flagship missing or destroyed before combat start');
+    // Cas impossible si engage V4 a fait son job, mais défensif. Utilise TRPCError
+    // pour que le front puisse afficher un message propre plutôt qu'un 500.
+    throw new TRPCError({
+      code: 'CONFLICT',
+      message: 'Anomalie incompatible (flagship manquant) — abandonnez la run pour réinitialiser',
+    });
   }
   const playerShipCounts: Record<string, number> = { flagship: 1 };
 
