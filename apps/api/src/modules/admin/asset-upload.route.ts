@@ -3,7 +3,7 @@ import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq, sql } from 'drizzle-orm';
 import { users, planetTypes, type Database } from '@exilium/db';
-import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, processLandingImage, processAnomalyImage, isValidCategory } from '../../lib/image-processing.js';
+import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, processLandingImage, processAnomalyImage, processModuleImage, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
 import { getNextAvatarIndex, listAvatarIndexes } from '../../lib/avatar-image.util.js';
@@ -52,10 +52,10 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const planetType = (data.fields.planetType as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
-      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars, landing, anomaly' });
+      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars, landing, anomaly, module' });
     }
     if (!entityId && category !== 'avatars') {
-      return reply.status(400).send({ error: 'entityId is required (hullId for flagships, slot for landing/anomaly)' });
+      return reply.status(400).send({ error: 'entityId is required (hullId for flagships, slot for landing/anomaly/module)' });
     }
     if (!ALLOWED_MIMES.includes(data.mimetype)) {
       return reply.status(400).send({ error: 'Invalid file type. Must be PNG, JPEG, or WebP' });
@@ -94,6 +94,11 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
           return reply.status(400).send({ error: 'Invalid anomaly slot' });
         }
         files = await processAnomalyImage(buffer, entityId!, env.ASSETS_DIR);
+      } else if (category === 'module') {
+        if (!/^[a-z0-9_-]+$/i.test(entityId!)) {
+          return reply.status(400).send({ error: 'Invalid module slot' });
+        }
+        files = await processModuleImage(buffer, entityId!, env.ASSETS_DIR);
       } else if (planetType) {
         if (category !== 'buildings' && category !== 'defenses') {
           return reply.status(400).send({ error: 'planetType only supported for buildings|defenses' });
