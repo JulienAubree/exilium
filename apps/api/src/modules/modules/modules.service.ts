@@ -212,11 +212,15 @@ export function createModulesService(db: Database) {
      * Roll a per-combat module drop for a flagship after a combat win.
      * Returns the granted module id (with hull side info) or null.
      * Caller is responsible for inserting into flagship_module_inventory.
+     *
+     * Pass `executor` (a tx) when called inside an anomaly transaction so the
+     * pool is read against the same snapshot — prevents racing with an admin
+     * disable mid-combat.
      */
-    async rollPerCombatDrop(args: { flagshipHullId: string; rng?: () => number }): Promise<string | null> {
+    async rollPerCombatDrop(args: { flagshipHullId: string; rng?: () => number; executor?: Database }): Promise<string | null> {
       const rng = args.rng ?? Math.random;
       const roll = rng();
-      const pool = await getPool();
+      const pool = await getPool(args.executor ?? db);
       const otherHulls = ['combat', 'scientific', 'industrial'].filter((h) => h !== args.flagshipHullId);
 
       if (roll < 0.30) {
@@ -238,10 +242,13 @@ export function createModulesService(db: Database) {
     /**
      * Roll the per-run final drop based on depth reached. Returns array of
      * granted module ids (could be empty). Caller inserts to inventory.
+     *
+     * Pass `executor` (a tx) when called inside an anomaly transaction so the
+     * pool is read against the same snapshot.
      */
-    async rollPerRunFinalDrop(args: { flagshipHullId: string; depth: number; rng?: () => number }): Promise<string[]> {
+    async rollPerRunFinalDrop(args: { flagshipHullId: string; depth: number; rng?: () => number; executor?: Database }): Promise<string[]> {
       const rng = args.rng ?? Math.random;
-      const pool = await getPool();
+      const pool = await getPool(args.executor ?? db);
       const own = (rarity: 'common' | 'rare' | 'epic') => pool.filter((m) => m.hullId === args.flagshipHullId && m.rarity === rarity);
 
       const out: string[] = [];
@@ -264,9 +271,16 @@ export function createModulesService(db: Database) {
       return out;
     },
 
-    /** Insert (or count++) a module in a flagship's inventory. */
-    async grantModule(flagshipId: string, moduleId: string) {
-      await db.insert(flagshipModuleInventory).values({
+    /**
+     * Insert (or count++) a module in a flagship's inventory.
+     *
+     * Pass `executor` (a tx) when called inside a transaction so the write
+     * commits/rolls back atomically with the surrounding anomaly mutation.
+     * Without it, a tx rollback (e.g. CONFLICT WHERE-guard) would leave the
+     * inventory write committed → duplicate-drop exploit.
+     */
+    async grantModule(flagshipId: string, moduleId: string, executor: Database = db) {
+      await executor.insert(flagshipModuleInventory).values({
         flagshipId, moduleId, count: 1,
       }).onConflictDoUpdate({
         target: [flagshipModuleInventory.flagshipId, flagshipModuleInventory.moduleId],

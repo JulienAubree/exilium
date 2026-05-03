@@ -80,10 +80,11 @@ export function createAnomalyService(
     const finalDropIds = await modulesService.rollPerRunFinalDrop({
       flagshipHullId: flagshipForFinal.hullId ?? 'combat',
       depth,
+      executor: tx as unknown as Database,
     });
     const finalDropDefs: Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }> = [];
     for (const moduleId of finalDropIds) {
-      await modulesService.grantModule(flagshipForFinal.id, moduleId);
+      await modulesService.grantModule(flagshipForFinal.id, moduleId, tx as unknown as Database);
       const [def] = await tx.select({
         id: moduleDefinitions.id,
         name: moduleDefinitions.name,
@@ -437,8 +438,10 @@ export function createAnomalyService(
         }
 
         // Roll per-run final drops based on the current depth (the player
-        // didn't reach a deeper node before being forced out).
-        const finalDrops = await rollFinalDropsForRun(tx, userId, row.currentDepth);
+        // didn't reach a deeper node before being forced out). Clamp at 1
+        // so a wipe on the very first node still grants a tier-1 common —
+        // otherwise the player would walk away with literally nothing.
+        const finalDrops = await rollFinalDropsForRun(tx, userId, Math.max(1, row.currentDepth));
 
         const updatedRows = await tx.update(anomalies).set({
           status: 'completed',
@@ -574,13 +577,18 @@ export function createAnomalyService(
 
       // ── Per-combat module drop ────────────────────────────────────────────
       // 30% common from the flagship's hull + 5% common from another hull.
+      // Pool read + grant both run inside the tx so they roll back together
+      // with the anomaly state if the WHERE-guard later fails.
       const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
         .from(flagships).where(eq(flagships.userId, userId)).limit(1);
       const dropHullId = flagshipForDrop?.hullId ?? 'combat';
-      const droppedModuleId = await modulesService.rollPerCombatDrop({ flagshipHullId: dropHullId });
+      const droppedModuleId = await modulesService.rollPerCombatDrop({
+        flagshipHullId: dropHullId,
+        executor: tx as unknown as Database,
+      });
       let droppedModule: { id: string; name: string; rarity: string; image: string } | null = null;
       if (droppedModuleId && flagshipForDrop) {
-        await modulesService.grantModule(flagshipForDrop.id, droppedModuleId);
+        await modulesService.grantModule(flagshipForDrop.id, droppedModuleId, tx as unknown as Database);
         const [def] = await tx.select({
           id: moduleDefinitions.id,
           name: moduleDefinitions.name,
@@ -1073,11 +1081,16 @@ export function createAnomalyService(
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pas d\'anomalie active' });
         }
 
-        const loadout = (flagship.moduleLoadout ?? {}) as Record<
+        // Read the loadout from the run *snapshot* (taken at engage), not
+        // from the live flagship — this preserves snapshot semantics so a
+        // future feature that allows mid-run loadout changes doesn't break
+        // module charges. `equippedModules` is JSONB → cast through the
+        // same shape `resolveEquippedModules` expects.
+        const snapshot = (active.equippedModules ?? {}) as Record<
           string,
           { epic?: string | null; rare?: string[]; common?: string[] }
         >;
-        const epicId = loadout[hullId]?.epic;
+        const epicId = snapshot[hullId]?.epic ?? null;
         if (!epicId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun module épique équipé' });
         }
@@ -1089,6 +1102,21 @@ export function createAnomalyService(
         }
 
         const resolved = resolveActiveAbility(epicMod.effect.ability, epicMod.effect.magnitude);
+
+        // C3c : refuse `skip` at the last possible depth — would otherwise
+        // bump to MAX_DEPTH without rolling final drops, granting a free
+        // skip of the deepest fight. Check BEFORE consuming the charge so
+        // the player keeps the resource.
+        if (
+          resolved.applied === 'immediate' &&
+          resolved.ability === 'skip' &&
+          active.currentDepth + 1 >= ANOMALY_MAX_DEPTH
+        ) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Impossible d\'utiliser Skip au dernier saut',
+          });
+        }
 
         // Consume 1 charge — guarded by status and charge balance via the
         // for('update') above.
@@ -1115,11 +1143,18 @@ export function createAnomalyService(
           } else if (resolved.ability === 'skip') {
             // Skip = mark next combat as auto-cleared by advancing depth.
             // V1 implementation : bump currentDepth, clear the next enemy
-            // preview, and set nextNodeAt to "now" so the player can
-            // immediately request the next node. Loot is not granted for
-            // a skipped node — it's a strategic emergency button.
+            // preview, force back to a combat node (clears any pending
+            // event so we don't wedge the run state — see C3a), and set
+            // nextNodeAt to "now" so the player can immediately request
+            // the next node. The next `advance()` will regenerate the
+            // enemy preview on the fly (front shows a brief "loading"
+            // state until then — acceptable for V1, see C3b note). Loot
+            // is not granted for a skipped node — it's a strategic
+            // emergency button.
             await tx.update(anomalies).set({
               currentDepth: active.currentDepth + 1,
+              nextNodeType: 'combat',
+              nextEventId: null,
               nextEnemyFleet: null,
               nextEnemyFp: null,
               nextNodeAt: new Date(),
