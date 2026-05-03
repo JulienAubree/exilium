@@ -44,6 +44,10 @@ export const anomalies = pgTable('anomalies', {
   equippedModules:    jsonb('equipped_modules').notNull().default(sql`'{}'::jsonb`),
   /** Pending epic effect to apply on next combat (set by epic module activation). */
   pendingEpicEffect:  jsonb('pending_epic_effect'),
+  /** Anomaly V4 (2026-05-03) : nombre de charges réparation restantes dans la run. */
+  repairChargesCurrent: smallint('repair_charges_current').notNull().default(0),
+  /** Max charges réparation (initialisé à `anomaly_repair_charges_per_run` à l'engage). */
+  repairChargesMax:     smallint('repair_charges_max').notNull().default(3),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
 });
