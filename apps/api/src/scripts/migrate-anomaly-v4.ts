@@ -110,9 +110,15 @@ async function main() {
         }
 
         // 1e. Flagship returns to base, status active
+        // Clear repair/refit timers too — defensive cleanup. Without this, if a flagship
+        // happens to be in 'hull_refit' or 'incapacitated' when the migration runs, we'd
+        // flip it to 'active' but leave the timer fields populated, which would confuse
+        // the lazy completion logic in flagshipService.get().
         await tx.update(flagships).set({
           status: 'active',
           planetId: row.originPlanetId,
+          repairEndsAt: null,
+          refitEndsAt: null,
           updatedAt: new Date(),
         }).where(eq(flagships.userId, row.userId));
 
