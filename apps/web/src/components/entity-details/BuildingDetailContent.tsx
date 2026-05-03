@@ -195,7 +195,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
               <p className="text-slate-300">Tous les bonus relais sont multipliés par <span className="text-violet-400 font-medium">+5% par biome distinct</span> couvert par au moins un relais. Avec les 5 biomes représentés : <span className="text-violet-400 font-medium">×1.25</span> sur l&apos;ensemble.</p>
             </div>
 
-            <p className="text-slate-500 text-[11px]">Les bonus de plusieurs relais sur le même biome se cumulent. Le bonus s&apos;additionne au talent <span className="text-slate-400">pve_loot</span>.</p>
+            <p className="text-slate-500 text-[11px]">Les bonus de plusieurs relais sur le même biome se cumulent. Le bonus s&apos;additionne au multiplicateur global <span className="text-slate-400">pve_loot</span>.</p>
           </div>
         </div>
       )}

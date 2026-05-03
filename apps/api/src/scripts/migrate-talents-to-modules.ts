@@ -86,8 +86,8 @@ async function main() {
           END
         )), 0) AS total_exilium
       FROM flagships f
-      LEFT JOIN flagship_talents ft ON ft.flagship_id = f.id AND ft.current_rank > 0
-      LEFT JOIN talent_definitions td ON td.id = ft.talent_id
+      LEFT JOIN flagship_talents_archive ft ON ft.flagship_id = f.id AND ft.current_rank > 0
+      LEFT JOIN talent_definitions_archive td ON td.id = ft.talent_id
       GROUP BY f.id, f.user_id
     `);
 

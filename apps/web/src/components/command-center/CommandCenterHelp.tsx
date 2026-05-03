@@ -28,7 +28,7 @@ export function CommandCenterHelp({ level, planetClassId }: CommandCenterHelpPro
         icon={<Sun className="h-3.5 w-3.5 text-amber-400" />}
         title="Slots parallèles"
       >
-        Par défaut, un seul slot de production est actif. Les <span className="text-foreground font-medium">talents militaires</span> (<span className="text-foreground font-medium">Production parallèle militaire</span>) débloquent des slots supplémentaires.
+        Par défaut, un seul slot de production est actif. Un <span className="text-foreground font-medium">Centre de commandement niveau 10</span> sur la planète du vaisseau amiral débloque un slot supplémentaire.
       </FacilityHelpSection>
 
       <FacilityHelpSection

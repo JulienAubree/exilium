@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTalentService } from '../talent.service.js';
 
 const HULLS_FIXTURE = {

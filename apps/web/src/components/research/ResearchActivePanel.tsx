@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Zap } from 'lucide-react';
 import { Timer } from '@/components/common/Timer';
 import { cn } from '@/lib/utils';
-import { ResearchIcon, BuildingsIcon, GalaxyIcon, FlagshipIcon, EmpireIcon } from '@/lib/icons';
+import { ResearchIcon, BuildingsIcon, GalaxyIcon, FlagshipIcon } from '@/lib/icons';
 
 type AnnexDetail = { buildingId: string; level: number; planetName: string };
 type ResearchBonuses = {
@@ -63,7 +63,6 @@ export function ResearchActivePanel({
   const labReduction = Math.round((1 - bonuses.labMultiplier) * 100);
   const annexReduction = Math.round((1 - bonuses.annexMultiplier) * 100);
   const biomeReduction = Math.round((1 - bonuses.biomeMultiplier) * 100);
-  const talentReduction = Math.round((1 - bonuses.talentMultiplier) * 100);
   const hullReduction = Math.round((1 - bonuses.hullMultiplier) * 100);
 
   // Progress of current research (0–100)
@@ -196,7 +195,6 @@ export function ResearchActivePanel({
                 <BonusLine icon={<ResearchIcon width={12} height={12} />} label="Labo principal" detail={`Niv. ${bonuses.labLevel}`} reduction={labReduction} color="text-violet-400" />
                 <BonusLine icon={<BuildingsIcon width={12} height={12} />} label="Labos annexes" detail={`${bonuses.annexLevelsSum} niv.`} reduction={annexReduction} color="text-violet-400" />
                 <BonusLine icon={<GalaxyIcon width={12} height={12} />} label="Biomes actifs" detail={`${bonuses.discoveredBiomesCount}`} reduction={biomeReduction} color="text-amber-400" />
-                {talentReduction > 0 && <BonusLine icon={<EmpireIcon width={12} height={12} />} label="Talents" reduction={talentReduction} color="text-emerald-400" />}
                 {hullReduction > 0 && <BonusLine icon={<FlagshipIcon width={12} height={12} />} label="Vaisseau amiral" reduction={hullReduction} color="text-cyan-400" />}
               </div>
             </div>

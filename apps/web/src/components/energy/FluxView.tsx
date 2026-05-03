@@ -64,7 +64,7 @@ export function FluxView({
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-foreground truncate">{c.name}</div>
-                <div className="text-[10px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-primary ml-1">+{c.levelBonus} talent</span> : null}</div>
+                <div className="text-[10px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
               </div>
             </div>
 

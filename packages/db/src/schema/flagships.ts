@@ -18,15 +18,15 @@ export const flagships = pgTable('flagships', {
   flagshipImageIndex: smallint('flagship_image_index'),
 
   // Stats de base (combat frégate, soute petit cargo, modifiables par les talents)
-  baseSpeed: integer('base_speed').notNull().default(10000),
-  fuelConsumption: integer('fuel_consumption').notNull().default(75),
-  cargoCapacity: integer('cargo_capacity').notNull().default(5000),
+  baseSpeed: integer('base_speed').notNull().default(13000),
+  fuelConsumption: integer('fuel_consumption').notNull().default(72),
+  cargoCapacity: integer('cargo_capacity').notNull().default(8000),
   driveType: varchar('drive_type', { length: 32 }).notNull().default('impulse'),
   weapons: integer('weapons').notNull().default(12),
   shield: integer('shield').notNull().default(16),
   hull: integer('hull').notNull().default(30),
   baseArmor: integer('base_armor').notNull().default(2),
-  shotCount: integer('shot_count').notNull().default(2),
+  shotCount: integer('shot_count').notNull().default(5),
   unlockedShips: text('unlocked_ships').array().notNull().default([]),
   combatCategoryId: varchar('combat_category_id', { length: 32 }).notNull().default('medium'),
 

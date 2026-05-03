@@ -72,7 +72,7 @@ export function TableView({
             </div>
             <div>
               <div className="text-sm font-medium text-foreground">{c.name}</div>
-              <div className="text-[11px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-[10px] text-primary ml-1">+{c.levelBonus} talent</span> : null}</div>
+              <div className="text-[11px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-[10px] text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
             </div>
           </div>
           <div className="px-1">

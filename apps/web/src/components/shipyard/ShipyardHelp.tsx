@@ -25,7 +25,7 @@ export function ShipyardHelp({ level, planetClassId }: ShipyardHelpProps) {
         icon={<Sun className="h-3.5 w-3.5 text-amber-400" />}
         title="Slots parallèles"
       >
-        Par défaut, vous disposez d'un seul slot de production. Les <span className="text-foreground font-medium">talents industriels</span> (<span className="text-foreground font-medium">Production parallèle</span>) débloquent des slots supplémentaires, permettant d'assembler plusieurs vaisseaux simultanément.
+        Par défaut, vous disposez d'un seul slot de production. Le <span className="text-foreground font-medium">passif coque industrielle</span> ou un <span className="text-foreground font-medium">Chantier spatial niveau 10</span> sur la planète du vaisseau amiral débloque un slot supplémentaire, permettant d'assembler plusieurs vaisseaux simultanément.
       </FacilityHelpSection>
 
       <FacilityHelpSection

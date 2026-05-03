@@ -42,7 +42,7 @@ export function ResearchHelp({ level, planetClassId }: ResearchHelpProps) {
         }
         title="Vitesse de recherche"
       >
-        La durée des recherches est réduite par plusieurs sources, cumulatives multiplicativement&nbsp;: le <span className="text-foreground font-medium">niveau du Laboratoire</span>, les <span className="text-foreground font-medium">laboratoires annexes</span> (Forge Volcanique, Bio-Laboratoire…), les <span className="text-foreground font-medium">biomes</span> découverts, certains <span className="text-foreground font-medium">talents</span> et la coque de votre <span className="text-foreground font-medium">vaisseau amiral</span>. Le total est affiché en haut&nbsp;; dépliez la carte pour voir le détail.
+        La durée des recherches est réduite par plusieurs sources, cumulatives multiplicativement&nbsp;: le <span className="text-foreground font-medium">niveau du Laboratoire</span>, les <span className="text-foreground font-medium">laboratoires annexes</span> (Forge Volcanique, Bio-Laboratoire…), les <span className="text-foreground font-medium">biomes</span> découverts et la coque de votre <span className="text-foreground font-medium">vaisseau amiral</span>. Le total est affiché en haut&nbsp;; dépliez la carte pour voir le détail.
       </FacilityHelpSection>
 
       <FacilityHelpSection
