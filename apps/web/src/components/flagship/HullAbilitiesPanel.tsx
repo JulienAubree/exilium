@@ -100,7 +100,7 @@ export function HullAbilitiesPanel({ flagship, hullConfig, hullId }: HullAbiliti
               <ActiveAbilityCard
                 key={ability.id}
                 ability={ability}
-                cooldownData={(flagshipData as { cooldowns?: Record<string, { cooldownEnds: string }> } | undefined)?.cooldowns?.[ability.id]}
+                cooldownData={flagshipData?.cooldowns?.[ability.id]}
                 styles={styles}
                 isActive={isActive}
                 scanTarget={scanTarget}

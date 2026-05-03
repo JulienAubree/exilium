@@ -177,7 +177,7 @@ export function FlagshipIdentityCard({
             <span className={cn('text-xs font-medium', status.color)}>{status.label}</span>
           </div>
 
-          {/* Planet + Exilium + Talents — inline */}
+          {/* Planet + Exilium — inline */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             {stationedPlanet && (
               <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">

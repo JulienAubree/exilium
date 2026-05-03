@@ -163,7 +163,7 @@ export function createFlagshipService(
         };
       }
 
-      return { ...flagship, talentBonuses: {}, effectiveStats, hullConfig, cooldowns };
+      return { ...flagship, effectiveStats, hullConfig, cooldowns };
     },
 
     async create(userId: string, name: string, hullId: string, description?: string) {
