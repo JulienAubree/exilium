@@ -50,14 +50,14 @@ export function createTalentService(
             // Conserver le préfixe `hull_` pour les bonus de réduction temps
             // (utilisés par les consumers existants comme `hull_combat_build_time_reduction`)
             if (key.endsWith('_time_reduction') || key.endsWith('_build_time_reduction')) {
-              ctx[`hull_${key}`] = value as number;
+              ctx[`hull_${key}`] = value;
             }
             // Bonus mining/prospection/repair NEW : exposés sans préfixe pour
             // remplacer les anciennes clés talent (mining_speed, prospection_speed,
             // flagship_repair_time).
-            if (key === 'mining_speed_bonus')      ctx['mining_speed']         = value as number;
-            if (key === 'prospection_speed_bonus') ctx['prospection_speed']    = value as number;
-            if (key === 'repair_time_reduction')   ctx['flagship_repair_time'] = value as number;
+            if (key === 'mining_speed_bonus')      ctx['mining_speed']         = value;
+            if (key === 'prospection_speed_bonus') ctx['prospection_speed']    = value;
+            if (key === 'repair_time_reduction')   ctx['flagship_repair_time'] = value;
           }
         }
       }
