@@ -31,14 +31,14 @@ export function HullAbilitiesPanel({ flagship, hullConfig, hullId }: HullAbiliti
   const [scanError, setScanError] = useState('');
 
   const utils = trpc.useUtils();
-  const { data: talentData } = trpc.talent.list.useQuery();
+  const { data: flagshipData } = trpc.flagship.get.useQuery();
 
   const navigate = useNavigate();
   const scanMutation = trpc.flagship.scan.useMutation({
     onSuccess: (data) => {
       setScanTarget({ galaxy: 0, system: 0, position: 0 });
       setScanError('');
-      utils.talent.list.invalidate();
+      utils.flagship.get.invalidate();
       if (data.reportId) {
         navigate(`/reports/${data.reportId}`);
       }
@@ -100,7 +100,7 @@ export function HullAbilitiesPanel({ flagship, hullConfig, hullId }: HullAbiliti
               <ActiveAbilityCard
                 key={ability.id}
                 ability={ability}
-                cooldownData={talentData?.cooldowns?.[ability.id]}
+                cooldownData={(flagshipData as { cooldowns?: Record<string, { cooldownEnds: string }> } | undefined)?.cooldowns?.[ability.id]}
                 styles={styles}
                 isActive={isActive}
                 scanTarget={scanTarget}

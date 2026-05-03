@@ -51,14 +51,12 @@ interface EffectiveStats {
 interface FlagshipStatsCardProps {
   flagship: FlagshipBaseStats & { hullId: string | null };
   effectiveStats: EffectiveStats | null;
-  talentBonuses: Record<string, number>;
   driveType: string;
 }
 
 export function FlagshipStatsCard({
   flagship,
   effectiveStats,
-  talentBonuses,
   driveType,
 }: FlagshipStatsCardProps) {
   const styles = getHullCardStyles(flagship.hullId);
@@ -99,7 +97,6 @@ export function FlagshipStatsCard({
             label="Bouclier"
             value={finalShield}
             base={flagship.shield}
-            bonus={talentBonuses.shield}
             researchPct={pct(shieldingMult)}
             variant="shield"
           />
@@ -108,7 +105,6 @@ export function FlagshipStatsCard({
             label="Blindage"
             value={finalArmor}
             base={flagship.baseArmor}
-            bonus={talentBonuses.baseArmor}
             researchPct={pct(armorMult)}
             variant="armor"
           />
@@ -117,7 +113,6 @@ export function FlagshipStatsCard({
             label="Coque"
             value={finalHull}
             base={flagship.hull}
-            bonus={talentBonuses.hull}
             researchPct={pct(armorMult)}
             variant="hull"
           />
@@ -135,7 +130,6 @@ export function FlagshipStatsCard({
             label="Armement"
             value={finalWeapons}
             base={flagship.weapons}
-            bonus={talentBonuses.weapons}
             researchPct={pct(weaponsMult)}
             variant="weapons"
           />
@@ -144,7 +138,6 @@ export function FlagshipStatsCard({
             label="Tirs / round"
             value={effectiveStats?.shotCount ?? flagship.shotCount}
             base={flagship.shotCount}
-            bonus={talentBonuses.shotCount}
             variant="shots"
           />
         </div>
@@ -166,11 +159,9 @@ export function FlagshipStatsCard({
               <div className="text-[10px] text-slate-500 uppercase tracking-wide">Vitesse</div>
               <div className="text-xs text-slate-200 font-mono font-semibold">
                 {fmt(finalSpeed)}
-                {(talentBonuses.speedPercent || speedMult > 1) ? (
+                {speedMult > 1 ? (
                   <span className="text-[9px] text-emerald-500 ml-1">
-                    base {fmt(flagship.baseSpeed)}
-                    {talentBonuses.speedPercent ? ` · +${fmt(Math.round(flagship.baseSpeed * talentBonuses.speedPercent))}` : ''}
-                    {speedMult > 1 ? ` · +${pct(speedMult)}% rech.` : ''}
+                    base {fmt(flagship.baseSpeed)} · +{pct(speedMult)}% rech.
                   </span>
                 ) : null}
               </div>
@@ -191,11 +182,6 @@ export function FlagshipStatsCard({
               <div className="text-[10px] text-slate-500 uppercase tracking-wide">Consommation</div>
               <div className="text-xs text-slate-200 font-mono font-semibold">
                 {fmt(effectiveStats?.fuelConsumption ?? flagship.fuelConsumption)}
-                {talentBonuses.fuelConsumption ? (
-                  <span className="text-[9px] text-emerald-500 ml-1">
-                    base {fmt(flagship.fuelConsumption)} · {talentBonuses.fuelConsumption > 0 ? '+' : ''}{fmt(talentBonuses.fuelConsumption)}
-                  </span>
-                ) : null}
               </div>
             </div>
           </div>
@@ -205,11 +191,6 @@ export function FlagshipStatsCard({
               <div className="text-[10px] text-slate-500 uppercase tracking-wide">Soute</div>
               <div className="text-xs text-slate-200 font-mono font-semibold">
                 {fmt(effectiveStats?.cargoCapacity ?? flagship.cargoCapacity)}
-                {talentBonuses.cargoCapacity ? (
-                  <span className="text-[9px] text-emerald-500 ml-1">
-                    base {fmt(flagship.cargoCapacity)} · +{fmt(talentBonuses.cargoCapacity)}
-                  </span>
-                ) : null}
               </div>
             </div>
           </div>

@@ -41,7 +41,6 @@ interface FlagshipIdentityCardProps {
   flagshipImages: number[] | undefined;
   stationedPlanet: PlanetLite | null;
   balance: number;
-  totalTalentPoints: number;
   onOpenImagePicker: () => void;
   onOpenHullChange: () => void;
 }
@@ -52,7 +51,6 @@ export function FlagshipIdentityCard({
   flagshipImages,
   stationedPlanet,
   balance,
-  totalTalentPoints,
   onOpenImagePicker,
   onOpenHullChange,
 }: FlagshipIdentityCardProps) {
@@ -197,16 +195,10 @@ export function FlagshipIdentityCard({
               </Link>
             )}
             <span className="text-primary font-medium">{balance} Exilium</span>
-            {totalTalentPoints > 0 && (
-              <Link to="/flagship/talents" className="text-muted-foreground hover:text-foreground transition-colors">
-                {totalTalentPoints} pts talents
-              </Link>
-            )}
           </div>
 
           {/* Quick links */}
           <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
-            <Link to="/flagship/talents" className="text-[11px] text-primary/70 hover:text-primary transition-colors">Arbre de talents</Link>
             <Link to="/fleet" className="text-[11px] text-primary/70 hover:text-primary transition-colors">Flotte</Link>
             <Link to="/fleet/movements" className="text-[11px] text-primary/70 hover:text-primary transition-colors">Mouvements</Link>
           </div>

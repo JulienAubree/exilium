@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { trpc } from '@/trpc';
 import { PageHeader } from '@/components/common/PageHeader';
-import { TalentTree } from '@/components/flagship/TalentTree';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
 import { IncapacitatedBanner } from '@/components/flagship/IncapacitatedBanner';
 import { HullRefitBanner } from '@/components/flagship/HullRefitBanner';
@@ -33,7 +32,6 @@ export default function FlagshipProfile() {
     { hullId: (flagship?.hullId ?? 'industrial') as 'combat' | 'industrial' | 'scientific' },
     { enabled: !!flagship },
   );
-  const { data: talentTree } = trpc.talent.list.useQuery();
   const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
   const balance = exiliumData?.balance ?? 0;
@@ -48,11 +46,6 @@ export default function FlagshipProfile() {
   const handleRepaired = useCallback(() => {
     utils.flagship.get.invalidate();
   }, [utils.flagship.get]);
-
-  const totalTalentPoints = useMemo(() => {
-    if (!talentTree) return 0;
-    return Object.values(talentTree.ranks).reduce((sum, r) => sum + r, 0);
-  }, [talentTree]);
 
   // Find planet where flagship is stationed
   const stationedPlanet = useMemo<PlanetLite | null>(() => {
@@ -79,9 +72,6 @@ export default function FlagshipProfile() {
   const effectiveStats = 'effectiveStats' in flagship
     ? (flagship as { effectiveStats: Record<string, number | string> | null }).effectiveStats
     : null;
-  const talentBonuses = 'talentBonuses' in flagship
-    ? (flagship as { talentBonuses: Record<string, number> }).talentBonuses
-    : {};
   const hullConfig = 'hullConfig' in flagship
     ? (flagship as { hullConfig: { id: string; name: string; description: string } | null }).hullConfig
     : null;
@@ -121,7 +111,6 @@ export default function FlagshipProfile() {
         flagshipImages={flagshipImages}
         stationedPlanet={stationedPlanet}
         balance={balance}
-        totalTalentPoints={totalTalentPoints}
         onOpenImagePicker={() => setShowImagePicker(true)}
         onOpenHullChange={() => setShowHullChange(true)}
       />
@@ -137,13 +126,10 @@ export default function FlagshipProfile() {
       <FlagshipStatsCard
         flagship={flagship}
         effectiveStats={effectiveStats as Parameters<typeof FlagshipStatsCard>[0]['effectiveStats']}
-        talentBonuses={talentBonuses}
         driveType={driveType}
       />
 
       <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
-
-      <TalentTree showGuide />
 
       <FlagshipImagePicker
         open={showImagePicker}
