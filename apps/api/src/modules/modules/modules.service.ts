@@ -13,9 +13,12 @@ import {
 type SlotType = 'epic' | 'rare' | 'common';
 
 export function createModulesService(db: Database) {
-  /** Fetch all enabled modules for use as the engine pool. */
-  async function getPool(): Promise<ModuleDefinitionLite[]> {
-    const rows = await db.select().from(moduleDefinitions).where(eq(moduleDefinitions.enabled, true));
+  /** Fetch all enabled modules for use as the engine pool. Pass a transaction
+   *  executor (`tx`) when called inside an equip/unequip flow so the pool is
+   *  read against the same transactional snapshot — prevents races with
+   *  concurrent admin disables. */
+  async function getPool(executor: Database = db): Promise<ModuleDefinitionLite[]> {
+    const rows = await executor.select().from(moduleDefinitions).where(eq(moduleDefinitions.enabled, true));
     return rows.map((r) => ({
       id: r.id,
       hullId: r.hullId,
@@ -146,7 +149,7 @@ export function createModulesService(db: Database) {
         const newLoadout = { ...loadout, [input.hullId]: newSlot };
 
         // Recompute epic_charges_max from new equipped modules
-        const pool = await getPool();
+        const pool = await getPool(tx as unknown as Database);
         const equipped = parseLoadout(newLoadout, input.hullId, pool).equipped;
         const newMax = getMaxCharges(equipped);
 
@@ -176,17 +179,23 @@ export function createModulesService(db: Database) {
         if (input.slotType === 'epic') {
           newSlot.epic = null;
         } else if (input.slotType === 'rare') {
+          if (input.slotIndex < 0 || input.slotIndex > 2) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..2 pour rare' });
+          }
           const rare = [...newSlot.rare];
           delete rare[input.slotIndex];
           newSlot.rare = rare.filter((x): x is string => typeof x === 'string');
         } else {
+          if (input.slotIndex < 0 || input.slotIndex > 4) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'slotIndex doit être 0..4 pour common' });
+          }
           const common = [...newSlot.common];
           delete common[input.slotIndex];
           newSlot.common = common.filter((x): x is string => typeof x === 'string');
         }
 
         const newLoadout = { ...loadout, [input.hullId]: newSlot };
-        const pool = await getPool();
+        const pool = await getPool(tx as unknown as Database);
         const equipped = parseLoadout(newLoadout, input.hullId, pool).equipped;
         const newMax = getMaxCharges(equipped);
 
