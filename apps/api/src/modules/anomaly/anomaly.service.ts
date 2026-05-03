@@ -104,37 +104,22 @@ export function createAnomalyService(
     },
 
     /**
-     * Engage an anomaly. Wrapped in a transaction with a per-user advisory lock
-     * so concurrent engage / advance / retreat from the same user are serialized.
-     * All resource mutations (Exilium spend, planet_ships decrement, flagship
-     * setInMission, anomaly row insert) commit atomically — no partial state
-     * if one of them fails.
+     * V4 (2026-05-03) : flagship-only engagement.
+     *
+     * No more escort selection — the flagship is the only ship engaged.
+     * The `input.ships` argument is accepted for back-compat but ignored
+     * (the router still passes an empty object).
+     *
+     * Wrapped in a transaction with a per-user advisory lock so concurrent
+     * engage / advance / retreat from the same user are serialized.
      */
-    async engage(userId: string, input: { ships: Record<string, number> }) {
-      // Sanitize input outside the transaction (no DB calls needed)
+    async engage(userId: string, _input: { ships: Record<string, number> }) {
       const config = await gameConfigService.getFullConfig();
-      const validShipIds = new Set(Object.keys(config.ships));
-      const sanitizedShips: Record<string, number> = {};
-      for (const [shipId, count] of Object.entries(input.ships)) {
-        if (shipId === 'flagship') continue;
-        if (count <= 0) continue;
-        if (!validShipIds.has(shipId)) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: `Type de vaisseau invalide : ${shipId}` });
-        }
-        const def = config.ships[shipId];
-        if (!def || def.role !== 'combat') {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Seuls les vaisseaux de combat sont autorisés dans une anomalie (refusé : ${shipId})`,
-          });
-        }
-        sanitizedShips[shipId] = count;
-      }
-
       const cost = Number(config.universe.anomaly_entry_cost_exilium) || 5;
+      const repairChargesMax = Number(config.universe.anomaly_repair_charges_per_run) || 3;
 
       return await db.transaction(async (tx) => {
-        // 1. Per-user advisory lock — serializes engage / advance / retreat
+        // 1. Per-user advisory lock
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         // 2. No active anomaly
@@ -145,7 +130,7 @@ export function createAnomalyService(
           throw new TRPCError({ code: 'CONFLICT', message: 'Une anomalie est déjà en cours' });
         }
 
-        // 3. Flagship validation (read directly from DB to avoid lazy-revert side effects)
+        // 3. Flagship validation
         const flagship = await flagshipService.get(userId);
         if (!flagship) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vaisseau amiral requis' });
@@ -162,25 +147,7 @@ export function createAnomalyService(
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Planète invalide' });
         }
 
-        // 5. Lock planet_ships row, validate availability
-        const [shipsRow] = await tx.select().from(planetShips)
-          .where(eq(planetShips.planetId, originPlanetId))
-          .for('update')
-          .limit(1);
-        if (!shipsRow) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun vaisseau sur cette planète' });
-        }
-        for (const [shipId, count] of Object.entries(sanitizedShips)) {
-          const available = (shipsRow as Record<string, unknown>)[shipId];
-          if (typeof available !== 'number' || available < count) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: `Vaisseaux insuffisants pour ${shipId} (${available ?? 0}/${count})`,
-            });
-          }
-        }
-
-        // 6. Spend Exilium inline (with lock-for-update on the balance row)
+        // 5. Spend Exilium
         const [exRecord] = await tx.select({ balance: userExilium.balance })
           .from(userExilium)
           .where(eq(userExilium.userId, userId))
@@ -201,49 +168,28 @@ export function createAnomalyService(
           userId, amount: -cost, source: 'pve', details: { source: 'anomaly_engage' },
         });
 
-        // 7. Flagship → in_mission
+        // 6. Flagship → in_mission
         await flagshipService.setInMission(userId);
 
-        // 8. Decrement planet_ships
-        const shipUpdates: Record<string, unknown> = {};
-        for (const [shipId, count] of Object.entries(sanitizedShips)) {
-          const col = (planetShips as unknown as Record<string, unknown>)[shipId];
-          if (col) {
-            shipUpdates[shipId] = sql`${col} - ${count}`;
-          }
-        }
-        if (Object.keys(shipUpdates).length > 0) {
-          await tx.update(planetShips).set(shipUpdates as never)
-            .where(eq(planetShips.planetId, originPlanetId));
-        }
-
-        // 9. Build fleet + pre-generate first enemy
-        const fleet: FleetMap = { flagship: { count: 1, hullPercent: 1 } };
-        for (const [shipId, count] of Object.entries(sanitizedShips)) {
-          fleet[shipId] = { count, hullPercent: 1 };
-        }
-
-        // Snapshot module loadout + reset epic charges for the run
+        // 7. Snapshot module loadout (sprint 1 logic)
         const [flagshipRow] = await tx.select({
           loadout: flagships.moduleLoadout,
           chargesMax: flagships.epicChargesMax,
-          hullId: flagships.hullId,
         }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
         const equippedSnapshot = flagshipRow?.loadout ?? {};
-
         await tx.update(flagships).set({
           epicChargesCurrent: flagshipRow?.chargesMax ?? 1,
         }).where(eq(flagships.userId, userId));
 
+        // 8. Build fleet (flagship only) + first enemy
+        const fleet: FleetMap = { flagship: { count: 1, hullPercent: 1.0 } };
         const firstEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet,
           depth: 1,
-          equippedModules: equippedSnapshot,
         });
 
-        // 10. Insert anomaly row — first node is always combat; pre-roll the
-        // gap to the first event (uniform {2,3,4} → ~6-7 events on a 20-deep run).
+        // 9. Insert anomaly row — V4 flagship-only with repair charges
         const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
         const [created] = await tx.insert(anomalies).values({
           userId,
@@ -259,6 +205,8 @@ export function createAnomalyService(
           combatsUntilNextEvent: pickEventGap(Math.random),
           equippedModules: equippedSnapshot,
           pendingEpicEffect: null,
+          repairChargesCurrent: repairChargesMax,
+          repairChargesMax,
         }).returning();
 
         return created;

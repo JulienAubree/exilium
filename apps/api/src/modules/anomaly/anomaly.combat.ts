@@ -316,18 +316,19 @@ export async function runAnomalyNode(
 ): Promise<AnomalyCombatResult> {
   const config = await gameConfigService.getFullConfig();
 
-  // 1. Build player ship counts (count only, hull is applied via shipConfigs override)
-  const playerShipCounts: Record<string, number> = {};
-  for (const [shipId, entry] of Object.entries(args.fleet)) {
-    if (entry.count > 0) playerShipCounts[shipId] = entry.count;
+  // 1. V4 : flagship-only. Tout autre ship dans args.fleet est ignoré (legacy data).
+  const flagshipEntry = args.fleet['flagship'];
+  if (!flagshipEntry || flagshipEntry.count <= 0) {
+    // Cas impossible si engage V4 a fait son job, mais défensif
+    throw new Error('V4 anomaly: flagship missing or destroyed before combat start');
   }
+  const playerShipCounts: Record<string, number> = { flagship: 1 };
 
   // 2. Build base ship configs, then override hull with current hullPercent.
   //    Le flagship est ajouté manuellement avec catégorie 'capital' (ciblé en
   //    dernier) — sans ça, il n'aurait aucune stat dans le combat.
   const baseShipConfigs = buildShipCombatConfigs(config);
-  const flagshipEntry = args.fleet['flagship'];
-  if (flagshipEntry && flagshipEntry.count > 0) {
+  {
     // Resolve modules + build a CombatContext for the active fight.
     const equipped = await resolveEquippedModules(db, modulesService, {
       userId: args.userId,
@@ -411,19 +412,19 @@ export async function runAnomalyNode(
   };
   const result = simulateCombat(combatInput);
 
-  // 8. Build attackerSurvivors with new hullPercent from final round
+  // 8. V4 : seul le flagship est tracké côté player
   const lastRound = result.rounds[result.rounds.length - 1];
   const attackerSurvivors: Record<string, FleetEntry> = {};
-  for (const [shipId, entry] of Object.entries(args.fleet)) {
-    const finalCount = lastRound?.attackerShips[shipId] ?? 0;
-    if (finalCount <= 0) continue;
-    const hp = lastRound?.attackerHPByType?.[shipId];
-    let newHullPercent = entry.hullPercent;
+  const flagshipFinalCount = lastRound?.attackerShips['flagship'] ?? 0;
+  if (flagshipFinalCount > 0) {
+    const hp = lastRound?.attackerHPByType?.['flagship'];
+    let newHullPercent = flagshipEntry.hullPercent;
     if (hp && hp.hullMax > 0) {
       newHullPercent = Math.max(0.05, hp.hullRemaining / hp.hullMax);
     }
-    attackerSurvivors[shipId] = { count: finalCount, hullPercent: newHullPercent };
+    attackerSurvivors['flagship'] = { count: 1, hullPercent: newHullPercent };
   }
+  // Si flagshipFinalCount = 0 → attackerSurvivors = {} → wipe
 
   // 9. Compute enemy destroyed (initial enemy count - survivors)
   const enemyDestroyed: Record<string, number> = {};

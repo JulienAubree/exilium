@@ -9,11 +9,12 @@ export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnom
     }),
 
     engage: protectedProcedure
+      // V4 : input shape kept for back-compat but the field is ignored server-side
       .input(z.object({
-        ships: z.record(z.string(), z.number().int().min(0)),
+        ships: z.record(z.string(), z.number().int().min(0)).optional().default({}),
       }))
       .mutation(async ({ ctx, input }) => {
-        return anomalyService.engage(ctx.userId!, input);
+        return anomalyService.engage(ctx.userId!, { ships: input.ships ?? {} });
       }),
 
     advance: protectedProcedure.mutation(async ({ ctx }) => {
