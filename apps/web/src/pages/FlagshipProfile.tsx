@@ -14,6 +14,7 @@ import { ModuleLoadoutGrid } from '@/components/flagship/ModuleLoadoutGrid';
 import { ModuleInventoryPanel } from '@/components/flagship/ModuleInventoryPanel';
 import { ModuleDetailModal } from '@/components/flagship/ModuleDetailModal';
 import { ModuleHullTabs } from '@/components/flagship/ModuleHullTabs';
+import { DEFAULT_HULL_ID } from '@exilium/shared';
 
 interface PlanetLite {
   id: string;
@@ -100,7 +101,7 @@ export default function FlagshipProfile() {
           name={flagship.name}
           repairEndsAt={new Date(flagship.repairEndsAt!)}
           flagshipImageIndex={flagship.flagshipImageIndex}
-          hullId={flagship.hullId ?? 'industrial'}
+          hullId={flagship.hullId ?? DEFAULT_HULL_ID}
           onRepaired={handleRepaired}
           balance={balance}
         />
@@ -129,7 +130,7 @@ export default function FlagshipProfile() {
         <HullAbilitiesPanel
           flagship={flagship}
           hullConfig={hullConfig}
-          hullId={flagship.hullId ?? 'industrial'}
+          hullId={flagship.hullId ?? DEFAULT_HULL_ID}
         />
       )}
 
@@ -140,13 +141,13 @@ export default function FlagshipProfile() {
         driveType={driveType}
       />
 
-      <ModulesTab activeHullId={flagship.hullId ?? 'combat'} />
+      <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
 
       <TalentTree showGuide />
 
       <FlagshipImagePicker
         open={showImagePicker}
-        hullId={flagship.hullId ?? 'industrial'}
+        hullId={flagship.hullId ?? DEFAULT_HULL_ID}
         currentImageIndex={flagship.flagshipImageIndex}
         images={flagshipImages ?? []}
         onSelect={handleImageSelect}
