@@ -188,7 +188,7 @@ export default function Anomaly() {
           silicium: snap?.lootSilicium ?? 0,
           hydrogene: snap?.lootHydrogene ?? 0,
         },
-        exiliumRefunded: snap?.exiliumPaid ?? 0,
+        exiliumRefunded: 0, // V4 : retreat ne refund plus l'Exilium (cf. anomaly.service.ts retreat())
         outcome: 'survived',
       });
     },
@@ -424,10 +424,10 @@ function IntroView({ cost, onEngage, historyCount, wipeCount }: {
       <div className="space-y-3">
         <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Comment ça marche</h3>
         <ol className="space-y-2 text-sm text-muted-foreground/90 list-decimal list-inside">
-          <li>Engagez votre vaisseau mère et la flotte de votre choix. Ils sont <span className="text-foreground">bloqués jusqu'au retour</span>.</li>
+          <li>Engagez votre <span className="text-foreground font-semibold">vaisseau amiral seul</span>, équipé de modules. Pas d'escorte — vos modules et vos charges de réparation feront la différence.</li>
           <li>À l'intérieur de l'anomalie, des combats se succèdent — chacun <span className="text-foreground">plus difficile</span> que le précédent, mais aussi plus <span className="text-foreground">lucratif</span>.</li>
           <li>Après chaque combat gagné, vous décidez : <span className="text-violet-300">continuer</span> pour empocher plus, ou <span className="text-emerald-400">rentrer</span> avec votre butin.</li>
-          <li>Si votre flotte est anéantie, <span className="text-red-400 font-semibold">tout est perdu</span> — sauf votre vaisseau mère qui sera incapacité.</li>
+          <li>Si votre vaisseau amiral est détruit en combat : <span className="text-red-400 font-semibold">wipe radical</span>. Vous perdez votre Exilium engagé, le butin du run, et votre vaisseau est incapacité 30 minutes (réparation longue).</li>
         </ol>
       </div>
 
@@ -438,7 +438,7 @@ function IntroView({ cost, onEngage, historyCount, wipeCount }: {
           <span className="text-xs text-muted-foreground/70 ml-1">d'entrée</span>
         </div>
         <div className="text-xs text-muted-foreground flex-1">
-          Remboursés intégralement si vous rentrez vivant — perdus si vous wipez.
+          Coût <span className="text-foreground font-semibold">perdu dans tous les cas</span> (réussite, retour volontaire ou wipe). Vous payez pour jouer.
         </div>
       </div>
 
