@@ -30,6 +30,12 @@ export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnom
       return anomalyService.retreat(ctx.userId!);
     }),
 
+    activateEpic: protectedProcedure
+      .input(z.object({ hullId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return anomalyService.activateEpic(ctx.userId!, input.hullId);
+      }),
+
     history: protectedProcedure
       .input(z.object({ limit: z.number().int().min(1).max(50).default(10) }).optional())
       .query(async ({ ctx, input }) => {

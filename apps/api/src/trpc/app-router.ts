@@ -167,7 +167,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
   const anomalyContentRouter = createAnomalyContentRouter(anomalyContentService, adminProcedure);
   const modulesRouter = createModulesRouter(modulesService, adminProcedure);
-  const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService);
+  const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService);
   const anomalyRouter = createAnomalyRouter(anomalyService);
 
   const appRouter = router({

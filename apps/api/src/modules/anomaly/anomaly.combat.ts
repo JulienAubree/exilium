@@ -6,13 +6,18 @@ import {
   computeFleetFP,
   scaleFleetToFP,
   anomalyEnemyFP,
+  applyModulesToStats,
+  parseLoadout,
   type CombatInput,
   type ShipCombatConfig,
   type CombatMultipliers,
   type UnitCombatStats,
   type FPConfig,
+  type ModuleDefinitionLite,
+  type CombatContext,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import type { createModulesService } from '../modules/modules.service.js';
 import {
   buildShipCombatConfigs,
   buildShipCosts,
@@ -24,23 +29,91 @@ import { buildCombatConfig } from '@exilium/game-engine';
 /**
  * Loads the flagship's combat config and forces categoryId='capital' so it
  * is targeted only as the last resort (after the whole escort has fallen).
+ *
+ * When `modulesContext` is provided, equipped modules are applied to the
+ * flagship's damage / hull / shield / armor via the pure
+ * `applyModulesToStats` formula (passive stats + conditional triggers +
+ * pending epic effect). Pass an empty `equippedModules` array for a
+ * neutral baseline (no modules in play, e.g. legacy scaling).
  */
 async function loadFlagshipCombatConfig(
   db: Database,
   userId: string,
   hullPercent: number,
+  modulesContext?: {
+    equippedModules: ModuleDefinitionLite[];
+    combatContext: CombatContext;
+  },
 ): Promise<ShipCombatConfig | null> {
   const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
   if (!flagship) return null;
+
+  let baseDamage = flagship.weapons;
+  let baseShield = flagship.shield;
+  let baseHull = Math.max(1, Math.floor(flagship.hull * hullPercent));
+  let baseArmor = flagship.baseArmor ?? 0;
+
+  if (modulesContext) {
+    const modified = applyModulesToStats(
+      { damage: baseDamage, hull: baseHull, shield: baseShield, armor: baseArmor, cargo: 0, speed: 0, regen: 0 },
+      modulesContext.equippedModules,
+      modulesContext.combatContext,
+    );
+    baseDamage = Math.round(modified.damage);
+    baseShield = Math.round(modified.shield);
+    baseHull = Math.max(1, Math.round(modified.hull));
+    baseArmor = Math.round(modified.armor);
+  }
+
   return {
     shipType: 'flagship',
     categoryId: 'capital', // Toujours targeté en dernier ressort
-    baseShield: flagship.shield,
-    baseArmor: flagship.baseArmor ?? 0,
-    baseHull: Math.max(1, Math.floor(flagship.hull * hullPercent)),
-    baseWeaponDamage: flagship.weapons,
+    baseShield,
+    baseArmor,
+    baseHull,
+    baseWeaponDamage: baseDamage,
     baseShotCount: flagship.shotCount ?? 1,
   };
+}
+
+/**
+ * Helper: build a `CombatContext` for the flagship — used both by
+ * `generateAnomalyEnemy` (with neutral defaults so FP scaling stays
+ * consistent with the actual combat) and by `runAnomalyNode`.
+ */
+function buildCombatContext(args: {
+  roundIndex?: number;
+  currentHullPercent: number;
+  enemyFP: number;
+  pendingEpicEffect?: { ability: string; magnitude: number } | null;
+}): CombatContext {
+  return {
+    roundIndex: args.roundIndex ?? 1,
+    currentHullPercent: args.currentHullPercent,
+    enemyFP: args.enemyFP,
+    pendingEpicEffect: args.pendingEpicEffect
+      ? (args.pendingEpicEffect as CombatContext['pendingEpicEffect'])
+      : null,
+  };
+}
+
+/**
+ * Resolve a raw equippedModules snapshot (Record<hullId, slot>) into the
+ * pool-validated module list for the flagship's current hull. Returns an
+ * empty list if the loadout is empty or the hull is unknown.
+ */
+async function resolveEquippedModules(
+  db: Database,
+  modulesService: ReturnType<typeof createModulesService>,
+  args: { userId: string; equippedModules?: unknown },
+): Promise<ModuleDefinitionLite[]> {
+  if (!args.equippedModules) return [];
+  const [flagshipRow] = await db.select({ hullId: flagships.hullId })
+    .from(flagships).where(eq(flagships.userId, args.userId)).limit(1);
+  const hullId = flagshipRow?.hullId ?? 'combat';
+  const pool = await modulesService._getPool(db);
+  const equippedSnapshot = (args.equippedModules ?? {}) as Parameters<typeof parseLoadout>[0];
+  return parseLoadout(equippedSnapshot, hullId, pool).equipped;
 }
 
 export interface FleetEntry {
@@ -111,24 +184,52 @@ export interface AnomalyCombatResult {
  * Generate an enemy fleet for an anomaly node at a given depth. Returns the
  * fleet composition + estimated FP. Used both to pre-generate the next enemy
  * for UI preview and to actually run the combat.
+ *
+ * Modules are applied to the flagship's stats with a *neutral* combat
+ * context (round 1, full hull, no enemy FP yet, no pending epic) so the
+ * scaling stays consistent with what the actual combat will use. If the
+ * caller doesn't pass `equippedModules`, the flagship's vanilla stats are
+ * used (legacy behavior).
  */
 export async function generateAnomalyEnemy(
   db: Database,
   gameConfigService: GameConfigService,
+  modulesService: ReturnType<typeof createModulesService>,
   args: {
     userId: string;
     fleet: Record<string, FleetEntry>;
     depth: number;
+    equippedModules?: unknown;
   },
 ): Promise<{ enemyFleet: Record<string, number>; enemyFP: number; playerFP: number }> {
   const config = await gameConfigService.getFullConfig();
 
   const baseShipConfigs = buildShipCombatConfigs(config);
 
-  // Inject flagship config so its FP is included in the player's total
+  // Inject flagship config so its FP is included in the player's total. We
+  // resolve the equipped modules and pass a neutral CombatContext so the FP
+  // estimate matches the actual combat baseline (no pending epic, round 1).
   const flagshipEntry = args.fleet['flagship'];
   if (flagshipEntry && flagshipEntry.count > 0) {
-    const flagshipConfig = await loadFlagshipCombatConfig(db, args.userId, flagshipEntry.hullPercent);
+    const equipped = await resolveEquippedModules(db, modulesService, {
+      userId: args.userId,
+      equippedModules: args.equippedModules,
+    });
+    const flagshipConfig = await loadFlagshipCombatConfig(
+      db,
+      args.userId,
+      flagshipEntry.hullPercent,
+      equipped.length > 0
+        ? {
+            equippedModules: equipped,
+            combatContext: buildCombatContext({
+              currentHullPercent: flagshipEntry.hullPercent,
+              enemyFP: 0,
+              pendingEpicEffect: null,
+            }),
+          }
+        : undefined,
+    );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }
 
@@ -200,11 +301,16 @@ export async function generateAnomalyEnemy(
 export async function runAnomalyNode(
   db: Database,
   gameConfigService: GameConfigService,
+  modulesService: ReturnType<typeof createModulesService>,
   args: {
     userId: string;
     fleet: Record<string, FleetEntry>;
     depth: number;
     predefinedEnemy: { fleet: Record<string, number>; fp: number };
+    /** Snapshot of the equipped modules (taken at engage). */
+    equippedModules?: unknown;
+    /** Pending epic effect persisted by a previous activateEpic call. */
+    pendingEpicEffect?: { ability: string; magnitude: number } | null;
   },
 ): Promise<AnomalyCombatResult> {
   const config = await gameConfigService.getFullConfig();
@@ -221,7 +327,25 @@ export async function runAnomalyNode(
   const baseShipConfigs = buildShipCombatConfigs(config);
   const flagshipEntry = args.fleet['flagship'];
   if (flagshipEntry && flagshipEntry.count > 0) {
-    const flagshipConfig = await loadFlagshipCombatConfig(db, args.userId, flagshipEntry.hullPercent);
+    // Resolve modules + build a CombatContext for the active fight.
+    const equipped = await resolveEquippedModules(db, modulesService, {
+      userId: args.userId,
+      equippedModules: args.equippedModules,
+    });
+    const combatContext = buildCombatContext({
+      roundIndex: 1,
+      currentHullPercent: flagshipEntry.hullPercent,
+      enemyFP: args.predefinedEnemy.fp,
+      pendingEpicEffect: args.pendingEpicEffect ?? null,
+    });
+    const flagshipConfig = await loadFlagshipCombatConfig(
+      db,
+      args.userId,
+      flagshipEntry.hullPercent,
+      equipped.length > 0 || args.pendingEpicEffect
+        ? { equippedModules: equipped, combatContext }
+        : undefined,
+    );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }
   const shipConfigs: Record<string, ShipCombatConfig> = { ...baseShipConfigs };

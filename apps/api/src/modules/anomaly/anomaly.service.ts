@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { anomalies, planets, planetShips, users, userExilium, exiliumLog } from '@exilium/db';
+import { anomalies, flagships, moduleDefinitions, planets, planetShips, users, userExilium, exiliumLog } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   anomalyLoot,
@@ -8,6 +8,7 @@ import {
   applyOutcomeToFleet,
   pickEventForTier,
   pickEventGap,
+  resolveActiveAbility,
   tierForDepth,
   type UnitCombatStats,
 } from '@exilium/game-engine';
@@ -17,7 +18,9 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createReportService } from '../report/report.service.js';
 import type { createAnomalyContentService } from '../anomaly-content/anomaly-content.service.js';
+import type { createModulesService } from '../modules/modules.service.js';
 import { buildCombatReportData } from '../fleet/combat.helpers.js';
+import { ANOMALY_MAX_DEPTH } from '../anomaly-content/anomaly-content.types.js';
 import { runAnomalyNode, generateAnomalyEnemy, type FleetEntry } from './anomaly.combat.js';
 
 type AnomalyRow = typeof anomalies.$inferSelect;
@@ -31,6 +34,7 @@ export function createAnomalyService(
   flagshipService: ReturnType<typeof createFlagshipService>,
   reportService: ReturnType<typeof createReportService>,
   anomalyContentService: ReturnType<typeof createAnomalyContentService>,
+  modulesService: ReturnType<typeof createModulesService>,
 ) {
   async function loadActive(userId: string): Promise<AnomalyRow | null> {
     const [row] = await db.select().from(anomalies)
@@ -56,6 +60,39 @@ export function createAnomalyService(
   /** True if a ship id corresponds to an actual column in planet_ships. */
   function validShipColumn(shipId: string): boolean {
     return shipId in (planetShips as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Roll the per-run final module drops for a given run depth, grant them
+   * to the flagship's inventory and resolve their definitions for the API
+   * response. Uses the passed transactional executor for the def fetch so
+   * the result is consistent with the same snapshot.
+   */
+  async function rollFinalDropsForRun(
+    tx: Parameters<Parameters<Database['transaction']>[0]>[0],
+    userId: string,
+    depth: number,
+  ): Promise<Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>> {
+    const [flagshipForFinal] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
+      .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+    if (!flagshipForFinal) return [];
+
+    const finalDropIds = await modulesService.rollPerRunFinalDrop({
+      flagshipHullId: flagshipForFinal.hullId ?? 'combat',
+      depth,
+    });
+    const finalDropDefs: Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }> = [];
+    for (const moduleId of finalDropIds) {
+      await modulesService.grantModule(flagshipForFinal.id, moduleId);
+      const [def] = await tx.select({
+        id: moduleDefinitions.id,
+        name: moduleDefinitions.name,
+        rarity: moduleDefinitions.rarity,
+        image: moduleDefinitions.image,
+      }).from(moduleDefinitions).where(eq(moduleDefinitions.id, moduleId)).limit(1);
+      if (def) finalDropDefs.push({ ...def, isFinal: true });
+    }
+    return finalDropDefs;
   }
 
   return {
@@ -183,10 +220,24 @@ export function createAnomalyService(
         for (const [shipId, count] of Object.entries(sanitizedShips)) {
           fleet[shipId] = { count, hullPercent: 1 };
         }
-        const firstEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+
+        // Snapshot module loadout + reset epic charges for the run
+        const [flagshipRow] = await tx.select({
+          loadout: flagships.moduleLoadout,
+          chargesMax: flagships.epicChargesMax,
+          hullId: flagships.hullId,
+        }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        const equippedSnapshot = flagshipRow?.loadout ?? {};
+
+        await tx.update(flagships).set({
+          epicChargesCurrent: flagshipRow?.chargesMax ?? 1,
+        }).where(eq(flagships.userId, userId));
+
+        const firstEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet,
           depth: 1,
+          equippedModules: equippedSnapshot,
         });
 
         // 10. Insert anomaly row — first node is always combat; pre-roll the
@@ -204,6 +255,8 @@ export function createAnomalyService(
           nextEnemyFp: Math.round(firstEnemy.enemyFP),
           nextNodeType: 'combat',
           combatsUntilNextEvent: pickEventGap(Math.random),
+          equippedModules: equippedSnapshot,
+          pendingEpicEffect: null,
         }).returning();
 
         return created;
@@ -249,20 +302,26 @@ export function createAnomalyService(
           fp: row.nextEnemyFp,
         };
       } else {
-        const generated = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+        const generated = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet,
           depth: newDepth,
+          equippedModules: row.equippedModules,
         });
         predefinedEnemy = { fleet: generated.enemyFleet, fp: Math.round(generated.enemyFP) };
       }
 
-      // Run combat with the locked-in enemy
-      const result = await runAnomalyNode(tx as unknown as Database, gameConfigService, {
+      // Run combat with the locked-in enemy + apply equipped modules to flagship stats
+      const pendingEpicEffect = row.pendingEpicEffect as
+        | { ability: string; magnitude: number }
+        | null;
+      const result = await runAnomalyNode(tx as unknown as Database, gameConfigService, modulesService, {
         userId,
         fleet,
         depth: newDepth,
         predefinedEnemy,
+        equippedModules: row.equippedModules,
+        pendingEpicEffect,
       });
 
       const config = await gameConfigService.getFullConfig();
@@ -344,6 +403,8 @@ export function createAnomalyService(
           nextNodeAt: null,
           nextEnemyFleet: null,
           nextEnemyFp: null,
+          // Clear pending epic effect (consumed even on wipe)
+          ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
         }).where(and(
           eq(anomalies.id, row.id),
           eq(anomalies.status, 'active'),
@@ -362,6 +423,10 @@ export function createAnomalyService(
           enemyFP: result.enemyFP,
           combatRounds: result.combatRounds,
           reportId: report.id,
+          // No drops on wipe — return consistent shape so the front always
+          // gets `droppedModule` / `finalDrops` keys.
+          droppedModule: null,
+          finalDrops: [] as Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>,
         };
       }
 
@@ -371,6 +436,10 @@ export function createAnomalyService(
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Planète mère introuvable' });
         }
 
+        // Roll per-run final drops based on the current depth (the player
+        // didn't reach a deeper node before being forced out).
+        const finalDrops = await rollFinalDropsForRun(tx, userId, row.currentDepth);
+
         const updatedRows = await tx.update(anomalies).set({
           status: 'completed',
           fleet: result.attackerSurvivors,
@@ -379,6 +448,8 @@ export function createAnomalyService(
           nextNodeAt: null,
           nextEnemyFleet: null,
           nextEnemyFp: null,
+          // Clear pending epic effect (consumed even on forced retreat)
+          ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
         }).where(and(
           eq(anomalies.id, row.id),
           eq(anomalies.status, 'active'),
@@ -448,6 +519,9 @@ export function createAnomalyService(
           reportId: report.id,
           flagshipLost: !flagshipSurvived,
           combatOutcome: result.outcome, // 'attacker' | 'defender' | 'draw'
+          // No per-combat drop on a lost combat — just final drops.
+          droppedModule: null,
+          finalDrops,
         };
       }
 
@@ -498,6 +572,115 @@ export function createAnomalyService(
         mergedLootShips[shipId] = (mergedLootShips[shipId] ?? 0) + count;
       }
 
+      // ── Per-combat module drop ────────────────────────────────────────────
+      // 30% common from the flagship's hull + 5% common from another hull.
+      const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
+        .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      const dropHullId = flagshipForDrop?.hullId ?? 'combat';
+      const droppedModuleId = await modulesService.rollPerCombatDrop({ flagshipHullId: dropHullId });
+      let droppedModule: { id: string; name: string; rarity: string; image: string } | null = null;
+      if (droppedModuleId && flagshipForDrop) {
+        await modulesService.grantModule(flagshipForDrop.id, droppedModuleId);
+        const [def] = await tx.select({
+          id: moduleDefinitions.id,
+          name: moduleDefinitions.name,
+          rarity: moduleDefinitions.rarity,
+          image: moduleDefinitions.image,
+        }).from(moduleDefinitions).where(eq(moduleDefinitions.id, droppedModuleId)).limit(1);
+        if (def) droppedModule = def;
+      }
+
+      // ── Run-completion check : the player has reached the bottom ─────────
+      // V1 anomaly is a 20-deep run. If the player just cleared the deepest
+      // node, the run auto-completes : roll the per-run final drops, mark
+      // the row as completed, refund nothing (loot stays), and return the
+      // resources/ships to the homeworld via the same path as `retreat`.
+      const runComplete = newDepth >= ANOMALY_MAX_DEPTH;
+      if (runComplete) {
+        const home = await getHomeworld(userId);
+        if (!home) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Planète mère introuvable' });
+        }
+
+        const finalDrops = await rollFinalDropsForRun(tx, userId, newDepth);
+
+        const completedRows = await tx.update(anomalies).set({
+          status: 'completed',
+          fleet: result.attackerSurvivors,
+          lootMinerai: sql`${anomalies.lootMinerai} + ${loot.minerai}`,
+          lootSilicium: sql`${anomalies.lootSilicium} + ${loot.silicium}`,
+          lootHydrogene: sql`${anomalies.lootHydrogene} + ${loot.hydrogene}`,
+          lootShips: mergedLootShips,
+          reportIds: updatedReportIds,
+          completedAt: new Date(),
+          currentDepth: newDepth,
+          nextNodeAt: null,
+          nextEnemyFleet: null,
+          nextEnemyFp: null,
+          // Clear pending epic effect (consumed by this combat)
+          ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
+        }).where(and(
+          eq(anomalies.id, row.id),
+          eq(anomalies.status, 'active'),
+          eq(anomalies.currentDepth, row.currentDepth),
+        )).returning({ id: anomalies.id });
+        if (completedRows.length === 0) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'État de l\'anomalie a changé entre-temps' });
+        }
+
+        // Credit total resources (loot stays on completion, no Exilium refund).
+        const finalMinerai = Number(row.lootMinerai) + loot.minerai;
+        const finalSilicium = Number(row.lootSilicium) + loot.silicium;
+        const finalHydrogene = Number(row.lootHydrogene) + loot.hydrogene;
+        if (finalMinerai > 0 || finalSilicium > 0 || finalHydrogene > 0) {
+          await tx.update(planets).set({
+            minerai: sql`${planets.minerai} + ${finalMinerai}`,
+            silicium: sql`${planets.silicium} + ${finalSilicium}`,
+            hydrogene: sql`${planets.hydrogene} + ${finalHydrogene}`,
+          }).where(eq(planets.id, home.id));
+        }
+
+        // Reinject surviving ships + recovered enemy ships to the homeworld
+        const totalToInject: Record<string, number> = {};
+        for (const [shipId, entry] of Object.entries(result.attackerSurvivors)) {
+          if (shipId === 'flagship') continue;
+          if (!validShipColumn(shipId)) continue;
+          if (entry.count > 0) totalToInject[shipId] = (totalToInject[shipId] ?? 0) + entry.count;
+        }
+        for (const [shipId, count] of Object.entries(mergedLootShips)) {
+          if (!validShipColumn(shipId)) continue;
+          if (count > 0) totalToInject[shipId] = (totalToInject[shipId] ?? 0) + count;
+        }
+        if (Object.keys(totalToInject).length > 0) {
+          const incrementUpdate: Record<string, unknown> = {};
+          for (const [shipId, count] of Object.entries(totalToInject)) {
+            const col = (planetShips as unknown as Record<string, unknown>)[shipId];
+            if (col) incrementUpdate[shipId] = sql`${col} + ${count}`;
+          }
+          await tx.update(planetShips).set(incrementUpdate as never)
+            .where(eq(planetShips.planetId, home.id));
+        }
+
+        await flagshipService.returnFromMission(userId, home.id);
+
+        return {
+          outcome: 'survived' as const,
+          fleet: result.attackerSurvivors,
+          enemyFP: result.enemyFP,
+          combatRounds: result.combatRounds,
+          nodeLoot: loot,
+          recoveredShips: recovered,
+          depth: newDepth,
+          nextNodeAt: new Date().toISOString(),
+          nextNodeType: 'combat' as const,
+          nextEventId: null,
+          reportId: report.id,
+          droppedModule,
+          finalDrops,
+          runComplete: true,
+        };
+      }
+
       // ── Decide next node : event vs combat ───────────────────────────────
       // Decrement counter; when it hits 0 try to pick an event of the upcoming
       // tier. If pool is exhausted for that tier, fallback to combat (no error).
@@ -523,10 +706,11 @@ export function createAnomalyService(
 
       // Generate the combat preview only when the next node is a combat.
       if (nextNodeType === 'combat') {
-        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet: result.attackerSurvivors,
           depth: newDepth + 1,
+          equippedModules: row.equippedModules,
         });
         nextEnemyFleet = nextEnemy.enemyFleet;
         nextEnemyFp = Math.round(nextEnemy.enemyFP);
@@ -547,6 +731,8 @@ export function createAnomalyService(
         nextNodeType,
         nextEventId,
         combatsUntilNextEvent: nextCounter,
+        // Clear pending epic effect (consumed by this combat)
+        ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
       }).where(and(
         eq(anomalies.id, row.id),
         eq(anomalies.status, 'active'),
@@ -568,6 +754,9 @@ export function createAnomalyService(
         nextNodeType,
         nextEventId,
         reportId: report.id,
+        droppedModule,
+        finalDrops: [] as Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>,
+        runComplete: false,
       };
       });
     },
@@ -612,10 +801,11 @@ export function createAnomalyService(
         // Admin removed/disabled the event mid-run → fallback to a combat node
         // so the player isn't stuck. Surface an error to trigger a UI refresh.
         if (!event || !event.enabled) {
-          const enemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+          const enemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
             userId,
             fleet: row.fleet as FleetMap,
             depth: row.currentDepth + 1,
+            equippedModules: row.equippedModules,
           });
           const config = await gameConfigService.getFullConfig();
           const newNextAt = new Date(Date.now() + nodeTravelMs(config));
@@ -691,10 +881,11 @@ export function createAnomalyService(
         }
 
         // Generate the next combat preview based on the *updated* fleet.
-        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, {
+        const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet: applied.fleet,
           depth: row.currentDepth + 1,
+          equippedModules: row.equippedModules,
         });
 
         const config = await gameConfigService.getFullConfig();
@@ -781,6 +972,10 @@ export function createAnomalyService(
         const fleet = row.fleet as FleetMap;
         const lootShips = (row.lootShips ?? {}) as LootShipsMap;
 
+        // Roll the per-run final drops based on the depth reached. Granted
+        // before the row update so any failure surfaces through the tx.
+        const finalDrops = await rollFinalDropsForRun(tx, userId, row.currentDepth);
+
         // Mark completed with status guard
         const updatedRows = await tx.update(anomalies).set({
           status: 'completed',
@@ -788,6 +983,8 @@ export function createAnomalyService(
           nextNodeAt: null,
           nextEnemyFleet: null,
           nextEnemyFp: null,
+          // Clear any unconsumed pending epic effect — the run is over.
+          ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
         }).where(and(
           eq(anomalies.id, row.id),
           eq(anomalies.status, 'active'),
@@ -844,7 +1041,109 @@ export function createAnomalyService(
 
         await flagshipService.returnFromMission(userId, home.id);
 
-        return { ok: true };
+        return { ok: true, finalDrops };
+      });
+    },
+
+    /**
+     * Activate the epic ability of the equipped module on the active anomaly.
+     * Consumes 1 charge from `flagships.epic_charges_current`. Routes to
+     * immediate effect (mutates fleet for repair / advances depth for skip /
+     * scan = UI hint only) or pending effect (overcharge, shield_burst,
+     * damage_burst → persisted on `anomalies.pending_epic_effect`, applied
+     * to the next combat).
+     */
+    async activateEpic(userId: string, hullId: string) {
+      return await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
+
+        const [flagship] = await tx.select().from(flagships)
+          .where(eq(flagships.userId, userId)).for('update').limit(1);
+        if (!flagship) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
+        }
+        if (flagship.epicChargesCurrent <= 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucune charge épique disponible' });
+        }
+
+        const [active] = await tx.select().from(anomalies)
+          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .for('update').limit(1);
+        if (!active) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pas d\'anomalie active' });
+        }
+
+        const loadout = (flagship.moduleLoadout ?? {}) as Record<
+          string,
+          { epic?: string | null; rare?: string[]; common?: string[] }
+        >;
+        const epicId = loadout[hullId]?.epic;
+        if (!epicId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun module épique équipé' });
+        }
+
+        const pool = await modulesService._getPool(tx as unknown as Database);
+        const epicMod = pool.find((m) => m.id === epicId);
+        if (!epicMod || epicMod.effect.type !== 'active') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Module épique invalide' });
+        }
+
+        const resolved = resolveActiveAbility(epicMod.effect.ability, epicMod.effect.magnitude);
+
+        // Consume 1 charge — guarded by status and charge balance via the
+        // for('update') above.
+        await tx.update(flagships).set({
+          epicChargesCurrent: sql`${flagships.epicChargesCurrent} - 1`,
+        }).where(eq(flagships.id, flagship.id));
+
+        if (resolved.applied === 'immediate') {
+          if (resolved.ability === 'repair') {
+            // Repair = boost hullPercent of every ship in the active fleet
+            // by `magnitude` (fraction 0..1), capped at 1.
+            const fleet = (active.fleet ?? {}) as FleetMap;
+            const newFleet: FleetMap = { ...fleet };
+            for (const [shipId, entry] of Object.entries(fleet)) {
+              newFleet[shipId] = {
+                ...entry,
+                hullPercent: Math.min(1, entry.hullPercent + resolved.magnitude),
+              };
+            }
+            await tx.update(anomalies).set({
+              fleet: newFleet,
+              pendingEpicEffect: null,
+            }).where(eq(anomalies.id, active.id));
+          } else if (resolved.ability === 'skip') {
+            // Skip = mark next combat as auto-cleared by advancing depth.
+            // V1 implementation : bump currentDepth, clear the next enemy
+            // preview, and set nextNodeAt to "now" so the player can
+            // immediately request the next node. Loot is not granted for
+            // a skipped node — it's a strategic emergency button.
+            await tx.update(anomalies).set({
+              currentDepth: active.currentDepth + 1,
+              nextEnemyFleet: null,
+              nextEnemyFp: null,
+              nextNodeAt: new Date(),
+              pendingEpicEffect: null,
+            }).where(eq(anomalies.id, active.id));
+          } else {
+            // 'scan' = pure UI hint in V1 (would reveal hidden event outcomes).
+            await tx.update(anomalies).set({
+              pendingEpicEffect: null,
+            }).where(eq(anomalies.id, active.id));
+          }
+        } else {
+          // Persist for next combat (overcharge, shield_burst, damage_burst).
+          await tx.update(anomalies).set({
+            pendingEpicEffect: { ability: resolved.ability, magnitude: resolved.magnitude },
+          }).where(eq(anomalies.id, active.id));
+        }
+
+        return {
+          ability: resolved.ability,
+          magnitude: resolved.magnitude,
+          applied: resolved.applied,
+          remainingCharges: flagship.epicChargesCurrent - 1,
+        };
       });
     },
 
