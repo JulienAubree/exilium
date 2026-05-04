@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles, Star } from 'lucide-react';
+import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles, Star, Crosshair } from 'lucide-react';
+import { ModuleTooltip } from '@/components/flagship/ModuleTooltip';
 import { resolveBonus } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -568,7 +569,14 @@ function RunView({
   const { data: content } = trpc.anomalyContent.get.useQuery();
   const equippedModules = (anomaly.equippedModules ?? {}) as Record<
     string,
-    { epic?: string | null; rare?: (string | null)[]; common?: (string | null)[] }
+    {
+      epic?: string | null;
+      rare?: (string | null)[];
+      common?: (string | null)[];
+      weaponEpic?: string | null;
+      weaponRare?: string | null;
+      weaponCommon?: string | null;
+    }
   >;
   const nextDepth = anomaly.currentDepth + 1;
   const nextDepthContent = content?.depths.find((d) => d.depth === nextDepth);
@@ -636,6 +644,7 @@ function RunView({
       {/* ─── Status sidebar ─────────────────────────────────────────────── */}
       <aside className="space-y-3 min-w-0">
         <RunFlagshipStatsCard />
+        <RunFlagshipLoadoutCard equippedModules={equippedModules} />
         <FleetCard fleet={fleet} totalShips={totalShips} gameConfig={gameConfig} />
         {hasLoot && (
           <LootCard
@@ -881,6 +890,163 @@ function RunFlagshipStatsCard() {
           <span className="font-mono tabular-nums">{finalWeapons}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * V7.4 : panneau modules + arsenal en cours de run anomaly.
+ * Lit le snapshot equippedModules de l'anomaly (figé à l'engage) et
+ * la liste complète des modules pour résoudre les ids → noms/effets.
+ * Le tooltip au hover montre les détails complets de chaque module.
+ */
+function RunFlagshipLoadoutCard({
+  equippedModules,
+}: {
+  equippedModules: Record<string, {
+    epic?: string | null;
+    rare?: (string | null)[];
+    common?: (string | null)[];
+    weaponEpic?: string | null;
+    weaponRare?: string | null;
+    weaponCommon?: string | null;
+  }>;
+}) {
+  const { data: flagship } = trpc.flagship.get.useQuery();
+  const { data: allModules } = trpc.modules.list.useQuery();
+
+  const moduleMap = useMemo(() => {
+    const map = new Map<string, {
+      id: string; name: string; description?: string; rarity: string;
+      kind?: string; effect?: unknown;
+    }>();
+    for (const m of allModules ?? []) {
+      map.set(m.id, {
+        id: m.id,
+        name: m.name,
+        description: (m as { description?: string }).description,
+        rarity: m.rarity,
+        kind: (m as { kind?: string }).kind ?? 'passive',
+        effect: m.effect,
+      });
+    }
+    return map;
+  }, [allModules]);
+
+  if (!flagship) return null;
+  const hullId = (flagship as { hullId?: string | null }).hullId ?? '';
+  const slot = equippedModules[hullId];
+  if (!slot) return null;
+
+  const passiveIds: { id: string; tier: 'epic' | 'rare' | 'common' }[] = [
+    ...(slot.epic ? [{ id: slot.epic, tier: 'epic' as const }] : []),
+    ...((slot.rare ?? []).filter((x): x is string => typeof x === 'string').map((id) => ({ id, tier: 'rare' as const }))),
+    ...((slot.common ?? []).filter((x): x is string => typeof x === 'string').map((id) => ({ id, tier: 'common' as const }))),
+  ];
+  const weaponIds: { id: string; tier: 'epic' | 'rare' | 'common' }[] = [
+    ...(slot.weaponEpic ? [{ id: slot.weaponEpic, tier: 'epic' as const }] : []),
+    ...(slot.weaponRare ? [{ id: slot.weaponRare, tier: 'rare' as const }] : []),
+    ...(slot.weaponCommon ? [{ id: slot.weaponCommon, tier: 'common' as const }] : []),
+  ];
+
+  const hasPassives = passiveIds.length > 0;
+  const hasWeapons = weaponIds.length > 0;
+  if (!hasPassives && !hasWeapons) return null;
+
+  const TIER_DOT: Record<string, string> = {
+    epic:   'bg-violet-400',
+    rare:   'bg-blue-400',
+    common: 'bg-gray-400',
+  };
+
+  return (
+    <div className="rounded-lg border border-border/40 bg-card/30 backdrop-blur-sm p-3 space-y-3">
+      {hasPassives && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-violet-300" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300">
+              Modules
+            </span>
+            <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+              {passiveIds.length}
+            </span>
+          </div>
+          <ul className="space-y-0.5">
+            {passiveIds.map(({ id, tier }) => {
+              const mod = moduleMap.get(id);
+              if (!mod) {
+                return (
+                  <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
+                    Module inconnu : {id}
+                  </li>
+                );
+              }
+              return (
+                <li key={id}>
+                  <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
+                    <div className="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
+                      <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', TIER_DOT[tier])} />
+                      <span className="text-[11px] truncate">{mod.name}</span>
+                    </div>
+                  </ModuleTooltip>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {hasWeapons && (
+        <div className={cn('space-y-1.5', hasPassives && 'border-t border-border/30 pt-2')}>
+          <div className="flex items-center gap-1.5">
+            <Crosshair className="h-3 w-3 text-orange-300" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-orange-300">
+              Arsenal
+            </span>
+            <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+              {weaponIds.length}
+            </span>
+          </div>
+          <ul className="space-y-0.5">
+            {weaponIds.map(({ id, tier }) => {
+              const mod = moduleMap.get(id);
+              if (!mod) {
+                return (
+                  <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
+                    Arme inconnue : {id}
+                  </li>
+                );
+              }
+              const eff = mod.effect as { type?: string; profile?: { shots?: number; targetCategory?: string; rafale?: { count: number }; hasChainKill?: boolean } } | undefined;
+              const profile = eff?.type === 'weapon' ? eff.profile : null;
+              return (
+                <li key={id}>
+                  <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
+                    <div className="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
+                      <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', TIER_DOT[tier])} />
+                      <span className="text-[11px] truncate flex-1">{mod.name}</span>
+                      {profile && (
+                        <span className="flex items-center gap-0.5 shrink-0">
+                          {profile.shots !== undefined && (
+                            <span className="text-[9px] font-mono text-orange-200/80">×{profile.shots}</span>
+                          )}
+                          {profile.rafale && (
+                            <span className="text-[8px] font-mono text-amber-300" title="Rafale">R</span>
+                          )}
+                          {profile.hasChainKill && (
+                            <span className="text-[8px] font-mono text-rose-300" title="ChainKill">C</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </ModuleTooltip>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
