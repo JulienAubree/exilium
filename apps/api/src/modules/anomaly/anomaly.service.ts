@@ -171,9 +171,12 @@ export function createAnomalyService(
      * Wrapped in a transaction with a per-user advisory lock so concurrent
      * engage / advance / retreat from the same user are serialized.
      */
-    async engage(userId: string, _input: { ships: Record<string, number> }) {
+    async engage(userId: string, input: { ships: Record<string, number>; tier: number }) {
       const config = await gameConfigService.getFullConfig();
-      const cost = Number(config.universe.anomaly_entry_cost_exilium) || 5;
+      const baseCost = Number(config.universe.anomaly_entry_cost_exilium) || 5;
+      // V5-Tiers : cost scales with tier
+      const costFactor = parseConfigNumber(config.universe.anomaly_tier_engage_cost_factor, 1.0);
+      const cost = Math.round(baseCost * (1 + (input.tier - 1) * costFactor));
       const repairChargesMax = Number(config.universe.anomaly_repair_charges_per_run) || 3;
 
       return await db.transaction(async (tx) => {
@@ -196,6 +199,16 @@ export function createAnomalyService(
         if (flagship.status !== 'active') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vaisseau amiral indisponible' });
         }
+
+        // V5-Tiers : validate tier ≤ max_tier_unlocked
+        const maxTierUnlocked = (flagship as { maxTierUnlocked?: number }).maxTierUnlocked ?? 1;
+        if (input.tier > maxTierUnlocked) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Palier ${input.tier} non débloqué (max disponible : ${maxTierUnlocked})`,
+          });
+        }
+
         const originPlanetId = flagship.planetId;
 
         // 4. Origin planet ownership
@@ -266,6 +279,7 @@ export function createAnomalyService(
           pendingEpicEffect: null,
           repairChargesCurrent: repairChargesMax,
           repairChargesMax,
+          tier: input.tier,  // V5-Tiers
         }).returning();
 
         return created;
