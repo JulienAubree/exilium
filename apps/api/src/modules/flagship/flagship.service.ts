@@ -8,7 +8,7 @@ import type { createTalentService } from './talent.service.js';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createReportService } from '../report/report.service.js';
 import { listFlagshipImageIndexes, getRandomFlagshipImageIndex } from '../../lib/flagship-image.util.js';
-import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport } from '@exilium/game-engine';
+import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport, xpToLevel } from '@exilium/game-engine';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -164,6 +164,48 @@ export function createFlagshipService(
       }
 
       return { ...flagship, effectiveStats, hullConfig, cooldowns };
+    },
+
+    /**
+     * V4-XP (2026-05-04) : grant XP to the flagship + recompute level.
+     * No-op for amount <= 0. Wrapped in transaction with advisory lock for
+     * concurrent safety (multiple grantXp calls from concurrent advance/retreat).
+     */
+    async grantXp(userId: string, amount: number): Promise<{
+      newXp: number;
+      oldLevel: number;
+      newLevel: number;
+      levelUp: boolean;
+    }> {
+      if (amount <= 0) return { newXp: 0, oldLevel: 1, newLevel: 1, levelUp: false };
+
+      const config = await gameConfigService.getFullConfig();
+      const maxLevel = Number(config.universe.flagship_max_level) || 60;
+
+      return await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
+
+        const [flagship] = await tx.select({
+          id: flagships.id,
+          xp: flagships.xp,
+          level: flagships.level,
+        }).from(flagships).where(eq(flagships.userId, userId)).for('update').limit(1);
+        if (!flagship) {
+          return { newXp: 0, oldLevel: 1, newLevel: 1, levelUp: false };
+        }
+
+        const oldLevel = flagship.level;
+        const newXp = flagship.xp + amount;
+        const newLevel = xpToLevel(newXp, maxLevel);
+
+        await tx.update(flagships).set({
+          xp: newXp,
+          level: newLevel,
+          updatedAt: new Date(),
+        }).where(eq(flagships.id, flagship.id));
+
+        return { newXp, oldLevel, newLevel, levelUp: newLevel > oldLevel };
+      });
     },
 
     async create(userId: string, name: string, hullId: string, description?: string) {
