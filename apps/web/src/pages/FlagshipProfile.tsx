@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { trpc } from '@/trpc';
-import { PageHeader } from '@/components/common/PageHeader';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
 import { IncapacitatedBanner } from '@/components/flagship/IncapacitatedBanner';
 import { HullRefitBanner } from '@/components/flagship/HullRefitBanner';
 import { HullAbilitiesPanel } from '@/components/flagship/HullAbilitiesPanel';
-import { FlagshipIdentityCard } from '@/components/flagship/FlagshipIdentityCard';
-import { FlagshipStatsCard } from '@/components/flagship/FlagshipStatsCard';
+import { FlagshipHero } from '@/components/flagship/FlagshipHero';
+import { FlagshipHelp } from '@/components/flagship/FlagshipHelp';
+import { FlagshipStatsClearCard } from '@/components/flagship/FlagshipStatsClearCard';
 import { FlagshipImagePicker } from '@/components/flagship/FlagshipImagePicker';
 import { FlagshipSkeleton } from '@/components/flagship/FlagshipSkeleton';
 import { ModuleLoadoutGrid } from '@/components/flagship/ModuleLoadoutGrid';
@@ -33,12 +33,13 @@ export default function FlagshipProfile() {
     { hullId: (flagship?.hullId ?? 'industrial') as 'combat' | 'industrial' | 'scientific' },
     { enabled: !!flagship },
   );
-  const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
+  const { data: exiliumData } = trpc.exilium.getBalance.useQuery();
   const balance = exiliumData?.balance ?? 0;
 
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showHullChange, setShowHullChange] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const imageMutation = trpc.flagship.updateImage.useMutation({
     onSuccess: () => utils.flagship.get.invalidate(),
@@ -59,7 +60,6 @@ export default function FlagshipProfile() {
   if (!flagship) {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-        <PageHeader title="Vaisseau amiral" />
         <div className="glass-card p-8 text-center">
           <p className="text-muted-foreground">Vous n'avez pas encore de vaisseau amiral.</p>
         </div>
@@ -70,13 +70,9 @@ export default function FlagshipProfile() {
   const isIncapacitated = flagship.status === 'incapacitated' && flagship.repairEndsAt;
   const isHullRefit = flagship.status === 'hull_refit' && (flagship as { refitEndsAt?: string | Date }).refitEndsAt;
 
-  const effectiveStats = 'effectiveStats' in flagship
-    ? (flagship as { effectiveStats: Record<string, number | string> | null }).effectiveStats
-    : null;
   const hullConfig = 'hullConfig' in flagship
     ? (flagship as { hullConfig: { id: string; name: string; description: string } | null }).hullConfig
     : null;
-  const driveType = (effectiveStats?.driveType as string | undefined) ?? flagship.driveType;
 
   function handleImageSelect(imageIndex: number) {
     imageMutation.mutate({ imageIndex });
@@ -84,53 +80,70 @@ export default function FlagshipProfile() {
   }
 
   return (
-    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title="Vaisseau amiral" />
-
-      {isIncapacitated && (
-        <IncapacitatedBanner
-          name={flagship.name}
-          repairEndsAt={new Date(flagship.repairEndsAt!)}
-          flagshipImageIndex={flagship.flagshipImageIndex}
-          hullId={flagship.hullId ?? DEFAULT_HULL_ID}
-          onRepaired={handleRepaired}
-          balance={balance}
-        />
-      )}
-
-      {isHullRefit && (
-        <HullRefitBanner
-          name={flagship.name}
-          refitEndsAt={new Date((flagship as { refitEndsAt: string | Date }).refitEndsAt)}
-          onComplete={handleRepaired}
-        />
-      )}
-
-      <FlagshipIdentityCard
+    <div className="space-y-4 lg:space-y-6 pb-6">
+      <FlagshipHero
         flagship={flagship}
         hullConfig={hullConfig}
-        flagshipImages={flagshipImages}
         stationedPlanet={stationedPlanet}
-        balance={balance}
         onOpenImagePicker={() => setShowImagePicker(true)}
         onOpenHullChange={() => setShowHullChange(true)}
+        onOpenHelp={() => setHelpOpen(true)}
       />
 
-      {hullConfig && (
-        <HullAbilitiesPanel
-          flagship={flagship}
-          hullConfig={hullConfig}
-          hullId={flagship.hullId ?? DEFAULT_HULL_ID}
-        />
+      {(isIncapacitated || isHullRefit) && (
+        <div className="px-4 lg:px-6 space-y-3">
+          {isIncapacitated && (
+            <IncapacitatedBanner
+              name={flagship.name}
+              repairEndsAt={new Date(flagship.repairEndsAt!)}
+              flagshipImageIndex={flagship.flagshipImageIndex}
+              hullId={flagship.hullId ?? DEFAULT_HULL_ID}
+              onRepaired={handleRepaired}
+              balance={balance}
+            />
+          )}
+          {isHullRefit && (
+            <HullRefitBanner
+              name={flagship.name}
+              refitEndsAt={new Date((flagship as { refitEndsAt: string | Date }).refitEndsAt)}
+              onComplete={handleRepaired}
+            />
+          )}
+        </div>
       )}
 
-      <FlagshipStatsCard
-        flagship={flagship}
-        effectiveStats={effectiveStats as Parameters<typeof FlagshipStatsCard>[0]['effectiveStats']}
-        driveType={driveType}
-      />
+      <div className="px-4 lg:px-6">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-4 lg:gap-6">
+          {/* Main : Modules + Arsenal + Inventory */}
+          <main className="min-w-0 space-y-4">
+            <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
+          </main>
 
-      <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
+          {/* Sidebar : Stats clairs + Hull abilities (sticky on desktop) */}
+          <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+            <FlagshipStatsClearCard
+              flagship={{
+                shield: flagship.shield,
+                baseArmor: flagship.baseArmor,
+                hull: flagship.hull,
+                weapons: flagship.weapons,
+                shotCount: flagship.shotCount,
+                hullId: flagship.hullId,
+                level: (flagship as { level?: number }).level,
+                status: flagship.status,
+                moduleLoadout: (flagship as { moduleLoadout?: unknown }).moduleLoadout,
+              }}
+            />
+            {hullConfig && (
+              <HullAbilitiesPanel
+                flagship={flagship}
+                hullConfig={hullConfig}
+                hullId={flagship.hullId ?? DEFAULT_HULL_ID}
+              />
+            )}
+          </aside>
+        </div>
+      </div>
 
       <FlagshipImagePicker
         open={showImagePicker}
@@ -146,6 +159,8 @@ export default function FlagshipProfile() {
         onClose={() => setShowHullChange(false)}
         flagship={flagship}
       />
+
+      <FlagshipHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
