@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles } from 'lucide-react';
+import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles, Star } from 'lucide-react';
+import { resolveBonus } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { Button } from '@/components/ui/button';
@@ -634,6 +635,7 @@ function RunView({
 
       {/* ─── Status sidebar ─────────────────────────────────────────────── */}
       <aside className="space-y-3 min-w-0">
+        <RunFlagshipStatsCard />
         <FleetCard fleet={fleet} totalShips={totalShips} gameConfig={gameConfig} />
         {hasLoot && (
           <LootCard
@@ -814,6 +816,74 @@ function RepairChargeButton({
 }
 
 // ─── Sidebar primitives ─────────────────────────────────────────────────────
+
+/**
+ * Compact flagship combat stats card shown at the top of the run sidebar.
+ *
+ * Mirrors the math in `AnomalyEngageModal` (preview-before-engage) so the
+ * player sees, in-run, the exact stats used by combat resolution :
+ *   effectiveStats (level mult + hull passive bonuses + module modifiers)
+ *   × research multipliers (weapons / shielding / armor)
+ */
+function RunFlagshipStatsCard() {
+  const { data: flagship } = trpc.flagship.get.useQuery();
+  const { data: researchData } = trpc.research.list.useQuery();
+  const { data: gameConfig } = useGameConfig();
+
+  if (!flagship) return null;
+
+  const researchLevels: Record<string, number> = {};
+  for (const r of researchData?.items ?? []) researchLevels[r.id] = r.currentLevel;
+  const bonusDefs = gameConfig?.bonuses ?? [];
+  const weaponsMult = resolveBonus('weapons', null, researchLevels, bonusDefs);
+  const shieldingMult = resolveBonus('shielding', null, researchLevels, bonusDefs);
+  const armorMult = resolveBonus('armor', null, researchLevels, bonusDefs);
+
+  const effectiveStats = flagship.effectiveStats as Record<string, number | string> | null;
+  const baseHull = Number(effectiveStats?.hull ?? flagship.hull);
+  const baseShield = Number(effectiveStats?.shield ?? flagship.shield);
+  const baseArmor = Number(effectiveStats?.baseArmor ?? flagship.baseArmor);
+  const baseWeapons = Number(effectiveStats?.weapons ?? flagship.weapons);
+
+  const finalHull = Math.round(baseHull * armorMult);
+  const finalShield = Math.round(baseShield * shieldingMult);
+  const finalArmor = Math.round(baseArmor * armorMult);
+  const finalWeapons = Math.round(baseWeapons * weaponsMult);
+
+  const level = (flagship as { level?: number }).level ?? 1;
+  const hullName = flagship.hullConfig?.name ?? 'Flagship';
+
+  return (
+    <div className="rounded-lg border border-border/40 bg-card/30 backdrop-blur-sm p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300 truncate">
+          {hullName}
+        </span>
+        <span className="text-[10px] font-mono tabular-nums text-muted-foreground/70 flex items-center gap-1 shrink-0">
+          <Star className="h-3 w-3" /> Niv. {level}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Coque</span>
+          <span className="font-mono tabular-nums">{finalHull}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Bouclier</span>
+          <span className="font-mono tabular-nums">{finalShield}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Blindage</span>
+          <span className="font-mono tabular-nums">{finalArmor}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Armement</span>
+          <span className="font-mono tabular-nums">{finalWeapons}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SidebarCard({
   label,
