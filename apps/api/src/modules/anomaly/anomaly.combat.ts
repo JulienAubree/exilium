@@ -483,7 +483,16 @@ export async function runAnomalyNode(
   const enemyFP = args.predefinedEnemy.fp;
 
   // 7. Combat
-  const combatConfig = buildCombatConfig(config.universe, { pillageRatio: 0 });
+  // V7.3 : anomaly = pas de combat indécis. On override maxRounds très haut
+  // (vs ~4 par défaut en PvP) pour qu'un camp meure systématiquement avant
+  // le timeout. Avec minDamagePerHit=1, un combat termine toujours en max
+  // ~hull rounds (donc 9999 couvre tous les cas réalistes). Si malgré tout
+  // le résultat est 'draw' (très edge), on force un winner via les counts
+  // de survivants juste après simulateCombat.
+  const combatConfig = buildCombatConfig(config.universe, {
+    pillageRatio: 0,
+    maxRounds: 9999,
+  });
   const playerMultipliers: CombatMultipliers = await getCombatMultipliers(db, args.userId, config.bonuses);
   const enemyMultipliers: CombatMultipliers = { weapons: 1, shielding: 1, armor: 1 };
 
@@ -507,7 +516,26 @@ export async function runAnomalyNode(
     shipIds: shipIdSet,
     defenseIds: new Set(Object.keys(config.defenses)),
   };
-  const result = simulateCombat(combatInput);
+  const rawResult = simulateCombat(combatInput);
+
+  // V7.3 : safety net si malgré maxRounds=9999 le combat reste indécis.
+  // En anomaly, "draw" n'a pas de sens (rogue-lite : tu gagnes ou tu meurs),
+  // donc on force le winner via le hull% du flagship :
+  //   - flagship détruit (count 0) → defender (impossible ici car déjà géré)
+  //   - flagship vivant à >50% hull → attacker (player wins)
+  //   - flagship vivant à ≤50% hull → defender (player perd la run)
+  // Choix conservateur : un combat qui n'aboutit pas en 9999 rounds est
+  // mathématiquement bloqué — on tranche en faveur du camp dominant.
+  let outcome = rawResult.outcome;
+  if (outcome === 'draw') {
+    const lastRoundFinal = rawResult.rounds[rawResult.rounds.length - 1];
+    const flagshipHP = lastRoundFinal?.attackerHPByType?.['flagship'];
+    const flagshipHullPct = (flagshipHP && flagshipHP.hullMax > 0)
+      ? flagshipHP.hullRemaining / flagshipHP.hullMax
+      : 0;
+    outcome = flagshipHullPct > 0.5 ? 'attacker' : 'defender';
+  }
+  const result = { ...rawResult, outcome };
 
   // 8. V4 : seul le flagship est tracké côté player
   const lastRound = result.rounds[result.rounds.length - 1];
