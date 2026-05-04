@@ -56,6 +56,7 @@ async function loadFlagshipCombatConfig(
   hullPercent: number,
   modulesContext?: {
     equippedModules: ModuleDefinitionLite[];
+    weaponModules?: ModuleDefinitionLite[];
     combatContext: CombatContext;
   },
 ): Promise<ShipCombatConfig | null> {
@@ -95,6 +96,31 @@ async function loadFlagshipCombatConfig(
     baseArmor = Math.round(modified.armor);
   }
 
+  // V7-WeaponProfiles : build the flagship weaponProfiles array.
+  //  - base profile (hull's defaultWeaponProfile, with damage/shots derived
+  //    from the post-mods baseDamage / baseShotCount)
+  //  - +1 profile per equipped weapon module (effect.profile)
+  // The combat engine will tire avec tous ces profils par tour (jusqu'à 4 :
+  // 1 hull + 3 modules max).
+  const hullDefaultProfile = (hullConfig as { defaultWeaponProfile?: {
+    targetCategory?: string;
+    rafale?: { category?: string; count: number };
+    hasChainKill?: boolean;
+  } } | null)?.defaultWeaponProfile;
+  const baseWeaponProfile = {
+    damage: baseDamage,
+    shots: baseShotCount,
+    targetCategory: hullDefaultProfile?.targetCategory ?? 'medium',
+    ...(hullDefaultProfile?.rafale ? { rafale: hullDefaultProfile.rafale } : {}),
+    ...(hullDefaultProfile?.hasChainKill ? { hasChainKill: true } : {}),
+  };
+  const weaponProfiles = [
+    baseWeaponProfile,
+    ...((modulesContext?.weaponModules ?? [])
+      .filter((m) => m.effect.type === 'weapon')
+      .map((m) => (m.effect as { type: 'weapon'; profile: typeof baseWeaponProfile }).profile)),
+  ];
+
   return {
     shipType: 'flagship',
     categoryId: 'capital', // Toujours targeté en dernier ressort
@@ -103,7 +129,8 @@ async function loadFlagshipCombatConfig(
     baseHull,
     baseWeaponDamage: baseDamage,
     baseShotCount,
-  };
+    weaponProfiles,
+  } as ShipCombatConfig;
 }
 
 /**
@@ -129,21 +156,26 @@ function buildCombatContext(args: {
 
 /**
  * Resolve a raw equippedModules snapshot (Record<hullId, slot>) into the
- * pool-validated module list for the flagship's current hull. Returns an
- * empty list if the loadout is empty or the hull is unknown.
+ * pool-validated module list for the flagship's current hull. Returns
+ * passive + weapon modules separately. Empty arrays if the loadout is
+ * empty or the hull is unknown.
+ *
+ * V7-WeaponProfiles : `weapons` contient les modules d'arme équipés
+ * (slots weaponEpic/weaponRare/weaponCommon).
  */
 async function resolveEquippedModules(
   db: Database,
   modulesService: ReturnType<typeof createModulesService>,
   args: { userId: string; equippedModules?: unknown },
-): Promise<ModuleDefinitionLite[]> {
-  if (!args.equippedModules) return [];
+): Promise<{ passives: ModuleDefinitionLite[]; weapons: ModuleDefinitionLite[] }> {
+  if (!args.equippedModules) return { passives: [], weapons: [] };
   const [flagshipRow] = await db.select({ hullId: flagships.hullId })
     .from(flagships).where(eq(flagships.userId, args.userId)).limit(1);
   const hullId = flagshipRow?.hullId ?? DEFAULT_HULL_ID;
   const pool = await modulesService._getPool(db);
   const equippedSnapshot = (args.equippedModules ?? {}) as Parameters<typeof parseLoadout>[0];
-  return parseLoadout(equippedSnapshot, hullId, pool).equipped;
+  const parsed = parseLoadout(equippedSnapshot, hullId, pool);
+  return { passives: parsed.equipped, weapons: parsed.weapons };
 }
 
 export interface FleetEntry {
@@ -243,25 +275,27 @@ export async function generateAnomalyEnemy(
   // estimate matches the actual combat baseline (no pending epic, round 1).
   const flagshipEntry = args.fleet['flagship'];
   if (flagshipEntry && flagshipEntry.count > 0) {
-    const equipped = await resolveEquippedModules(db, modulesService, {
+    const { passives, weapons } = await resolveEquippedModules(db, modulesService, {
       userId: args.userId,
       equippedModules: args.equippedModules,
     });
+    // V7-WeaponProfiles : on charge toujours le config flagship (même sans
+    // passives) pour que le hull defaultWeaponProfile + weapon modules soient
+    // bien intégrés dans le FP préview.
     const flagshipConfig = await loadFlagshipCombatConfig(
       db,
       gameConfigService,
       args.userId,
       flagshipEntry.hullPercent,
-      equipped.length > 0
-        ? {
-            equippedModules: equipped,
-            combatContext: buildCombatContext({
-              currentHullPercent: flagshipEntry.hullPercent,
-              enemyFP: 0,
-              pendingEpicEffect: null,
-            }),
-          }
-        : undefined,
+      {
+        equippedModules: passives,
+        weaponModules: weapons,
+        combatContext: buildCombatContext({
+          currentHullPercent: flagshipEntry.hullPercent,
+          enemyFP: 0,
+          pendingEpicEffect: null,
+        }),
+      },
     );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }
@@ -375,7 +409,7 @@ export async function runAnomalyNode(
   const baseShipConfigs = buildShipCombatConfigs(config);
   {
     // Resolve modules + build a CombatContext for the active fight.
-    const equipped = await resolveEquippedModules(db, modulesService, {
+    const { passives, weapons } = await resolveEquippedModules(db, modulesService, {
       userId: args.userId,
       equippedModules: args.equippedModules,
     });
@@ -385,14 +419,18 @@ export async function runAnomalyNode(
       enemyFP: args.predefinedEnemy.fp,
       pendingEpicEffect: args.pendingEpicEffect ?? null,
     });
+    // V7-WeaponProfiles : on charge toujours le config flagship pour que le
+    // hull defaultWeaponProfile + weapon modules soient intégrés au combat.
     const flagshipConfig = await loadFlagshipCombatConfig(
       db,
       gameConfigService,
       args.userId,
       flagshipEntry.hullPercent,
-      equipped.length > 0 || args.pendingEpicEffect
-        ? { equippedModules: equipped, combatContext }
-        : undefined,
+      {
+        equippedModules: passives,
+        weaponModules: weapons,
+        combatContext,
+      },
     );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }

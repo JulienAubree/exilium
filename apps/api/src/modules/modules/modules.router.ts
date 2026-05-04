@@ -18,17 +18,24 @@ export function createModulesRouter(
     list: protectedProcedure.query(({ ctx }) => service.getInventory(ctx.userId!)),
   });
 
+  // V7-WeaponProfiles : SlotType inclut maintenant les 3 weapon slots.
+  // slotIndex est ignoré pour les weapon slots (1 slot unique par rareté)
+  // mais reste requis pour les passives (rare 0..2 / common 0..4).
+  const slotTypeSchema = z.enum([
+    'epic', 'rare', 'common',
+    'weapon-epic', 'weapon-rare', 'weapon-common',
+  ]);
   const loadoutRouter = router({
     get: protectedProcedure.input(z.object({ hullId: z.string() })).query(({ ctx, input }) => service.getLoadout(ctx.userId!, input.hullId)),
     equip: protectedProcedure.input(z.object({
       hullId: z.string(),
-      slotType: z.enum(['epic', 'rare', 'common']),
+      slotType: slotTypeSchema,
       slotIndex: z.number().int().min(0).max(4),
       moduleId: z.string(),
     })).mutation(({ ctx, input }) => service.equip(ctx.userId!, input)),
     unequip: protectedProcedure.input(z.object({
       hullId: z.string(),
-      slotType: z.enum(['epic', 'rare', 'common']),
+      slotType: slotTypeSchema,
       slotIndex: z.number().int().min(0).max(4),
     })).mutation(({ ctx, input }) => service.unequip(ctx.userId!, input)),
   });

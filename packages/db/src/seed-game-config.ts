@@ -666,6 +666,12 @@ const HULLS = [
       bonus_shot_count: 2,
       bonus_weapons: 8,
     },
+    // V7-WeaponProfiles : profil d'arme par défaut du hull. Combat = polyvalent
+    // anti-medium avec rafale légère (un soldat).
+    defaultWeaponProfile: {
+      targetCategory: 'medium' as const,
+      rafale: { category: 'light' as const, count: 1 },
+    },
     abilities: [],
     bonusLabels: [
       '+6 blindage',
@@ -687,6 +693,11 @@ const HULLS = [
       industrial_build_time_reduction: 0.20,
       mining_speed_bonus:              0.45,  // ex ind_mining_speed max (3 rangs × 15%)
       prospection_speed_bonus:         0.45,  // ex ind_prospect_speed max (3 rangs × 15%)
+    },
+    // V7-WeaponProfiles : profil basique anti-medium, sans rafale (le mineur
+    // n'est pas un combattant — l'arsenal vient des modules d'armes).
+    defaultWeaponProfile: {
+      targetCategory: 'medium' as const,
     },
     abilities: [
       {
@@ -722,6 +733,12 @@ const HULLS = [
     playstyle: 'explorer',
     passiveBonuses: {
       research_time_reduction: 0.20,
+    },
+    // V7-WeaponProfiles : profil rapide anti-light avec chainKill (le scientifique
+    // mitraille les chasseurs grâce à ses systèmes de ciblage avancés).
+    defaultWeaponProfile: {
+      targetCategory: 'light' as const,
+      hasChainKill: true,
     },
     abilities: [
       {

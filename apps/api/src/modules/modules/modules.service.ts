@@ -10,7 +10,19 @@ import {
   type ModuleDefinition, type ModuleLoadoutDb,
 } from './modules.types.js';
 
-type SlotType = 'epic' | 'rare' | 'common';
+/** V7-WeaponProfiles : SlotType étendu avec les 3 slots Arsenal (1 par rareté).
+ *  Les 3 nouveaux types ignorent slotIndex (1 slot unique). */
+type SlotType = 'epic' | 'rare' | 'common' | 'weapon-epic' | 'weapon-rare' | 'weapon-common';
+type WeaponSlotType = 'weapon-epic' | 'weapon-rare' | 'weapon-common';
+function isWeaponSlot(t: SlotType): t is WeaponSlotType {
+  return t === 'weapon-epic' || t === 'weapon-rare' || t === 'weapon-common';
+}
+function weaponSlotKey(t: WeaponSlotType): 'weaponEpic' | 'weaponRare' | 'weaponCommon' {
+  return t === 'weapon-epic' ? 'weaponEpic' : t === 'weapon-rare' ? 'weaponRare' : 'weaponCommon';
+}
+function weaponSlotRarity(t: WeaponSlotType): 'epic' | 'rare' | 'common' {
+  return t === 'weapon-epic' ? 'epic' : t === 'weapon-rare' ? 'rare' : 'common';
+}
 
 /** Fixed lengths enforced by hullSlotSchema. Kept here so the tolerant pad-on-read
  *  helper below stays in sync if we ever expand a slot. */
@@ -31,17 +43,38 @@ function padToLen<T>(arr: readonly (T | null | undefined)[] | undefined, len: nu
   return out;
 }
 
-/** Pad-on-read coercion. Read raw JSONB → produce a schema-valid loadout. */
+/** V7-WeaponProfiles : coerce a single weapon slot value. string → string,
+ *  null/undefined/non-string → null. Tolerant by design : an unexpected
+ *  shape never crashes the pipeline, it just resets the slot. */
+function coerceWeaponSlot(v: unknown): string | null {
+  return typeof v === 'string' && v.length > 0 ? v : null;
+}
+
+/** Pad-on-read coercion. Read raw JSONB → produce a schema-valid loadout.
+ *  V7-WeaponProfiles : préserve les 3 weapon slots (string|null) avec coerce
+ *  défensif des valeurs invalides. Les anciens loadouts (sans weapon*) sont
+ *  acceptés tels quels — les clés sont absentes plutôt que null pour rester
+ *  optional-friendly côté schema. */
 function coerceLoadout(raw: unknown): ModuleLoadoutDb {
   if (!raw || typeof raw !== 'object') return {};
   const out: ModuleLoadoutDb = {};
   for (const [hullId, slot] of Object.entries(raw as Record<string, unknown>)) {
     if (!slot || typeof slot !== 'object') continue;
-    const s = slot as { epic?: string | null; rare?: unknown; common?: unknown };
+    const s = slot as {
+      epic?: string | null;
+      rare?: unknown;
+      common?: unknown;
+      weaponEpic?: unknown;
+      weaponRare?: unknown;
+      weaponCommon?: unknown;
+    };
     out[hullId as keyof ModuleLoadoutDb] = {
       epic: typeof s.epic === 'string' ? s.epic : s.epic === null ? null : null,
       rare: padToLen(Array.isArray(s.rare) ? (s.rare as (string | null | undefined)[]) : [], RARE_LEN),
       common: padToLen(Array.isArray(s.common) ? (s.common as (string | null | undefined)[]) : [], COMMON_LEN),
+      weaponEpic:   coerceWeaponSlot(s.weaponEpic),
+      weaponRare:   coerceWeaponSlot(s.weaponRare),
+      weaponCommon: coerceWeaponSlot(s.weaponCommon),
     };
   }
   return out;
@@ -58,6 +91,9 @@ export function createModulesService(db: Database) {
       id: r.id,
       hullId: r.hullId,
       rarity: r.rarity as 'common' | 'rare' | 'epic',
+      // V7-WeaponProfiles : propage `kind` au pool. Default 'passive' si la
+      // colonne est absente (tests stub) pour rester back-compat.
+      kind: ((r as { kind?: string }).kind ?? 'passive') as 'passive' | 'weapon',
       enabled: r.enabled,
       effect: r.effect as ModuleDefinitionLite['effect'],
     }));
@@ -87,11 +123,14 @@ export function createModulesService(db: Database) {
     async getInventory(userId: string) {
       const [flagship] = await db.select({ id: flagships.id }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
       if (!flagship) return { items: [] };
+      // V7-WeaponProfiles : on inclut `kind` pour que le front filtre
+      // Arsenal (kind='weapon') vs Modules (kind='passive').
       const rows = await db.select({
         moduleId: flagshipModuleInventory.moduleId,
         count: flagshipModuleInventory.count,
         hullId: moduleDefinitions.hullId,
         rarity: moduleDefinitions.rarity,
+        kind: moduleDefinitions.kind,
         name: moduleDefinitions.name,
         description: moduleDefinitions.description,
         image: moduleDefinitions.image,
@@ -113,7 +152,16 @@ export function createModulesService(db: Database) {
       // fixed length with explicit nulls so the schema validates and the
       // front receives a stable shape.
       const loadout = coerceLoadout(flagship.loadout);
-      const empty = { epic: null, rare: padToLen([], RARE_LEN), common: padToLen([], COMMON_LEN) } as const;
+      // V7-WeaponProfiles : default empty inclut les 3 weapon slots à null
+      // pour que le front ait toujours une shape stable.
+      const empty = {
+        epic: null,
+        rare: padToLen([], RARE_LEN),
+        common: padToLen([], COMMON_LEN),
+        weaponEpic:   null,
+        weaponRare:   null,
+        weaponCommon: null,
+      } as const;
       return {
         hullId,
         slot: loadout[hullId as keyof typeof loadout] ?? empty,
@@ -125,6 +173,11 @@ export function createModulesService(db: Database) {
     /**
      * Equip a module in a slot. Validates rarity, hull, ownership,
      * not-already-equipped, not-in-mission. Atomic via transaction.
+     *
+     * V7-WeaponProfiles : slotType peut être `weapon-epic|weapon-rare|weapon-common`
+     * pour les 3 slots Arsenal. slotIndex est ignoré pour les weapon slots
+     * (1 slot unique par rareté). Le module doit avoir kind='weapon' et
+     * effect.type='weapon' pour entrer dans un weapon slot.
      */
     async equip(userId: string, input: { hullId: string; slotType: SlotType; slotIndex: number; moduleId: string }) {
       return await db.transaction(async (tx) => {
@@ -141,8 +194,27 @@ export function createModulesService(db: Database) {
         if (moduleDef.hullId !== input.hullId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: `Module incompatible avec la coque ${input.hullId}` });
         }
-        if (moduleDef.rarity !== input.slotType) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: `Module rareté ${moduleDef.rarity} ne va pas dans slot ${input.slotType}` });
+
+        // V7-WeaponProfiles : validation kind + rareté pour les weapon slots.
+        const moduleKind = ((moduleDef as { kind?: string }).kind ?? 'passive') as 'passive' | 'weapon';
+        const effectType = (moduleDef.effect as { type?: string } | null)?.type;
+        if (isWeaponSlot(input.slotType)) {
+          if (moduleKind !== 'weapon' || effectType !== 'weapon') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seuls les modules d\'arme peuvent occuper un slot Arsenal' });
+          }
+          const expectedRarity = weaponSlotRarity(input.slotType);
+          if (moduleDef.rarity !== expectedRarity) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `Module rareté ${moduleDef.rarity} ne va pas dans slot ${input.slotType}` });
+          }
+        } else {
+          // Passive slots : rareté doit matcher le slot type, et le module
+          // ne doit PAS être un weapon module (sinon il s'équipe via Arsenal).
+          if (moduleDef.rarity !== input.slotType) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `Module rareté ${moduleDef.rarity} ne va pas dans slot ${input.slotType}` });
+          }
+          if (moduleKind === 'weapon' || effectType === 'weapon') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Un module d\'arme ne peut pas occuper un slot passif (utilise Arsenal)' });
+          }
         }
 
         const [inv] = await tx.select({ count: flagshipModuleInventory.count }).from(flagshipModuleInventory)
@@ -162,22 +234,30 @@ export function createModulesService(db: Database) {
           epic: null,
           rare: padToLen([], RARE_LEN),
           common: padToLen([], COMMON_LEN),
+          weaponEpic: null,
+          weaponRare: null,
+          weaponCommon: null,
         };
 
         // Reject if already equipped in another slot of same hull (no double-equip even with duplicates).
         // Filter out nulls so they don't accidentally count as "equipped".
+        // V7-WeaponProfiles : weapon slots font partie du même check (un module
+        // ne s'équipe qu'une fois par hull, peu importe Arsenal vs passive).
         const allEquipped = [
           ...(slot.epic ? [slot.epic] : []),
           ...slot.rare.filter((x): x is string => typeof x === 'string'),
           ...slot.common.filter((x): x is string => typeof x === 'string'),
+          ...(slot.weaponEpic ? [slot.weaponEpic] : []),
+          ...(slot.weaponRare ? [slot.weaponRare] : []),
+          ...(slot.weaponCommon ? [slot.weaponCommon] : []),
         ];
         if (allEquipped.includes(input.moduleId)) {
           // Allow if it's THIS exact slot being overridden (same module already there)
-          const existing = input.slotType === 'epic'
-            ? slot.epic
-            : input.slotType === 'rare'
-              ? slot.rare[input.slotIndex]
-              : slot.common[input.slotIndex];
+          let existing: string | null | undefined;
+          if (input.slotType === 'epic') existing = slot.epic;
+          else if (input.slotType === 'rare') existing = slot.rare[input.slotIndex];
+          else if (input.slotType === 'common') existing = slot.common[input.slotIndex];
+          else existing = slot[weaponSlotKey(input.slotType)];
           if (existing !== input.moduleId) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Module déjà équipé dans un autre slot' });
           }
@@ -193,11 +273,14 @@ export function createModulesService(db: Database) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${RARE_LEN - 1} pour rare` });
           }
           newSlot.rare[input.slotIndex] = input.moduleId;
-        } else {
+        } else if (input.slotType === 'common') {
           if (input.slotIndex < 0 || input.slotIndex > COMMON_LEN - 1) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${COMMON_LEN - 1} pour common` });
           }
           newSlot.common[input.slotIndex] = input.moduleId;
+        } else {
+          // V7-WeaponProfiles : weapon slot. slotIndex ignoré (1 slot unique).
+          newSlot[weaponSlotKey(input.slotType)] = input.moduleId;
         }
 
         const newLoadout = { ...loadout, [input.hullId]: newSlot };
@@ -216,7 +299,11 @@ export function createModulesService(db: Database) {
       });
     },
 
-    /** Remove a module from a slot. */
+    /** Remove a module from a slot.
+     *
+     *  V7-WeaponProfiles : symétrique avec equip — slotType peut être
+     *  `weapon-epic|weapon-rare|weapon-common` (slotIndex ignoré). Le slot
+     *  correspondant est SET à null. */
     async unequip(userId: string, input: { hullId: string; slotType: SlotType; slotIndex: number }) {
       return await db.transaction(async (tx) => {
         const [flagship] = await tx.select().from(flagships).where(eq(flagships.userId, userId)).for('update').limit(1);
@@ -231,6 +318,9 @@ export function createModulesService(db: Database) {
           epic: null,
           rare: padToLen([], RARE_LEN),
           common: padToLen([], COMMON_LEN),
+          weaponEpic: null,
+          weaponRare: null,
+          weaponCommon: null,
         };
         // Replace `delete arr[i]` (which creates a sparse array) with explicit
         // `arr[i] = null` so JSON.stringify doesn't emit `null` placeholders
@@ -243,11 +333,14 @@ export function createModulesService(db: Database) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${RARE_LEN - 1} pour rare` });
           }
           newSlot.rare[input.slotIndex] = null;
-        } else {
+        } else if (input.slotType === 'common') {
           if (input.slotIndex < 0 || input.slotIndex > COMMON_LEN - 1) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: `slotIndex doit être 0..${COMMON_LEN - 1} pour common` });
           }
           newSlot.common[input.slotIndex] = null;
+        } else {
+          // V7-WeaponProfiles : weapon slot (slotIndex ignoré).
+          newSlot[weaponSlotKey(input.slotType)] = null;
         }
 
         const newLoadout = { ...loadout, [input.hullId]: newSlot };

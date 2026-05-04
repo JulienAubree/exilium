@@ -73,6 +73,7 @@ export default function Modules() {
       description: 'À remplir',
       image: '',
       enabled: true,
+      kind: 'passive',
       effect: { type: 'stat', stat: 'damage', value: 0.05 } as ModuleDef['effect'],
     });
   }

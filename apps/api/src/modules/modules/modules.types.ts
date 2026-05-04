@@ -7,6 +7,25 @@ const ABILITY_KEYS = ['repair', 'shield_burst', 'overcharge', 'scan', 'skip', 'd
 
 const HULL_IDS = ['combat', 'scientific', 'industrial'] as const;
 const RARITIES = ['common', 'rare', 'epic'] as const;
+/** V7-WeaponProfiles : kind du module. 'passive' = comportement V1
+ *  (stat / conditional / active), 'weapon' = apporte un weaponProfile au combat. */
+const KINDS = ['passive', 'weapon'] as const;
+
+const TARGET_CATEGORY_KEYS = ['light', 'medium', 'heavy', 'shield', 'defense', 'capital', 'support'] as const;
+
+/** V7-WeaponProfiles : weaponProfile shape — mirrors UnitWeaponProfile from
+ *  the engine but kept inline so the API doesn't depend on engine private
+ *  shapes for input validation. */
+const weaponProfileSchema = z.object({
+  damage: z.number().int().min(0),
+  shots: z.number().int().min(0),
+  targetCategory: z.enum(TARGET_CATEGORY_KEYS).optional(),
+  rafale: z.object({
+    category: z.enum(TARGET_CATEGORY_KEYS).optional(),
+    count: z.number().int().min(0),
+  }).optional(),
+  hasChainKill: z.boolean().optional(),
+});
 
 export const moduleEffectSchema = z.discriminatedUnion('type', [
   z.object({
@@ -28,12 +47,21 @@ export const moduleEffectSchema = z.discriminatedUnion('type', [
     ability: z.enum(ABILITY_KEYS),
     magnitude: z.number(),
   }),
+  // V7-WeaponProfiles : effect.type === 'weapon' → le module apporte un
+  // weaponProfile au flagship pendant le combat (slots Arsenal).
+  z.object({
+    type: z.literal('weapon'),
+    profile: weaponProfileSchema,
+  }),
 ]);
 
 export const moduleDefinitionSchema = z.object({
   id: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/, 'id must be kebab-case'),
   hullId: z.enum(HULL_IDS),
   rarity: z.enum(RARITIES),
+  /** V7-WeaponProfiles : default 'passive' pour back-compat avec les modules
+   *  existants. Les seeds 0074_weapon_modules.sql posent kind='weapon'. */
+  kind: z.enum(KINDS).optional().default('passive'),
   name: z.string().min(1).max(80),
   description: z.string().min(1),
   image: z.string().max(500).default(''),
@@ -60,6 +88,11 @@ export const hullSlotSchema = z.object({
   epic:   z.string().nullable(),
   rare:   z.array(z.string().nullable()).length(3),
   common: z.array(z.string().nullable()).length(5),
+  /** V7-WeaponProfiles : 1 slot weapon par rareté. Optional/nullable pour
+   *  back-compat avec les anciens loadouts (sans clé "weapon*" du tout). */
+  weaponEpic:   z.string().nullable().optional(),
+  weaponRare:   z.string().nullable().optional(),
+  weaponCommon: z.string().nullable().optional(),
 });
 
 export const moduleLoadoutSchema = z.object({

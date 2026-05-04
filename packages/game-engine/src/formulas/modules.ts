@@ -3,6 +3,8 @@
  * All inputs/outputs are plain data — no DB, no I/O.
  */
 
+import type { UnitWeaponProfile } from './fp.js';
+
 export type StatKey =
   | 'damage' | 'hull' | 'shield' | 'armor' | 'cargo' | 'speed' | 'regen' | 'epic_charges_max';
 
@@ -15,12 +17,20 @@ export type ModuleEffect =
   | { type: 'stat'; stat: StatKey; value: number }
   | { type: 'conditional'; trigger: TriggerKey; threshold?: number;
       effect: { stat: StatKey; value: number } }
-  | { type: 'active'; ability: AbilityKey; magnitude: number };
+  | { type: 'active'; ability: AbilityKey; magnitude: number }
+  /** V7-WeaponProfiles : module qui apporte un weaponProfile au flagship. */
+  | { type: 'weapon'; profile: UnitWeaponProfile };
+
+/** V7-WeaponProfiles : 'passive' = ancien comportement (stat/conditional/active),
+ *  'weapon' = module qui ajoute un weaponProfile au combat. */
+export type ModuleKind = 'passive' | 'weapon';
 
 export interface ModuleDefinitionLite {
   id: string;
   hullId: string;
   rarity: 'common' | 'rare' | 'epic';
+  /** V7-WeaponProfiles : kind du module (default 'passive' pour back-compat). */
+  kind?: ModuleKind;
   enabled: boolean;
   effect: ModuleEffect;
 }
@@ -31,18 +41,29 @@ export interface HullSlot {
   rare: (string | null)[];
   /** Fixed-length 5 with explicit `null` placeholders for empty slots. */
   common: (string | null)[];
+  /** V7-WeaponProfiles : 1 slot weapon par rareté, indépendants des passives. */
+  weaponEpic?: string | null;
+  weaponRare?: string | null;
+  weaponCommon?: string | null;
 }
 
 export type ModuleLoadout = Partial<Record<string, HullSlot>>;
 
 export interface ParsedLoadout {
+  /** Passive modules (effect.type stat / conditional / active). */
   equipped: ModuleDefinitionLite[];
+  /** V7-WeaponProfiles : weapon modules équipés (effect.type === 'weapon'). */
+  weapons: ModuleDefinitionLite[];
 }
 
 /**
  * Resolve a loadout (ids) to actual module definitions for one hull.
  * Silently ignores unknown ids, disabled modules, and `null` placeholders
  * (used for fixed-length slot arrays — see hullSlotSchema in modules.types.ts).
+ *
+ * V7-WeaponProfiles : sépare passives (slots epic/rare/common) et weapons
+ * (slots weaponEpic/weaponRare/weaponCommon). Le `kind` du module sert de
+ * fallback si le module est dans le mauvais slot (ex: weapon dans rare slot).
  */
 export function parseLoadout(
   loadout: ModuleLoadout,
@@ -50,21 +71,37 @@ export function parseLoadout(
   pool: ModuleDefinitionLite[],
 ): ParsedLoadout {
   const slot = loadout[hullId];
-  if (!slot) return { equipped: [] };
+  if (!slot) return { equipped: [], weapons: [] };
 
   const isString = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
-  const ids: string[] = [
+  const passiveIds: string[] = [
     ...((slot.common ?? []) as (string | null | undefined)[]).filter(isString),
     ...((slot.rare ?? []) as (string | null | undefined)[]).filter(isString),
     ...(slot.epic ? [slot.epic] : []),
   ];
+  const weaponIds: string[] = [
+    ...(slot.weaponCommon ? [slot.weaponCommon] : []),
+    ...(slot.weaponRare ? [slot.weaponRare] : []),
+    ...(slot.weaponEpic ? [slot.weaponEpic] : []),
+  ];
 
   const byId = new Map(pool.map((m) => [m.id, m] as const));
-  const equipped = ids
+  const resolve = (ids: string[]) => ids
     .map((id) => byId.get(id))
     .filter((m): m is ModuleDefinitionLite => m !== undefined && m.enabled);
 
-  return { equipped };
+  // Defensive partitioning : route by effect.type so a weapon module
+  // mistakenly placed in a passive slot still ends up in `weapons`, and
+  // vice versa. Belt + braces against admin or migration mistakes.
+  const allEquipped = [...resolve(passiveIds), ...resolve(weaponIds)];
+  const equipped: ModuleDefinitionLite[] = [];
+  const weapons: ModuleDefinitionLite[] = [];
+  for (const m of allEquipped) {
+    if (m.effect.type === 'weapon') weapons.push(m);
+    else equipped.push(m);
+  }
+
+  return { equipped, weapons };
 }
 
 export interface CombatStats {
