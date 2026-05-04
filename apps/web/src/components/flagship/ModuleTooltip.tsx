@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Crosshair, Sparkles, Zap, AlertTriangle, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTargetCategory } from '@/lib/combat-helpers';
 
 /**
  * V7.2 ModuleTooltip — popover détaillé au survol des modules.
@@ -97,6 +98,8 @@ interface ParsedEffect {
   magnitude?: number;
   profile?: {
     damage?: number;
+    /** V8.1 — multiplicateur du damage de coque (remplace `damage` absolu). */
+    damageMultiplier?: number;
     shots?: number;
     targetCategory?: string;
     rafale?: { category?: string; count: number };
@@ -135,6 +138,7 @@ function parseEffect(effect: unknown): ParsedEffect {
       kind: 'weapon',
       profile: {
         damage: p.damage !== undefined ? Number(p.damage) : undefined,
+        damageMultiplier: p.damageMultiplier !== undefined ? Number(p.damageMultiplier) : undefined,
         shots: p.shots !== undefined ? Number(p.shots) : undefined,
         targetCategory: typeof p.targetCategory === 'string' ? p.targetCategory : undefined,
         rafale: rafale && rafale.count !== undefined ? { category: rafale.category, count: Number(rafale.count) } : undefined,
@@ -205,12 +209,21 @@ function EffectBlock({ parsed }: { parsed: ParsedEffect }) {
           Profil d'arme
         </div>
         <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-          {p.damage !== undefined && (
+          {/* V8.1 : damageMultiplier prend le pas sur damage absolu si défini.
+               Affiché comme "×120% tir principal" au lieu d'un nombre brut. */}
+          {p.damageMultiplier !== undefined ? (
+            <div className="flex justify-between col-span-2">
+              <span className="text-muted-foreground">Dégâts</span>
+              <span className="font-mono text-foreground/90">
+                ×{Math.round(p.damageMultiplier * 100)}% tir principal
+              </span>
+            </div>
+          ) : p.damage !== undefined ? (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Dégâts</span>
               <span className="font-mono text-foreground/90">{p.damage}</span>
             </div>
-          )}
+          ) : null}
           {p.shots !== undefined && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Tirs</span>
@@ -220,7 +233,7 @@ function EffectBlock({ parsed }: { parsed: ParsedEffect }) {
           {p.targetCategory && (
             <div className="flex justify-between col-span-2">
               <span className="text-muted-foreground">Cible</span>
-              <span className="font-mono text-foreground/90">anti-{p.targetCategory}</span>
+              <span className="font-mono text-foreground/90">vs {formatTargetCategory(p.targetCategory)}</span>
             </div>
           )}
         </div>
@@ -230,7 +243,7 @@ function EffectBlock({ parsed }: { parsed: ParsedEffect }) {
               rafale
             </span>
             <span className="text-[10px] text-muted-foreground">
-              ×{p.rafale.count}{p.rafale.category ? ` vs ${p.rafale.category}` : ''}
+              ×{p.rafale.count}{p.rafale.category ? ` vs ${formatTargetCategory(p.rafale.category)}` : ''}
             </span>
           </div>
         )}

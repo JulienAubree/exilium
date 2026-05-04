@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Sparkles, Crosshair, Zap } from 'lucide-react';
+import { Sparkles, Crosshair, Zap, Info } from 'lucide-react';
 import {
   applyModulesToStats,
   parseLoadout,
@@ -12,6 +12,7 @@ import {
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
+import { formatTargetCategory } from '@/lib/combat-helpers';
 import {
   ShieldIcon, ArmorIcon, HullIcon, WeaponsIcon, ShotsIcon,
   SectionHeader,
@@ -205,10 +206,22 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
     });
 
     // Modules — each weapon module brings its own profile (research applied to damage)
+    // V8.1 : si `damageMultiplier` est présent, le damage par shot est dérivé
+    // du damage de coque post-research (`hullDamagePerShot`) × multiplicateur.
+    // Sinon fallback V7 sur `p.damage` absolu × weaponsMult.
     for (const m of weaponModules) {
       if (m.effect.type !== 'weapon') continue;
-      const p = m.effect.profile;
-      const dps = Math.round(p.damage * weaponsMult);
+      const p = m.effect.profile as {
+        damage: number;
+        damageMultiplier?: number;
+        shots: number;
+        targetCategory?: string;
+        rafale?: { category?: string; count: number };
+        hasChainKill?: boolean;
+      };
+      const dps = p.damageMultiplier !== undefined
+        ? Math.round(hullDamagePerShot * p.damageMultiplier)
+        : Math.round(p.damage * weaponsMult);
       batteries.push({
         source: (m as ModuleDefinitionLite & { name?: string }).name ?? m.id,
         rarityLabel: m.rarity,
@@ -366,9 +379,9 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
                 </span>
               </div>
               <div className="text-[10px] text-muted-foreground/70 font-mono pl-3">
-                anti-{b.targetCategory}
+                vs {formatTargetCategory(b.targetCategory)}
                 {b.rafale && (
-                  <> · rafale ×{b.rafale.count}{b.rafale.category ? ` vs ${b.rafale.category}` : ''}</>
+                  <> · rafale ×{b.rafale.count}{b.rafale.category ? ` vs ${formatTargetCategory(b.rafale.category)}` : ''}</>
                 )}
                 {b.hasChainKill && <> · chainKill</>}
               </div>
@@ -380,6 +393,17 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
             Aucune arme additionnelle équipée — l'arsenal augmenterait les batteries de combat.
           </p>
         )}
+
+        {/* V8.1 — légende discrète des cibles. Aide les joueurs à matcher
+            leur arsenal avec la composition enemy. Format compact, font tiny. */}
+        <div className="mt-2 flex items-start gap-1.5 text-[10px] text-muted-foreground/70 leading-snug">
+          <Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/60" />
+          <div className="space-y-0.5">
+            <div><span className="text-foreground/80 font-medium">Légers</span> : chasseurs, drones, frégates légères</div>
+            <div><span className="text-foreground/80 font-medium">Moyens</span> : frégates, croiseurs, destroyers</div>
+            <div><span className="text-foreground/80 font-medium">Lourds</span> : battlecruisers, vaisseaux capitaux</div>
+          </div>
+        </div>
       </div>
     </div>
   );

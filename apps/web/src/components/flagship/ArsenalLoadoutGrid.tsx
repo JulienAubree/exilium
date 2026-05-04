@@ -1,5 +1,6 @@
 import { Crosshair, Plus, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTargetCategory } from '@/lib/combat-helpers';
 import { ModuleTooltip } from './ModuleTooltip';
 
 /**
@@ -9,7 +10,7 @@ import { ModuleTooltip } from './ModuleTooltip';
  *   - layout horizontal au lieu de grid radiale
  *   - cards rectangulaires plus grandes
  *   - palette orange/amber au lieu de violet/indigo
- *   - badges "X tirs", "anti-{cat}", "rafale", "chainKill"
+ *   - badges "X tirs", "vs {cat}", "rafale", "chainKill"
  *
  * Le composant accepte un `inventory` Map (id → { name, image, kind, effect })
  * pour résoudre les slots équipés. Si le module n'a pas le bon kind ('weapon'),
@@ -156,11 +157,11 @@ function ArsenalSlot({ rarity, module, onClick, onUnequip }: SlotProps) {
                     )}
                     {profile.targetCategory && (
                       <span className="rounded bg-stone-900/60 border border-stone-500/40 text-stone-200 text-[8px] font-mono px-1 py-0">
-                        anti-{profile.targetCategory}
+                        vs {formatTargetCategory(profile.targetCategory)}
                       </span>
                     )}
                     {profile.rafale && (
-                      <span className="rounded bg-amber-900/50 border border-amber-500/40 text-amber-200 text-[8px] font-mono px-1 py-0" title={`Rafale ×${profile.rafale.count}${profile.rafale.category ? ` vs ${profile.rafale.category}` : ''}`}>
+                      <span className="rounded bg-amber-900/50 border border-amber-500/40 text-amber-200 text-[8px] font-mono px-1 py-0" title={`Rafale ×${profile.rafale.count}${profile.rafale.category ? ` vs ${formatTargetCategory(profile.rafale.category)}` : ''}`}>
                         rafale
                       </span>
                     )}

@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Zap, Sparkles, Wrench, X, Star, Trophy, Crosshair } from 'lucide-react';
 import { resolveBonus } from '@exilium/game-engine';
+import { formatTargetCategory } from '@/lib/combat-helpers';
 
 /**
  * V7-WeaponProfiles : descriptor d'un weaponProfile pour le preview.
@@ -23,9 +24,9 @@ interface WeaponProfilePreview {
 function formatWeaponProfile(p: WeaponProfilePreview): string {
   const parts: string[] = [];
   if (p.shots !== undefined) parts.push(`${p.shots} tir${p.shots > 1 ? 's' : ''}`);
-  if (p.targetCategory) parts.push(`anti-${p.targetCategory}`);
+  if (p.targetCategory) parts.push(`vs ${formatTargetCategory(p.targetCategory)}`);
   if (p.rafale) {
-    const cat = p.rafale.category ? ` vs ${p.rafale.category}` : '';
+    const cat = p.rafale.category ? ` vs ${formatTargetCategory(p.rafale.category)}` : '';
     parts.push(`rafale ×${p.rafale.count}${cat}`);
   }
   if (p.hasChainKill) parts.push('chainKill');

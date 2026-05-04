@@ -5,6 +5,27 @@ import type {
 } from '@exilium/game-engine';
 import { buildCombatConfig } from '@exilium/game-engine';
 
+// V8.1 — Centralisation des labels de target category.
+// Le combat utilise les ids 'light' / 'medium' / 'heavy' (cf. ShipCategory),
+// le UI affiche le label fr ("vs Légers" / "vs Moyens" / "vs Lourds").
+// Garder ce mapping unique évite les divergences entre Arsenal, FlagshipStats,
+// AnomalyEngageModal et ModuleTooltip.
+export const TARGET_CATEGORY_LABEL: Record<string, string> = {
+  light: 'Légers',
+  medium: 'Moyens',
+  heavy: 'Lourds',
+  shield: 'Boucliers',
+  defense: 'Défenses',
+  capital: 'Capitaux',
+  support: 'Soutiens',
+};
+
+/** Retourne le label fr d'une target category, ou la valeur brute si inconnue. */
+export function formatTargetCategory(cat: string | undefined | null): string {
+  if (!cat) return '';
+  return TARGET_CATEGORY_LABEL[cat] ?? cat;
+}
+
 const NEUTRAL_MULTIPLIERS: CombatMultipliers = { weapons: 1, shielding: 1, armor: 1 };
 
 interface ShipConfigLike {
