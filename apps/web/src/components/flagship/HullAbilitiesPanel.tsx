@@ -77,15 +77,29 @@ export function HullAbilitiesPanel({ flagship, hullConfig, hullId }: HullAbiliti
         />
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
           {(hullConfig.bonusLabels ?? []).map((label, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-xs">
-              <span className={cn('text-[10px]', styles.badgeText)}>●</span>
-              <span className={cn('font-medium', isActive ? 'text-slate-200' : 'text-slate-500')}>
+            <div
+              key={i}
+              className={cn('flex items-center gap-1.5 text-xs', !isActive && 'opacity-50')}
+              title={isActive ? undefined : "Ne s'applique que lorsque le flagship est stationné"}
+            >
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  isActive ? 'bg-emerald-400' : 'bg-muted',
+                )}
+                aria-hidden
+              />
+              <span className={cn('font-medium', isActive ? 'text-slate-200' : 'text-slate-400')}>
                 {label}
               </span>
-              {!isActive && <span className="text-[10px] text-slate-600">(inactif)</span>}
             </div>
           ))}
         </div>
+        {!isActive && (hullConfig.bonusLabels?.length ?? 0) > 0 && (
+          <p className="mt-2 text-[10px] text-muted-foreground/70 italic">
+            Les effets passifs ne s'appliquent que lorsque le flagship est stationné.
+          </p>
+        )}
       </div>
 
       {/* Active abilities — retro-card style */}

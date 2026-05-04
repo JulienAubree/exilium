@@ -70,13 +70,11 @@ interface WeaponBatteryDisplay {
   isHull: boolean;
 }
 
-const RARITY_TONE: Record<string, string> = {
-  common: 'text-slate-300 border-slate-500/40 bg-slate-500/10',
-  rare: 'text-blue-300 border-blue-500/40 bg-blue-500/10',
-  epic: 'text-violet-300 border-violet-500/40 bg-violet-500/10',
+const RARITY_DOT: Record<string, string> = {
+  common: 'bg-gray-400',
+  rare: 'bg-blue-400',
+  epic: 'bg-violet-400 shadow-[0_0_6px_rgba(167,139,250,0.5)]',
 };
-
-const RARITY_LABEL: Record<string, string> = { common: 'C', rare: 'R', epic: 'E' };
 
 /**
  * V8-FlagshipRework : bloc de stats "vraies" combat-ready, intégrant
@@ -346,35 +344,28 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
           {computed.batteries.map((b, i) => (
             <li
               key={`${b.isHull ? 'hull' : 'mod'}-${i}`}
-              className={cn(
-                'rounded-md border px-2.5 py-2 text-[11px] space-y-0.5',
-                b.isHull
-                  ? 'border-stone-500/30 bg-stone-500/5'
-                  : 'border-orange-500/20 bg-orange-500/5',
-              )}
+              className="rounded-md border border-panel-border/50 bg-card/30 px-2.5 py-2 text-[11px] space-y-0.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={cn(
-                    'truncate font-semibold',
-                    b.isHull ? 'text-stone-200' : 'text-amber-200',
-                  )}>
+                  <span
+                    className={cn(
+                      'shrink-0 h-1.5 w-1.5 rounded-full',
+                      b.isHull
+                        ? 'bg-muted-foreground/50'
+                        : RARITY_DOT[b.rarityLabel ?? 'common'] ?? RARITY_DOT.common,
+                    )}
+                    aria-hidden
+                  />
+                  <span className="truncate font-medium text-foreground/90">
                     {b.source}
                   </span>
-                  {b.rarityLabel && (
-                    <span className={cn(
-                      'shrink-0 inline-flex h-4 w-4 items-center justify-center rounded border text-[9px] font-bold uppercase',
-                      RARITY_TONE[b.rarityLabel] ?? RARITY_TONE.common,
-                    )}>
-                      {RARITY_LABEL[b.rarityLabel] ?? '·'}
-                    </span>
-                  )}
                 </div>
-                <span className="text-red-300 font-mono tabular-nums shrink-0">
-                  {fmt(b.damagePerShot)} × {b.shots} = <span className="font-semibold">{fmt(b.totalDamage)}</span>
+                <span className="text-foreground/80 font-mono tabular-nums shrink-0">
+                  {fmt(b.damagePerShot)} × {b.shots} = <span className="font-semibold text-foreground">{fmt(b.totalDamage)}</span>
                 </span>
               </div>
-              <div className="text-[10px] text-muted-foreground font-mono">
+              <div className="text-[10px] text-muted-foreground/70 font-mono pl-3">
                 anti-{b.targetCategory}
                 {b.rafale && (
                   <> · rafale ×{b.rafale.count}{b.rafale.category ? ` vs ${b.rafale.category}` : ''}</>

@@ -25,45 +25,64 @@ interface Props {
   onUnequip: (slotType: 'epic' | 'rare' | 'common', slotIndex: number) => void;
 }
 
+const TIER_LABEL_CLASS =
+  'block text-[9px] font-mono uppercase tracking-widest text-muted-foreground/60 text-center';
+
 export function ModuleLoadoutGrid({ slot, inventory, onSlotClick, onUnequip }: Props) {
   const epicMod = slot.epic ? inventory.get(slot.epic) ?? null : null;
+
   return (
-    <div className="relative aspect-square w-full max-w-md mx-auto bg-gradient-to-br from-violet-950/30 via-slate-900 to-indigo-950/40 rounded-lg p-6">
-      {/* Épique au centre */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-        <ModuleSlot
-          size="epic"
-          module={epicMod}
-          onClick={() => onSlotClick('epic', 0)}
-          onUnequip={epicMod ? () => onUnequip('epic', 0) : undefined}
-        />
-      </div>
+    <div className="rounded-lg bg-card/30 backdrop-blur-sm p-4 lg:p-6 space-y-5 max-w-md mx-auto">
+      {/* ─── ÉPIQUE ─── */}
+      <section className="space-y-2">
+        <span className={TIER_LABEL_CLASS}>Épique</span>
+        <div className="flex justify-center">
+          <ModuleSlot
+            size="epic"
+            module={epicMod}
+            onClick={() => onSlotClick('epic', 0)}
+            onUnequip={epicMod ? () => onUnequip('epic', 0) : undefined}
+          />
+        </div>
+      </section>
 
-      {/* 3 rares en triangle (top, bottom-left, bottom-right) */}
-      {[0, 1, 2].map((idx) => {
-        const angle = (idx * 120 - 90) * (Math.PI / 180);
-        const x = 50 + 28 * Math.cos(angle);
-        const y = 50 + 28 * Math.sin(angle);
-        const m = slot.rare[idx] ? inventory.get(slot.rare[idx]) ?? null : null;
-        return (
-          <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ top: `${y}%`, left: `${x}%` }}>
-            <ModuleSlot size="rare" module={m} onClick={() => onSlotClick('rare', idx)} onUnequip={m ? () => onUnequip('rare', idx) : undefined} />
-          </div>
-        );
-      })}
+      {/* ─── RARES ─── */}
+      <section className="space-y-2">
+        <span className={TIER_LABEL_CLASS}>Rares</span>
+        <div className="flex justify-center gap-3">
+          {[0, 1, 2].map((idx) => {
+            const m = slot.rare[idx] ? inventory.get(slot.rare[idx] as string) ?? null : null;
+            return (
+              <ModuleSlot
+                key={idx}
+                size="rare"
+                module={m}
+                onClick={() => onSlotClick('rare', idx)}
+                onUnequip={m ? () => onUnequip('rare', idx) : undefined}
+              />
+            );
+          })}
+        </div>
+      </section>
 
-      {/* 5 communs en couronne externe */}
-      {[0, 1, 2, 3, 4].map((idx) => {
-        const angle = (idx * 72 - 90) * (Math.PI / 180);
-        const x = 50 + 42 * Math.cos(angle);
-        const y = 50 + 42 * Math.sin(angle);
-        const m = slot.common[idx] ? inventory.get(slot.common[idx]) ?? null : null;
-        return (
-          <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ top: `${y}%`, left: `${x}%` }}>
-            <ModuleSlot size="common" module={m} onClick={() => onSlotClick('common', idx)} onUnequip={m ? () => onUnequip('common', idx) : undefined} />
-          </div>
-        );
-      })}
+      {/* ─── COMMUNS ─── */}
+      <section className="space-y-2">
+        <span className={TIER_LABEL_CLASS}>Communs</span>
+        <div className="flex justify-center gap-2">
+          {[0, 1, 2, 3, 4].map((idx) => {
+            const m = slot.common[idx] ? inventory.get(slot.common[idx] as string) ?? null : null;
+            return (
+              <ModuleSlot
+                key={idx}
+                size="common"
+                module={m}
+                onClick={() => onSlotClick('common', idx)}
+                onUnequip={m ? () => onUnequip('common', idx) : undefined}
+              />
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

@@ -17,44 +17,58 @@ interface Props {
   onUnequip?: () => void;
 }
 
-const SIZE_CLASSES = {
-  epic:   'h-20 w-20 border-violet-400/60 ring-2 ring-violet-500/30 shadow-lg shadow-violet-500/20',
-  rare:   'h-14 w-14 border-blue-400/40',
-  common: 'h-12 w-12 border-border/50',
+const SIZE_CLASSES: Record<Props['size'], string> = {
+  epic: 'h-20 w-20',
+  rare: 'h-16 w-16',
+  common: 'h-14 w-14',
 };
 
-const RARITY_BORDER = {
-  epic:   'border-violet-400',
-  rare:   'border-blue-400',
-  common: 'border-gray-400',
+const RARITY_DOT: Record<string, string> = {
+  epic: 'bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.5)]',
+  rare: 'bg-blue-400',
+  common: 'bg-gray-400',
 };
 
 export function ModuleSlot({ size, module, onClick, onUnequip }: Props) {
+  const rarity = (module?.rarity ?? size) as 'epic' | 'rare' | 'common';
   const slotButton = (
     <button
       type="button"
       onClick={module && onUnequip ? onUnequip : onClick}
       className={cn(
-        'relative rounded-md border-2 bg-card/40 transition-all hover:bg-card/70',
+        'group relative rounded-md border border-border/40 bg-card/50 transition-colors',
+        'hover:bg-card/80 hover:border-border/60',
         SIZE_CLASSES[size],
-        module && RARITY_BORDER[module.rarity as 'epic' | 'rare' | 'common'],
         !module && 'border-dashed',
+        size === 'epic' && 'ring-1 ring-violet-500/20 shadow-sm shadow-violet-500/10',
       )}
       aria-label={module ? `${module.name} — clic pour déséquiper` : 'Clic pour équiper'}
     >
+      {/* Rarity indicator dot — top-left */}
+      {module && (
+        <span
+          className={cn(
+            'absolute top-1 left-1 h-1.5 w-1.5 rounded-full',
+            RARITY_DOT[rarity] ?? RARITY_DOT.common,
+          )}
+          aria-hidden
+        />
+      )}
+
       {module ? (
         module.image ? (
-          <img src={`${module.image}-thumb.webp`} alt={module.name} className="absolute inset-1 rounded object-cover" />
+          <img
+            src={`${module.image}-thumb.webp`}
+            alt={module.name}
+            className="absolute inset-1.5 rounded-md object-cover"
+          />
         ) : (
-          <div className={cn('absolute inset-1 rounded flex items-center justify-center text-xs font-mono',
-            size === 'epic' ? 'bg-violet-900/50 text-violet-200' :
-            size === 'rare' ? 'bg-blue-900/40 text-blue-200' :
-            'bg-card text-foreground/70')}>
+          <div className="absolute inset-1.5 rounded-md flex items-center justify-center bg-muted/30 text-[10px] font-mono text-foreground/70">
             {module.name.slice(0, 3).toUpperCase()}
           </div>
         )
       ) : (
-        <Plus className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground/50" />
+        <Plus className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground/40" />
       )}
     </button>
   );
