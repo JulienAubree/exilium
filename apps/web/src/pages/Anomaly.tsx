@@ -105,6 +105,12 @@ export default function Anomaly() {
         addToast(`🌟 NIVEAU ${levelUp.newLevel} atteint !`, 'success');
       }
 
+      // Tier unlock toast (V5-Tiers) — server returns the unlocked tier
+      // number when this run cleared a max-depth threshold for the first time.
+      if (data.newTierUnlocked) {
+        addToast(`🏆 PALIER ${data.newTierUnlocked} DÉBLOQUÉ !`, 'success');
+      }
+
       // In-run drop toast (per-combat module dropped on a survived combat).
       // Translated rarity to match the modal labelling.
       if (data.outcome === 'survived' && data.droppedModule) {
@@ -332,6 +338,12 @@ function IntroHero() {
             Plongez dans le vide quantique, à vos risques et périls.
           </p>
         </div>
+        <Link to="/anomalies/leaderboard" className="shrink-0">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Trophy className="h-4 w-4 text-yellow-400" />
+            <span className="hidden sm:inline">Leaderboard</span>
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -377,6 +389,10 @@ function RunHero({
             <h1 className="text-[11px] lg:text-xs font-mono font-semibold uppercase tracking-[0.22em] text-violet-200">
               Anomalie en cours
             </h1>
+            <span className="inline-flex items-center gap-1 text-[10px] lg:text-xs text-violet-300/80 font-mono">
+              <Trophy className="h-3 w-3 text-yellow-400" />
+              <span className="tabular-nums">Palier {anomaly.tier ?? 1}</span>
+            </span>
             <span className="text-[10px] lg:text-xs text-violet-300/60 font-mono tabular-nums">
               · prof {String(depth).padStart(2, '0')}/{MAX_DEPTH}
             </span>
@@ -389,6 +405,16 @@ function RunHero({
           <DepthMeter current={depth} />
         </div>
 
+        <Link to="/anomalies/leaderboard" className="shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-violet-500/40 hover:bg-violet-950/40 hover:border-violet-400/60 transition-colors"
+          >
+            <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+            <span className="hidden lg:inline">Leaderboard</span>
+          </Button>
+        </Link>
         <Button
           onClick={onRetreat}
           disabled={advancePending || retreatPending}
@@ -488,6 +514,8 @@ interface AnomalyRow {
   id: string;
   status: string;
   currentDepth: number;
+  /** V5-Tiers : palier sélectionné à l'engage (1..N). */
+  tier?: number;
   fleet?: unknown;
   lootMinerai: string | number;
   lootSilicium: string | number;
