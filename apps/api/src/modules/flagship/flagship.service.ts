@@ -1,6 +1,6 @@
 import { eq, asc, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents, anomalies } from '@exilium/db';
+import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents, anomalies, flagshipModuleInventory, moduleDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -38,6 +38,60 @@ export function createFlagshipService(
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
       .trim();
+  }
+
+  /**
+   * V7.1 Starter weapons : grant les 3 starter weapon modules du hull
+   * (1 par rareté) à l'inventaire du flagship + auto-équipe dans les
+   * slots Arsenal SI vides. Idempotent — peut être appelé sans risque
+   * à la création + à chaque change de hull.
+   *
+   * Convention : id = `<hullId>-w-starter-<rarity>` (cf migration 0075).
+   * Si le hull n'a pas de starters seedés, no-op silencieux.
+   */
+  async function grantAndEquipStarterWeapons(flagshipId: string, hullId: string) {
+    const starters = await db
+      .select({ id: moduleDefinitions.id, rarity: moduleDefinitions.rarity })
+      .from(moduleDefinitions)
+      .where(and(
+        eq(moduleDefinitions.hullId, hullId),
+        eq(moduleDefinitions.kind, 'weapon'),
+        sql`${moduleDefinitions.id} LIKE '%-w-starter-%'`,
+        eq(moduleDefinitions.enabled, true),
+      ));
+    if (starters.length === 0) return;
+
+    // Grant inventory (idempotent on the unique flagship_id + module_id key)
+    for (const s of starters) {
+      await db.insert(flagshipModuleInventory)
+        .values({ flagshipId, moduleId: s.id, count: 1 })
+        .onConflictDoNothing();
+    }
+
+    // Auto-equip in empty Arsenal slots only (preserve player choices)
+    const [row] = await db.select({ loadout: flagships.moduleLoadout })
+      .from(flagships).where(eq(flagships.id, flagshipId)).limit(1);
+    if (!row) return;
+    const loadout = ((row.loadout ?? {}) as Record<string, unknown>);
+    const slot = ({ ...((loadout[hullId] ?? {}) as Record<string, unknown>) });
+    let changed = false;
+    for (const s of starters) {
+      const slotKey = s.rarity === 'common' ? 'weaponCommon'
+        : s.rarity === 'rare' ? 'weaponRare'
+        : s.rarity === 'epic' ? 'weaponEpic'
+        : null;
+      if (!slotKey) continue;
+      if (!slot[slotKey]) {
+        slot[slotKey] = s.id;
+        changed = true;
+      }
+    }
+    if (changed) {
+      loadout[hullId] = slot;
+      await db.update(flagships)
+        .set({ moduleLoadout: loadout })
+        .where(eq(flagships.id, flagshipId));
+    }
   }
 
   return {
@@ -285,6 +339,10 @@ export function createFlagshipService(
 
       await db.update(users).set({ playstyle: hullConfig.playstyle }).where(eq(users.id, userId));
 
+      // V7.1 : grant + auto-équipe les 3 starter weapons du hull (1 par rareté).
+      // Idempotent — pas de blocage si pas de starters seedés pour ce hull.
+      await grantAndEquipStarterWeapons(created.id, hullId);
+
       return created;
     },
 
@@ -477,6 +535,11 @@ export function createFlagshipService(
       }).where(eq(flagships.id, flagship.id));
 
       await db.update(users).set({ playstyle: hullConfig.playstyle }).where(eq(users.id, userId));
+
+      // V7.1 : grant + auto-équipe les starters du nouveau hull (vu que les
+      // anciens starters appartiennent à l'autre hull). Le player peut
+      // toujours déséquiper s'il a déjà mieux dans le slot.
+      await grantAndEquipStarterWeapons(flagship.id, newHullId);
 
       return { newHullId, refitEndsAt: refitEnd, cooldownEndsAt: cooldownEnd };
     },
