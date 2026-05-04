@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
-import { Zap, Sparkles, Wrench, X, Star } from 'lucide-react';
+import { Zap, Sparkles, Wrench, X, Star, Trophy } from 'lucide-react';
 import { resolveBonus } from '@exilium/game-engine';
 
 interface Props {
@@ -24,7 +24,22 @@ export function AnomalyEngageModal({ open, onClose }: Props) {
   const cost = Number(gameConfig?.universe?.anomaly_entry_cost_exilium) || 5;
   const repairCharges = Number(gameConfig?.universe?.anomaly_repair_charges_per_run) || 3;
   const balance = exilium?.balance ?? 0;
-  const insufficientFunds = balance < cost;
+
+  // V5-Tiers : difficulty + loot + cost scaled by tier
+  const maxUnlocked = flagship?.maxTierUnlocked ?? 1;
+  const [selectedTier, setSelectedTier] = useState(maxUnlocked);
+  // Sync state when flagship arrives after mount (modal could open before query resolves)
+  useEffect(() => {
+    setSelectedTier((prev) => Math.min(prev, maxUnlocked));
+  }, [maxUnlocked]);
+
+  const tierFactor = Number(gameConfig?.universe?.anomaly_tier_multiplier_factor) || 1.0;
+  const tierMult = 1 + (selectedTier - 1) * tierFactor;
+  const lootTierCap = Number(gameConfig?.universe?.anomaly_loot_tier_cap) || 10;
+  const lootMult = Math.min(selectedTier, lootTierCap);
+  const costFactor = Number(gameConfig?.universe?.anomaly_tier_engage_cost_factor) || 1.0;
+  const scaledCost = Math.round(cost * (1 + (selectedTier - 1) * costFactor));
+  const insufficientFundsScaled = balance < scaledCost;
 
   // Research multipliers — applied on top of effective stats (level mult + hull bonuses)
   // to match what the combat actually uses (see FlagshipStatsCard for reference).
@@ -56,7 +71,7 @@ export function AnomalyEngageModal({ open, onClose }: Props) {
       setConfirming(true);
       return;
     }
-    engageMutation.mutate({ ships: {} });
+    engageMutation.mutate({ ships: {}, tier: selectedTier });
   }
 
   const hullName = flagship.hullConfig?.name ?? 'Flagship';
@@ -117,12 +132,36 @@ export function AnomalyEngageModal({ open, onClose }: Props) {
           </div>
         </div>
 
+        <div className="border-t border-panel-border pt-3 space-y-2">
+          <div className="flex items-center gap-3">
+            <span className="text-gray-500 text-sm flex items-center gap-1.5">
+              <Trophy className="h-4 w-4 text-yellow-400" /> Palier
+            </span>
+            <button
+              onClick={() => setSelectedTier(Math.max(1, selectedTier - 1))}
+              disabled={selectedTier <= 1}
+              className="px-2 py-1 rounded hover:bg-panel-hover disabled:opacity-30 text-sm"
+            >◀</button>
+            <span className="font-bold text-lg w-8 text-center">{selectedTier}</span>
+            <button
+              onClick={() => setSelectedTier(Math.min(maxUnlocked, selectedTier + 1))}
+              disabled={selectedTier >= maxUnlocked}
+              className="px-2 py-1 rounded hover:bg-panel-hover disabled:opacity-30 text-sm"
+            >▶</button>
+            <span className="text-xs text-gray-500">/ {maxUnlocked}</span>
+          </div>
+          <div className="text-xs text-gray-500 flex justify-between">
+            <span>Difficulté : ×{tierMult.toFixed(1)} enemy FP</span>
+            <span>Loot : ×{lootMult} ressources</span>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between text-sm border-t border-panel-border pt-3">
           <span className="text-gray-500 flex items-center gap-1.5">
             <Zap className="h-4 w-4 text-purple-400" /> Coût
           </span>
-          <span className={insufficientFunds ? 'text-red-400 font-bold' : 'font-bold'}>
-            {cost} Exilium {insufficientFunds && '(insuffisant)'}
+          <span className={insufficientFundsScaled ? 'text-red-400 font-bold' : 'font-bold'}>
+            {scaledCost} Exilium {insufficientFundsScaled && '(insuffisant)'}
           </span>
         </div>
 
@@ -130,7 +169,7 @@ export function AnomalyEngageModal({ open, onClose }: Props) {
           <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button
             onClick={handleEngage}
-            disabled={insufficientFunds || engageMutation.isPending}
+            disabled={insufficientFundsScaled || engageMutation.isPending}
           >
             {confirming ? 'Confirmer ?' : engageMutation.isPending ? 'Engage…' : 'Engager'}
           </Button>
