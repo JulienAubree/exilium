@@ -188,6 +188,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'anomalies/leaderboard',
+        lazy: lazyLoad(() => import('./pages/AnomalyLeaderboard')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'movements',
         element: <Navigate to="/fleet/movements" replace />,
       },
