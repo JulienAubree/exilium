@@ -185,11 +185,28 @@ function ModulesTab({ activeHullId }: { activeHullId: string }) {
   const { data: allModules } = trpc.modules.list.useQuery();
   const utils = trpc.useUtils();
 
+  // V8.3 : on invalide aussi `flagship.get` parce que FlagshipStatsClearCard
+  // lit `flagship.moduleLoadout` directement depuis ce cache (le query
+  // `modules.loadout.get` est désactivé quand directLoadout existe). Sans ça,
+  // le tile stats ne reflète jamais l'équipement jusqu'à un refresh manuel.
+  // On invalide aussi `modules.inventory.list` pour prendre en compte
+  // d'éventuels changements de count futurs.
   const equipMutation = trpc.modules.loadout.equip.useMutation({
-    onSuccess: () => { utils.modules.loadout.get.invalidate(); refetchLoadout(); setPendingSlot(null); },
+    onSuccess: () => {
+      utils.modules.loadout.get.invalidate();
+      utils.flagship.get.invalidate();
+      utils.modules.inventory.list.invalidate();
+      refetchLoadout();
+      setPendingSlot(null);
+    },
   });
   const unequipMutation = trpc.modules.loadout.unequip.useMutation({
-    onSuccess: () => { utils.modules.loadout.get.invalidate(); refetchLoadout(); },
+    onSuccess: () => {
+      utils.modules.loadout.get.invalidate();
+      utils.flagship.get.invalidate();
+      utils.modules.inventory.list.invalidate();
+      refetchLoadout();
+    },
   });
 
   // V7-WeaponProfiles : map d'inventaire enrichie avec kind + effect, exposée
