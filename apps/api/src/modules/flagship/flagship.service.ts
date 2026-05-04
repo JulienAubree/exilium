@@ -8,7 +8,7 @@ import type { createTalentService } from './talent.service.js';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createReportService } from '../report/report.service.js';
 import { listFlagshipImageIndexes, getRandomFlagshipImageIndex } from '../../lib/flagship-image.util.js';
-import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport, xpToLevel } from '@exilium/game-engine';
+import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport, xpToLevel, levelMultiplier } from '@exilium/game-engine';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -121,23 +121,27 @@ export function createFlagshipService(
       // Always return hull config + effective stats for display
       const hullConfig = flagship.hullId ? (config.hulls[flagship.hullId] ?? null) : null;
 
+      // V4-XP : compute level multiplier from config + flagship.level
+      const levelPct = Number(config.universe.flagship_xp_level_multiplier_pct) || 0.05;
+      const levelMult = levelMultiplier(flagship.level, levelPct);
+
       const effectiveStats = {
-        weapons: flagship.weapons,
-        shield: flagship.shield,
-        hull: flagship.hull,
-        baseArmor: flagship.baseArmor,
-        shotCount: flagship.shotCount,
-        cargoCapacity: flagship.cargoCapacity,
-        fuelConsumption: flagship.fuelConsumption,
-        baseSpeed: flagship.baseSpeed,
-        driveType: flagship.driveType,
+        weapons:         Math.round(flagship.weapons * levelMult),
+        shield:          Math.round(flagship.shield * levelMult),
+        hull:            Math.round(flagship.hull * levelMult),
+        baseArmor:       Math.round(flagship.baseArmor * levelMult),
+        shotCount:       flagship.shotCount,        // pas multiplié (count entier)
+        cargoCapacity:   flagship.cargoCapacity,    // pas multiplié (stat non-combat)
+        fuelConsumption: flagship.fuelConsumption,  // pas multiplié
+        baseSpeed:       flagship.baseSpeed,        // pas multiplié
+        driveType:       flagship.driveType,
       };
 
-      // Apply hull combat bonuses (only when stationed)
+      // Apply hull combat bonuses (only when stationed) — multiplied too
       if (hullConfig && flagship.status === 'active') {
-        effectiveStats.weapons   += (hullConfig.passiveBonuses.bonus_weapons   ?? 0);
-        effectiveStats.baseArmor += (hullConfig.passiveBonuses.bonus_armor     ?? 0);
-        effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);
+        effectiveStats.weapons   += Math.round((hullConfig.passiveBonuses.bonus_weapons   ?? 0) * levelMult);
+        effectiveStats.baseArmor += Math.round((hullConfig.passiveBonuses.bonus_armor     ?? 0) * levelMult);
+        effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);  // pas multiplié
       }
 
       // Fetch active cooldowns for hull abilities (replaces the talent.list cooldowns
