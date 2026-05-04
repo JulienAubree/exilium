@@ -11,7 +11,10 @@ import {
   pickEventGap,
   resolveActiveAbility,
   tierForDepth,
+  xpFromCombat,
+  xpFromRunDepth,
   type UnitCombatStats,
+  type XpConfig,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
@@ -412,6 +415,10 @@ export function createAnomalyService(
           reportId: report.id,
           droppedModule: null,
           finalDrops: [],
+          // V4-XP : wipe ne rapporte pas d'XP, mais on remonte les champs pour
+          // que le front puisse afficher uniformément (xpGained=0, levelUp=null).
+          xpGained: 0,
+          levelUp: null as { newLevel: number; oldLevel: number } | null,
         };
       }
 
@@ -491,6 +498,24 @@ export function createAnomalyService(
       // the row as completed, refund nothing (loot stays), and return the
       // resources/ships to the homeworld via the same path as `retreat`.
       const runComplete = newDepth >= ANOMALY_MAX_DEPTH;
+
+      // V4-XP : grant XP per-combat (+ bonus per-run depth si runComplete).
+      // Mutualisé entre la branche runComplete et la branche survived classique
+      // car les deux branches surviennent au même point (combat gagné).
+      const xpConfig: XpConfig = {
+        perKillFpFactor: Number(config.universe.flagship_xp_per_kill_fp_factor) || 0.10,
+        perDepthBonus: Number(config.universe.flagship_xp_per_depth_bonus) || 100,
+        levelMultiplierPct: Number(config.universe.flagship_xp_level_multiplier_pct) || 0.05,
+        maxLevel: Number(config.universe.flagship_max_level) || 60,
+      };
+      const xpGainedCombat = xpFromCombat(result.enemyFP, xpConfig);
+      const xpGainedDepthBonus = runComplete ? xpFromRunDepth(newDepth, xpConfig) : 0;
+      const xpGainedTotal = xpGainedCombat + xpGainedDepthBonus;
+      const xpResult = await flagshipService.grantXp(userId, xpGainedTotal);
+      const levelUpPayload = xpResult.levelUp
+        ? { newLevel: xpResult.newLevel, oldLevel: xpResult.oldLevel }
+        : null;
+
       if (runComplete) {
         const home = await getHomeworld(userId);
         if (!home) {
@@ -573,6 +598,8 @@ export function createAnomalyService(
           droppedModule,
           finalDrops,
           runComplete: true,
+          xpGained: xpGainedTotal,
+          levelUp: levelUpPayload,
         };
       }
 
@@ -652,6 +679,8 @@ export function createAnomalyService(
         droppedModule,
         finalDrops: [] as Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>,
         runComplete: false,
+        xpGained: xpGainedTotal,
+        levelUp: levelUpPayload,
       };
       });
     },
@@ -987,7 +1016,26 @@ export function createAnomalyService(
 
         await flagshipService.returnFromMission(userId, home.id);
 
-        return { ok: true, finalDrops };
+        // V4-XP : grant XP bonus per-run (depth atteinte au moment du retreat).
+        // Pas de combat ici, donc seulement le bonus de profondeur.
+        const config = await gameConfigService.getFullConfig();
+        const xpConfig: XpConfig = {
+          perKillFpFactor: Number(config.universe.flagship_xp_per_kill_fp_factor) || 0.10,
+          perDepthBonus: Number(config.universe.flagship_xp_per_depth_bonus) || 100,
+          levelMultiplierPct: Number(config.universe.flagship_xp_level_multiplier_pct) || 0.05,
+          maxLevel: Number(config.universe.flagship_max_level) || 60,
+        };
+        const xpGainedDepth = xpFromRunDepth(row.currentDepth, xpConfig);
+        const xpResult = await flagshipService.grantXp(userId, xpGainedDepth);
+
+        return {
+          ok: true,
+          finalDrops,
+          xpGained: xpGainedDepth,
+          levelUp: xpResult.levelUp
+            ? { newLevel: xpResult.newLevel, oldLevel: xpResult.oldLevel }
+            : null,
+        };
       });
     },
 
