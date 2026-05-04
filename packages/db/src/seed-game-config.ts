@@ -540,11 +540,16 @@ const UNIVERSE_CONFIG = [
   { key: 'pve_exploration_min_distance', value: 3 },
   { key: 'pve_exploration_expiration_hours', value: 48 },
 
-  // Anomalie gravitationnelle (rogue-lite V1)
+  // Anomalie gravitationnelle (rogue-lite V1 + V5-Tiers + V6-AbsoluteFP)
   { key: 'anomaly_entry_cost_exilium', value: 5 },
-  { key: 'anomaly_difficulty_growth', value: 1.3 },
+  { key: 'anomaly_difficulty_growth', value: 1.06 },        // V6 : intra-palier smooth depth 1→20
+  { key: 'anomaly_enemy_max_ratio', value: 3.0 },           // V6 : ×3 cap au depth max
+  { key: 'anomaly_tier_base_fp', value: 80 },               // V6 : FP enemy au palier 1 depth 1
+  { key: 'anomaly_tier_fp_growth', value: 1.7 },            // V6 : croissance FP entre paliers
   { key: 'anomaly_loot_base', value: 5000 },
   { key: 'anomaly_loot_growth', value: 1.4 },
+  { key: 'anomaly_loot_tier_cap', value: 10 },              // V5-Tiers : loot scaling capped à palier 10
+  { key: 'anomaly_tier_engage_cost_factor', value: 1.0 },   // V5-Tiers : cost engage scale linéaire ×tier
   { key: 'anomaly_enemy_recovery_ratio', value: 0.15 },
   { key: 'anomaly_node_travel_seconds', value: 120 },
 
