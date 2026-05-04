@@ -176,7 +176,9 @@ export function createAnomalyService(
       const baseCost = Number(config.universe.anomaly_entry_cost_exilium) || 5;
       // V5-Tiers : cost scales with tier
       const costFactor = parseConfigNumber(config.universe.anomaly_tier_engage_cost_factor, 1.0);
-      const cost = Math.round(baseCost * (1 + (input.tier - 1) * costFactor));
+      // Clamp at 0 — guards against admin setting a negative cost factor that
+      // would otherwise *credit* the player Exilium on engage.
+      const cost = Math.max(0, Math.round(baseCost * (1 + (input.tier - 1) * costFactor)));
       const repairChargesMax = Number(config.universe.anomaly_repair_charges_per_run) || 3;
 
       return await db.transaction(async (tx) => {
@@ -380,7 +382,7 @@ export function createAnomalyService(
         attackerFP: result.playerFP,
         defenderFP: result.enemyFP,
         shotsPerRound: result.shotsPerRound,
-        extra: { anomalyDepth: newDepth, anomalyId: row.id },
+        extra: { anomalyDepth: newDepth, anomalyId: row.id, tier: row.tier ?? 1 },
       });
       const outcomeLabel = wipe
         ? 'Défaite totale'
@@ -458,8 +460,11 @@ export function createAnomalyService(
       // V5-Tiers : loot scales linearly with the run's tier, capped to
       // anomaly_loot_tier_cap (default 10) so re-running tier 50 doesn't
       // print resources. Tunable via universe_config without redeploy.
-      const lootTierCap = Number(config.universe.anomaly_loot_tier_cap) || 10;
-      const effectiveTierForLoot = Math.min(row.tier ?? 1, lootTierCap);
+      const lootTierCap = parseConfigNumber(config.universe.anomaly_loot_tier_cap, 10);
+      // Defensive Number() on row.tier: it's an int column but a corrupted
+      // jsonb leak could feed a string here — `Number(x) || 1` falls back to 1
+      // for NaN/0/undefined.
+      const effectiveTierForLoot = Math.min(Number(row.tier) || 1, lootTierCap);
       const scaledLootBase = lootBase * effectiveTierForLoot;
 
       const loot = anomalyLoot(newDepth, scaledLootBase, lootGrowth);
@@ -639,6 +644,15 @@ export function createAnomalyService(
           }).where(eq(flagships.userId, userId));
         }
         const newTierUnlocked = newMaxUnlocked > oldMaxUnlocked ? newMaxUnlocked : null;
+        // Audit trail: log every new tier unlock so we can correlate run
+        // performance with progression in production logs.
+        if (newTierUnlocked !== null) {
+          console.info('[anomaly] tier unlocked', {
+            userId,
+            runTier,
+            newMaxUnlocked,
+          });
+        }
 
         return {
           outcome: 'survived' as const,
