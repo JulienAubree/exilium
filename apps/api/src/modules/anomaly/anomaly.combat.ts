@@ -11,6 +11,7 @@ import {
   applyModulesToStats,
   parseLoadout,
   levelMultiplier,
+  tierMultiplier,
   type CombatInput,
   type ShipCombatConfig,
   type CombatMultipliers,
@@ -28,6 +29,15 @@ import {
   getCombatMultipliers,
 } from '../fleet/fleet.types.js';
 import { buildCombatConfig } from '@exilium/game-engine';
+
+/**
+ * Robust parser for game-config numbers : preserves intentional 0 values
+ * (kill-switch). `Number(x) || default` would clobber 0 with `default`.
+ */
+function parseConfigNumber(val: unknown, fallback: number): number {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : fallback;
+}
 
 /**
  * Loads the flagship's combat config including:
@@ -220,10 +230,16 @@ export async function generateAnomalyEnemy(
     userId: string;
     fleet: Record<string, FleetEntry>;
     depth: number;
+    /** V5-Tiers (2026-05-04) : palier pour scaling enemy FP. Default 1. */
+    tier: number;
     equippedModules?: unknown;
   },
 ): Promise<{ enemyFleet: Record<string, number>; enemyFP: number; playerFP: number }> {
   const config = await gameConfigService.getFullConfig();
+
+  // V5-Tiers : compute the difficulty multiplier for this tier
+  const tierFactor = parseConfigNumber(config.universe.anomaly_tier_multiplier_factor, 1.0);
+  const tierMult = tierMultiplier(args.tier, tierFactor);
 
   const baseShipConfigs = buildShipCombatConfigs(config);
 
@@ -288,10 +304,12 @@ export async function generateAnomalyEnemy(
 
   // Difficulty curve: baseRatio (0.5 default V5) × growth^(depth-1), capped at
   // maxRatio (1.3 default). Tunable via universe_config without redeploy.
+  // V5-Tiers : tierMultiplier applied post-cap to differentiate paliers.
   const targetEnemyFP = anomalyEnemyFP(playerFP, args.depth, {
-    baseRatio: Number(config.universe.anomaly_enemy_base_ratio) || undefined,
-    growth: Number(config.universe.anomaly_difficulty_growth) || undefined,
-    maxRatio: Number(config.universe.anomaly_enemy_max_ratio) || undefined,
+    baseRatio: parseConfigNumber(config.universe.anomaly_enemy_base_ratio, 0.5),
+    growth: parseConfigNumber(config.universe.anomaly_difficulty_growth, 1.15),
+    maxRatio: parseConfigNumber(config.universe.anomaly_enemy_max_ratio, 1.3),
+    tierMultiplier: tierMult,
   });
 
   // Anomaly compositions include EVERY combat ship type (interceptor,
@@ -329,6 +347,10 @@ export async function runAnomalyNode(
     fleet: Record<string, FleetEntry>;
     depth: number;
     predefinedEnemy: { fleet: Record<string, number>; fp: number };
+    /** V5-Tiers (2026-05-04) : palier de la run en cours. Le predefinedEnemy a
+     * déjà été scaled au moment de la génération (engage ou advance précédent),
+     * donc cette valeur est conservée pour cohérence/futur usage (audit). */
+    tier: number;
     /** Snapshot of the equipped modules (taken at engage). */
     equippedModules?: unknown;
     /** Pending epic effect persisted by a previous activateEpic call. */

@@ -258,6 +258,7 @@ export function createAnomalyService(
           userId,
           fleet,
           depth: 1,
+          tier: input.tier,  // V5-Tiers
           equippedModules: equippedSnapshot,
         });
 
@@ -329,6 +330,7 @@ export function createAnomalyService(
           userId,
           fleet,
           depth: newDepth,
+          tier: row.tier ?? 1,  // V5-Tiers
           equippedModules: row.equippedModules,
         });
         predefinedEnemy = { fleet: generated.enemyFleet, fp: Math.round(generated.enemyFP) };
@@ -343,6 +345,7 @@ export function createAnomalyService(
         fleet,
         depth: newDepth,
         predefinedEnemy,
+        tier: row.tier ?? 1,  // V5-Tiers
         equippedModules: row.equippedModules,
         pendingEpicEffect,
       });
@@ -442,6 +445,9 @@ export function createAnomalyService(
           // que le front puisse afficher uniformément (xpGained=0, levelUp=null).
           xpGained: 0,
           levelUp: null as { newLevel: number; oldLevel: number } | null,
+          // V5-Tiers : pas de complétion sur un wipe.
+          tierCompleted: null as number | null,
+          newTierUnlocked: null as number | null,
         };
       }
 
@@ -449,7 +455,14 @@ export function createAnomalyService(
       const lootBase = Number(config.universe.anomaly_loot_base) || 5000;
       const lootGrowth = Number(config.universe.anomaly_loot_growth) || 1.4;
 
-      const loot = anomalyLoot(newDepth, lootBase, lootGrowth);
+      // V5-Tiers : loot scales linearly with the run's tier, capped to
+      // anomaly_loot_tier_cap (default 10) so re-running tier 50 doesn't
+      // print resources. Tunable via universe_config without redeploy.
+      const lootTierCap = Number(config.universe.anomaly_loot_tier_cap) || 10;
+      const effectiveTierForLoot = Math.min(row.tier ?? 1, lootTierCap);
+      const scaledLootBase = lootBase * effectiveTierForLoot;
+
+      const loot = anomalyLoot(newDepth, scaledLootBase, lootGrowth);
 
       // Recovery now scales with each ship's FP (heavier = better salvage),
       // capped at 25%. Build the same shipStats as the FP calc so the
@@ -606,6 +619,27 @@ export function createAnomalyService(
 
         await flagshipService.returnFromMission(userId, home.id);
 
+        // V5-Tiers : unlock next tier if this run cleared a tier never completed before.
+        // Le flagship n'est pas en scope ici — on fetch les colonnes tier dans la même tx
+        // pour garantir la cohérence avec l'écriture qui suit.
+        const [flagshipTierRow] = await tx.select({
+          maxTierUnlocked: flagships.maxTierUnlocked,
+          maxTierCompleted: flagships.maxTierCompleted,
+        }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        const oldMaxUnlocked = flagshipTierRow?.maxTierUnlocked ?? 1;
+        const oldMaxCompleted = flagshipTierRow?.maxTierCompleted ?? 0;
+        const runTier = row.tier ?? 1;
+        const newMaxCompleted = Math.max(oldMaxCompleted, runTier);
+        const newMaxUnlocked = Math.max(oldMaxUnlocked, runTier + 1);
+        if (newMaxCompleted > oldMaxCompleted || newMaxUnlocked > oldMaxUnlocked) {
+          await tx.update(flagships).set({
+            maxTierCompleted: newMaxCompleted,
+            maxTierUnlocked: newMaxUnlocked,
+            updatedAt: new Date(),
+          }).where(eq(flagships.userId, userId));
+        }
+        const newTierUnlocked = newMaxUnlocked > oldMaxUnlocked ? newMaxUnlocked : null;
+
         return {
           outcome: 'survived' as const,
           fleet: result.attackerSurvivors,
@@ -623,6 +657,8 @@ export function createAnomalyService(
           runComplete: true,
           xpGained: xpGainedTotal,
           levelUp: levelUpPayload,
+          tierCompleted: runTier,
+          newTierUnlocked,  // null if no new unlock (re-run lower tier)
         };
       }
 
@@ -655,6 +691,7 @@ export function createAnomalyService(
           userId,
           fleet: result.attackerSurvivors,
           depth: newDepth + 1,
+          tier: row.tier ?? 1,  // V5-Tiers
           equippedModules: row.equippedModules,
         });
         nextEnemyFleet = nextEnemy.enemyFleet;
@@ -704,6 +741,9 @@ export function createAnomalyService(
         runComplete: false,
         xpGained: xpGainedTotal,
         levelUp: levelUpPayload,
+        // V5-Tiers : pas de complétion sur un noeud intermédiaire.
+        tierCompleted: null as number | null,
+        newTierUnlocked: null as number | null,
       };
       });
     },
@@ -752,6 +792,7 @@ export function createAnomalyService(
             userId,
             fleet: row.fleet as FleetMap,
             depth: row.currentDepth + 1,
+            tier: row.tier ?? 1,  // V5-Tiers
             equippedModules: row.equippedModules,
           });
           const config = await gameConfigService.getFullConfig();
@@ -868,6 +909,7 @@ export function createAnomalyService(
           userId,
           fleet: applied.fleet,
           depth: row.currentDepth + 1,
+          tier: row.tier ?? 1,  // V5-Tiers
           equippedModules: row.equippedModules,
         });
 
