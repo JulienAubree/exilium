@@ -587,12 +587,21 @@ function RunView({
   const nextAt = anomaly.nextNodeAt ? new Date(anomaly.nextNodeAt) : null;
   const nextAtMs = nextAt?.getTime() ?? null;
   const [, forceTick] = useReducer((x: number) => x + 1, 0);
+  // V8.8 — setInterval(1s) au lieu d'un setTimeout one-shot. Le setTimeout
+  // précédent était throttlé quand le tab partait en background, et un
+  // déclenchement unique ne tolère aucun drift d'horloge ; le countdown
+  // restait bloqué à 00:00:00 jusqu'à reload manuel. Avec un tick chaque
+  // seconde, le re-render arrive systématiquement et `ready` devient true
+  // dès que nextAt est passé. On clear l'interval dès qu'on est ready pour
+  // ne pas tourner inutilement.
   useEffect(() => {
     if (!nextAtMs) return;
-    const delay = nextAtMs - Date.now();
-    if (delay <= 0) return;
-    const id = setTimeout(forceTick, delay);
-    return () => clearTimeout(id);
+    if (Date.now() >= nextAtMs) return;
+    const id = setInterval(() => {
+      forceTick();
+      if (Date.now() >= nextAtMs) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
   }, [nextAtMs]);
   const ready = !nextAt || nextAt <= new Date();
 
