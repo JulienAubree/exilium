@@ -243,28 +243,15 @@ function ModulesTab({ activeHullId }: { activeHullId: string }) {
     ? (inventory?.items ?? []).find((i) => i.moduleId === detailId)
     : null;
 
-  // V7-WeaponProfiles : filtre la liste d'inventaire montrée au panneau de droite.
-  // - Si pendingSlot est un weapon → on ne montre que les modules kind='weapon'
-  //   de la rareté correspondante.
-  // - Si pendingSlot est passive → on montre uniquement les passives
-  //   (kind != 'weapon') du hull, comme avant.
-  // - Sans pendingSlot, on montre TOUT (passives + weapons mélangés) — l'utilisateur
-  //   peut filtrer via le rarity selector.
-  const filteredInventory = useMemo(() => {
-    const all = (inventory?.items ?? []).filter((i) => i.hullId === selectedHull);
-    if (!pendingSlot) return all;
-    if (pendingSlot.kind === 'weapon') {
-      return all.filter((i) => ((i as { kind?: string }).kind ?? 'passive') === 'weapon' && i.rarity === pendingSlot.rarity);
-    }
-    return all.filter((i) => ((i as { kind?: string }).kind ?? 'passive') !== 'weapon');
-  }, [inventory, selectedHull, pendingSlot]);
-
-  // The ModuleInventoryPanel uses selectedSlotType only for rarity matching —
-  // we map both kinds of pending slots to a rarity filter so the panel narrows
-  // correctly.
-  const inventoryPanelRarity = pendingSlot
-    ? (pendingSlot.kind === 'weapon' ? pendingSlot.rarity : pendingSlot.slotType)
-    : null;
+  // V8.3-FlagshipModulesUX : on délègue au panneau le filtrage kind+rareté.
+  // Il auto-applique le filtre correspondant à `pendingSlot` (override-able)
+  // et affiche un banner explicite "→ Équiper dans : <slot>" qui se ferme
+  // au clic sur la croix. Ici on ne filtre que par hull pour qu'il puisse
+  // toggler kind sans perdre l'inventaire.
+  const inventoryForPanel = useMemo(
+    () => (inventory?.items ?? []).filter((i) => i.hullId === selectedHull),
+    [inventory, selectedHull],
+  );
 
   function handleEquipFromInventory(moduleId: string) {
     if (!pendingSlot) return;
@@ -325,12 +312,13 @@ function ModulesTab({ activeHullId }: { activeHullId: string }) {
           )}
         </div>
         <ModuleInventoryPanel
-          items={filteredInventory}
+          items={inventoryForPanel}
           hullFilter={selectedHull}
-          selectedSlotType={inventoryPanelRarity}
+          pendingSlot={pendingSlot}
           equippedIds={equippedIds}
           onEquip={handleEquipFromInventory}
           onDetails={(moduleId) => setDetailId(moduleId)}
+          onClearPending={() => setPendingSlot(null)}
         />
       </div>
       <ModuleDetailModal
