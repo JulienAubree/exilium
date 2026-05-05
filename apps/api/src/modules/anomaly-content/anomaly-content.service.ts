@@ -7,6 +7,7 @@ import {
   anomalyContentSchema,
   type AnomalyContent,
 } from './anomaly-content.types.js';
+import { DEFAULT_ANOMALY_BOSSES } from './anomaly-bosses.seed.js';
 
 export function createAnomalyContentService(db: Database) {
   /** Reads the singleton row, falls back to defaults on missing/invalid blob. */
@@ -25,9 +26,24 @@ export function createAnomalyContentService(db: Database) {
       return DEFAULT_ANOMALY_CONTENT;
     }
 
+    // V9.3 — fallback bosses : la row a pu être écrite avant l'introduction
+    // du champ `bosses` (V9.2). Si vide, on injecte les 50 bosses seedés en
+    // memoire pour que l'admin/runtime aient toujours un pool fonctionnel.
+    // Au prochain save admin, ça écrira en DB.
+    let data = parsed.data;
+    if (data.bosses.length === 0) {
+      data = {
+        ...data,
+        bosses: anomalyContentSchema.parse({
+          ...data,
+          bosses: DEFAULT_ANOMALY_BOSSES,
+        }).bosses,
+      };
+    }
+
     // Defensive: ensure we always return all 20 depth slots even if some
     // were trimmed somehow. Missing slots default to empty.
-    return normalizeDepths(parsed.data);
+    return normalizeDepths(data);
   }
 
   async function writeContent(content: AnomalyContent): Promise<AnomalyContent> {
