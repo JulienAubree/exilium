@@ -2,6 +2,7 @@ import { Sparkles } from 'lucide-react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { formatNumber } from '@/lib/format';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
+import { cn } from '@/lib/utils';
 
 interface OutcomeApplied {
   minerai?: number;
@@ -30,6 +31,10 @@ interface AnomalyEvent {
 interface Props {
   log: EventLogEntry[];
   events: AnomalyEvent[];
+  /** V9.3 — masque le header "Événements résolus" interne quand le composant
+   *  est imbriqué dans un conteneur qui fournit déjà son propre header
+   *  (ex: section "Événements" du RunJournal). Default false. */
+  hideHeader?: boolean;
 }
 
 /**
@@ -37,18 +42,20 @@ interface Props {
  * combat reports — events don't generate full reports in V3, so this is the
  * only trace of what happened.
  */
-export function AnomalyEventLog({ log, events }: Props) {
+export function AnomalyEventLog({ log, events, hideHeader = false }: Props) {
   if (log.length === 0) return null;
 
   const eventById = new Map(events.map((e) => [e.id, e]));
 
   return (
     <div>
-      <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-        <Sparkles className="h-3 w-3 text-violet-400" />
-        Événements résolus
-      </h3>
-      <ul className="space-y-1.5 text-xs">
+      {!hideHeader && (
+        <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-violet-400" />
+          Événements résolus
+        </h3>
+      )}
+      <ul className={cn('space-y-1.5 text-xs')}>
         {log.map((entry, i) => {
           const def = eventById.get(entry.eventId);
           const choice = def?.choices[entry.choiceIndex];

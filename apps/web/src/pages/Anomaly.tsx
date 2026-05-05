@@ -618,6 +618,8 @@ function RunView({
     outcomeApplied: Record<string, unknown>;
     resolvedAt: string;
   }>;
+  const defeatedBossIds = ((anomaly.defeatedBossIds ?? []) as unknown[])
+    .filter((x): x is string => typeof x === 'string');
   const activeBuffs = (anomaly.activeBuffs ?? []) as Array<{
     type: BossBuffType;
     magnitude: number;
@@ -730,14 +732,6 @@ function RunView({
       <aside className="space-y-3 min-w-0">
         <RunFlagshipStatsCard hullPercent={fleet['flagship']?.hullPercent ?? 1.0} />
         <RunFlagshipLoadoutCard equippedModules={equippedModules} />
-        {activeBuffs.length > 0 && (
-          <ActiveBuffsCard
-            buffs={activeBuffs}
-            bossesById={
-              new Map((bossesPoolData?.bosses ?? []).map((b) => [b.id, b]))
-            }
-          />
-        )}
         {/* V8 sidebar refresh : FleetCard supprimé — l'info hull% a migré dans
             RunFlagshipStatsCard. En mode anomaly flagship-only, lister "flagship ×1"
             était redondant et exposait le mot anglais à l'écran. */}
@@ -750,15 +744,17 @@ function RunView({
             gameConfig={gameConfig}
           />
         )}
-        {eventLog.length > 0 && content?.events && (
-          <SidebarCard
-            label="Événements résolus"
-            count={eventLog.length}
-            collapsibleKey="events"
-            defaultCollapsed
-          >
-            <AnomalyEventLog log={eventLog as never} events={content.events} />
-          </SidebarCard>
+        {/* V9.3 — Journal de la run : unifie Boss vaincus (avec buff inline)
+            et Événements résolus. Les buffs apparaissent rattachés à leur
+            boss-source pour une lecture chronologique cohérente. */}
+        {(defeatedBossIds.length > 0 || (eventLog.length > 0 && content?.events)) && (
+          <RunJournal
+            defeatedBossIds={defeatedBossIds}
+            activeBuffs={activeBuffs}
+            bossesPool={bossesPoolData?.bosses ?? []}
+            eventLog={eventLog}
+            events={content?.events ?? []}
+          />
         )}
         {reportIds.length > 0 && <ReportsCard reportIds={reportIds} />}
       </aside>
@@ -1461,46 +1457,143 @@ function describeBuff(type: BossBuffType, magnitude: number): string {
   }
 }
 
-function ActiveBuffsCard({
-  buffs,
-  bossesById,
+/**
+ * V9.3 — Journal unifié de la run : boss vaincus (avec leur buff débloqué
+ * inline) + événements résolus narratifs. Remplace l'ancienne split
+ * `ActiveBuffsCard` + `Événements résolus` qui faisait 2 cards distinctes
+ * pour de l'info corrélée.
+ *
+ * Structure :
+ *   - Section "Boss vaincus" : pour chaque boss battu, image + nom + tier
+ *     + buff appliqué en sous-ligne (couleur tone du buff).
+ *   - Section "Événements" : list des choix narratifs résolus avec leur outcome.
+ */
+function RunJournal({
+  defeatedBossIds,
+  activeBuffs,
+  bossesPool,
+  eventLog,
+  events,
 }: {
-  buffs: Array<{ type: BossBuffType; magnitude: number; sourceBossId: string }>;
-  bossesById: Map<string, { id: string; name: string }>;
+  defeatedBossIds: string[];
+  activeBuffs: Array<{ type: BossBuffType; magnitude: number; sourceBossId: string }>;
+  bossesPool: Array<{ id: string; name: string; tier: string; image?: string; title?: string }>;
+  eventLog: Array<{
+    depth: number;
+    eventId: string;
+    choiceIndex: number;
+    outcomeApplied: Record<string, unknown>;
+    resolvedAt: string;
+  }>;
+  events: Array<{ id: string; title: string; choices: Array<{ label: string }> }>;
 }) {
+  const bossesById = new Map(bossesPool.map((b) => [b.id, b]));
+  // Map sourceBossId → buff (un buff par boss, le user choisit 1 parmi 2-3
+  // au moment de la victoire). Si plusieurs buffs sourcés du même boss
+  // (cas théorique), on garde le dernier.
+  const buffByBossId = new Map(activeBuffs.map((b) => [b.sourceBossId, b]));
+  const hasBosses = defeatedBossIds.length > 0;
+  const hasEvents = eventLog.length > 0;
+  const totalCount = defeatedBossIds.length + eventLog.length;
+
+  const TIER_TONE: Record<string, string> = {
+    early: 'text-emerald-300/85 border-emerald-500/25',
+    mid:   'text-amber-300/85 border-amber-500/25',
+    deep:  'text-rose-300/85 border-rose-500/25',
+  };
+
   return (
     <SidebarCard
-      label="Bénédictions de boss"
-      count={buffs.length}
+      label="Journal de la run"
+      count={totalCount}
       accent="amber"
-      collapsibleKey="boss-buffs"
+      collapsibleKey="run-journal"
     >
-      <ul className="space-y-1.5">
-        {buffs.map((b, i) => {
-          const boss = bossesById.get(b.sourceBossId);
-          return (
-            <li
-              key={`${b.sourceBossId}-${i}`}
-              className={cn(
-                'rounded-md border px-2 py-1.5 text-[11px] flex items-baseline gap-2',
-                BUFF_TONES_FR[b.type],
-              )}
-            >
-              <span className="font-mono font-semibold tracking-tight">
-                {BUFF_LABELS_FR[b.type]}
-              </span>
-              <span className="opacity-80 truncate flex-1">
-                {describeBuff(b.type, b.magnitude)}
-              </span>
-              {boss && (
-                <span className="text-[9px] opacity-60 truncate" title={`Source : ${boss.name}`}>
-                  ← {boss.name}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="space-y-3">
+        {hasBosses && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-rose-300/80">
+              <Skull className="h-3 w-3" />
+              Boss vaincus
+              <span className="ml-auto tabular-nums text-muted-foreground/60">{defeatedBossIds.length}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {defeatedBossIds.map((bossId, i) => {
+                const boss = bossesById.get(bossId);
+                const buff = buffByBossId.get(bossId);
+                const tierTone = boss ? TIER_TONE[boss.tier] ?? '' : '';
+                return (
+                  <li
+                    key={`${bossId}-${i}`}
+                    className="rounded-md border border-rose-500/15 bg-rose-500/5 p-1.5 space-y-1"
+                  >
+                    <div className="flex items-center gap-2">
+                      {boss?.image ? (
+                        <img
+                          src={`${boss.image}-thumb.webp`}
+                          alt={boss.name}
+                          className="h-7 w-7 rounded shrink-0 object-cover border border-rose-500/30"
+                        />
+                      ) : (
+                        <div className="h-7 w-7 rounded shrink-0 border border-rose-500/30 bg-rose-950/40 flex items-center justify-center">
+                          <Skull className="h-3.5 w-3.5 text-rose-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-semibold text-foreground/90 truncate">
+                          {boss?.name ?? bossId}
+                        </div>
+                        {boss?.title && (
+                          <div className="text-[9px] text-muted-foreground/70 truncate italic">
+                            {boss.title}
+                          </div>
+                        )}
+                      </div>
+                      {boss && (
+                        <span className={cn(
+                          'text-[8px] font-mono uppercase tracking-wider px-1 py-0.5 rounded border shrink-0',
+                          tierTone,
+                        )}>
+                          {boss.tier}
+                        </span>
+                      )}
+                    </div>
+                    {buff && (
+                      <div
+                        className={cn(
+                          'rounded border px-1.5 py-1 text-[10px] flex items-baseline gap-1.5',
+                          BUFF_TONES_FR[buff.type],
+                        )}
+                      >
+                        <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                        <span className="font-mono font-semibold tracking-tight">
+                          {BUFF_LABELS_FR[buff.type]}
+                        </span>
+                        <span className="opacity-80 truncate flex-1 font-mono">
+                          {describeBuff(buff.type, buff.magnitude)}
+                        </span>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {hasBosses && hasEvents && <div className="h-px bg-border/30" />}
+
+        {hasEvents && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-violet-300/80">
+              <Sparkles className="h-3 w-3" />
+              Événements résolus
+              <span className="ml-auto tabular-nums text-muted-foreground/60">{eventLog.length}</span>
+            </div>
+            <AnomalyEventLog log={eventLog as never} events={events} hideHeader />
+          </div>
+        )}
+      </div>
     </SidebarCard>
   );
 }
