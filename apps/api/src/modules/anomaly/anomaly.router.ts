@@ -73,11 +73,15 @@ export function createAnomalyRouter(
         return anomalyService.getLeaderboard(input?.limit ?? 50);
       }),
 
-    /** V9 Boss — pool complète des boss seedés (lecture seule). Utilisée par
+    /** V9 Boss — pool complète des boss (lecture seule). Utilisée par
      *  le front pour résoudre id → nom/skills/buffs au moment de l'affichage
-     *  du preview boss et du modal de récompense. */
-    bossesPool: protectedProcedure.query(() => {
-      return { bosses: anomalyBossesService.getPool() };
+     *  du preview boss et du modal de récompense.
+     *
+     *  V9.2 — La pool provient désormais de anomaly_content.bosses (admin
+     *  éditable) avec fallback sur le seed in-memory. Async pour aller hit
+     *  le content service. */
+    bossesPool: protectedProcedure.query(async () => {
+      return { bosses: await anomalyBossesService.getPool() };
     }),
   });
 }

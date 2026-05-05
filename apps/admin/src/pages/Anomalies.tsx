@@ -18,6 +18,8 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
+  Skull,
+  Copy,
 } from 'lucide-react';
 
 type AnomalyContent = inferRouterOutputs<AppRouter>['anomalyContent']['get'];
@@ -25,6 +27,11 @@ type DepthEntry = AnomalyContent['depths'][number];
 type EventEntry = AnomalyContent['events'][number];
 type ChoiceEntry = EventEntry['choices'][number];
 type Outcome = ChoiceEntry['outcome'];
+// V9.2 — boss editing types (matches anomaly-bosses.types.ts schema).
+type BossEntry = AnomalyContent['bosses'][number];
+type BossSkillEntry = BossEntry['skills'][number];
+type BossBuffEntry = BossEntry['buffChoices'][number];
+type BossStatsEntry = NonNullable<BossEntry['bossStats']>;
 
 const TIERS = ['early', 'mid', 'deep'] as const;
 type Tier = (typeof TIERS)[number];
@@ -94,6 +101,85 @@ function newEventTemplate(tier: Tier): EventEntry {
   };
 }
 
+// V9.2 — boss factory helpers ────────────────────────────────────────────────
+
+const BOSS_SKILL_TYPES = [
+  'armor_pierce',
+  'regen',
+  'shield_aura',
+  'damage_burst',
+  'summon_drones',
+  'disable_battery',
+  'armor_corrosion',
+  'last_stand',
+  'evasion',
+  'rafale_swarm',
+] as const;
+type BossSkillType = (typeof BOSS_SKILL_TYPES)[number];
+
+const BOSS_SKILL_LABELS: Record<BossSkillType, string> = {
+  armor_pierce: 'Perforation (armor_pierce)',
+  regen: 'Régénération (regen)',
+  shield_aura: 'Aura de bouclier (shield_aura)',
+  damage_burst: 'Salve dévastatrice (damage_burst)',
+  summon_drones: 'Invocation drones (summon_drones)',
+  disable_battery: 'Brouillage batterie (disable_battery)',
+  armor_corrosion: 'Corrosion armure (armor_corrosion)',
+  last_stand: "Sursaut d'agonie (last_stand)",
+  evasion: 'Esquive (evasion)',
+  rafale_swarm: 'Essaim de rafales (rafale_swarm)',
+};
+
+const BOSS_BUFF_TYPES = [
+  'damage_boost',
+  'hull_repair',
+  'shield_amp',
+  'armor_amp',
+  'extra_charge',
+  'module_unlock',
+] as const;
+type BossBuffType = (typeof BOSS_BUFF_TYPES)[number];
+
+const BOSS_BUFF_LABELS: Record<BossBuffType, string> = {
+  damage_boost: 'Dégâts +N% (damage_boost)',
+  hull_repair: 'Réparation +N% (hull_repair)',
+  shield_amp: 'Bouclier +N% (shield_amp)',
+  armor_amp: 'Blindage +N% (armor_amp)',
+  extra_charge: 'Charges épiques +N (extra_charge)',
+  module_unlock: 'Déblocage module (module_unlock)',
+};
+
+function newBossTemplate(tier: Tier): BossEntry {
+  const id = `boss-${Math.random().toString(36).slice(2, 9)}`;
+  return {
+    id,
+    enabled: true,
+    // V9.2 — Le tier admin (early/mid/deep) doit matcher les profondeurs boss
+    // 1/5 (early), 10/15 (mid), 20 (deep). On force `early` même si la
+    // profondeur est ≤7 ici car les bosses spawnent uniquement à 1/5/10/15/20.
+    tier: tier as BossEntry['tier'],
+    image: '',
+    name: 'Nouveau boss',
+    title: '',
+    description: 'Description à remplir.',
+    fpMultiplier: 1.5,
+    escortFpRatio: 0.4,
+    skills: [{ type: 'armor_pierce', magnitude: 0.30 }],
+    buffChoices: [
+      { type: 'damage_boost', magnitude: 0.20 },
+      { type: 'hull_repair', magnitude: 0.30 },
+    ],
+  };
+}
+
+function duplicateBoss(source: BossEntry): BossEntry {
+  return {
+    ...source,
+    id: `${source.id}-copy-${Math.random().toString(36).slice(2, 6)}`,
+    name: `${source.name} (copie)`,
+  };
+}
+
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function Anomalies() {
@@ -106,10 +192,13 @@ export default function Anomalies() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [resetConfirm, setResetConfirm] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'depths' | 'events'>('depths');
+  const [activeTab, setActiveTab] = useState<'depths' | 'events' | 'bosses'>('depths');
   const [selectedDepth, setSelectedDepth] = useState<number>(1);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventTierFilter, setEventTierFilter] = useState<Tier | 'all'>('all');
+  // V9.2 — boss tab state
+  const [selectedBossId, setSelectedBossId] = useState<string | null>(null);
+  const [bossTierFilter, setBossTierFilter] = useState<Tier | 'all'>('all');
 
   useEffect(() => {
     if (data) setDraft(data);
@@ -127,6 +216,17 @@ export default function Anomalies() {
     }
   }, [activeTab, draft, selectedEventId]);
 
+  // V9.2 — Auto-select a boss when entering the bosses tab.
+  useEffect(() => {
+    if (
+      activeTab === 'bosses' &&
+      draft &&
+      (!selectedBossId || !draft.bosses.find((b) => b.id === selectedBossId))
+    ) {
+      setSelectedBossId(draft.bosses[0]?.id ?? null);
+    }
+  }, [activeTab, draft, selectedBossId]);
+
   const dirty = useMemo(() => {
     if (!data || !draft) return false;
     return JSON.stringify(data) !== JSON.stringify(draft);
@@ -142,6 +242,14 @@ export default function Anomalies() {
     early: draft.events.filter((e) => e.tier === 'early'),
     mid: draft.events.filter((e) => e.tier === 'mid'),
     deep: draft.events.filter((e) => e.tier === 'deep'),
+  };
+  // V9.2 — boss counters
+  const enabledBosses = draft.bosses.filter((b) => b.enabled).length;
+  const bossesWithStats = draft.bosses.filter((b) => !!b.bossStats).length;
+  const bossesByTier: Record<Tier, BossEntry[]> = {
+    early: draft.bosses.filter((b) => b.tier === 'early'),
+    mid: draft.bosses.filter((b) => b.tier === 'mid'),
+    deep: draft.bosses.filter((b) => b.tier === 'deep'),
   };
 
   // ── Mutations ────────────────────────────────────────────────────────────
@@ -174,6 +282,35 @@ export default function Anomalies() {
     setEventTierFilter(tier);
   }
 
+  // V9.2 — boss CRUD handlers ───────────────────────────────────────────────
+  function setBossById(id: string, entry: BossEntry) {
+    setDraft((prev) =>
+      prev ? { ...prev, bosses: prev.bosses.map((b) => (b.id === id ? entry : b)) } : prev,
+    );
+    if (entry.id !== id) setSelectedBossId(entry.id);
+  }
+
+  function removeBossById(id: string) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      return { ...prev, bosses: prev.bosses.filter((b) => b.id !== id) };
+    });
+    setSelectedBossId(null);
+  }
+
+  function addBoss(tier: Tier) {
+    const tpl = newBossTemplate(tier);
+    setDraft((prev) => (prev ? { ...prev, bosses: [...prev.bosses, tpl] } : prev));
+    setSelectedBossId(tpl.id);
+    setBossTierFilter(tier);
+  }
+
+  function dupBoss(source: BossEntry) {
+    const copy = duplicateBoss(source);
+    setDraft((prev) => (prev ? { ...prev, bosses: [...prev.bosses, copy] } : prev));
+    setSelectedBossId(copy.id);
+  }
+
   async function handleSave() {
     if (!draft) return;
     setSaveError(null);
@@ -202,6 +339,7 @@ export default function Anomalies() {
   const selectedDepthEntry = draft.depths.find((d) => d.depth === selectedDepth);
   const selectedDepthIdx = draft.depths.findIndex((d) => d.depth === selectedDepth);
   const selectedEvent = selectedEventId ? draft.events.find((e) => e.id === selectedEventId) : null;
+  const selectedBoss = selectedBossId ? draft.bosses.find((b) => b.id === selectedBossId) : null;
 
   return (
     // -m-4 md:-m-6 takes the page full-bleed inside the AdminLayout's padding.
@@ -232,6 +370,8 @@ export default function Anomalies() {
               value={`${enabledEvents}/${draft.events.length}`}
             />
             <StatPill label="images events" value={`${eventsWithImage}/${draft.events.length}`} />
+            <StatPill label="boss actifs" value={`${enabledBosses}/${draft.bosses.length}`} />
+            <StatPill label="boss-as-unit" value={`${bossesWithStats}/${draft.bosses.length}`} />
             <div className="mx-1 h-7 w-px bg-panel-border" />
             {dirty && !updateMutation.isPending && (
               <span className="rounded-sm bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-amber-300">
@@ -274,6 +414,13 @@ export default function Anomalies() {
             count={draft.events.length}
             icon={<Sparkles className="h-3.5 w-3.5" />}
           />
+          <TabButton
+            active={activeTab === 'bosses'}
+            onClick={() => setActiveTab('bosses')}
+            label="Boss"
+            count={draft.bosses.length}
+            icon={<Skull className="h-3.5 w-3.5" />}
+          />
         </div>
 
         {saveError && (
@@ -313,7 +460,7 @@ export default function Anomalies() {
               />
             )}
           </>
-        ) : (
+        ) : activeTab === 'events' ? (
           <>
             <EventRail
               events={draft.events}
@@ -337,6 +484,26 @@ export default function Anomalies() {
                 hint="Ajoute un nouvel event via le bouton + dans le rail, ou sélectionne-en un existant."
               />
             )}
+          </>
+        ) : (
+          <>
+            {/* V9.2 — Tab Boss : édition WIP, finalisation prévue.
+                Pour l'instant, affichage en lecture seule du pool actuel
+                (50 boss seedés, modifiable côté seed file). */}
+            <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-hull-700/40 bg-hull-950/40 p-12 text-center">
+              <Skull className="h-10 w-10 text-hull-400/70" />
+              <div>
+                <p className="text-sm font-semibold text-hull-100">
+                  Édition des boss — bientôt disponible
+                </p>
+                <p className="mt-1 text-xs text-hull-300/80">
+                  {draft.bosses.length} boss dans la pool. CRUD admin en cours
+                  d'implémentation. Modifie les valeurs via{' '}
+                  <code className="text-hull-200">anomaly-bosses.seed.ts</code>{' '}
+                  en attendant.
+                </p>
+              </div>
+            </div>
           </>
         )}
       </div>

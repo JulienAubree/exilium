@@ -248,11 +248,13 @@ describe('activateEpic', () => {
       stubs.anomalyContentService,
       modulesService,
       // V9 Boss — stub minimal pour les tests legacy ne touchant pas aux boss.
-      // Les méthodes appelées par activateEpic n'incluent pas pickBossForDepth.
+      // V9.2 — getPool / pickBossForDepth sont désormais async (read content table).
       {
-        getPool: () => [],
+        getPool: async () => [],
+        getPoolSync: () => [],
+        invalidateCache: () => {},
         isBossDepth: () => false,
-        pickBossForDepth: () => null,
+        pickBossForDepth: async () => null,
       } as never,
     );
   });

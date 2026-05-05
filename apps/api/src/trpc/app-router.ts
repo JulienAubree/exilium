@@ -130,7 +130,10 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const explorationReportService = createExplorationReportService(db, resourceService, gameConfigService);
   const homepageService = createHomepageService(db);
   const anomalyContentService = createAnomalyContentService(db);
-  const anomalyBossesService = createAnomalyBossesService();
+  // V9.2 — bosses service lit la pool depuis anomaly_content.bosses (admin
+  // éditable) avec fallback sur le seed. Sans le content service injecté,
+  // il retombe automatiquement sur le seed in-memory (back-compat).
+  const anomalyBossesService = createAnomalyBossesService(anomalyContentService);
   const modulesService = createModulesService(db);
 
   const authRouter = createAuthRouter(db, authService, planetService);
@@ -165,7 +168,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const explorationReportRouter = createExplorationReportRouter(explorationReportService);
   const colonizationRouter = createColonizationRouter(colonizationService);
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
-  const anomalyContentRouter = createAnomalyContentRouter(anomalyContentService, adminProcedure);
+  const anomalyContentRouter = createAnomalyContentRouter(anomalyContentService, adminProcedure, anomalyBossesService);
   const modulesRouter = createModulesRouter(modulesService, adminProcedure);
   const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService, anomalyBossesService);
   const anomalyRouter = createAnomalyRouter(anomalyService, anomalyBossesService);

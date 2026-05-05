@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { DEFAULT_ANOMALY_EVENTS } from './anomaly-events.seed.js';
+import { bossEntrySchema } from './anomaly-bosses.types.js';
+import { DEFAULT_ANOMALY_BOSSES } from './anomaly-bosses.seed.js';
 
 /** Maximum depth supported by the V1 of the Anomaly mode. */
 export const ANOMALY_MAX_DEPTH = 20;
@@ -92,6 +94,12 @@ const eventEntrySchema = z.object({
 export const anomalyContentSchema = z.object({
   depths: z.array(depthEntrySchema).max(ANOMALY_MAX_DEPTH),
   events: z.array(eventEntrySchema).max(50).default([]),
+  /**
+   * V9.2 — Pool de boss spawn aux profondeurs 1/5/10/15/20. Migré du seed
+   * statique vers le contenu admin pour permettre l'édition CRUD via l'UI.
+   * Default = 50 boss seedés (cf. DEFAULT_ANOMALY_BOSSES).
+   */
+  bosses: z.array(bossEntrySchema).max(200).default([]),
 });
 
 export type AnomalyContent = z.infer<typeof anomalyContentSchema>;
@@ -123,4 +131,5 @@ export const DEFAULT_ANOMALY_CONTENT: AnomalyContent = anomalyContentSchema.pars
     description: '',
   })),
   events: DEFAULT_ANOMALY_EVENTS,
+  bosses: DEFAULT_ANOMALY_BOSSES,
 });

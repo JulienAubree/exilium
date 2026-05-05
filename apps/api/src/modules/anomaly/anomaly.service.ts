@@ -203,7 +203,9 @@ export function createAnomalyService(
         }
         // Le dernier boss vaincu (LIFO) — celui dont on récompense la victoire.
         const lastBossId = defeatedIds[defeatedIds.length - 1];
-        const boss = anomalyBossesService.getPool().find(b => b.id === lastBossId);
+        // V9.2 — getPool() est désormais async (read content table).
+        const pool = await anomalyBossesService.getPool();
+        const boss = pool.find(b => b.id === lastBossId);
         if (!boss) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Boss inconnu — pool désynchronisée' });
         }
@@ -373,7 +375,7 @@ export function createAnomalyService(
         // V9 Boss : depth 1 spawn ALWAYS un boss (early tier).
         const fleet: FleetMap = { flagship: { count: 1, hullPercent: 1.0 } };
 
-        const firstBoss = anomalyBossesService.pickBossForDepth(1, []);
+        const firstBoss = await anomalyBossesService.pickBossForDepth(1, []);
         let nextNodeType: 'combat' | 'event' | 'boss' = 'combat';
         let pendingBossId: string | null = null;
         let firstEnemyFleet: Record<string, number>;
@@ -389,6 +391,9 @@ export function createAnomalyService(
             equippedModules: equippedSnapshot,
             activeBuffs: [],
             bossFpMultiplier: firstBoss.fpMultiplier,
+            // V9.2 — Boss-as-unit : passe le boss complet pour que son
+            // bossStats (s'il existe) injecte une vraie unité dans la flotte.
+            boss: firstBoss,
           });
           firstEnemyFleet = bossEnemy.enemyFleet;
           firstEnemyFP = bossEnemy.enemyFP;
@@ -471,7 +476,9 @@ export function createAnomalyService(
         const defeatedBossIds = (row.defeatedBossIds ?? []) as string[];
         let currentBoss: BossEntry | null = null;
         if (isBossNode && row.pendingBossId) {
-          currentBoss = anomalyBossesService.getPool().find(b => b.id === row.pendingBossId) ?? null;
+          // V9.2 — getPool() est async (read content table).
+          const advancePool = await anomalyBossesService.getPool();
+          currentBoss = advancePool.find(b => b.id === row.pendingBossId) ?? null;
         }
 
       // Use the pre-generated enemy that the player has been previewing.
@@ -508,6 +515,9 @@ export function createAnomalyService(
         pendingEpicEffect,
         activeBuffs,
         bossSkills,
+        // V9.2 — passe le boss complet pour que runAnomalyNode injecte
+        // l'unité boss dans shipConfigs si bossStats est défini.
+        boss: currentBoss,
       });
 
       const config = await gameConfigService.getFullConfig();
@@ -885,7 +895,7 @@ export function createAnomalyService(
       let nextPendingBossId: string | null = null;
 
       if (isUpcomingBossDepth) {
-        const nextBoss = anomalyBossesService.pickBossForDepth(upcomingDepth, updatedDefeatedBossIds);
+        const nextBoss = await anomalyBossesService.pickBossForDepth(upcomingDepth, updatedDefeatedBossIds);
         if (nextBoss) {
           nextNodeType = 'boss';
           nextPendingBossId = nextBoss.id;
@@ -897,6 +907,8 @@ export function createAnomalyService(
             equippedModules: row.equippedModules,
             activeBuffs,
             bossFpMultiplier: nextBoss.fpMultiplier,
+            // V9.2 — Boss-as-unit : injecte le boss dans la flotte preview.
+            boss: nextBoss,
           });
           nextEnemyFleet = bossEnemy.enemyFleet;
           nextEnemyFp = Math.round(bossEnemy.enemyFP);
