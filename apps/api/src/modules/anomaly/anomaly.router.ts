@@ -67,6 +67,22 @@ export function createAnomalyRouter(
         return anomalyService.history(ctx.userId!, input?.limit);
       }),
 
+    /** V9.2 — Historique détaillé pour la page /anomalies/history. Renvoie
+     *  pagination + stats globales + boss vaincus hydratés. */
+    historyDetailed: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().int().min(1).max(50).default(20),
+          offset: z.number().int().min(0).default(0),
+        }).optional(),
+      )
+      .query(async ({ ctx, input }) => {
+        return anomalyService.historyDetailed(ctx.userId!, {
+          limit: input?.limit ?? 20,
+          offset: input?.offset ?? 0,
+        });
+      }),
+
     leaderboard: protectedProcedure
       .input(z.object({ limit: z.number().int().min(1).max(100).default(50) }).optional())
       .query(async ({ input }) => {

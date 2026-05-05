@@ -378,12 +378,20 @@ function IntroHero() {
             Plongez dans le vide quantique, à vos risques et périls.
           </p>
         </div>
-        <Link to="/anomalies/leaderboard" className="shrink-0">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Trophy className="h-4 w-4 text-yellow-400" />
-            <span className="hidden sm:inline">Leaderboard</span>
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link to="/anomalies/history">
+            <Button variant="outline" size="sm" className="gap-2">
+              <FileText className="h-4 w-4 text-violet-300" />
+              <span className="hidden sm:inline">Historique</span>
+            </Button>
+          </Link>
+          <Link to="/anomalies/leaderboard">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Trophy className="h-4 w-4 text-yellow-400" />
+              <span className="hidden sm:inline">Leaderboard</span>
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

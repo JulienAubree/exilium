@@ -1520,6 +1520,93 @@ export function createAnomalyService(
     },
 
     /**
+     * V9.2 — Page d'historique détaillée. Contrairement à `history()` qui
+     * retourne les rows brutes, cette méthode :
+     *  - paginate via limit + offset
+     *  - calcule les stats globales du joueur (total runs, completed, wiped,
+     *    palier max, total ressources, total boss vaincus)
+     *  - hydrate les boss vaincus (id → nom/tier/image) depuis la pool
+     */
+    async historyDetailed(userId: string, opts: { limit: number; offset: number }) {
+      const allRuns = await db
+        .select()
+        .from(anomalies)
+        .where(and(eq(anomalies.userId, userId), inArray(anomalies.status, ['completed', 'wiped'])))
+        .orderBy(desc(anomalies.completedAt));
+
+      const stats = {
+        totalRuns: allRuns.length,
+        completed: allRuns.filter((r) => r.status === 'completed').length,
+        wiped: allRuns.filter((r) => r.status === 'wiped').length,
+        maxDepthReached: allRuns.reduce((m, r) => Math.max(m, r.currentDepth ?? 0), 0),
+        maxTierReached: allRuns.reduce((m, r) => Math.max(m, r.tier ?? 0), 0),
+        totalMinerai: allRuns.reduce((s, r) => s + Math.floor(Number(r.lootMinerai ?? 0)), 0),
+        totalSilicium: allRuns.reduce((s, r) => s + Math.floor(Number(r.lootSilicium ?? 0)), 0),
+        totalHydrogene: allRuns.reduce((s, r) => s + Math.floor(Number(r.lootHydrogene ?? 0)), 0),
+        totalBossDefeated: allRuns.reduce((s, r) => {
+          const ids = (r.defeatedBossIds ?? []) as string[];
+          return s + ids.length;
+        }, 0),
+      };
+
+      const paged = allRuns.slice(opts.offset, opts.offset + opts.limit);
+
+      // Hydrate les boss : on récupère la pool une seule fois et on indexe par id.
+      const pool = await anomalyBossesService.getPool();
+      const bossById = new Map(pool.map((b) => [b.id, b] as const));
+
+      const runs = paged.map((row) => {
+        const defeatedIds = (row.defeatedBossIds ?? []) as string[];
+        const activeBuffs = (row.activeBuffs ?? []) as ActiveBossBuff[];
+        const eventLog = (row.eventLog ?? []) as Array<{
+          depth: number;
+          eventId: string;
+          choiceIndex: number;
+          outcomeApplied: Record<string, unknown>;
+          resolvedAt: string;
+        }>;
+        const bossesDefeated = defeatedIds.map((id) => {
+          const b = bossById.get(id);
+          return {
+            id,
+            name: b?.name ?? id,
+            title: b?.title ?? '',
+            tier: b?.tier ?? 'early',
+            image: b?.image ?? '',
+            // Le joueur n'a pas forcément choisi de buff, mais on cherche dans
+            // active_buffs si un est sourcé sur ce boss (info utile pour la
+            // page d'historique).
+            buffApplied: activeBuffs.find((bf) => bf.sourceBossId === id) ?? null,
+          };
+        });
+        return {
+          id: row.id,
+          status: row.status,
+          tier: row.tier,
+          currentDepth: row.currentDepth,
+          completedAt: row.completedAt,
+          startedAt: row.createdAt,
+          lootMinerai: Math.floor(Number(row.lootMinerai ?? 0)),
+          lootSilicium: Math.floor(Number(row.lootSilicium ?? 0)),
+          lootHydrogene: Math.floor(Number(row.lootHydrogene ?? 0)),
+          lootShips: (row.lootShips ?? {}) as Record<string, number>,
+          exiliumPaid: row.exiliumPaid,
+          reportIds: (row.reportIds ?? []) as string[],
+          bossesDefeated,
+          activeBuffs,
+          eventLog,
+        };
+      });
+
+      return {
+        stats,
+        runs,
+        hasMore: opts.offset + opts.limit < allRuns.length,
+        total: allRuns.length,
+      };
+    },
+
+    /**
      * V5-Tiers (2026-05-04) : leaderboard PvE basé sur le palier max complété.
      * Tiebreakers : level pilote DESC, puis xp DESC.
      */
