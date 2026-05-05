@@ -61,6 +61,54 @@ export interface CombatMultipliers {
   armor: number;
 }
 
+/**
+ * V9 Boss — runtime skill applied to the combat engine. The combat engine
+ * consumes each as a discrete hook (see applyBossSkillsRoundStart /
+ * boss-side helpers in simulateCombat). `side` indicates who carries the
+ * skill — for anomaly boss combats, always 'defender'.
+ *
+ * Skill semantics (all magnitudes are fractions / counts) :
+ *  - armor_pierce    : ignore N% of attacker's armor on every hit
+ *  - regen           : boss heals N% of maxHull per round (start of round)
+ *  - shield_aura     : boss starts with maxShield × N
+ *  - damage_burst    : on a randomized round, attacker damage ×N (negative
+ *                      for the attacker since the *boss* is buffed; here
+ *                      we apply it on the boss salvo: boss damage ×N for
+ *                      one round during the fight)
+ *  - summon_drones   : at round 1, +N units of `summonShipId` are appended
+ *                      to the defender side (default: interceptor)
+ *  - disable_battery : at round 1, the attacker's flagship loses N batteries
+ *  - armor_corrosion : each round, attacker units lose N% of their armor
+ *  - last_stand      : the first time a boss unit would die, set hull=1 instead
+ *  - evasion         : attacker shots have N% chance to miss the boss
+ *  - rafale_swarm    : boss weapon profiles get rafale.count × N globally
+ */
+export type BossSkillType =
+  | 'armor_pierce'
+  | 'regen'
+  | 'shield_aura'
+  | 'damage_burst'
+  | 'summon_drones'
+  | 'disable_battery'
+  | 'armor_corrosion'
+  | 'last_stand'
+  | 'evasion'
+  | 'rafale_swarm';
+
+export interface BossSkillRuntime {
+  type: BossSkillType;
+  magnitude: number;
+  /** Side qui porte le skill — toujours 'defender' pour un boss anomaly,
+   *  mais l'option permet une réutilisation symétrique future. */
+  side: 'defender' | 'attacker';
+  /** Optional ship id used by `summon_drones` (default: 'interceptor'). */
+  summonShipId?: string;
+  /** Optional unit type the boss skills are bound to. When set,
+   *  shield_aura/regen/last_stand are restricted to units of this type
+   *  on the carrier side. Default = all units on the side. */
+  bossShipType?: string;
+}
+
 export interface CombatInput {
   attackerFleet: Record<string, number>;
   defenderFleet: Record<string, number>;
@@ -75,6 +123,9 @@ export interface CombatInput {
   rngSeed?: number;
   planetaryShieldCapacity?: number;
   detailedLog?: boolean;
+  /** V9 Boss : skills actifs durant le combat. Consommés par les hooks
+   *  internes de `simulateCombat`. */
+  bossSkills?: BossSkillRuntime[];
 }
 
 interface CombatUnit {
@@ -280,6 +331,21 @@ function emptySideStats(): CombatSideStats {
   };
 }
 
+/**
+ * V9 Boss — runtime context derived from `bossSkills`. Threaded through
+ * fireShot so per-hit hooks (armor_pierce, evasion, last_stand) can apply.
+ */
+interface BossRuntimeCtx {
+  /** % d'armure ignorée quand un attaquant tape un défenseur (armor_pierce). */
+  defenderArmorPierce: number;
+  /** % chance de miss quand un attaquant tape un défenseur (evasion). */
+  defenderEvasion: number;
+  /** Set d'unités défenseuses bénéficiant d'un last_stand non encore consommé. */
+  lastStandActive: Set<string>;
+  /** RNG partagé par tout le combat. */
+  rng: () => number;
+}
+
 function fireShot(
   attacker: CombatUnit,
   target: CombatUnit,
@@ -290,9 +356,37 @@ function fireShot(
   targetDamageByType: Record<string, UnitTypeDamageReceived>,
   round?: number,
   eventAccumulator?: CombatEvent[],
+  bossCtx?: BossRuntimeCtx,
+  attackerSide?: 'attacker' | 'defender',
 ): boolean {
   // Track per-type damage
   const entry = targetDamageByType[target.shipType] ??= { shieldDamage: 0, hullDamage: 0, destroyed: 0 };
+
+  // V9 Boss — evasion : si la cible est le boss (défender) et qu'il a un
+  // skill evasion actif, le shot peut rater. Pas de damage, pas de tracking
+  // sauf l'event log.
+  if (
+    bossCtx &&
+    attackerSide === 'attacker' &&
+    bossCtx.defenderEvasion > 0 &&
+    bossCtx.rng() < bossCtx.defenderEvasion
+  ) {
+    if (eventAccumulator && round !== undefined) {
+      eventAccumulator.push({
+        round,
+        shooterId: attacker.id,
+        shooterType: attacker.shipType,
+        targetId: target.id,
+        targetType: target.shipType,
+        damage: 0,
+        shieldAbsorbed: 0,
+        armorBlocked: 0,
+        hullDamage: 0,
+        targetDestroyed: false,
+      });
+    }
+    return false;
+  }
 
   // Shield absorbs first
   if (target.shield >= damage) {
@@ -326,8 +420,15 @@ function fireShot(
     target.shield = 0;
   }
 
+  // V9 Boss — armor_pierce : ignore une fraction de l'armure cible quand
+  // un attaquant tape un défenseur boss. Calculé sur l'armure courante de
+  // la cible (qui peut elle-même avoir été corrodée par armor_corrosion).
+  let effectiveArmor = target.armor;
+  if (bossCtx && attackerSide === 'attacker' && bossCtx.defenderArmorPierce > 0) {
+    effectiveArmor = target.armor * (1 - bossCtx.defenderArmorPierce);
+  }
   // Armor reduces surplus, minimum 1 damage if shot reaches hull
-  const hullDamage = Math.max(surplus - target.armor, minDamage);
+  const hullDamage = Math.max(surplus - effectiveArmor, minDamage);
   const shotArmorBlocked = surplus - hullDamage;
   defenderStats.armorBlocked += shotArmorBlocked;
 
@@ -342,11 +443,23 @@ function fireShot(
 
   let destroyed = false;
   if (target.hull <= 0) {
-    if (target.hull < 0) attackerStats.overkillWasted += Math.abs(target.hull);
-    target.hull = 0;
-    target.destroyed = true;
-    entry.destroyed += 1;
-    destroyed = true;
+    // V9 Boss — last_stand : si le boss devait mourir, set hull=1 et
+    // consomme la charge (one-shot). Le flag est porté par l'unité ciblée.
+    if (
+      bossCtx &&
+      attackerSide === 'attacker' &&
+      bossCtx.lastStandActive.has(target.id)
+    ) {
+      bossCtx.lastStandActive.delete(target.id);
+      target.hull = 1;
+      // Pas de comptage dans entry.destroyed — l'unité est encore en vie.
+    } else {
+      if (target.hull < 0) attackerStats.overkillWasted += Math.abs(target.hull);
+      target.hull = 0;
+      target.destroyed = true;
+      entry.destroyed += 1;
+      destroyed = true;
+    }
   }
 
   if (eventAccumulator && round !== undefined) {
@@ -377,6 +490,11 @@ function fireSalvo(
   targetDamageByType: Record<string, UnitTypeDamageReceived>,
   round?: number,
   eventAccumulator?: CombatEvent[],
+  /** V9 Boss — multiplicateur de damage appliqué à chaque battery du
+   *  tireur sur ce salvo (utilisé pour damage_burst côté boss). */
+  damageMultiplier = 1,
+  bossCtx?: BossRuntimeCtx,
+  attackerSide?: 'attacker' | 'defender',
 ): void {
   for (const weapon of attacker.weapons) {
     // Pick the first target to know whether rafale should trigger.
@@ -385,6 +503,7 @@ function fireSalvo(
 
     const rafaleTriggered = weapon.rafale !== undefined && firstTarget.category === weapon.rafale.category;
     const totalShots = weapon.shots + (rafaleTriggered ? weapon.rafale!.count : 0);
+    const effectiveDamage = weapon.damage * damageMultiplier;
 
     for (let shot = 0; shot < totalShots; shot++) {
       const target = shot === 0
@@ -393,8 +512,9 @@ function fireSalvo(
       if (!target) break;
 
       const destroyed = fireShot(
-        attacker, target, weapon.damage, minDamage,
+        attacker, target, effectiveDamage, minDamage,
         attackerStats, defenderStats, targetDamageByType, round, eventAccumulator,
+        bossCtx, attackerSide,
       );
 
       // Enchaînement: on kill, fire one bonus shot on another unit of the same
@@ -404,8 +524,9 @@ function fireSalvo(
         if (sameCategoryTargets.length > 0) {
           const bonus = sameCategoryTargets[Math.floor(rng() * sameCategoryTargets.length)];
           fireShot(
-            attacker, bonus, weapon.damage, minDamage,
+            attacker, bonus, effectiveDamage, minDamage,
             attackerStats, defenderStats, targetDamageByType, round, eventAccumulator,
+            bossCtx, attackerSide,
           );
         }
       }
@@ -477,16 +598,107 @@ export function simulateCombat(input: CombatInput): CombatResult {
     attackerFleet, defenderFleet, defenderDefenses,
     attackerMultipliers, defenderMultipliers,
     combatConfig, shipConfigs, shipCosts, shipIds, defenseIds,
-    rngSeed, planetaryShieldCapacity,
+    rngSeed, planetaryShieldCapacity, bossSkills,
   } = input;
 
   const rng = createRng(rngSeed);
   const sortedCategories = [...combatConfig.categories].sort((a, b) => a.targetOrder - b.targetOrder);
 
-  const attackers = createUnits(attackerFleet, attackerMultipliers, shipConfigs, 0);
-  const defenderShipUnits = createUnits(defenderFleet, defenderMultipliers, shipConfigs, attackers.length);
-  const defenderDefenseUnits = createUnits(defenderDefenses, defenderMultipliers, shipConfigs, attackers.length + defenderShipUnits.length);
+  // V9 Boss — précompute des hooks issus de bossSkills. Toutes les valeurs
+  // sont en fraction (0..1 sauf les counts).
+  const defenderSkills = (bossSkills ?? []).filter(s => s.side === 'defender');
+  const attackerSkills = (bossSkills ?? []).filter(s => s.side === 'attacker');
+  function pickSkill(list: BossSkillRuntime[], type: BossSkillType): BossSkillRuntime | undefined {
+    return list.find(s => s.type === type);
+  }
+  const defenderArmorPierce = pickSkill(defenderSkills, 'armor_pierce')?.magnitude ?? 0;
+  const defenderEvasion = pickSkill(defenderSkills, 'evasion')?.magnitude ?? 0;
+  const defenderRegen = pickSkill(defenderSkills, 'regen')?.magnitude ?? 0;
+  const defenderShieldAura = pickSkill(defenderSkills, 'shield_aura')?.magnitude ?? 0;
+  const defenderArmorCorrosion = pickSkill(defenderSkills, 'armor_corrosion')?.magnitude ?? 0;
+  const defenderDamageBurstMag = pickSkill(defenderSkills, 'damage_burst')?.magnitude ?? 0;
+  const defenderRafaleSwarm = pickSkill(defenderSkills, 'rafale_swarm')?.magnitude ?? 0;
+  const defenderSummon = pickSkill(defenderSkills, 'summon_drones');
+  const defenderDisableBatteryCount = Math.floor(pickSkill(defenderSkills, 'disable_battery')?.magnitude ?? 0);
+  const defenderLastStand = !!pickSkill(defenderSkills, 'last_stand');
+  const defenderBossShipType = defenderSkills[0]?.bossShipType;
+
+  // V9 Boss — summon_drones : ajoute des unités à la défense AVANT createUnits
+  // (le summon est statique sur tout le combat — round-1 only).
+  const effectiveDefenderFleet: Record<string, number> = { ...defenderFleet };
+  if (defenderSummon && defenderSummon.magnitude > 0) {
+    const summonId = defenderSummon.summonShipId ?? 'interceptor';
+    if (shipConfigs[summonId]) {
+      effectiveDefenderFleet[summonId] = (effectiveDefenderFleet[summonId] ?? 0)
+        + Math.floor(defenderSummon.magnitude);
+    }
+  }
+
+  // V9 Boss — disable_battery : retire N batteries du flagship attaquant.
+  // Modifie shipConfigs.flagship en clonant pour ne pas muter l'input du caller.
+  const localShipConfigs: Record<string, ShipCombatConfig> = { ...shipConfigs };
+  if (defenderDisableBatteryCount > 0 && localShipConfigs['flagship']?.weapons) {
+    const fc = localShipConfigs['flagship'];
+    const wpns = fc.weapons ?? [];
+    if (wpns.length > 1) {
+      // Toujours conserver la batterie de base (index 0) — désactive les modules
+      // surnuméraires en priorité.
+      const keep = Math.max(1, wpns.length - defenderDisableBatteryCount);
+      localShipConfigs['flagship'] = { ...fc, weapons: wpns.slice(0, keep) };
+    }
+  }
+
+  const attackers = createUnits(attackerFleet, attackerMultipliers, localShipConfigs, 0);
+  const defenderShipUnits = createUnits(effectiveDefenderFleet, defenderMultipliers, localShipConfigs, attackers.length);
+  const defenderDefenseUnits = createUnits(defenderDefenses, defenderMultipliers, localShipConfigs, attackers.length + defenderShipUnits.length);
   const defenders = [...defenderShipUnits, ...defenderDefenseUnits];
+
+  // V9 Boss — boss-bound mutations APRES createUnits :
+  //  - shield_aura : multiplie maxShield/shield des unités boss
+  //  - rafale_swarm : multiplie le rafale.count de chaque battery boss
+  //  - last_stand : marque les unités boss éligibles
+  const bossUnits = defenderShipUnits.filter(u =>
+    !defenderBossShipType || u.shipType === defenderBossShipType,
+  );
+  const lastStandActive = new Set<string>();
+  if (defenderShieldAura > 0) {
+    for (const u of bossUnits) {
+      u.maxShield *= defenderShieldAura;
+      u.shield *= defenderShieldAura;
+    }
+  }
+  if (defenderRafaleSwarm > 0) {
+    for (const u of bossUnits) {
+      u.weapons = u.weapons.map(w => w.rafale
+        ? { ...w, rafale: { ...w.rafale, count: Math.round(w.rafale.count * defenderRafaleSwarm) } }
+        : w);
+    }
+  }
+  if (defenderLastStand) {
+    for (const u of bossUnits) lastStandActive.add(u.id);
+  }
+  // Symmetric — accept attacker-side variants (currently unused by anomaly
+  // but keeps the API symmetric for future PvP boss-style scenarios).
+  if (attackerSkills.length > 0) {
+    const aShieldAura = pickSkill(attackerSkills, 'shield_aura')?.magnitude ?? 0;
+    if (aShieldAura > 0) {
+      for (const u of attackers) {
+        u.maxShield *= aShieldAura;
+        u.shield *= aShieldAura;
+      }
+    }
+  }
+  const bossCtx: BossRuntimeCtx = {
+    defenderArmorPierce,
+    defenderEvasion,
+    lastStandActive,
+    rng,
+  };
+  // Pre-roll the burst round (1..min(maxRounds, 10)) so it's deterministic
+  // per RNG seed. If no damage_burst skill, set to 0 (never matches).
+  const burstRound = defenderDamageBurstMag > 0
+    ? 1 + Math.floor(rng() * Math.min(combatConfig.maxRounds, 10))
+    : 0;
 
   // Inject planetary shield as a special defender unit.
   // Hull is set to 1 so that once shield HP is depleted, the unit is "destroyed" for the
@@ -538,6 +750,24 @@ export function simulateCombat(input: CombatInput): CombatResult {
 
     if (aliveDefenders.length === 0 || aliveAttackers.length === 0) break;
 
+    // V9 Boss — regen : heal une fraction de maxHull pour chaque unité
+    // boss vivante (start of round, capé à maxHull).
+    if (defenderRegen > 0) {
+      for (const u of bossUnits) {
+        if (u.destroyed) continue;
+        u.hull = Math.min(u.maxHull, u.hull + u.maxHull * defenderRegen);
+      }
+    }
+    // V9 Boss — armor_corrosion : retire une fraction d'armor à chaque
+    // unité attaquante vivante. Cumulatif round à round (réduit l'armor
+    // résiduelle, donc un peu auto-régulé : tend asymptotiquement vers 0).
+    if (defenderArmorCorrosion > 0) {
+      for (const u of attackers) {
+        if (u.destroyed) continue;
+        u.armor = Math.max(0, u.armor * (1 - defenderArmorCorrosion));
+      }
+    }
+
     const roundAttackerStats = emptySideStats();
     const roundDefenderStats = emptySideStats();
     const defenderDamageByType: Record<string, UnitTypeDamageReceived> = {};
@@ -547,10 +777,17 @@ export function simulateCombat(input: CombatInput): CombatResult {
     const defendersForAttackerFire = cloneUnits(defenders);
     const attackersForDefenderFire = cloneUnits(attackers);
 
+    // V9 Boss — damage_burst : ce round, le boss inflige damage ×magnitude.
+    // S'applique au salvo défender (boss → attacker).
+    const defenderDamageMult = (defenderDamageBurstMag > 0 && round === burstRound)
+      ? defenderDamageBurstMag
+      : 1;
+
     // Attackers fire at defender clones
     for (const attacker of aliveAttackers) {
       fireSalvo(attacker, defendersForAttackerFire,
-        sortedCategories, combatConfig.minDamagePerHit, roundAttackerStats, roundDefenderStats, rng, defenderDamageByType, round, eventAccumulator);
+        sortedCategories, combatConfig.minDamagePerHit, roundAttackerStats, roundDefenderStats, rng, defenderDamageByType, round, eventAccumulator,
+        1, bossCtx, 'attacker');
     }
 
     // Track planetary shield absorption before defenders fire
@@ -564,7 +801,8 @@ export function simulateCombat(input: CombatInput): CombatResult {
     // Defenders fire at attacker clones
     for (const defender of aliveDefenders) {
       fireSalvo(defender, attackersForDefenderFire,
-        sortedCategories, combatConfig.minDamagePerHit, roundDefenderStats, roundAttackerStats, rng, attackerDamageByType, round, eventAccumulator);
+        sortedCategories, combatConfig.minDamagePerHit, roundDefenderStats, roundAttackerStats, rng, attackerDamageByType, round, eventAccumulator,
+        defenderDamageMult, bossCtx, 'defender');
     }
 
     // Apply damage from both phases back to real units
