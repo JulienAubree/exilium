@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, X, Crosshair, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, X, Crosshair, Sparkles, ArrowRight, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModuleTooltip } from './ModuleTooltip';
 import { getHullCardStyles } from './hullCardStyles';
@@ -191,13 +191,13 @@ export function ModuleInventoryPanel({
             : 'border-violet-500/50 bg-violet-950/30 text-violet-100',
         )}>
           <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-[10px] uppercase tracking-wider opacity-70">Équiper dans</span>
-          <span className="font-semibold truncate">{pendingLabel}</span>
+          <span className="text-[10px] uppercase tracking-wider opacity-70 shrink-0 hidden sm:inline">Équiper dans</span>
+          <span className="font-semibold truncate min-w-0">{pendingLabel}</span>
           <button
             type="button"
             onClick={onClearPending}
             aria-label="Annuler la sélection de slot"
-            className="ml-auto rounded p-0.5 hover:bg-white/10 transition-colors"
+            className="ml-auto shrink-0 inline-flex items-center justify-center rounded h-7 w-7 hover:bg-white/10 transition-colors"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -429,7 +429,7 @@ function ItemList({
         const equipDisabled = equipped || !canEquip.ok;
         return (
           <li key={m.moduleId} className={cn(
-            'flex items-center gap-2 p-1.5 rounded border',
+            'flex items-center gap-1.5 sm:gap-2 p-1.5 rounded border',
             RARITY_TONE[m.rarity] ?? '',
             equipped && 'opacity-50',
           )}>
@@ -438,7 +438,7 @@ function ItemList({
                 id: m.moduleId, name: m.name, description: m.description,
                 rarity: m.rarity, kind: m.kind, effect: m.effect,
               }}
-              placement="right"
+              placement="top"
               wrapperClassName="flex-1 min-w-0 block"
             >
               <div className="flex flex-1 min-w-0 cursor-help items-center gap-2">
@@ -456,14 +456,19 @@ function ItemList({
             </ModuleTooltip>
             <button
               onClick={() => onDetails(m.moduleId)}
-              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-            >Détails</button>
+              aria-label="Détails"
+              title="Détails"
+              className="shrink-0 inline-flex items-center justify-center h-7 w-7 sm:w-auto sm:px-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+            >
+              <Info className="h-3.5 w-3.5 sm:hidden" />
+              <span className="hidden sm:inline text-[10px]">Détails</span>
+            </button>
             <button
               onClick={() => onEquip(m.moduleId)}
               disabled={equipDisabled}
               title={equipped ? 'Déjà équipé' : !canEquip.ok ? canEquip.reason : 'Équiper dans le slot sélectionné'}
               className={cn(
-                'text-[10px] rounded px-2 py-1 border transition-colors',
+                'shrink-0 text-[10px] rounded px-2 py-1 border transition-colors min-h-7 whitespace-nowrap',
                 equipped
                   ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
                   : !canEquip.ok

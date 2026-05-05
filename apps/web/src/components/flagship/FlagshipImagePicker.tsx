@@ -20,13 +20,13 @@ export function FlagshipImagePicker({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="glass-card max-w-lg w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4" onClick={onClose}>
+      <div className="glass-card max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold mb-4">Choisir une image</h3>
         {images.length === 0 ? (
           <div className="text-muted-foreground text-sm">Aucune image disponible</div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-80 overflow-y-auto">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 max-h-[60vh] sm:max-h-80 overflow-y-auto">
             {images.map((idx) => (
               <button
                 key={idx}
@@ -41,7 +41,7 @@ export function FlagshipImagePicker({
           </div>
         )}
         <div className="mt-4 flex justify-end">
-          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">Fermer</button>
+          <button onClick={onClose} className="min-h-9 px-3 text-sm text-muted-foreground hover:text-foreground">Fermer</button>
         </div>
       </div>
     </div>

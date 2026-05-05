@@ -100,8 +100,8 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-lg border border-slate-600 bg-slate-800/95 p-6 shadow-xl max-h-[90vh] overflow-y-auto mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
+      <div className="w-full max-w-2xl rounded-lg border border-slate-600 bg-slate-800/95 p-4 sm:p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold text-slate-100">Changer de coque</h2>
         <p className="mt-1 text-sm text-slate-400">
           Choisissez une nouvelle coque pour votre vaisseau amiral.
@@ -198,10 +198,10 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
         )}
 
         {/* Actions */}
-        <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <button
             onClick={onClose}
-            className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
+            className="text-sm text-slate-400 hover:text-slate-200 transition-colors min-h-9 px-1"
           >
             Annuler
           </button>
@@ -210,23 +210,23 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
             <button
               onClick={() => setShowConfirm(true)}
               disabled={!selectedHull}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-lg bg-blue-600 px-4 sm:px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed min-h-9"
             >
               Changer de coque
             </button>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-400">Confirmer le changement ?</span>
+            <div className="flex flex-wrap items-center gap-2 ml-auto">
+              <span className="text-xs text-amber-400 w-full sm:w-auto">Confirmer le changement ?</span>
               <button
                 onClick={() => setShowConfirm(false)}
-                className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700 transition-colors"
+                className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700 transition-colors min-h-9"
               >
                 Non
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={changeHullMutation.isPending}
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 min-h-9"
               >
                 {changeHullMutation.isPending ? 'En cours...' : 'Oui, confirmer'}
               </button>
