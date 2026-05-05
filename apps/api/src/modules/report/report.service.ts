@@ -91,6 +91,14 @@ export function createReportService(db: Database) {
         conditions.push(
           inArray(missionReports.missionType, options.missionTypes as typeof missionReports.missionType.enumValues),
         );
+      } else {
+        // V9.4 — par défaut, on EXCLUT les rapports d'anomalie de la liste
+        // générale : une run produit jusqu'à 20 rapports de combat (un par
+        // depth) et inonde la page Rapports. Ils restent accessibles
+        // individuellement via leur URL stockée dans anomalies.report_ids[]
+        // (lus avec la méthode `get`, pas `list`). Si l'appelant veut les
+        // voir explicitement, il passe `missionTypes: ['anomaly']`.
+        conditions.push(sql`${missionReports.missionType}::text != 'anomaly'`);
       }
 
       const reports = await db
