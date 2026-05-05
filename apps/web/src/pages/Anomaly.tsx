@@ -1458,6 +1458,33 @@ function describeBuff(type: BossBuffType, magnitude: number): string {
 }
 
 /**
+ * V9.3.1 — Mini-thumbnail boss avec fallback gracieux. L'image en seed
+ * peut être absente, vide, ou pointer vers un chemin sans fichier
+ * `-thumb.webp` correspondant en prod. On bascule au crâne ambient si
+ * onError ou image vide pour éviter l'icône "image cassée" du browser.
+ */
+function BossThumb({ image, name }: { image?: string; name: string }) {
+  const trimmed = (image ?? '').trim();
+  const [errored, setErrored] = useState(false);
+  const useFallback = !trimmed || errored;
+  if (useFallback) {
+    return (
+      <div className="h-7 w-7 rounded shrink-0 border border-rose-500/30 bg-rose-950/40 flex items-center justify-center">
+        <Skull className="h-3.5 w-3.5 text-rose-400" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={`${trimmed}-thumb.webp`}
+      alt={name}
+      onError={() => setErrored(true)}
+      className="h-7 w-7 rounded shrink-0 object-cover border border-rose-500/30"
+    />
+  );
+}
+
+/**
  * V9.3 — Journal unifié de la run : boss vaincus (avec leur buff débloqué
  * inline) + événements résolus narratifs. Remplace l'ancienne split
  * `ActiveBuffsCard` + `Événements résolus` qui faisait 2 cards distinctes
@@ -1528,17 +1555,8 @@ function RunJournal({
                     className="rounded-md border border-rose-500/15 bg-rose-500/5 p-1.5 space-y-1"
                   >
                     <div className="flex items-center gap-2">
-                      {boss?.image ? (
-                        <img
-                          src={`${boss.image}-thumb.webp`}
-                          alt={boss.name}
-                          className="h-7 w-7 rounded shrink-0 object-cover border border-rose-500/30"
-                        />
-                      ) : (
-                        <div className="h-7 w-7 rounded shrink-0 border border-rose-500/30 bg-rose-950/40 flex items-center justify-center">
-                          <Skull className="h-3.5 w-3.5 text-rose-400" />
-                        </div>
-                      )}
+                      <BossThumb image={boss?.image} name={boss?.name ?? bossId} />
+
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] font-semibold text-foreground/90 truncate">
                           {boss?.name ?? bossId}
