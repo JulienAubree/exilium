@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Skull,
   Copy,
+  Download,
 } from 'lucide-react';
 
 type AnomalyContent = inferRouterOutputs<AppRouter>['anomalyContent']['get'];
@@ -1420,38 +1421,98 @@ function BossRail({
 }) {
   const filtered = tierFilter === 'all' ? bosses : bosses.filter((b) => b.tier === tierFilter);
   const totalEnabled = bosses.filter((b) => b.enabled).length;
+  const missingImage = bosses.filter((b) => !b.image || b.image.trim() === '');
+
+  function exportMissingImagesMarkdown() {
+    if (missingImage.length === 0) {
+      alert('Tous les boss ont une illustration.');
+      return;
+    }
+    const lines: string[] = [
+      `# Boss sans illustration (${missingImage.length}/${bosses.length})`,
+      '',
+      `Liste exportée le ${new Date().toLocaleString('fr-FR')}.`,
+      '',
+    ];
+    // Group by tier for readability
+    for (const tier of TIERS) {
+      const inTier = missingImage.filter((b) => b.tier === tier);
+      if (inTier.length === 0) continue;
+      lines.push(`## ${TIER_LABELS[tier]} (${inTier.length})`, '');
+      for (const b of inTier) {
+        lines.push(`### ${b.name}${b.title ? ` — *${b.title}*` : ''}`);
+        lines.push(`\`id: ${b.id}\``);
+        lines.push('');
+        lines.push(b.description.trim());
+        lines.push('');
+      }
+    }
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.download = `anomaly-bosses-sans-illustration-${ts}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <aside className="border-r border-panel-border bg-bg/60 overflow-y-auto flex flex-col">
       <div className="sticky top-0 z-10 border-b border-panel-border/60 bg-bg/95 backdrop-blur p-3 space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div>
             <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-gray-500">
               Pool de boss
             </div>
             <div className="text-[10px] text-gray-600">
               {totalEnabled}/{bosses.length} actifs
+              {missingImage.length > 0 && (
+                <span className="ml-1 text-amber-400/80">· {missingImage.length} sans image</span>
+              )}
             </div>
           </div>
-          <div className="relative group">
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded border border-rose-700/40 bg-rose-900/30 px-2 py-1 text-[11px] text-rose-300 hover:bg-rose-900/60"
+              onClick={exportMissingImagesMarkdown}
+              disabled={missingImage.length === 0}
+              title={
+                missingImage.length === 0
+                  ? 'Tous les boss ont une illustration'
+                  : `Exporter en .md la liste des ${missingImage.length} boss sans image`
+              }
+              className="inline-flex items-center gap-1 rounded border border-amber-700/40 bg-amber-900/20 px-2 py-1 text-[11px] text-amber-300 hover:bg-amber-900/50 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <Plus className="h-3 w-3" /> Nouveau
+              <Download className="h-3 w-3" />
+              Sans image
+              {missingImage.length > 0 && (
+                <span className="text-[9px] tabular-nums opacity-70">({missingImage.length})</span>
+              )}
             </button>
-            <div className="invisible group-hover:visible group-focus-within:visible absolute right-0 top-full mt-1 z-20 min-w-[140px] rounded border border-panel-border bg-panel shadow-lg overflow-hidden">
-              {TIERS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => onAdd(t)}
-                  className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-rose-900/40 ${TIER_TONE[t].text}`}
-                >
-                  + {t}{' '}
-                  <span className="text-gray-500 normal-case">({TIER_LABELS[t]})</span>
-                </button>
-              ))}
+            <div className="relative group">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded border border-rose-700/40 bg-rose-900/30 px-2 py-1 text-[11px] text-rose-300 hover:bg-rose-900/60"
+              >
+                <Plus className="h-3 w-3" /> Nouveau
+              </button>
+              <div className="invisible group-hover:visible group-focus-within:visible absolute right-0 top-full mt-1 z-20 min-w-[140px] rounded border border-panel-border bg-panel shadow-lg overflow-hidden">
+                {TIERS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onAdd(t)}
+                    className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-rose-900/40 ${TIER_TONE[t].text}`}
+                  >
+                    + {t}{' '}
+                    <span className="text-gray-500 normal-case">({TIER_LABELS[t]})</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
