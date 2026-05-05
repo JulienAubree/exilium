@@ -284,7 +284,10 @@ export function ModuleTooltip({ module, children, placement = 'bottom', wrapperC
       <div
         role="tooltip"
         className={cn(
-          'pointer-events-none absolute z-50 w-64 max-w-[80vw]',
+          // Tooltip caché sur mobile (no hover, on a la modale Détails) ;
+          // visible dès sm pour tablet/desktop. max-w-[90vw] évite le clip
+          // hors viewport sur les petits écrans tablette.
+          'pointer-events-none absolute z-50 w-64 max-w-[90vw] hidden sm:block',
           'opacity-0 group-hover/mt:opacity-100 transition-opacity duration-150 delay-100',
           'rounded-md border border-border/60 bg-popover/95 backdrop-blur-md shadow-xl',
           'p-3 space-y-2',

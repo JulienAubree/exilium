@@ -290,18 +290,18 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
   }
 
   return (
-    <div className={cn('glass-card p-4 lg:p-5 space-y-4 border', styles.border)}>
+    <div className={cn('glass-card p-3 sm:p-4 lg:p-5 space-y-4 border', styles.border)}>
       <div>
         <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <Sparkles className={cn('h-3.5 w-3.5', styles.badgeText)} />
-            Stats de combat
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 min-w-0">
+            <Sparkles className={cn('h-3.5 w-3.5 shrink-0', styles.badgeText)} />
+            <span className="truncate">Stats de combat</span>
           </h3>
-          <span className="text-[10px] text-muted-foreground/70 font-mono">
+          <span className="text-[10px] text-muted-foreground/70 font-mono shrink-0 whitespace-nowrap">
             ×{computed.levelMult.toFixed(2)} niv. {computed.level}
           </span>
         </div>
-        <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+        <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-snug">
           Chiffres exacts utilisés en anomalie (niveau × coque × modules × recherches).
         </p>
       </div>
@@ -419,7 +419,7 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
 
       {/* Weapon batteries breakdown */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-2">
           <SectionHeader
             icon={<Crosshair className="h-3.5 w-3.5 text-orange-400" />}
             label={`Batteries d'armes (${computed.batteries.length})`}
@@ -522,14 +522,14 @@ function StatTile({
   return (
     <div
       className={cn(
-        'group/stat relative flex items-center gap-2 rounded-md bg-[#0f172a]/60 border border-panel-border/50 px-2.5 py-2',
+        'group/stat relative flex items-center gap-2 rounded-md bg-[#0f172a]/60 border border-panel-border/50 px-2 py-2 sm:px-2.5',
         hasBreakdown && 'cursor-help',
       )}
     >
       <span className={cn('shrink-0', iconTone)}>{icon}</span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-[9px] uppercase tracking-wide text-slate-500 truncate">{label}</div>
-        <div className={cn('text-sm font-bold font-mono tabular-nums leading-tight', tone)}>
+        <div className={cn('text-sm font-bold font-mono tabular-nums leading-tight truncate', tone)}>
           {fmt(value)}
           {suffix && <span className="ml-1 text-[9px] text-muted-foreground/60 font-normal">{suffix}</span>}
         </div>
@@ -539,8 +539,9 @@ function StatTile({
         <div
           role="tooltip"
           className={cn(
+            // Tooltip caché sur mobile (no hover) ; visible dès sm pour tablet/desktop.
             'pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50',
-            'w-60 max-w-[80vw]',
+            'w-60 max-w-[90vw] hidden sm:block',
             'opacity-0 group-hover/stat:opacity-100 transition-opacity duration-150 delay-150',
             'rounded-md border border-border/60 bg-popover/95 backdrop-blur-md shadow-xl',
             'p-2.5 space-y-1.5',
