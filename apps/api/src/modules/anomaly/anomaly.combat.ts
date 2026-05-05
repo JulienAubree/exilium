@@ -18,7 +18,9 @@ import {
   type FPConfig,
   type ModuleDefinitionLite,
   type CombatContext,
+  type BossSkillRuntime,
 } from '@exilium/game-engine';
+import type { ActiveBossBuff } from '../anomaly-content/anomaly-bosses.types.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createModulesService } from '../modules/modules.service.js';
 import {
@@ -59,6 +61,9 @@ async function loadFlagshipCombatConfig(
     weaponModules?: ModuleDefinitionLite[];
     combatContext: CombatContext;
   },
+  /** V9 Boss — buffs actifs accordés par les boss vaincus dans la run.
+   *  Appliqués APRES les modules pour scaler les stats déjà mod-boostées. */
+  activeBuffs?: ActiveBossBuff[],
 ): Promise<ShipCombatConfig | null> {
   const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
   if (!flagship) return null;
@@ -94,6 +99,24 @@ async function loadFlagshipCombatConfig(
     baseShield = Math.round(modified.shield);
     baseHull = Math.max(1, Math.round(modified.hull));
     baseArmor = Math.round(modified.armor);
+  }
+
+  // V9 Boss — applique les buffs actifs (cumulatifs) APRES les modules.
+  // damage_boost / shield_amp / armor_amp sont des multiplicateurs sur la
+  // stat correspondante. hull_repair / extra_charge / module_unlock sont
+  // gérés one-time ailleurs (au moment de l'apply du buff dans le service).
+  if (activeBuffs && activeBuffs.length > 0) {
+    let damageMult = 1;
+    let shieldMult = 1;
+    let armorMult = 1;
+    for (const buff of activeBuffs) {
+      if (buff.type === 'damage_boost') damageMult *= 1 + buff.magnitude;
+      else if (buff.type === 'shield_amp') shieldMult *= 1 + buff.magnitude;
+      else if (buff.type === 'armor_amp') armorMult *= 1 + buff.magnitude;
+    }
+    baseDamage = Math.round(baseDamage * damageMult);
+    baseShield = Math.round(baseShield * shieldMult);
+    baseArmor = Math.round(baseArmor * armorMult);
   }
 
   // V7-WeaponProfiles : build the flagship weapon batteries.
@@ -287,6 +310,11 @@ export async function generateAnomalyEnemy(
     /** V5-Tiers (2026-05-04) : palier pour scaling enemy FP. Default 1. */
     tier: number;
     equippedModules?: unknown;
+    /** V9 Boss — buffs actifs (passé en lecture seule pour cohérence FP preview). */
+    activeBuffs?: ActiveBossBuff[];
+    /** V9 Boss — fpMultiplier additionnel appliqué au FP target (boss = 1.5×
+     *  un combat normal de la même depth). */
+    bossFpMultiplier?: number;
   },
 ): Promise<{ enemyFleet: Record<string, number>; enemyFP: number; playerFP: number }> {
   const config = await gameConfigService.getFullConfig();
@@ -319,6 +347,7 @@ export async function generateAnomalyEnemy(
           pendingEpicEffect: null,
         }),
       },
+      args.activeBuffs,
     );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }
@@ -360,12 +389,15 @@ export async function generateAnomalyEnemy(
   // accessible aux débutants, paliers élevés réservés aux hardcore.
   // playerFP reste calculé pour les logs/observability mais ne pilote plus
   // le scaling enemy.
-  const targetEnemyFP = anomalyEnemyFP(args.tier, args.depth, {
+  const baseTargetFP = anomalyEnemyFP(args.tier, args.depth, {
     tierBaseFp: parseConfigNumber(config.universe.anomaly_tier_base_fp, 80),
     tierFpGrowth: parseConfigNumber(config.universe.anomaly_tier_fp_growth, 1.7),
     growth: parseConfigNumber(config.universe.anomaly_difficulty_growth, 1.06),
     maxRatio: parseConfigNumber(config.universe.anomaly_enemy_max_ratio, 3.0),
   });
+  // V9 Boss — multiplicateur additionnel appliqué au FP target (default 1.0
+  // = comportement régulier ; un boss seedé est ~1.3 à 2.0×).
+  const targetEnemyFP = baseTargetFP * (args.bossFpMultiplier ?? 1.0);
 
   // Anomaly compositions include EVERY combat ship type (interceptor,
   // frigate, cruiser, battlecruiser, …) in a pyramid ratio so the player
@@ -410,6 +442,10 @@ export async function runAnomalyNode(
     equippedModules?: unknown;
     /** Pending epic effect persisted by a previous activateEpic call. */
     pendingEpicEffect?: { ability: string; magnitude: number } | null;
+    /** V9 Boss — buffs actifs accordés par les boss vaincus dans cette run. */
+    activeBuffs?: ActiveBossBuff[];
+    /** V9 Boss — skills runtime injectés au combat quand le node est un boss. */
+    bossSkills?: BossSkillRuntime[];
   },
 ): Promise<AnomalyCombatResult> {
   const config = await gameConfigService.getFullConfig();
@@ -454,6 +490,7 @@ export async function runAnomalyNode(
         weaponModules: weapons,
         combatContext,
       },
+      args.activeBuffs,
     );
     if (flagshipConfig) baseShipConfigs['flagship'] = flagshipConfig;
   }
@@ -525,6 +562,7 @@ export async function runAnomalyNode(
     shipCosts,
     shipIds: shipIdSet,
     defenseIds: new Set(Object.keys(config.defenses)),
+    ...(args.bossSkills && args.bossSkills.length > 0 ? { bossSkills: args.bossSkills } : {}),
   };
   const rawResult = simulateCombat(combatInput);
 

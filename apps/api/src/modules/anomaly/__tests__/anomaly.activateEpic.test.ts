@@ -247,6 +247,13 @@ describe('activateEpic', () => {
       stubs.reportService,
       stubs.anomalyContentService,
       modulesService,
+      // V9 Boss — stub minimal pour les tests legacy ne touchant pas aux boss.
+      // Les méthodes appelées par activateEpic n'incluent pas pickBossForDepth.
+      {
+        getPool: () => [],
+        isBossDepth: () => false,
+        pickBossForDepth: () => null,
+      } as never,
     );
   });
 

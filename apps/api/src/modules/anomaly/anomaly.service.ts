@@ -22,9 +22,17 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createReportService } from '../report/report.service.js';
 import type { createAnomalyContentService } from '../anomaly-content/anomaly-content.service.js';
+import type { createAnomalyBossesService } from '../anomaly-content/anomaly-bosses.service.js';
 import type { createModulesService } from '../modules/modules.service.js';
 import { buildCombatReportData } from '../fleet/combat.helpers.js';
 import { ANOMALY_MAX_DEPTH } from '../anomaly-content/anomaly-content.types.js';
+import {
+  bossSkillsToRuntime,
+  BOSS_DEPTHS,
+  type ActiveBossBuff,
+  type BossBuff,
+  type BossEntry,
+} from '../anomaly-content/anomaly-bosses.types.js';
 import { runAnomalyNode, generateAnomalyEnemy, type FleetEntry } from './anomaly.combat.js';
 
 type AnomalyRow = typeof anomalies.$inferSelect;
@@ -48,6 +56,7 @@ export function createAnomalyService(
   reportService: ReturnType<typeof createReportService>,
   anomalyContentService: ReturnType<typeof createAnomalyContentService>,
   modulesService: ReturnType<typeof createModulesService>,
+  anomalyBossesService: ReturnType<typeof createAnomalyBossesService>,
 ) {
   async function loadActive(userId: string): Promise<AnomalyRow | null> {
     const [row] = await db.select().from(anomalies)
@@ -162,6 +171,112 @@ export function createAnomalyService(
     },
 
     /**
+     * V9 Boss (2026-05-04) : applique un buff en récompense de victoire boss.
+     * Le joueur choisit parmi les buffChoices proposés par le boss vaincu.
+     * Le buff est ajouté à active_buffs et appliqué au flagship pour le reste
+     * de la run (ou one-time pour hull_repair / extra_charge / module_unlock).
+     *
+     * Validation :
+     *  - run active
+     *  - current_depth correspond bien à une boss depth (le combat boss vient
+     *    de se résoudre)
+     *  - le buffType demandé fait partie des buffChoices du boss qui vient
+     *    d'être vaincu (sinon TRPCError BAD_REQUEST)
+     *  - applyBossBuff n'a pas déjà été appelé pour ce boss (idempotency :
+     *    on check defeated_boss_ids contient bien le boss courant ET on
+     *    refuse si active_buffs contient déjà un buff sourcé sur ce boss).
+     */
+    async applyBossBuff(userId: string, input: { buffType: BossBuff }) {
+      return await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
+
+        const [active] = await tx.select().from(anomalies)
+          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .for('update').limit(1);
+        if (!active) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune anomalie active' });
+        }
+
+        const defeatedIds = (active.defeatedBossIds ?? []) as string[];
+        if (defeatedIds.length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Aucun boss vaincu à récompenser' });
+        }
+        // Le dernier boss vaincu (LIFO) — celui dont on récompense la victoire.
+        const lastBossId = defeatedIds[defeatedIds.length - 1];
+        const boss = anomalyBossesService.getPool().find(b => b.id === lastBossId);
+        if (!boss) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Boss inconnu — pool désynchronisée' });
+        }
+
+        const existingBuffs = (active.activeBuffs ?? []) as ActiveBossBuff[];
+        if (existingBuffs.some(b => b.sourceBossId === lastBossId)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Récompense déjà appliquée pour ce boss' });
+        }
+
+        const choice = boss.buffChoices.find(c => c.type === input.buffType);
+        if (!choice) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Buff non proposé par ce boss' });
+        }
+
+        const newBuff: ActiveBossBuff = {
+          type: choice.type,
+          magnitude: choice.magnitude,
+          sourceBossId: lastBossId,
+        };
+        const newActiveBuffs = [...existingBuffs, newBuff];
+
+        // V9 Boss — buffs ONE-TIME : appliqués immédiatement sur la row /
+        // flagship plutôt que via les multiplicateurs de stats au combat.
+        //  - hull_repair : restaure +magnitude × 100% de coque flagship
+        //                  (clamp à 1.0) ET +1 charge de réparation max+current
+        //  - extra_charge : +magnitude charges épiques max+current sur le flagship
+        //  - module_unlock : permission de déployer une batterie supplémentaire
+        //                    (effet géré au combat via active_buffs lookup)
+        const fleet = (active.fleet ?? {}) as Record<string, FleetEntry>;
+        let updatedFleet = fleet;
+        let repairChargesBumpCurrent = 0;
+        let repairChargesBumpMax = 0;
+        if (choice.type === 'hull_repair') {
+          const cur = fleet.flagship?.hullPercent ?? 1.0;
+          updatedFleet = {
+            ...fleet,
+            flagship: { count: 1, hullPercent: Math.min(1.0, cur + choice.magnitude) },
+          };
+          repairChargesBumpCurrent = 1;
+          repairChargesBumpMax = 1;
+        }
+
+        // extra_charge : bumpe les charges épiques flagship.
+        if (choice.type === 'extra_charge') {
+          const bump = Math.max(0, Math.floor(choice.magnitude));
+          if (bump > 0) {
+            await tx.update(flagships).set({
+              epicChargesCurrent: sql`${flagships.epicChargesCurrent} + ${bump}`,
+              epicChargesMax: sql`${flagships.epicChargesMax} + ${bump}`,
+            }).where(eq(flagships.userId, userId));
+          }
+        }
+
+        await tx.update(anomalies).set({
+          activeBuffs: newActiveBuffs,
+          fleet: updatedFleet,
+          ...(repairChargesBumpCurrent > 0
+            ? {
+                repairChargesCurrent: sql`${anomalies.repairChargesCurrent} + ${repairChargesBumpCurrent}`,
+                repairChargesMax: sql`${anomalies.repairChargesMax} + ${repairChargesBumpMax}`,
+              }
+            : {}),
+        }).where(eq(anomalies.id, active.id));
+
+        return {
+          ok: true as const,
+          appliedBuff: newBuff,
+          activeBuffs: newActiveBuffs,
+        };
+      });
+    },
+
+    /**
      * V4 (2026-05-03) : flagship-only engagement.
      *
      * No more escort selection — the flagship is the only ship engaged.
@@ -255,14 +370,40 @@ export function createAnomalyService(
         }).where(eq(flagships.userId, userId));
 
         // 8. Build fleet (flagship only) + first enemy
+        // V9 Boss : depth 1 spawn ALWAYS un boss (early tier).
         const fleet: FleetMap = { flagship: { count: 1, hullPercent: 1.0 } };
-        const firstEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
-          userId,
-          fleet,
-          depth: 1,
-          tier: input.tier,  // V5-Tiers
-          equippedModules: equippedSnapshot,
-        });
+
+        const firstBoss = anomalyBossesService.pickBossForDepth(1, []);
+        let nextNodeType: 'combat' | 'event' | 'boss' = 'combat';
+        let pendingBossId: string | null = null;
+        let firstEnemyFleet: Record<string, number>;
+        let firstEnemyFP: number;
+        if (firstBoss) {
+          nextNodeType = 'boss';
+          pendingBossId = firstBoss.id;
+          const bossEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
+            userId,
+            fleet,
+            depth: 1,
+            tier: input.tier,
+            equippedModules: equippedSnapshot,
+            activeBuffs: [],
+            bossFpMultiplier: firstBoss.fpMultiplier,
+          });
+          firstEnemyFleet = bossEnemy.enemyFleet;
+          firstEnemyFP = bossEnemy.enemyFP;
+        } else {
+          // Fallback safety : pool vide → combat normal.
+          const firstEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
+            userId,
+            fleet,
+            depth: 1,
+            tier: input.tier,
+            equippedModules: equippedSnapshot,
+          });
+          firstEnemyFleet = firstEnemy.enemyFleet;
+          firstEnemyFP = firstEnemy.enemyFP;
+        }
 
         // 9. Insert anomaly row — V4 flagship-only with repair charges
         const nextNodeAt = new Date(Date.now() + nodeTravelMs(config));
@@ -274,15 +415,19 @@ export function createAnomalyService(
           fleet,
           exiliumPaid: cost,
           nextNodeAt,
-          nextEnemyFleet: firstEnemy.enemyFleet,
-          nextEnemyFp: Math.round(firstEnemy.enemyFP),
-          nextNodeType: 'combat',
+          nextEnemyFleet: firstEnemyFleet,
+          nextEnemyFp: Math.round(firstEnemyFP),
+          nextNodeType,
           combatsUntilNextEvent: pickEventGap(Math.random),
           equippedModules: equippedSnapshot,
           pendingEpicEffect: null,
           repairChargesCurrent: repairChargesMax,
           repairChargesMax,
           tier: input.tier,  // V5-Tiers
+          // V9 Boss
+          activeBuffs: [],
+          pendingBossId,
+          defeatedBossIds: [],
         }).returning();
 
         return created;
@@ -319,6 +464,16 @@ export function createAnomalyService(
         const fleet = row.fleet as FleetMap;
         const newDepth = row.currentDepth + 1;
 
+        // V9 Boss — détecte si le node courant est un boss. La row porte
+        // pending_boss_id quand l'étape précédente l'a fixée.
+        const isBossNode = row.nextNodeType === 'boss' && !!row.pendingBossId;
+        const activeBuffs = (row.activeBuffs ?? []) as ActiveBossBuff[];
+        const defeatedBossIds = (row.defeatedBossIds ?? []) as string[];
+        let currentBoss: BossEntry | null = null;
+        if (isBossNode && row.pendingBossId) {
+          currentBoss = anomalyBossesService.getPool().find(b => b.id === row.pendingBossId) ?? null;
+        }
+
       // Use the pre-generated enemy that the player has been previewing.
       // Fallback: regenerate one (legacy rows without next_enemy_fleet).
       let predefinedEnemy: { fleet: Record<string, number>; fp: number };
@@ -342,6 +497,7 @@ export function createAnomalyService(
       const pendingEpicEffect = row.pendingEpicEffect as
         | { ability: string; magnitude: number }
         | null;
+      const bossSkills = currentBoss ? bossSkillsToRuntime(currentBoss) : undefined;
       const result = await runAnomalyNode(tx as unknown as Database, gameConfigService, modulesService, {
         userId,
         fleet,
@@ -350,6 +506,8 @@ export function createAnomalyService(
         tier: row.tier ?? 1,  // V5-Tiers
         equippedModules: row.equippedModules,
         pendingEpicEffect,
+        activeBuffs,
+        bossSkills,
       });
 
       const config = await gameConfigService.getFullConfig();
@@ -451,6 +609,13 @@ export function createAnomalyService(
           // V5-Tiers : pas de complétion sur un wipe.
           tierCompleted: null as number | null,
           newTierUnlocked: null as number | null,
+          // V9 Boss : pas de récompense si tu meurs sur le boss.
+          bossVictory: null as null | {
+            bossId: string;
+            bossName: string;
+            bossTitle: string;
+            buffChoices: Array<{ type: BossBuff; magnitude: number }>;
+          },
         };
       }
 
@@ -566,6 +731,13 @@ export function createAnomalyService(
 
         const finalDrops = await rollFinalDropsForRun(tx, userId, newDepth);
 
+        // V9 Boss — depth 20 est un boss : marque le boss vaincu pour audit.
+        // Pas besoin de proposer des buffChoices au runComplete (run terminée),
+        // mais on veut bien track defeated_boss_ids pour les stats de fin.
+        const updatedDefeated = currentBoss
+          ? [...defeatedBossIds, currentBoss.id]
+          : defeatedBossIds;
+
         const completedRows = await tx.update(anomalies).set({
           status: 'completed',
           fleet: result.attackerSurvivors,
@@ -581,6 +753,9 @@ export function createAnomalyService(
           nextEnemyFp: null,
           // Clear pending epic effect (consumed by this combat)
           ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
+          // V9 Boss : clear pending + track defeated final boss
+          pendingBossId: null,
+          defeatedBossIds: updatedDefeated,
         }).where(and(
           eq(anomalies.id, row.id),
           eq(anomalies.status, 'active'),
@@ -676,23 +851,59 @@ export function createAnomalyService(
           levelUp: levelUpPayload,
           tierCompleted: runTier,
           newTierUnlocked,  // null if no new unlock (re-run lower tier)
+          // V9 Boss : pas de buff à proposer en fin de run (la run est terminée).
+          bossVictory: currentBoss
+            ? {
+                bossId: currentBoss.id,
+                bossName: currentBoss.name,
+                bossTitle: currentBoss.title,
+                buffChoices: [] as Array<{ type: BossBuff; magnitude: number }>,
+              }
+            : null,
         };
       }
 
-      // ── Decide next node : event vs combat ───────────────────────────────
-      // Decrement counter; when it hits 0 try to pick an event of the upcoming
-      // tier. If pool is exhausted for that tier, fallback to combat (no error).
+      // ── Decide next node : boss vs event vs combat ───────────────────────
+      // V9 Boss : si newDepth+1 ∈ {1,5,10,15,20}, spawn un boss (priorité
+      // absolue sur l'event/combat). Note : depth 1 = boss spawnable seulement
+      // depuis engage(), donc ici on ne tombe que sur 5/10/15/20.
+      const upcomingDepth = newDepth + 1;
+      const isUpcomingBossDepth = (BOSS_DEPTHS as readonly number[]).includes(upcomingDepth);
+
+      // V9 Boss : si on vient de battre un boss, ajoute son id à defeated_boss_ids.
+      const updatedDefeatedBossIds = currentBoss
+        ? Array.from(new Set([...defeatedBossIds, currentBoss.id]))
+        : defeatedBossIds;
+
       const newCounter = Math.max(0, row.combatsUntilNextEvent - 1);
       const seenEventIds = new Set((row.seenEventIds ?? []) as string[]);
-      let nextNodeType: 'combat' | 'event' = 'combat';
+      let nextNodeType: 'combat' | 'event' | 'boss' = 'combat';
       let nextEventId: string | null = null;
       let nextEnemyFleet: Record<string, number> | null = null;
       let nextEnemyFp: number | null = null;
       let nextCounter = newCounter;
+      let nextPendingBossId: string | null = null;
 
-      if (newCounter === 0) {
+      if (isUpcomingBossDepth) {
+        const nextBoss = anomalyBossesService.pickBossForDepth(upcomingDepth, updatedDefeatedBossIds);
+        if (nextBoss) {
+          nextNodeType = 'boss';
+          nextPendingBossId = nextBoss.id;
+          const bossEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
+            userId,
+            fleet: result.attackerSurvivors,
+            depth: upcomingDepth,
+            tier: row.tier ?? 1,
+            equippedModules: row.equippedModules,
+            activeBuffs,
+            bossFpMultiplier: nextBoss.fpMultiplier,
+          });
+          nextEnemyFleet = bossEnemy.enemyFleet;
+          nextEnemyFp = Math.round(bossEnemy.enemyFP);
+        }
+      } else if (newCounter === 0) {
         const content = await anomalyContentService.getContent();
-        const tier = tierForDepth(newDepth + 1);
+        const tier = tierForDepth(upcomingDepth);
         const pickedEvent = pickEventForTier(content.events, tier, seenEventIds, Math.random);
         if (pickedEvent) {
           nextNodeType = 'event';
@@ -702,14 +913,15 @@ export function createAnomalyService(
         }
       }
 
-      // Generate the combat preview only when the next node is a combat.
+      // Generate the combat preview only when the next node is a regular combat.
       if (nextNodeType === 'combat') {
         const nextEnemy = await generateAnomalyEnemy(tx as unknown as Database, gameConfigService, modulesService, {
           userId,
           fleet: result.attackerSurvivors,
-          depth: newDepth + 1,
+          depth: upcomingDepth,
           tier: row.tier ?? 1,  // V5-Tiers
           equippedModules: row.equippedModules,
+          activeBuffs,
         });
         nextEnemyFleet = nextEnemy.enemyFleet;
         nextEnemyFp = Math.round(nextEnemy.enemyFP);
@@ -732,6 +944,10 @@ export function createAnomalyService(
         combatsUntilNextEvent: nextCounter,
         // Clear pending epic effect (consumed by this combat)
         ...(row.pendingEpicEffect ? { pendingEpicEffect: null } : {}),
+        // V9 Boss : on clear pending_boss_id du combat qui vient d'avoir lieu
+        // (boss vaincu) ou on set le suivant si upcoming est boss-depth.
+        pendingBossId: nextPendingBossId,
+        defeatedBossIds: updatedDefeatedBossIds,
       }).where(and(
         eq(anomalies.id, row.id),
         eq(anomalies.status, 'active'),
@@ -754,6 +970,18 @@ export function createAnomalyService(
         nextEventId,
         reportId: report.id,
         droppedModule,
+        // V9 Boss : si le combat qui vient d'être gagné était un boss,
+        // on remonte les buffChoices pour que le front affiche le modal
+        // de récompense. Le joueur appellera applyBossBuff(buffType) pour
+        // valider son choix.
+        bossVictory: currentBoss
+          ? {
+              bossId: currentBoss.id,
+              bossName: currentBoss.name,
+              bossTitle: currentBoss.title,
+              buffChoices: currentBoss.buffChoices,
+            }
+          : null,
         finalDrops: [] as Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>,
         runComplete: false,
         xpGained: xpGainedTotal,

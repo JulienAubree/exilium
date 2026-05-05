@@ -54,6 +54,7 @@ function makeService(db: any) {
     {} as any,  // reportService
     {} as any,  // anomalyContentService
     {} as any,  // modulesService
+    {} as any,  // anomalyBossesService — not used by useRepairCharge
   );
 }
 

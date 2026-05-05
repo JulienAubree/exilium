@@ -1,8 +1,12 @@
 import { z } from 'zod';
 import { protectedProcedure, router } from '../../trpc/router.js';
 import type { createAnomalyService } from './anomaly.service.js';
+import type { createAnomalyBossesService } from '../anomaly-content/anomaly-bosses.service.js';
 
-export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnomalyService>) {
+export function createAnomalyRouter(
+  anomalyService: ReturnType<typeof createAnomalyService>,
+  anomalyBossesService: ReturnType<typeof createAnomalyBossesService>,
+) {
   return router({
     current: protectedProcedure.query(async ({ ctx }) => {
       return anomalyService.current(ctx.userId!);
@@ -41,6 +45,22 @@ export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnom
       return anomalyService.useRepairCharge(ctx.userId!);
     }),
 
+    /** V9 Boss — applique le buff choisi par le joueur après une victoire boss. */
+    applyBossBuff: protectedProcedure
+      .input(z.object({
+        buffType: z.enum([
+          'damage_boost',
+          'hull_repair',
+          'shield_amp',
+          'armor_amp',
+          'extra_charge',
+          'module_unlock',
+        ]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return anomalyService.applyBossBuff(ctx.userId!, input);
+      }),
+
     history: protectedProcedure
       .input(z.object({ limit: z.number().int().min(1).max(50).default(10) }).optional())
       .query(async ({ ctx, input }) => {
@@ -52,5 +72,12 @@ export function createAnomalyRouter(anomalyService: ReturnType<typeof createAnom
       .query(async ({ input }) => {
         return anomalyService.getLeaderboard(input?.limit ?? 50);
       }),
+
+    /** V9 Boss — pool complète des boss seedés (lecture seule). Utilisée par
+     *  le front pour résoudre id → nom/skills/buffs au moment de l'affichage
+     *  du preview boss et du modal de récompense. */
+    bossesPool: protectedProcedure.query(() => {
+      return { bosses: anomalyBossesService.getPool() };
+    }),
   });
 }

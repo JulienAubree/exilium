@@ -73,6 +73,7 @@ import { createColonizationRouter } from '../modules/colonization/colonization.r
 import { createHomepageService } from '../modules/homepage/homepage.service.js';
 import { createHomepageRouter } from '../modules/homepage/homepage.router.js';
 import { createAnomalyContentService } from '../modules/anomaly-content/anomaly-content.service.js';
+import { createAnomalyBossesService } from '../modules/anomaly-content/anomaly-bosses.service.js';
 import { createAnomalyContentRouter } from '../modules/anomaly-content/anomaly-content.router.js';
 import { createModulesService } from '../modules/modules/modules.service.js';
 import { createModulesRouter } from '../modules/modules/modules.router.js';
@@ -129,6 +130,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const explorationReportService = createExplorationReportService(db, resourceService, gameConfigService);
   const homepageService = createHomepageService(db);
   const anomalyContentService = createAnomalyContentService(db);
+  const anomalyBossesService = createAnomalyBossesService();
   const modulesService = createModulesService(db);
 
   const authRouter = createAuthRouter(db, authService, planetService);
@@ -165,8 +167,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
   const anomalyContentRouter = createAnomalyContentRouter(anomalyContentService, adminProcedure);
   const modulesRouter = createModulesRouter(modulesService, adminProcedure);
-  const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService);
-  const anomalyRouter = createAnomalyRouter(anomalyService);
+  const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService, anomalyBossesService);
+  const anomalyRouter = createAnomalyRouter(anomalyService, anomalyBossesService);
 
   const appRouter = router({
     health: publicProcedure.query(() => ({
