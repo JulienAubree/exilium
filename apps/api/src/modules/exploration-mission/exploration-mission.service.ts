@@ -805,6 +805,84 @@ export function createExplorationMissionService(
   }
 
   /**
+   * Rappelle la flotte avant la fin de la mission. Crédite les outcomes
+   * accumulés jusqu'ici (ressources, exilium, modules, biome reveals,
+   * anomaly credits) et marque la mission completed avec une note de
+   * retraite dans le step_log.
+   *
+   * Refusé si la mission est en awaiting_decision (il faut d'abord
+   * résoudre l'événement en cours) ou non engagée.
+   */
+  async function retreatMission(
+    userId: string,
+    missionId: string,
+  ): Promise<{ status: 'completed'; resolutionText: string }> {
+    return await db.transaction(async (tx) => {
+      const [mission] = await tx
+        .select()
+        .from(explorationMissions)
+        .where(and(
+          eq(explorationMissions.id, missionId),
+          eq(explorationMissions.userId, userId),
+        ))
+        .for('update')
+        .limit(1);
+
+      if (!mission) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Mission introuvable' });
+      }
+      if (mission.status !== 'engaged') {
+        if (mission.status === 'awaiting_decision') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Résolvez l\'événement en cours avant de rappeler la flotte',
+          });
+        }
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cette mission ne peut plus être rappelée',
+        });
+      }
+
+      const outcomes = mission.outcomesAccumulated as OutcomesAccumulated;
+      const fleetStatus = mission.fleetStatus as FleetStatus;
+      const stepLog = mission.stepLog as StepLogEntry[];
+
+      // Note de retraite dans le journal
+      const retreatNote: StepLogEntry = {
+        step: mission.currentStep + 1,
+        eventId: 'retreat',
+        choiceIndex: -1,
+        outcomeApplied: {
+          minerai: 0, silicium: 0, hydrogene: 0, exilium: 0,
+          hullDelta: 0, bonusBiomeReveal: 0,
+          resolutionText: "Sur votre ordre, la flotte fait demi-tour avant la fin de la mission.",
+        },
+        resolutionText: "Sur votre ordre, la flotte fait demi-tour avant la fin de la mission. Vous récupérez ce qui est dans la soute.",
+        resolvedAt: new Date().toISOString(),
+      };
+      const newStepLog = [...stepLog, retreatNote];
+
+      // Réutilise la logique de crédit final
+      await completeMissionInTx(
+        tx,
+        missionId,
+        userId,
+        outcomes,
+        newStepLog,
+        fleetStatus,
+        mission,
+        crypto.randomUUID(),
+      );
+
+      return {
+        status: 'completed' as const,
+        resolutionText: retreatNote.resolutionText,
+      };
+    });
+  }
+
+  /**
    * Tick global : avance toutes les missions dont `next_step_at` est passé.
    * Appelé toutes les 60s par le cron.
    */
@@ -922,6 +1000,7 @@ export function createExplorationMissionService(
     engageMission,
     advanceMission,
     resolveStep,
+    retreatMission,
     tickPendingMissions,
     purgeExpiredOffers,
     timeoutAwaitingDecisions,

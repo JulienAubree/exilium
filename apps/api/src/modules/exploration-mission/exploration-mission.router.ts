@@ -67,5 +67,16 @@ export function createExplorationMissionRouter(
           input.resolutionToken,
         );
       }),
+
+    /**
+     * Rappelle la flotte avant la fin de la mission. Crédite les outcomes
+     * accumulés et marque la mission completed. Refusé si un événement est
+     * en attente de décision.
+     */
+    retreat: protectedProcedure
+      .input(z.object({ missionId: z.string().uuid() }))
+      .mutation(async ({ ctx, input }) => {
+        return service.retreatMission(ctx.userId!, input.missionId);
+      }),
   });
 }

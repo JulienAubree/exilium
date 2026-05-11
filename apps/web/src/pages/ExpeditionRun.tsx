@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
   ArrowLeft, Compass, MapPin, Clock, Fuel, Package, Anchor,
-  Sparkles, AlertTriangle, CheckCircle2, XCircle, Skull, Coins,
+  Sparkles, AlertTriangle, CheckCircle2, XCircle, Skull, Coins, LogOut,
 } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -104,6 +104,29 @@ export default function ExpeditionRun() {
     },
   });
 
+  const retreatMutation = trpc.expedition.retreat.useMutation({
+    onSuccess: (res) => {
+      addToast(res.resolutionText || 'Flotte rappelée', 'success');
+      utils.expedition.list.invalidate();
+      utils.expedition.getDetail.invalidate({ missionId: missionId! });
+      utils.planet.list.invalidate();
+      refetch();
+    },
+    onError: (e) => {
+      addToast(e.message ?? 'Rappel impossible', 'error');
+    },
+  });
+
+  const handleRetreat = () => {
+    if (!missionId) return;
+    const confirmed = window.confirm(
+      'Rappeler la flotte ?\n\nLa flotte rentre immédiatement à la planète d\'origine avec ' +
+      'ce qui est dans la soute. Les étapes restantes ne seront pas explorées.',
+    );
+    if (!confirmed) return;
+    retreatMutation.mutate({ missionId });
+  };
+
   const pendingEvent: ExpeditionEvent | null = useMemo(() => {
     if (!mission || !content || mission.status !== 'awaiting_decision') return null;
     return content.events.find((e) => e.id === mission.pendingEventId) ?? null;
@@ -180,19 +203,33 @@ export default function ExpeditionRun() {
             Étape {mission.currentStep + (mission.status === 'awaiting_decision' ? 1 : 0)} / {mission.totalSteps}
           </span>
         </div>
-        {mission.status === 'engaged' && mission.nextStepAt && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            Prochain événement dans{' '}
-            <Timer endTime={new Date(mission.nextStepAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
-          </div>
-        )}
-        {mission.status === 'awaiting_decision' && (
-          <Button size="sm" onClick={() => setEventOpen(true)}>
-            <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-            Résoudre l'événement
-          </Button>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {mission.status === 'engaged' && mission.nextStepAt && (
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Prochain événement dans{' '}
+              <Timer endTime={new Date(mission.nextStepAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
+            </div>
+          )}
+          {mission.status === 'awaiting_decision' && (
+            <Button size="sm" onClick={() => setEventOpen(true)}>
+              <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+              Résoudre l'événement
+            </Button>
+          )}
+          {mission.status === 'engaged' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRetreat}
+              disabled={retreatMutation.isPending}
+              title="Rentrer immédiatement avec ce qui est dans la soute"
+            >
+              <LogOut className="h-3.5 w-3.5 mr-1.5" />
+              {retreatMutation.isPending ? 'Rappel…' : 'Rappeler la flotte'}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Briefing */}
