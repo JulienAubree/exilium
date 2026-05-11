@@ -3,7 +3,7 @@ import '@fastify/multipart';
 import { jwtVerify } from 'jose';
 import { eq, sql } from 'drizzle-orm';
 import { users, planetTypes, type Database } from '@exilium/db';
-import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, processLandingImage, processAnomalyImage, processModuleImage, isValidCategory } from '../../lib/image-processing.js';
+import { processImage, processPlanetImage, processFlagshipImage, processAvatarImage, processBuildingVariant, processLandingImage, processAnomalyImage, processModuleImage, processExpeditionImage, isValidCategory } from '../../lib/image-processing.js';
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
 import { getNextAvatarIndex, listAvatarIndexes } from '../../lib/avatar-image.util.js';
@@ -52,7 +52,7 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     const planetType = (data.fields.planetType as { value: string } | undefined)?.value;
 
     if (!category || !isValidCategory(category)) {
-      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars, landing, anomaly, module' });
+      return reply.status(400).send({ error: 'Invalid category. Must be: buildings, research, ships, defenses, planets, flagships, avatars, landing, anomaly, module, expedition' });
     }
     if (!entityId && category !== 'avatars') {
       return reply.status(400).send({ error: 'entityId is required (hullId for flagships, slot for landing/anomaly/module)' });
@@ -94,6 +94,12 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
           return reply.status(400).send({ error: 'Invalid anomaly slot' });
         }
         files = await processAnomalyImage(buffer, entityId!, env.ASSETS_DIR);
+      } else if (category === 'expedition') {
+        // Expedition content images use a free-form slot key (e.g. "sector-theta-7").
+        if (!/^[a-z0-9_-]+$/i.test(entityId!)) {
+          return reply.status(400).send({ error: 'Invalid expedition slot' });
+        }
+        files = await processExpeditionImage(buffer, entityId!, env.ASSETS_DIR);
       } else if (category === 'module') {
         if (!/^[a-z0-9_-]+$/i.test(entityId!)) {
           return reply.status(400).send({ error: 'Invalid module slot' });

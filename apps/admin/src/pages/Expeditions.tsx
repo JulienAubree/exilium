@@ -4,6 +4,7 @@ import type { AppRouter } from '@exilium/api/trpc';
 import { trpc } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ExpeditionImageSlot } from '@/components/ui/ExpeditionImageSlot';
 import {
   Save, RotateCcw, Plus, Trash2, Eye, EyeOff, MapPin, Sparkles,
   Compass, Activity, Power, AlertCircle, Copy, Download,
@@ -282,7 +283,17 @@ function SectorsTab({
       <div className="space-y-2">
         {draft.sectors.map((s, i) => (
           <div key={i} className={`rounded-lg border p-3 ${s.enabled ? 'border-border/40 bg-card/40' : 'border-border/20 bg-card/20 opacity-60'}`}>
-            <div className="grid grid-cols-12 gap-2 items-start">
+            <div className="grid grid-cols-12 gap-3 items-start">
+              <div className="col-span-2 row-span-2">
+                <ExpeditionImageSlot
+                  slot={`sector-${s.id}`}
+                  value={s.imageRef ?? ''}
+                  aspect="16/9"
+                  label="Illustration"
+                  hint="Hero du secteur (~1280×720)"
+                  onChange={(path) => updateSector(i, { imageRef: path || undefined })}
+                />
+              </div>
               <div className="col-span-2">
                 <label className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</label>
                 <input
@@ -313,7 +324,25 @@ function SectorsTab({
                   ))}
                 </select>
               </div>
-              <div className="col-span-4">
+              <div className="col-span-2 flex flex-col gap-1 items-end pt-4">
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateSector(i, { enabled: !s.enabled })}
+                    className="p-1 rounded hover:bg-white/5"
+                    title={s.enabled ? 'Désactiver' : 'Activer'}
+                  >
+                    {s.enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                  </button>
+                  <button type="button" onClick={() => duplicateSector(i)} className="p-1 rounded hover:bg-white/5">
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                  <button type="button" onClick={() => removeSector(i)} className="p-1 rounded hover:bg-rose-500/10 text-rose-400">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="col-span-10 col-start-3">
                 <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Briefing</label>
                 <textarea
                   value={s.briefingTemplate}
@@ -321,22 +350,6 @@ function SectorsTab({
                   className="w-full bg-background/60 border border-border/30 rounded px-2 py-1 text-xs"
                   rows={2}
                 />
-              </div>
-              <div className="col-span-1 flex flex-col gap-1 items-end pt-4">
-                <button
-                  type="button"
-                  onClick={() => updateSector(i, { enabled: !s.enabled })}
-                  className="p-1 rounded hover:bg-white/5"
-                  title={s.enabled ? 'Désactiver' : 'Activer'}
-                >
-                  {s.enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
-                </button>
-                <button type="button" onClick={() => duplicateSector(i)} className="p-1 rounded hover:bg-white/5">
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-                <button type="button" onClick={() => removeSector(i)} className="p-1 rounded hover:bg-rose-500/10 text-rose-400">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
               </div>
             </div>
           </div>
@@ -491,14 +504,26 @@ function EventsTab({
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Description narrative</label>
-              <textarea
-                value={selected.description}
-                onChange={(e) => updateEvent(selectedIdx, { description: e.target.value })}
-                className="w-full bg-background/60 border border-border/30 rounded px-2 py-1 text-sm"
-                rows={3}
-              />
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-3">
+                <ExpeditionImageSlot
+                  slot={`event-${selected.id}`}
+                  value={selected.imageRef ?? ''}
+                  aspect="16/9"
+                  label="Illustration"
+                  hint="Hero de l'événement"
+                  onChange={(path) => updateEvent(selectedIdx, { imageRef: path || undefined })}
+                />
+              </div>
+              <div className="col-span-9">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Description narrative</label>
+                <textarea
+                  value={selected.description}
+                  onChange={(e) => updateEvent(selectedIdx, { description: e.target.value })}
+                  className="w-full bg-background/60 border border-border/30 rounded px-2 py-1 text-sm h-full"
+                  rows={5}
+                />
+              </div>
             </div>
 
             {/* Choix */}

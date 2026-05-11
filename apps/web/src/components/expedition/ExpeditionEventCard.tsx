@@ -134,6 +134,23 @@ export function ExpeditionEventCard({
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
+      {/* Hero illustration (uploadée admin, fallback gradient violet) */}
+      {event.imageRef ? (
+        <div className="relative -mx-6 -mt-6 mb-2 overflow-hidden rounded-t-xl">
+          <img
+            src={event.imageRef}
+            alt={event.title}
+            className="w-full h-44 object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+        </div>
+      ) : (
+        <div className="relative -mx-6 -mt-6 mb-2 h-32 overflow-hidden rounded-t-xl bg-gradient-to-br from-violet-950/60 via-amber-950/30 to-rose-950/40">
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+        </div>
+      )}
+
       <div className="space-y-2 text-center">
         <h2 className="text-xl font-bold text-foreground">{event.title}</h2>
         <p className="text-sm text-muted-foreground italic">{event.description}</p>

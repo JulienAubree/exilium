@@ -4,7 +4,7 @@ import fs from 'fs';
 
 import { toKebab, type AssetCategory } from '@exilium/shared';
 
-const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships', 'avatars', 'landing', 'anomaly', 'module'];
+const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships', 'avatars', 'landing', 'anomaly', 'module', 'expedition'];
 
 const SIZES: readonly { suffix: string; width: number; height?: number; quality: number; label: string }[] = [
   { suffix: '', width: 1200, quality: 85, label: 'hero' },
@@ -220,6 +220,36 @@ export async function processAnomalyImage(
   }
 
   const outputDir = path.join(assetsDir, 'anomaly');
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const files: string[] = [];
+  for (const size of ANOMALY_SIZES) {
+    const filename = `${slot}${size.suffix}.webp`;
+    const outPath = path.join(outputDir, filename);
+    await sharp(buffer)
+      .resize({ width: size.width, withoutEnlargement: true })
+      .webp({ quality: size.quality })
+      .toFile(outPath);
+    files.push(filename);
+  }
+  return files;
+}
+
+/**
+ * Images des Missions d'exploration en espace profond.
+ * Slot libre (ex: `sector-theta-7`, `event-epave-recyclable`).
+ * Mêmes tailles que les anomalies pour cohérence visuelle.
+ */
+export async function processExpeditionImage(
+  buffer: Buffer,
+  slot: string,
+  assetsDir: string,
+): Promise<string[]> {
+  if (!/^[a-z0-9_-]+$/i.test(slot)) {
+    throw new Error(`Invalid expedition slot "${slot}"`);
+  }
+
+  const outputDir = path.join(assetsDir, 'expedition');
   fs.mkdirSync(outputDir, { recursive: true });
 
   const files: string[] = [];

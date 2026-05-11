@@ -175,24 +175,56 @@ export default function ExpeditionRun() {
   const statusInfo = STATUS_LABEL[mission.status] ?? { label: mission.status, color: 'text-muted-foreground' };
   const isFinal = mission.status === 'completed' || mission.status === 'failed' || mission.status === 'expired';
 
+  // Image hero du secteur (uploadée admin, fallback gradient)
+  const sectorDef = content?.sectors.find((s) => s.id === mission.sectorId);
+  const sectorImage = sectorDef?.imageRef ?? null;
+
   return (
     <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/missions/expeditions"
-          className="p-1.5 rounded-md border border-border/30 hover:bg-card/60 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <Compass className="h-5 w-5 text-cyan-300" />
-        <h1 className="text-lg font-bold flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
-          {mission.sectorName}
-          <span className={cn('ml-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wider', TIER_COLOR[tier])}>
-            {TIER_LABEL[tier]}
-          </span>
-        </h1>
+      {/* Hero header avec image de fond */}
+      <div className={cn(
+        'relative overflow-hidden rounded-xl border',
+        TIER_COLOR[tier].replace('text-', 'border-').replace(/-300\b/, '-500/30'),
+      )}>
+        {sectorImage ? (
+          <>
+            <img
+              src={sectorImage}
+              alt={mission.sectorName}
+              className="absolute inset-0 h-full w-full object-cover opacity-50"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
+          </>
+        ) : (
+          <div className={cn(
+            'absolute inset-0',
+            tier === 'early' ? 'bg-gradient-to-br from-emerald-950/60 via-background to-background' :
+            tier === 'mid' ? 'bg-gradient-to-br from-cyan-950/60 via-background to-background' :
+            'bg-gradient-to-br from-violet-950/60 via-background to-background',
+          )} />
+        )}
+        <div className="relative px-5 py-6 lg:px-8 lg:py-8 flex items-center gap-4">
+          <Link
+            to="/missions/expeditions"
+            className="p-1.5 rounded-md border border-border/30 hover:bg-card/60 transition-colors backdrop-blur-sm bg-background/40"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <Compass className="h-3 w-3" />
+              Expédition en espace profond
+            </div>
+            <h1 className="mt-1 text-xl lg:text-2xl font-bold flex items-center gap-2.5 flex-wrap">
+              <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
+              <span className="truncate">{mission.sectorName}</span>
+              <span className={cn('shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wider', TIER_COLOR[tier])}>
+                {TIER_LABEL[tier]}
+              </span>
+            </h1>
+          </div>
+        </div>
       </div>
 
       {/* Status bar */}

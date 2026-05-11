@@ -1,4 +1,4 @@
-export type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets' | 'flagships' | 'avatars' | 'landing' | 'anomaly' | 'module';
+export type AssetCategory = 'buildings' | 'research' | 'ships' | 'defenses' | 'planets' | 'flagships' | 'avatars' | 'landing' | 'anomaly' | 'module' | 'expedition';
 
 /** Convert camelCase ID to kebab-case filename */
 export function toKebab(id: string): string {
