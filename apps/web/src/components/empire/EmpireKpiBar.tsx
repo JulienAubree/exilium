@@ -1,32 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useState } from 'react';
 import { Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { useCountdownString } from '@/hooks/useCountdown';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useProgress } from '@/components/fleet/MovementCard';
-
-/** Live countdown that ticks every second. */
-function useCountdown(targetDate: Date): string {
-  const compute = useCallback(() => {
-    const diff = Math.max(0, Math.floor((targetDate.getTime() - Date.now()) / 1000));
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    const s = diff % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }, [targetDate]);
-
-  const [display, setDisplay] = useState(compute);
-
-  useEffect(() => {
-    const id = setInterval(() => setDisplay(compute()), 1000);
-    return () => clearInterval(id);
-  }, [compute]);
-
-  return display;
-}
 
 interface GovernanceData {
   colonyCount: number;
@@ -63,7 +44,13 @@ function formatRate(value: number): string {
 
 type PanelId = 'minerai' | 'silicium' | 'hydrogene' | 'governance' | 'fleets' | null;
 
-export function EmpireKpiBar({ totalRates, activeFleetCount, inboundAttackCount, governance, planets }: EmpireKpiBarProps) {
+export function EmpireKpiBar({
+  totalRates,
+  activeFleetCount,
+  inboundAttackCount,
+  governance,
+  planets,
+}: EmpireKpiBarProps) {
   const [openPanel, setOpenPanel] = useState<PanelId>(null);
 
   const toggle = (id: PanelId) => setOpenPanel((prev) => (prev === id ? null : id));
@@ -137,16 +124,20 @@ export function EmpireKpiBar({ totalRates, activeFleetCount, inboundAttackCount,
           {(openPanel === 'minerai' || openPanel === 'silicium' || openPanel === 'hydrogene') && (
             <ResourcePanel
               resource={openPanel}
-              planets={(planets ?? []).filter(p => p.status !== 'colonizing')}
+              planets={(planets ?? []).filter((p) => p.status !== 'colonizing')}
               total={
-                openPanel === 'minerai' ? totalRates.mineraiPerHour
-                  : openPanel === 'silicium' ? totalRates.siliciumPerHour
+                openPanel === 'minerai'
+                  ? totalRates.mineraiPerHour
+                  : openPanel === 'silicium'
+                    ? totalRates.siliciumPerHour
                     : totalRates.hydrogenePerHour
               }
             />
           )}
           {openPanel === 'governance' && governance && <GovernancePanel governance={governance} />}
-          {openPanel === 'fleets' && <FleetsPanel planets={planets ?? []} totalFleets={activeFleetCount} />}
+          {openPanel === 'fleets' && (
+            <FleetsPanel planets={planets ?? []} totalFleets={activeFleetCount} />
+          )}
         </div>
       )}
     </div>
@@ -157,7 +148,14 @@ export function EmpireKpiBar({ totalRates, activeFleetCount, inboundAttackCount,
 // KPI pill (clickable)
 // ---------------------------------------------------------------------------
 
-function Kpi({ iconNode, color, value, label, active, onClick }: {
+function Kpi({
+  iconNode,
+  color,
+  value,
+  label,
+  active,
+  onClick,
+}: {
   iconNode: React.ReactNode;
   color: string;
   value: string;
@@ -177,10 +175,12 @@ function Kpi({ iconNode, color, value, label, active, onClick }: {
       {iconNode}
       <span className={cn('text-xs font-bold', color)}>{value}</span>
       <span className="text-[9px] uppercase text-muted-foreground hidden lg:inline">{label}</span>
-      <ChevronDown className={cn(
-        'h-2.5 w-2.5 text-muted-foreground/40 transition-transform',
-        active && 'rotate-180',
-      )} />
+      <ChevronDown
+        className={cn(
+          'h-2.5 w-2.5 text-muted-foreground/40 transition-transform',
+          active && 'rotate-180',
+        )}
+      />
     </button>
   );
 }
@@ -195,7 +195,10 @@ function PlanetLink({ planet }: { planet: PlanetData }) {
   return (
     <button
       type="button"
-      onClick={() => { setActivePlanet(planet.id); navigate('/'); }}
+      onClick={() => {
+        setActivePlanet(planet.id);
+        navigate('/');
+      }}
       className="truncate text-foreground font-medium hover:text-primary transition-colors text-left"
     >
       {planet.name}
@@ -203,14 +206,28 @@ function PlanetLink({ planet }: { planet: PlanetData }) {
   );
 }
 
-function ResourcePanel({ resource, planets, total }: {
+function ResourcePanel({
+  resource,
+  planets,
+  total,
+}: {
   resource: 'minerai' | 'silicium' | 'hydrogene';
   planets: PlanetData[];
   total: number;
 }) {
-  const colorMap = { minerai: 'text-minerai', silicium: 'text-silicium', hydrogene: 'text-hydrogene' };
-  const rateKey = resource === 'minerai' ? 'mineraiPerHour' : resource === 'silicium' ? 'siliciumPerHour' : 'hydrogenePerHour';
-  const label = resource === 'minerai' ? 'Minerai' : resource === 'silicium' ? 'Silicium' : 'Hydrogene';
+  const colorMap = {
+    minerai: 'text-minerai',
+    silicium: 'text-silicium',
+    hydrogene: 'text-hydrogene',
+  };
+  const rateKey =
+    resource === 'minerai'
+      ? 'mineraiPerHour'
+      : resource === 'silicium'
+        ? 'siliciumPerHour'
+        : 'hydrogenePerHour';
+  const label =
+    resource === 'minerai' ? 'Minerai' : resource === 'silicium' ? 'Silicium' : 'Hydrogene';
 
   const sorted = [...planets].sort((a, b) => (b[rateKey] ?? 0) - (a[rateKey] ?? 0));
 
@@ -225,10 +242,19 @@ function ResourcePanel({ resource, planets, total }: {
           const pct = total > 0 ? (rate / total) * 100 : 0;
           return (
             <div key={p.id} className="flex items-center gap-2 text-xs">
-              <div className="w-24"><PlanetLink planet={p} /></div>
+              <div className="w-24">
+                <PlanetLink planet={p} />
+              </div>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                 <div
-                  className={cn('h-full rounded-full', resource === 'minerai' ? 'bg-minerai' : resource === 'silicium' ? 'bg-silicium' : 'bg-hydrogene')}
+                  className={cn(
+                    'h-full rounded-full',
+                    resource === 'minerai'
+                      ? 'bg-minerai'
+                      : resource === 'silicium'
+                        ? 'bg-silicium'
+                        : 'bg-hydrogene',
+                  )}
                   style={{ width: `${Math.min(100, pct)}%` }}
                 />
               </div>
@@ -240,7 +266,8 @@ function ResourcePanel({ resource, planets, total }: {
         })}
       </div>
       <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t border-border/30">
-        Total : <span className={cn('font-semibold ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
+        Total :{' '}
+        <span className={cn('font-semibold ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
       </div>
     </div>
   );
@@ -260,10 +287,26 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
         Gouvernance impériale
       </div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <MiniCard label="Capacité" value={`${governance.capacity} planète${governance.capacity > 1 ? 's' : ''}`} color="text-amber-400" />
-        <MiniCard label="Colonies" value={String(governance.colonyCount)} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
-        <MiniCard label="Malus récolte" value={isOver ? `-${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
-        <MiniCard label="Malus construction" value={isOver ? `+${Math.round(governance.constructionMalus * 100)}%` : 'Aucun'} color={isOver ? 'text-destructive' : 'text-emerald-400'} />
+        <MiniCard
+          label="Capacité"
+          value={`${governance.capacity} planète${governance.capacity > 1 ? 's' : ''}`}
+          color="text-amber-400"
+        />
+        <MiniCard
+          label="Colonies"
+          value={String(governance.colonyCount)}
+          color={isOver ? 'text-destructive' : 'text-emerald-400'}
+        />
+        <MiniCard
+          label="Malus récolte"
+          value={isOver ? `-${Math.round(governance.harvestMalus * 100)}%` : 'Aucun'}
+          color={isOver ? 'text-destructive' : 'text-emerald-400'}
+        />
+        <MiniCard
+          label="Malus construction"
+          value={isOver ? `+${Math.round(governance.constructionMalus * 100)}%` : 'Aucun'}
+          color={isOver ? 'text-destructive' : 'text-emerald-400'}
+        />
       </div>
       <div className="text-xs text-muted-foreground">
         {isOver
@@ -311,10 +354,13 @@ function FleetRow({ movement, gameConfig }: { movement: any; gameConfig: any }) 
   const missionHex = gameConfig?.missions?.[movement.mission]?.color ?? '#888';
   const phaseLabel = PHASE_LABELS[movement.phase] ?? movement.phase;
   const arrival = new Date(movement.arrivalTime);
-  const countdown = useCountdown(arrival);
+  const countdown = useCountdownString(arrival);
   const progress = useProgress(movement.departureTime, movement.arrivalTime);
   const coords = `[${movement.targetGalaxy}:${movement.targetSystem}:${movement.targetPosition}]`;
-  const shipCount = Object.values(movement.ships as Record<string, number>).reduce((s: number, c: number) => s + c, 0);
+  const shipCount = Object.values(movement.ships as Record<string, number>).reduce(
+    (s: number, c: number) => s + c,
+    0,
+  );
 
   return (
     <button
@@ -369,7 +415,7 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
   const navigate = useNavigate();
   const { data: movements } = trpc.fleet.movements.useQuery();
   const { data: gameConfig } = useGameConfig();
-  const underAttack = planets.filter(p => p.inboundAttack);
+  const underAttack = planets.filter((p) => p.inboundAttack);
 
   return (
     <div className="space-y-2">
@@ -402,7 +448,10 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
             Planetes attaquees
           </div>
           {underAttack.map((p) => (
-            <div key={p.id} className="flex items-center justify-between text-xs text-destructive rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-1.5">
+            <div
+              key={p.id}
+              className="flex items-center justify-between text-xs text-destructive rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-1.5"
+            >
               <span className="font-medium">{p.name}</span>
               <span className="font-mono">Attaque imminente</span>
             </div>
