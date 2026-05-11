@@ -6,13 +6,32 @@ interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  /** Classe(s) supplémentaire(s) appliquée(s) au backdrop (par-dessus `bg-black/60`). */
+  backdropClassName?: string;
+  /** Si false, l'ESC ne ferme pas la modal (utile pour les modales bloquantes type onboarding). */
+  closeOnEsc?: boolean;
+  /** Si false, le clic sur le backdrop ne ferme pas la modal. */
+  closeOnBackdropClick?: boolean;
 }
 
 const Modal = forwardRef<HTMLDivElement, ModalProps>(
-  ({ open, onClose, children, title, className, ...props }, ref) => {
+  (
+    {
+      open,
+      onClose,
+      children,
+      title,
+      className,
+      backdropClassName,
+      closeOnEsc = true,
+      closeOnBackdropClick = true,
+      ...props
+    },
+    ref,
+  ) => {
     useEffect(() => {
       const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
+        if (e.key === 'Escape' && closeOnEsc) onClose();
       };
       if (open) {
         document.addEventListener('keydown', handleEsc);
@@ -22,13 +41,16 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
         document.removeEventListener('keydown', handleEsc);
         document.body.style.overflow = '';
       };
-    }, [open, onClose]);
+    }, [open, onClose, closeOnEsc]);
 
     if (!open) return null;
 
     return (
       <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center">
-        <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+        <div
+          className={cn('fixed inset-0 bg-black/60', backdropClassName)}
+          onClick={closeOnBackdropClick ? onClose : undefined}
+        />
         <div
           ref={ref}
           className={cn(
