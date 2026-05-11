@@ -25,7 +25,7 @@ export function createPveService(
   pirateService: ReturnType<typeof createPirateService>,
   gameConfigService: GameConfigService,
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
-  exiliumService?: ReturnType<typeof createExiliumService>,
+  _exiliumService?: ReturnType<typeof createExiliumService>,
 ) {
   return {
     async getMissions(userId: string) {

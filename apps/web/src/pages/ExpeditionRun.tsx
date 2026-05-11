@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
-  ArrowLeft, Compass, MapPin, Clock, Fuel, Package, Anchor,
-  Sparkles, AlertTriangle, CheckCircle2, XCircle, Skull, Coins, LogOut,
+  ArrowLeft, Compass, MapPin, Clock, Package, Anchor,
+  Sparkles, AlertTriangle, CheckCircle2, XCircle, Skull, LogOut,
 } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';

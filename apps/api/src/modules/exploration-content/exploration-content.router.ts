@@ -5,7 +5,7 @@ import type { createExplorationContentService } from './exploration-content.serv
 import type { createExplorationMissionService } from '../exploration-mission/exploration-mission.service.js';
 import { explorationContentSchema } from './exploration-content.types.js';
 import { explorationMissions } from '@exilium/db';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, lt } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
 
 /**

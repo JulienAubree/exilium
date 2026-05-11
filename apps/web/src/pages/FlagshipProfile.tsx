@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
+import { Link } from 'react-router';
+import { Sparkles, ExternalLink } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
 import { IncapacitatedBanner } from '@/components/flagship/IncapacitatedBanner';
@@ -6,6 +8,7 @@ import { HullRefitBanner } from '@/components/flagship/HullRefitBanner';
 import { HullAbilitiesPanel } from '@/components/flagship/HullAbilitiesPanel';
 import { FlagshipHero } from '@/components/flagship/FlagshipHero';
 import { FlagshipHelp } from '@/components/flagship/FlagshipHelp';
+import { FlagshipModeIntro } from '@/components/flagship/FlagshipModeIntro';
 import { FlagshipStatsClearCard } from '@/components/flagship/FlagshipStatsClearCard';
 import { FlagshipImagePicker } from '@/components/flagship/FlagshipImagePicker';
 import { FlagshipSkeleton } from '@/components/flagship/FlagshipSkeleton';
@@ -113,9 +116,35 @@ export default function FlagshipProfile() {
       )}
 
       <div className="px-3 sm:px-4 lg:px-6">
+        <FlagshipModeIntro onOpenHelp={() => setHelpOpen(true)} />
+      </div>
+
+      <div className="px-3 sm:px-4 lg:px-6">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-4 lg:gap-6">
-          {/* Main : Modules + Arsenal + Inventory */}
+          {/* Main : Modules + Arsenal + Inventory — affected only in anomaly runs */}
           <main className="min-w-0 space-y-4">
+            <section className="rounded-xl border border-violet-500/25 bg-violet-950/10 px-4 py-3 flex items-start gap-3">
+              <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 flex-wrap">
+                  Loadout d&apos;anomalie
+                  <span className="rounded bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-300">
+                    Mode anomalie
+                  </span>
+                </h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Configuration utilisée <span className="text-foreground font-medium">uniquement</span> pendant les runs.
+                  Aucun effet en PvP / pirate / défense.
+                </p>
+              </div>
+              <Link
+                to="/anomalies"
+                className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-300 font-medium hover:bg-violet-500/20 transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Aller aux anomalies
+              </Link>
+            </section>
             <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
           </main>
 

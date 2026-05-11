@@ -6,7 +6,6 @@ import {
   planets,
   planetShips,
   userResearch,
-  discoveredPositions,
   discoveredBiomes,
 } from '@exilium/db';
 import type { Database, DbOrTx } from '@exilium/db';
@@ -20,7 +19,6 @@ import {
   applyHullDelta,
   type ExpeditionTier,
   type ExpeditionConfigKeys,
-  type ChoiceRequirement,
   type RequirementContext,
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -43,7 +41,7 @@ import type { createExiliumService } from '../exilium/exilium.service.js';
  * d'un même choix (double-clic / replay).
  */
 
-const ACTIVE_STATUSES = ['available', 'engaged', 'awaiting_decision'] as const;
+const _ACTIVE_STATUSES = ['available', 'engaged', 'awaiting_decision'] as const;
 
 // ── Types internes ────────────────────────────────────────────────────────
 
@@ -252,7 +250,6 @@ export function createExplorationMissionService(
     planetId: string,
   ): Promise<{ missionId: string; hydrogenCost: number; nextStepAt: Date }> {
     const config = await gameConfigService.getFullConfig();
-    const shipRoles = buildShipRolesMap(config);
     const configKeys = buildConfigKeys(config);
 
     return await db.transaction(async (tx) => {

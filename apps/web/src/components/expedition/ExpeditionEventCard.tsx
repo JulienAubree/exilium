@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, AlertTriangle, Lock, Package, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sparkles, AlertTriangle, Lock, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 
