@@ -29,6 +29,7 @@ const TIER_COLOR = {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   engaged: { label: 'En route', color: 'text-cyan-300' },
   awaiting_decision: { label: 'Décision requise', color: 'text-amber-300' },
+  returning: { label: 'Retour en cours', color: 'text-cyan-200' },
   completed: { label: 'Terminée', color: 'text-emerald-300' },
   failed: { label: 'Flotte perdue', color: 'text-rose-300' },
   expired: { label: 'Expirée', color: 'text-muted-foreground' },
@@ -209,6 +210,13 @@ export default function ExpeditionRun() {
               <Clock className="h-3.5 w-3.5" />
               Prochain événement dans{' '}
               <Timer endTime={new Date(mission.nextStepAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
+            </div>
+          )}
+          {mission.status === 'returning' && mission.returnAt && (
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Arrivée dans{' '}
+              <Timer endTime={new Date(mission.returnAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
             </div>
           )}
           {mission.status === 'awaiting_decision' && (

@@ -32,7 +32,9 @@ export const explorationMissions = pgTable('exploration_missions', {
    *   available           → offre dispo dans le pool du joueur
    *   engaged             → run actif, en attente du prochain tick
    *   awaiting_decision   → événement présent au joueur, attend choix
-   *   completed           → succès, récompenses créditées
+   *   returning           → tous les events résolus / rappel ordonné,
+   *                          flotte en chemin du retour (jusqu'à return_at)
+   *   completed           → flotte rentrée, butin crédité
    *   failed              → flotte perdue (combat wipe), aucune récompense
    *   expired             → offre non engagée arrivée à expiration
    */
@@ -84,6 +86,9 @@ export const explorationMissions = pgTable('exploration_missions', {
   hydrogenCost: integer('hydrogen_cost').notNull().default(0),
   estimatedDurationSeconds: integer('estimated_duration_seconds').notNull(),
   nextStepAt: timestamp('next_step_at', { withTimezone: true }),
+
+  /** Date d'arrivée de la flotte sur la planète d'origine (status='returning'). */
+  returnAt: timestamp('return_at', { withTimezone: true }),
 
   /** Token idempotence resolveStep, généré côté client à chaque tentative. */
   lastResolutionToken: uuid('last_resolution_token'),

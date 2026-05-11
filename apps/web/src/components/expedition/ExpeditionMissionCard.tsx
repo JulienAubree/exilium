@@ -91,6 +91,7 @@ interface InProgressProps {
     };
     pendingEventId: string | null;
     nextStepAt: string | null;
+    returnAt: string | null;
   };
   shipNames: Record<string, string>;
   onOpen: () => void;
@@ -98,6 +99,7 @@ interface InProgressProps {
 
 export function ExpeditionInProgressCard({ mission, shipNames, onOpen }: InProgressProps) {
   const awaitingDecision = mission.status === 'awaiting_decision';
+  const returning = mission.status === 'returning';
 
   const cargoUsed = mission.outcomesAccumulated.minerai
     + mission.outcomesAccumulated.silicium
@@ -186,6 +188,20 @@ export function ExpeditionInProgressCard({ mission, shipNames, onOpen }: InProgr
           <span className="text-xs text-amber-300 font-medium">⚠️ Décision requise</span>
           <Button size="sm" onClick={onOpen}>
             Résoudre l'événement
+          </Button>
+        </div>
+      ) : returning ? (
+        <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-muted-foreground/70">
+          {mission.returnAt ? (
+            <span className="text-cyan-200">
+              Retour — arrivée dans{' '}
+              <Timer endTime={new Date(mission.returnAt)} className="font-mono tabular-nums text-foreground/80" />
+            </span>
+          ) : (
+            <span className="text-cyan-200">Retour en cours…</span>
+          )}
+          <Button size="sm" variant="outline" onClick={onOpen}>
+            Détails
           </Button>
         </div>
       ) : (

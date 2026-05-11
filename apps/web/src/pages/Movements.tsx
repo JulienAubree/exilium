@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { AlertTriangle, Layers, ChevronDown, Box } from 'lucide-react';
+import { Link } from 'react-router';
+import { AlertTriangle, Layers, ChevronDown, Box, Compass, MapPin, Clock } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Timer } from '@/components/common/Timer';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -301,6 +302,7 @@ export default function Movements() {
   const { data: gameConfig } = useGameConfig();
   const { data: movements, isLoading } = trpc.fleet.movements.useQuery();
   const { data: inboundFleets } = trpc.fleet.inbound.useQuery();
+  const { data: expeditionList } = trpc.expedition.list.useQuery();
   const { data: fleetSlots } = trpc.fleet.slots.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
   const { data: researchData } = trpc.research.list.useQuery();
@@ -471,6 +473,61 @@ export default function Movements() {
         </div>
         );
       })()}
+
+      {/* Expéditions actives en espace profond */}
+      {expeditionList?.missions && expeditionList.missions.filter(
+        (m) => m.status === 'engaged' || m.status === 'awaiting_decision' || m.status === 'returning',
+      ).length > 0 && (
+        <div className="space-y-2 lg:max-w-4xl lg:mx-auto">
+          <div className="flex items-center gap-2 text-xs text-cyan-300 uppercase tracking-wider font-semibold">
+            <Compass className="h-3.5 w-3.5" />
+            Expéditions en espace profond
+          </div>
+          {expeditionList.missions
+            .filter((m) => m.status === 'engaged' || m.status === 'awaiting_decision' || m.status === 'returning')
+            .map((m) => {
+              const status = m.status;
+              const phaseLabel =
+                status === 'awaiting_decision' ? 'Décision requise' :
+                status === 'returning' ? 'Retour en cours' : 'En exploration';
+              const phaseColor =
+                status === 'awaiting_decision' ? 'text-amber-300' :
+                status === 'returning' ? 'text-cyan-200' : 'text-cyan-300';
+              const eta =
+                status === 'returning' && m.returnAt ? new Date(m.returnAt) :
+                status === 'engaged' && m.nextStepAt ? new Date(m.nextStepAt) :
+                null;
+              return (
+                <Link
+                  key={m.id}
+                  to={`/missions/expeditions/${m.id}`}
+                  className="block rounded-lg border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 p-3 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="h-4 w-4 text-cyan-300 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold truncate">{m.sectorName}</div>
+                        <div className="text-[11px] text-muted-foreground tabular-nums">
+                          Étape {m.currentStep}{status !== 'returning' ? `/${m.totalSteps}` : ` · ${m.totalSteps} étape${m.totalSteps > 1 ? 's' : ''}`}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className={cn('text-xs font-semibold', phaseColor)}>{phaseLabel}</div>
+                      {eta && (
+                        <div className="text-[11px] text-muted-foreground flex items-center justify-end gap-1">
+                          <Clock className="h-3 w-3" />
+                          <Timer endTime={eta} className="font-mono tabular-nums" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+        </div>
+      )}
 
       {/* Own movements */}
       {sorted.length === 0 && sortedInbound.length === 0 ? (

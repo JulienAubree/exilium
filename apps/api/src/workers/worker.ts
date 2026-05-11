@@ -134,6 +134,19 @@ scheduleCron(
 );
 console.log('[worker] Expedition tick cron started (60s)');
 
+// Expédition deep-space : finalise les missions returning arrivées
+scheduleCron(
+  redis,
+  async () => {
+    const res = await explorationMissionService.tickReturningMissions();
+    if (res.finalized > 0) {
+      console.log(`[expedition] Finalized ${res.finalized} returning mission(s).`);
+    }
+  },
+  { name: 'expedition-return-tick', intervalMs: 60_000 },
+);
+console.log('[worker] Expedition return-tick cron started (60s)');
+
 // Expédition deep-space : purge des offres available expirées
 scheduleCron(
   redis,

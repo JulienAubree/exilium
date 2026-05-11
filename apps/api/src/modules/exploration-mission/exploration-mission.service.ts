@@ -106,13 +106,22 @@ function buildConfigKeys(config: Awaited<ReturnType<GameConfigService['getFullCo
     hydrogenBaseCostMid: readConfigKey(config, 'expedition_hydrogen_base_cost_mid', 800),
     hydrogenBaseCostDeep: readConfigKey(config, 'expedition_hydrogen_base_cost_deep', 2400),
     hydrogenMassFactor: readConfigKey(config, 'expedition_hydrogen_mass_factor', 0.4),
-    totalStepsEarlyMin: readConfigKey(config, 'expedition_total_steps_early_min', 1),
-    totalStepsEarlyMax: readConfigKey(config, 'expedition_total_steps_early_max', 2),
-    totalStepsMidMin: readConfigKey(config, 'expedition_total_steps_mid_min', 2),
-    totalStepsMidMax: readConfigKey(config, 'expedition_total_steps_mid_max', 3),
-    totalStepsDeepMin: readConfigKey(config, 'expedition_total_steps_deep_min', 3),
+    totalStepsEarlyMin: readConfigKey(config, 'expedition_total_steps_early_min', 4),
+    totalStepsEarlyMax: readConfigKey(config, 'expedition_total_steps_early_max', 5),
+    totalStepsMidMin: readConfigKey(config, 'expedition_total_steps_mid_min', 4),
+    totalStepsMidMax: readConfigKey(config, 'expedition_total_steps_mid_max', 5),
+    totalStepsDeepMin: readConfigKey(config, 'expedition_total_steps_deep_min', 4),
     totalStepsDeepMax: readConfigKey(config, 'expedition_total_steps_deep_max', 5),
   };
+}
+
+function returnDurationSeconds(
+  tier: 'early' | 'mid' | 'deep',
+  config: Awaited<ReturnType<GameConfigService['getFullConfig']>>,
+): number {
+  if (tier === 'deep') return readConfigKey(config, 'expedition_return_seconds_deep', 7200);
+  if (tier === 'mid') return readConfigKey(config, 'expedition_return_seconds_mid', 3600);
+  return readConfigKey(config, 'expedition_return_seconds_early', 1800);
 }
 
 function buildShipRolesMap(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): Record<string, string> {
@@ -169,13 +178,15 @@ export function createExplorationMissionService(
       .limit(1);
     if (!research || (research.planetaryExploration ?? 0) < requiredResearchLevel) return;
 
-    // Compte les missions actives (available + engaged + awaiting_decision)
+    // Compte les missions actives (available + engaged + awaiting_decision + returning)
+    // Le retour compte comme actif : tant que la flotte n'est pas rentrée,
+    // le slot reste pris.
     const [{ count: activeCount }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(explorationMissions)
       .where(and(
         eq(explorationMissions.userId, userId),
-        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision')`,
+        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
       ));
     if (Number(activeCount) >= maxActive) return;
 
@@ -606,11 +617,12 @@ export function createExplorationMissionService(
             missionCompleted: true,
           };
         }
-        // Succès final → completeMission inline (toujours dans la même tx)
-        await completeMissionInTx(tx, missionId, userId, outcomes, newStepLog, updatedFleetStatus, mission, resolutionToken);
+        // Succès final → startReturn (la flotte rentre, butin crédité à
+        // l'arrivée par finalizeReturnedMission via cron)
+        await startReturnInTx(tx, missionId, outcomes, newStepLog, updatedFleetStatus, mission, resolutionToken);
         return {
-          status: 'completed',
-          resolutionText: effectiveOutcome.resolutionText,
+          status: 'returning',
+          resolutionText: effectiveOutcome.resolutionText + ' La flotte fait route vers la planète d\'origine.',
           missionCompleted: true,
         };
       }
@@ -643,110 +655,143 @@ export function createExplorationMissionService(
   }
 
   /**
-   * Helper interne pour finaliser une mission réussie dans une tx ouverte.
-   * Crédite les ressources, modules, exilium, biome reveals, anomaly credits.
+   * Helper interne : marque la mission en retour. Les outcomes restent
+   * en attente dans `outcomes_accumulated`, créditerés seulement à
+   * `finalizeReturnedMission` quand `return_at` est atteint.
    */
-  async function completeMissionInTx(
+  async function startReturnInTx(
     tx: DbOrTx,
     missionId: string,
-    userId: string,
     outcomes: OutcomesAccumulated,
     stepLog: StepLogEntry[],
     fleetStatus: FleetStatus,
     mission: typeof explorationMissions.$inferSelect,
     resolutionToken: string,
-  ): Promise<void> {
-    // 1. Trouve la planète destination : origine si dispo, sinon homeworld
-    let destinationPlanetId: string | null = mission.fleetOriginPlanetId;
-    if (destinationPlanetId) {
-      const [check] = await tx
-        .select({ id: planets.id })
-        .from(planets)
-        .where(and(eq(planets.id, destinationPlanetId), eq(planets.userId, userId)))
-        .limit(1);
-      if (!check) destinationPlanetId = null;
-    }
-    if (!destinationPlanetId) {
-      const [home] = await tx
-        .select({ id: planets.id })
-        .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
-        .limit(1);
-      destinationPlanetId = home?.id ?? null;
-    }
+  ): Promise<{ returnAt: Date }> {
+    const config = await gameConfigService.getFullConfig();
+    const returnSeconds = returnDurationSeconds(mission.tier as 'early' | 'mid' | 'deep', config);
+    const returnAt = new Date(Date.now() + returnSeconds * 1000);
 
-    // 2. Crédit ressources matérielles
-    if (destinationPlanetId && (outcomes.minerai > 0 || outcomes.silicium > 0 || outcomes.hydrogene > 0)) {
-      await tx.update(planets).set({
-        minerai: sql`${planets.minerai} + ${outcomes.minerai}`,
-        silicium: sql`${planets.silicium} + ${outcomes.silicium}`,
-        hydrogene: sql`${planets.hydrogene} + ${outcomes.hydrogene}`,
-      }).where(eq(planets.id, destinationPlanetId));
-    }
-
-    // 3. Retour des vaisseaux sur la planète destination (en respectant
-    //    les pertes éventuelles — pour V1 pas de pertes car triggerCombat
-    //    désactivé)
-    if (destinationPlanetId) {
-      const shipsIncrement: Record<string, unknown> = {};
-      for (const [shipId, count] of Object.entries(fleetStatus.shipsAlive)) {
-        if (count <= 0) continue;
-        shipsIncrement[shipId] = sql`${(planetShips as unknown as Record<string, unknown>)[shipId]} + ${count}`;
-      }
-      if (Object.keys(shipsIncrement).length > 0) {
-        await tx.update(planetShips).set(shipsIncrement as never).where(eq(planetShips.planetId, destinationPlanetId));
-      }
-    }
-
-    // 4. Crédit Exilium
-    if (outcomes.exilium > 0 && exiliumService) {
-      try {
-        await exiliumService.earn(userId, outcomes.exilium, 'pve', {
-          source: 'expedition',
-          missionId,
-        });
-      } catch (err) {
-        console.warn('[expedition] exilium credit failed:', err);
-      }
-    }
-
-    // 5. Bonus biome reveal — applique sur des positions découvertes
-    //    n'ayant aucun biome révélé.
-    if (outcomes.biomeRevealsRequested > 0) {
-      try {
-        await applyBonusBiomeReveals(tx, userId, outcomes.biomeRevealsRequested);
-      } catch (err) {
-        console.warn('[expedition] bonus biome reveal failed:', err);
-      }
-    }
-
-    // 6. Crédit anomaly engagement unlocked
-    if (outcomes.anomalyEngagementUnlocked) {
-      await tx.insert(expeditionAnomalyCredits).values({
-        userId,
-        tier: outcomes.anomalyEngagementUnlocked.tier,
-        sourceMissionId: missionId,
-      });
-    }
-
-    // 7. Module drops — TODO : nécessite moduleService côté factory ;
-    //    laissés dans outcomes_accumulated pour traçabilité ; consommation
-    //    différée en Phase 1c quand on branche modulesService.
-
-    // 8. Marque la mission complétée
     await tx.update(explorationMissions).set({
-      status: 'completed',
-      currentStep: mission.totalSteps,
+      status: 'returning',
+      currentStep: Math.max(mission.currentStep, mission.totalSteps),
       stepLog: stepLog as never,
       outcomesAccumulated: outcomes as never,
       fleetStatus: fleetStatus as never,
       lastResolutionToken: resolutionToken,
-      completedAt: new Date(),
+      pendingEventId: null,
+      nextStepAt: null,
+      returnAt,
     }).where(eq(explorationMissions.id, missionId));
 
-    // 9. Refill du pool (en dehors de la tx idéalement, mais OK ici car
-    //    INSERT sont commutatifs)
-    await ensureAvailableMissions(userId);
+    return { returnAt };
+  }
+
+  /**
+   * Finalise une mission rentrée : crédite ressources, exilium, modules,
+   * biome reveals, anomaly credits ; rend les vaisseaux à la planète
+   * d'origine ; marque status='completed'.
+   *
+   * Appelé par `tickReturningMissions` (cron) quand `return_at <= now`.
+   * Idempotent : si déjà completed, no-op.
+   */
+  async function finalizeReturnedMission(missionId: string): Promise<{ finalized: boolean }> {
+    return await db.transaction(async (tx) => {
+      const [mission] = await tx
+        .select()
+        .from(explorationMissions)
+        .where(eq(explorationMissions.id, missionId))
+        .for('update')
+        .limit(1);
+
+      if (!mission) return { finalized: false };
+      if (mission.status !== 'returning') return { finalized: false };
+
+      const userId = mission.userId;
+      const outcomes = mission.outcomesAccumulated as OutcomesAccumulated;
+      const fleetStatus = mission.fleetStatus as FleetStatus;
+
+      // 1. Planète destination : origine si dispo, sinon homeworld
+      let destinationPlanetId: string | null = mission.fleetOriginPlanetId;
+      if (destinationPlanetId) {
+        const [check] = await tx
+          .select({ id: planets.id })
+          .from(planets)
+          .where(and(eq(planets.id, destinationPlanetId), eq(planets.userId, userId)))
+          .limit(1);
+        if (!check) destinationPlanetId = null;
+      }
+      if (!destinationPlanetId) {
+        const [home] = await tx
+          .select({ id: planets.id })
+          .from(planets)
+          .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
+          .limit(1);
+        destinationPlanetId = home?.id ?? null;
+      }
+
+      // 2. Crédit ressources matérielles
+      if (destinationPlanetId && (outcomes.minerai > 0 || outcomes.silicium > 0 || outcomes.hydrogene > 0)) {
+        await tx.update(planets).set({
+          minerai: sql`${planets.minerai} + ${outcomes.minerai}`,
+          silicium: sql`${planets.silicium} + ${outcomes.silicium}`,
+          hydrogene: sql`${planets.hydrogene} + ${outcomes.hydrogene}`,
+        }).where(eq(planets.id, destinationPlanetId));
+      }
+
+      // 3. Retour des vaisseaux vivants sur la planète destination
+      if (destinationPlanetId) {
+        const shipsIncrement: Record<string, unknown> = {};
+        for (const [shipId, count] of Object.entries(fleetStatus.shipsAlive ?? {})) {
+          if (count <= 0) continue;
+          shipsIncrement[shipId] = sql`${(planetShips as unknown as Record<string, unknown>)[shipId]} + ${count}`;
+        }
+        if (Object.keys(shipsIncrement).length > 0) {
+          await tx.update(planetShips).set(shipsIncrement as never).where(eq(planetShips.planetId, destinationPlanetId));
+        }
+      }
+
+      // 4. Crédit Exilium
+      if (outcomes.exilium > 0 && exiliumService) {
+        try {
+          await exiliumService.earn(userId, outcomes.exilium, 'pve', {
+            source: 'expedition',
+            missionId,
+          });
+        } catch (err) {
+          console.warn('[expedition] exilium credit failed:', err);
+        }
+      }
+
+      // 5. Bonus biome reveal
+      if (outcomes.biomeRevealsRequested > 0) {
+        try {
+          await applyBonusBiomeReveals(tx, userId, outcomes.biomeRevealsRequested);
+        } catch (err) {
+          console.warn('[expedition] bonus biome reveal failed:', err);
+        }
+      }
+
+      // 6. Crédit anomaly engagement
+      if (outcomes.anomalyEngagementUnlocked) {
+        await tx.insert(expeditionAnomalyCredits).values({
+          userId,
+          tier: outcomes.anomalyEngagementUnlocked.tier,
+          sourceMissionId: missionId,
+        });
+      }
+
+      // 7. Marque completed
+      await tx.update(explorationMissions).set({
+        status: 'completed',
+        completedAt: new Date(),
+      }).where(eq(explorationMissions.id, missionId));
+
+      // 8. Refill du pool
+      await ensureAvailableMissions(userId);
+
+      return { finalized: true };
+    });
   }
 
   /**
@@ -816,7 +861,7 @@ export function createExplorationMissionService(
   async function retreatMission(
     userId: string,
     missionId: string,
-  ): Promise<{ status: 'completed'; resolutionText: string }> {
+  ): Promise<{ status: 'returning'; resolutionText: string; returnAt: Date }> {
     return await db.transaction(async (tx) => {
       const [mission] = await tx
         .select()
@@ -863,11 +908,10 @@ export function createExplorationMissionService(
       };
       const newStepLog = [...stepLog, retreatNote];
 
-      // Réutilise la logique de crédit final
-      await completeMissionInTx(
+      // Démarre le retour — butin crédité à l'arrivée
+      const { returnAt } = await startReturnInTx(
         tx,
         missionId,
-        userId,
         outcomes,
         newStepLog,
         fleetStatus,
@@ -876,10 +920,38 @@ export function createExplorationMissionService(
       );
 
       return {
-        status: 'completed' as const,
+        status: 'returning' as const,
         resolutionText: retreatNote.resolutionText,
+        returnAt,
       };
     });
+  }
+
+  /**
+   * Cron : finalise les missions arrivées (status='returning' avec
+   * return_at <= now). Crédite le butin et libère le slot.
+   */
+  async function tickReturningMissions(now: Date = new Date()): Promise<{ finalized: number }> {
+    const arrived = await db
+      .select({ id: explorationMissions.id })
+      .from(explorationMissions)
+      .where(and(
+        eq(explorationMissions.status, 'returning'),
+        lt(explorationMissions.returnAt, now),
+      ))
+      .orderBy(asc(explorationMissions.returnAt))
+      .limit(50);
+
+    let finalized = 0;
+    for (const m of arrived) {
+      try {
+        const result = await finalizeReturnedMission(m.id);
+        if (result.finalized) finalized++;
+      } catch (err) {
+        console.warn(`[expedition] finalize failed for ${m.id}:`, err);
+      }
+    }
+    return { finalized };
   }
 
   /**
@@ -970,14 +1042,14 @@ export function createExplorationMissionService(
     return { timedOut };
   }
 
-  /** Liste les missions actives du joueur (incluant les available). */
+  /** Liste les missions actives du joueur (incluant available et returning). */
   async function listForUser(userId: string) {
     return db
       .select()
       .from(explorationMissions)
       .where(and(
         eq(explorationMissions.userId, userId),
-        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision')`,
+        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
       ))
       .orderBy(desc(explorationMissions.createdAt));
   }
@@ -1001,7 +1073,9 @@ export function createExplorationMissionService(
     advanceMission,
     resolveStep,
     retreatMission,
+    finalizeReturnedMission,
     tickPendingMissions,
+    tickReturningMissions,
     purgeExpiredOffers,
     timeoutAwaitingDecisions,
     listForUser,

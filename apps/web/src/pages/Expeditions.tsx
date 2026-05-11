@@ -23,7 +23,9 @@ export default function Expeditions() {
 
   const missions = data?.missions ?? [];
   const available = missions.filter((m) => m.status === 'available');
-  const inProgress = missions.filter((m) => m.status === 'engaged' || m.status === 'awaiting_decision');
+  const inProgress = missions.filter(
+    (m) => m.status === 'engaged' || m.status === 'awaiting_decision' || m.status === 'returning',
+  );
 
   const shipNames = useMemo(() => {
     if (!gameConfig?.ships) return {} as Record<string, string>;
