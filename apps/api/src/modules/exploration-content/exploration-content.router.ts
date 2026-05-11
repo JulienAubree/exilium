@@ -5,7 +5,7 @@ import type { createExplorationContentService } from './exploration-content.serv
 import type { createExplorationMissionService } from '../exploration-mission/exploration-mission.service.js';
 import { explorationContentSchema } from './exploration-content.types.js';
 import { explorationMissions } from '@exilium/db';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
 
 /**
@@ -58,7 +58,7 @@ export function createExplorationContentRouter(
         if (input.zombie) {
           const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
           conditions.push(eq(explorationMissions.status, 'awaiting_decision'));
-          conditions.push(sql`${explorationMissions.engagedAt} < ${sevenDaysAgo}`);
+          conditions.push(lt(explorationMissions.engagedAt, sevenDaysAgo));
         }
         const rows = await db
           .select()

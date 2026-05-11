@@ -1,4 +1,4 @@
-import { eq, and, lt, sql, asc, desc } from 'drizzle-orm';
+import { eq, and, gt, lt, sql, asc, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import {
   explorationMissions,
@@ -189,7 +189,7 @@ export function createExplorationMissionService(
       .from(explorationMissions)
       .where(and(
         eq(explorationMissions.userId, userId),
-        sql`${explorationMissions.createdAt} > ${sevenDaysAgo}`,
+        gt(explorationMissions.createdAt, sevenDaysAgo),
       ));
     const recentSectorIds = new Set(recentMissions.map((m) => m.sectorId));
 
