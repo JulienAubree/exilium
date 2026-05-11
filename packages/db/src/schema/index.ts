@@ -43,3 +43,6 @@ export * from './colonization.js';
 export * from './homepage-content.js';
 export * from './anomalies.js';
 export * from './anomaly-content.js';
+export * from './exploration-missions.js';
+export * from './exploration-content.js';
+export * from './expedition-anomaly-credits.js';
