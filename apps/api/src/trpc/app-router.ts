@@ -75,6 +75,10 @@ import { createHomepageRouter } from '../modules/homepage/homepage.router.js';
 import { createAnomalyContentService } from '../modules/anomaly-content/anomaly-content.service.js';
 import { createAnomalyBossesService } from '../modules/anomaly-content/anomaly-bosses.service.js';
 import { createAnomalyContentRouter } from '../modules/anomaly-content/anomaly-content.router.js';
+import { createExplorationContentService } from '../modules/exploration-content/exploration-content.service.js';
+import { createExplorationContentRouter } from '../modules/exploration-content/exploration-content.router.js';
+import { createExplorationMissionService } from '../modules/exploration-mission/exploration-mission.service.js';
+import { createExplorationMissionRouter } from '../modules/exploration-mission/exploration-mission.router.js';
 import { createModulesService } from '../modules/modules/modules.service.js';
 import { createModulesRouter } from '../modules/modules/modules.router.js';
 import { createMailerService } from '../modules/mailer/mailer.service.js';
@@ -135,6 +139,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   // il retombe automatiquement sur le seed in-memory (back-compat).
   const anomalyBossesService = createAnomalyBossesService(anomalyContentService);
   const modulesService = createModulesService(db);
+  const explorationContentService = createExplorationContentService(db);
+  const explorationMissionService = createExplorationMissionService(db, gameConfigService, explorationContentService, exiliumService);
 
   const authRouter = createAuthRouter(db, authService, planetService);
   const planetRouter = createPlanetRouter(planetService, planetAbandonService);
@@ -172,6 +178,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const modulesRouter = createModulesRouter(modulesService, adminProcedure);
   const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService, anomalyBossesService);
   const anomalyRouter = createAnomalyRouter(anomalyService, anomalyBossesService);
+  const explorationMissionRouter = createExplorationMissionRouter(explorationMissionService);
+  const explorationContentRouter = createExplorationContentRouter(explorationContentService, explorationMissionService, adminProcedure, db);
 
   const appRouter = router({
     health: publicProcedure.query(() => ({
@@ -212,6 +220,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
     homepage: homepageRouter,
     anomaly: anomalyRouter,
     anomalyContent: anomalyContentRouter,
+    expedition: explorationMissionRouter,
+    expeditionContent: explorationContentRouter,
     modules: modulesRouter,
   });
 

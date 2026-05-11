@@ -12,6 +12,8 @@ import { createMessageService } from '../modules/message/message.service.js';
 import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
+import { createExplorationContentService } from '../modules/exploration-content/exploration-content.service.js';
+import { createExplorationMissionService } from '../modules/exploration-mission/exploration-mission.service.js';
 import { createReportService } from '../modules/report/report.service.js';
 import { createPushService } from '../modules/push/push.service.js';
 import { createExiliumService } from '../modules/exilium/exilium.service.js';
@@ -64,6 +66,10 @@ const colonizationService = createColonizationService(db, gameConfigService);
 
 const allianceLogService = createAllianceLogService(db, redis);
 
+// Expéditions en espace profond
+const explorationContentService = createExplorationContentService(db);
+const explorationMissionService = createExplorationMissionService(db, gameConfigService, explorationContentService, exiliumService);
+
 const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService);
 
 // Market service
@@ -114,6 +120,45 @@ scheduleCron(
   { name: 'alliance-log-purge', intervalMs: 60 * 60_000 },
 );
 console.log('[worker] Alliance log purge cron started (1h)');
+
+// Expédition deep-space : tick scheduler (avance les missions engagées)
+scheduleCron(
+  redis,
+  async () => {
+    const res = await explorationMissionService.tickPendingMissions();
+    if (res.advanced > 0) {
+      console.log(`[expedition] Advanced ${res.advanced} mission(s).`);
+    }
+  },
+  { name: 'expedition-tick', intervalMs: 60_000 },
+);
+console.log('[worker] Expedition tick cron started (60s)');
+
+// Expédition deep-space : purge des offres available expirées
+scheduleCron(
+  redis,
+  async () => {
+    const res = await explorationMissionService.purgeExpiredOffers();
+    if (res.expired > 0) {
+      console.log(`[expedition] Expired ${res.expired} offer(s).`);
+    }
+  },
+  { name: 'expedition-expire-offers', intervalMs: 6 * 60 * 60_000 },
+);
+console.log('[worker] Expedition expire-offers cron started (6h)');
+
+// Expédition deep-space : timeout des decisions awaiting_decision > 7j
+scheduleCron(
+  redis,
+  async () => {
+    const res = await explorationMissionService.timeoutAwaitingDecisions();
+    if (res.timedOut > 0) {
+      console.log(`[expedition] Timed out ${res.timedOut} awaiting decision(s).`);
+    }
+  },
+  { name: 'expedition-timeout-decisions', intervalMs: 60 * 60_000 },
+);
+console.log('[worker] Expedition timeout-decisions cron started (1h)');
 
 process.on('SIGTERM', () => {
   console.log('[worker] Shutting down...');
