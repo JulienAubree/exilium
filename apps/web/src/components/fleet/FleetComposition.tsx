@@ -1,10 +1,6 @@
-import { Check, X } from 'lucide-react';
 import { categorizeShip, type Mission, type ShipCategory } from '@/config/mission-config';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { GameImage } from '@/components/common/GameImage';
-import { getFlagshipImageUrl } from '@/lib/assets';
-import { QuantityStepper } from '@/components/common/QuantityStepper';
-import { cn } from '@/lib/utils';
+import { ShipPickCard, ShipPickGrid } from './ShipPickCard';
 
 interface Ship {
   id: string;
@@ -25,100 +21,26 @@ interface FleetCompositionProps {
   onToggle: (shipId: string) => void;
 }
 
-function ShipCard({ ship, value, onChange, onToggle, disabled }: {
-  ship: Ship;
-  value: number;
-  onChange: (count: number) => void;
-  onToggle: () => void;
-  disabled: boolean;
-}) {
-  const isSelected = !disabled && value > 0;
-  const isConflict = disabled && value > 0;
-  const isClickable = !disabled || isConflict;
+function renderShipCard(
+  ship: Ship,
+  value: number,
+  onChange: (shipId: string, count: number) => void,
+  onToggle: (shipId: string) => void,
+  disabled: boolean,
+) {
   return (
-    <div
-      role={isClickable ? 'button' : undefined}
-      onClick={isClickable ? onToggle : undefined}
-      className={cn(
-        'retro-card overflow-hidden flex flex-col',
-        disabled && !isConflict && 'opacity-40',
-        isClickable && 'cursor-pointer',
-        isSelected && 'border-primary',
-        isConflict && 'border-destructive',
-      )}
-    >
-      <div className="relative h-24 overflow-hidden">
-        {ship.id === 'flagship' && ship.flagshipImageIndex != null ? (
-          <img
-            src={getFlagshipImageUrl(ship.hullId ?? 'industrial', ship.flagshipImageIndex, 'full')}
-            alt={ship.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <GameImage
-            category="ships"
-            id={ship.id}
-            size="full"
-            alt={ship.name}
-            className="w-full h-full object-cover"
-          />
-        )}
-        <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
-          x{ship.count.toLocaleString()}
-        </span>
-        {isSelected && (
-          <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
-            <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-          </div>
-        )}
-        {isConflict && (
-          <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-destructive flex items-center justify-center shadow-md">
-            <X className="h-3 w-3 text-destructive-foreground" strokeWidth={3} />
-          </div>
-        )}
-      </div>
-      <div className="p-2.5 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
-          {ship.name}
-        </span>
-        {isConflict ? (
-          <span className="text-[10px] text-destructive">x{value} — incompatible</span>
-        ) : disabled ? (
-          <span className="text-[10px] text-muted-foreground/60">non disponible</span>
-        ) : isSelected ? (
-          <QuantityStepper
-            value={value}
-            onChange={onChange}
-            min={1}
-            max={ship.count}
-          />
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function ShipCardGrid({ ships, selectedShips, onChange, onToggle, disabled }: {
-  ships: Ship[];
-  selectedShips: Record<string, number>;
-  onChange: (shipId: string, count: number) => void;
-  onToggle: (shipId: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
-      {ships.map((ship) => (
-        <ShipCard
-          key={ship.id}
-          ship={ship}
-          value={selectedShips[ship.id] ?? 0}
-          onChange={disabled ? () => {} : (count) => onChange(ship.id, count)}
-          onToggle={() => onToggle(ship.id)}
-          disabled={disabled}
-        />
-      ))}
-    </div>
+    <ShipPickCard
+      key={ship.id}
+      shipId={ship.id}
+      shipName={ship.name}
+      available={ship.count}
+      value={value}
+      onChange={disabled ? () => {} : (c) => onChange(ship.id, c)}
+      onToggle={() => onToggle(ship.id)}
+      disabled={disabled}
+      flagshipImageIndex={ship.flagshipImageIndex}
+      hullId={ship.hullId}
+    />
   );
 }
 
@@ -147,50 +69,36 @@ export function FleetComposition({ ships, mission, selectedShips, onChange, onTo
 
   return (
     <div className="space-y-3">
-      {/* Required / Recommended */}
       {showRequired && (
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">{sectionLabel}</div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
-            {categorized.required.map((ship) => (
-              <ShipCard
-                key={ship.id}
-                ship={ship}
-                value={selectedShips[ship.id] ?? 0}
-                onChange={(count) => onChange(ship.id, count)}
-                onToggle={() => onToggle(ship.id)}
-                disabled={false}
-              />
-            ))}
-          </div>
+          <ShipPickGrid>
+            {categorized.required.map((ship) =>
+              renderShipCard(ship, selectedShips[ship.id] ?? 0, onChange, onToggle, false),
+            )}
+          </ShipPickGrid>
         </div>
       )}
 
-      {/* Optional */}
       {categorized.optional.length > 0 && (
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Optionnels</div>
-          <ShipCardGrid
-            ships={categorized.optional}
-            selectedShips={selectedShips}
-            onChange={onChange}
-            onToggle={onToggle}
-            disabled={false}
-          />
+          <ShipPickGrid>
+            {categorized.optional.map((ship) =>
+              renderShipCard(ship, selectedShips[ship.id] ?? 0, onChange, onToggle, false),
+            )}
+          </ShipPickGrid>
         </div>
       )}
 
-      {/* Disabled */}
       {categorized.disabled.length > 0 && (
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Non disponibles</div>
-          <ShipCardGrid
-            ships={categorized.disabled}
-            selectedShips={selectedShips}
-            onChange={onChange}
-            onToggle={onToggle}
-            disabled
-          />
+          <ShipPickGrid>
+            {categorized.disabled.map((ship) =>
+              renderShipCard(ship, selectedShips[ship.id] ?? 0, onChange, onToggle, true),
+            )}
+          </ShipPickGrid>
         </div>
       )}
     </div>

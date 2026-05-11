@@ -3,8 +3,8 @@ import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
-import { GameImage } from '@/components/common/GameImage';
 import { PlanetSelectorDropdown } from '@/components/layout/topbar/PlanetSelectorDropdown';
+import { ShipPickCard, ShipPickGrid } from '@/components/fleet/ShipPickCard';
 import { X, Fuel, Package, Anchor, AlertCircle, MapPin, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -262,68 +262,29 @@ export function EngageFleetModal({ open, onClose, mission, defaultPlanetId, onEn
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                         {category.name}
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {categoryShips.map((s) => {
-                          const value = ships[s.id] ?? 0;
-                          const isExplorer = s.role === 'exploration';
-                          const isSelected = value > 0;
-                          return (
-                            <div
-                              key={s.id}
-                              className={cn(
-                                'retro-card overflow-hidden transition-all',
-                                isSelected
-                                  ? 'border-primary/60 ring-1 ring-primary/30'
-                                  : 'border-border/40',
-                                isExplorer && !isSelected && 'border-cyan-500/30',
-                              )}
-                            >
-                              <div className="relative h-20 overflow-hidden">
-                                <GameImage
-                                  category="ships"
-                                  id={s.id}
-                                  size="full"
-                                  alt={s.name}
-                                  className="w-full h-full object-cover"
-                                />
-                                <span className="absolute top-1.5 right-1.5 bg-black/70 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full backdrop-blur-sm tabular-nums">
-                                  / {fmt(s.count)}
+                      <ShipPickGrid>
+                        {categoryShips.map((s) => (
+                          <ShipPickCard
+                            key={s.id}
+                            shipId={s.id}
+                            shipName={s.name}
+                            available={s.count}
+                            value={ships[s.id] ?? 0}
+                            onChange={(v) => handleShipChange(s.id, v)}
+                            onToggle={() => {
+                              const current = ships[s.id] ?? 0;
+                              handleShipChange(s.id, current > 0 ? 0 : s.count);
+                            }}
+                            topLeftBadge={
+                              s.role === 'exploration' ? (
+                                <span className="bg-cyan-500/80 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                                  Explo
                                 </span>
-                                {isExplorer && (
-                                  <span className="absolute top-1.5 left-1.5 bg-cyan-500/80 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                                    Explo
-                                  </span>
-                                )}
-                                {isSelected && (
-                                  <div className="absolute bottom-1.5 left-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums shadow-md">
-                                    {fmt(value)}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="p-2 space-y-1.5">
-                                <div className="text-[12px] font-semibold truncate">{s.name}</div>
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={s.count}
-                                    value={value}
-                                    onChange={(e) => handleShipChange(s.id, parseInt(e.target.value) || 0)}
-                                    className="flex-1 min-w-0 bg-background/60 border border-border/40 rounded px-1.5 py-1 text-[11px] tabular-nums"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleShipChange(s.id, s.count)}
-                                    className="px-1.5 py-1 rounded border border-border/40 hover:bg-white/5 text-[10px] font-semibold"
-                                  >
-                                    Max
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                              ) : undefined
+                            }
+                          />
+                        ))}
+                      </ShipPickGrid>
                     </div>
                   );
                 })
