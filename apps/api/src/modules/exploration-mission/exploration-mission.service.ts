@@ -9,6 +9,7 @@ import {
   discoveredBiomes,
 } from '@exilium/db';
 import type { Database, DbOrTx } from '@exilium/db';
+import { getUserResearchLevels } from '@exilium/db';
 import {
   pickTierForResearchLevel,
   generateMissionAttributes,
@@ -23,9 +24,7 @@ import {
 } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { ExplorationContentService } from '../exploration-content/exploration-content.service.js';
-import type {
-  EventOutcome,
-} from '../exploration-content/exploration-content.types.js';
+import type { EventOutcome } from '../exploration-content/exploration-content.types.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 
 /**
@@ -90,12 +89,18 @@ interface StepLogEntry {
 
 // ── Helpers locaux ────────────────────────────────────────────────────────
 
-function readConfigKey(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>, key: string, fallback: number): number {
+function readConfigKey(
+  config: Awaited<ReturnType<GameConfigService['getFullConfig']>>,
+  key: string,
+  fallback: number,
+): number {
   const value = config.universe[key];
   return value !== undefined ? Number(value) : fallback;
 }
 
-function buildConfigKeys(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): ExpeditionConfigKeys {
+function buildConfigKeys(
+  config: Awaited<ReturnType<GameConfigService['getFullConfig']>>,
+): ExpeditionConfigKeys {
   return {
     stepDurationEarlySeconds: readConfigKey(config, 'expedition_step_duration_early_seconds', 600),
     stepDurationMidSeconds: readConfigKey(config, 'expedition_step_duration_mid_seconds', 1200),
@@ -122,7 +127,9 @@ function returnDurationSeconds(
   return readConfigKey(config, 'expedition_return_seconds_early', 1800);
 }
 
-function buildShipRolesMap(config: Awaited<ReturnType<GameConfigService['getFullConfig']>>): Record<string, string> {
+function buildShipRolesMap(
+  config: Awaited<ReturnType<GameConfigService['getFullConfig']>>,
+): Record<string, string> {
   const map: Record<string, string> = {};
   for (const [shipId, ship] of Object.entries(config.ships)) {
     if (ship.role) map[shipId] = ship.role;
@@ -166,7 +173,11 @@ export function createExplorationMissionService(
     const config = await gameConfigService.getFullConfig();
     const maxActive = readConfigKey(config, 'expedition_max_active', 3);
     const offerExpirationHours = readConfigKey(config, 'expedition_offer_expiration_hours', 72);
-    const requiredResearchLevel = readConfigKey(config, 'expedition_required_research_min_level', 1);
+    const requiredResearchLevel = readConfigKey(
+      config,
+      'expedition_required_research_min_level',
+      1,
+    );
 
     // Gate technologique : la même recherche que l'exploration normale
     const [research] = await db
@@ -182,10 +193,12 @@ export function createExplorationMissionService(
     const [{ count: activeCount }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.userId, userId),
-        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
-      ));
+      .where(
+        and(
+          eq(explorationMissions.userId, userId),
+          sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
+        ),
+      );
     if (Number(activeCount) >= maxActive) return;
 
     const slotsToFill = maxActive - Number(activeCount);
@@ -196,10 +209,12 @@ export function createExplorationMissionService(
     const recentMissions = await db
       .select({ sectorId: explorationMissions.sectorId })
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.userId, userId),
-        gt(explorationMissions.createdAt, sevenDaysAgo),
-      ));
+      .where(
+        and(
+          eq(explorationMissions.userId, userId),
+          gt(explorationMissions.createdAt, sevenDaysAgo),
+        ),
+      );
     const recentSectorIds = new Set(recentMissions.map((m) => m.sectorId));
 
     const configKeys = buildConfigKeys(config);
@@ -257,10 +272,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(
-          eq(explorationMissions.id, missionId),
-          eq(explorationMissions.userId, userId),
-        ))
+        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -268,10 +280,13 @@ export function createExplorationMissionService(
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Mission introuvable' });
       }
       if (mission.status !== 'available') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette mission n\'est plus disponible' });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: "Cette mission n'est plus disponible",
+        });
       }
       if (mission.expiresAt < new Date()) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'L\'offre a expiré' });
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "L'offre a expiré" });
       }
 
       // 2. Valide la planète d'origine appartient au joueur
@@ -282,7 +297,7 @@ export function createExplorationMissionService(
         .for('update')
         .limit(1);
       if (!planet) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Planète d\'origine invalide' });
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "Planète d'origine invalide" });
       }
 
       // 3. Valide la flotte : au moins 1 explorateur, ships dispos sur la planète
@@ -335,7 +350,7 @@ export function createExplorationMissionService(
       if (explorerCount === 0) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Au moins un vaisseau d\'exploration est requis',
+          message: "Au moins un vaisseau d'exploration est requis",
         });
       }
 
@@ -345,7 +360,11 @@ export function createExplorationMissionService(
         if (mission.tier === 'mid') return configKeys.hydrogenBaseCostMid;
         return configKeys.hydrogenBaseCostEarly;
       })();
-      const hydrogenCost = computeHydrogenCost(baseCost, fleetSnapshot.totalMass, configKeys.hydrogenMassFactor);
+      const hydrogenCost = computeHydrogenCost(
+        baseCost,
+        fleetSnapshot.totalMass,
+        configKeys.hydrogenMassFactor,
+      );
 
       if (Number(planet.hydrogene) < hydrogenCost) {
         throw new TRPCError({
@@ -357,20 +376,28 @@ export function createExplorationMissionService(
       // 5. Décrément ships + hydrogène
       const shipsUpdate: Record<string, unknown> = {};
       for (const s of fleetSnapshot.ships) {
-        shipsUpdate[s.shipId] = sql`${(planetShips as unknown as Record<string, unknown>)[s.shipId]} - ${s.count}`;
+        shipsUpdate[s.shipId] =
+          sql`${(planetShips as unknown as Record<string, unknown>)[s.shipId]} - ${s.count}`;
       }
-      await tx.update(planetShips).set(shipsUpdate as never).where(eq(planetShips.planetId, planetId));
+      await tx
+        .update(planetShips)
+        .set(shipsUpdate as never)
+        .where(eq(planetShips.planetId, planetId));
 
-      await tx.update(planets).set({
-        hydrogene: sql`${planets.hydrogene} - ${hydrogenCost}`,
-      }).where(eq(planets.id, planetId));
+      await tx
+        .update(planets)
+        .set({
+          hydrogene: sql`${planets.hydrogene} - ${hydrogenCost}`,
+        })
+        .where(eq(planets.id, planetId));
 
       // 6. Engage la mission
-      const stepDurationSeconds = mission.tier === 'deep'
-        ? configKeys.stepDurationDeepSeconds
-        : mission.tier === 'mid'
-        ? configKeys.stepDurationMidSeconds
-        : configKeys.stepDurationEarlySeconds;
+      const stepDurationSeconds =
+        mission.tier === 'deep'
+          ? configKeys.stepDurationDeepSeconds
+          : mission.tier === 'mid'
+            ? configKeys.stepDurationMidSeconds
+            : configKeys.stepDurationEarlySeconds;
       const now = new Date();
       const nextStepAt = new Date(now.getTime() + stepDurationSeconds * 1000);
 
@@ -379,15 +406,18 @@ export function createExplorationMissionService(
         hullRatio: 1.0,
       };
 
-      await tx.update(explorationMissions).set({
-        status: 'engaged',
-        engagedAt: now,
-        fleetSnapshot: fleetSnapshot as never,
-        fleetOriginPlanetId: planetId,
-        fleetStatus: fleetStatus as never,
-        hydrogenCost,
-        nextStepAt,
-      }).where(eq(explorationMissions.id, missionId));
+      await tx
+        .update(explorationMissions)
+        .set({
+          status: 'engaged',
+          engagedAt: now,
+          fleetSnapshot: fleetSnapshot as never,
+          fleetOriginPlanetId: planetId,
+          fleetStatus: fleetStatus as never,
+          hydrogenCost,
+          nextStepAt,
+        })
+        .where(eq(explorationMissions.id, missionId));
 
       return { missionId, hydrogenCost, nextStepAt };
     });
@@ -413,23 +443,36 @@ export function createExplorationMissionService(
       if (!mission.nextStepAt || mission.nextStepAt > new Date()) return { advanced: false };
 
       const seenIds = (mission.stepLog as StepLogEntry[]).map((s) => s.eventId);
-      const event = pickExplorationEvent(content.events, mission.tier as ExpeditionTier, seenIds, Math.random);
+      const event = pickExplorationEvent(
+        content.events,
+        mission.tier as ExpeditionTier,
+        seenIds,
+        Math.random,
+      );
 
       if (!event) {
         // Pool vide pour ce tier : on complète la mission directement (cas dégradé)
-        console.warn(`[expedition] no event available for tier=${mission.tier} mission=${missionId} — auto-completing`);
-        await tx.update(explorationMissions).set({
-          status: 'completed',
-          completedAt: new Date(),
-        }).where(eq(explorationMissions.id, missionId));
+        console.warn(
+          `[expedition] no event available for tier=${mission.tier} mission=${missionId} — auto-completing`,
+        );
+        await tx
+          .update(explorationMissions)
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+          })
+          .where(eq(explorationMissions.id, missionId));
         return { advanced: false };
       }
 
-      await tx.update(explorationMissions).set({
-        status: 'awaiting_decision',
-        pendingEventId: event.id,
-        nextStepAt: null,
-      }).where(eq(explorationMissions.id, missionId));
+      await tx
+        .update(explorationMissions)
+        .set({
+          status: 'awaiting_decision',
+          pendingEventId: event.id,
+          nextStepAt: null,
+        })
+        .where(eq(explorationMissions.id, missionId));
 
       return { advanced: true };
     });
@@ -455,10 +498,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(
-          eq(explorationMissions.id, missionId),
-          eq(explorationMissions.userId, userId),
-        ))
+        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -468,7 +508,9 @@ export function createExplorationMissionService(
 
       // Idempotence : si même token, retourne l'état actuel sans réappliquer
       if (mission.lastResolutionToken === resolutionToken) {
-        const lastStep = (mission.stepLog as StepLogEntry[])[(mission.stepLog as StepLogEntry[]).length - 1];
+        const lastStep = (mission.stepLog as StepLogEntry[])[
+          (mission.stepLog as StepLogEntry[]).length - 1
+        ];
         return {
           status: mission.status,
           resolutionText: lastStep?.resolutionText ?? '',
@@ -482,7 +524,10 @@ export function createExplorationMissionService(
 
       const event = content.events.find((e) => e.id === mission.pendingEventId);
       if (!event) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Événement introuvable dans le contenu admin' });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Événement introuvable dans le contenu admin',
+        });
       }
       if (choiceIndex < 0 || choiceIndex >= event.choices.length) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Choix invalide' });
@@ -521,7 +566,11 @@ export function createExplorationMissionService(
         const amount = effectiveOutcome[kind] ?? 0;
         if (amount > 0) {
           const result = addResourceToOutcomes(
-            { minerai: outcomes.minerai, silicium: outcomes.silicium, hydrogene: outcomes.hydrogene },
+            {
+              minerai: outcomes.minerai,
+              silicium: outcomes.silicium,
+              hydrogene: outcomes.hydrogene,
+            },
             snapshot.totalCargo,
             kind,
             amount,
@@ -557,7 +606,10 @@ export function createExplorationMissionService(
       let newHullRatio = fleetStatus.hullRatio;
       if (effectiveOutcome.hullDelta) {
         newHullRatio = applyHullDelta(newHullRatio, effectiveOutcome.hullDelta);
-        outcomes = { ...outcomes, hullDeltaTotal: outcomes.hullDeltaTotal + effectiveOutcome.hullDelta };
+        outcomes = {
+          ...outcomes,
+          hullDeltaTotal: outcomes.hullDeltaTotal + effectiveOutcome.hullDelta,
+        };
       }
 
       // Anomaly engagement unlock
@@ -571,7 +623,9 @@ export function createExplorationMissionService(
       // TriggerCombat — implémentation reportée à une phase ultérieure.
       // En V1, on log et on continue sans appliquer de pertes.
       if (effectiveOutcome.triggerCombat) {
-        console.info(`[expedition] triggerCombat outcome ignored (not yet implemented) mission=${missionId} fp=${effectiveOutcome.triggerCombat.fp}`);
+        console.info(
+          `[expedition] triggerCombat outcome ignored (not yet implemented) mission=${missionId} fp=${effectiveOutcome.triggerCombat.fp}`,
+        );
       }
 
       const updatedFleetStatus: FleetStatus = { ...fleetStatus, hullRatio: newHullRatio };
@@ -597,51 +651,68 @@ export function createExplorationMissionService(
       if (isFinalStep || shouldFail) {
         // Finalisation inline
         if (shouldFail) {
-          await tx.update(explorationMissions).set({
-            status: 'failed',
-            currentStep: newCurrentStep,
-            stepLog: newStepLog as never,
-            outcomesAccumulated: outcomes as never,
-            fleetStatus: updatedFleetStatus as never,
-            lastResolutionToken: resolutionToken,
-            completedAt: new Date(),
-          }).where(eq(explorationMissions.id, missionId));
+          await tx
+            .update(explorationMissions)
+            .set({
+              status: 'failed',
+              currentStep: newCurrentStep,
+              stepLog: newStepLog as never,
+              outcomesAccumulated: outcomes as never,
+              fleetStatus: updatedFleetStatus as never,
+              lastResolutionToken: resolutionToken,
+              completedAt: new Date(),
+            })
+            .where(eq(explorationMissions.id, missionId));
           // Ensure pool refill
           await ensureAvailableMissions(userId);
           return {
             status: 'failed',
-            resolutionText: effectiveOutcome.resolutionText + ' La coque ne tient plus. Flotte perdue.',
+            resolutionText:
+              effectiveOutcome.resolutionText + ' La coque ne tient plus. Flotte perdue.',
             missionCompleted: true,
           };
         }
         // Succès final → startReturn (la flotte rentre, butin crédité à
         // l'arrivée par finalizeReturnedMission via cron)
-        await startReturnInTx(tx, missionId, outcomes, newStepLog, updatedFleetStatus, mission, resolutionToken);
+        await startReturnInTx(
+          tx,
+          missionId,
+          outcomes,
+          newStepLog,
+          updatedFleetStatus,
+          mission,
+          resolutionToken,
+        );
         return {
           status: 'returning',
-          resolutionText: effectiveOutcome.resolutionText + ' La flotte fait route vers la planète d\'origine.',
+          resolutionText:
+            effectiveOutcome.resolutionText + " La flotte fait route vers la planète d'origine.",
           missionCompleted: true,
         };
       }
 
       // Sinon, on programme le prochain step
-      const stepDurationSeconds = mission.tier === 'deep'
-        ? configKeys.stepDurationDeepSeconds
-        : mission.tier === 'mid'
-        ? configKeys.stepDurationMidSeconds
-        : configKeys.stepDurationEarlySeconds;
+      const stepDurationSeconds =
+        mission.tier === 'deep'
+          ? configKeys.stepDurationDeepSeconds
+          : mission.tier === 'mid'
+            ? configKeys.stepDurationMidSeconds
+            : configKeys.stepDurationEarlySeconds;
       const nextStepAt = new Date(Date.now() + stepDurationSeconds * 1000);
 
-      await tx.update(explorationMissions).set({
-        status: 'engaged',
-        pendingEventId: null,
-        currentStep: newCurrentStep,
-        stepLog: newStepLog as never,
-        outcomesAccumulated: outcomes as never,
-        fleetStatus: updatedFleetStatus as never,
-        nextStepAt,
-        lastResolutionToken: resolutionToken,
-      }).where(eq(explorationMissions.id, missionId));
+      await tx
+        .update(explorationMissions)
+        .set({
+          status: 'engaged',
+          pendingEventId: null,
+          currentStep: newCurrentStep,
+          stepLog: newStepLog as never,
+          outcomesAccumulated: outcomes as never,
+          fleetStatus: updatedFleetStatus as never,
+          nextStepAt,
+          lastResolutionToken: resolutionToken,
+        })
+        .where(eq(explorationMissions.id, missionId));
 
       return {
         status: 'engaged',
@@ -669,17 +740,20 @@ export function createExplorationMissionService(
     const returnSeconds = returnDurationSeconds(mission.tier as 'early' | 'mid' | 'deep', config);
     const returnAt = new Date(Date.now() + returnSeconds * 1000);
 
-    await tx.update(explorationMissions).set({
-      status: 'returning',
-      currentStep: Math.max(mission.currentStep, mission.totalSteps),
-      stepLog: stepLog as never,
-      outcomesAccumulated: outcomes as never,
-      fleetStatus: fleetStatus as never,
-      lastResolutionToken: resolutionToken,
-      pendingEventId: null,
-      nextStepAt: null,
-      returnAt,
-    }).where(eq(explorationMissions.id, missionId));
+    await tx
+      .update(explorationMissions)
+      .set({
+        status: 'returning',
+        currentStep: Math.max(mission.currentStep, mission.totalSteps),
+        stepLog: stepLog as never,
+        outcomesAccumulated: outcomes as never,
+        fleetStatus: fleetStatus as never,
+        lastResolutionToken: resolutionToken,
+        pendingEventId: null,
+        nextStepAt: null,
+        returnAt,
+      })
+      .where(eq(explorationMissions.id, missionId));
 
     return { returnAt };
   }
@@ -728,12 +802,18 @@ export function createExplorationMissionService(
       }
 
       // 2. Crédit ressources matérielles
-      if (destinationPlanetId && (outcomes.minerai > 0 || outcomes.silicium > 0 || outcomes.hydrogene > 0)) {
-        await tx.update(planets).set({
-          minerai: sql`${planets.minerai} + ${outcomes.minerai}`,
-          silicium: sql`${planets.silicium} + ${outcomes.silicium}`,
-          hydrogene: sql`${planets.hydrogene} + ${outcomes.hydrogene}`,
-        }).where(eq(planets.id, destinationPlanetId));
+      if (
+        destinationPlanetId &&
+        (outcomes.minerai > 0 || outcomes.silicium > 0 || outcomes.hydrogene > 0)
+      ) {
+        await tx
+          .update(planets)
+          .set({
+            minerai: sql`${planets.minerai} + ${outcomes.minerai}`,
+            silicium: sql`${planets.silicium} + ${outcomes.silicium}`,
+            hydrogene: sql`${planets.hydrogene} + ${outcomes.hydrogene}`,
+          })
+          .where(eq(planets.id, destinationPlanetId));
       }
 
       // 3. Retour des vaisseaux vivants sur la planète destination
@@ -741,10 +821,14 @@ export function createExplorationMissionService(
         const shipsIncrement: Record<string, unknown> = {};
         for (const [shipId, count] of Object.entries(fleetStatus.shipsAlive ?? {})) {
           if (count <= 0) continue;
-          shipsIncrement[shipId] = sql`${(planetShips as unknown as Record<string, unknown>)[shipId]} + ${count}`;
+          shipsIncrement[shipId] =
+            sql`${(planetShips as unknown as Record<string, unknown>)[shipId]} + ${count}`;
         }
         if (Object.keys(shipsIncrement).length > 0) {
-          await tx.update(planetShips).set(shipsIncrement as never).where(eq(planetShips.planetId, destinationPlanetId));
+          await tx
+            .update(planetShips)
+            .set(shipsIncrement as never)
+            .where(eq(planetShips.planetId, destinationPlanetId));
         }
       }
 
@@ -779,10 +863,13 @@ export function createExplorationMissionService(
       }
 
       // 7. Marque completed
-      await tx.update(explorationMissions).set({
-        status: 'completed',
-        completedAt: new Date(),
-      }).where(eq(explorationMissions.id, missionId));
+      await tx
+        .update(explorationMissions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+        })
+        .where(eq(explorationMissions.id, missionId));
 
       // 8. Refill du pool
       await ensureAvailableMissions(userId);
@@ -800,7 +887,7 @@ export function createExplorationMissionService(
   async function applyBonusBiomeReveals(tx: DbOrTx, userId: string, count: number): Promise<void> {
     if (count <= 0) return;
 
-    const candidates = await tx.execute(sql`
+    const candidates = (await tx.execute(sql`
       SELECT dp.galaxy, dp.system, dp.position
         FROM discovered_positions dp
         LEFT JOIN discovered_biomes db
@@ -812,7 +899,7 @@ export function createExplorationMissionService(
          AND db.biome_id IS NULL
        ORDER BY random()
        LIMIT ${count}
-    `) as unknown as Array<{ galaxy: number; system: number; position: number }>;
+    `)) as unknown as Array<{ galaxy: number; system: number; position: number }>;
 
     if (!candidates || candidates.length === 0) return;
 
@@ -822,28 +909,21 @@ export function createExplorationMissionService(
 
     for (const c of candidates) {
       const biome = biomes[Math.floor(Math.random() * biomes.length)];
-      await tx.insert(discoveredBiomes).values({
-        userId,
-        galaxy: c.galaxy,
-        system: c.system,
-        position: c.position,
-        biomeId: biome.id,
-      }).onConflictDoNothing();
+      await tx
+        .insert(discoveredBiomes)
+        .values({
+          userId,
+          galaxy: c.galaxy,
+          system: c.system,
+          position: c.position,
+          biomeId: biome.id,
+        })
+        .onConflictDoNothing();
     }
   }
 
   async function loadUserResearch(tx: DbOrTx, userId: string): Promise<Record<string, number>> {
-    const [row] = await tx
-      .select()
-      .from(userResearch)
-      .where(eq(userResearch.userId, userId))
-      .limit(1);
-    if (!row) return {};
-    const out: Record<string, number> = {};
-    for (const [k, v] of Object.entries(row)) {
-      if (typeof v === 'number') out[k] = v;
-    }
-    return out;
+    return getUserResearchLevels(tx, userId);
   }
 
   /**
@@ -863,10 +943,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(
-          eq(explorationMissions.id, missionId),
-          eq(explorationMissions.userId, userId),
-        ))
+        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -877,7 +954,7 @@ export function createExplorationMissionService(
         if (mission.status === 'awaiting_decision') {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Résolvez l\'événement en cours avant de rappeler la flotte',
+            message: "Résolvez l'événement en cours avant de rappeler la flotte",
           });
         }
         throw new TRPCError({
@@ -896,11 +973,16 @@ export function createExplorationMissionService(
         eventId: 'retreat',
         choiceIndex: -1,
         outcomeApplied: {
-          minerai: 0, silicium: 0, hydrogene: 0, exilium: 0,
-          hullDelta: 0, bonusBiomeReveal: 0,
-          resolutionText: "Sur votre ordre, la flotte fait demi-tour avant la fin de la mission.",
+          minerai: 0,
+          silicium: 0,
+          hydrogene: 0,
+          exilium: 0,
+          hullDelta: 0,
+          bonusBiomeReveal: 0,
+          resolutionText: 'Sur votre ordre, la flotte fait demi-tour avant la fin de la mission.',
         },
-        resolutionText: "Sur votre ordre, la flotte fait demi-tour avant la fin de la mission. Vous récupérez ce qui est dans la soute.",
+        resolutionText:
+          'Sur votre ordre, la flotte fait demi-tour avant la fin de la mission. Vous récupérez ce qui est dans la soute.',
         resolvedAt: new Date().toISOString(),
       };
       const newStepLog = [...stepLog, retreatNote];
@@ -932,10 +1014,9 @@ export function createExplorationMissionService(
     const arrived = await db
       .select({ id: explorationMissions.id })
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.status, 'returning'),
-        lt(explorationMissions.returnAt, now),
-      ))
+      .where(
+        and(eq(explorationMissions.status, 'returning'), lt(explorationMissions.returnAt, now)),
+      )
       .orderBy(asc(explorationMissions.returnAt))
       .limit(50);
 
@@ -959,10 +1040,9 @@ export function createExplorationMissionService(
     const pending = await db
       .select({ id: explorationMissions.id })
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.status, 'engaged'),
-        lt(explorationMissions.nextStepAt, now),
-      ))
+      .where(
+        and(eq(explorationMissions.status, 'engaged'), lt(explorationMissions.nextStepAt, now)),
+      )
       .orderBy(asc(explorationMissions.nextStepAt))
       .limit(50);
 
@@ -985,10 +1065,9 @@ export function createExplorationMissionService(
     const result = await db
       .update(explorationMissions)
       .set({ status: 'expired' })
-      .where(and(
-        eq(explorationMissions.status, 'available'),
-        lt(explorationMissions.expiresAt, now),
-      ))
+      .where(
+        and(eq(explorationMissions.status, 'available'), lt(explorationMissions.expiresAt, now)),
+      )
       .returning({ id: explorationMissions.id });
     return { expired: result.length };
   }
@@ -1010,10 +1089,12 @@ export function createExplorationMissionService(
         pendingEventId: explorationMissions.pendingEventId,
       })
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.status, 'awaiting_decision'),
-        lt(explorationMissions.engagedAt, threshold),
-      ))
+      .where(
+        and(
+          eq(explorationMissions.status, 'awaiting_decision'),
+          lt(explorationMissions.engagedAt, threshold),
+        ),
+      )
       .limit(50);
 
     let timedOut = 0;
@@ -1044,10 +1125,12 @@ export function createExplorationMissionService(
     return db
       .select()
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.userId, userId),
-        sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
-      ))
+      .where(
+        and(
+          eq(explorationMissions.userId, userId),
+          sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
+        ),
+      )
       .orderBy(desc(explorationMissions.createdAt));
   }
 
@@ -1056,10 +1139,7 @@ export function createExplorationMissionService(
     const [mission] = await db
       .select()
       .from(explorationMissions)
-      .where(and(
-        eq(explorationMissions.id, missionId),
-        eq(explorationMissions.userId, userId),
-      ))
+      .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
       .limit(1);
     return mission ?? null;
   }

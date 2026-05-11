@@ -2,7 +2,12 @@ import { eq } from 'drizzle-orm';
 import { userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { resolveBonus } from '@exilium/game-engine';
-import type { BonusDefinition, CombatMultipliers, ShipStats, ShipCombatConfig } from '@exilium/game-engine';
+import type {
+  BonusDefinition,
+  CombatMultipliers,
+  ShipStats,
+  ShipCombatConfig,
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -84,7 +89,9 @@ export interface MissionHandlerContext {
   flagshipService?: ReturnType<typeof createFlagshipService>;
   gameEventService?: ReturnType<typeof createGameEventService>;
   colonizationService?: ReturnType<typeof createColonizationService>;
-  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> };
+  talentService?: {
+    computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>>;
+  };
   allianceLogService?: AllianceLogService;
   fleetQueue: Queue;
   assetsDir: string;
@@ -127,23 +134,20 @@ export interface PhaseResult {
 // Handlers CAN do DB reads/writes for their mission logic but NEVER touch queues or notifications.
 
 export interface MissionHandler {
-  validateFleet(input: SendFleetInput, config: GameConfig, ctx: MissionHandlerContext): Promise<void>;
+  validateFleet(
+    input: SendFleetInput,
+    config: GameConfig,
+    ctx: MissionHandlerContext,
+  ): Promise<void>;
   processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult>;
 }
 
 export interface PhasedMissionHandler extends MissionHandler {
-  processPhase(phase: string, fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<PhaseResult>;
-}
-
-// ── Duration formatting ──
-
-export function formatDuration(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m ${seconds}s`;
+  processPhase(
+    phase: string,
+    fleetEvent: FleetEvent,
+    ctx: MissionHandlerContext,
+  ): Promise<PhaseResult>;
 }
 
 // ── Shared helpers (moved from fleet.service.ts) ──
@@ -217,8 +221,14 @@ export async function getCombatMultipliers(
   const { userId: _, ...levels } = research ?? {};
 
   return {
-    weapons: resolveBonus('weapons', null, levels as Record<string, number>, bonusDefs) * (1 + (talentCtx?.['combat_weapons'] ?? 0)),
-    shielding: resolveBonus('shielding', null, levels as Record<string, number>, bonusDefs) * (1 + (talentCtx?.['combat_shield'] ?? 0)),
-    armor: resolveBonus('armor', null, levels as Record<string, number>, bonusDefs) * (1 + (talentCtx?.['combat_armor'] ?? 0)),
+    weapons:
+      resolveBonus('weapons', null, levels as Record<string, number>, bonusDefs) *
+      (1 + (talentCtx?.['combat_weapons'] ?? 0)),
+    shielding:
+      resolveBonus('shielding', null, levels as Record<string, number>, bonusDefs) *
+      (1 + (talentCtx?.['combat_shield'] ?? 0)),
+    armor:
+      resolveBonus('armor', null, levels as Record<string, number>, bonusDefs) *
+      (1 + (talentCtx?.['combat_armor'] ?? 0)),
   };
 }

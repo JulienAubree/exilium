@@ -2,7 +2,15 @@ import { eq, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, userResearch, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { researchCost, researchTime, checkResearchPrerequisites, resolveBonus, researchAnnexBonus, researchBiomeBonus } from '@exilium/game-engine';
+import { findOwnedPlanet, getPlanetBuildingLevels } from '@exilium/db';
+import {
+  researchCost,
+  researchTime,
+  checkResearchPrerequisites,
+  resolveBonus,
+  researchAnnexBonus,
+  researchBiomeBonus,
+} from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
@@ -10,25 +18,10 @@ import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
-async function getBuildingLevels(db: Database, planetId: string): Promise<Record<string, number>> {
-  const rows = await db
-    .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
-    .from(planetBuildings)
-    .where(eq(planetBuildings.planetId, planetId));
-  const levels: Record<string, number> = {};
-  for (const row of rows) {
-    levels[row.buildingId] = row.level;
-  }
-  return levels;
-}
-
 const ANNEX_BUILDING_IDS = ['labVolcanic', 'labArid', 'labTemperate', 'labGlacial', 'labGaseous'];
 
 async function getAnnexLevelsSum(db: Database, userId: string): Promise<number> {
-  const userPlanets = db
-    .select({ id: planets.id })
-    .from(planets)
-    .where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
 
   const [result] = await db
     .select({ total: sql<number>`coalesce(sum(${planetBuildings.level}), 0)` })
@@ -43,24 +36,19 @@ async function getAnnexLevelsSum(db: Database, userId: string): Promise<number> 
 }
 
 async function getActiveBiomesCount(db: Database, userId: string): Promise<number> {
-  const userPlanets = db
-    .select({ id: planets.id })
-    .from(planets)
-    .where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
 
   const [result] = await db
     .select({ count: sql<number>`count(*)` })
     .from(planetBiomes)
-    .where(
-      and(
-        inArray(planetBiomes.planetId, userPlanets),
-        eq(planetBiomes.active, true),
-      ),
-    );
+    .where(and(inArray(planetBiomes.planetId, userPlanets), eq(planetBiomes.active, true)));
   return Number(result?.count ?? 0);
 }
 
-async function getAnnexDetails(db: Database, userId: string): Promise<{ buildingId: string; level: number; planetName: string }[]> {
+async function getAnnexDetails(
+  db: Database,
+  userId: string,
+): Promise<{ buildingId: string; level: number; planetName: string }[]> {
   const rows = await db
     .select({
       buildingId: planetBuildings.buildingId,
@@ -70,20 +58,14 @@ async function getAnnexDetails(db: Database, userId: string): Promise<{ building
     .from(planetBuildings)
     .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
     .where(
-      and(
-        eq(planets.userId, userId),
-        inArray(planetBuildings.buildingId, ANNEX_BUILDING_IDS),
-      ),
+      and(eq(planets.userId, userId), inArray(planetBuildings.buildingId, ANNEX_BUILDING_IDS)),
     );
   return rows;
 }
 
 async function hasAnnexOfType(db: Database, userId: string, annexType: string): Promise<boolean> {
   const annexBuildingId = `lab${annexType.charAt(0).toUpperCase()}${annexType.slice(1)}`;
-  const userPlanets = db
-    .select({ id: planets.id })
-    .from(planets)
-    .where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
 
   const [result] = await db
     .select({ level: planetBuildings.level })
@@ -103,7 +85,9 @@ export function createResearchService(
   resourceService: ReturnType<typeof createResourceService>,
   completionQueue: Queue,
   gameConfigService: GameConfigService,
-  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
+  talentService?: {
+    computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>>;
+  },
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
 ) {
   return {
@@ -113,7 +97,8 @@ export function createResearchService(
         .from(planets)
         .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
         .limit(1);
-      if (!homeworld) throw new TRPCError({ code: 'NOT_FOUND', message: 'Planete mere introuvable' });
+      if (!homeworld)
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Planete mere introuvable' });
       return homeworld;
     },
 
@@ -122,7 +107,7 @@ export function createResearchService(
       const planetId = homeworld.id;
       const research = await this.getOrCreateResearch(userId);
       const config = await gameConfigService.getFullConfig();
-      const buildingLevels = await getBuildingLevels(db, planetId);
+      const buildingLevels = await getPlanetBuildingLevels(db, planetId);
 
       const [activeResearch] = await db
         .select()
@@ -137,7 +122,11 @@ export function createResearchService(
         .limit(1);
 
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
       const timeDivisor = Number(config.universe.research_time_divisor) || 1000;
       // For empire-level research: get global talents (no planet restriction)
@@ -162,16 +151,32 @@ export function createResearchService(
         Object.values(config.research)
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(async (def) => {
-            const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
+            const currentLevel = (research[def.levelColumn as keyof typeof research] ??
+              0) as number;
             const nextLevel = currentLevel + 1;
             const cost = researchCost(def, nextLevel, phaseMap);
-            const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier * govTimeMult));
+            const time = Math.max(
+              1,
+              Math.floor(
+                researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) *
+                  talentTimeMultiplier *
+                  hullTimeMultiplier *
+                  annexBonusMultiplier *
+                  biomeBonusMultiplier *
+                  govTimeMult,
+              ),
+            );
 
             const researchLevels: Record<string, number> = {};
             for (const [key, rDef] of Object.entries(config.research)) {
-              researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ?? 0) as number;
+              researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ??
+                0) as number;
             }
-            const prereqCheck = checkResearchPrerequisites(def.prerequisites, buildingLevels, researchLevels);
+            const prereqCheck = checkResearchPrerequisites(
+              def.prerequisites,
+              buildingLevels,
+              researchLevels,
+            );
 
             // Check annex prerequisite if required
             const requiredAnnex = def.requiredAnnexType;
@@ -194,7 +199,8 @@ export function createResearchService(
               ],
               requiredAnnexType: requiredAnnex ?? null,
               isResearching: activeResearch?.itemId === def.id,
-              researchEndTime: activeResearch?.itemId === def.id ? activeResearch.endTime.toISOString() : null,
+              researchEndTime:
+                activeResearch?.itemId === def.id ? activeResearch.endTime.toISOString() : null,
             };
           }),
       );
@@ -210,7 +216,12 @@ export function createResearchService(
           biomeMultiplier: biomeBonusMultiplier,
           talentMultiplier: talentTimeMultiplier,
           hullMultiplier: hullTimeMultiplier,
-          totalMultiplier: bonusMultiplier * annexBonusMultiplier * biomeBonusMultiplier * talentTimeMultiplier * hullTimeMultiplier,
+          totalMultiplier:
+            bonusMultiplier *
+            annexBonusMultiplier *
+            biomeBonusMultiplier *
+            talentTimeMultiplier *
+            hullTimeMultiplier,
         },
       };
     },
@@ -219,7 +230,10 @@ export function createResearchService(
       const homeworld = await this.getHomeworld(userId);
 
       if (homeworld.status === 'colonizing') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Construction impossible pendant la colonisation' });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Construction impossible pendant la colonisation',
+        });
       }
 
       const planetId = homeworld.id;
@@ -244,14 +258,21 @@ export function createResearchService(
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Recherche déjà en cours' });
       }
 
-      const buildingLevels = await getBuildingLevels(db, planetId);
+      const buildingLevels = await getPlanetBuildingLevels(db, planetId);
       const researchLevels: Record<string, number> = {};
       for (const [key, rDef] of Object.entries(config.research)) {
         researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ?? 0) as number;
       }
-      const prereqCheck = checkResearchPrerequisites(def.prerequisites, buildingLevels, researchLevels);
+      const prereqCheck = checkResearchPrerequisites(
+        def.prerequisites,
+        buildingLevels,
+        researchLevels,
+      );
       if (!prereqCheck.met) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `Prérequis non remplis: ${prereqCheck.missing.join(', ')}` });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Prérequis non remplis: ${prereqCheck.missing.join(', ')}`,
+        });
       }
 
       // Check annex prerequisite
@@ -259,17 +280,27 @@ export function createResearchService(
       if (requiredAnnex) {
         const hasAnnex = await hasAnnexOfType(db, userId, requiredAnnex);
         if (!hasAnnex) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: `Annexe requise : ${requiredAnnex}` });
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Annexe requise : ${requiredAnnex}`,
+          });
         }
       }
 
       const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
       const nextLevel = currentLevel + 1;
       if (def.maxLevel != null && nextLevel > def.maxLevel) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `Niveau maximum atteint (${def.maxLevel})` });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Niveau maximum atteint (${def.maxLevel})`,
+        });
       }
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
       const timeDivisor = Number(config.universe.research_time_divisor) || 1000;
       const cost = researchCost(def, nextLevel, phaseMap);
@@ -283,9 +314,24 @@ export function createResearchService(
       const discoveredBiomesCount = await getActiveBiomesCount(db, userId);
       const biomeBonusMultiplier = researchBiomeBonus(discoveredBiomesCount);
       // Governance construction penalty (no-op on homeworld, applied for consistency)
-      const govPenaltyResearch = await getGovernancePenalty(db, userId, homeworld.planetClassId, config);
+      const govPenaltyResearch = await getGovernancePenalty(
+        db,
+        userId,
+        homeworld.planetClassId,
+        config,
+      );
       const govTimeMultResearch = 1 + govPenaltyResearch.constructionMalus;
-      const time = Math.max(1, Math.floor(researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) * talentTimeMultiplier * hullTimeMultiplier * annexBonusMultiplier * biomeBonusMultiplier * govTimeMultResearch));
+      const time = Math.max(
+        1,
+        Math.floor(
+          researchTime(def, nextLevel, bonusMultiplier, { timeDivisor, phaseMap }) *
+            talentTimeMultiplier *
+            hullTimeMultiplier *
+            annexBonusMultiplier *
+            biomeBonusMultiplier *
+            govTimeMultResearch,
+        ),
+      );
 
       await resourceService.spendResources(planetId, userId, cost);
 
@@ -313,11 +359,13 @@ export function createResearchService(
 
       // Hook: daily quest detection for construction start
       if (dailyQuestService) {
-        dailyQuestService.processEvent({
-          type: 'construction:started',
-          userId,
-          payload: { researchId },
-        }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
+        dailyQuestService
+          .processEvent({
+            type: 'construction:started',
+            userId,
+            payload: { researchId },
+          })
+          .catch((e) => console.warn('[daily-quest] processEvent failed:', e));
       }
 
       return { entry, endTime: endTime.toISOString(), researchTime: time };
@@ -345,18 +393,28 @@ export function createResearchService(
       const def = config.research[activeResearch.itemId];
       const research = await this.getOrCreateResearch(userId);
       const currentLevel = def
-        ? (research[def.levelColumn as keyof typeof research] ?? 0) as number
+        ? ((research[def.levelColumn as keyof typeof research] ?? 0) as number)
         : 0;
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
-      const cost = def ? researchCost(def, currentLevel + 1, phaseMap) : { minerai: 0, silicium: 0, hydrogene: 0 };
+      const cost = def
+        ? researchCost(def, currentLevel + 1, phaseMap)
+        : { minerai: 0, silicium: 0, hydrogene: 0 };
 
       // Pro-rata refund capped at 70%
       const now = Date.now();
-      const totalDuration = new Date(activeResearch.endTime).getTime() - new Date(activeResearch.startTime).getTime();
+      const totalDuration =
+        new Date(activeResearch.endTime).getTime() - new Date(activeResearch.startTime).getTime();
       const remaining = Math.max(0, new Date(activeResearch.endTime).getTime() - now);
-      const refundRatio = Math.min(cancelRefundRatio, totalDuration > 0 ? remaining / totalDuration : 0);
+      const refundRatio = Math.min(
+        cancelRefundRatio,
+        totalDuration > 0 ? remaining / totalDuration : 0,
+      );
       const refund = {
         minerai: Math.floor(cost.minerai * refundRatio),
         silicium: Math.floor(cost.silicium * refundRatio),
@@ -457,20 +515,13 @@ export function createResearchService(
 
       if (existing) return existing;
 
-      const [created] = await db
-        .insert(userResearch)
-        .values({ userId })
-        .returning();
+      const [created] = await db.insert(userResearch).values({ userId }).returning();
 
       return created;
     },
 
     async getOwnedPlanet(userId: string, planetId: string) {
-      const [planet] = await db
-        .select()
-        .from(planets)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
-        .limit(1);
+      const planet = await findOwnedPlanet(db, userId, planetId);
 
       if (!planet) throw new TRPCError({ code: 'NOT_FOUND' });
       return planet;

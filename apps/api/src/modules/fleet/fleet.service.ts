@@ -2,6 +2,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, fleetEvents, userResearch, fleetPhaseEnum } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { findOwnedPlanet, getUserResearchLevels } from '@exilium/db';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -36,7 +37,12 @@ import { createFleetQueries } from './operations/fleet-queries.js';
 import { createProcessDetection } from './operations/process-detection.js';
 import type { FleetCompletionResult } from '../../workers/completion.types.js';
 import { env } from '../../config/env.js';
-import type { PhasedMissionHandler, MissionHandler, MissionHandlerContext, FleetEvent as HandlerFleetEvent } from './fleet.types.js';
+import type {
+  PhasedMissionHandler,
+  MissionHandler,
+  MissionHandlerContext,
+  FleetEvent as HandlerFleetEvent,
+} from './fleet.types.js';
 import type { AllianceLogService } from '../alliance/alliance-log.service.js';
 
 export function createFleetService(
@@ -53,9 +59,15 @@ export function createFleetService(
   exiliumService?: ReturnType<typeof createExiliumService>,
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
   flagshipService?: ReturnType<typeof createFlagshipService>,
-  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
-  gameEventService?: ReturnType<typeof import('../game-event/game-event.service.js').createGameEventService>,
-  colonizationService?: ReturnType<typeof import('../colonization/colonization.service.js').createColonizationService>,
+  talentService?: {
+    computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>>;
+  },
+  gameEventService?: ReturnType<
+    typeof import('../game-event/game-event.service.js').createGameEventService
+  >,
+  colonizationService?: ReturnType<
+    typeof import('../colonization/colonization.service.js').createColonizationService
+  >,
   allianceLogService?: AllianceLogService,
 ) {
   const handlers: Record<string, MissionHandler> = {
@@ -99,50 +111,60 @@ export function createFleetService(
   // Closure-scoped helpers (replace the previous `this.X` patterns). Kept
   // here so extracted operations can reference them as plain deps.
   async function getOwnedPlanet(userId: string, planetId: string) {
-    const [planet] = await db
-      .select()
-      .from(planets)
-      .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
-      .limit(1);
+    const planet = await findOwnedPlanet(db, userId, planetId);
     if (!planet) throw new TRPCError({ code: 'NOT_FOUND' });
     return planet;
   }
 
   async function getResearchLevels(userId: string): Promise<Record<string, number>> {
-    const [research] = await db
-      .select()
-      .from(userResearch)
-      .where(eq(userResearch.userId, userId))
-      .limit(1);
-    if (!research) return {};
-    const levels: Record<string, number> = {};
-    for (const [key, value] of Object.entries(research)) {
-      if (key !== 'userId' && typeof value === 'number') levels[key] = value;
-    }
-    return levels;
+    return getUserResearchLevels(db, userId);
   }
 
   async function getOrCreateShips(planetId: string) {
-    const [existing] = await db.select().from(planetShips).where(eq(planetShips.planetId, planetId)).limit(1);
+    const [existing] = await db
+      .select()
+      .from(planetShips)
+      .where(eq(planetShips.planetId, planetId))
+      .limit(1);
     if (existing) return existing;
     const [created] = await db.insert(planetShips).values({ planetId }).returning();
     return created;
   }
 
   const sendFleet = createSendFleet({
-    db, gameConfigService, resourceService, fleetQueue, redis,
-    pveService, flagshipService, talentService, dailyQuestService,
-    handlers, handlerCtx,
-    getOwnedPlanet, getResearchLevels, getOrCreateShips,
+    db,
+    gameConfigService,
+    resourceService,
+    fleetQueue,
+    redis,
+    pveService,
+    flagshipService,
+    talentService,
+    dailyQuestService,
+    handlers,
+    handlerCtx,
+    getOwnedPlanet,
+    getResearchLevels,
+    getOrCreateShips,
   });
 
   const listInboundFleets = createListInboundFleets({ db, gameConfigService });
   const recallFleet = createRecallFleet({ db, fleetQueue, pveService });
   const scheduleReturn = createScheduleReturn({
-    db, gameConfigService, fleetQueue, flagshipService, talentService, getResearchLevels,
+    db,
+    gameConfigService,
+    fleetQueue,
+    flagshipService,
+    talentService,
+    getResearchLevels,
   });
   const { getFleetSlots, listMovements, estimateFleet } = createFleetQueries({
-    db, gameConfigService, flagshipService, talentService, getOwnedPlanet, getResearchLevels,
+    db,
+    gameConfigService,
+    flagshipService,
+    talentService,
+    getOwnedPlanet,
+    getResearchLevels,
   });
   const processDetection = createProcessDetection({ db, gameConfigService, redis });
 
@@ -151,12 +173,18 @@ export function createFleetService(
   async function processPhaseDispatch(
     fleetEventId: string,
     phaseName: string,
-    expectedPhase: typeof fleetPhaseEnum.enumValues[number],
+    expectedPhase: (typeof fleetPhaseEnum.enumValues)[number],
   ) {
     const [event] = await db
       .select()
       .from(fleetEvents)
-      .where(and(eq(fleetEvents.id, fleetEventId), eq(fleetEvents.status, 'active'), eq(fleetEvents.phase, expectedPhase)))
+      .where(
+        and(
+          eq(fleetEvents.id, fleetEventId),
+          eq(fleetEvents.status, 'active'),
+          eq(fleetEvents.phase, expectedPhase),
+        ),
+      )
       .limit(1);
 
     if (!event) return { skipped: true };
@@ -189,30 +217,44 @@ export function createFleetService(
       tradeId: event.tradeId,
     };
 
-    const result = await (handler as PhasedMissionHandler).processPhase(phaseName, handlerEvent, handlerCtx);
+    const result = await (handler as PhasedMissionHandler).processPhase(
+      phaseName,
+      handlerEvent,
+      handlerCtx,
+    );
 
     if (result.scheduleNextPhase) {
       await fleetQueue.add(
         result.scheduleNextPhase.jobName,
         { fleetEventId: event.id },
-        { delay: result.scheduleNextPhase.delayMs, jobId: `fleet-${result.scheduleNextPhase.jobName}-${event.id}` },
+        {
+          delay: result.scheduleNextPhase.delayMs,
+          jobId: `fleet-${result.scheduleNextPhase.jobName}-${event.id}`,
+        },
       );
     }
 
     // Store reportId in metadata for retrieval during processReturn
     if (result.reportId) {
       const existingMeta = (event.metadata ?? {}) as Record<string, unknown>;
-      await db.update(fleetEvents).set({
-        metadata: { ...existingMeta, reportId: result.reportId },
-      }).where(eq(fleetEvents.id, event.id));
+      await db
+        .update(fleetEvents)
+        .set({
+          metadata: { ...existingMeta, reportId: result.reportId },
+        })
+        .where(eq(fleetEvents.id, event.id));
     }
 
     if (result.scheduleReturn && event.originPlanetId) {
       const cargo = result.cargo ?? { minerai: 0, silicium: 0, hydrogene: 0 };
       await scheduleReturn(
-        event.id, event.originPlanetId,
+        event.id,
+        event.originPlanetId,
         { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-        ships, cargo.minerai, cargo.silicium, cargo.hydrogene,
+        ships,
+        cargo.minerai,
+        cargo.silicium,
+        cargo.hydrogene,
       );
     }
 
@@ -228,10 +270,6 @@ export function createFleetService(
     listMovements,
     estimateFleet,
     processDetection,
-
-
-
-
 
     async processArrival(fleetEventId: string): Promise<FleetCompletionResult> {
       const [event] = await db
@@ -291,12 +329,24 @@ export function createFleetService(
         const result = await handler.processArrival(handlerEvent, handlerCtx);
 
         if (result.scheduleReturn && event.originPlanetId) {
-          const cargo = result.cargo ?? { minerai: mineraiCargo, silicium: siliciumCargo, hydrogene: hydrogeneCargo };
+          const cargo = result.cargo ?? {
+            minerai: mineraiCargo,
+            silicium: siliciumCargo,
+            hydrogene: hydrogeneCargo,
+          };
           const returnShips = result.shipsAfterArrival ?? ships;
           await scheduleReturn(
-            event.id, event.originPlanetId,
-            { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-            returnShips, cargo.minerai, cargo.silicium, cargo.hydrogene,
+            event.id,
+            event.originPlanetId,
+            {
+              galaxy: event.targetGalaxy,
+              system: event.targetSystem,
+              position: event.targetPosition,
+            },
+            returnShips,
+            cargo.minerai,
+            cargo.silicium,
+            cargo.hydrogene,
           );
         }
 
@@ -304,7 +354,10 @@ export function createFleetService(
           await fleetQueue.add(
             result.schedulePhase.jobName,
             { fleetEventId: event.id },
-            { delay: result.schedulePhase.delayMs, jobId: `fleet-${result.schedulePhase.jobName}-${event.id}` },
+            {
+              delay: result.schedulePhase.delayMs,
+              jobId: `fleet-${result.schedulePhase.jobName}-${event.id}`,
+            },
           );
         }
 
@@ -312,10 +365,18 @@ export function createFleetService(
           // Flagship stays on target planet for no-return missions (station, colonize)
           // But NOT if it was destroyed in combat (shipsAfterArrival would exclude it)
           const survivingShips = result.shipsAfterArrival ?? ships;
-          if (survivingShips['flagship'] && survivingShips['flagship'] > 0 && flagshipService && event.targetPlanetId) {
+          if (
+            survivingShips['flagship'] &&
+            survivingShips['flagship'] > 0 &&
+            flagshipService &&
+            event.targetPlanetId
+          ) {
             await flagshipService.returnFromMission(event.userId, event.targetPlanetId);
           }
-          await db.update(fleetEvents).set({ status: 'completed' }).where(eq(fleetEvents.id, event.id));
+          await db
+            .update(fleetEvents)
+            .set({ status: 'completed' })
+            .where(eq(fleetEvents.id, event.id));
         }
 
         if (result.createReturnEvent) {
@@ -330,9 +391,17 @@ export function createFleetService(
             const returnShips = (returnData.ships ?? ships) as Record<string, number>;
             const returnCargo = result.cargo ?? { minerai: 0, silicium: 0, hydrogene: 0 };
             await scheduleReturn(
-              insertedEvent.id, event.originPlanetId,
-              { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-              returnShips, returnCargo.minerai, returnCargo.silicium, returnCargo.hydrogene,
+              insertedEvent.id,
+              event.originPlanetId,
+              {
+                galaxy: event.targetGalaxy,
+                system: event.targetSystem,
+                position: event.targetPosition,
+              },
+              returnShips,
+              returnCargo.minerai,
+              returnCargo.silicium,
+              returnCargo.hydrogene,
             );
           }
         }
@@ -340,7 +409,11 @@ export function createFleetService(
         // Notify defender for dangerous missions so their inbound list refreshes
         const config = await gameConfigService.getFullConfig();
         const missionDef = config.missions[event.mission];
-        const notifyUsers: Array<{ userId: string; type: string; payload: Record<string, unknown> }> = [];
+        const notifyUsers: Array<{
+          userId: string;
+          type: string;
+          payload: Record<string, unknown>;
+        }> = [];
         if (missionDef?.dangerous && event.targetPlanetId) {
           const [targetPlanet] = await db
             .select({ userId: planets.userId, name: planets.name })
@@ -392,9 +465,17 @@ export function createFleetService(
       // Unknown mission — return fleet (only if origin still exists)
       if (event.originPlanetId) {
         await scheduleReturn(
-          event.id, event.originPlanetId,
-          { galaxy: event.targetGalaxy, system: event.targetSystem, position: event.targetPosition },
-          ships, mineraiCargo, siliciumCargo, hydrogeneCargo,
+          event.id,
+          event.originPlanetId,
+          {
+            galaxy: event.targetGalaxy,
+            system: event.targetSystem,
+            position: event.targetPosition,
+          },
+          ships,
+          mineraiCargo,
+          siliciumCargo,
+          hydrogeneCargo,
         );
       }
 
@@ -437,7 +518,6 @@ export function createFleetService(
       return null;
     },
 
-
     async processReturn(fleetEventId: string): Promise<FleetCompletionResult> {
       const [event] = await db
         .select()
@@ -470,7 +550,10 @@ export function createFleetService(
 
       // Merge returning ships + PvE bonus ships into a single atomic update
       // Skip ship restoration if origin planet was deleted (abandon_return after colony abandoned)
-      const meta = event.metadata as { bonusShips?: Record<string, number>; reportId?: string } | null;
+      const meta = event.metadata as {
+        bonusShips?: Record<string, number>;
+        reportId?: string;
+      } | null;
       if (event.originPlanetId) {
         await getOrCreateShips(event.originPlanetId);
         // Compute total increment per ship type, then apply as atomic SQL
@@ -523,18 +606,17 @@ export function createFleetService(
         // Hook: daily quest — comptabiliser les ressources rapportees par la flotte
         if (dailyQuestService) {
           const totalCollected = mineraiCargo + siliciumCargo + hydrogeneCargo;
-          await dailyQuestService.processEvent({
-            type: 'resources:collected',
-            userId: event.userId,
-            payload: { totalCollected },
-          }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
+          await dailyQuestService
+            .processEvent({
+              type: 'resources:collected',
+              userId: event.userId,
+              payload: { totalCollected },
+            })
+            .catch((e) => console.warn('[daily-quest] processEvent failed:', e));
         }
       }
 
-      await db
-        .update(fleetEvents)
-        .set({ status: 'completed' })
-        .where(eq(fleetEvents.id, event.id));
+      await db.update(fleetEvents).set({ status: 'completed' }).where(eq(fleetEvents.id, event.id));
 
       const reportId = meta?.reportId;
 
@@ -561,34 +643,41 @@ export function createFleetService(
           },
           reportId,
         },
-        extraEvents: (event.mission === 'mine' || event.mission === 'pirate') ? [{
-          type: 'pve-mission-done',
-          payload: {
-            missionType: event.mission,
-            targetCoords: `${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}`,
-            originName: originPlanet?.name ?? 'Planète',
-            cargo: {
-              minerai: Number(event.mineraiCargo),
-              silicium: Number(event.siliciumCargo),
-              hydrogene: Number(event.hydrogeneCargo),
-            },
-            reportId,
-          },
-        }] : undefined,
+        extraEvents:
+          event.mission === 'mine' || event.mission === 'pirate'
+            ? [
+                {
+                  type: 'pve-mission-done',
+                  payload: {
+                    missionType: event.mission,
+                    targetCoords: `${event.targetGalaxy}:${event.targetSystem}:${event.targetPosition}`,
+                    originName: originPlanet?.name ?? 'Planète',
+                    cargo: {
+                      minerai: Number(event.mineraiCargo),
+                      silicium: Number(event.siliciumCargo),
+                      hydrogene: Number(event.hydrogeneCargo),
+                    },
+                    reportId,
+                  },
+                },
+              ]
+            : undefined,
         tutorialChecks: [
           { type: 'fleet_return', targetId: event.mission, targetValue: 1 },
-          ...(event.mission === 'mine' ? [{ type: 'mission_complete' as const, targetId: 'mine', targetValue: 1 }] : []),
-          ...(event.mission === 'pirate' ? [{ type: 'mission_complete' as const, targetId: 'pirate', targetValue: 1 }] : []),
+          ...(event.mission === 'mine'
+            ? [{ type: 'mission_complete' as const, targetId: 'mine', targetValue: 1 }]
+            : []),
+          ...(event.mission === 'pirate'
+            ? [{ type: 'mission_complete' as const, targetId: 'pirate', targetValue: 1 }]
+            : []),
         ],
       };
     },
-
 
     // Exposed for tests and older callers; internal code uses the closure
     // functions directly.
     getResearchLevels,
     getOrCreateShips,
-
 
     getOwnedPlanet,
   };
