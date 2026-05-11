@@ -77,10 +77,12 @@ interface Props {
     briefing: string;
     expiresAt: string;
   };
+  /** Image hero du secteur (path public, ex: /assets/expedition/sector-theta-7.webp) */
+  sectorImage?: string;
   onEngage: () => void;
 }
 
-export function ExpeditionMissionCard({ mission, onEngage }: Props) {
+export function ExpeditionMissionCard({ mission, sectorImage, onEngage }: Props) {
   const expiresAt = new Date(mission.expiresAt);
   const durationMin = Math.round(mission.estimatedDurationSeconds / 60);
 
@@ -89,16 +91,30 @@ export function ExpeditionMissionCard({ mission, onEngage }: Props) {
       'glass-card overflow-hidden border transition-all hover:scale-[1.01]',
       TIER_GLOW[mission.tier],
     )}>
-      {/* Header */}
-      <div className={cn('relative px-4 py-3 border-b border-white/5', TIER_HEADER_GRADIENT[mission.tier])}>
-        <div className="flex items-center gap-3">
-          <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg shrink-0', TIER_ICON_BG[mission.tier])}>
+      {/* Header avec image hero (si dispo) ou gradient palier */}
+      <div className={cn(
+        'relative px-4 py-3 border-b border-white/5 overflow-hidden',
+        !sectorImage && TIER_HEADER_GRADIENT[mission.tier],
+      )}>
+        {sectorImage && (
+          <>
+            <img
+              src={sectorImage}
+              alt={mission.sectorName}
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-card/95 via-card/70 to-card/40" />
+          </>
+        )}
+        <div className="relative flex items-center gap-3">
+          <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg shrink-0 backdrop-blur-sm', TIER_ICON_BG[mission.tier])}>
             <Compass className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-sm font-bold truncate">{mission.sectorName}</h4>
             <span className={cn(
-              'inline-block mt-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider',
+              'inline-block mt-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm',
               TIER_BADGE[mission.tier],
             )}>
               {TIER_LABEL[mission.tier]}
@@ -164,12 +180,14 @@ interface InProgressProps {
   };
   shipNames: Record<string, string>;
   shipRoles?: Record<string, string>;
+  /** Image hero du secteur (path public). */
+  sectorImage?: string;
   onOpen: () => void;
   /** Appelé quand le timer affiché atteint zéro (pour déclencher un refetch). */
   onTimerComplete?: () => void;
 }
 
-export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, onOpen, onTimerComplete }: InProgressProps) {
+export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, sectorImage, onOpen, onTimerComplete }: InProgressProps) {
   const awaitingDecision = mission.status === 'awaiting_decision';
   const returning = mission.status === 'returning';
 
@@ -200,19 +218,39 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, o
           : TIER_GLOW[mission.tier],
       )}
     >
-      {/* Header gradient */}
+      {/* Header avec image hero (si dispo) ou gradient palier */}
       <div className={cn(
-        'relative px-4 py-3 border-b border-white/5',
-        awaitingDecision
-          ? 'bg-gradient-to-br from-amber-950/40 via-amber-900/10 to-transparent'
-          : returning
-          ? 'bg-gradient-to-br from-cyan-950/40 via-cyan-900/10 to-transparent'
-          : TIER_HEADER_GRADIENT[mission.tier],
+        'relative px-4 py-3 border-b border-white/5 overflow-hidden',
+        !sectorImage && (
+          awaitingDecision
+            ? 'bg-gradient-to-br from-amber-950/40 via-amber-900/10 to-transparent'
+            : returning
+            ? 'bg-gradient-to-br from-cyan-950/40 via-cyan-900/10 to-transparent'
+            : TIER_HEADER_GRADIENT[mission.tier]
+        ),
       )}>
-        <div className="flex items-start justify-between gap-3">
+        {sectorImage && (
+          <>
+            <img
+              src={sectorImage}
+              alt={mission.sectorName}
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className={cn(
+              'absolute inset-0',
+              awaitingDecision
+                ? 'bg-gradient-to-r from-card/95 via-card/70 to-amber-950/30'
+                : returning
+                ? 'bg-gradient-to-r from-card/95 via-card/70 to-cyan-950/30'
+                : 'bg-gradient-to-r from-card/95 via-card/70 to-card/40',
+            )} />
+          </>
+        )}
+        <div className="relative flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-lg shrink-0',
+              'flex h-10 w-10 items-center justify-center rounded-lg shrink-0 backdrop-blur-sm',
               awaitingDecision
                 ? 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30 animate-pulse'
                 : returning
@@ -225,7 +263,7 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, o
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm font-bold truncate">{mission.sectorName}</h4>
                 <span className={cn(
-                  'shrink-0 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider',
+                  'shrink-0 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm',
                   TIER_BADGE[mission.tier],
                 )}>
                   {TIER_LABEL[mission.tier]}

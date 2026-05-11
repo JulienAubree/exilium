@@ -18,6 +18,7 @@ export default function Expeditions() {
   const { data, isLoading, refetch } = trpc.expedition.list.useQuery(undefined, {
     refetchInterval: 10_000,
   });
+  const { data: content } = trpc.expeditionContent.get.useQuery();
 
   const [engageOpen, setEngageOpen] = useState<string | null>(null);
 
@@ -44,6 +45,15 @@ export default function Expeditions() {
     }
     return out;
   }, [gameConfig]);
+
+  // Map sectorId → image url (uploadée admin)
+  const sectorImages = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const s of content?.sectors ?? []) {
+      if (s.imageRef) out[s.id] = s.imageRef;
+    }
+    return out;
+  }, [content]);
 
   const engageMission = available.find((m) => m.id === engageOpen) ?? null;
 
@@ -105,6 +115,7 @@ export default function Expeditions() {
                 mission={m as any}
                 shipNames={shipNames}
                 shipRoles={shipRoles}
+                sectorImage={sectorImages[m.sectorId]}
                 onOpen={() => navigate(`/missions/expeditions/${m.id}`)}
                 onTimerComplete={() => refetch()}
               />
@@ -130,6 +141,7 @@ export default function Expeditions() {
               <ExpeditionMissionCard
                 key={m.id}
                 mission={m as any}
+                sectorImage={sectorImages[m.sectorId]}
                 onEngage={() => setEngageOpen(m.id)}
               />
             ))}
