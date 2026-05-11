@@ -16,7 +16,7 @@ export default function Expeditions() {
   const navigate = useNavigate();
   const { data: gameConfig } = useGameConfig();
   const { data, isLoading, refetch } = trpc.expedition.list.useQuery(undefined, {
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 
   const [engageOpen, setEngageOpen] = useState<string | null>(null);
@@ -106,6 +106,7 @@ export default function Expeditions() {
                 shipNames={shipNames}
                 shipRoles={shipRoles}
                 onOpen={() => navigate(`/missions/expeditions/${m.id}`)}
+                onTimerComplete={() => refetch()}
               />
             ))}
           </div>

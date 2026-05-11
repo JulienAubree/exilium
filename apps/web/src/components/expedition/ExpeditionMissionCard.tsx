@@ -165,9 +165,11 @@ interface InProgressProps {
   shipNames: Record<string, string>;
   shipRoles?: Record<string, string>;
   onOpen: () => void;
+  /** Appelé quand le timer affiché atteint zéro (pour déclencher un refetch). */
+  onTimerComplete?: () => void;
 }
 
-export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, onOpen }: InProgressProps) {
+export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, onOpen, onTimerComplete }: InProgressProps) {
   const awaitingDecision = mission.status === 'awaiting_decision';
   const returning = mission.status === 'returning';
 
@@ -350,13 +352,23 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, o
           <>
             <div className="flex items-center gap-1.5 text-xs">
               <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
-              {mission.returnAt ? (
+              {mission.returnAt && new Date(mission.returnAt).getTime() > Date.now() ? (
                 <span className="text-cyan-200">
                   Arrivée dans{' '}
-                  <Timer endTime={new Date(mission.returnAt)} className="font-mono tabular-nums text-foreground/90 font-semibold" />
+                  <Timer
+                    endTime={new Date(mission.returnAt)}
+                    className="font-mono tabular-nums text-foreground/90 font-semibold"
+                    onComplete={onTimerComplete}
+                  />
                 </span>
               ) : (
-                <span className="text-cyan-200">Retour en cours…</span>
+                <span className="text-cyan-200 flex items-center gap-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-300" />
+                  </span>
+                  Arrivée imminente…
+                </span>
               )}
             </div>
             <Button size="sm" variant="outline" onClick={onOpen} className="gap-1">
@@ -368,13 +380,23 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, o
           <>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
-              {mission.nextStepAt ? (
+              {mission.nextStepAt && new Date(mission.nextStepAt).getTime() > Date.now() ? (
                 <span>
                   Prochain événement dans{' '}
-                  <Timer endTime={new Date(mission.nextStepAt)} className="font-mono tabular-nums text-foreground/90 font-semibold" />
+                  <Timer
+                    endTime={new Date(mission.nextStepAt)}
+                    className="font-mono tabular-nums text-foreground/90 font-semibold"
+                    onComplete={onTimerComplete}
+                  />
                 </span>
               ) : (
-                <span>En route…</span>
+                <span className="text-cyan-200 flex items-center gap-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-300" />
+                  </span>
+                  Événement imminent…
+                </span>
               )}
             </div>
             <Button size="sm" variant="outline" onClick={onOpen} className="gap-1">
