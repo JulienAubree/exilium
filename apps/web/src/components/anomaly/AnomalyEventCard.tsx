@@ -4,6 +4,7 @@ import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
+import { Modal } from '@/components/ui/modal';
 import { Timer } from '@/components/common/Timer';
 import { formatNumber } from '@/lib/format';
 import { resolveResearchName } from '@/lib/entity-details';
@@ -104,9 +105,7 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
    *  - recherche insuffisante AVEC failureOutcome → cliquable mais "test
    *    technique raté" (badge rouge, applique failureOutcome serveur-side).
    */
-  function getIneligibilityReason(
-    choice: AnomalyEvent['choices'][number],
-  ): string | null {
+  function getIneligibilityReason(choice: AnomalyEvent['choices'][number]): string | null {
     if (choice.requiredHull && flagshipHullId !== choice.requiredHull) {
       const label = HULL_LABELS[choice.requiredHull] ?? choice.requiredHull;
       return `Réservé à la coque ${label}`;
@@ -114,7 +113,7 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
     if (
       choice.requiredResearch &&
       getResearchLevel(choice.requiredResearch.researchId) < choice.requiredResearch.minLevel &&
-      !choice.failureOutcome  // V8.14 : avec failureOutcome → toujours cliquable
+      !choice.failureOutcome // V8.14 : avec failureOutcome → toujours cliquable
     ) {
       const name = resolveResearchName(choice.requiredResearch.researchId, gameConfig ?? undefined);
       return `Requiert ${name} niv. ${choice.requiredResearch.minLevel}`;
@@ -128,12 +127,21 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
    */
   function getSkillCheck(
     choice: AnomalyEvent['choices'][number],
-  ): { researchId: string; researchName: string; current: number; min: number; passed: boolean } | null {
+  ): {
+    researchId: string;
+    researchName: string;
+    current: number;
+    min: number;
+    passed: boolean;
+  } | null {
     if (!choice.requiredResearch) return null;
     const current = getResearchLevel(choice.requiredResearch.researchId);
     return {
       researchId: choice.requiredResearch.researchId,
-      researchName: resolveResearchName(choice.requiredResearch.researchId, gameConfig ?? undefined),
+      researchName: resolveResearchName(
+        choice.requiredResearch.researchId,
+        gameConfig ?? undefined,
+      ),
       current,
       min: choice.requiredResearch.minLevel,
       passed: current >= choice.requiredResearch.minLevel,
@@ -224,7 +232,10 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
           {!ready && nextAt && (
             <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.06] p-3 flex items-center justify-center gap-2 text-sm">
               <span className="text-muted-foreground">Stabilisation en cours —</span>
-              <Timer endTime={nextAt} className="font-mono text-violet-200 tabular-nums font-semibold" />
+              <Timer
+                endTime={nextAt}
+                className="font-mono text-violet-200 tabular-nums font-semibold"
+              />
             </div>
           )}
         </div>
@@ -246,7 +257,10 @@ export function AnomalyEventCard({ event, ready, disabled, nextAt }: Props) {
  * V8.14 — palette par tone. `hidden` reste prioritaire (amber question-mark)
  * mais on layer le tone par-dessus si défini. Neutral = style legacy.
  */
-const TONE_STYLES: Record<ChoiceTone, { border: string; bg: string; hover: string; icon: React.ReactNode; label: string }> = {
+const TONE_STYLES: Record<
+  ChoiceTone,
+  { border: string; bg: string; hover: string; icon: React.ReactNode; label: string }
+> = {
   positive: {
     border: 'border-emerald-500/40',
     bg: 'bg-emerald-500/5',
@@ -294,7 +308,13 @@ function ChoiceButton({
   choice: AnomalyEvent['choices'][number];
   disabled: boolean;
   ineligibilityReason: string | null;
-  skillCheck: { researchId: string; researchName: string; current: number; min: number; passed: boolean } | null;
+  skillCheck: {
+    researchId: string;
+    researchName: string;
+    current: number;
+    min: number;
+    passed: boolean;
+  } | null;
   onClick: () => void;
 }) {
   const ineligible = ineligibilityReason !== null;
@@ -304,7 +324,8 @@ function ChoiceButton({
   const toneStyle = TONE_STYLES[tone];
   // V8.14 : un skill check raté avec failureOutcome rend le bouton cliquable
   // mais on l'affiche en rouge "Test technique : échec probable".
-  const willFailSkillCheck = skillCheck !== null && !skillCheck.passed && choice.failureOutcome !== undefined;
+  const willFailSkillCheck =
+    skillCheck !== null && !skillCheck.passed && choice.failureOutcome !== undefined;
   return (
     <button
       type="button"
@@ -393,36 +414,70 @@ function OutcomeSummary({ outcome }: { outcome: AnomalyEvent['choices'][number][
 
   const r = outcome;
   if (r.minerai !== 0)
-    parts.push(<Pill key="m" sign={r.minerai} label="Minerai" value={r.minerai} colorClass="text-minerai" />);
+    parts.push(
+      <Pill key="m" sign={r.minerai} label="Minerai" value={r.minerai} colorClass="text-minerai" />,
+    );
   if (r.silicium !== 0)
-    parts.push(<Pill key="s" sign={r.silicium} label="Silicium" value={r.silicium} colorClass="text-silicium" />);
+    parts.push(
+      <Pill
+        key="s"
+        sign={r.silicium}
+        label="Silicium"
+        value={r.silicium}
+        colorClass="text-silicium"
+      />,
+    );
   if (r.hydrogene !== 0)
-    parts.push(<Pill key="h" sign={r.hydrogene} label="Hydrogène" value={r.hydrogene} colorClass="text-hydrogene" />);
+    parts.push(
+      <Pill
+        key="h"
+        sign={r.hydrogene}
+        label="Hydrogène"
+        value={r.hydrogene}
+        colorClass="text-hydrogene"
+      />,
+    );
   if (r.exilium !== 0)
     parts.push(
-      <span key="ex" className={cn('inline-flex items-center gap-1 text-xs', r.exilium > 0 ? 'text-purple-300' : 'text-red-300')}>
+      <span
+        key="ex"
+        className={cn(
+          'inline-flex items-center gap-1 text-xs',
+          r.exilium > 0 ? 'text-purple-300' : 'text-red-300',
+        )}
+      >
         <ExiliumIcon size={12} />
-        {r.exilium > 0 ? '+' : ''}{r.exilium}
+        {r.exilium > 0 ? '+' : ''}
+        {r.exilium}
       </span>,
     );
   if (r.hullDelta !== 0) {
     const pct = Math.round(r.hullDelta * 100);
     parts.push(
       <span key="hull" className={cn('text-xs', pct > 0 ? 'text-emerald-400' : 'text-red-400')}>
-        Coque {pct > 0 ? '+' : ''}{pct}%
+        Coque {pct > 0 ? '+' : ''}
+        {pct}%
       </span>,
     );
   }
   for (const [shipId, count] of Object.entries(r.shipsGain)) {
     if (count > 0) {
       const name = gameConfig?.ships?.[shipId]?.name ?? shipId;
-      parts.push(<span key={`g-${shipId}`} className="text-xs text-emerald-300">+{count} {name}</span>);
+      parts.push(
+        <span key={`g-${shipId}`} className="text-xs text-emerald-300">
+          +{count} {name}
+        </span>,
+      );
     }
   }
   for (const [shipId, count] of Object.entries(r.shipsLoss)) {
     if (count > 0) {
       const name = gameConfig?.ships?.[shipId]?.name ?? shipId;
-      parts.push(<span key={`l-${shipId}`} className="text-xs text-red-300">−{count} {name}</span>);
+      parts.push(
+        <span key={`l-${shipId}`} className="text-xs text-red-300">
+          −{count} {name}
+        </span>,
+      );
     }
   }
   if (parts.length === 0) {
@@ -431,10 +486,21 @@ function OutcomeSummary({ outcome }: { outcome: AnomalyEvent['choices'][number][
   return <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{parts}</div>;
 }
 
-function Pill({ sign, label, value, colorClass }: { sign: number; label: string; value: number; colorClass: string }) {
+function Pill({
+  sign,
+  label,
+  value,
+  colorClass,
+}: {
+  sign: number;
+  label: string;
+  value: number;
+  colorClass: string;
+}) {
   return (
     <span className={cn('text-xs', colorClass)}>
-      {sign > 0 ? '+' : '−'}{formatNumber(Math.abs(value))} {label[0].toUpperCase()}
+      {sign > 0 ? '+' : '−'}
+      {formatNumber(Math.abs(value))} {label[0].toUpperCase()}
     </span>
   );
 }
@@ -451,39 +517,42 @@ function ConfirmHiddenModal({
   pending: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="glass-card w-full max-w-md p-5 space-y-3">
-        <div className="flex items-center gap-2 text-amber-400">
-          <AlertTriangle className="h-4 w-4" />
-          <h3 className="font-bold">Choix risqué</h3>
-        </div>
-        <p className="text-sm text-foreground/85">
-          Vous êtes sur le point de tenter : <span className="font-semibold">{choice.label}</span>.
-          Les conséquences ne sont pas connues à l&apos;avance.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Confirmer ? Vous découvrirez l&apos;issue immédiatement.
-        </p>
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={pending}
-            className="rounded-md border border-border bg-card px-4 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
-          >
-            Annuler
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={pending}
-            className="rounded-md bg-amber-600 hover:bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50 inline-flex items-center gap-1.5"
-          >
-            {pending && <Loader2 className="h-3 w-3 animate-spin" />}
-            Tenter
-          </button>
-        </div>
+    <Modal
+      open
+      onClose={onCancel}
+      backdropClassName="bg-black/70 backdrop-blur-sm"
+      className="glass-card max-w-md lg:max-w-md p-5 space-y-3"
+    >
+      <div className="flex items-center gap-2 text-amber-400">
+        <AlertTriangle className="h-4 w-4" />
+        <h3 className="font-bold">Choix risqué</h3>
       </div>
-    </div>
+      <p className="text-sm text-foreground/85">
+        Vous êtes sur le point de tenter : <span className="font-semibold">{choice.label}</span>.
+        Les conséquences ne sont pas connues à l&apos;avance.
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Confirmer ? Vous découvrirez l&apos;issue immédiatement.
+      </p>
+      <div className="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={pending}
+          className="rounded-md border border-border bg-card px-4 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={pending}
+          className="rounded-md bg-amber-600 hover:bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          {pending && <Loader2 className="h-3 w-3 animate-spin" />}
+          Tenter
+        </button>
+      </div>
+    </Modal>
   );
 }
