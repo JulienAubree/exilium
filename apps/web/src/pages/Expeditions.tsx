@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useOutletContext } from 'react-router';
 import { ArrowLeft, Compass, Info } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -14,6 +14,10 @@ import { EngageFleetModal } from '@/components/expedition/EngageFleetModal';
  */
 export default function Expeditions() {
   const navigate = useNavigate();
+  // Récupère la planète courante du layout pour la pré-sélectionner dans
+  // le modal d'engagement.
+  const layoutContext = useOutletContext<{ planetId?: string } | null>();
+  const currentPlanetId = layoutContext?.planetId;
   const { data: gameConfig } = useGameConfig();
   const { data, isLoading, refetch } = trpc.expedition.list.useQuery(undefined, {
     refetchInterval: 10_000,
@@ -98,6 +102,7 @@ export default function Expeditions() {
           open
           onClose={() => setEngageOpen(null)}
           mission={engageMission as any}
+          defaultPlanetId={currentPlanetId}
           onEngaged={() => refetch()}
         />
       )}
