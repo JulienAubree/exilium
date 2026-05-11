@@ -4,6 +4,7 @@ import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { ClockIcon } from '@/components/icons/utility-icons';
 import { Modal } from '@/components/ui/modal';
+import { formatDurationCompact } from '@/lib/format';
 import { useGameConfig } from '../../hooks/useGameConfig';
 
 interface HullChangeModalProps {
@@ -51,14 +52,6 @@ const RESOURCE_LABELS: Record<string, string> = {
 };
 
 const fmt = (n: number) => n.toLocaleString('fr-FR');
-
-function formatDuration(seconds: number) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0 && m > 0) return `${h}h${String(m).padStart(2, '0')}`;
-  if (h > 0) return `${h}h`;
-  return `${m}min`;
-}
 
 function formatDays(seconds: number) {
   const d = Math.round(seconds / 86400);
@@ -225,7 +218,7 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
               <span>
                 Le vaisseau sera indisponible pendant{' '}
                 <span className="text-amber-300 font-medium">
-                  {formatDuration(selectedHullConfig.unavailabilitySeconds)}
+                  {formatDurationCompact(selectedHullConfig.unavailabilitySeconds)}
                 </span>
               </span>
             </div>

@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getShipName } from '@/lib/entity-names';
+import { formatDurationShort } from '@/lib/format';
 import { useToastStore } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
 import { BuildingsIcon, DefenseIcon, FleetIcon, FlagshipIcon, ShipyardIcon } from '@/lib/icons';
@@ -31,15 +32,6 @@ const BLOCKER_LABELS: Record<string, string> = {
   market_offers: 'Des offres marché actives partent de cette planète.',
   destination_invalid: 'Destination invalide.',
 };
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m < 60) return `${m}m ${s}s`;
-  const h = Math.floor(m / 60);
-  return `${h}h ${m % 60}m`;
-}
 
 export function AbandonColonyModal({
   planet,
@@ -92,9 +84,7 @@ export function AbandonColonyModal({
   };
 
   const title =
-    step === 1
-      ? `Abandonner ${planet.name} — destination`
-      : `Abandonner ${planet.name} — résumé`;
+    step === 1 ? `Abandonner ${planet.name} — destination` : `Abandonner ${planet.name} — résumé`;
 
   return (
     <Modal open={open} onClose={handleClose} title={title}>
@@ -261,9 +251,7 @@ function AbandonSummary({
   return (
     <div className="space-y-3">
       <FleetCard preview={preview} gameConfig={gameConfig} shipEntries={shipEntries} />
-      {hasDebris && (
-        <DebrisCard minerai={overflowMinerai} silicium={overflowSilicium} />
-      )}
+      {hasDebris && <DebrisCard minerai={overflowMinerai} silicium={overflowSilicium} />}
       {hasLoss && (
         <LossCard
           buildings={preview.buildingsLost}
@@ -300,9 +288,17 @@ function Card({
   children: React.ReactNode;
 }) {
   const accentMap = {
-    success: { border: 'border-emerald-500/30', stripe: 'bg-emerald-500', text: 'text-emerald-400' },
+    success: {
+      border: 'border-emerald-500/30',
+      stripe: 'bg-emerald-500',
+      text: 'text-emerald-400',
+    },
     warning: { border: 'border-amber-500/30', stripe: 'bg-amber-500', text: 'text-amber-400' },
-    destructive: { border: 'border-destructive/40', stripe: 'bg-destructive', text: 'text-destructive' },
+    destructive: {
+      border: 'border-destructive/40',
+      stripe: 'bg-destructive',
+      text: 'text-destructive',
+    },
   };
   const a = accentMap[accent];
   return (
@@ -351,7 +347,7 @@ function FleetCard({
               minute: '2-digit',
             })}
             {' · '}
-            {formatDuration(preview.travelSeconds)}
+            {formatDurationShort(preview.travelSeconds)}
           </span>
         </div>
       }
@@ -390,8 +386,7 @@ function FleetCard({
                 cargoFull ? 'text-amber-400' : 'text-muted-foreground',
               )}
             >
-              {Math.floor(loadedTotal).toLocaleString('fr-FR')} /{' '}
-              {capacity.toLocaleString('fr-FR')}
+              {Math.floor(loadedTotal).toLocaleString('fr-FR')} / {capacity.toLocaleString('fr-FR')}
             </span>
           </div>
           <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -490,9 +485,7 @@ function LossCard({
         {hydrogene > 0 && (
           <li className="flex items-center gap-2">
             <HydrogeneIcon size={14} className="text-hydrogene/80 shrink-0" />
-            <span className="tabular-nums text-hydrogene">
-              {hydrogene.toLocaleString('fr-FR')}
-            </span>
+            <span className="tabular-nums text-hydrogene">{hydrogene.toLocaleString('fr-FR')}</span>
             <span>hydrogène (non récupérable)</span>
           </li>
         )}
@@ -500,4 +493,3 @@ function LossCard({
     </Card>
   );
 }
-

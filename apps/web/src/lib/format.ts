@@ -6,7 +6,31 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * Formate un nombre d'heures (potentiellement décimal) en libellé lisible.
+ * Variante "compacte" : `2h15`, `2h`, `45min`. Pas de secondes.
+ * Utile pour les libellés courts (UI mobile, badges).
+ */
+export function formatDurationCompact(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h${String(m).padStart(2, '0')}`;
+  if (h > 0) return `${h}h`;
+  return `${m}min`;
+}
+
+/**
+ * Variante "courte" : adapte l'unité maximale à la durée.
+ * `45s`, `2m 15s`, `2h 30m`. Sans secondes au-delà d'1h.
+ */
+export function formatDurationShort(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m < 60) return `${m}m ${s}s`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+}
+
+/**
  * `25.5h → "1j 1h"`, `2.5h → "2h 30min"`, `0.25h → "15min"`.
  */
 export function formatHoursMinutes(hours: number): string {

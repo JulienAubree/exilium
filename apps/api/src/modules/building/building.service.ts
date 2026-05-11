@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { planets, buildQueue, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { findOwnedPlanet, getPlanetBuildingLevels } from '@exilium/db';
 import { buildingCost, buildingTime, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -15,20 +16,14 @@ export function createBuildingService(
   resourceService: ReturnType<typeof createResourceService>,
   completionQueue: Queue,
   gameConfigService: GameConfigService,
-  talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
+  talentService?: {
+    computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>>;
+  },
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
 ) {
   return {
     async getBuildingLevels(planetId: string): Promise<Record<string, number>> {
-      const rows = await db
-        .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
-        .from(planetBuildings)
-        .where(eq(planetBuildings.planetId, planetId));
-      const levels: Record<string, number> = {};
-      for (const row of rows) {
-        levels[row.buildingId] = row.level;
-      }
-      return levels;
+      return getPlanetBuildingLevels(db, planetId);
     },
 
     async listBuildings(userId: string, planetId: string) {
@@ -49,10 +44,16 @@ export function createBuildingService(
         .limit(1);
 
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
 
-      const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      const talentCtx = talentService
+        ? await talentService.computeTalentContext(userId, planetId)
+        : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['building_time'] ?? 0));
 
       // Governance construction penalty (non-homeworld only)
@@ -61,7 +62,8 @@ export function createBuildingService(
 
       // Fetch cross-planet max building levels for annex prerequisite display
       const hasAnnex = Object.values(config.buildings).some(
-        (def) => def.allowedPlanetTypes && def.allowedPlanetTypes.includes(planet.planetClassId ?? ''),
+        (def) =>
+          def.allowedPlanetTypes && def.allowedPlanetTypes.includes(planet.planetClassId ?? ''),
       );
       let globalBuildingLevels: Record<string, number> | null = null;
       if (hasAnnex) {
@@ -72,7 +74,10 @@ export function createBuildingService(
           .where(eq(planets.userId, userId));
         globalBuildingLevels = {};
         for (const row of allRows) {
-          globalBuildingLevels[row.buildingId] = Math.max(globalBuildingLevels[row.buildingId] ?? 0, row.level);
+          globalBuildingLevels[row.buildingId] = Math.max(
+            globalBuildingLevels[row.buildingId] ?? 0,
+            row.level,
+          );
         }
       }
 
@@ -87,12 +92,25 @@ export function createBuildingService(
           const currentLevel = buildingLevels[def.id] ?? 0;
           const nextLevel = currentLevel + 1;
           const cost = buildingCost(def, nextLevel, phaseMap);
-          const bonusMultiplier = resolveBonus('building_time', null, buildingLevels, config.bonuses);
-          const time = Math.max(1, Math.floor(buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) * govTimeMult));
+          const bonusMultiplier = resolveBonus(
+            'building_time',
+            null,
+            buildingLevels,
+            config.bonuses,
+          );
+          const time = Math.max(
+            1,
+            Math.floor(
+              buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
+                govTimeMult,
+            ),
+          );
 
           // For annex buildings, resolve prerequisites cross-planet
-          const prereqLevels = def.allowedPlanetTypes ? (globalBuildingLevels ?? buildingLevels) : buildingLevels;
-          const resolvedPrereqs = def.prerequisites.map(p => ({
+          const prereqLevels = def.allowedPlanetTypes
+            ? (globalBuildingLevels ?? buildingLevels)
+            : buildingLevels;
+          const resolvedPrereqs = def.prerequisites.map((p) => ({
             buildingId: p.buildingId,
             level: p.level,
             currentLevel: prereqLevels[p.buildingId] ?? 0,
@@ -107,7 +125,8 @@ export function createBuildingService(
             nextLevelTime: time,
             prerequisites: resolvedPrereqs,
             isUpgrading: activeBuild?.itemId === def.id,
-            upgradeEndTime: activeBuild?.itemId === def.id ? activeBuild.endTime.toISOString() : null,
+            upgradeEndTime:
+              activeBuild?.itemId === def.id ? activeBuild.endTime.toISOString() : null,
           };
         });
     },
@@ -116,7 +135,10 @@ export function createBuildingService(
       const planet = await this.getOwnedPlanet(userId, planetId);
 
       if (planet.status === 'colonizing') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Construction impossible pendant la colonisation' });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Construction impossible pendant la colonisation',
+        });
       }
 
       const config = await gameConfigService.getFullConfig();
@@ -181,18 +203,35 @@ export function createBuildingService(
       }
 
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
 
       const currentLevel = buildingLevels[buildingId] ?? 0;
       const nextLevel = currentLevel + 1;
       const cost = buildingCost(def, nextLevel, phaseMap);
       const bonusMultiplier = resolveBonus('building_time', null, buildingLevels, config.bonuses);
-      const talentCtx = talentService ? await talentService.computeTalentContext(userId, planetId) : {};
+      const talentCtx = talentService
+        ? await talentService.computeTalentContext(userId, planetId)
+        : {};
       const talentTimeMultiplier = 1 / (1 + (talentCtx['building_time'] ?? 0));
-      const govPenaltyUpgrade = await getGovernancePenalty(db, userId, planet.planetClassId, config);
+      const govPenaltyUpgrade = await getGovernancePenalty(
+        db,
+        userId,
+        planet.planetClassId,
+        config,
+      );
       const govTimeMultUpgrade = 1 + govPenaltyUpgrade.constructionMalus;
-      const time = Math.max(1, Math.floor(buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) * govTimeMultUpgrade));
+      const time = Math.max(
+        1,
+        Math.floor(
+          buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
+            govTimeMultUpgrade,
+        ),
+      );
 
       // Spend resources (atomic)
       await resourceService.spendResources(planetId, userId, cost);
@@ -223,11 +262,13 @@ export function createBuildingService(
 
       // Hook: daily quest detection for construction start
       if (dailyQuestService) {
-        dailyQuestService.processEvent({
-          type: 'construction:started',
-          userId,
-          payload: { buildingId },
-        }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
+        dailyQuestService
+          .processEvent({
+            type: 'construction:started',
+            userId,
+            payload: { buildingId },
+          })
+          .catch((e) => console.warn('[daily-quest] processEvent failed:', e));
       }
 
       return { entry, endTime: endTime.toISOString(), buildingTime: time };
@@ -258,15 +299,25 @@ export function createBuildingService(
       const buildingLevels = await this.getBuildingLevels(planetId);
       const currentLevel = buildingLevels[activeBuild.itemId] ?? 0;
       const phaseMap = config.universe.phase_multiplier
-        ? Object.fromEntries(Object.entries(config.universe.phase_multiplier as Record<string, number>).map(([k, v]) => [Number(k), v]))
+        ? Object.fromEntries(
+            Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
+              ([k, v]) => [Number(k), v],
+            ),
+          )
         : undefined;
-      const cost = def ? buildingCost(def, currentLevel + 1, phaseMap) : { minerai: 0, silicium: 0, hydrogene: 0 };
+      const cost = def
+        ? buildingCost(def, currentLevel + 1, phaseMap)
+        : { minerai: 0, silicium: 0, hydrogene: 0 };
 
       // Pro-rata refund capped at 70%
       const now = Date.now();
-      const totalDuration = new Date(activeBuild.endTime).getTime() - new Date(activeBuild.startTime).getTime();
+      const totalDuration =
+        new Date(activeBuild.endTime).getTime() - new Date(activeBuild.startTime).getTime();
       const timeLeft = Math.max(0, new Date(activeBuild.endTime).getTime() - now);
-      const refundRatio = Math.min(cancelRefundRatio, totalDuration > 0 ? timeLeft / totalDuration : 0);
+      const refundRatio = Math.min(
+        cancelRefundRatio,
+        totalDuration > 0 ? timeLeft / totalDuration : 0,
+      );
       const refund = {
         minerai: Math.floor(cost.minerai * refundRatio),
         silicium: Math.floor(cost.silicium * refundRatio),
@@ -359,12 +410,7 @@ export function createBuildingService(
     },
 
     async getOwnedPlanet(userId: string, planetId: string) {
-      const [planet] = await db
-        .select()
-        .from(planets)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
-        .limit(1);
-
+      const planet = await findOwnedPlanet(db, userId, planetId);
       if (!planet) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
