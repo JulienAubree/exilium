@@ -36,6 +36,15 @@ export default function Expeditions() {
     return out;
   }, [gameConfig]);
 
+  const shipRoles = useMemo(() => {
+    if (!gameConfig?.ships) return {} as Record<string, string>;
+    const out: Record<string, string> = {};
+    for (const [id, def] of Object.entries(gameConfig.ships as Record<string, any>)) {
+      if (def.role) out[id] = def.role;
+    }
+    return out;
+  }, [gameConfig]);
+
   const engageMission = available.find((m) => m.id === engageOpen) ?? null;
 
   if (isLoading) {
@@ -95,6 +104,7 @@ export default function Expeditions() {
                 key={m.id}
                 mission={m as any}
                 shipNames={shipNames}
+                shipRoles={shipRoles}
                 onOpen={() => navigate(`/missions/expeditions/${m.id}`)}
               />
             ))}
