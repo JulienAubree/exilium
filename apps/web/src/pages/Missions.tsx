@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { Lock, Home, HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus, Telescope } from 'lucide-react';
+import { Lock, Home, HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -20,13 +20,12 @@ const TIER_COLORS: Record<string, string> = {
 
 // ── Types ────────────────────────────────────────────────────────────
 
-type MissionFilter = 'all' | 'mine' | 'pirate' | 'exploration';
+type MissionFilter = 'all' | 'mine' | 'pirate';
 
 const FILTERS: { key: MissionFilter; label: string }[] = [
   { key: 'all', label: 'Tout' },
   { key: 'mine', label: 'Gisements' },
   { key: 'pirate', label: 'Pirates' },
-  { key: 'exploration', label: 'Exploration' },
 ];
 
 // ── Category KPI: count + next-discovery countdown ──────────────────
@@ -104,12 +103,10 @@ export default function Missions() {
   const missions = data?.missions ?? [];
   const nextMiningAt = data?.nextDiscoveryAt ? new Date(data.nextDiscoveryAt) : null;
   const nextPirateAt = data?.nextPirateDiscoveryAt ? new Date(data.nextPirateDiscoveryAt) : null;
-  const nextExplorationAt = data?.nextExplorationDiscoveryAt ? new Date(data.nextExplorationDiscoveryAt) : null;
   const inFuture = (d: Date | null) => !!d && d.getTime() > Date.now();
 
   const miningMissions = missions.filter((m) => m.missionType === 'mine');
   const pirateMissions = missions.filter((m) => m.missionType === 'pirate');
-  const explorationMissions = missions.filter((m) => m.missionType === 'exploration');
 
   // Build lookup: pveMissionId → active fleet events
   const fleetsByMission = new Map<string, typeof movements>();
@@ -232,16 +229,6 @@ export default function Missions() {
             nextAt={nextPirateAt}
             inFuture={inFuture(nextPirateAt)}
             onClick={() => setFilter('pirate')}
-            onTimerEnd={() => utils.pve.getMissions.invalidate()}
-          />
-          <CategoryKpi
-            label="Reconnaissances"
-            count={`${explorationMissions.length}/2`}
-            color="text-cyan-300"
-            icon={<Telescope className="h-[18px] w-[18px]" />}
-            nextAt={nextExplorationAt}
-            inFuture={inFuture(nextExplorationAt)}
-            onClick={() => setFilter('exploration')}
             onTimerEnd={() => utils.pve.getMissions.invalidate()}
           />
         </div>
@@ -514,99 +501,6 @@ export default function Missions() {
             </div>
           )}
 
-          {/* Exploration missions */}
-          {(filter === 'all' || filter === 'exploration') && (
-            <div>
-              {filter === 'all' && (
-                <div className="flex items-center gap-2 mb-4">
-                  <Telescope className="h-4 w-4 text-cyan-300" />
-                  <h3 className="text-xs font-semibold text-cyan-300 uppercase tracking-wider">
-                    Reconnaissances ({explorationMissions.length}/2)
-                  </h3>
-                </div>
-              )}
-
-              <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 space-y-2 mb-4">
-                <div className="flex items-start gap-2">
-                  <Info className="h-3.5 w-3.5 text-cyan-300 shrink-0 mt-0.5" />
-                  <span className="text-xs text-muted-foreground">
-                    Cartographiez un système éloigné de votre planète mère pour empocher la prime. Seules les <span className="text-cyan-200">positions explorées après acceptation</span> du contrat comptent.
-                  </span>
-                </div>
-              </div>
-
-              {explorationMissions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                  <Telescope className="h-10 w-10 mb-3 opacity-30" strokeWidth={1.5} />
-                  <p className="text-sm">Aucun contrat d&apos;exploration disponible.</p>
-                  <p className="text-[11px] text-muted-foreground/70 mt-1">Recherche <span className="text-foreground/70">Exploration planétaire</span> requise.</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {explorationMissions.map((mission) => {
-                    const params = mission.parameters as { galaxy: number; system: number; quota: number; progress?: number };
-                    const rewards = mission.rewards as { minerai: number; silicium: number; hydrogene: number; exilium: number };
-                    const progress = params.progress ?? 0;
-                    const pct = Math.min(100, Math.round((progress / params.quota) * 100));
-                    const expiresAt = mission.expiresAt ? new Date(mission.expiresAt) : null;
-                    return (
-                      <div key={mission.id} className="retro-card border-cyan-500/10 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold">Cartographie</span>
-                          <span className="text-xs text-cyan-300 tabular-nums">{progress}/{params.quota}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Système cible : [{params.galaxy}:{params.system}]
-                        </div>
-
-                        <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-cyan-500/30 to-cyan-400 rounded-full transition-[width] duration-700"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">Récompense :</div>
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            {rewards.minerai > 0 && <span className="text-minerai">M: {fmt(rewards.minerai)}</span>}
-                            {rewards.silicium > 0 && <span className="text-silicium">S: {fmt(rewards.silicium)}</span>}
-                            {rewards.hydrogene > 0 && <span className="text-hydrogene">H: {fmt(rewards.hydrogene)}</span>}
-                            {rewards.exilium > 0 && <span className="text-purple-300">+{rewards.exilium} Exilium</span>}
-                          </div>
-                        </div>
-
-                        {expiresAt && (
-                          <div className="text-[11px] text-muted-foreground/70">
-                            Expire dans <Timer endTime={expiresAt} className="text-cyan-300 tabular-nums" />
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => navigate(`/galaxy?g=${params.galaxy}&s=${params.system}`)}
-                          >
-                            Voir le système
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => dismissMutation.mutate({ missionId: mission.id })}
-                            disabled={dismissMutation.isPending}
-                            title="Annuler ce contrat"
-                          >
-                            Annuler
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
         </section>
 
       </div>

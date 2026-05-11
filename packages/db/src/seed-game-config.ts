@@ -535,10 +535,6 @@ const UNIVERSE_CONFIG = [
   { key: 'pve_deposit_variance_min', value: 0.6 },
   { key: 'pve_deposit_variance_max', value: 1.6 },
   { key: 'pve_loot_multiplier', value: 0.1 },
-  // Exploration recon (P1)
-  { key: 'pve_max_exploration_missions', value: 2 },
-  { key: 'pve_exploration_min_distance', value: 3 },
-  { key: 'pve_exploration_expiration_hours', value: 48 },
 
   // Anomalie gravitationnelle (rogue-lite V1 + V5-Tiers + V6-AbsoluteFP + V8.9-Rebalance)
   { key: 'anomaly_entry_cost_exilium', value: 5 },

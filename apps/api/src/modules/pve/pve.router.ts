@@ -30,7 +30,6 @@ export function createPveRouter(
         centerLevel,
         nextDiscoveryAt: discoveryState?.nextDiscoveryAt?.toISOString() ?? null,
         nextPirateDiscoveryAt: discoveryState?.nextPirateDiscoveryAt?.toISOString() ?? null,
-        nextExplorationDiscoveryAt: discoveryState?.nextExplorationDiscoveryAt?.toISOString() ?? null,
       };
     }),
 

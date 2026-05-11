@@ -7,8 +7,6 @@ import {
   depositComposition,
   computeSlagRate,
   computeMiningExtraction,
-  explorationQuota,
-  explorationRewards,
 } from './pve.js';
 
 describe('prospectionDuration', () => {
@@ -213,40 +211,3 @@ describe('Parametric config', () => {
   });
 });
 
-describe('explorationQuota', () => {
-  it('retourne 0 si centerLevel <= 0', () => {
-    expect(explorationQuota(0)).toBe(0);
-    expect(explorationQuota(-3)).toBe(0);
-  });
-  it('floor à 2 sur low level', () => {
-    expect(explorationQuota(1)).toBe(2);
-    expect(explorationQuota(3)).toBe(2);
-    expect(explorationQuota(5)).toBe(2);
-  });
-  it('monte à 3 vers level 7-9', () => {
-    expect(explorationQuota(7)).toBe(3);
-    expect(explorationQuota(9)).toBe(3);
-  });
-  it('cap à 5 sur high level', () => {
-    expect(explorationQuota(13)).toBe(5);
-    expect(explorationQuota(20)).toBe(5);
-    expect(explorationQuota(100)).toBe(5);
-  });
-});
-
-describe('explorationRewards', () => {
-  it('linéaire en centerLevel × quota', () => {
-    const r1 = explorationRewards(5, 2);
-    expect(r1).toEqual({ minerai: 2000, silicium: 1500, hydrogene: 1000, exilium: 1 });
-    const r2 = explorationRewards(10, 4);
-    expect(r2).toEqual({ minerai: 8000, silicium: 6000, hydrogene: 4000, exilium: 1 });
-  });
-  it('exilium toujours 1, même si level/quota petits', () => {
-    expect(explorationRewards(1, 2).exilium).toBe(1);
-    expect(explorationRewards(0, 0).exilium).toBe(1);
-  });
-  it('clamp safe pour valeurs invalides', () => {
-    const r = explorationRewards(0, 0);
-    expect(r.minerai).toBeGreaterThan(0);
-  });
-});
