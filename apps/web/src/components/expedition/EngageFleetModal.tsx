@@ -35,6 +35,13 @@ export function EngageFleetModal({ open, onClose, mission, onEngaged }: Props) {
   const [planetId, setPlanetId] = useState<string | null>(null);
   const [ships, setShips] = useState<Record<string, number>>({});
 
+  // Récupère les ships effectivement présents sur la planète sélectionnée
+  // (planet.list ne renvoie pas les ships — endpoint dédié).
+  const { data: planetShipsData } = trpc.shipyard.ships.useQuery(
+    { planetId: planetId! },
+    { enabled: open && !!planetId },
+  );
+
   // Auto-sélection : première planète avec un explorateur
   const explorerShipIds = useMemo(() => {
     if (!gameConfig?.ships) return [];
@@ -81,12 +88,14 @@ export function EngageFleetModal({ open, onClose, mission, onEngaged }: Props) {
   }, [ships, gameConfig, hydrogenBaseCost, hydrogenMassFactor]);
 
   const planetShipsAvailable = useMemo(() => {
-    if (!selectedPlanet) return {} as Record<string, number>;
+    if (!planetShipsData) return {} as Record<string, number>;
     const out: Record<string, number> = {};
-    const sp = (selectedPlanet as Record<string, unknown>).ships as Record<string, number> | undefined;
-    if (sp) for (const [k, v] of Object.entries(sp)) out[k] = Number(v) || 0;
+    // shipyard.ships retourne un array d'items { id, count, ... }
+    for (const item of planetShipsData) {
+      if (item.count > 0) out[item.id] = item.count;
+    }
     return out;
-  }, [selectedPlanet]);
+  }, [planetShipsData]);
 
   const insufficientHydrogen = selectedPlanet && preview
     ? Number((selectedPlanet as Record<string, unknown>).hydrogene ?? 0) < preview.hydrogenCost
