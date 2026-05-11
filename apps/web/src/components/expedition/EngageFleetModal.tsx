@@ -4,7 +4,8 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { GameImage } from '@/components/common/GameImage';
-import { X, Fuel, Package, Anchor, AlertCircle, Check, MapPin, Compass } from 'lucide-react';
+import { PlanetSelectorDropdown } from '@/components/layout/topbar/PlanetSelectorDropdown';
+import { X, Fuel, Package, Anchor, AlertCircle, MapPin, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -181,61 +182,32 @@ export function EngageFleetModal({ open, onClose, mission, defaultPlanetId, onEn
 
         {/* Body */}
         <div className="p-6 space-y-6">
-          {/* Sélecteur planète visuel */}
+          {/* Sélecteur planète — réutilise le dropdown de la nav (PlanetSelectorDropdown) */}
           <section className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <MapPin className="h-3 w-3" />
               Planète d'origine
             </label>
             {planets && planets.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {planets.map((p: any) => {
-                  const isSelected = p.id === planetId;
-                  const h2 = Math.floor(Number(p.hydrogene ?? 0));
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        if (p.id !== planetId) {
-                          setPlanetId(p.id);
-                          setShips({});
-                        }
-                      }}
-                      className={cn(
-                        'retro-card relative overflow-hidden text-left transition-all',
-                        isSelected
-                          ? 'border-primary shadow-[0_0_16px_-4px_rgba(34,211,238,0.5)] ring-1 ring-primary/40'
-                          : 'border-border/40 hover:border-border/70',
-                      )}
-                    >
-                      <div className="relative h-16 overflow-hidden">
-                        <GameImage
-                          category="planets"
-                          id={p.planetClassId ?? 'homeworld'}
-                          size="full"
-                          alt={p.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-                        {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                            <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-2 space-y-0.5">
-                        <div className="text-[13px] font-semibold truncate">{p.name}</div>
-                        <div className="text-[10px] text-muted-foreground tabular-nums">
-                          [{p.galaxy}:{p.system}:{p.position}]
-                        </div>
-                        <div className="text-[10px] text-hydrogene tabular-nums">
-                          H₂ {fmt(h2)}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-3 flex-wrap">
+                <PlanetSelectorDropdown
+                  planetId={planetId}
+                  planets={planets as any}
+                  onSelect={(id) => {
+                    if (id !== planetId) {
+                      setPlanetId(id);
+                      setShips({});
+                    }
+                  }}
+                />
+                {selectedPlanet && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Fuel className="h-3.5 w-3.5 text-hydrogene" />
+                    <span>
+                      H₂ disponible : <span className="text-hydrogene font-semibold tabular-nums">{fmt(planetHydrogene)}</span>
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground italic">Chargement…</p>
