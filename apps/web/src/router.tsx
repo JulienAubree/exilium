@@ -188,6 +188,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'missions/expeditions/:missionId',
+        lazy: lazyLoad(() => import('./pages/ExpeditionRun')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'anomalies',
         lazy: lazyLoad(() => import('./pages/Anomaly')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

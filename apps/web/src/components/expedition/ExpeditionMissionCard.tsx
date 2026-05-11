@@ -85,7 +85,7 @@ interface InProgressProps {
     currentStep: number;
     status: string;
     fleetSnapshot: { ships: Array<{ shipId: string; count: number }>; totalCargo: number };
-    fleetStatus: { hullRatio: number };
+    fleetStatus: { shipsAlive?: Record<string, number> };
     outcomesAccumulated: {
       minerai: number; silicium: number; hydrogene: number; exilium: number;
     };
@@ -98,12 +98,19 @@ interface InProgressProps {
 
 export function ExpeditionInProgressCard({ mission, shipNames, onOpen }: InProgressProps) {
   const awaitingDecision = mission.status === 'awaiting_decision';
-  const hullPct = Math.round(mission.fleetStatus.hullRatio * 100);
+
   const cargoUsed = mission.outcomesAccumulated.minerai
     + mission.outcomesAccumulated.silicium
     + mission.outcomesAccumulated.hydrogene;
   const cargoTotal = mission.fleetSnapshot.totalCargo;
   const cargoPct = cargoTotal > 0 ? Math.round((cargoUsed / cargoTotal) * 100) : 0;
+
+  // Compte total de vaisseaux vivants + ratio survivants/engagés
+  const initialShips = mission.fleetSnapshot.ships.reduce((acc, s) => acc + s.count, 0);
+  const aliveShips = mission.fleetStatus.shipsAlive
+    ? Object.values(mission.fleetStatus.shipsAlive).reduce((acc, n) => acc + n, 0)
+    : initialShips;
+  const lostShips = Math.max(0, initialShips - aliveShips);
 
   const fleetSummary = mission.fleetSnapshot.ships
     .map((s) => `${s.count}× ${shipNames[s.shipId] ?? s.shipId}`)
@@ -141,16 +148,19 @@ export function ExpeditionInProgressCard({ mission, shipNames, onOpen }: InProgr
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-muted-foreground">Coque flotte</span>
-            <span className="tabular-nums text-foreground/80">{hullPct}%</span>
+            <span className="text-muted-foreground">Flotte</span>
+            <span className={cn('tabular-nums', lostShips > 0 ? 'text-rose-300' : 'text-foreground/80')}>
+              {aliveShips} vaisseau{aliveShips > 1 ? 'x' : ''}
+              {lostShips > 0 && ` (−${lostShips})`}
+            </span>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-[width] duration-700',
-                hullPct > 60 ? 'bg-emerald-400' : hullPct > 30 ? 'bg-amber-400' : 'bg-rose-400',
+                lostShips === 0 ? 'bg-emerald-400' : aliveShips / initialShips > 0.5 ? 'bg-amber-400' : 'bg-rose-400',
               )}
-              style={{ width: `${hullPct}%` }}
+              style={{ width: `${initialShips > 0 ? Math.round((aliveShips / initialShips) * 100) : 0}%` }}
             />
           </div>
         </div>

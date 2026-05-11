@@ -1,40 +1,30 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router';
-import { ArrowLeft, Compass, Info, Loader2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { ArrowLeft, Compass, Info } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { useToastStore } from '@/stores/toast.store';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ExpeditionMissionCard, ExpeditionInProgressCard } from '@/components/expedition/ExpeditionMissionCard';
-import { ExpeditionEventCard, type ExpeditionEvent } from '@/components/expedition/ExpeditionEventCard';
 import { EngageFleetModal } from '@/components/expedition/EngageFleetModal';
-import { Button } from '@/components/ui/button';
 
 /**
- * Page dédiée aux Missions d'exploration en espace profond.
- * Accessible via /missions/expeditions, lien depuis /missions.
+ * Page d'aperçu des Missions d'exploration en espace profond.
+ * Liste les offres disponibles + missions en cours.
+ * Le détail / résolution d'événement se passe sur /missions/expeditions/:missionId.
  */
 export default function Expeditions() {
-  const addToast = useToastStore((s) => s.addToast);
-  const utils = trpc.useUtils();
+  const navigate = useNavigate();
   const { data: gameConfig } = useGameConfig();
   const { data, isLoading, refetch } = trpc.expedition.list.useQuery(undefined, {
-    refetchInterval: 30_000, // poll passif tant qu'il n'y a pas de SSE dédié
+    refetchInterval: 30_000,
   });
-  const { data: content } = trpc.expeditionContent.get.useQuery();
-  const { data: researchData } = trpc.research.list.useQuery();
 
   const [engageOpen, setEngageOpen] = useState<string | null>(null);
-  const [resolvingMissionId, setResolvingMissionId] = useState<string | null>(null);
-  const [resolutionToken] = useState(() => crypto.randomUUID());
 
   const missions = data?.missions ?? [];
-
   const available = missions.filter((m) => m.status === 'available');
   const inProgress = missions.filter((m) => m.status === 'engaged' || m.status === 'awaiting_decision');
-  const awaitingDecision = missions.find((m) => m.status === 'awaiting_decision');
 
-  // Maps utilitaires
   const shipNames = useMemo(() => {
     if (!gameConfig?.ships) return {} as Record<string, string>;
     const out: Record<string, string> = {};
@@ -43,60 +33,6 @@ export default function Expeditions() {
     }
     return out;
   }, [gameConfig]);
-
-  const shipRoles = useMemo(() => {
-    if (!gameConfig?.ships) return {} as Record<string, string>;
-    const out: Record<string, string> = {};
-    for (const [id, def] of Object.entries(gameConfig.ships as Record<string, any>)) {
-      if (def.role) out[id] = def.role;
-    }
-    return out;
-  }, [gameConfig]);
-
-  const researchNames = useMemo(() => {
-    const out: Record<string, string> = {};
-    const items = researchData?.items ?? [];
-    for (const r of items) {
-      out[r.id] = r.name ?? r.id;
-    }
-    return out;
-  }, [researchData]);
-
-  const userResearchLevels = useMemo(() => {
-    const out: Record<string, number> = {};
-    const items = researchData?.items ?? [];
-    for (const r of items) {
-      out[r.id] = r.currentLevel ?? 0;
-    }
-    return out;
-  }, [researchData]);
-
-  // Auto-ouverture de l'événement en attente si une mission y est
-  useEffect(() => {
-    if (awaitingDecision && !resolvingMissionId) {
-      setResolvingMissionId(awaitingDecision.id);
-    }
-  }, [awaitingDecision?.id, resolvingMissionId]);
-
-  const resolveMutation = trpc.expedition.resolveStep.useMutation({
-    onSuccess: (res) => {
-      addToast(res.resolutionText || 'Événement résolu', 'success');
-      utils.expedition.list.invalidate();
-      utils.planet.list.invalidate();
-      setResolvingMissionId(null);
-      refetch();
-    },
-    onError: (e) => {
-      addToast(e.message ?? 'Résolution impossible', 'error');
-    },
-  });
-
-  const resolvingMission = missions.find((m) => m.id === resolvingMissionId);
-  const pendingEvent: ExpeditionEvent | null = useMemo(() => {
-    if (!resolvingMission || !content || resolvingMission.status !== 'awaiting_decision') return null;
-    const found = content.events.find((e) => e.id === resolvingMission.pendingEventId);
-    return found ?? null;
-  }, [resolvingMission, content]);
 
   const engageMission = available.find((m) => m.id === engageOpen) ?? null;
 
@@ -112,19 +48,15 @@ export default function Expeditions() {
   return (
     <div className="space-y-6 p-4 lg:p-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/missions"
-            className="p-1.5 rounded-md border border-border/30 hover:bg-card/60 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Compass className="h-5 w-5 text-cyan-300" />
-            <h1 className="text-lg font-bold">Missions d'exploration en espace profond</h1>
-          </div>
-        </div>
+      <div className="flex items-center gap-3">
+        <Link
+          to="/missions"
+          className="p-1.5 rounded-md border border-border/30 hover:bg-card/60 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <Compass className="h-5 w-5 text-cyan-300" />
+        <h1 className="text-lg font-bold">Missions d'exploration en espace profond</h1>
       </div>
 
       {/* Info banner */}
@@ -138,38 +70,6 @@ export default function Expeditions() {
           </span>
         </div>
       </div>
-
-      {/* Modal d'événement en cours */}
-      {resolvingMission && pendingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-amber-500/40 bg-card/95 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] uppercase tracking-wider text-amber-300">
-                {resolvingMission.sectorName} · Étape {resolvingMission.currentStep + 1} sur {resolvingMission.totalSteps}
-              </span>
-              <Button variant="outline" size="sm" onClick={() => setResolvingMissionId(null)}>
-                Fermer
-              </Button>
-            </div>
-            <ExpeditionEventCard
-              event={pendingEvent}
-              userResearch={userResearchLevels}
-              shipsAlive={(resolvingMission.fleetStatus as any)?.shipsAlive ?? {}}
-              shipRoles={shipRoles}
-              shipNames={shipNames}
-              researchNames={researchNames}
-              loading={resolveMutation.isPending}
-              onChoose={(choiceIndex) => {
-                resolveMutation.mutate({
-                  missionId: resolvingMission.id,
-                  choiceIndex,
-                  resolutionToken: crypto.randomUUID(),
-                });
-              }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Engage modal */}
       {engageMission && (
@@ -193,7 +93,7 @@ export default function Expeditions() {
                 key={m.id}
                 mission={m as any}
                 shipNames={shipNames}
-                onOpen={() => setResolvingMissionId(m.id)}
+                onOpen={() => navigate(`/missions/expeditions/${m.id}`)}
               />
             ))}
           </div>
