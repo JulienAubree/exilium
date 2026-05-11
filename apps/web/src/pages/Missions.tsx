@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { Lock, Home, HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus } from 'lucide-react';
+import { Lock, Home, HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus, Compass } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -231,6 +231,25 @@ export default function Missions() {
             onClick={() => setFilter('pirate')}
             onTimerEnd={() => utils.pve.getMissions.invalidate()}
           />
+          <Link
+            to="/missions/expeditions"
+            className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-left transition-colors hover:bg-cyan-500/10 hover:border-cyan-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-300">
+                <Compass className="h-[18px] w-[18px]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm font-bold text-cyan-300">Espace profond</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Expéditions</span>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground/80 leading-tight">
+                  Missions narratives à étapes — engagez une flotte
+                </p>
+              </div>
+            </div>
+          </Link>
         </div>
 
         {/* Filter */}
