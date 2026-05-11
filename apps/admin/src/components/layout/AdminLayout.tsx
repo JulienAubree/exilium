@@ -35,6 +35,7 @@ const NAV_SECTIONS = [
       { to: '/missions', label: 'Missions', icon: Compass },
       { to: '/pve-missions', label: 'Missions PvE', icon: Skull },
       { to: '/anomalies', label: 'Anomalies', icon: Atom },
+      { to: '/expeditions', label: 'Expéditions', icon: Compass },
       { to: '/modules', label: 'Modules Flagship', icon: Atom },
       { to: '/flagship', label: 'Flagship', icon: Rocket },
       { to: '/hull-abilities', label: 'Capacites Flagship', icon: Bolt },
