@@ -53,7 +53,7 @@ export function ResourceSell({ planetId, commissionPercent }: ResourceSellProps)
     <div className="max-w-lg space-y-5">
       {/* Resource select */}
       <div>
-        <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider">Ressource a vendre</label>
+        <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider">Ressource à vendre</label>
         <div className="flex gap-2">
           {(['minerai', 'silicium', 'hydrogene'] as const).map((r) => (
             <button

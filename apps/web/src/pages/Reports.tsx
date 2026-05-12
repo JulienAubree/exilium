@@ -1,8 +1,11 @@
 // apps/web/src/pages/Reports.tsx
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
+import { EmptyState } from '@/components/common/EmptyState';
+import { FilterPills } from '@/components/common/FilterPills';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { ReportCard } from '@/components/reports/ReportCard';
 import { MissionType } from '@exilium/shared';
@@ -21,6 +24,7 @@ const FILTER_OPTIONS: Array<{ label: string; types: MissionType[] }> = [
 ];
 
 export default function Reports() {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState(0);
   const { data: gameConfig } = useGameConfig();
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
@@ -96,22 +100,12 @@ export default function Reports() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {FILTER_OPTIONS.map((option, i) => (
-          <button
-            key={option.label}
-            type="button"
-            onClick={() => handleFilterChange(i)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm transition-colors ${
-              activeFilter === i
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <FilterPills
+        ariaLabel="Filtrer les rapports par type de mission"
+        options={FILTER_OPTIONS.map((o, i) => ({ value: i, label: o.label }))}
+        value={activeFilter}
+        onChange={handleFilterChange}
+      />
 
       {/* Report list */}
       <div className="space-y-2">
@@ -119,7 +113,11 @@ export default function Reports() {
           <div className="glass-card p-8 text-center text-sm text-muted-foreground">Chargement...</div>
         )}
         {!isFetching && allReports.length === 0 && (
-          <div className="glass-card p-8 text-center text-sm text-muted-foreground">Aucun rapport.</div>
+          <EmptyState
+            title="Aucun rapport"
+            description="Lancez une mission depuis la galaxie pour générer votre premier rapport."
+            action={{ label: 'Ouvrir la galaxie', onClick: () => navigate('/galaxy') }}
+          />
         )}
         {allReports.map((report) => (
           <ReportCard key={report.id} report={report} gameConfig={gameConfig} />

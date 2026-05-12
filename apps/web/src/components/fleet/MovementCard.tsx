@@ -153,9 +153,9 @@ export function MiningPhaseStepper({
               <span
                 className={cn(
                   'text-[10px]',
-                  isDone && 'text-muted-foreground/60',
+                  isDone && 'text-muted-foreground-soft',
                   isActive && 'font-semibold',
-                  !isDone && !isActive && 'text-muted-foreground/30',
+                  !isDone && !isActive && 'text-muted-foreground-faint',
                 )}
                 style={isActive ? { color: hex } : {}}
               >
@@ -367,7 +367,7 @@ export function MovementCard({
             <Timer endTime={new Date(event.arrivalTime)} onComplete={onTimerComplete} />
             <ChevronDown
               className={cn(
-                'h-3 w-3 text-muted-foreground/40 transition-transform duration-200',
+                'h-3 w-3 text-muted-foreground-faint transition-transform duration-200',
                 expanded && 'rotate-180',
               )}
               strokeWidth={1.5}
@@ -443,7 +443,7 @@ export function MovementCard({
             </span>
           ))}
           {shipCount > 1 && (
-            <span className="text-[10px] text-muted-foreground/50 ml-1">
+            <span className="text-[10px] text-muted-foreground-soft ml-1">
               ({shipCount} vaisseaux)
             </span>
           )}
@@ -452,7 +452,7 @@ export function MovementCard({
         {/* Cargo (summary) */}
         {hasCargo && (
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
               Cargo
             </span>
             <div className="flex gap-3">
@@ -475,7 +475,7 @@ export function MovementCard({
                 </span>
               )}
             </div>
-            <span className="text-muted-foreground/30 text-[10px]">({fmt(totalCargo)} total)</span>
+            <span className="text-muted-foreground-faint text-[10px]">({fmt(totalCargo)} total)</span>
           </div>
         )}
       </div>
@@ -491,11 +491,11 @@ export function MovementCard({
           <div className="border-t border-white/[0.06] px-4 py-3 space-y-4 text-xs">
             {/* Horaires */}
             <div>
-              <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
+              <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                 Horaires
               </div>
               <div className="grid grid-cols-2 gap-y-1 text-muted-foreground">
-                <span>Depart</span>
+                <span>Départ</span>
                 <span className="text-foreground text-right">
                   {new Date(event.departureTime).toLocaleString('fr-FR', {
                     day: '2-digit',
@@ -505,7 +505,7 @@ export function MovementCard({
                     second: '2-digit',
                   })}
                 </span>
-                <span>Arrivee estimee</span>
+                <span>Arrivée estimée</span>
                 <span className="text-foreground text-right">
                   {new Date(event.arrivalTime).toLocaleString('fr-FR', {
                     day: '2-digit',
@@ -523,13 +523,13 @@ export function MovementCard({
             {/* Detail des vaisseaux */}
             {shipStats && (
               <div>
-                <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Detail des vaisseaux
                 </div>
                 <div className="rounded-md border border-white/[0.06] overflow-hidden">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="text-muted-foreground/60 border-b border-white/[0.06]">
+                      <tr className="text-muted-foreground-soft border-b border-white/[0.06]">
                         <th className="text-left px-2 py-1.5 font-medium">Vaisseau</th>
                         <th className="text-right px-2 py-1.5 font-medium">Qte</th>
                         <th className="text-right px-2 py-1.5 font-medium">Vitesse</th>
@@ -597,7 +597,7 @@ export function MovementCard({
             {/* Detail du cargo */}
             {hasCargo && (
               <div>
-                <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Cargo embarque
                 </div>
                 <div className="space-y-1.5">
@@ -642,7 +642,7 @@ export function MovementCard({
                         </div>
                       );
                     })}
-                  <div className="flex justify-between pt-1 text-muted-foreground/60">
+                  <div className="flex justify-between pt-1 text-muted-foreground-soft">
                     <span>Utilisation soute</span>
                     <span>
                       {fmt(totalCargo)} / {fmt(fleetCargoCapacity)} (
@@ -659,7 +659,7 @@ export function MovementCard({
             {/* Origine */}
             {originPlanet && (
               <div>
-                <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Origine
                 </div>
                 <button

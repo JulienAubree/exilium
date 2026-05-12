@@ -354,7 +354,7 @@ function SourceDetail({ source, targetName, cargo, setResource, pack, cargoOverf
             </div>
           )}
           {Object.keys(pack.picked).length > 0 && (
-            <div className="text-[10px] text-muted-foreground/80">
+            <div className="text-[10px] text-muted-foreground">
               → {Object.entries(pack.picked).map(([id, n]) => `${n} ${id}`).join(' + ')}
             </div>
           )}

@@ -54,7 +54,7 @@ export function LandingFooter({ content }: LandingFooterProps) {
         </div>
 
         {(footer.legalNote || footer.description) && (
-          <div className="mt-12 border-t border-white/5 pt-6 text-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground/70">
+          <div className="mt-12 border-t border-white/5 pt-6 text-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             {footer.legalNote}
           </div>
         )}

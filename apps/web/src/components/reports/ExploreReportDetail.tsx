@@ -130,11 +130,11 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
 
   const createMutation = trpc.explorationReport.create.useMutation({
     onSuccess: () => {
-      addToast('Rapport cree — renseignez votre prix de vente', 'success');
+      addToast('Rapport créé — renseignez votre prix de vente', 'success');
       navigate('/market?cat=exploration&tab=sell');
     },
     onError: (err) => {
-      addToast(err.message ?? 'Erreur lors de la creation du rapport', 'error');
+      addToast(err.message ?? 'Erreur lors de la création du rapport', 'error');
     },
   });
 

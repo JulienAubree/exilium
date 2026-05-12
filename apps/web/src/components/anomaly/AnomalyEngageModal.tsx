@@ -314,7 +314,7 @@ export function AnomalyEngageModal({ open, onClose }: Props) {
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <Star className="h-3 w-3 text-violet-400" />
             <span>Niv. {level}</span>
-            <span className="font-mono text-muted-foreground/60">×{levelMultDisplay}</span>
+            <span className="font-mono text-muted-foreground-soft">×{levelMultDisplay}</span>
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <Wrench className="h-3 w-3 text-emerald-400" />

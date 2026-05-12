@@ -183,7 +183,7 @@ export function UnitTimeline({
                       <span className="ml-auto flex items-center gap-1 shrink-0">
                         {e.shieldAbsorbed > 0 && <span className="text-cyan-400/70 font-mono">{fmt(e.shieldAbsorbed)}</span>}
                         {e.hullDamage > 0 && <span className="text-orange-400/70 font-mono">{fmt(e.hullDamage)}</span>}
-                        {e.shieldAbsorbed === 0 && e.hullDamage === 0 && <span className="text-muted-foreground/30 font-mono">0</span>}
+                        {e.shieldAbsorbed === 0 && e.hullDamage === 0 && <span className="text-muted-foreground-faint font-mono">0</span>}
                         {e.targetDestroyed && (
                           <XCircle className="h-[9px] w-[9px] text-red-400" />
                         )}
@@ -221,7 +221,7 @@ export function UnitTimeline({
 
               {/* No activity */}
               {shotsFired.length === 0 && shotsReceived.length === 0 && isAlive && (
-                <div className="text-[10px] text-muted-foreground/40">Aucune activite</div>
+                <div className="text-[10px] text-muted-foreground-faint">Aucune activite</div>
               )}
             </div>
           );

@@ -575,7 +575,7 @@ function IntroView({
         <div className="flex items-center gap-1 shrink-0">
           <ExiliumIcon size={16} className="text-purple-400" />
           <span className="text-2xl font-bold text-purple-300">{cost}</span>
-          <span className="text-xs text-muted-foreground/70 ml-1">d'entrée</span>
+          <span className="text-xs text-muted-foreground ml-1">d'entrée</span>
         </div>
         <div className="text-xs text-muted-foreground flex-1">
           Coût <span className="text-foreground font-semibold">perdu dans tous les cas</span>{' '}
@@ -1024,7 +1024,7 @@ function CollapseChevron({ collapsed }: { collapsed: boolean }) {
   return (
     <ChevronDown
       className={cn(
-        'h-3.5 w-3.5 text-muted-foreground/60 shrink-0 transition-transform duration-150',
+        'h-3.5 w-3.5 text-muted-foreground-soft shrink-0 transition-transform duration-150',
         collapsed && '-rotate-90',
       )}
       aria-hidden
@@ -1083,7 +1083,7 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
             <CollapseChevron collapsed={collapsed} />
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono truncate flex-1">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono truncate flex-1">
               {hullName}
             </div>
             {collapsed && (
@@ -1323,7 +1323,7 @@ function RunFlagshipLoadoutCard({
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300">
           Équipement
         </span>
-        <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+        <span className="text-[10px] font-mono tabular-nums text-muted-foreground-soft ml-auto">
           {hasPassives && `${passiveIds.length} mod.`}
           {hasPassives && hasWeapons && ' · '}
           {hasWeapons && `${weaponIds.length} arme${weaponIds.length > 1 ? 's' : ''}`}
@@ -1340,7 +1340,7 @@ function RunFlagshipLoadoutCard({
                 <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300">
                   Modules
                 </span>
-                <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+                <span className="text-[10px] font-mono tabular-nums text-muted-foreground-soft ml-auto">
                   {passiveIds.length}
                 </span>
               </div>
@@ -1381,7 +1381,7 @@ function RunFlagshipLoadoutCard({
                 <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-orange-300">
                   Arsenal
                 </span>
-                <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+                <span className="text-[10px] font-mono tabular-nums text-muted-foreground-soft ml-auto">
                   {weaponIds.length}
                 </span>
               </div>
@@ -1493,7 +1493,7 @@ function SidebarCard({
         {label}
       </h3>
       {count !== undefined && (
-        <span className="text-[10px] font-mono tabular-nums text-muted-foreground/70 ml-auto">
+        <span className="text-[10px] font-mono tabular-nums text-muted-foreground ml-auto">
           {count}
         </span>
       )}
@@ -1708,7 +1708,7 @@ function RunJournal({
             <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-rose-300/80">
               <Skull className="h-3 w-3" />
               Boss vaincus
-              <span className="ml-auto tabular-nums text-muted-foreground/60">
+              <span className="ml-auto tabular-nums text-muted-foreground-soft">
                 {defeatedBossIds.length}
               </span>
             </div>
@@ -1730,7 +1730,7 @@ function RunJournal({
                           {boss?.name ?? bossId}
                         </div>
                         {boss?.title && (
-                          <div className="text-[9px] text-muted-foreground/70 truncate italic">
+                          <div className="text-[9px] text-muted-foreground truncate italic">
                             {boss.title}
                           </div>
                         )}
@@ -1776,7 +1776,7 @@ function RunJournal({
             <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-violet-300/80">
               <Sparkles className="h-3 w-3" />
               Événements résolus
-              <span className="ml-auto tabular-nums text-muted-foreground/60">
+              <span className="ml-auto tabular-nums text-muted-foreground-soft">
                 {eventLog.length}
               </span>
             </div>
@@ -1800,8 +1800,8 @@ function ResPill({
   if (value <= 0) {
     return (
       <div className="rounded border border-border/30 bg-card/20 px-1.5 py-1 text-center">
-        <div className="text-[10px] tabular-nums text-muted-foreground/40">—</div>
-        <div className="text-[8px] uppercase tracking-wider text-muted-foreground/50">{suffix}</div>
+        <div className="text-[10px] tabular-nums text-muted-foreground-faint">—</div>
+        <div className="text-[8px] uppercase tracking-wider text-muted-foreground-soft">{suffix}</div>
       </div>
     );
   }
@@ -1928,7 +1928,7 @@ function HistoryAccordion({ history }: { history: AnomalyRow[] }) {
           <h3 className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground font-semibold">
             Historique
           </h3>
-          <span className="text-[10px] text-muted-foreground/70">
+          <span className="text-[10px] text-muted-foreground">
             {history.length} runs · <span className="text-red-400/80">{wipes} wipes</span> ·{' '}
             <span className="text-emerald-400/80">{completed} retours</span>
           </span>
@@ -1988,7 +1988,7 @@ function HistoryList({ history, compact = false }: { history: AnomalyRow[]; comp
                 <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0">
                   prof {String(h.currentDepth).padStart(2, '0')}
                 </span>
-                <span className="flex-1 text-[11px] text-muted-foreground/70 truncate">
+                <span className="flex-1 text-[11px] text-muted-foreground truncate">
                   {totalLoot > 0 ? `+${formatNumber(totalLoot)} ressources` : ''}
                   {totalShips > 0 ? ` · +${totalShips} vaisseaux` : ''}
                 </span>

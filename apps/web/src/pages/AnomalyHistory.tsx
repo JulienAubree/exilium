@@ -325,12 +325,12 @@ function RunCard({ run }: { run: Run }) {
               palier {run.tier} · prof {String(run.currentDepth).padStart(2, '0')}
             </span>
             {date && (
-              <span className="text-[10px] font-mono text-muted-foreground/70">
+              <span className="text-[10px] font-mono text-muted-foreground">
                 · {date.toLocaleDateString('fr-FR')} {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
           </div>
-          <div className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
+          <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
             {totalLoot > 0 ? `+${formatNumber(totalLoot)} ressources` : 'Aucune ressource'}
             {totalShips > 0 ? ` · +${totalShips} vaisseaux` : ''}
             {run.bossesDefeated.length > 0 ? ` · ${run.bossesDefeated.length} boss vaincu${run.bossesDefeated.length > 1 ? 's' : ''}` : ''}
@@ -448,17 +448,17 @@ function RunDetail({ run }: { run: Run }) {
           <h4 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-2">
             Événements résolus ({run.eventLog.length})
           </h4>
-          <ul className="space-y-1 text-[11px] text-muted-foreground/80">
+          <ul className="space-y-1 text-[11px] text-muted-foreground">
             {run.eventLog.map((evt, i) => (
               <li
                 key={`${evt.eventId}-${i}`}
                 className="flex items-center gap-2 rounded border border-border/30 bg-card/30 px-2 py-1"
               >
-                <span className="font-mono tabular-nums text-muted-foreground/60">
+                <span className="font-mono tabular-nums text-muted-foreground-soft">
                   prof {String(evt.depth).padStart(2, '0')}
                 </span>
                 <span className="text-foreground/80 truncate">{evt.eventId}</span>
-                <span className="ml-auto text-[10px] font-mono text-muted-foreground/60">
+                <span className="ml-auto text-[10px] font-mono text-muted-foreground-soft">
                   choix {evt.choiceIndex + 1}
                 </span>
               </li>

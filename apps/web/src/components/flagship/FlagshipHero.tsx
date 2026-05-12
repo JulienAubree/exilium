@@ -160,7 +160,7 @@ export function FlagshipHero({
                 <span className="text-xs font-semibold text-foreground tabular-nums">
                   Niv. {level}
                 </span>
-                <span className="text-[10px] text-muted-foreground/70">/ {MAX_LEVEL}</span>
+                <span className="text-[10px] text-muted-foreground">/ {MAX_LEVEL}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="h-1.5 rounded-full bg-violet-950/60 overflow-hidden border border-violet-500/10">
@@ -169,7 +169,7 @@ export function FlagshipHero({
                     style={{ width: `${Math.round(xpProgress * 100)}%` }}
                   />
                 </div>
-                <div className="text-[10px] text-muted-foreground/80 mt-0.5 font-mono tabular-nums truncate">
+                <div className="text-[10px] text-muted-foreground mt-0.5 font-mono tabular-nums truncate">
                   {isMaxLevel
                     ? `${xp.toLocaleString('fr-FR')} XP (max)`
                     : `${xp.toLocaleString('fr-FR')} / ${nextLevelXp.toLocaleString('fr-FR')} XP`
@@ -185,7 +185,7 @@ export function FlagshipHero({
                 className="mt-1.5 inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="truncate max-w-[140px] sm:max-w-[180px]">{stationedPlanet.name}</span>
-                <span className="text-muted-foreground/50 font-mono text-[10px] shrink-0">
+                <span className="text-muted-foreground-soft font-mono text-[10px] shrink-0">
                   [{stationedPlanet.galaxy}:{stationedPlanet.system}:{stationedPlanet.position}]
                 </span>
               </Link>

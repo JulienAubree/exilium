@@ -50,7 +50,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
   const fieldClass = cn(
     'bg-transparent text-center font-mono text-sm outline-none',
     '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
-    'placeholder:text-muted-foreground/50',
+    'placeholder:text-muted-foreground-soft',
     disabled && 'cursor-not-allowed opacity-50',
   );
 
@@ -64,7 +64,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
       <span className="text-muted-foreground font-mono text-sm select-none mr-1">[</span>
 
       <div className="flex flex-col items-center">
-        <span className="text-[9px] uppercase text-muted-foreground/70 leading-none mb-0.5">Gal</span>
+        <span className="text-[9px] uppercase text-muted-foreground leading-none mb-0.5">Gal</span>
         <input
           ref={galaxyRef}
           type="number"
@@ -82,7 +82,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
       <span className="text-primary/60 font-mono text-sm select-none mx-0.5">:</span>
 
       <div className="flex flex-col items-center">
-        <span className="text-[9px] uppercase text-muted-foreground/70 leading-none mb-0.5">Sys</span>
+        <span className="text-[9px] uppercase text-muted-foreground leading-none mb-0.5">Sys</span>
         <input
           ref={systemRef}
           type="number"
@@ -102,7 +102,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
           <span className="text-primary/60 font-mono text-sm select-none mx-0.5">:</span>
 
           <div className="flex flex-col items-center">
-            <span className="text-[9px] uppercase text-muted-foreground/70 leading-none mb-0.5">Pos</span>
+            <span className="text-[9px] uppercase text-muted-foreground leading-none mb-0.5">Pos</span>
             <input
               ref={positionRef}
               type="number"

@@ -8,8 +8,8 @@ import { ArrowLeft, Send } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 
 const MONTHS = [
-  'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
-  'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ];
 
 function formatDate(date: string | Date): string {
@@ -377,7 +377,7 @@ export default function ChangelogDetail() {
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Nouveautes
+        Nouveautés
       </button>
 
       <div className="glass-card p-5 lg:p-8 space-y-4">

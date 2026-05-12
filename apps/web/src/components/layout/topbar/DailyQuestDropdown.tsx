@@ -58,7 +58,7 @@ function DailyQuestPanel({ quests }: { quests: { id: string; name: string; descr
               {quest.status === 'completed' ? (
                 <Check className="h-4 w-4 text-emerald-400" />
               ) : quest.status === 'expired' ? (
-                <X className="h-4 w-4 text-muted-foreground/40" />
+                <X className="h-4 w-4 text-muted-foreground-faint" />
               ) : (
                 <div className="h-4 w-4 rounded border border-border" />
               )}
@@ -70,13 +70,13 @@ function DailyQuestPanel({ quests }: { quests: { id: string; name: string; descr
                   quest.status === 'completed'
                     ? 'text-emerald-400'
                     : quest.status === 'expired'
-                      ? 'text-muted-foreground/40 line-through'
+                      ? 'text-muted-foreground-faint line-through'
                       : 'text-foreground',
                 )}
               >
                 {quest.name}
               </span>
-              <p className={cn('text-[10px]', quest.status === 'expired' ? 'text-muted-foreground/30' : 'text-muted-foreground')}>
+              <p className={cn('text-[10px]', quest.status === 'expired' ? 'text-muted-foreground-faint' : 'text-muted-foreground')}>
                 {quest.description}
               </p>
             </div>

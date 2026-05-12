@@ -1,5 +1,6 @@
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { useDialogA11y } from '@/hooks/useDialogA11y';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ export function ConfirmDialog({
   cancelLabel = 'Annuler',
   variant = 'default',
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const { dialogProps, titleId } = useDialogA11y(open, { title });
 
   useEffect(() => {
     if (!open) return;
@@ -41,10 +42,10 @@ export function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onCancel} />
       <div
-        ref={dialogRef}
+        {...dialogProps}
         className="relative z-10 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-xl animate-slide-up"
       >
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <h3 id={titleId} className="text-lg font-semibold">{title}</h3>
         {description && (
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
         )}

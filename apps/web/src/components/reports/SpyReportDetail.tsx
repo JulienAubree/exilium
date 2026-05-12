@@ -150,7 +150,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                     const unlocked = effectiveInfo >= t;
                     return (
                       <div key={i} className="flex items-center gap-2 text-[11px]">
-                        <div className={cn('w-14 text-right font-mono', unlocked ? 'text-emerald-400' : 'text-muted-foreground/50')}>
+                        <div className={cn('w-14 text-right font-mono', unlocked ? 'text-emerald-400' : 'text-muted-foreground-soft')}>
                           ≥ {t}
                         </div>
                         <div className={cn('h-1.5 flex-1 rounded-full', unlocked ? 'bg-emerald-500/30' : 'bg-white/5')}>
@@ -159,7 +159,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                             style={{ width: unlocked ? '100%' : '0%' }}
                           />
                         </div>
-                        <span className={cn('w-24 text-[10px]', unlocked ? 'text-emerald-400' : 'text-muted-foreground/50')}>
+                        <span className={cn('w-24 text-[10px]', unlocked ? 'text-emerald-400' : 'text-muted-foreground-soft')}>
                           {unlocked ? '\u2713' : '\u2717'} {thresholdLabels[i]}
                         </span>
                       </div>

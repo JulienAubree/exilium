@@ -251,7 +251,7 @@ export function SendFleetOverlay({
             </div>
           </div>
           {sendableShips.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border/40 py-3 text-center text-xs text-muted-foreground/70">
+            <div className="rounded-md border border-dashed border-border/40 py-3 text-center text-xs text-muted-foreground">
               Aucun vaisseau mobilisable depuis cette planète.
             </div>
           ) : (
@@ -352,11 +352,11 @@ export function SendFleetOverlay({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="inline-flex items-center gap-1 text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
-              {estimate ? formatDuration(estimate.duration * 1000) : <span className="text-muted-foreground/50">—</span>}
+              {estimate ? formatDuration(estimate.duration * 1000) : <span className="text-muted-foreground-soft">—</span>}
             </span>
             <span className="inline-flex items-center gap-1 text-muted-foreground">
               <Fuel className="h-3.5 w-3.5" />
-              {estimate ? formatCompact(fuelNeeded) : <span className="text-muted-foreground/50">—</span>}
+              {estimate ? formatCompact(fuelNeeded) : <span className="text-muted-foreground-soft">—</span>}
               {insufficientFuel && <span className="text-destructive ml-1">insuffisant</span>}
             </span>
             <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -410,7 +410,7 @@ function MissionTab({
         {icon}
         {label}
       </span>
-      <span className={cn('text-[10px]', active ? 'text-primary/80' : 'text-muted-foreground/70')}>{hint}</span>
+      <span className={cn('text-[10px]', active ? 'text-primary/80' : 'text-muted-foreground')}>{hint}</span>
     </button>
   );
 }

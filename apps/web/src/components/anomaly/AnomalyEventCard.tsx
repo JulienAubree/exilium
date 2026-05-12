@@ -481,7 +481,7 @@ function OutcomeSummary({ outcome }: { outcome: AnomalyEvent['choices'][number][
     }
   }
   if (parts.length === 0) {
-    return <span className="text-xs text-muted-foreground/70 italic">Aucun effet matériel</span>;
+    return <span className="text-xs text-muted-foreground italic">Aucun effet matériel</span>;
   }
   return <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{parts}</div>;
 }

@@ -106,7 +106,7 @@ export function AnomalyCombatPreview({
               </ul>
             </div>
           ) : (
-            <div className="rounded-lg border border-border/30 bg-card/30 p-3 text-xs text-muted-foreground/80 text-center">
+            <div className="rounded-lg border border-border/30 bg-card/30 p-3 text-xs text-muted-foreground text-center">
               Composition ennemie non disponible — l'anomalie brouille vos capteurs.
             </div>
           )}

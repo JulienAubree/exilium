@@ -57,7 +57,7 @@ function computeValueStars(biomes: Array<{ rarity: string }>): number {
 
 function ValueStars({ count }: { count: number }) {
   return (
-    <span className="inline-flex gap-px" title={`Valeur estimee : ${count}/5`}>
+    <span className="inline-flex gap-px" title={`Valeur estimée : ${count}/5`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -329,7 +329,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
             <p className="text-sm text-muted-foreground">
               Aucun rapport en inventaire.
             </p>
-            <p className="text-xs text-muted-foreground/80">
+            <p className="text-xs text-muted-foreground">
               Pour vendre les informations sur une planète, rendez-vous dans la{' '}
               <a href="/galaxy" className="text-cyan-400 hover:underline">vue galaxie</a>,
               {' '}selectionnez une position exploree et cliquez sur{' '}

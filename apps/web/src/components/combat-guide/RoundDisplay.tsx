@@ -318,10 +318,10 @@ function FleetColumn({
         return (
           <div key={type} className="space-y-0.5">
             <div className="flex items-center justify-between text-xs">
-              <span className={curr === 0 ? 'text-muted-foreground/40 line-through' : 'text-foreground'}>
+              <span className={curr === 0 ? 'text-muted-foreground-faint line-through' : 'text-foreground'}>
                 {getUnitName(type, gameConfig)}
               </span>
-              <span className={curr === 0 ? 'text-muted-foreground/40' : 'text-muted-foreground'}>
+              <span className={curr === 0 ? 'text-muted-foreground-faint' : 'text-muted-foreground'}>
                 {curr}/{init}
               </span>
             </div>
@@ -377,7 +377,7 @@ function DamageRoundSummary({
 }) {
   if (!damageByType) return null;
   const entries = Object.entries(damageByType).filter(([, d]) => d.shieldDamage > 0 || d.hullDamage > 0);
-  if (entries.length === 0) return <div className="text-muted-foreground/60">{title} : aucun</div>;
+  if (entries.length === 0) return <div className="text-muted-foreground-soft">{title} : aucun</div>;
 
   const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
 

@@ -127,7 +127,7 @@ export const ShipPickCard = memo(function ShipPickCard({
             x{value} — {conflictLabel ?? 'incompatible'}
           </span>
         ) : disabled ? (
-          <span className="text-[10px] text-muted-foreground/60">non disponible</span>
+          <span className="text-[10px] text-muted-foreground-soft">non disponible</span>
         ) : isSelected ? (
           <QuantityStepper
             value={value}

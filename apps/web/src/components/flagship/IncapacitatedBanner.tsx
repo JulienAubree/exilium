@@ -95,7 +95,7 @@ export function IncapacitatedBanner({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground/40">
+              <div className="flex justify-between text-[10px] text-muted-foreground-faint">
                 <span>Reparation {Math.round(progress)}%</span>
                 <span>{String(h).padStart(2, '0')}h {String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s</span>
               </div>

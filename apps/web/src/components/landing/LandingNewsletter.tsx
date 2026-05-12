@@ -67,7 +67,7 @@ export function LandingNewsletter({ content }: LandingNewsletterProps) {
             placeholder="Votre adresse e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 rounded-md border border-white/10 bg-card/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="flex-1 rounded-md border border-white/10 bg-card/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button
             type="submit"

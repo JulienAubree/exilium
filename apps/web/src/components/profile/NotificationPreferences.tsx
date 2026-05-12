@@ -214,7 +214,7 @@ export function NotificationPreferences() {
                     {NOTIFICATION_CATEGORY_LABELS[cat]}
                   </span>
                   {eventTypes.length > 1 && (
-                    <span className="text-[10px] text-muted-foreground/60">{eventTypes.length}</span>
+                    <span className="text-[10px] text-muted-foreground-soft">{eventTypes.length}</span>
                   )}
                 </button>
                 {CHANNELS.map((ch) => {

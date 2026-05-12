@@ -261,7 +261,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
                 <span>FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
               </span>
             ) : (
-              <span className="text-muted-foreground/60 italic">vide</span>
+              <span className="text-muted-foreground-soft italic">vide</span>
             )}
           </div>
           {fleet && fleet.ships.length > 0 ? (
@@ -284,7 +284,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               </div>
             </button>
           ) : (
-            <div className="rounded border border-dashed border-border/30 py-2 text-center text-[10px] text-muted-foreground/60">
+            <div className="rounded border border-dashed border-border/30 py-2 text-center text-[10px] text-muted-foreground-soft">
               Aucun vaisseau stationné
             </div>
           )}
@@ -385,7 +385,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
                 'flex flex-1 items-center justify-center gap-1.5 border-r border-border/30 py-2 text-[11px] transition-colors',
                 canSendFleet
                   ? 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
-                  : 'text-muted-foreground/40 cursor-not-allowed',
+                  : 'text-muted-foreground-faint cursor-not-allowed',
               )}
               title={canSendFleet ? 'Envoyer une flotte en transport' : 'Aucune flotte mobilisable ou aucune autre planète'}
             >
@@ -399,7 +399,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
                 'flex flex-1 items-center justify-center gap-1.5 py-2 text-[11px] transition-colors',
                 canSendFleet
                   ? 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
-                  : 'text-muted-foreground/40 cursor-not-allowed',
+                  : 'text-muted-foreground-faint cursor-not-allowed',
               )}
               title={canSendFleet ? 'Stationner une flotte sur une autre planète' : 'Aucune flotte mobilisable ou aucune autre planète'}
             >

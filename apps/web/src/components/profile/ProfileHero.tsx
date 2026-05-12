@@ -113,7 +113,7 @@ export function ProfileHero({
           <div className="flex-1 min-w-0 pt-1">
             <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">{username}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{rankLine}</p>
-            <p className="text-xs italic text-muted-foreground/80 mt-2 leading-relaxed">{phrase}</p>
+            <p className="text-xs italic text-muted-foreground mt-2 leading-relaxed">{phrase}</p>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {playstyle && (
                 <span className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">

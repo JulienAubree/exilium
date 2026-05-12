@@ -18,7 +18,7 @@ const BTN_COLOR: Record<Accent, string> = {
   emerald: 'text-emerald-400/70 hover:text-emerald-300',
   blue: 'text-blue-400/70 hover:text-blue-300',
   red: 'text-red-400/70 hover:text-red-300',
-  muted: 'text-muted-foreground/70 hover:text-foreground',
+  muted: 'text-muted-foreground hover:text-foreground',
 };
 
 /**

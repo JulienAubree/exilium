@@ -166,7 +166,7 @@ function IndividualShotRow({
 
   return (
     <div className="flex items-center gap-1.5 text-[10px] py-0.5">
-      <ArrowRight className="h-2 w-2 text-muted-foreground/40 shrink-0" />
+      <ArrowRight className="h-2 w-2 text-muted-foreground-faint shrink-0" />
       {onSelectUnit ? (
         <button
           type="button"
@@ -181,7 +181,7 @@ function IndividualShotRow({
       <span className="ml-auto flex items-center gap-1.5 shrink-0">
         {event.shieldAbsorbed > 0 && <span className="text-cyan-400 font-mono">{fmt(event.shieldAbsorbed)}</span>}
         {event.hullDamage > 0 && <span className="text-orange-400 font-mono">{fmt(event.hullDamage)}</span>}
-        {event.shieldAbsorbed === 0 && event.hullDamage === 0 && <span className="text-muted-foreground/40 font-mono">0</span>}
+        {event.shieldAbsorbed === 0 && event.hullDamage === 0 && <span className="text-muted-foreground-faint font-mono">0</span>}
         {event.targetDestroyed && (
           <XCircle className="h-2.5 w-2.5 text-red-400" />
         )}
@@ -262,7 +262,7 @@ export function RoundShotDetail({
   const indRight = isDefPerspective ? individual.attacker : individual.defender;
 
   const leftLabel = isDefPerspective ? 'Vos tirs' : 'Tirs attaquant';
-  const rightLabel = isDefPerspective ? 'Tirs ennemi' : 'Tirs defenseur';
+  const rightLabel = isDefPerspective ? 'Tirs ennemi' : 'Tirs défenseur';
 
   if (aggLeft.length === 0 && aggRight.length === 0) return null;
 
@@ -285,7 +285,7 @@ export function RoundShotDetail({
           Tir par tir
         </button>
         {viewMode === 'individual' && (
-          <span className="text-muted-foreground/50 ml-1">
+          <span className="text-muted-foreground-soft ml-1">
             <span className="text-cyan-400/50">bouclier</span>{' / '}
             <span className="text-orange-400/50">coque</span>
           </span>
@@ -298,14 +298,14 @@ export function RoundShotDetail({
           <div className="space-y-2">
             <div className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
             {aggLeft.length === 0
-              ? <div className="text-[10px] text-muted-foreground/60">Aucun tir</div>
+              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
               : aggLeft.map((g) => <AggregatedRow key={`${g.shooterType}-${g.targetType}`} group={g} gameConfig={gameConfig} />)
             }
           </div>
           <div className="space-y-2">
             <div className="text-[10px] uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
             {aggRight.length === 0
-              ? <div className="text-[10px] text-muted-foreground/60">Aucun tir</div>
+              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
               : aggRight.map((g) => <AggregatedRow key={`${g.shooterType}-${g.targetType}`} group={g} gameConfig={gameConfig} />)
             }
           </div>
@@ -318,14 +318,14 @@ export function RoundShotDetail({
           <div className="space-y-1.5">
             <div className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
             {indLeft.length === 0
-              ? <div className="text-[10px] text-muted-foreground/60">Aucun tir</div>
+              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
               : indLeft.map((g) => <ShooterBlock key={g.shooterId} group={g} gameConfig={gameConfig} numberMap={unitNumberMap} onSelectUnit={onSelectUnit} />)
             }
           </div>
           <div className="space-y-1.5">
             <div className="text-[10px] uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
             {indRight.length === 0
-              ? <div className="text-[10px] text-muted-foreground/60">Aucun tir</div>
+              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
               : indRight.map((g) => <ShooterBlock key={g.shooterId} group={g} gameConfig={gameConfig} numberMap={unitNumberMap} onSelectUnit={onSelectUnit} />)
             }
           </div>

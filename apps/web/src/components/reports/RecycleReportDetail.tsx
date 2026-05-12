@@ -180,7 +180,7 @@ export function RecycleReportDetail({ result, coordinates }: RecycleReportDetail
                   );
                 })}
               </div>
-              <p className="text-[10px] text-muted-foreground/70 mt-1">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 Envoyez plus de recycleurs pour collecter les débris restants.
               </p>
             </div>

@@ -93,7 +93,7 @@ export function FleetComposition({ ships, mission, selectedShips, onChange, onTo
 
       {categorized.disabled.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Non disponibles</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground-soft">Non disponibles</div>
           <ShipPickGrid>
             {categorized.disabled.map((ship) =>
               renderShipCard(ship, selectedShips[ship.id] ?? 0, onChange, onToggle, true),

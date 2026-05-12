@@ -333,6 +333,7 @@ export default function CommandCenter() {
         title="Annuler la production ?"
         description="Les unités restantes seront annulées. Le remboursement est proportionnel au temps restant, plafonné à 70% des ressources investies. Les unités déjà produites sont conservées."
         confirmLabel="Annuler la production"
+        cancelLabel="Continuer la production"
         variant="destructive"
       />
     </div>

@@ -76,7 +76,7 @@ export function CombatAnalysisHeader({
               type="button"
               onClick={onDownloadJson}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground bg-white/5 hover:bg-white/10 hover:text-foreground transition-colors"
-              title="Telecharger le rapport JSON"
+              title="Télécharger le rapport JSON"
             >
               <Download className="h-3.5 w-3.5" />
               JSON

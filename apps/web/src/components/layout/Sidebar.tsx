@@ -100,7 +100,7 @@ export function Sidebar() {
         {renderedSections.map((section, idx) => (
           <div key={section.title} className="sidebar-section-fade-in">
             {idx > 0 && <div className="mx-3 my-2 border-t border-border/30" />}
-            <p className="mb-1 px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            <p className="mb-1 px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {section.title}
             </p>
             <ul className="space-y-0.5">

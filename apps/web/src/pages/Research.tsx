@@ -643,6 +643,7 @@ export default function Research() {
         description="Le remboursement est proportionnel au temps restant, plafonné à 70% des ressources investies."
         variant="destructive"
         confirmLabel="Annuler la recherche"
+        cancelLabel="Continuer la recherche"
       />
     </div>
   );

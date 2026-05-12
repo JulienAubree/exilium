@@ -243,7 +243,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
       {/* Biomes + leurs bonus */}
       <div className="mt-4">
         <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
-          Biomes {biomes.length > 0 && <span className="text-muted-foreground/50">({biomes.length})</span>}
+          Biomes {biomes.length > 0 && <span className="text-muted-foreground-soft">({biomes.length})</span>}
         </div>
         {biomes.length > 0 ? (
           <div className="space-y-2">

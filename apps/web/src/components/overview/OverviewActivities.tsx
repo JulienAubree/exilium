@@ -86,7 +86,7 @@ function EmptySlot({ label, cta, onClick }: { label: string; cta: string; onClic
         <div className="w-5 h-5 rounded bg-white/[0.04]" />
         <span className="text-[11px] text-muted-foreground">{label}</span>
       </div>
-      <div className="text-[10px] text-muted-foreground/50 mt-2">{cta} →</div>
+      <div className="text-[10px] text-muted-foreground-soft mt-2">{cta} →</div>
     </div>
   );
 }

@@ -30,18 +30,18 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
 
       <div className="px-4 pb-2">
         <p className="text-[11px] text-muted-foreground leading-tight">
-          Les pirates lancent des raids a intervalles irreguliers tant que la colonisation n'est pas terminee.
+          Les pirates lancent des raids à intervalles irréguliers tant que la colonisation n'est pas terminée.
         </p>
         <div className="mt-1.5">
           <ExpandableInfo label="Comprendre les raids" accent="red">
             <p>
-              Un raid peut survenir a tout moment apres l'etablissement de l'avant-poste. Votre niveau de detection (lie a vos batiments) determine les informations visibles : compte a rebours, composition, identite.
+              Un raid peut survenir à tout moment après l'établissement de l'avant-poste. Votre niveau de détection (lié à vos bâtiments) détermine les informations visibles : compte à rebours, composition, identité.
             </p>
             <p>
-              Au combat : votre garnison affronte la flotte pirate. Si elle perd, les pirates pillent vos stocks (minerai + silicium) et la progression peut etre impactee.
+              Au combat : votre garnison affronte la flotte pirate. Si elle perd, les pirates pillent vos stocks (minerai + silicium) et la progression peut être impactée.
             </p>
             <p className="text-muted-foreground">
-              Defense : gardez une garnison a FP suffisant, surveillez les comptes a rebours et envoyez des renforts en avance quand une menace est detectee.
+              Défense : gardez une garnison à FP suffisant, surveillez les comptes à rebours et envoyez des renforts en avance quand une menace est détectée.
             </p>
           </ExpandableInfo>
         </div>
@@ -90,7 +90,7 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
                   )}
                   {tier >= 2 && tier < 3 && raid.shipCount != null && (
                     <p className="text-[11px] text-muted-foreground">
-                      Flotte estimee : {raid.shipCount} vaisseaux
+                      Flotte estimée : {raid.shipCount} vaisseaux
                     </p>
                   )}
                 </div>
@@ -100,7 +100,7 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
         ) : (
           <div className="rounded-lg bg-card/40 border border-border/20 px-3 py-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Aucune menace detectee
+              Aucune menace détectée
             </p>
           </div>
         )}

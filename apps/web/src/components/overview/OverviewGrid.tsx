@@ -124,7 +124,7 @@ export function OverviewGrid({
                   <div className="flex items-center gap-1.5 text-[10px]">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: hex }} />
                     <span className="font-medium text-foreground truncate">{missionLabel}</span>
-                    <span className="text-muted-foreground/60 text-[9px]">{phaseLabel}</span>
+                    <span className="text-muted-foreground-soft text-[9px]">{phaseLabel}</span>
                     <div className="ml-auto flex-shrink-0">
                       <Timer endTime={new Date(m.arrivalTime)} onComplete={onFleetTimerComplete} className="!text-[9px]" />
                     </div>

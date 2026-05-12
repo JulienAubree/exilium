@@ -182,7 +182,7 @@ export function AnomalyBossPreview({
               </ul>
             </div>
           ) : (
-            <div className="rounded-lg border border-border/30 bg-card/30 p-3 text-xs text-muted-foreground/80 text-center">
+            <div className="rounded-lg border border-border/30 bg-card/30 p-3 text-xs text-muted-foreground text-center">
               {hasBossUnit
                 ? "Le boss se dresse seul — pas d'escorte."
                 : "Composition ennemie non disponible — l'anomalie brouille vos capteurs."}

@@ -147,7 +147,7 @@ export function ExpeditionMissionCard({ mission, sectorImage, onEngage }: Props)
 
       {/* Footer */}
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-white/5 bg-background/30">
-        <div className="text-[11px] text-muted-foreground/70">
+        <div className="text-[11px] text-muted-foreground">
           Expire dans <Timer endTime={expiresAt} className="font-mono tabular-nums text-foreground/80" />
         </div>
         <Button size="sm" onClick={onEngage} className="gap-1">
@@ -300,7 +300,7 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, s
                 )}
               >
                 <span className="font-mono tabular-nums font-semibold">{alive}</span>
-                <span className="text-muted-foreground/80">×</span>
+                <span className="text-muted-foreground">×</span>
                 <span>{shipNames[s.shipId] ?? s.shipId}</span>
                 {lost > 0 && <span className="text-rose-300 ml-0.5">−{lost}</span>}
               </span>
@@ -342,7 +342,7 @@ export function ExpeditionInProgressCard({ mission, shipNames, shipRoles = {}, s
               Soute
             </span>
             <span className="tabular-nums font-semibold text-foreground/90">
-              {fmt(cargoUsed)} <span className="text-muted-foreground/70">/ {fmt(cargoTotal)}</span>
+              {fmt(cargoUsed)} <span className="text-muted-foreground">/ {fmt(cargoTotal)}</span>
             </span>
           </div>
           <div className="h-2 rounded-full bg-white/[0.04] overflow-hidden">

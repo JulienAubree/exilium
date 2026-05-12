@@ -116,7 +116,7 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
                       <span
                         className={cn(
                           'mt-0.5 shrink-0',
-                          isSelected ? styles.icon : 'text-muted-foreground/60',
+                          isSelected ? styles.icon : 'text-muted-foreground-soft',
                         )}
                       >
                         +

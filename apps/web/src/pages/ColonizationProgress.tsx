@@ -140,7 +140,7 @@ export default function ColonizationProgress() {
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-sky-300">Sursis d'installation</p>
                     <p className="text-[11px] text-muted-foreground leading-tight">
-                      Pas de consommation de ressources. Preparez vos convois.
+                      Pas de consommation de ressources. Préparez vos convois.
                     </p>
                   </div>
                 </div>

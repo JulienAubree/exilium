@@ -221,7 +221,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               </div>
               <div className="text-[11px] text-slate-300 space-y-1.5">
                 <p>Base : <span className="text-amber-400 font-mono">{(baseRate * 100).toFixed(0)}%</span> de scories sur chaque extraction.</p>
-                <p>Chaque niveau reduit les scories de <span className="text-emerald-400">15%</span> (multiplicatif : taux = {(baseRate * 100).toFixed(0)}% x 0.85^niveau).</p>
+                <p>Chaque niveau réduit les scories de <span className="text-emerald-400">15%</span> (multiplicatif : taux = {(baseRate * 100).toFixed(0)}% x 0.85^niveau).</p>
               </div>
               <div className="flex gap-4 text-[11px]">
                 <div className="flex justify-between gap-2">

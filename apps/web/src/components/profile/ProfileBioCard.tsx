@@ -109,7 +109,7 @@ export function ProfileBioCard({ bio, isOwn, onSave, isSaving }: ProfileBioCardP
         </span>
       </div>
       {isEmpty ? (
-        <p className="text-sm italic text-muted-foreground/70">Cliquez pour écrire votre log de capitaine.</p>
+        <p className="text-sm italic text-muted-foreground">Cliquez pour écrire votre log de capitaine.</p>
       ) : (
         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bio}</p>
       )}

@@ -120,7 +120,7 @@ export default function Galaxy() {
 
   const createReportMutation = trpc.explorationReport.create.useMutation({
     onSuccess: () => {
-      addToast('Rapport cree — renseignez votre prix de vente');
+      addToast('Rapport créé — renseignez votre prix de vente');
       navigate('/market?cat=exploration&tab=sell');
     },
     onError: (err) => addToast(err.message, 'error'),

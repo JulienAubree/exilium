@@ -66,6 +66,14 @@ export function Layout() {
 
   return (
     <div className="flex h-viewport flex-col bg-background bg-stars text-foreground">
+      {/* Skip-to-content for keyboard users — visible only when focused. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg"
+      >
+        Aller au contenu
+      </a>
+
       {/* Desktop sidebar */}
       <Sidebar />
 
@@ -82,7 +90,7 @@ export function Layout() {
         {/* Page content — scrolls independently; the mobile BottomTabBar
             below is a flex sibling, so it is anchored naturally at the
             bottom of the viewport without position:fixed. */}
-        <main className="flex-1 overflow-y-auto min-h-0">
+        <main id="main-content" className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto lg:max-w-6xl">
             <Outlet context={{ planetId: resolvedPlanetId, planetClassId: activePlanet?.planetClassId ?? null }} />
           </div>

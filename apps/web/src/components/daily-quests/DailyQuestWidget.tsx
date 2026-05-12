@@ -60,7 +60,7 @@ export function DailyQuestWidget() {
               {quest.status === 'completed' ? (
                 <Check className="h-4 w-4 text-emerald-400" />
               ) : quest.status === 'expired' ? (
-                <X className="h-4 w-4 text-muted-foreground/40" />
+                <X className="h-4 w-4 text-muted-foreground-faint" />
               ) : (
                 <div className="h-4 w-4 rounded border border-border" />
               )}
@@ -68,13 +68,13 @@ export function DailyQuestWidget() {
             <div>
               <span className={`text-xs font-medium ${
                 quest.status === 'completed' ? 'text-emerald-400' :
-                quest.status === 'expired' ? 'text-muted-foreground/40 line-through' :
+                quest.status === 'expired' ? 'text-muted-foreground-faint line-through' :
                 'text-foreground'
               }`}>
                 {quest.name}
               </span>
               <p className={`text-[10px] ${
-                quest.status === 'expired' ? 'text-muted-foreground/30' : 'text-muted-foreground'
+                quest.status === 'expired' ? 'text-muted-foreground-faint' : 'text-muted-foreground'
               }`}>
                 {quest.description}
               </p>

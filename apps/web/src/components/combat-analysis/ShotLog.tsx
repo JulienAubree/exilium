@@ -81,7 +81,7 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
           Tirs individuels
         </div>
         {shotsByShooter.length === 0 ? (
-          <div className="text-[10px] text-muted-foreground/60">Aucun tir</div>
+          <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
         ) : (
           <div className="space-y-2">
             {shotsByShooter.map(({ shooterId, shots }) => {
@@ -105,7 +105,7 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
                       <span className="ml-auto flex items-center gap-1 shrink-0">
                         {e.shieldAbsorbed > 0 && <span className="text-cyan-400/70 font-mono">{fmt(e.shieldAbsorbed)}</span>}
                         {e.hullDamage > 0 && <span className="text-orange-400/70 font-mono">{fmt(e.hullDamage)}</span>}
-                        {e.shieldAbsorbed === 0 && e.hullDamage === 0 && <span className="text-muted-foreground/30 font-mono">0</span>}
+                        {e.shieldAbsorbed === 0 && e.hullDamage === 0 && <span className="text-muted-foreground-faint font-mono">0</span>}
                         {e.targetDestroyed && (
                           <XCircle className="h-[9px] w-[9px] text-red-400" />
                         )}
@@ -125,7 +125,7 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
           Impacts individuels
         </div>
         {impactsByTarget.length === 0 ? (
-          <div className="text-[10px] text-muted-foreground/60">Aucun impact</div>
+          <div className="text-[10px] text-muted-foreground-soft">Aucun impact</div>
         ) : (
           <div className="space-y-2">
             {impactsByTarget.map(({ targetId, impacts }) => {

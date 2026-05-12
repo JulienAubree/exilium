@@ -69,7 +69,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 })}
               </div>
             )}
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground/70">
+            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
               Ressources brutes prélevées sur l'astéroïde, réparties proportionnellement aux réserves restantes.
             </p>
           </div>
@@ -91,7 +91,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 </span>
               </div>
             </div>
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground/70">
+            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
               {slagPct > 0
                 ? "Une partie des ressources est perdue lors du raffinage. Améliorez Raffinage spatial profond pour réduire ce taux."
                 : 'Aucune perte ! Votre technologie de raffinage élimine toutes les scories.'}
@@ -115,7 +115,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 </span>
               </div>
             </div>
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground/70">
+            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
               {cargoPct >= 95
                 ? 'Soute pleine ! Pour transporter plus, ajoutez des vaisseaux cargo ou améliorez la capacité de soute.'
                 : cargoPct >= 50

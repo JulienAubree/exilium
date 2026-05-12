@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router';
 import { Diamond, Check } from 'lucide-react';
 import { trpc } from '@/trpc';
-import { useLevelMap } from '@/hooks/useLevelMap';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -194,7 +193,7 @@ export default function StationedFleet() {
               )}
               <button
                 onClick={() => setOverlayShipId(ship.id)}
-                className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                className="text-[10px] text-muted-foreground-soft hover:text-muted-foreground transition-colors"
               >
                 Détails
               </button>

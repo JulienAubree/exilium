@@ -99,7 +99,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
             <span>Colonisation en cours</span>
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground-faint" />
       </button>
     );
   }
@@ -170,11 +170,11 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
                   <span className="text-[10px]">FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
                 </>
               ) : (
-                <span className="text-[10px] text-muted-foreground/60 italic">vide</span>
+                <span className="text-[10px] text-muted-foreground-soft italic">vide</span>
               )}
             </div>
           )}
-          {!canAbandon && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />}
+          {!canAbandon && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground-faint" />}
         </button>
         {canAbandon && (
           <div className="relative shrink-0 pr-2" ref={menuRef}>

@@ -74,7 +74,7 @@ export function ShipChipPopover({ shipId, name, count, cargoCapacity, role }: Pr
             />
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground truncate">{name}</div>
-              {role && <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70">{role}</div>}
+              {role && <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{role}</div>}
             </div>
           </div>
           <div className="space-y-1 text-[11px]">

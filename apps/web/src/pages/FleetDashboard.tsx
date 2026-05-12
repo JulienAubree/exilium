@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router';
 import { Send, Package, Play, ArrowRight, Diamond, Check } from 'lucide-react';
 import { trpc } from '@/trpc';
-import { useLevelMap } from '@/hooks/useLevelMap';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
@@ -166,7 +165,7 @@ export default function FleetDashboard() {
         >
           <Play className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
           <span className="text-muted-foreground">Missions PvE</span>
-          <ArrowRight className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+          <ArrowRight className="h-3 w-3 text-muted-foreground-soft" aria-hidden="true" />
         </Link>
       </div>
 
@@ -189,7 +188,7 @@ export default function FleetDashboard() {
           {availableShips.length === 0 && !flagshipOnPlanet ? (
             <div className="rounded-lg border border-border bg-card p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Aucun vaisseau stationné.{' '}
+                Aucun vaisseau stationné sur cette planète.{' '}
                 <Link to="/shipyard" className="text-primary hover:underline">
                   Construire des vaisseaux
                 </Link>
@@ -290,7 +289,7 @@ export default function FleetDashboard() {
                     )}
                     <button
                       onClick={() => setOverlayShipId(ship.id)}
-                      className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                      className="text-[10px] text-muted-foreground-soft hover:text-muted-foreground transition-colors"
                     >
                       Détails
                     </button>
@@ -319,7 +318,7 @@ export default function FleetDashboard() {
           {recentMovements.length === 0 ? (
             <div className="rounded-lg border border-border bg-card p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Aucun mouvement en cours.
+                Toutes vos flottes sont au mouillage.
               </p>
             </div>
           ) : (

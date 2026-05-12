@@ -29,7 +29,7 @@ export function FriendRequests() {
       )}
       {sent && sent.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-muted-foreground mb-2">Demandes envoyees</h4>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-2">Demandes envoyées</h4>
           <ul className="space-y-2">
             {sent.map(s => (
               <li key={s.friendshipId} className="flex items-center justify-between gap-2">

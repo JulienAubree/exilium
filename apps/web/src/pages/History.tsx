@@ -91,7 +91,7 @@ export default function History() {
       {/* Event list */}
       <div className="glass-card divide-y divide-border/30">
         {allEvents.length === 0 && !isFetching && (
-          <p className="p-4 text-sm text-muted-foreground">Aucun événement</p>
+          <p className="p-6 text-sm text-muted-foreground text-center">Aucun événement pour ce filtre.</p>
         )}
         {allEvents.map((event) => (
           <div key={event.id} className="flex items-start gap-3 p-3">
@@ -102,7 +102,7 @@ export default function History() {
               </div>
               <p className="text-sm">{formatEventText(event, { includePlanet: true, missions: gameConfig?.missions })}</p>
             </div>
-            <span className="text-xs text-muted-foreground/60 shrink-0">{formatDateTime(event.createdAt)}</span>
+            <span className="text-xs text-muted-foreground-soft shrink-0">{formatDateTime(event.createdAt)}</span>
           </div>
         ))}
         {hasMore && (

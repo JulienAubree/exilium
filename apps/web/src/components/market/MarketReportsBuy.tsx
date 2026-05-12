@@ -203,7 +203,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
                     </div>
                     {offer.knownBiomeCount > 0 && (
                       <div className="text-amber-400/80">
-                        {offer.knownBiomeCount} biome{offer.knownBiomeCount > 1 ? 's' : ''} deja connu{offer.knownBiomeCount > 1 ? 's' : ''}
+                        {offer.knownBiomeCount} biome{offer.knownBiomeCount > 1 ? 's' : ''} déjà connu{offer.knownBiomeCount > 1 ? 's' : ''}
                       </div>
                     )}
                   </div>

@@ -363,7 +363,7 @@ export function EngageFleetModal({ open, onClose, mission, defaultPlanetId, onEn
                   >
                     {fmt(preview.hydrogenCost)}
                     {selectedPlanet && (
-                      <span className="text-muted-foreground/70 font-normal">
+                      <span className="text-muted-foreground font-normal">
                         {' '}
                         / {fmt(planetHydrogene)}
                       </span>

@@ -60,7 +60,7 @@ export function MissionSelector({ selected, onChange, locked }: MissionSelectorP
                 isSelected
                   ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700'
                   : locked
-                    ? 'bg-muted/30 text-muted-foreground/40 cursor-not-allowed'
+                    ? 'bg-muted/30 text-muted-foreground-faint cursor-not-allowed'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer',
               )}
             >

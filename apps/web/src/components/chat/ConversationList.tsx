@@ -157,7 +157,7 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
                     >
                       {conv.otherUser.username}
                     </Link>
-                    <span className="text-[10px] text-muted-foreground/60 ml-2 flex-shrink-0">
+                    <span className="text-[10px] text-muted-foreground-soft ml-2 flex-shrink-0">
                       {formatRelative(conv.lastMessage.createdAt)}
                     </span>
                   </div>

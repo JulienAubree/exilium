@@ -118,7 +118,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
               placeholder="Rechercher..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-border bg-background/60 px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-1 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-background/60 px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground-soft outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
@@ -209,7 +209,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                     <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
                       Amis
                     </div>
-                    <div className="px-3 py-3 text-xs text-muted-foreground/60 italic">Aucun ami ajouté</div>
+                    <div className="px-3 py-3 text-xs text-muted-foreground">Aucun ami ajouté.</div>
                   </div>
                 )}
                 {!q && data && !data.allianceTag && (
@@ -217,7 +217,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                     <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
                       Alliance
                     </div>
-                    <div className="px-3 py-3 text-xs text-muted-foreground/60 italic">Pas d'alliance</div>
+                    <div className="px-3 py-3 text-xs text-muted-foreground">Pas d'alliance.</div>
                   </div>
                 )}
               </>

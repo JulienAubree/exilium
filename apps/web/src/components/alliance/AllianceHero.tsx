@@ -97,7 +97,7 @@ export function AllianceHero({ alliance }: AllianceHeroProps) {
               </h1>
               <p className="mt-0.5 text-sm text-muted-foreground">Alliance · Rang #{alliance.rank}</p>
               {alliance.motto && (
-                <p className="mt-2 text-xs italic leading-relaxed text-muted-foreground/80">« {alliance.motto} »</p>
+                <p className="mt-2 text-xs italic leading-relaxed text-muted-foreground">« {alliance.motto} »</p>
               )}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <span className="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-2 py-0.5 text-[10px] text-sky-300">

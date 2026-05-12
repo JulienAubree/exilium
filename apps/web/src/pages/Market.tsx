@@ -228,7 +228,7 @@ export default function Market() {
               <p className="text-sm text-muted-foreground mt-0.5">
                 Niveau {marketLevel} · Commission {commissionPercent}%
               </p>
-              <p className="text-xs text-muted-foreground/70 mt-2 max-w-lg leading-relaxed hidden lg:block">
+              <p className="text-xs text-muted-foreground mt-2 max-w-lg leading-relaxed hidden lg:block">
                 Echangez des ressources et des rapports d'exploration avec les autres joueurs.
                 Chaque vente est soumise a une commission de {commissionPercent}% et la livraison
                 s'effectue par flotte marchande.

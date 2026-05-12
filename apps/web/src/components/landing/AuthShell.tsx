@@ -61,7 +61,7 @@ export function AuthShell({ title, eyebrow, children, footer }: AuthShellProps) 
         </div>
       </main>
 
-      <footer className="relative z-10 px-4 py-5 text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground/60 sm:px-8">
+      <footer className="relative z-10 px-4 py-5 text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground-soft sm:px-8">
         Exilium · Stratégie spatiale en bêta
       </footer>
     </div>

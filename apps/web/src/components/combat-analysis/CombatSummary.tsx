@@ -80,18 +80,18 @@ function FleetSummaryColumn({
           return (
             <div key={type}>
               <div className="flex items-center justify-between text-xs">
-                <span className={survived === 0 ? 'text-muted-foreground/40 line-through' : 'text-foreground'}>
+                <span className={survived === 0 ? 'text-muted-foreground-faint line-through' : 'text-foreground'}>
                   {getName(type, gameConfig)}
                 </span>
                 <div className="flex items-center gap-2 text-[10px]">
                   <span className="text-muted-foreground">{deployed}</span>
                   {lost > 0 && (
                     <>
-                      <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/30" strokeWidth={1.5} />
+                      <ArrowRight className="h-2.5 w-2.5 text-muted-foreground-faint" strokeWidth={1.5} />
                       <span className="text-red-400">-{lost}</span>
                     </>
                   )}
-                  <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/30" strokeWidth={1.5} />
+                  <ArrowRight className="h-2.5 w-2.5 text-muted-foreground-faint" strokeWidth={1.5} />
                   <span className={survived > 0 ? 'text-emerald-400 font-medium' : 'text-red-400'}>{survived}</span>
                 </div>
               </div>

@@ -112,11 +112,11 @@ function ChatFab() {
                         >
                           {conv.otherUser.username}
                         </Link>
-                        <span className="text-[9px] text-muted-foreground/60 ml-1 flex-shrink-0">
+                        <span className="text-[9px] text-muted-foreground-soft ml-1 flex-shrink-0">
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>
                       </div>
-                      <p className={`text-[10px] truncate ${conv.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground/70'}`}>
+                      <p className={`text-[10px] truncate ${conv.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {conv.lastMessage.body}
                       </p>
                     </div>

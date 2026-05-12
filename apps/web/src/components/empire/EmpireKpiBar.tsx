@@ -177,7 +177,7 @@ function Kpi({
       <span className="text-[9px] uppercase text-muted-foreground hidden lg:inline">{label}</span>
       <ChevronDown
         className={cn(
-          'h-2.5 w-2.5 text-muted-foreground/40 transition-transform',
+          'h-2.5 w-2.5 text-muted-foreground-faint transition-transform',
           active && 'rotate-180',
         )}
       />
@@ -445,7 +445,7 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
       {underAttack.length > 0 && (
         <div className="space-y-1 pt-1 border-t border-border/30">
           <div className="text-[10px] uppercase tracking-wider text-destructive font-semibold">
-            Planetes attaquees
+            Planètes attaquées
           </div>
           {underAttack.map((p) => (
             <div

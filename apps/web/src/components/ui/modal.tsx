@@ -1,5 +1,6 @@
 import { type ReactNode, type HTMLAttributes, useEffect, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useDialogA11y } from '@/hooks/useDialogA11y';
 
 interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean;
@@ -29,6 +30,13 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
     },
     ref,
   ) => {
+    const { dialogProps, titleId } = useDialogA11y(open, { title });
+    const setRefs = (node: HTMLDivElement | null) => {
+      (dialogProps.ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    };
+
     useEffect(() => {
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape' && closeOnEsc) onClose();
@@ -52,7 +60,10 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
           onClick={closeOnBackdropClick ? onClose : undefined}
         />
         <div
-          ref={ref}
+          role={dialogProps.role}
+          aria-modal={dialogProps['aria-modal']}
+          aria-labelledby={dialogProps['aria-labelledby']}
+          ref={setRefs}
           className={cn(
             'relative z-50 w-full max-h-[85dvh] overflow-y-auto rounded-t-2xl border border-border bg-card p-5 pb-safe-bottom shadow-lg animate-slide-up-sheet',
             'lg:max-w-lg lg:rounded-lg lg:animate-fade-in lg:pb-6',
@@ -60,7 +71,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
           )}
           {...props}
         >
-          {title && <h2 className="mb-4 text-lg font-semibold text-foreground">{title}</h2>}
+          {title && <h2 id={titleId} className="mb-4 text-lg font-semibold text-foreground">{title}</h2>}
           {children}
         </div>
       </div>

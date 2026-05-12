@@ -26,7 +26,7 @@ interface Props {
 }
 
 const TIER_LABEL_CLASS =
-  'block text-[9px] font-mono uppercase tracking-widest text-muted-foreground/60 text-center';
+  'block text-[9px] font-mono uppercase tracking-widest text-muted-foreground-soft text-center';
 
 export function ModuleLoadoutGrid({ slot, inventory, onSlotClick, onUnequip }: Props) {
   const epicMod = slot.epic ? inventory.get(slot.epic) ?? null : null;

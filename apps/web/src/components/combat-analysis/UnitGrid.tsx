@@ -35,7 +35,7 @@ export function UnitGrid({
   if (sorted.length === 0) {
     return (
       <div className="text-xs text-muted-foreground text-center py-4">
-        Aucune donnee unitaire disponible
+        Aucune donnée unitaire disponible
       </div>
     );
   }

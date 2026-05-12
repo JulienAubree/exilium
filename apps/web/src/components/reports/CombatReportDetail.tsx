@@ -171,7 +171,7 @@ export function CombatReportDetail({ result, missionType, gameConfig, coordinate
                 </>
               )}
               {entries.length === 0 && defEntries.length === 0 && !shield && (
-                <div className="text-xs text-muted-foreground/60">Aucune</div>
+                <div className="text-xs text-muted-foreground-soft">Aucune</div>
               )}
             </div>
           );

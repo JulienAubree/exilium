@@ -202,7 +202,7 @@ export function ModuleInventoryPanel({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground-soft" />
         <input
           type="text"
           placeholder="Rechercher un module ou une arme…"
@@ -214,7 +214,7 @@ export function ModuleInventoryPanel({
 
       {/* Kind filter — Tous / Modules / Armes */}
       <div className="space-y-1.5">
-        <div className="text-[9px] uppercase tracking-widest text-muted-foreground/60 font-mono">Type</div>
+        <div className="text-[9px] uppercase tracking-widest text-muted-foreground-soft font-mono">Type</div>
         <div className="flex gap-1">
           <KindButton
             active={kindFilter === 'all'}
@@ -241,7 +241,7 @@ export function ModuleInventoryPanel({
 
       {/* Rarity filter */}
       <div className="space-y-1.5">
-        <div className="text-[9px] uppercase tracking-widest text-muted-foreground/60 font-mono">Rareté</div>
+        <div className="text-[9px] uppercase tracking-widest text-muted-foreground-soft font-mono">Rareté</div>
         <div className="flex gap-1">
           {(['all', 'common', 'rare', 'epic'] as const).map((r) => (
             <RarityButton
@@ -395,7 +395,7 @@ function SectionGroup({
         )} />
         {icon}
         <span>{label}</span>
-        <span className="text-muted-foreground/60 font-normal">({count})</span>
+        <span className="text-muted-foreground-soft font-normal">({count})</span>
       </div>
       <ItemList
         items={items}
@@ -470,7 +470,7 @@ function ItemList({
                 equipped
                   ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
                   : !canEquip.ok
-                    ? 'border-border/20 bg-card/10 text-muted-foreground/50 cursor-not-allowed'
+                    ? 'border-border/20 bg-card/10 text-muted-foreground-soft cursor-not-allowed'
                     : 'border-foreground/30 bg-foreground/10 text-foreground hover:bg-foreground/20',
               )}
             >{equipped ? '✓ Équipé' : 'Équiper'}</button>

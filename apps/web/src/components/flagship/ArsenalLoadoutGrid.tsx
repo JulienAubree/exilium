@@ -183,11 +183,11 @@ function ArsenalSlot({ rarity, module, onClick, onUnequip }: SlotProps) {
               <Crosshair className="h-7 w-7 text-stone-600/60" />
             </div>
             <div className="space-y-0.5">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground/70">
+              <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
                 <Plus className="h-3 w-3" />
                 Vide
               </div>
-              <div className="text-[8px] text-muted-foreground/50 text-center font-mono uppercase tracking-wider">
+              <div className="text-[8px] text-muted-foreground-soft text-center font-mono uppercase tracking-wider">
                 {RARITY_LABEL[rarity]}
               </div>
             </div>
@@ -276,7 +276,7 @@ export function ArsenalLoadoutGrid({ slot, inventory, onSlotClick, onUnequip }: 
         />
       </div>
 
-      <p className="text-[10px] text-muted-foreground/80 leading-snug">
+      <p className="text-[10px] text-muted-foreground leading-snug">
         Chaque arme équipée ajoute un profil de tir au flagship en plus de son tir
         de coque. Les armes ne fournissent pas de bonus de stats — elles tirent
         directement contre les cibles ennemies de leur catégorie.

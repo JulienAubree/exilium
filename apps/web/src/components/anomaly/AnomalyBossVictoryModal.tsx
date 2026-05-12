@@ -159,7 +159,7 @@ export function AnomalyBossVictoryModal({ open, boss, buffChoices, onClose }: Pr
 
       {/* Footer */}
       <div className="px-5 py-3 border-t border-border/30 bg-slate-950/60 flex items-center justify-between gap-2">
-        <span className="text-[10px] text-muted-foreground/70 font-mono uppercase tracking-wider">
+        <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
           Récompense permanente jusqu'à la fin de la run
         </span>
         <Button

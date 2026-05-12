@@ -430,6 +430,7 @@ export default function Resources() {
         description="Le remboursement est proportionnel au temps restant, plafonné à 70% des ressources investies."
         variant="destructive"
         confirmLabel="Annuler la construction"
+        cancelLabel="Continuer la construction"
       >
         {(() => {
           if (!upgradingBuilding || !upgradingBuilding.upgradeEndTime) return null;
@@ -440,7 +441,7 @@ export default function Resources() {
           );
           return (
             <div className="rounded-md border border-border bg-card/50 p-3 space-y-1.5">
-              <div className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-semibold">
+              <div className="text-[11px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
                 Remboursement estimé ({refund.ratio}%)
               </div>
               <div className="flex flex-wrap gap-3 text-xs">

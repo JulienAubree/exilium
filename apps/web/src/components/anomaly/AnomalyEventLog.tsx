@@ -116,7 +116,7 @@ function OutcomeLine({ outcome }: { outcome: OutcomeApplied }) {
     }
   }
   if (parts.length === 0) {
-    return <span className="text-muted-foreground/70 italic text-[11px]">Sans effet matériel</span>;
+    return <span className="text-muted-foreground italic text-[11px]">Sans effet matériel</span>;
   }
   return (
     <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] mt-0.5">

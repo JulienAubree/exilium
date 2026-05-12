@@ -43,7 +43,7 @@ export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapac
         <div className="text-xs text-muted-foreground">
           {shipCount > 0
             ? `${shipCount} vaisseau${shipCount > 1 ? 'x' : ''}`
-            : 'Aucun vaisseau selectionne'}
+            : 'Aucun vaisseau sélectionné'}
         </div>
         <Button
           size="sm"

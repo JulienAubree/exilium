@@ -6,8 +6,8 @@ import { trpc } from '@/trpc';
 import { MessageSquare } from 'lucide-react';
 
 const MONTHS = [
-  'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
-  'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ];
 
 function formatDate(date: string | Date): string {
@@ -43,7 +43,7 @@ export default function Changelog() {
 
   return (
     <div className="space-y-4 p-4 lg:space-y-6 lg:p-6 max-w-4xl mx-auto">
-      <PageHeader title="Nouveautes" />
+      <PageHeader title="Nouveautés" />
 
       <div className="space-y-2">
         {allItems.map((item) => (
@@ -70,7 +70,7 @@ export default function Changelog() {
       </div>
 
       {allItems.length === 0 && !isFetching && (
-        <p className="text-sm text-muted-foreground text-center py-8">Aucune nouveaute pour le moment</p>
+        <p className="text-sm text-muted-foreground text-center py-8">Aucune nouveauté pour le moment</p>
       )}
 
       {data?.nextCursor && (

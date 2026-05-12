@@ -151,7 +151,7 @@ export function EnergyCard({
             {nextLevelGain != null && nextLevelGain > 0 && (
               <div className="text-[11px] text-energy">
                 <span className="font-mono">+{formatCompact(nextLevelGain)}</span>
-                <span className="text-muted-foreground/80"> au niv. {nextLevel}</span>
+                <span className="text-muted-foreground"> au niv. {nextLevel}</span>
               </div>
             )}
           </div>

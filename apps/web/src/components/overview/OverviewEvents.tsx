@@ -33,7 +33,7 @@ export function OverviewEvents({ events, gameConfig }: OverviewEventsProps) {
           <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-90')} />
           {grouped.length} événement{grouped.length > 1 ? 's' : ''} récent{grouped.length > 1 ? 's' : ''}
         </span>
-        <span className="text-muted-foreground/50">
+        <span className="text-muted-foreground-soft">
           {open ? 'Masquer' : 'Voir'}
         </span>
       </button>
@@ -47,7 +47,7 @@ export function OverviewEvents({ events, gameConfig }: OverviewEventsProps) {
                   <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${eventTypeColor(event.type)}`} />
                   <span className="text-muted-foreground">{formatEventText(event, { missions: gameConfig?.missions })}</span>
                 </div>
-                <span className="text-xs text-muted-foreground/60 shrink-0 ml-2">{formatRelativeTime(event.createdAt)}</span>
+                <span className="text-xs text-muted-foreground-soft shrink-0 ml-2">{formatRelativeTime(event.createdAt)}</span>
               </div>
             ))}
           </div>

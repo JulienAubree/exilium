@@ -103,7 +103,7 @@ export function FleetComposer({ fleet, onChange, label, color }: FleetComposerPr
 
       {/* Fleet list */}
       {fleetEntries.length === 0 ? (
-        <p className="text-xs text-muted-foreground/60">Aucune unité ajoutée.</p>
+        <p className="text-xs text-muted-foreground-soft">Aucune unité ajoutée.</p>
       ) : (
         <div className="space-y-1">
           {fleetEntries.map(([id, n]) => (
@@ -114,7 +114,7 @@ export function FleetComposer({ fleet, onChange, label, color }: FleetComposerPr
               <button
                 type="button"
                 onClick={() => removeUnit(id)}
-                className="text-muted-foreground/60 hover:text-red-400"
+                className="text-muted-foreground-soft hover:text-red-400"
               >
                 ✕
               </button>

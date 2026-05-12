@@ -58,7 +58,7 @@ export function ModuleSlot({ size, module, onClick, onUnequip }: Props) {
           </div>
         )
       ) : (
-        <Plus className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground/40" />
+        <Plus className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground-faint" />
       )}
 
       {/* Rarity indicator dot — top-left, z-10 pour passer au-dessus de l'image */}

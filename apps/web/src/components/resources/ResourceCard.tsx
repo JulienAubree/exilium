@@ -230,7 +230,7 @@ export function ResourceCard({
               style={{ width: `${fillPercent}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground/80">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span>{Math.round(fillPercent)}%</span>
             {isFull ? (
               <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
@@ -262,7 +262,7 @@ export function ResourceCard({
             {nextLevelGain != null && nextLevelGain > 0 && (
               <div className={cn('text-[11px]', accentColor)}>
                 <span className="font-mono">+{formatCompact(nextLevelGain)}/h</span>
-                <span className="text-muted-foreground/80"> au niv. {nextLevel}</span>
+                <span className="text-muted-foreground"> au niv. {nextLevel}</span>
               </div>
             )}
 

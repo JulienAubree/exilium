@@ -38,7 +38,7 @@ export function UnitDetailPanel({
       <div className="glass-card flex items-center justify-center p-8 min-h-[300px]">
         <div className="text-center space-y-2">
           <LineChart
-            className="mx-auto h-8 w-8 text-muted-foreground/40"
+            className="mx-auto h-8 w-8 text-muted-foreground-faint"
             strokeWidth={1.5}
           />
           <p className="text-sm text-muted-foreground">
@@ -117,10 +117,10 @@ export function UnitDetailPanel({
           {previousLosses > 0 ? (
             <div className="flex flex-col items-center shrink-0">
               <div className="text-[9px] text-red-400/70">-{previousLosses}</div>
-              <ArrowRight className="h-2.5 w-4 text-muted-foreground/30" strokeWidth={1.5} />
+              <ArrowRight className="h-2.5 w-4 text-muted-foreground-faint" strokeWidth={1.5} />
             </div>
           ) : (
-            <ArrowRight className="h-2.5 w-4 text-muted-foreground/30 shrink-0" strokeWidth={1.5} />
+            <ArrowRight className="h-2.5 w-4 text-muted-foreground-faint shrink-0" strokeWidth={1.5} />
           )}
 
           {/* Start of round */}
@@ -132,12 +132,12 @@ export function UnitDetailPanel({
           </div>
 
           {/* Arrow */}
-          <ArrowRight className="h-2.5 w-4 text-muted-foreground/30 shrink-0" strokeWidth={1.5} />
+          <ArrowRight className="h-2.5 w-4 text-muted-foreground-faint shrink-0" strokeWidth={1.5} />
 
           {/* Losses this round */}
           <div className="text-center shrink-0">
             <div className={`rounded-md px-2.5 py-1.5 ${losses > 0 ? 'bg-red-500/10 border border-red-500/20' : 'bg-white/5 border border-border/20'}`}>
-              <div className={`text-sm font-bold ${losses > 0 ? 'text-red-400' : 'text-muted-foreground/40'}`}>
+              <div className={`text-sm font-bold ${losses > 0 ? 'text-red-400' : 'text-muted-foreground-faint'}`}>
                 {losses > 0 ? `-${losses}` : '0'}
               </div>
             </div>
@@ -145,7 +145,7 @@ export function UnitDetailPanel({
           </div>
 
           {/* Arrow */}
-          <ArrowRight className="h-2.5 w-4 text-muted-foreground/30 shrink-0" strokeWidth={1.5} />
+          <ArrowRight className="h-2.5 w-4 text-muted-foreground-faint shrink-0" strokeWidth={1.5} />
 
           {/* Surviving */}
           <div className="text-center shrink-0">
@@ -224,7 +224,7 @@ export function UnitDetailPanel({
                 Tir par tir
               </button>
               {damageView === 'shots' && (
-                <span className="text-muted-foreground/50 ml-1">
+                <span className="text-muted-foreground-soft ml-1">
                   <span className="text-cyan-400/50">bouclier</span>{' / '}
                   <span className="text-orange-400/50">coque</span>
                 </span>

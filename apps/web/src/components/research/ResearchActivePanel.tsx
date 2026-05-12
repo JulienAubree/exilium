@@ -215,12 +215,12 @@ function BonusLine({ icon, label, detail, reduction, color }: {
   const active = reduction > 0;
   return (
     <div className="flex items-center gap-2 px-2 py-1">
-      <span className={cn('shrink-0', active ? color : 'text-muted-foreground/50')}>{icon}</span>
+      <span className={cn('shrink-0', active ? color : 'text-muted-foreground-soft')}>{icon}</span>
       <span className={cn('text-[11px] flex-1 min-w-0 truncate', active ? 'text-foreground' : 'text-muted-foreground')}>
         {label}
         {detail && <span className="text-muted-foreground ml-1">({detail})</span>}
       </span>
-      <span className={cn('text-[11px] font-semibold shrink-0', active ? 'text-emerald-400' : 'text-muted-foreground/50')}>−{reduction}%</span>
+      <span className={cn('text-[11px] font-semibold shrink-0', active ? 'text-emerald-400' : 'text-muted-foreground-soft')}>−{reduction}%</span>
       <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden shrink-0">
         <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(reduction, 100)}%` }} />
       </div>

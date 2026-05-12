@@ -96,8 +96,8 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
     }
     const { condition } = quest;
     switch (condition.type) {
-      case 'building_level': return { label: 'Aller aux Batiments \u2192', action: () => { navigate('/buildings'); onClose(); } };
-      case 'research_level': return { label: 'Aller a la Recherche \u2192', action: () => { navigate('/research'); onClose(); } };
+      case 'building_level': return { label: 'Aller aux B\u00e2timents \u2192', action: () => { navigate('/buildings'); onClose(); } };
+      case 'research_level': return { label: 'Aller \u00e0 la Recherche \u2192', action: () => { navigate('/research'); onClose(); } };
       case 'ship_count':
         if (condition.targetId === 'interceptor') return { label: 'Aller au Centre de commandement \u2192', action: () => { navigate('/command-center'); onClose(); } };
         return { label: 'Aller au Chantier \u2192', action: () => { navigate('/shipyard'); onClose(); } };

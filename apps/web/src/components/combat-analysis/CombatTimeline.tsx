@@ -102,7 +102,7 @@ export function CombatTimeline({
         </div>
       ) : (
         <div className="text-xs text-muted-foreground text-center">
-          Aucune donnee pour ce round
+          Aucune donnée pour ce round
         </div>
       )}
     </div>

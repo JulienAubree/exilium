@@ -55,7 +55,7 @@ function CategoryKpi({ label, count, color, icon, nextAt, inFuture, onClick, onT
             <span className={cn('text-lg font-bold tabular-nums leading-tight', color)}>{count}</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground/80">
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>Prochaine dans</span>
             {inFuture && nextAt ? (
@@ -136,7 +136,7 @@ export default function Missions() {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
           <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
-              <Lock className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
+              <Lock className="h-10 w-10 text-muted-foreground-faint" strokeWidth={1.5} />
             </div>
             <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de missions</h1>
             <p className="text-sm text-muted-foreground mb-6 max-w-md">
@@ -197,7 +197,7 @@ export default function Missions() {
               <p className="text-sm text-muted-foreground mt-0.5">
                 Niveau {centerLevel} · Decouverte toutes les {Math.max(1, 7 - centerLevel)}h
               </p>
-              <p className="text-xs text-muted-foreground/70 mt-2 max-w-lg leading-relaxed hidden lg:block">
+              <p className="text-xs text-muted-foreground mt-2 max-w-lg leading-relaxed hidden lg:block">
                 Decouvrez des gisements de ressources et traquez des repaires pirates.
                 Decouverte automatique toutes les {Math.max(1, 7 - centerLevel)}h.
               </p>
@@ -244,7 +244,7 @@ export default function Missions() {
                   <span className="text-sm font-bold text-cyan-300">Espace profond</span>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Expéditions</span>
                 </div>
-                <p className="mt-1 text-[11px] text-muted-foreground/80 leading-tight">
+                <p className="mt-1 text-[11px] text-muted-foreground leading-tight">
                   Missions narratives à étapes — engagez une flotte
                 </p>
               </div>
@@ -296,7 +296,7 @@ export default function Missions() {
                   <span className="text-xs text-muted-foreground">
                     La <span className="text-amber-300 font-semibold">capacité de soute</span> de votre flotte détermine combien de ressources vous ramenez.
                   </span>
-                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', miningInfo.isOpen && 'rotate-180')} />
+                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground-soft ml-auto shrink-0 transition-transform', miningInfo.isOpen && 'rotate-180')} />
                 </button>
                 {miningInfo.isOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
@@ -329,10 +329,10 @@ export default function Missions() {
                           <span className="text-sm font-semibold">Extraction miniere</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Coordonnees : [{params.galaxy}:{params.system}:{params.position}]
+                          Coordonnées : [{params.galaxy}:{params.system}:{params.position}]
                         </div>
                         <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">Ressources estimees :</div>
+                          <div className="text-xs text-muted-foreground">Ressources estimées :</div>
                           <div className="flex flex-wrap gap-2 text-xs">
                             {rewards.minerai > 0 && <span className="text-minerai">M: {fmt(rewards.minerai)}</span>}
                             {rewards.silicium > 0 && <span className="text-silicium">S: {fmt(rewards.silicium)}</span>}
@@ -407,7 +407,7 @@ export default function Missions() {
                   <span className="text-xs text-muted-foreground">
                     Le <span className="text-rose-300 font-semibold">Facteur de Puissance (FP)</span> mesure la force d&apos;une flotte.
                   </span>
-                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', combatInfo.isOpen && 'rotate-180')} />
+                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground-soft ml-auto shrink-0 transition-transform', combatInfo.isOpen && 'rotate-180')} />
                 </button>
                 {combatInfo.isOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
@@ -431,7 +431,7 @@ export default function Missions() {
               {pirateMissions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                   <Frown className="h-10 w-10 mb-3 opacity-30" strokeWidth={1.5} />
-                  <p className="text-sm">Aucun repaire pirate detecte pour le moment.</p>
+                  <p className="text-sm">Aucun repaire pirate détecté pour le moment.</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -454,7 +454,7 @@ export default function Missions() {
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Coordonnees : [{params.galaxy}:{params.system}:{params.position}]
+                          Coordonnées : [{params.galaxy}:{params.system}:{params.position}]
                         </div>
                         {mission.pirateFP != null && (
                           <div className="flex items-center gap-2">

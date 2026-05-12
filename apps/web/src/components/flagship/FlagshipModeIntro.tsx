@@ -69,7 +69,7 @@ export function FlagshipModeIntro({ onOpenHelp }: FlagshipModeIntroProps) {
             <p className="text-[11px] text-sky-400/80">
               ✓ Niveau pilote · ✓ Bonus coque · ✓ Recherches armes/bouclier/blindage
             </p>
-            <p className="text-[11px] text-muted-foreground/80">
+            <p className="text-[11px] text-muted-foreground">
               ✗ Modules · ✗ Arsenal (aucun effet hors anomalie)
             </p>
           </div>
@@ -92,7 +92,7 @@ export function FlagshipModeIntro({ onOpenHelp }: FlagshipModeIntroProps) {
             <p className="text-[11px] text-violet-400/80">
               ✓ Stats brutes · ✓ 9 modules passifs · ✓ 3 batteries d&apos;armes · ✓ Capacités actives
             </p>
-            <p className="text-[11px] text-muted-foreground/80">
+            <p className="text-[11px] text-muted-foreground">
               ⚠ Wipe = run perdu + 30 min d&apos;incapacité
             </p>
           </div>

@@ -297,11 +297,11 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
             <Sparkles className={cn('h-3.5 w-3.5 shrink-0', styles.badgeText)} />
             <span className="truncate">Stats de combat</span>
           </h3>
-          <span className="text-[10px] text-muted-foreground/70 font-mono shrink-0 whitespace-nowrap">
+          <span className="text-[10px] text-muted-foreground font-mono shrink-0 whitespace-nowrap">
             ×{computed.levelMult.toFixed(2)} niv. {computed.level}
           </span>
         </div>
-        <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-snug">
+        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
           Chiffres exacts utilisés en anomalie (niveau × coque × modules × recherches).
         </p>
       </div>
@@ -457,7 +457,7 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
                   {fmt(b.damagePerShot)} × {b.shots} = <span className="font-semibold text-foreground">{fmt(b.totalDamage)}</span>
                 </span>
               </div>
-              <div className="text-[10px] text-muted-foreground/70 font-mono pl-3">
+              <div className="text-[10px] text-muted-foreground font-mono pl-3">
                 vs {formatTargetCategory(b.targetCategory)}
                 {b.rafale && (
                   <> · rafale ×{b.rafale.count}{b.rafale.category ? ` vs ${formatTargetCategory(b.rafale.category)}` : ''}</>
@@ -468,15 +468,15 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
           ))}
         </ul>
         {computed.batteries.length === 1 && (
-          <p className="mt-2 text-[10px] text-muted-foreground/60 italic">
+          <p className="mt-2 text-[10px] text-muted-foreground-soft italic">
             Aucune arme additionnelle équipée — l'arsenal augmenterait les batteries de combat.
           </p>
         )}
 
         {/* V8.1 — légende discrète des cibles. Aide les joueurs à matcher
             leur arsenal avec la composition enemy. Format compact, font tiny. */}
-        <div className="mt-2 flex items-start gap-1.5 text-[10px] text-muted-foreground/70 leading-snug">
-          <Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/60" />
+        <div className="mt-2 flex items-start gap-1.5 text-[10px] text-muted-foreground leading-snug">
+          <Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground-soft" />
           <div className="space-y-0.5">
             <div><span className="text-foreground/80 font-medium">Légers</span> : chasseurs, drones, frégates légères</div>
             <div><span className="text-foreground/80 font-medium">Moyens</span> : frégates, croiseurs, destroyers</div>
@@ -531,7 +531,7 @@ function StatTile({
         <div className="text-[9px] uppercase tracking-wide text-slate-500 truncate">{label}</div>
         <div className={cn('text-sm font-bold font-mono tabular-nums leading-tight truncate', tone)}>
           {fmt(value)}
-          {suffix && <span className="ml-1 text-[9px] text-muted-foreground/60 font-normal">{suffix}</span>}
+          {suffix && <span className="ml-1 text-[9px] text-muted-foreground-soft font-normal">{suffix}</span>}
         </div>
       </div>
 
@@ -549,7 +549,7 @@ function StatTile({
             'p-2.5 space-y-1.5',
           )}
         >
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
             Détail {label}
           </div>
           <div className="space-y-0.5">
@@ -558,7 +558,7 @@ function StatTile({
                 key={i}
                 className={cn(
                   'flex items-baseline justify-between gap-2 text-[11px] font-mono tabular-nums',
-                  s.muted && 'text-muted-foreground/50',
+                  s.muted && 'text-muted-foreground-soft',
                 )}
               >
                 <span className="truncate">{s.label}</span>
@@ -571,7 +571,7 @@ function StatTile({
             <span className={cn('font-bold', tone)}>{fmt(breakdown!.finalValue)}</span>
           </div>
           {breakdown!.footnote && (
-            <p className="text-[9px] text-muted-foreground/60 leading-snug pt-0.5">
+            <p className="text-[9px] text-muted-foreground-soft leading-snug pt-0.5">
               {breakdown!.footnote}
             </p>
           )}

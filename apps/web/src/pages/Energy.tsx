@@ -597,6 +597,8 @@ export default function Energy() {
         title="Annuler la construction ?"
         description="Vous récupérerez une partie des ressources investies."
         variant="destructive"
+        confirmLabel="Annuler la construction"
+        cancelLabel="Continuer la construction"
       />
     </div>
   );

@@ -33,7 +33,7 @@ export function GarrisonSection({
 
       <div className="px-4 pb-2">
         <p className="text-[11px] text-muted-foreground leading-tight">
-          Les vaisseaux stationnes defendent la colonie contre les raids pirates qui peuvent survenir pendant la colonisation.
+          Les vaisseaux stationnés défendent la colonie contre les raids pirates qui peuvent survenir pendant la colonisation.
         </p>
         {status.garrisonBonusActive ? (
           <p className="mt-1 text-[11px] text-emerald-300">
@@ -41,26 +41,26 @@ export function GarrisonSection({
           </p>
         ) : (
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Atteignez <span className="text-blue-300 font-medium">{status.garrisonFpThreshold} FP</span> stationnes pour debloquer <span className="text-emerald-300 font-medium">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en continu.
+            Atteignez <span className="text-blue-300 font-medium">{status.garrisonFpThreshold} FP</span> stationnés pour débloquer <span className="text-emerald-300 font-medium">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en continu.
             {status.stationedFP > 0 && (
               <span className="text-muted-foreground"> (actuellement {formatNumber(status.stationedFP)} FP)</span>
             )}
           </p>
         )}
         <div className="mt-1.5">
-          <ExpandableInfo label="Role de la garnison" accent="blue">
+          <ExpandableInfo label="Rôle de la garnison" accent="blue">
             <p>
               Votre garnison actuelle : <span className="text-blue-300 font-medium">{formatNumber(status.stationedFP)} FP</span>.
-              Elle intercepte les raids pirates a leur arrivee.
+              Elle intercepte les raids pirates à leur arrivée.
             </p>
             <p className="text-emerald-300">
-              Bonus garnison : avec au moins <span className="font-bold">{status.garrisonFpThreshold} FP stationnes</span>, la colonisation gagne <span className="font-bold">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en permanence. Cumulable avec le bonus convoi (plafond +{(status.bonusCap * 100).toFixed(0)}%/h).
+              Bonus garnison : avec au moins <span className="font-bold">{status.garrisonFpThreshold} FP stationnés</span>, la colonisation gagne <span className="font-bold">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en permanence. Cumulable avec le bonus convoi (plafond +{(status.bonusCap * 100).toFixed(0)}%/h).
             </p>
             <p>
-              La taille des raids croit avec le niveau IPC (actuellement <span className="text-foreground font-medium">niv. {status.ipcLevel}</span>) et, dans une moindre mesure, avec votre garnison elle-meme. Maintenez un FP suffisant pour vaincre les raids sans surdimensionner.
+              La taille des raids croît avec le niveau IPC (actuellement <span className="text-foreground font-medium">niv. {status.ipcLevel}</span>) et, dans une moindre mesure, avec votre garnison elle-même. Maintenez un FP suffisant pour vaincre les raids sans surdimensionner.
             </p>
             <p className="text-muted-foreground">
-              Conseil : envoyez des renforts des que vous voyez des menaces en approche. Sans garnison, les raids detruisent vos stocks et peuvent ralentir la colonisation.
+              Conseil : envoyez des renforts dès que vous voyez des menaces en approche. Sans garnison, les raids détruisent vos stocks et peuvent ralentir la colonisation.
             </p>
           </ExpandableInfo>
         </div>

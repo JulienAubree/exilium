@@ -57,7 +57,7 @@ export function ChatMessageList({ messages, currentUserId, className = '', showS
       {enriched.map((msg) => (
           <div key={msg.id}>
             {msg.showSeparator && (
-              <div className="text-center text-[10px] text-muted-foreground/60 my-3">
+              <div className="text-center text-[10px] text-muted-foreground-soft my-3">
                 {formatDateSeparator(msg.date)}
               </div>
             )}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { AlertTriangle, Layers, ChevronDown, Box, Compass, MapPin, Clock } from 'lucide-react';
 import { trpc } from '@/trpc';
@@ -132,7 +132,7 @@ function InboundFleetCard({
           </div>
           <div className="flex items-center gap-2">
             <Timer endTime={new Date(event.arrivalTime)} onComplete={onTimerComplete} />
-            <ChevronDown className={cn('h-3 w-3 text-muted-foreground/40 transition-transform duration-200', expanded && 'rotate-180')} strokeWidth={1.5} />
+            <ChevronDown className={cn('h-3 w-3 text-muted-foreground-faint transition-transform duration-200', expanded && 'rotate-180')} strokeWidth={1.5} />
           </div>
         </div>
 
@@ -147,13 +147,13 @@ function InboundFleetCard({
               <span className="text-foreground font-medium">{event.senderUsername ?? 'Inconnu'}</span>
             </>
           ) : (
-            <span className="text-muted-foreground/50 italic">???</span>
+            <span className="text-muted-foreground-soft italic">???</span>
           )}
         </div>
 
         {/* Route */}
         <div className="flex items-center gap-2 text-xs">
-          <span className={cn('font-medium truncate', hasOrigin ? 'text-foreground' : 'text-muted-foreground/50 italic')}>{fromLabel}</span>
+          <span className={cn('font-medium truncate', hasOrigin ? 'text-foreground' : 'text-muted-foreground-soft italic')}>{fromLabel}</span>
           <svg width="24" height="10" viewBox="0 0 24 10" className="flex-shrink-0 opacity-40">
             <line x1="0" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
             <polyline points="15,2 19,5 15,8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -197,25 +197,25 @@ function InboundFleetCard({
               </span>
             ))}
             {shipCount > 1 && (
-              <span className="text-[10px] text-muted-foreground/50 ml-1">
+              <span className="text-[10px] text-muted-foreground-soft ml-1">
                 ({shipCount} vaisseaux)
               </span>
             )}
           </div>
         ) : hasShipCount ? (
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-muted-foreground/60">Vaisseaux :</span>
+            <span className="text-muted-foreground-soft">Vaisseaux :</span>
             <span className="text-foreground font-semibold">{shipCount}</span>
-            <span className="text-muted-foreground/40 italic text-[10px]">(composition inconnue)</span>
+            <span className="text-muted-foreground-faint italic text-[10px]">(composition inconnue)</span>
           </div>
         ) : (
-          <div className="text-xs text-muted-foreground/40 italic">Composition de la flotte inconnue</div>
+          <div className="text-xs text-muted-foreground-faint italic">Composition de la flotte inconnue</div>
         )}
 
         {/* Cargo */}
         {hasCargo && !isHostile && (
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
               Cargo
             </span>
             <div className="flex gap-3">
@@ -250,11 +250,11 @@ function InboundFleetCard({
         <div className="overflow-hidden">
           <div className="border-t border-white/[0.06] px-4 py-3 space-y-3 text-xs">
             <div className="grid grid-cols-2 gap-y-1 text-muted-foreground">
-              <span>Depart</span>
+              <span>Départ</span>
               <span className="text-foreground text-right">
                 {new Date(event.departureTime).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
-              <span>Arrivee estimee</span>
+              <span>Arrivée estimée</span>
               <span className="text-foreground text-right">
                 {new Date(event.arrivalTime).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
@@ -265,7 +265,7 @@ function InboundFleetCard({
             {/* Detection tier info for hostile fleets */}
             {isHostile && (
               <div className="pt-1 border-t border-white/[0.06]">
-                <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Niveau de detection
                 </div>
                 <div className="flex gap-1">
@@ -279,12 +279,12 @@ function InboundFleetCard({
                     />
                   ))}
                 </div>
-                <div className="text-[10px] text-muted-foreground/40 mt-1">
+                <div className="text-[10px] text-muted-foreground-faint mt-1">
                   {tier === 0 && 'Alerte minimale — origine et composition inconnues'}
-                  {tier === 1 && 'Coordonnees d\'origine detectees'}
-                  {tier === 2 && 'Nombre de vaisseaux detecte'}
-                  {tier === 3 && 'Composition de la flotte detectee'}
-                  {tier >= 4 && 'Detection complete — identite de l\'attaquant connue'}
+                  {tier === 1 && 'Coordonnées d\'origine détectées'}
+                  {tier === 2 && 'Nombre de vaisseaux détecté'}
+                  {tier === 3 && 'Composition de la flotte détectée'}
+                  {tier >= 4 && 'Détection complète — identité de l\'attaquant connue'}
                 </div>
               </div>
             )}
@@ -372,7 +372,7 @@ export default function Movements() {
                   <Box className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Emplacements de flotte</div>
+                  <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">Emplacements de flotte</div>
                   <div className="text-sm font-bold tabular-nums">
                     {fleetSlots.current}
                     <span className="text-muted-foreground font-normal"> / {fleetSlots.max}</span>
@@ -424,9 +424,9 @@ export default function Movements() {
             </div>
 
             {/* Explainer */}
-            <p className="text-[11px] text-muted-foreground/50 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground-soft leading-relaxed">
               Chaque flotte en mission occupe un emplacement jusqu&apos;a son retour.
-              La <span className="text-muted-foreground/70 font-medium">Technologie Ordinateur</span> augmente
+              La <span className="text-muted-foreground font-medium">Technologie Ordinateur</span> augmente
               le nombre d&apos;emplacements disponibles (+1 par niveau).
               {fleetSlots.current >= fleetSlots.max && (
                 <span className="text-amber-400/70"> Tous vos emplacements sont utilisés — attendez le retour d&apos;une flotte ou améliorez votre recherche.</span>
@@ -455,7 +455,7 @@ export default function Movements() {
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                 <span className="text-xs text-red-400/80 uppercase tracking-wider font-semibold">
-                  {hostileCount} attaque{hostileCount > 1 ? 's' : ''} detectee{hostileCount > 1 ? 's' : ''}
+                  {hostileCount} attaque{hostileCount > 1 ? 's' : ''} détectée{hostileCount > 1 ? 's' : ''}
                 </span>
               </div>
             )}
@@ -535,7 +535,7 @@ export default function Movements() {
         />
       ) : sorted.length > 0 ? (
         <div className="space-y-4 lg:max-w-4xl lg:mx-auto">
-          <div className="text-xs text-muted-foreground/60">
+          <div className="text-xs text-muted-foreground-soft">
             {sorted.length} mouvement{sorted.length > 1 ? 's' : ''} en cours
           </div>
 

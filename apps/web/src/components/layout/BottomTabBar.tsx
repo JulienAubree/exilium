@@ -61,7 +61,7 @@ const SHEET_ITEMS = {
     { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
     { label: 'Classement', path: '/ranking', icon: RankingIcon },
     { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },
-    { label: 'Nouveautes', path: '/changelog', icon: HistoryIcon },
+    { label: 'Nouveautés', path: '/changelog', icon: HistoryIcon },
     { label: 'Feedback', path: '/feedback', icon: MessageSquarePlus as any },
   ],
 };
