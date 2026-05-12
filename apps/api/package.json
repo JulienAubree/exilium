@@ -30,7 +30,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@trpc/server": "^11.0.0-rc.682",
     "argon2": "^0.41.1",
-    "bullmq": "^5.71.0",
+    "bullmq": "^5.76.8",
     "drizzle-orm": "^0.38.3",
     "fastify": "^5.2.1",
     "ioredis": "^5.4.2",
