@@ -1,11 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import {
-  mineraiProduction,
-  siliciumProduction,
-  hydrogeneProduction,
-} from '@exilium/game-engine';
+import { mineraiProduction, siliciumProduction, hydrogeneProduction } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { estimateRefund } from '@/lib/refund';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -21,11 +17,7 @@ import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/Re
 import { getPlanetImageUrl } from '@/lib/assets';
 import { BuildingsList } from './Buildings';
 
-const RESOURCE_CATEGORY_IDS = [
-  'building_extraction',
-  'building_energie',
-  'building_stockage',
-];
+const RESOURCE_CATEGORY_IDS = ['building_extraction', 'building_energie', 'building_stockage'];
 
 const BUILDING_IDS = {
   minerai: 'mineraiMine',
@@ -34,7 +26,10 @@ const BUILDING_IDS = {
 } as const;
 
 export default function Resources() {
-  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
+  const { planetId, planetClassId } = useOutletContext<{
+    planetId?: string;
+    planetClassId?: string | null;
+  }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
@@ -80,7 +75,9 @@ export default function Resources() {
 
   const buildingLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    buildings?.forEach((b) => {
+      levels[b.id] = b.currentLevel;
+    });
     return levels;
   }, [buildings]);
 
@@ -104,9 +101,10 @@ export default function Resources() {
       : undefined,
   );
 
-  const planetThumb = activePlanet?.planetClassId && activePlanet.planetImageIndex != null
-    ? getPlanetImageUrl(activePlanet.planetClassId, activePlanet.planetImageIndex, 'thumb')
-    : null;
+  const planetThumb =
+    activePlanet?.planetClassId && activePlanet.planetImageIndex != null
+      ? getPlanetImageUrl(activePlanet.planetClassId, activePlanet.planetImageIndex, 'thumb')
+      : null;
 
   // Find each resource building (typed to ResourceCard's BuildingForCard shape)
   const findBuilding = (id: string) => buildings?.find((b) => b.id === id);
@@ -123,6 +121,14 @@ export default function Resources() {
   const siliciumMultiplier = resourceData?.rates.siliciumMultiplier ?? 1;
   const hydrogeneMultiplier = resourceData?.rates.hydrogeneMultiplier ?? 1;
   const maxTemp = resourceData?.maxTemp ?? 0;
+
+  const craftRates = resourceData
+    ? {
+        mineraiPerHour: resourceData.rates.mineraiPerHour,
+        siliciumPerHour: resourceData.rates.siliciumPerHour,
+        hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+      }
+    : undefined;
 
   const handleUpgrade = (buildingId: string) => () => {
     if (!planetId) return;
@@ -146,7 +152,9 @@ export default function Resources() {
               className="h-full w-full object-cover opacity-40 blur-md scale-110"
               decoding="async"
               fetchPriority="low"
-              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-br from-amber-950/30 via-slate-950/70 to-emerald-950/30" />
@@ -166,7 +174,9 @@ export default function Resources() {
                   src={planetThumb}
                   alt={activePlanet?.name ?? ''}
                   className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 object-cover shadow-lg shadow-amber-500/15 transition-opacity group-hover:opacity-80"
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-amber-500/30 bg-card/60 shadow-lg shadow-amber-500/10" />
@@ -218,16 +228,27 @@ export default function Resources() {
             bonusMultiplier={mineraiMultiplier}
             productionAtCurrentLevel={
               mineraiBuilding && mineraiBuilding.currentLevel > 0
-                ? Math.floor(mineraiProduction(mineraiBuilding.currentLevel, productionFactor) * mineraiMultiplier)
+                ? Math.floor(
+                    mineraiProduction(mineraiBuilding.currentLevel, productionFactor) *
+                      mineraiMultiplier,
+                  )
                 : undefined
             }
             productionAtNextLevel={
               mineraiBuilding
-                ? Math.floor(mineraiProduction(mineraiBuilding.currentLevel + 1, productionFactor) * mineraiMultiplier)
+                ? Math.floor(
+                    mineraiProduction(mineraiBuilding.currentLevel + 1, productionFactor) *
+                      mineraiMultiplier,
+                  )
                 : undefined
             }
             building={mineraiBuilding}
-            resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
+            resources={{
+              minerai: liveResources.minerai,
+              silicium: liveResources.silicium,
+              hydrogene: liveResources.hydrogene,
+            }}
+            rates={craftRates}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
@@ -254,16 +275,27 @@ export default function Resources() {
             bonusMultiplier={siliciumMultiplier}
             productionAtCurrentLevel={
               siliciumBuilding && siliciumBuilding.currentLevel > 0
-                ? Math.floor(siliciumProduction(siliciumBuilding.currentLevel, productionFactor) * siliciumMultiplier)
+                ? Math.floor(
+                    siliciumProduction(siliciumBuilding.currentLevel, productionFactor) *
+                      siliciumMultiplier,
+                  )
                 : undefined
             }
             productionAtNextLevel={
               siliciumBuilding
-                ? Math.floor(siliciumProduction(siliciumBuilding.currentLevel + 1, productionFactor) * siliciumMultiplier)
+                ? Math.floor(
+                    siliciumProduction(siliciumBuilding.currentLevel + 1, productionFactor) *
+                      siliciumMultiplier,
+                  )
                 : undefined
             }
             building={siliciumBuilding}
-            resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
+            resources={{
+              minerai: liveResources.minerai,
+              silicium: liveResources.silicium,
+              hydrogene: liveResources.hydrogene,
+            }}
+            rates={craftRates}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
@@ -290,16 +322,30 @@ export default function Resources() {
             bonusMultiplier={hydrogeneMultiplier}
             productionAtCurrentLevel={
               hydrogeneBuilding && hydrogeneBuilding.currentLevel > 0
-                ? Math.floor(hydrogeneProduction(hydrogeneBuilding.currentLevel, maxTemp, productionFactor) * hydrogeneMultiplier)
+                ? Math.floor(
+                    hydrogeneProduction(hydrogeneBuilding.currentLevel, maxTemp, productionFactor) *
+                      hydrogeneMultiplier,
+                  )
                 : undefined
             }
             productionAtNextLevel={
               hydrogeneBuilding
-                ? Math.floor(hydrogeneProduction(hydrogeneBuilding.currentLevel + 1, maxTemp, productionFactor) * hydrogeneMultiplier)
+                ? Math.floor(
+                    hydrogeneProduction(
+                      hydrogeneBuilding.currentLevel + 1,
+                      maxTemp,
+                      productionFactor,
+                    ) * hydrogeneMultiplier,
+                  )
                 : undefined
             }
             building={hydrogeneBuilding}
-            resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
+            resources={{
+              minerai: liveResources.minerai,
+              silicium: liveResources.silicium,
+              hydrogene: liveResources.hydrogene,
+            }}
+            rates={craftRates}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
@@ -320,8 +366,12 @@ export default function Resources() {
             className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-accent/30 transition-colors"
           >
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Tous les bâtiments de ressources</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Extraction · Énergie · Stockage</p>
+              <h2 className="text-sm font-semibold text-foreground">
+                Tous les bâtiments de ressources
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Extraction · Énergie · Stockage
+              </p>
             </div>
             {detailsExpanded ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -344,11 +394,7 @@ export default function Resources() {
       </div>
 
       {/* Help overlay */}
-      <EntityDetailOverlay
-        open={helpOpen}
-        onClose={() => setHelpOpen(false)}
-        title="Ressources"
-      >
+      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Ressources">
         <ResourcesHelp planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
@@ -356,7 +402,7 @@ export default function Resources() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? gameConfig?.buildings[detailId]?.name ?? '' : ''}
+        title={detailId ? (gameConfig?.buildings[detailId]?.name ?? '') : ''}
       >
         {detailId && buildings && (
           <BuildingDetailContent
@@ -399,13 +445,19 @@ export default function Resources() {
               </div>
               <div className="flex flex-wrap gap-3 text-xs">
                 {refund.minerai > 0 && (
-                  <span className="text-minerai font-semibold">+{refund.minerai.toLocaleString('fr-FR')} M</span>
+                  <span className="text-minerai font-semibold">
+                    +{refund.minerai.toLocaleString('fr-FR')} M
+                  </span>
                 )}
                 {refund.silicium > 0 && (
-                  <span className="text-silicium font-semibold">+{refund.silicium.toLocaleString('fr-FR')} S</span>
+                  <span className="text-silicium font-semibold">
+                    +{refund.silicium.toLocaleString('fr-FR')} S
+                  </span>
                 )}
                 {refund.hydrogene > 0 && (
-                  <span className="text-hydrogene font-semibold">+{refund.hydrogene.toLocaleString('fr-FR')} H</span>
+                  <span className="text-hydrogene font-semibold">
+                    +{refund.hydrogene.toLocaleString('fr-FR')} H
+                  </span>
                 )}
               </div>
             </div>

@@ -66,7 +66,11 @@ function getEffectLine(buildingId: string, level: number): string | null {
     }
     case 'researchLab':
       return 'Pilote toute la recherche';
-    case 'labVolcanic': case 'labArid': case 'labTemperate': case 'labGlacial': case 'labGaseous':
+    case 'labVolcanic':
+    case 'labArid':
+    case 'labTemperate':
+    case 'labGlacial':
+    case 'labGaseous':
       return 'Boost +5%/niv. recherche';
     default:
       return null;
@@ -78,10 +82,10 @@ function getRelayEffectLine(level: number, planetClassId: string | null): string
   if (level <= 0) return null;
   const bonus = getMissionRelayBonusPerLevel(planetClassId);
   const parts: string[] = [];
-  if (bonus.minerai > 0)   parts.push(`+${Math.round(bonus.minerai * level * 100)}% minerai`);
-  if (bonus.silicium > 0)  parts.push(`+${Math.round(bonus.silicium * level * 100)}% silicium`);
+  if (bonus.minerai > 0) parts.push(`+${Math.round(bonus.minerai * level * 100)}% minerai`);
+  if (bonus.silicium > 0) parts.push(`+${Math.round(bonus.silicium * level * 100)}% silicium`);
   if (bonus.hydrogene > 0) parts.push(`+${Math.round(bonus.hydrogene * level * 100)}% hydrogène`);
-  if (bonus.pirate > 0)    parts.push(`+${Math.round(bonus.pirate * level * 100)}% butin pirates`);
+  if (bonus.pirate > 0) parts.push(`+${Math.round(bonus.pirate * level * 100)}% butin pirates`);
   if (parts.length === 0) return null;
   return `${parts.join(' · ')} (cumulé niv. ${level})`;
 }
@@ -96,7 +100,10 @@ interface InfraSlot {
 }
 
 export default function Infrastructures() {
-  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
+  const { planetId, planetClassId } = useOutletContext<{
+    planetId?: string;
+    planetClassId?: string | null;
+  }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
@@ -145,7 +152,9 @@ export default function Infrastructures() {
 
   const buildingLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    buildings?.forEach((b) => {
+      levels[b.id] = b.currentLevel;
+    });
     return levels;
   }, [buildings]);
 
@@ -168,18 +177,20 @@ export default function Infrastructures() {
       : undefined,
   );
 
-  const planetThumb = activePlanet?.planetClassId && activePlanet.planetImageIndex != null
-    ? getPlanetImageUrl(activePlanet.planetClassId, activePlanet.planetImageIndex, 'thumb')
-    : null;
+  const planetThumb =
+    activePlanet?.planetClassId && activePlanet.planetImageIndex != null
+      ? getPlanetImageUrl(activePlanet.planetClassId, activePlanet.planetImageIndex, 'thumb')
+      : null;
 
   // Build the list of cards based on planet type. Order matters (visual layout).
   const slots: InfraSlot[] = useMemo(() => {
     const make = (id: string, locked: boolean, lockReason?: string): InfraSlot => {
       const def = gameConfig?.buildings[id];
       const level = buildingLevels[id] ?? 0;
-      const effect = id === 'missionRelay'
-        ? getRelayEffectLine(level, planetClassId ?? null)
-        : getEffectLine(id, level);
+      const effect =
+        id === 'missionRelay'
+          ? getRelayEffectLine(level, planetClassId ?? null)
+          : getEffectLine(id, level);
       return {
         id,
         label: def?.name ?? id,
@@ -190,7 +201,8 @@ export default function Infrastructures() {
       };
     };
 
-    const annexId = planetClassId && ANNEX_LAB_BY_BIOME[planetClassId] ? ANNEX_LAB_BY_BIOME[planetClassId] : null;
+    const annexId =
+      planetClassId && ANNEX_LAB_BY_BIOME[planetClassId] ? ANNEX_LAB_BY_BIOME[planetClassId] : null;
 
     return [
       make('robotics', false),
@@ -199,9 +211,7 @@ export default function Infrastructures() {
         : annexId
           ? make(annexId, false)
           : make('researchLab', true, 'Le laboratoire principal vit sur votre planète-mère.'),
-      isHomeworld
-        ? make('missionCenter', false)
-        : make('missionRelay', false),
+      isHomeworld ? make('missionCenter', false) : make('missionRelay', false),
       make('galacticMarket', false),
       isHomeworld
         ? make('imperialPowerCenter', false)
@@ -236,7 +246,9 @@ export default function Infrastructures() {
               className="h-full w-full object-cover opacity-40 blur-md scale-110"
               decoding="async"
               fetchPriority="low"
-              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-slate-950/70 to-cyan-950/30" />
@@ -256,7 +268,9 @@ export default function Infrastructures() {
                   src={planetThumb}
                   alt={activePlanet?.name ?? ''}
                   className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-violet-500/30 object-cover shadow-lg shadow-violet-500/15 transition-opacity group-hover:opacity-80"
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-full border-2 border-violet-500/30 bg-card/60 shadow-lg shadow-violet-500/10" />
@@ -304,7 +318,20 @@ export default function Infrastructures() {
               locked={slot.locked}
               lockReason={slot.lockReason}
               onSwitchToHome={slot.locked ? handleSwitchToHome : undefined}
-              resources={{ minerai: liveResources.minerai, silicium: liveResources.silicium, hydrogene: liveResources.hydrogene }}
+              resources={{
+                minerai: liveResources.minerai,
+                silicium: liveResources.silicium,
+                hydrogene: liveResources.hydrogene,
+              }}
+              rates={
+                resourceData
+                  ? {
+                      mineraiPerHour: resourceData.rates.mineraiPerHour,
+                      siliciumPerHour: resourceData.rates.siliciumPerHour,
+                      hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+                    }
+                  : undefined
+              }
               buildingLevels={buildingLevels}
               isAnyUpgrading={isAnyBuildingUpgrading}
               upgradePending={upgradeMutation.isPending}
@@ -326,8 +353,12 @@ export default function Infrastructures() {
             className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-accent/30 transition-colors"
           >
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Tous les bâtiments d'infrastructure</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Industrie · Recherche · Exploration · Commerce · Gouvernance · Défense</p>
+              <h2 className="text-sm font-semibold text-foreground">
+                Tous les bâtiments d'infrastructure
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Industrie · Recherche · Exploration · Commerce · Gouvernance · Défense
+              </p>
             </div>
             {detailsExpanded ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -363,7 +394,7 @@ export default function Infrastructures() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? gameConfig?.buildings[detailId]?.name ?? '' : ''}
+        title={detailId ? (gameConfig?.buildings[detailId]?.name ?? '') : ''}
       >
         {detailId && buildings && (
           <BuildingDetailContent
@@ -406,13 +437,19 @@ export default function Infrastructures() {
               </div>
               <div className="flex flex-wrap gap-3 text-xs">
                 {refund.minerai > 0 && (
-                  <span className="text-minerai font-semibold">+{refund.minerai.toLocaleString('fr-FR')} M</span>
+                  <span className="text-minerai font-semibold">
+                    +{refund.minerai.toLocaleString('fr-FR')} M
+                  </span>
                 )}
                 {refund.silicium > 0 && (
-                  <span className="text-silicium font-semibold">+{refund.silicium.toLocaleString('fr-FR')} S</span>
+                  <span className="text-silicium font-semibold">
+                    +{refund.silicium.toLocaleString('fr-FR')} S
+                  </span>
                 )}
                 {refund.hydrogene > 0 && (
-                  <span className="text-hydrogene font-semibold">+{refund.hydrogene.toLocaleString('fr-FR')} H</span>
+                  <span className="text-hydrogene font-semibold">
+                    +{refund.hydrogene.toLocaleString('fr-FR')} H
+                  </span>
                 )}
               </div>
             </div>

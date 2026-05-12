@@ -6,6 +6,7 @@ import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
 import { Timer } from '@/components/common/Timer';
 import { GameImage } from '@/components/common/GameImage';
 import { ClockIcon } from '@/components/icons/utility-icons';
@@ -25,7 +26,11 @@ import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { ResearchActivePanel } from '@/components/research/ResearchActivePanel';
 import { ResearchRoleFilter, type ResearchFilter } from '@/components/research/ResearchRoleFilter';
 import { ResearchHelp } from '@/components/research/ResearchHelp';
-import { RESEARCH_CATEGORIES, RESEARCH_CATEGORY_MAP, type ResearchCategoryId } from '@/components/research/research-icons';
+import {
+  RESEARCH_CATEGORIES,
+  RESEARCH_CATEGORY_MAP,
+  type ResearchCategoryId,
+} from '@/components/research/research-icons';
 
 const ANNEX_LAB_BY_PLANET_CLASS: Record<string, { id: string; name: string }> = {
   volcanic: { id: 'labVolcanic', name: 'Forge Volcanique' },
@@ -91,6 +96,14 @@ export default function Research() {
       : undefined,
   );
 
+  const craftRates = resourceData
+    ? {
+        mineraiPerHour: resourceData.rates.mineraiPerHour,
+        siliciumPerHour: resourceData.rates.siliciumPerHour,
+        hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+      }
+    : undefined;
+
   const startMutation = trpc.research.start.useMutation({
     onSuccess: () => {
       utils.research.list.invalidate();
@@ -131,7 +144,9 @@ export default function Research() {
 
   const researchLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    techs?.forEach((t) => { levels[t.id] = t.currentLevel; });
+    techs?.forEach((t) => {
+      levels[t.id] = t.currentLevel;
+    });
     return levels;
   }, [techs]);
 
@@ -162,7 +177,9 @@ export default function Research() {
     const annexBuilding = annex ? colonyBuildings?.find((b) => b.id === annex.id) : undefined;
     const isAnyColonyUpgrading = colonyBuildings?.some((b) => b.isUpgrading) ?? false;
     const colonyBuildingLevels: Record<string, number> = {};
-    colonyBuildings?.forEach((b) => { colonyBuildingLevels[b.id] = b.currentLevel; });
+    colonyBuildings?.forEach((b) => {
+      colonyBuildingLevels[b.id] = b.currentLevel;
+    });
 
     return (
       <FacilityLockedHero
@@ -171,9 +188,16 @@ export default function Research() {
         planetClassId={currentPlanet?.planetClassId}
         description={
           annex ? (
-            <>Le programme scientifique principal s'exécute depuis votre <span className="text-foreground font-semibold">planète-mère</span>. Cette colonie peut héberger une annexe spécialisée qui boostera l'ensemble de votre recherche.</>
+            <>
+              Le programme scientifique principal s'exécute depuis votre{' '}
+              <span className="text-foreground font-semibold">planète-mère</span>. Cette colonie
+              peut héberger une annexe spécialisée qui boostera l'ensemble de votre recherche.
+            </>
           ) : (
-            <>Le programme scientifique s'exécute depuis votre <span className="text-foreground font-semibold">planète-mère</span>.</>
+            <>
+              Le programme scientifique s'exécute depuis votre{' '}
+              <span className="text-foreground font-semibold">planète-mère</span>.
+            </>
           )
         }
       >
@@ -186,13 +210,19 @@ export default function Research() {
               prerequisites={annexBuilding.prerequisites as any}
               isUpgrading={!!annexBuilding.isUpgrading}
               upgradeEndTime={annexBuilding.upgradeEndTime ?? null}
-              resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+              resources={{
+                minerai: resources.minerai,
+                silicium: resources.silicium,
+                hydrogene: resources.hydrogene,
+              }}
               buildingLevels={colonyBuildingLevels}
               isAnyUpgrading={isAnyColonyUpgrading}
               upgradePending={upgradeMutation.isPending}
               cancelPending={buildingCancelMutation.isPending}
               gameConfig={gameConfig}
-              onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: annex.id as any })}
+              onUpgrade={() =>
+                upgradeMutation.mutate({ planetId: planetId!, buildingId: annex.id as any })
+              }
               onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
               onTimerComplete={() => {
                 utils.building.list.invalidate({ planetId: planetId! });
@@ -221,7 +251,13 @@ export default function Research() {
         buildingId="researchLab"
         title="Laboratoire de recherche"
         planetClassId={homePlanet?.planetClassId}
-        description={<>Construisez le <span className="text-foreground font-semibold">Laboratoire de recherche</span> sur votre planète-mère pour démarrer le programme scientifique de votre empire.</>}
+        description={
+          <>
+            Construisez le{' '}
+            <span className="text-foreground font-semibold">Laboratoire de recherche</span> sur
+            votre planète-mère pour démarrer le programme scientifique de votre empire.
+          </>
+        }
       >
         {researchLabBuilding && homePlanet && (
           <BuildingUpgradeCard
@@ -231,13 +267,19 @@ export default function Research() {
             prerequisites={researchLabBuilding.prerequisites as any}
             isUpgrading={!!researchLabBuilding.isUpgrading}
             upgradeEndTime={researchLabBuilding.upgradeEndTime ?? null}
-            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            resources={{
+              minerai: resources.minerai,
+              silicium: resources.silicium,
+              hydrogene: resources.hydrogene,
+            }}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: homePlanet.id, buildingId: 'researchLab' as any })}
+            onUpgrade={() =>
+              upgradeMutation.mutate({ planetId: homePlanet.id, buildingId: 'researchLab' as any })
+            }
             onCancel={() => buildingCancelMutation.mutate({ planetId: homePlanet.id })}
             onTimerComplete={() => {
               if (homePlanet.id) utils.building.list.invalidate({ planetId: homePlanet.id });
@@ -261,8 +303,11 @@ export default function Research() {
     list.push(tech);
     techsByCategory.set(catId, list);
   }
-  const availableCategories = RESEARCH_CATEGORIES.filter((c) => techsByCategory.has(c.id)).map((c) => c.id);
-  const visibleCategories = filter === 'all' ? availableCategories : availableCategories.filter((id) => id === filter);
+  const availableCategories = RESEARCH_CATEGORIES.filter((c) => techsByCategory.has(c.id)).map(
+    (c) => c.id,
+  );
+  const visibleCategories =
+    filter === 'all' ? availableCategories : availableCategories.filter((id) => id === filter);
 
   // ── Main layout ───────────────────────────────────────────────────────
   return (
@@ -274,28 +319,40 @@ export default function Research() {
         planetClassId={homePlanet?.planetClassId}
         planetImageIndex={homePlanet?.planetImageIndex}
         onOpenHelp={() => setHelpOpen(true)}
-        upgradeCard={researchLabBuilding && homePlanet && (
-          <BuildingUpgradeCard
-            currentLevel={researchLabBuilding.currentLevel}
-            nextLevelCost={researchLabBuilding.nextLevelCost}
-            nextLevelTime={researchLabBuilding.nextLevelTime}
-            prerequisites={researchLabBuilding.prerequisites as any}
-            isUpgrading={!!researchLabBuilding.isUpgrading}
-            upgradeEndTime={researchLabBuilding.upgradeEndTime ?? null}
-            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
-            buildingLevels={buildingLevels}
-            isAnyUpgrading={isAnyBuildingUpgrading}
-            upgradePending={upgradeMutation.isPending}
-            cancelPending={buildingCancelMutation.isPending}
-            gameConfig={gameConfig}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: homePlanet.id, buildingId: 'researchLab' as any })}
-            onCancel={() => buildingCancelMutation.mutate({ planetId: homePlanet.id })}
-            onTimerComplete={() => {
-              if (homePlanet.id) utils.building.list.invalidate({ planetId: homePlanet.id });
-              utils.research.list.invalidate();
-            }}
-          />
-        )}
+        upgradeCard={
+          researchLabBuilding &&
+          homePlanet && (
+            <BuildingUpgradeCard
+              currentLevel={researchLabBuilding.currentLevel}
+              nextLevelCost={researchLabBuilding.nextLevelCost}
+              nextLevelTime={researchLabBuilding.nextLevelTime}
+              prerequisites={researchLabBuilding.prerequisites as any}
+              isUpgrading={!!researchLabBuilding.isUpgrading}
+              upgradeEndTime={researchLabBuilding.upgradeEndTime ?? null}
+              resources={{
+                minerai: resources.minerai,
+                silicium: resources.silicium,
+                hydrogene: resources.hydrogene,
+              }}
+              buildingLevels={buildingLevels}
+              isAnyUpgrading={isAnyBuildingUpgrading}
+              upgradePending={upgradeMutation.isPending}
+              cancelPending={buildingCancelMutation.isPending}
+              gameConfig={gameConfig}
+              onUpgrade={() =>
+                upgradeMutation.mutate({
+                  planetId: homePlanet.id,
+                  buildingId: 'researchLab' as any,
+                })
+              }
+              onCancel={() => buildingCancelMutation.mutate({ planetId: homePlanet.id })}
+              onTimerComplete={() => {
+                if (homePlanet.id) utils.building.list.invalidate({ planetId: homePlanet.id });
+                utils.research.list.invalidate();
+              }}
+            />
+          )
+        }
       >
         {bonuses && (
           <ResearchActivePanel
@@ -312,7 +369,11 @@ export default function Research() {
       </FacilityHero>
 
       <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
-        <ResearchRoleFilter value={filter} onChange={setFilter} availableCategories={availableCategories} />
+        <ResearchRoleFilter
+          value={filter}
+          onChange={setFilter}
+          availableCategories={availableCategories}
+        />
 
         <section className="glass-card p-4 lg:p-5 space-y-8">
           {visibleCategories.map((categoryId) => {
@@ -354,11 +415,19 @@ export default function Research() {
                             Objectif
                           </span>
                         )}
-                        <GameImage category="research" id={tech.id} size="icon" alt={tech.name} className="h-8 w-8 rounded" />
+                        <GameImage
+                          category="research"
+                          id={tech.id}
+                          size="icon"
+                          alt={tech.name}
+                          className="h-8 w-8 rounded"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium truncate">{tech.name}</span>
-                            <Badge variant="secondary" className="text-xs ml-2">Niv. {tech.currentLevel}</Badge>
+                            <Badge variant="secondary" className="text-xs ml-2">
+                              Niv. {tech.currentLevel}
+                            </Badge>
                           </div>
                           {tech.isResearching && tech.researchEndTime ? (
                             <div className="mt-1">
@@ -372,25 +441,50 @@ export default function Research() {
                               />
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                              <ResourceCost
-                                minerai={tech.nextLevelCost.minerai}
-                                silicium={tech.nextLevelCost.silicium}
-                                hydrogene={tech.nextLevelCost.hydrogene}
-                                currentMinerai={resources.minerai}
-                                currentSilicium={resources.silicium}
-                                currentHydrogene={resources.hydrogene}
-                              />
-                              <span className="font-mono text-[10px] shrink-0">{formatDuration(tech.nextLevelTime)}</span>
-                            </div>
+                            <>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                <ResourceCost
+                                  minerai={tech.nextLevelCost.minerai}
+                                  silicium={tech.nextLevelCost.silicium}
+                                  hydrogene={tech.nextLevelCost.hydrogene}
+                                  currentMinerai={resources.minerai}
+                                  currentSilicium={resources.silicium}
+                                  currentHydrogene={resources.hydrogene}
+                                />
+                                <span className="font-mono text-[10px] shrink-0">
+                                  {formatDuration(tech.nextLevelTime)}
+                                </span>
+                              </div>
+                              {craftRates && !canAfford && tech.prerequisitesMet && (
+                                <div className="mt-0.5">
+                                  <CraftEtaBadge
+                                    cost={tech.nextLevelCost}
+                                    stock={{
+                                      minerai: resources.minerai,
+                                      silicium: resources.silicium,
+                                      hydrogene: resources.hydrogene,
+                                    }}
+                                    rates={craftRates}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                         {!tech.isResearching && (
                           <Button
                             size="sm"
                             className="shrink-0"
-                            onClick={(e) => { e.stopPropagation(); startMutation.mutate({ researchId: tech.id as any }); }}
-                            disabled={!canAfford || !tech.prerequisitesMet || isAnyResearching || startMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startMutation.mutate({ researchId: tech.id as any });
+                            }}
+                            disabled={
+                              !canAfford ||
+                              !tech.prerequisitesMet ||
+                              isAnyResearching ||
+                              startMutation.isPending
+                            }
                           >
                             ↑
                           </Button>
@@ -467,8 +561,27 @@ export default function Research() {
                                 <ClockIcon className="h-3 w-3" />
                                 {formatDuration(tech.nextLevelTime)}
                               </div>
+                              {craftRates && !canAfford && tech.prerequisitesMet && (
+                                <CraftEtaBadge
+                                  cost={tech.nextLevelCost}
+                                  stock={{
+                                    minerai: resources.minerai,
+                                    silicium: resources.silicium,
+                                    hydrogene: resources.hydrogene,
+                                  }}
+                                  rates={craftRates}
+                                />
+                              )}
                               {!tech.prerequisitesMet ? (
-                                <PrerequisiteList items={buildPrerequisiteItems(gameConfig?.research[tech.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)} missingOnly />
+                                <PrerequisiteList
+                                  items={buildPrerequisiteItems(
+                                    gameConfig?.research[tech.id]?.prerequisites ?? {},
+                                    buildingLevels,
+                                    researchLevels,
+                                    gameConfig,
+                                  )}
+                                  missingOnly
+                                />
                               ) : (
                                 <Button
                                   variant="retro"
@@ -478,7 +591,9 @@ export default function Research() {
                                     e.stopPropagation();
                                     startMutation.mutate({ researchId: tech.id as any });
                                   }}
-                                  disabled={!canAfford || isAnyResearching || startMutation.isPending}
+                                  disabled={
+                                    !canAfford || isAnyResearching || startMutation.isPending
+                                  }
                                 >
                                   Rechercher
                                 </Button>
@@ -500,13 +615,23 @@ export default function Research() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? gameConfig?.research[detailId]?.name ?? '' : ''}
+        title={detailId ? (gameConfig?.research[detailId]?.name ?? '') : ''}
       >
-        {detailId && <ResearchDetailContent researchId={detailId} researchLevels={researchLevels} buildingLevels={buildingLevels} />}
+        {detailId && (
+          <ResearchDetailContent
+            researchId={detailId}
+            researchLevels={researchLevels}
+            buildingLevels={buildingLevels}
+          />
+        )}
       </EntityDetailOverlay>
 
       {/* Help overlay */}
-      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Laboratoire de recherche">
+      <EntityDetailOverlay
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="Laboratoire de recherche"
+      >
         <ResearchHelp level={labLevel} planetClassId={homePlanet?.planetClassId} />
       </EntityDetailOverlay>
 

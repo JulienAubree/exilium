@@ -3,10 +3,12 @@ import { ArrowUp, Lock, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
 import { Timer } from '@/components/common/Timer';
 import { ClockIcon } from '@/components/icons/utility-icons';
 import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 import { formatDuration } from '@/lib/format';
+import type { CraftRates } from '@/lib/craft-eta';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingIllustrationUrl } from '@/lib/assets';
 import type { BuildingForCard } from '@/components/resources/ResourceCard';
@@ -30,6 +32,7 @@ interface InfrastructureCardProps {
   onSwitchToHome?: () => void;
 
   resources: { minerai: number; silicium: number; hydrogene: number };
+  rates?: CraftRates;
   buildingLevels: Record<string, number>;
   isAnyUpgrading: boolean;
   upgradePending: boolean;
@@ -52,6 +55,7 @@ export function InfrastructureCard({
   lockReason,
   onSwitchToHome,
   resources,
+  rates,
   buildingLevels,
   isAnyUpgrading,
   upgradePending,
@@ -101,12 +105,16 @@ export function InfrastructureCard({
             locked && 'grayscale',
           )}
           decoding="async"
-          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          onError={(e) => {
+            (e.target as HTMLElement).style.display = 'none';
+          }}
         />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-card via-card/80 to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 px-3 lg:px-4 pb-2 flex items-end justify-between gap-2">
-          <span className="text-sm lg:text-base font-bold text-foreground drop-shadow-md truncate">{buildingLabel}</span>
+          <span className="text-sm lg:text-base font-bold text-foreground drop-shadow-md truncate">
+            {buildingLabel}
+          </span>
           {!locked && building && currentLevel > 0 && (
             <span className="font-mono text-[11px] text-muted-foreground bg-background/40 backdrop-blur-sm rounded px-1.5 py-0.5">
               Niv. {currentLevel}
@@ -127,7 +135,9 @@ export function InfrastructureCard({
 
       {/* Body */}
       <div className="p-3 lg:p-4 space-y-2 flex flex-col flex-1">
-        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+          {description}
+        </p>
 
         {effectLine && !locked && (
           <div className="text-xs text-foreground font-medium">{effectLine}</div>
@@ -135,9 +145,7 @@ export function InfrastructureCard({
 
         {locked ? (
           <div className="mt-auto space-y-1.5">
-            {lockReason && (
-              <p className="text-[11px] text-muted-foreground italic">{lockReason}</p>
-            )}
+            {lockReason && <p className="text-[11px] text-muted-foreground italic">{lockReason}</p>}
             {onSwitchToHome && (
               <Button
                 variant="outline"
@@ -188,12 +196,18 @@ export function InfrastructureCard({
                 <ClockIcon className="h-3 w-3" />
                 {formatDuration(building.nextLevelTime)}
               </div>
+              {rates && !canAfford && prereqsMet && (
+                <CraftEtaBadge cost={building.nextLevelCost} stock={resources} rates={rates} />
+              )}
               {!prereqsMet ? (
                 <PrerequisiteList
                   items={buildPrerequisiteItems(
                     { buildings: building.prerequisites },
                     Object.fromEntries(
-                      building.prerequisites.map((p) => [p.buildingId, p.currentLevel ?? buildingLevels[p.buildingId] ?? 0]),
+                      building.prerequisites.map((p) => [
+                        p.buildingId,
+                        p.currentLevel ?? buildingLevels[p.buildingId] ?? 0,
+                      ]),
                     ),
                     {},
                     gameConfig,

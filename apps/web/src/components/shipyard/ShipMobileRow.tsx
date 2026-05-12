@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
 import { QuantityStepper } from '@/components/common/QuantityStepper';
 import { GameImage } from '@/components/common/GameImage';
 import { formatDuration } from '@/lib/format';
+import type { CraftRates } from '@/lib/craft-eta';
 import { cn } from '@/lib/utils';
 
 type Ship = {
@@ -21,6 +23,8 @@ interface ShipMobileRowProps {
   canAfford: boolean;
   highlighted: boolean;
   buildPending: boolean;
+  resources?: { minerai: number; silicium: number; hydrogene: number };
+  rates?: CraftRates;
   onQuantityChange: (value: number) => void;
   onBuild: () => void;
   onOpenDetail: () => void;
@@ -33,6 +37,8 @@ export function ShipMobileRow({
   canAfford,
   highlighted,
   buildPending,
+  resources,
+  rates,
   onQuantityChange,
   onBuild,
   onOpenDetail,
@@ -52,20 +58,40 @@ export function ShipMobileRow({
           Objectif
         </span>
       )}
-      <GameImage category="ships" id={ship.id} size="icon" alt={ship.name} className="h-8 w-8 rounded" />
+      <GameImage
+        category="ships"
+        id={ship.id}
+        size="icon"
+        alt={ship.name}
+        className="h-8 w-8 rounded"
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium truncate">{ship.name}</span>
           <span className="text-xs text-muted-foreground">x{ship.count}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <ResourceCost minerai={ship.cost.minerai} silicium={ship.cost.silicium} hydrogene={ship.cost.hydrogene} />
+          <ResourceCost
+            minerai={ship.cost.minerai}
+            silicium={ship.cost.silicium}
+            hydrogene={ship.cost.hydrogene}
+          />
           <span className="font-mono text-[10px] shrink-0">{formatDuration(ship.timePerUnit)}</span>
         </div>
+        {rates && resources && !canAfford && ship.prerequisitesMet && (
+          <div className="mt-1">
+            <CraftEtaBadge cost={ship.cost} stock={resources} rates={rates} quantity={quantity} />
+          </div>
+        )}
       </div>
       {ship.prerequisitesMet && (
         <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <QuantityStepper value={quantity} onChange={onQuantityChange} max={maxAffordable} showMax={false} />
+          <QuantityStepper
+            value={quantity}
+            onChange={onQuantityChange}
+            max={maxAffordable}
+            showMax={false}
+          />
           <Button
             size="sm"
             className="h-7 px-2"

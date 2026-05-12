@@ -1,10 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
+import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
 import { QuantityStepper } from '@/components/common/QuantityStepper';
 import { GameImage } from '@/components/common/GameImage';
 import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 import { ClockIcon } from '@/components/icons/utility-icons';
 import { formatDuration } from '@/lib/format';
+import type { CraftRates } from '@/lib/craft-eta';
 import { cn } from '@/lib/utils';
 import { useGameConfig } from '@/hooks/useGameConfig';
 
@@ -26,6 +28,7 @@ interface ShipCardProps {
   canAfford: boolean;
   highlighted: boolean;
   resources: { minerai: number; silicium: number; hydrogene: number };
+  rates?: CraftRates;
   gameConfig: GameConfigData;
   buildingLevels: Record<string, number>;
   researchLevels: Record<string, number>;
@@ -42,6 +45,7 @@ export function ShipCard({
   canAfford,
   highlighted,
   resources,
+  rates,
   gameConfig,
   buildingLevels,
   researchLevels,
@@ -66,7 +70,13 @@ export function ShipCard({
         </span>
       )}
       <div className="relative h-[130px] overflow-hidden">
-        <GameImage category="ships" id={ship.id} size="full" alt={ship.name} className="w-full h-full object-cover" />
+        <GameImage
+          category="ships"
+          id={ship.id}
+          size="full"
+          alt={ship.name}
+          className="w-full h-full object-cover"
+        />
         <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
           x{ship.count}
         </span>
@@ -88,9 +98,17 @@ export function ShipCard({
           <ClockIcon className="h-3 w-3" />
           {formatDuration(ship.timePerUnit)}
         </div>
+        {rates && !canAfford && ship.prerequisitesMet && (
+          <CraftEtaBadge cost={ship.cost} stock={resources} rates={rates} quantity={quantity} />
+        )}
         {!ship.prerequisitesMet ? (
           <PrerequisiteList
-            items={buildPrerequisiteItems(gameConfig?.ships[ship.id]?.prerequisites ?? {}, buildingLevels, researchLevels, gameConfig)}
+            items={buildPrerequisiteItems(
+              gameConfig?.ships[ship.id]?.prerequisites ?? {},
+              buildingLevels,
+              researchLevels,
+              gameConfig,
+            )}
             missingOnly
           />
         ) : (

@@ -18,16 +18,25 @@ import { ShipyardRoleFilter, type ShipyardFilter } from '@/components/shipyard/S
 import { ShipCard } from '@/components/shipyard/ShipCard';
 import { ShipMobileRow } from '@/components/shipyard/ShipMobileRow';
 import { ShipyardHelp } from '@/components/shipyard/ShipyardHelp';
-import { SHIPYARD_ROLES, SHIPYARD_ROLE_MAP, type ShipyardRoleId } from '@/components/shipyard/role-icons';
+import {
+  SHIPYARD_ROLES,
+  SHIPYARD_ROLE_MAP,
+  type ShipyardRoleId,
+} from '@/components/shipyard/role-icons';
 
 export default function Shipyard() {
-  const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
+  const { planetId, planetClassId } = useOutletContext<{
+    planetId?: string;
+    planetClassId?: string | null;
+  }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
   const tutorialTargetId = useTutorialTargetId();
 
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  useEffect(() => { setQuantities({}); }, [planetId]);
+  useEffect(() => {
+    setQuantities({});
+  }, [planetId]);
 
   const [detailId, setDetailId] = useState<string | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
@@ -78,13 +87,17 @@ export default function Shipyard() {
 
   const researchLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    researchList?.forEach((r) => { levels[r.id] = r.currentLevel; });
+    researchList?.forEach((r) => {
+      levels[r.id] = r.currentLevel;
+    });
     return levels;
   }, [researchList]);
 
   const buildingLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
+    buildings?.forEach((b) => {
+      levels[b.id] = b.currentLevel;
+    });
     return levels;
   }, [buildings]);
 
@@ -158,7 +171,12 @@ export default function Shipyard() {
         buildingId="shipyard"
         title="Chantier spatial"
         planetClassId={planetClassId}
-        description={<>Construisez le <span className="text-foreground font-semibold">Chantier spatial</span> pour assembler les vaisseaux industriels de votre empire.</>}
+        description={
+          <>
+            Construisez le <span className="text-foreground font-semibold">Chantier spatial</span>{' '}
+            pour assembler les vaisseaux industriels de votre empire.
+          </>
+        }
       >
         {shipyardBuilding && (
           <BuildingUpgradeCard
@@ -168,13 +186,19 @@ export default function Shipyard() {
             prerequisites={shipyardBuilding.prerequisites as any}
             isUpgrading={!!shipyardBuilding.isUpgrading}
             upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
-            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+            resources={{
+              minerai: resources.minerai,
+              silicium: resources.silicium,
+              hydrogene: resources.hydrogene,
+            }}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })}
+            onUpgrade={() =>
+              upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })
+            }
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {
               utils.building.list.invalidate({ planetId: planetId! });
@@ -196,30 +220,40 @@ export default function Shipyard() {
     shipsByRole.set(role, list);
   }
   const availableRoles = SHIPYARD_ROLES.filter((r) => shipsByRole.has(r.id)).map((r) => r.id);
-  const visibleRoles = filter === 'all'
-    ? availableRoles
-    : availableRoles.filter((id) => id === filter);
+  const visibleRoles =
+    filter === 'all' ? availableRoles : availableRoles.filter((id) => id === filter);
 
   // ── Per-ship derived values (qty, affordability, highlight) ───────────
-  const derivations = new Map<string, {
-    qty: number;
-    maxAffordable: number;
-    canAfford: boolean;
-    highlighted: boolean;
-  }>();
+  const derivations = new Map<
+    string,
+    {
+      qty: number;
+      maxAffordable: number;
+      canAfford: boolean;
+      highlighted: boolean;
+    }
+  >();
   for (const ship of ships) {
     const qty = quantities[ship.id] || 1;
-    const maxAffordable = Math.max(1, Math.min(
-      ship.cost.minerai > 0 ? Math.floor(resources.minerai / ship.cost.minerai) : 9999,
-      ship.cost.silicium > 0 ? Math.floor(resources.silicium / ship.cost.silicium) : 9999,
-      ship.cost.hydrogene > 0 ? Math.floor(resources.hydrogene / ship.cost.hydrogene) : 9999,
-      9999,
-    ));
+    const maxAffordable = Math.max(
+      1,
+      Math.min(
+        ship.cost.minerai > 0 ? Math.floor(resources.minerai / ship.cost.minerai) : 9999,
+        ship.cost.silicium > 0 ? Math.floor(resources.silicium / ship.cost.silicium) : 9999,
+        ship.cost.hydrogene > 0 ? Math.floor(resources.hydrogene / ship.cost.hydrogene) : 9999,
+        9999,
+      ),
+    );
     const canAfford =
       resources.minerai >= ship.cost.minerai * qty &&
       resources.silicium >= ship.cost.silicium * qty &&
       resources.hydrogene >= ship.cost.hydrogene * qty;
-    derivations.set(ship.id, { qty, maxAffordable, canAfford, highlighted: tutorialTargetId === ship.id });
+    derivations.set(ship.id, {
+      qty,
+      maxAffordable,
+      canAfford,
+      highlighted: tutorialTargetId === ship.id,
+    });
   }
 
   // ── Main layout ───────────────────────────────────────────────────────
@@ -232,28 +266,36 @@ export default function Shipyard() {
         planetClassId={resourceData?.planetClassId}
         planetImageIndex={resourceData?.planetImageIndex}
         onOpenHelp={() => setHelpOpen(true)}
-        upgradeCard={shipyardBuilding && (
-          <BuildingUpgradeCard
-            currentLevel={shipyardBuilding.currentLevel}
-            nextLevelCost={shipyardBuilding.nextLevelCost}
-            nextLevelTime={shipyardBuilding.nextLevelTime}
-            prerequisites={shipyardBuilding.prerequisites as any}
-            isUpgrading={!!shipyardBuilding.isUpgrading}
-            upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
-            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
-            buildingLevels={buildingLevels}
-            isAnyUpgrading={buildings?.some((b) => b.isUpgrading) ?? false}
-            upgradePending={upgradeMutation.isPending}
-            cancelPending={buildingCancelMutation.isPending}
-            gameConfig={gameConfig}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })}
-            onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
-            onTimerComplete={() => {
-              utils.building.list.invalidate({ planetId: planetId! });
-              utils.resource.production.invalidate({ planetId: planetId! });
-            }}
-          />
-        )}
+        upgradeCard={
+          shipyardBuilding && (
+            <BuildingUpgradeCard
+              currentLevel={shipyardBuilding.currentLevel}
+              nextLevelCost={shipyardBuilding.nextLevelCost}
+              nextLevelTime={shipyardBuilding.nextLevelTime}
+              prerequisites={shipyardBuilding.prerequisites as any}
+              isUpgrading={!!shipyardBuilding.isUpgrading}
+              upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
+              resources={{
+                minerai: resources.minerai,
+                silicium: resources.silicium,
+                hydrogene: resources.hydrogene,
+              }}
+              buildingLevels={buildingLevels}
+              isAnyUpgrading={buildings?.some((b) => b.isUpgrading) ?? false}
+              upgradePending={upgradeMutation.isPending}
+              cancelPending={buildingCancelMutation.isPending}
+              gameConfig={gameConfig}
+              onUpgrade={() =>
+                upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })
+              }
+              onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
+              onTimerComplete={() => {
+                utils.building.list.invalidate({ planetId: planetId! });
+                utils.resource.production.invalidate({ planetId: planetId! });
+              }}
+            />
+          )
+        }
       >
         <FacilityQueue
           queue={shipQueue}
@@ -265,7 +307,9 @@ export default function Shipyard() {
             utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
             utils.shipyard.ships.invalidate({ planetId: planetId! });
           }}
-          onReduce={(batchId) => reduceMutation.mutate({ planetId: planetId!, batchId, removeCount: 1 })}
+          onReduce={(batchId) =>
+            reduceMutation.mutate({ planetId: planetId!, batchId, removeCount: 1 })
+          }
           onCancel={(batchId) => setCancelConfirm(batchId)}
           reducePending={reduceMutation.isPending}
           cancelPending={cancelMutation.isPending}
@@ -294,7 +338,9 @@ export default function Shipyard() {
                 {/* Mobile compact list */}
                 <div className="space-y-1 lg:hidden">
                   {roleShips.map((ship) => {
-                    const { qty, maxAffordable, canAfford, highlighted } = derivations.get(ship.id)!;
+                    const { qty, maxAffordable, canAfford, highlighted } = derivations.get(
+                      ship.id,
+                    )!;
 
                     return (
                       <ShipMobileRow
@@ -305,8 +351,28 @@ export default function Shipyard() {
                         canAfford={canAfford}
                         highlighted={highlighted}
                         buildPending={buildMutation.isPending}
+                        resources={{
+                          minerai: resources.minerai,
+                          silicium: resources.silicium,
+                          hydrogene: resources.hydrogene,
+                        }}
+                        rates={
+                          resourceData
+                            ? {
+                                mineraiPerHour: resourceData.rates.mineraiPerHour,
+                                siliciumPerHour: resourceData.rates.siliciumPerHour,
+                                hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+                              }
+                            : undefined
+                        }
                         onQuantityChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
-                        onBuild={() => buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty })}
+                        onBuild={() =>
+                          buildMutation.mutate({
+                            planetId: planetId!,
+                            shipId: ship.id as any,
+                            quantity: qty,
+                          })
+                        }
                         onOpenDetail={() => setDetailId(ship.id)}
                       />
                     );
@@ -316,7 +382,9 @@ export default function Shipyard() {
                 {/* Desktop vertical card grid */}
                 <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                   {roleShips.map((ship) => {
-                    const { qty, maxAffordable, canAfford, highlighted } = derivations.get(ship.id)!;
+                    const { qty, maxAffordable, canAfford, highlighted } = derivations.get(
+                      ship.id,
+                    )!;
 
                     return (
                       <ShipCard
@@ -326,13 +394,32 @@ export default function Shipyard() {
                         maxAffordable={maxAffordable}
                         canAfford={canAfford}
                         highlighted={highlighted}
-                        resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
+                        resources={{
+                          minerai: resources.minerai,
+                          silicium: resources.silicium,
+                          hydrogene: resources.hydrogene,
+                        }}
+                        rates={
+                          resourceData
+                            ? {
+                                mineraiPerHour: resourceData.rates.mineraiPerHour,
+                                siliciumPerHour: resourceData.rates.siliciumPerHour,
+                                hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+                              }
+                            : undefined
+                        }
                         gameConfig={gameConfig}
                         buildingLevels={buildingLevels}
                         researchLevels={researchLevels}
                         buildPending={buildMutation.isPending}
                         onQuantityChange={(v) => setQuantities({ ...quantities, [ship.id]: v })}
-                        onBuild={() => buildMutation.mutate({ planetId: planetId!, shipId: ship.id as any, quantity: qty })}
+                        onBuild={() =>
+                          buildMutation.mutate({
+                            planetId: planetId!,
+                            shipId: ship.id as any,
+                            quantity: qty,
+                          })
+                        }
                         onOpenDetail={() => setDetailId(ship.id)}
                       />
                     );
@@ -348,7 +435,7 @@ export default function Shipyard() {
       <EntityDetailOverlay
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detailId ? gameConfig?.ships[detailId]?.name ?? '' : ''}
+        title={detailId ? (gameConfig?.ships[detailId]?.name ?? '') : ''}
       >
         {detailId && (
           <ShipDetailContent
@@ -363,14 +450,20 @@ export default function Shipyard() {
       </EntityDetailOverlay>
 
       {/* Help overlay */}
-      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Chantier spatial">
+      <EntityDetailOverlay
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="Chantier spatial"
+      >
         <ShipyardHelp level={shipyardLevel} planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       {/* Cancel confirm */}
       <ConfirmDialog
         open={!!cancelConfirm}
-        onConfirm={() => cancelConfirm && cancelMutation.mutate({ planetId: planetId!, batchId: cancelConfirm })}
+        onConfirm={() =>
+          cancelConfirm && cancelMutation.mutate({ planetId: planetId!, batchId: cancelConfirm })
+        }
         onCancel={() => setCancelConfirm(null)}
         title="Annuler la production ?"
         description="Les unités restantes seront annulées. Le remboursement est proportionnel au temps restant, plafonné à 70% des ressources investies. Les unités déjà produites sont conservées."
