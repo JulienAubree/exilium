@@ -21,6 +21,7 @@ import { useToastStore } from '@/stores/toast.store';
 import { Timer } from '@/components/common/Timer';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 import {
   ExpeditionEventCard,
@@ -136,13 +137,11 @@ export default function ExpeditionRun() {
     },
   });
 
+  const retreatDialog = useDisclosure(false);
+
   const handleRetreat = () => {
     if (!missionId) return;
-    const confirmed = window.confirm(
-      "Rappeler la flotte ?\n\nLa flotte rentre immédiatement à la planète d'origine avec " +
-        'ce qui est dans la soute. Les étapes restantes ne seront pas explorées.',
-    );
-    if (!confirmed) return;
+    retreatDialog.close();
     retreatMutation.mutate({ missionId });
   };
 
@@ -318,7 +317,7 @@ export default function ExpeditionRun() {
             <Button
               size="sm"
               variant="outline"
-              onClick={handleRetreat}
+              onClick={retreatDialog.open}
               disabled={retreatMutation.isPending}
               title="Rentrer immédiatement avec ce qui est dans la soute"
             >
@@ -586,6 +585,19 @@ export default function ExpeditionRun() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={retreatDialog.isOpen}
+        onCancel={retreatDialog.close}
+        onConfirm={handleRetreat}
+        title="Rappeler la flotte ?"
+        description={
+          "La flotte rentre immédiatement à la planète d'origine avec ce qui est dans la soute. " +
+          'Les étapes restantes ne seront pas explorées.'
+        }
+        confirmLabel={retreatMutation.isPending ? 'Rappel…' : 'Rappeler'}
+        variant="destructive"
+      />
     </div>
   );
 }

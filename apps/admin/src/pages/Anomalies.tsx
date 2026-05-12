@@ -4,7 +4,7 @@ import type { AppRouter } from '@exilium/api/trpc';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { AnomalyImageSlot } from '@/components/ui/AnomalyImageSlot';
+import { AdminAssetSlot } from "@/components/ui/AdminAssetSlot";
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Save,
@@ -736,7 +736,7 @@ function DepthDetail({
           </Field>
         </div>
         <div>
-          <AnomalyImageSlot
+          <AdminAssetSlot category="anomaly"
             slot={`depth-${depth.depth}`}
             value={depth.image}
             aspect="16/9"
@@ -1004,7 +1004,7 @@ function EventDetail({
       <div className="p-6 space-y-6">
         {/* Identity + image */}
         <section className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <AnomalyImageSlot
+          <AdminAssetSlot category="anomaly"
             slot={`event-${event.id}`}
             value={event.image}
             aspect="16/9"
@@ -1745,7 +1745,7 @@ function BossDetail({
       <div className="p-6 space-y-6">
         {/* Identity + image */}
         <section className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <AnomalyImageSlot
+          <AdminAssetSlot category="anomaly"
             slot={`boss-${boss.id}`}
             value={boss.image}
             aspect="16/9"

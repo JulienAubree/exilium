@@ -3,7 +3,7 @@ import type { inferRouterOutputs } from '@trpc/server';
 import type { AppRouter } from '@exilium/api/trpc';
 import { trpc } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
-import { HomepageImageSlot } from '@/components/ui/HomepageImageSlot';
+import { AdminAssetSlot } from "@/components/ui/AdminAssetSlot";
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Plus, Trash2, ChevronDown, ChevronUp, Save, RotateCcw, ExternalLink } from 'lucide-react';
 
@@ -457,7 +457,7 @@ function HeroEditor({
       </div>
 
       <div>
-        <HomepageImageSlot
+        <AdminAssetSlot category="landing"
           slot="hero"
           value={hero.backgroundImage}
           aspect="16/9"
@@ -562,7 +562,7 @@ function PillarsEditor({
               className="grid gap-3 rounded border border-panel-border/60 p-3 sm:grid-cols-[140px_120px_1fr_2fr_auto]"
             >
               <div>
-                <HomepageImageSlot
+                <AdminAssetSlot category="landing"
                   slot={slot}
                   value={item.image}
                   aspect="1/1"
@@ -671,7 +671,7 @@ function ImmersiveEditor({
             const slot = slotFromPath(img.src) ?? `immersive-${i + 1}`;
             return (
               <div key={i} className="space-y-2 rounded border border-panel-border/60 p-3">
-                <HomepageImageSlot
+                <AdminAssetSlot category="landing"
                   slot={slot}
                   value={img.src}
                   aspect="3/4"

@@ -4,7 +4,7 @@ import type { AppRouter } from '@exilium/api/trpc';
 import { trpc } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { ExpeditionImageSlot } from '@/components/ui/ExpeditionImageSlot';
+import { AdminAssetSlot } from "@/components/ui/AdminAssetSlot";
 import {
   Save,
   RotateCcw,
@@ -323,7 +323,7 @@ function SectorsTab({
           >
             <div className="grid grid-cols-12 gap-3 items-start">
               <div className="col-span-2 row-span-2">
-                <ExpeditionImageSlot
+                <AdminAssetSlot category="expedition"
                   slot={`sector-${s.id}`}
                   value={s.imageRef ?? ''}
                   aspect="16/9"
@@ -590,7 +590,7 @@ function EventsTab({
 
             <div className="grid grid-cols-12 gap-3">
               <div className="col-span-3">
-                <ExpeditionImageSlot
+                <AdminAssetSlot category="expedition"
                   slot={`event-${selected.id}`}
                   value={selected.imageRef ?? ''}
                   aspect="16/9"
