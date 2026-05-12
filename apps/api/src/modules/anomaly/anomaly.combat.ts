@@ -21,7 +21,12 @@ import {
   type CombatContext,
   type BossSkillRuntime,
 } from '@exilium/game-engine';
-import type { ActiveBossBuff, BossEntry, BossStats, BossWeaponProfile } from '../anomaly-content/anomaly-bosses.types.js';
+import type {
+  ActiveBossBuff,
+  BossEntry,
+  BossStats,
+  BossWeaponProfile,
+} from '../anomaly-content/anomaly-bosses.types.js';
 import { bossUnitId } from '../anomaly-content/anomaly-bosses.types.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createModulesService } from '../modules/modules.service.js';
@@ -79,9 +84,14 @@ async function loadFlagshipCombatConfig(
   const levelMult = levelMultiplier(flagship.level, levelPct);
 
   // Apply hull passive bonuses (only when stationed) BEFORE level mult
-  const hullBonusWeapons = (hullConfig && flagship.status === 'active') ? (hullConfig.passiveBonuses.bonus_weapons ?? 0) : 0;
-  const hullBonusArmor = (hullConfig && flagship.status === 'active') ? (hullConfig.passiveBonuses.bonus_armor ?? 0) : 0;
-  const hullBonusShotCount = (hullConfig && flagship.status === 'active') ? (hullConfig.passiveBonuses.bonus_shot_count ?? 0) : 0;
+  const hullBonusWeapons =
+    hullConfig && flagship.status === 'active' ? (hullConfig.passiveBonuses.bonus_weapons ?? 0) : 0;
+  const hullBonusArmor =
+    hullConfig && flagship.status === 'active' ? (hullConfig.passiveBonuses.bonus_armor ?? 0) : 0;
+  const hullBonusShotCount =
+    hullConfig && flagship.status === 'active'
+      ? (hullConfig.passiveBonuses.bonus_shot_count ?? 0)
+      : 0;
 
   // Effective stats with level mult applied (weapons/shield/hull/armor only)
   let baseDamage = Math.round((flagship.weapons + hullBonusWeapons) * levelMult);
@@ -93,7 +103,15 @@ async function loadFlagshipCombatConfig(
 
   if (modulesContext) {
     const modified = applyModulesToStats(
-      { damage: baseDamage, hull: baseHull, shield: baseShield, armor: baseArmor, cargo: 0, speed: 0, regen: 0 },
+      {
+        damage: baseDamage,
+        hull: baseHull,
+        shield: baseShield,
+        armor: baseArmor,
+        cargo: 0,
+        speed: 0,
+        regen: 0,
+      },
       modulesContext.equippedModules,
       modulesContext.combatContext,
     );
@@ -129,17 +147,26 @@ async function loadFlagshipCombatConfig(
   // combat engine consumes — see combat.ts line ~183 where it maps over
   // `config.weapons` and falls back to a single synthetic battery if absent.
   type WeaponBattery = NonNullable<ShipCombatConfig['weapons']>[number];
-  const hullDefaultProfile = (hullConfig as { defaultWeaponProfile?: {
-    targetCategory?: string;
-    rafale?: { category?: string; count: number };
-    hasChainKill?: boolean;
-  } } | null)?.defaultWeaponProfile;
+  const hullDefaultProfile = (
+    hullConfig as {
+      defaultWeaponProfile?: {
+        targetCategory?: string;
+        rafale?: { category?: string; count: number };
+        hasChainKill?: boolean;
+      };
+    } | null
+  )?.defaultWeaponProfile;
   const baseWeaponProfile: WeaponBattery = {
     damage: baseDamage,
     shots: baseShotCount,
     targetCategory: hullDefaultProfile?.targetCategory ?? 'medium',
     ...(hullDefaultProfile?.rafale && hullDefaultProfile.rafale.category
-      ? { rafale: { category: hullDefaultProfile.rafale.category, count: hullDefaultProfile.rafale.count } }
+      ? {
+          rafale: {
+            category: hullDefaultProfile.rafale.category,
+            count: hullDefaultProfile.rafale.count,
+          },
+        }
       : {}),
     ...(hullDefaultProfile?.hasChainKill ? { hasChainKill: true } : {}),
   };
@@ -217,8 +244,11 @@ async function resolveEquippedModules(
   args: { userId: string; equippedModules?: unknown },
 ): Promise<{ passives: ModuleDefinitionLite[]; weapons: ModuleDefinitionLite[] }> {
   if (!args.equippedModules) return { passives: [], weapons: [] };
-  const [flagshipRow] = await db.select({ hullId: flagships.hullId })
-    .from(flagships).where(eq(flagships.userId, args.userId)).limit(1);
+  const [flagshipRow] = await db
+    .select({ hullId: flagships.hullId })
+    .from(flagships)
+    .where(eq(flagships.userId, args.userId))
+    .limit(1);
   const hullId = flagshipRow?.hullId ?? DEFAULT_HULL_ID;
   const pool = await modulesService._getPool(db);
   const equippedSnapshot = (args.equippedModules ?? {}) as Parameters<typeof parseLoadout>[0];
@@ -268,31 +298,34 @@ function buildAnomalyTemplateShips(
  * est synthétisé depuis weapons / shotCount.
  */
 export function buildBossShipConfig(boss: BossEntry, stats: BossStats): ShipCombatConfig {
-  const profiles: NonNullable<ShipCombatConfig['weapons']> = stats.weaponProfiles && stats.weaponProfiles.length > 0
-    ? stats.weaponProfiles.map((p: BossWeaponProfile) => {
-        // V8.1 — un profile peut déclarer damageMultiplier (× baseWeaponDamage)
-        // OU damage absolu. On propage les deux ; combat.ts choisit lequel
-        // appliquer (priorité au multiplicateur si présent).
-        const baseEntry: NonNullable<ShipCombatConfig['weapons']>[number] = {
-          damage: p.damage ?? 0,
-          shots: p.shots,
-          targetCategory: p.targetCategory ?? 'medium',
-        };
-        if (p.damageMultiplier !== undefined) baseEntry.damageMultiplier = p.damageMultiplier;
-        if (p.rafale && p.rafale.count > 0) {
-          baseEntry.rafale = {
-            category: p.rafale.category ?? 'medium',
-            count: p.rafale.count,
+  const profiles: NonNullable<ShipCombatConfig['weapons']> =
+    stats.weaponProfiles && stats.weaponProfiles.length > 0
+      ? stats.weaponProfiles.map((p: BossWeaponProfile) => {
+          // V8.1 — un profile peut déclarer damageMultiplier (× baseWeaponDamage)
+          // OU damage absolu. On propage les deux ; combat.ts choisit lequel
+          // appliquer (priorité au multiplicateur si présent).
+          const baseEntry: NonNullable<ShipCombatConfig['weapons']>[number] = {
+            damage: p.damage ?? 0,
+            shots: p.shots,
+            targetCategory: p.targetCategory ?? 'medium',
           };
-        }
-        if (p.hasChainKill) baseEntry.hasChainKill = true;
-        return baseEntry;
-      })
-    : [{
-        damage: stats.weapons,
-        shots: stats.shotCount,
-        targetCategory: 'medium',
-      }];
+          if (p.damageMultiplier !== undefined) baseEntry.damageMultiplier = p.damageMultiplier;
+          if (p.rafale && p.rafale.count > 0) {
+            baseEntry.rafale = {
+              category: p.rafale.category ?? 'medium',
+              count: p.rafale.count,
+            };
+          }
+          if (p.hasChainKill) baseEntry.hasChainKill = true;
+          return baseEntry;
+        })
+      : [
+          {
+            damage: stats.weapons,
+            shots: stats.shotCount,
+            targetCategory: 'medium',
+          },
+        ];
   return {
     shipType: bossUnitId(boss.id),
     categoryId: 'boss',
@@ -322,6 +355,72 @@ function shipConfigToUnitStats(sc: ShipCombatConfig): UnitCombatStats {
   };
 }
 
+/**
+ * V9.3 — FP que l'unité boss doit représenter au tier/depth courant.
+ *
+ * Décomposition : `bossUnitFP = anomalyEnemyFP(tier, depth) × fpMultiplier
+ *                              × (1 - escortFpRatio)`.
+ * Floor à 50 FP pour éviter des stats dégénérées (1 hull / 0 weapons) aux
+ * tout premiers paliers — le boss garde une présence minimale même tier 1.
+ */
+export function computeBossUnitTargetFP(
+  boss: BossEntry,
+  tier: number,
+  depth: number,
+  difficulty: { tierBaseFp: number; tierFpGrowth: number; growth: number; maxRatio: number },
+): number {
+  const baseTargetFP = anomalyEnemyFP(tier, depth, difficulty);
+  const escortRatio = boss.escortFpRatio ?? 0.4;
+  const bossPart = baseTargetFP * boss.fpMultiplier * (1 - escortRatio);
+  return Math.max(50, bossPart);
+}
+
+/**
+ * V9.3 — Scale les `bossStats` absolus du seed pour viser `targetFP`.
+ *
+ * Pourquoi : les bossStats seedés en V9.2 sont des valeurs absolues calibrées
+ * pour un tier médian (early ≈ tier 5, mid ≈ tier 8-10, deep ≈ tier 12-15).
+ * Sans scaling, un débutant tier 1 affronte un boss 10-870× le target et un
+ * endgame tier 20 le trouve trivial. Le scaling resynchronise le boss avec
+ * la cible `anomalyEnemyFP(tier, depth) × fpMultiplier` quel que soit le tier.
+ *
+ * Méthode : FP ∝ dps × durability. On multiplie damage (DPS) et hull/shield/
+ * armor (durability) chacun par `sqrt(target/baseline)` pour que FP scale
+ * linéairement par le bon facteur tout en préservant le ratio offensif/défensif
+ * du seed (un tank reste un tank, un glass cannon reste un glass cannon).
+ *
+ * shotCount/shots sont des entiers qualitatifs (pas un volume) — on les laisse
+ * tels quels.
+ */
+export function scaleBossStatsToTargetFP(
+  boss: BossEntry,
+  targetFP: number,
+  fpConfig: FPConfig,
+): BossStats {
+  if (!boss.bossStats) {
+    throw new Error('scaleBossStatsToTargetFP appelé sur un boss sans bossStats');
+  }
+  const baseline = boss.bossStats;
+  const baselineConfig = buildBossShipConfig(boss, baseline);
+  const baselineFP = computeUnitFP(shipConfigToUnitStats(baselineConfig), fpConfig);
+  if (baselineFP <= 0 || targetFP <= 0) return baseline;
+  const scale = Math.sqrt(targetFP / baselineFP);
+  return {
+    hull: Math.max(1, Math.round(baseline.hull * scale)),
+    shield: Math.round(baseline.shield * scale),
+    armor: Math.round(baseline.armor * scale),
+    weapons: Math.max(1, Math.round(baseline.weapons * scale)),
+    shotCount: baseline.shotCount,
+    ...(baseline.weaponProfiles
+      ? {
+          weaponProfiles: baseline.weaponProfiles.map((p) => ({
+            ...p,
+            ...(p.damage !== undefined ? { damage: Math.round(p.damage * scale) } : {}),
+          })),
+        }
+      : {}),
+  };
+}
 
 export interface AnomalyCombatResult {
   outcome: 'attacker' | 'defender' | 'draw';
@@ -444,7 +543,8 @@ export async function generateAnomalyEnemy(
   for (const [id, sc] of Object.entries(baseShipConfigs)) {
     const hullPct = args.fleet[id]?.hullPercent ?? 1;
     // Flagship config is already hull-adjusted; don't double-apply.
-    const hullToUse = id === 'flagship' ? sc.baseHull : Math.max(1, Math.floor(sc.baseHull * hullPct));
+    const hullToUse =
+      id === 'flagship' ? sc.baseHull : Math.max(1, Math.floor(sc.baseHull * hullPct));
     shipStatsForFP[id] = {
       weapons: sc.baseWeaponDamage,
       shotCount: sc.baseShotCount,
@@ -494,10 +594,20 @@ export async function generateAnomalyEnemy(
   // une vraie unité dans la flotte ennemie. Le FP target restant après
   // déduction du FP boss est utilisé pour scaler les escortes (gardant
   // la cohérence avec `targetEnemyFP`).
+  // V9.3 — Scale les bossStats au tier/depth courant pour qu'ils restent
+  // synchronisés avec `anomalyEnemyFP(tier, depth) × fpMultiplier` au lieu
+  // de rester aux valeurs absolues seedées (calibrées tier ~5/8/12).
   let bossShipConfig: ShipCombatConfig | undefined;
   let bossUnitFP = 0;
   if (args.boss && args.boss.bossStats) {
-    bossShipConfig = buildBossShipConfig(args.boss, args.boss.bossStats);
+    const bossTargetFP = computeBossUnitTargetFP(args.boss, args.tier, args.depth, {
+      tierBaseFp: parseConfigNumber(config.universe.anomaly_tier_base_fp, 80),
+      tierFpGrowth: parseConfigNumber(config.universe.anomaly_tier_fp_growth, 1.7),
+      growth: parseConfigNumber(config.universe.anomaly_difficulty_growth, 1.06),
+      maxRatio: parseConfigNumber(config.universe.anomaly_enemy_max_ratio, 3.0),
+    });
+    const scaledStats = scaleBossStatsToTargetFP(args.boss, bossTargetFP, fpConfig);
+    bossShipConfig = buildBossShipConfig(args.boss, scaledStats);
     const bossStats = shipConfigToUnitStats(bossShipConfig);
     bossUnitFP = computeUnitFP(bossStats, fpConfig);
     // Inject le shipStats du boss pour que computeFleetFP le voie.
@@ -515,12 +625,7 @@ export async function generateAnomalyEnemy(
     ? Math.max(50, Math.round((targetEnemyFP - bossUnitFP) * escortRatio))
     : Math.max(1, Math.round(targetEnemyFP));
 
-  const enemyFleet = scaleFleetToFP(
-    templateShips,
-    escortBudget,
-    shipStatsForFP,
-    fpConfig,
-  );
+  const enemyFleet = scaleFleetToFP(templateShips, escortBudget, shipStatsForFP, fpConfig);
   // V9.2 — Inject le boss avec count=1 dans la flotte enemy.
   if (bossShipConfig) {
     enemyFleet[bossShipConfig.shipType] = 1;
@@ -637,8 +742,23 @@ export async function runAnomalyNode(
   // bossStats. Le combat reconnaît alors `boss:{id}` comme une unité full
   // (hull/shield/armor/weapons) côté défender. Si bossStats absent, on
   // skip et la fight reste en mode V9 (FP boost diffus).
+  // V9.3 — Scaling tier/depth identique à generateAnomalyEnemy : mêmes inputs
+  // (args.boss, args.tier, args.depth, config) → même facteur, donc même stats.
+  // Le predefinedEnemy a été créé avec ces stats scalées ; on les recalcule ici
+  // pour shipConfigs.
   if (args.boss && args.boss.bossStats) {
-    const bossConfig = buildBossShipConfig(args.boss, args.boss.bossStats);
+    const fpConfigForBoss: FPConfig = {
+      shotcountExponent: Number(config.universe.fp_shotcount_exponent) || 1.5,
+      divisor: Number(config.universe.fp_divisor) || 100,
+    };
+    const bossTargetFP = computeBossUnitTargetFP(args.boss, args.tier, args.depth, {
+      tierBaseFp: parseConfigNumber(config.universe.anomaly_tier_base_fp, 80),
+      tierFpGrowth: parseConfigNumber(config.universe.anomaly_tier_fp_growth, 1.7),
+      growth: parseConfigNumber(config.universe.anomaly_difficulty_growth, 1.06),
+      maxRatio: parseConfigNumber(config.universe.anomaly_enemy_max_ratio, 3.0),
+    });
+    const scaledStats = scaleBossStatsToTargetFP(args.boss, bossTargetFP, fpConfigForBoss);
+    const bossConfig = buildBossShipConfig(args.boss, scaledStats);
     shipConfigs[bossConfig.shipType] = bossConfig;
   }
 
@@ -673,7 +793,11 @@ export async function runAnomalyNode(
     pillageRatio: 0,
     maxRounds: 9999,
   });
-  const playerMultipliers: CombatMultipliers = await getCombatMultipliers(db, args.userId, config.bonuses);
+  const playerMultipliers: CombatMultipliers = await getCombatMultipliers(
+    db,
+    args.userId,
+    config.bonuses,
+  );
   const enemyMultipliers: CombatMultipliers = { weapons: 1, shielding: 1, armor: 1 };
 
   const shipStatsMap = buildShipStatsMap(config);
@@ -719,9 +843,8 @@ export async function runAnomalyNode(
   if (outcome === 'draw') {
     const lastRoundFinal = rawResult.rounds[rawResult.rounds.length - 1];
     const flagshipHP = lastRoundFinal?.attackerHPByType?.['flagship'];
-    const flagshipHullPct = (flagshipHP && flagshipHP.hullMax > 0)
-      ? flagshipHP.hullRemaining / flagshipHP.hullMax
-      : 0;
+    const flagshipHullPct =
+      flagshipHP && flagshipHP.hullMax > 0 ? flagshipHP.hullRemaining / flagshipHP.hullMax : 0;
     outcome = flagshipHullPct > 0.5 ? 'attacker' : 'defender';
   }
   const result = { ...rawResult, outcome };
@@ -758,8 +881,14 @@ export async function runAnomalyNode(
   const shotsPerRound = result.rounds.map((round, i) => {
     const attFleet = i === 0 ? playerShipCounts : result.rounds[i - 1].attackerShips;
     const defFleet = i === 0 ? enemyFleet : result.rounds[i - 1].defenderShips;
-    const attShots = Object.entries(attFleet).reduce((sum, [id, count]) => sum + count * (config.ships[id]?.shotCount ?? 1), 0);
-    const defShots = Object.entries(defFleet).reduce((sum, [id, count]) => sum + count * (config.ships[id]?.shotCount ?? 1), 0);
+    const attShots = Object.entries(attFleet).reduce(
+      (sum, [id, count]) => sum + count * (config.ships[id]?.shotCount ?? 1),
+      0,
+    );
+    const defShots = Object.entries(defFleet).reduce(
+      (sum, [id, count]) => sum + count * (config.ships[id]?.shotCount ?? 1),
+      0,
+    );
     return { attacker: attShots, defender: defShots };
   });
 
