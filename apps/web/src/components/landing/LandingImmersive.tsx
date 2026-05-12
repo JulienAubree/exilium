@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight } from 'lucide-react';
+import { safeImageSrc, safeLinkHref } from '@exilium/shared';
 import type { HomepageContent } from './useHomepageContent';
 
 interface LandingImmersiveProps {
@@ -54,12 +55,13 @@ export function LandingImmersive({ content }: LandingImmersiveProps) {
 
 function ImmersiveTile({ src, alt, index }: { src: string; alt: string; index: number }) {
   const [errored, setErrored] = useState(false);
+  const safeSrc = safeImageSrc(src);
   return (
     <figure className="group relative overflow-hidden rounded-lg border border-white/5 bg-card/40 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_-10px_hsl(200,85%,65%,0.4)]">
       <div className="aspect-[3/4]">
-        {!errored && src ? (
+        {!errored && safeSrc ? (
           <img
-            src={src}
+            src={safeSrc}
             alt={alt}
             loading="lazy"
             decoding="async"
@@ -173,7 +175,7 @@ function ImmersiveFallback({ index }: { index: number }) {
 }
 
 function ImmersiveCta({ href, children }: { href: string; children: React.ReactNode }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className =
     'inline-flex items-center gap-2 rounded-md border border-primary/40 bg-transparent px-5 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-primary transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground';
   const content = (
@@ -182,15 +184,18 @@ function ImmersiveCta({ href, children }: { href: string; children: React.ReactN
       <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
     </>
   );
-  if (isInternal) {
+  if (!safe) {
+    return <span className={`group ${className}`}>{content}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={`group ${className}`}>
+      <Link to={safe} className={`group ${className}`}>
         {content}
       </Link>
     );
   }
   return (
-    <a href={href} className={`group ${className}`}>
+    <a href={safe} className={`group ${className}`}>
       {content}
     </a>
   );

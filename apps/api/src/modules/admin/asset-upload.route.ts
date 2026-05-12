@@ -7,7 +7,7 @@ import { processImage, processPlanetImage, processFlagshipImage, processAvatarIm
 import { getNextPlanetImageIndex, listPlanetImageIndexes } from '../../lib/planet-image.util.js';
 import { getNextFlagshipImageIndex, listFlagshipImageIndexes } from '../../lib/flagship-image.util.js';
 import { getNextAvatarIndex, listAvatarIndexes } from '../../lib/avatar-image.util.js';
-import { toKebab } from '@exilium/shared';
+import { toKebab, isSafeAssetSegment } from '@exilium/shared';
 import { unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 import { env } from '../../config/env.js';
@@ -56,6 +56,12 @@ export function registerAssetUploadRoute(server: FastifyInstance, db: Database) 
     }
     if (!entityId && category !== 'avatars') {
       return reply.status(400).send({ error: 'entityId is required (hullId for flagships, slot for landing/anomaly/module)' });
+    }
+    // entityId is concatenated into the asset filesystem path further down.
+    // Centralized allowlist check before any branch can build a path with it
+    // (path.join doesn't reject `..` or `/`, so we must reject them here).
+    if (entityId && !isSafeAssetSegment(entityId)) {
+      return reply.status(400).send({ error: 'Invalid entityId (allowed: a-z, A-Z, 0-9, _, -)' });
     }
     if (!ALLOWED_MIMES.includes(data.mimetype)) {
       return reply.status(400).send({ error: 'Invalid file type. Must be PNG, JPEG, or WebP' });

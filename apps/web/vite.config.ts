@@ -48,16 +48,13 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
         runtimeCaching: [
           {
+            // tRPC carries per-user data keyed by the Authorization header,
+            // but the Cache API only keys on the URL. Caching here can
+            // resurrect a previous user's response after a logout / account
+            // switch / offline blip. Force NetworkOnly so every tRPC roundtrip
+            // hits the API and is gated by a fresh access token.
             urlPattern: /\/trpc\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'trpc-cache',
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24h
-              },
-            },
+            handler: 'NetworkOnly',
           },
           {
             urlPattern: /\/assets\/.+\.(png|jpg|jpeg|webp|svg|gif)$/,

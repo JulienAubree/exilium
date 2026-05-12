@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';

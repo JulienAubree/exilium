@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { ExiliumLogo } from './ExiliumLogo';
 import { useAuthStore } from '@/stores/auth.store';
+import { safeLinkHref } from '@exilium/shared';
 import type { HomepageContent } from './useHomepageContent';
 
 interface LandingHeaderProps {
@@ -110,7 +111,7 @@ export function LandingHeader({ content }: LandingHeaderProps) {
 }
 
 function NavItem({ href, label }: { href: string; label: string }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className =
     'group relative text-xs font-medium uppercase tracking-[0.2em] text-foreground/70 transition-colors hover:text-foreground';
   const content = (
@@ -120,33 +121,39 @@ function NavItem({ href, label }: { href: string; label: string }) {
     </>
   );
 
-  if (isInternal) {
+  if (!safe) {
+    return <span className={className}>{content}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={className}>
+      <Link to={safe} className={className}>
         {content}
       </Link>
     );
   }
   return (
-    <a href={href} className={className}>
+    <a href={safe} className={className}>
       {content}
     </a>
   );
 }
 
 function CtaLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className =
     'inline-flex items-center justify-center rounded-md border border-primary/40 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-primary transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_-4px_hsl(200,85%,65%,0.6)]';
-  if (isInternal) {
+  if (!safe) {
+    return <span className={className}>{children}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={className}>
+      <Link to={safe} className={className}>
         {children}
       </Link>
     );
   }
   return (
-    <a href={href} className={className}>
+    <a href={safe} className={className}>
       {children}
     </a>
   );

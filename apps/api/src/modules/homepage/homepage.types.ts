@@ -1,13 +1,41 @@
 import { z } from 'zod';
+import { safeLinkHref, safeImageSrc } from '@exilium/shared';
+
+/**
+ * Zod refinements that delegate URL allowlisting to the shared helpers.
+ * Anything that fails (javascript:, data:, malformed) is rejected at the
+ * admin-save step, so the public landing never renders a hostile link or
+ * image. Allowed: http/https, mailto for links; http/https for images;
+ * plus internal `/...` and `#...` paths.
+ */
+const linkHrefSchema = z.string().min(1).max(500).refine(
+  (v) => safeLinkHref(v) !== null,
+  { message: 'URL non autorisée (autorisé : http(s), mailto, /chemin, #ancre)' },
+);
+
+const optionalLinkHrefSchema = z.string().max(500).refine(
+  (v) => v === '' || safeLinkHref(v) !== null,
+  { message: 'URL non autorisée (autorisé : http(s), mailto, /chemin, #ancre)' },
+).default('');
+
+const imageSrcSchema = z.string().max(500).refine(
+  (v) => v === '' || safeImageSrc(v) !== null,
+  { message: "Source d'image non autorisée (autorisé : http(s) ou /chemin)" },
+);
+
+const requiredImageSrcSchema = z.string().min(1).max(500).refine(
+  (v) => safeImageSrc(v) !== null,
+  { message: "Source d'image non autorisée (autorisé : http(s) ou /chemin)" },
+);
 
 const ctaSchema = z.object({
   label: z.string().min(1).max(80),
-  href: z.string().min(1).max(500),
+  href: linkHrefSchema,
 });
 
 const navItemSchema = z.object({
   label: z.string().min(1).max(40),
-  href: z.string().min(1).max(500),
+  href: linkHrefSchema,
 });
 
 export const pillarIcons = ['planet', 'building', 'sword', 'shield', 'rocket', 'globe'] as const;
@@ -18,17 +46,17 @@ const pillarSchema = z.object({
   description: z.string().min(1).max(500),
   icon: z.enum(pillarIcons),
   /** Optional custom image. When set and loadable, takes precedence over the icon SVG. */
-  image: z.string().max(500).default(''),
+  image: imageSrcSchema.default(''),
 });
 
 const immersiveImageSchema = z.object({
-  src: z.string().min(1).max(500),
+  src: requiredImageSrcSchema,
   alt: z.string().max(200).default(''),
 });
 
 const footerLinkSchema = z.object({
   label: z.string().min(1).max(40),
-  href: z.string().min(1).max(500),
+  href: linkHrefSchema,
 });
 
 const footerSectionSchema = z.object({
@@ -49,7 +77,7 @@ export type SocialPlatform = (typeof socialPlatforms)[number];
 
 const socialSchema = z.object({
   platform: z.enum(socialPlatforms),
-  href: z.string().min(1).max(500),
+  href: linkHrefSchema,
 });
 
 export const homepageContentSchema = z.object({
@@ -63,7 +91,7 @@ export const homepageContentSchema = z.object({
     description: z.string().max(500).default(''),
     primaryCta: ctaSchema,
     secondaryCta: ctaSchema.nullable().default(null),
-    backgroundImage: z.string().max(500).default(''),
+    backgroundImage: imageSrcSchema.default(''),
   }),
   pillars: z.object({
     title: z.string().max(120).default(''),
@@ -73,7 +101,7 @@ export const homepageContentSchema = z.object({
     title: z.string().max(120).default(''),
     description: z.string().max(500).default(''),
     ctaLabel: z.string().max(40).default(''),
-    ctaHref: z.string().max(500).default(''),
+    ctaHref: optionalLinkHrefSchema,
     images: z.array(immersiveImageSchema).max(6),
   }),
   newsletter: z.object({

@@ -5,6 +5,40 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Pencil, Trash2, Eye, EyeOff, Sparkles, X, Bold, Heading3, List, Minus } from 'lucide-react';
 
 // ── Simple Markdown Preview ──
+// Replaces the previous dangerouslySetInnerHTML pipeline. Each line is parsed
+// into React nodes — `**bold**` becomes a <strong>, everything else is plain
+// text. No HTML evaluation, so user-controlled content can't inject scripts.
+function renderInline(text: string, baseKey: number): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let key = baseKey;
+  while (remaining.length > 0) {
+    const match = remaining.match(/^\*\*(.+?)\*\*/);
+    if (match) {
+      parts.push(
+        <strong key={key++} className="text-gray-100 font-semibold">
+          {match[1]}
+        </strong>,
+      );
+      remaining = remaining.slice(match[0].length);
+      continue;
+    }
+    const nextBold = remaining.indexOf('**');
+    if (nextBold === -1) {
+      parts.push(<span key={key++}>{remaining}</span>);
+      break;
+    }
+    if (nextBold > 0) {
+      parts.push(<span key={key++}>{remaining.slice(0, nextBold)}</span>);
+      remaining = remaining.slice(nextBold);
+    } else {
+      parts.push(<span key={key++}>{remaining[0]}</span>);
+      remaining = remaining.slice(1);
+    }
+  }
+  return parts;
+}
+
 function MarkdownPreview({ content }: { content: string }) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
@@ -18,10 +52,10 @@ function MarkdownPreview({ content }: { content: string }) {
           {listItems.map((item, i) => (
             <li key={i} className="text-sm text-gray-300 flex gap-2">
               <span className="text-gray-500 shrink-0">•</span>
-              <span dangerouslySetInnerHTML={{ __html: inlineBold(item) }} />
+              <span>{renderInline(item, i * 1000)}</span>
             </li>
           ))}
-        </ul>
+        </ul>,
       );
       listItems = [];
     }
@@ -37,15 +71,15 @@ function MarkdownPreview({ content }: { content: string }) {
       flushList();
     } else {
       flushList();
-      elements.push(<p key={key++} className="text-sm text-gray-300 mb-1" dangerouslySetInnerHTML={{ __html: inlineBold(line) }} />);
+      elements.push(
+        <p key={key++} className="text-sm text-gray-300 mb-1">
+          {renderInline(line, key * 1000)}
+        </p>,
+      );
     }
   }
   flushList();
   return <>{elements}</>;
-}
-
-function inlineBold(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong class="text-gray-100 font-semibold">$1</strong>');
 }
 
 // ── Markdown Editor with toolbar ──

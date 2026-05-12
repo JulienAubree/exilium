@@ -217,10 +217,12 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
         .where(eq(users.id, user.id));
       await recordLoginEvent({ userId: user.id, email, success: true, ctx });
 
-      const jwtExpiry = rememberMe ? '14d' : env.JWT_EXPIRES_IN;
+      // Access token stays short-lived even with rememberMe. Long sessions
+      // come from extending the *refresh* token (below), not from a 14-day
+      // access token — otherwise a ban takes 14 days to propagate.
       const accessToken = await new SignJWT({ userId: user.id, isAdmin: user.isAdmin })
         .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime(jwtExpiry)
+        .setExpirationTime(env.JWT_EXPIRES_IN)
         .sign(JWT_SECRET);
 
       const rawRefresh = randomBytes(32).toString('hex');
@@ -259,6 +261,20 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
 
       if (!stored || stored.expiresAt < new Date()) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid refresh token' });
+      }
+
+      // Re-check the account before minting a new access token. Without this,
+      // a banned/deleted player keeps refreshing indefinitely.
+      const [user] = await db
+        .select({ id: users.id, bannedAt: users.bannedAt })
+        .from(users)
+        .where(eq(users.id, stored.userId))
+        .limit(1);
+      if (!user || user.bannedAt) {
+        // Revoke every refresh token on the account so the client cannot
+        // simply retry.
+        await db.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Account disabled' });
       }
 
       await db.delete(refreshTokens).where(eq(refreshTokens.id, stored.id));

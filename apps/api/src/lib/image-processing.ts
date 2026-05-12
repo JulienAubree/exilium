@@ -2,7 +2,18 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-import { toKebab, type AssetCategory } from '@exilium/shared';
+import { toKebab, isSafeAssetSegment, type AssetCategory } from '@exilium/shared';
+
+function safeOutPath(dir: string, filename: string): string {
+  // Defense in depth: even with allowlisted segments, normalize and verify
+  // the resolved path stays inside the intended directory before writing.
+  const resolved = path.resolve(dir, filename);
+  const root = path.resolve(dir);
+  if (!resolved.startsWith(root + path.sep) && resolved !== root) {
+    throw new Error('Path escapes the assets directory');
+  }
+  return resolved;
+}
 
 const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships', 'avatars', 'landing', 'anomaly', 'module', 'expedition'];
 
@@ -22,6 +33,7 @@ export async function processImage(
   entityId: string,
   assetsDir: string,
 ): Promise<string[]> {
+  if (!isSafeAssetSegment(entityId)) throw new Error('Invalid entityId for processImage');
   const kebabId = toKebab(entityId);
   const outputDir = path.join(assetsDir, category);
   fs.mkdirSync(outputDir, { recursive: true });
@@ -30,7 +42,7 @@ export async function processImage(
 
   for (const size of SIZES) {
     const filename = `${kebabId}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
 
     let pipeline = sharp(buffer);
 
@@ -58,6 +70,8 @@ export async function processPlanetImage(
   imageIndex: number,
   assetsDir: string,
 ): Promise<string[]> {
+  if (!isSafeAssetSegment(planetClassId)) throw new Error('Invalid planetClassId for processPlanetImage');
+  if (!Number.isInteger(imageIndex) || imageIndex < 0) throw new Error('Invalid imageIndex');
   const outputDir = path.join(assetsDir, 'planets', planetClassId);
   fs.mkdirSync(outputDir, { recursive: true });
 
@@ -65,7 +79,7 @@ export async function processPlanetImage(
 
   for (const size of SIZES) {
     const filename = `${imageIndex}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
 
     let pipeline = sharp(buffer);
 
@@ -105,7 +119,7 @@ export async function processAvatarImage(
 
   for (const size of AVATAR_SIZES) {
     const filename = `${imageIndex}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
 
     await sharp(buffer)
       .resize({ width: size.width, height: size.width, fit: 'cover', position: 'centre' })
@@ -128,7 +142,10 @@ export async function processBuildingVariant(
   if (category !== 'buildings' && category !== 'defenses') {
     throw new Error(`processBuildingVariant only supports buildings|defenses, got "${category}"`);
   }
-  if (!/^[a-z0-9_-]+$/i.test(planetType)) {
+  if (!isSafeAssetSegment(entityId)) {
+    throw new Error(`Invalid entityId "${entityId}"`);
+  }
+  if (!isSafeAssetSegment(planetType)) {
     throw new Error(`Invalid planetType "${planetType}"`);
   }
 
@@ -139,7 +156,7 @@ export async function processBuildingVariant(
   const files: string[] = [];
   for (const size of SIZES) {
     const filename = `${planetType}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
 
     let pipeline = sharp(buffer);
     if (size.height) {
@@ -177,7 +194,7 @@ export async function processLandingImage(
   slot: string,
   assetsDir: string,
 ): Promise<string[]> {
-  if (!/^[a-z0-9_-]+$/i.test(slot)) {
+  if (!isSafeAssetSegment(slot)) {
     throw new Error(`Invalid landing slot "${slot}"`);
   }
 
@@ -187,7 +204,7 @@ export async function processLandingImage(
   const files: string[] = [];
   for (const size of LANDING_SIZES) {
     const filename = `${slot}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
     await sharp(buffer)
       .resize({ width: size.width, withoutEnlargement: true })
       .webp({ quality: size.quality })
@@ -215,7 +232,7 @@ export async function processAnomalyImage(
   slot: string,
   assetsDir: string,
 ): Promise<string[]> {
-  if (!/^[a-z0-9_-]+$/i.test(slot)) {
+  if (!isSafeAssetSegment(slot)) {
     throw new Error(`Invalid anomaly slot "${slot}"`);
   }
 
@@ -225,7 +242,7 @@ export async function processAnomalyImage(
   const files: string[] = [];
   for (const size of ANOMALY_SIZES) {
     const filename = `${slot}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
     await sharp(buffer)
       .resize({ width: size.width, withoutEnlargement: true })
       .webp({ quality: size.quality })
@@ -245,7 +262,7 @@ export async function processExpeditionImage(
   slot: string,
   assetsDir: string,
 ): Promise<string[]> {
-  if (!/^[a-z0-9_-]+$/i.test(slot)) {
+  if (!isSafeAssetSegment(slot)) {
     throw new Error(`Invalid expedition slot "${slot}"`);
   }
 
@@ -255,7 +272,7 @@ export async function processExpeditionImage(
   const files: string[] = [];
   for (const size of ANOMALY_SIZES) {
     const filename = `${slot}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
     await sharp(buffer)
       .resize({ width: size.width, withoutEnlargement: true })
       .webp({ quality: size.quality })
@@ -275,7 +292,7 @@ export async function processModuleImage(
   slot: string,
   assetsDir: string,
 ): Promise<string[]> {
-  if (!/^[a-z0-9_-]+$/i.test(slot)) {
+  if (!isSafeAssetSegment(slot)) {
     throw new Error(`Invalid module slot "${slot}"`);
   }
   const outputDir = path.join(assetsDir, 'module');
@@ -283,7 +300,7 @@ export async function processModuleImage(
   const files: string[] = [];
   for (const size of MODULE_SIZES) {
     const filename = `${slot}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
     await sharp(buffer)
       .resize({ width: size.width, withoutEnlargement: true })
       .webp({ quality: size.quality })
@@ -299,6 +316,8 @@ export async function processFlagshipImage(
   imageIndex: number,
   assetsDir: string,
 ): Promise<string[]> {
+  if (!isSafeAssetSegment(hullId)) throw new Error('Invalid hullId for processFlagshipImage');
+  if (!Number.isInteger(imageIndex) || imageIndex < 0) throw new Error('Invalid imageIndex');
   const outputDir = path.join(assetsDir, 'flagships', hullId);
   fs.mkdirSync(outputDir, { recursive: true });
 
@@ -306,7 +325,7 @@ export async function processFlagshipImage(
 
   for (const size of SIZES) {
     const filename = `${imageIndex}${size.suffix}.webp`;
-    const outPath = path.join(outputDir, filename);
+    const outPath = safeOutPath(outputDir, filename);
 
     let pipeline = sharp(buffer);
 

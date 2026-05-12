@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { safeImageSrc } from '@exilium/shared';
 import type { HomepageContent } from './useHomepageContent';
 
 interface LandingPillarsProps {
@@ -92,14 +93,15 @@ function PillarCard({
  */
 function PillarVisual({ icon, image }: { icon: PillarIcon; image: string }) {
   const [errored, setErrored] = useState(false);
-  const showImage = !!image && !errored;
+  const safeSrc = safeImageSrc(image);
+  const showImage = !!safeSrc && !errored;
 
   return (
     <div className="relative aspect-[4/3] w-full overflow-hidden">
       {showImage ? (
         <>
           <img
-            src={image}
+            src={safeSrc}
             alt=""
             loading="lazy"
             decoding="async"

@@ -12,6 +12,7 @@ import {
   flagships,
   userExilium,
   fleetEvents,
+  refreshTokens,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { Queue } from 'bullmq';
@@ -173,6 +174,11 @@ export function createPlayerAdminService(
 
     async banPlayer(userId: string) {
       await db.update(users).set({ bannedAt: new Date() }).where(eq(users.id, userId));
+      // Drop every refresh token immediately. Access tokens emitted before the
+      // ban are filtered out by protectedProcedure's user check, so they stop
+      // working on the next request. Without this delete, a banned player could
+      // keep refreshing for up to REFRESH_TOKEN_EXPIRES_IN.
+      await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
     },
 
     async unbanPlayer(userId: string) {

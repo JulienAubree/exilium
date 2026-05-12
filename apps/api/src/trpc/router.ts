@@ -28,16 +28,30 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   } catch {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
+  // Ban revocation strategy (SEC-01):
+  //   1. refresh() rejects a banned account → no new access tokens issued.
+  //   2. banPlayer() wipes refresh_tokens → existing refreshes also fail.
+  //   3. access tokens always expire within JWT_EXPIRES_IN (2h default), even
+  //      with rememberMe (rememberMe extends the *refresh* token, not the
+  //      access token).
+  // Worst-case propagation delay after ban: JWT_EXPIRES_IN.
+  // We deliberately don't hit the DB here per-request to keep latency tight.
 });
 
 export function createAdminProcedure(db: Database) {
   return protectedProcedure.use(async ({ ctx, next, path, type, input }) => {
     const [user] = await db
-      .select({ isAdmin: users.isAdmin })
+      .select({ isAdmin: users.isAdmin, bannedAt: users.bannedAt })
       .from(users)
       .where(eq(users.id, ctx.userId!))
       .limit(1);
-    if (!user?.isAdmin) {
+    // Belt-and-suspenders ban check for admin actions: if a banned admin
+    // somehow still has a valid access token (during the JWT_EXPIRES_IN
+    // grace window after ban), reject every admin call immediately.
+    if (!user || user.bannedAt) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    if (!user.isAdmin) {
       throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
     }
 

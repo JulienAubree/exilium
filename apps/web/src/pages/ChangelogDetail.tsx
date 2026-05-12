@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/format';
 import { ArrowLeft, Send } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
+import { safeLinkHref } from '@exilium/shared';
 
 const MONTHS = [
   'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -50,20 +51,27 @@ function inlineFormat(text: string): React.ReactNode {
       remaining = remaining.slice(match[0].length);
       continue;
     }
-    // Link [text](url)
+    // Link [text](url) — reject anything that isn't http(s)/mailto/internal.
+    // A hostile URL falls back to plain text so the visible content is
+    // preserved without becoming clickable.
     match = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
     if (match) {
-      tokens.push(
-        <a
-          key={key++}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline hover:text-primary/80"
-        >
-          {match[1]}
-        </a>
-      );
+      const safe = safeLinkHref(match[2]);
+      if (safe) {
+        tokens.push(
+          <a
+            key={key++}
+            href={safe}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-primary/80"
+          >
+            {match[1]}
+          </a>
+        );
+      } else {
+        tokens.push(<span key={key++}>{match[1]}</span>);
+      }
       remaining = remaining.slice(match[0].length);
       continue;
     }

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { Play } from 'lucide-react';
+import { safeLinkHref } from '@exilium/shared';
 import { AnimatedHeroBackground } from './AnimatedHeroBackground';
 import type { HomepageContent } from './useHomepageContent';
 
@@ -89,7 +90,7 @@ function HeroTitle({ text }: { text: string }) {
 }
 
 function PrimaryCta({ href, children }: { href: string; children: React.ReactNode }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className =
     'group relative inline-flex items-center justify-center overflow-hidden rounded-md bg-primary px-8 py-3.5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-[0_0_30px_-6px_hsl(200,85%,65%,0.7)] transition-all duration-200 hover:bg-primary/90 hover:shadow-[0_0_40px_-4px_hsl(200,85%,65%,0.9)] active:scale-[0.98]';
   const content = (
@@ -101,22 +102,25 @@ function PrimaryCta({ href, children }: { href: string; children: React.ReactNod
       />
     </>
   );
-  if (isInternal) {
+  if (!safe) {
+    return <span className={className}>{content}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={className}>
+      <Link to={safe} className={className}>
         {content}
       </Link>
     );
   }
   return (
-    <a href={href} className={className}>
+    <a href={safe} className={className}>
       {content}
     </a>
   );
 }
 
 function SecondaryCta({ href, children }: { href: string; children: React.ReactNode }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className =
     'group inline-flex items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.03] px-6 py-3 text-sm font-medium uppercase tracking-[0.2em] text-foreground/90 backdrop-blur-sm transition-all duration-200 hover:border-white/30 hover:bg-white/[0.07]';
   const content = (
@@ -125,15 +129,18 @@ function SecondaryCta({ href, children }: { href: string; children: React.ReactN
       <span>{children}</span>
     </>
   );
-  if (isInternal) {
+  if (!safe) {
+    return <span className={className}>{content}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={className}>
+      <Link to={safe} className={className}>
         {content}
       </Link>
     );
   }
   return (
-    <a href={href} className={className}>
+    <a href={safe} className={className}>
       {content}
     </a>
   );

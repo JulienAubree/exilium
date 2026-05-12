@@ -32,4 +32,21 @@ describe('processBuildingVariant', () => {
     const src = await sharp({ create: { width: 100, height: 100, channels: 3, background: '#fff' } }).png().toBuffer();
     await expect(processBuildingVariant(src, 'ships' as never, 'x', 'volcanic', dir)).rejects.toThrow();
   });
+
+  it('rejects path traversal in entityId (SEC-03)', async () => {
+    const src = await sharp({ create: { width: 100, height: 100, channels: 3, background: '#fff' } }).png().toBuffer();
+    await expect(
+      processBuildingVariant(src, 'buildings', '../etc', 'volcanic', dir),
+    ).rejects.toThrow(/entityId/);
+    await expect(
+      processBuildingVariant(src, 'buildings', 'foo/bar', 'volcanic', dir),
+    ).rejects.toThrow(/entityId/);
+  });
+
+  it('rejects path traversal in planetType (SEC-03)', async () => {
+    const src = await sharp({ create: { width: 100, height: 100, channels: 3, background: '#fff' } }).png().toBuffer();
+    await expect(
+      processBuildingVariant(src, 'buildings', 'mineraiMine', '../etc', dir),
+    ).rejects.toThrow(/planetType/);
+  });
 });

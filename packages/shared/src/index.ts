@@ -7,4 +7,5 @@ export * from './types/missions.js';
 export * from './types/notifications.js';
 export * from './types/flagship.js';
 export * from './utils/assets.js';
+export * from './utils/safe-url.js';
 export * from './alliance-log.js';

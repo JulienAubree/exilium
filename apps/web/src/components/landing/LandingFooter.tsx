@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { safeLinkHref } from '@exilium/shared';
 import { ExiliumLogo } from './ExiliumLogo';
 import type { HomepageContent } from './useHomepageContent';
 
@@ -64,30 +65,37 @@ export function LandingFooter({ content }: LandingFooterProps) {
 }
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const isInternal = href.startsWith('/');
+  const safe = safeLinkHref(href);
   const className = 'text-sm text-muted-foreground transition-colors hover:text-primary';
-  if (isInternal) {
+  if (!safe) {
+    return <span className={className}>{children}</span>;
+  }
+  if (safe.startsWith('/') || safe.startsWith('#')) {
     return (
-      <Link to={href} className={className}>
+      <Link to={safe} className={className}>
         {children}
       </Link>
     );
   }
   return (
-    <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+    <a href={safe} className={className} target="_blank" rel="noopener noreferrer">
       {children}
     </a>
   );
 }
 
 function SocialLink({ platform, href }: { platform: Social['platform']; href: string }) {
+  const safe = safeLinkHref(href);
+  const className =
+    'inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-card/40 text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary';
+  if (!safe) return null;
   return (
     <a
-      href={href}
+      href={safe}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={platform}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-card/40 text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+      className={className}
     >
       <SocialIcon platform={platform} />
     </a>
