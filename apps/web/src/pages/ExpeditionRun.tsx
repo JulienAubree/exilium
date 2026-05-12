@@ -21,6 +21,7 @@ import { useToastStore } from '@/stores/toast.store';
 import { Timer } from '@/components/common/Timer';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
 import {
@@ -555,36 +556,38 @@ export default function ExpeditionRun() {
       )}
 
       {/* Modal d'événement */}
-      {eventDialog.isOpen && pendingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-amber-500/40 bg-card/95 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] uppercase tracking-wider text-amber-300">
-                {mission.sectorName} · Étape {mission.currentStep + 1} sur {mission.totalSteps}
-              </span>
-              <Button variant="outline" size="sm" onClick={() => eventDialog.close()}>
-                Fermer
-              </Button>
-            </div>
-            <ExpeditionEventCard
-              event={pendingEvent}
-              userResearch={userResearchLevels}
-              shipsAlive={fleetStatus.shipsAlive ?? {}}
-              shipRoles={shipRoles}
-              shipNames={shipNames}
-              researchNames={researchNames}
-              loading={resolveMutation.isPending}
-              onChoose={(choiceIndex) => {
-                resolveMutation.mutate({
-                  missionId: mission.id,
-                  choiceIndex,
-                  resolutionToken: crypto.randomUUID(),
-                });
-              }}
-            />
-          </div>
+      <Modal
+        open={eventDialog.isOpen && !!pendingEvent}
+        onClose={eventDialog.close}
+        className="lg:max-w-3xl border-amber-500/40"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[10px] uppercase tracking-wider text-amber-300">
+            {mission.sectorName} · Étape {mission.currentStep + 1} sur {mission.totalSteps}
+          </span>
+          <Button variant="outline" size="sm" onClick={eventDialog.close}>
+            Fermer
+          </Button>
         </div>
-      )}
+        {pendingEvent && (
+          <ExpeditionEventCard
+            event={pendingEvent}
+            userResearch={userResearchLevels}
+            shipsAlive={fleetStatus.shipsAlive ?? {}}
+            shipRoles={shipRoles}
+            shipNames={shipNames}
+            researchNames={researchNames}
+            loading={resolveMutation.isPending}
+            onChoose={(choiceIndex) => {
+              resolveMutation.mutate({
+                missionId: mission.id,
+                choiceIndex,
+                resolutionToken: crypto.randomUUID(),
+              });
+            }}
+          />
+        )}
+      </Modal>
 
       <ConfirmDialog
         open={retreatDialog.isOpen}
