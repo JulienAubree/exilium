@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, AlertTriangle, Lock, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ExiliumIcon } from '@/components/common/ExiliumIcon';
+import { ResourceBadge } from '@/components/common/ResourceBadge';
 
 type ChoiceTone = 'positive' | 'negative' | 'risky' | 'neutral';
 
@@ -106,10 +106,10 @@ function formatRequirement(req: Requirement, ctx: { userResearch: Record<string,
 
 function renderOutcomePreview(outcome: Outcome): React.ReactNode {
   const parts: React.ReactNode[] = [];
-  if (outcome.minerai) parts.push(<span key="min" className="text-minerai">{outcome.minerai > 0 ? '+' : ''}{outcome.minerai} M</span>);
-  if (outcome.silicium) parts.push(<span key="sil" className="text-silicium">{outcome.silicium > 0 ? '+' : ''}{outcome.silicium} S</span>);
-  if (outcome.hydrogene) parts.push(<span key="hyd" className="text-hydrogene">{outcome.hydrogene > 0 ? '+' : ''}{outcome.hydrogene} H</span>);
-  if (outcome.exilium) parts.push(<span key="exi" className="flex items-center gap-0.5 text-purple-300">+{outcome.exilium} <ExiliumIcon className="h-3 w-3" /></span>);
+  if (outcome.minerai) parts.push(<ResourceBadge key="min" resource="minerai" amount={outcome.minerai} variant="compact" showSign />);
+  if (outcome.silicium) parts.push(<ResourceBadge key="sil" resource="silicium" amount={outcome.silicium} variant="compact" showSign />);
+  if (outcome.hydrogene) parts.push(<ResourceBadge key="hyd" resource="hydrogene" amount={outcome.hydrogene} variant="compact" showSign />);
+  if (outcome.exilium) parts.push(<ResourceBadge key="exi" resource="exilium" amount={outcome.exilium} showSign />);
   if (outcome.hullDelta) parts.push(<span key="hull" className={cn(outcome.hullDelta < 0 ? 'text-rose-300' : 'text-emerald-300')}>Coque {outcome.hullDelta > 0 ? '+' : ''}{Math.round(outcome.hullDelta * 100)}%</span>);
   if (outcome.moduleDrop) parts.push(<span key="mod" className="flex items-center gap-0.5 text-violet-300"><Package className="h-3 w-3" />{outcome.moduleDrop.count}× module {outcome.moduleDrop.rarity}</span>);
   if (outcome.bonusBiomeReveal) parts.push(<span key="bio" className="text-cyan-300">{outcome.bonusBiomeReveal} biome{outcome.bonusBiomeReveal > 1 ? 's' : ''} révélé{outcome.bonusBiomeReveal > 1 ? 's' : ''}</span>);

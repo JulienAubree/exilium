@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { cn } from '@/lib/utils';
 
 type Accent = 'amber' | 'emerald' | 'blue' | 'red' | 'muted';
@@ -33,13 +34,13 @@ export function ExpandableInfo({
   accent: Accent;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const { isOpen, toggle } = useDisclosure();
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
+        onClick={toggle}
+        aria-expanded={isOpen}
         className={cn(
           'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors',
           BTN_COLOR[accent],
@@ -47,9 +48,9 @@ export function ExpandableInfo({
       >
         <Info className="h-3 w-3" />
         <span>{label}</span>
-        <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-3 w-3 transition-transform', isOpen && 'rotate-180')} />
       </button>
-      {open && (
+      {isOpen && (
         <div className={cn('mt-2 rounded-lg border p-3 text-[11px] leading-relaxed space-y-2', COLOR_MAP[accent])}>
           {children}
         </div>
