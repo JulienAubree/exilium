@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useNow } from '@/hooks/useNow';
 import { useNavigate } from 'react-router';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,53 +20,69 @@ export const fmt = (n: number) => n.toLocaleString('fr-FR');
 
 export const MISSION_STYLE: Record<string, { border: string; text: string }> = {
   transport: { border: 'border-l-blue-500', text: 'text-blue-400' },
-  station:   { border: 'border-l-emerald-500', text: 'text-emerald-400' },
-  spy:       { border: 'border-l-violet-500', text: 'text-violet-400' },
-  attack:    { border: 'border-l-red-500', text: 'text-red-400' },
-  colonize:  { border: 'border-l-orange-500', text: 'text-orange-400' },
-  mine:      { border: 'border-l-amber-500', text: 'text-amber-400' },
-  pirate:    { border: 'border-l-rose-600', text: 'text-rose-400' },
-  recycle:   { border: 'border-l-cyan-500', text: 'text-cyan-400' },
-  trade:     { border: 'border-l-violet-400', text: 'text-violet-300' },
+  station: { border: 'border-l-emerald-500', text: 'text-emerald-400' },
+  spy: { border: 'border-l-violet-500', text: 'text-violet-400' },
+  attack: { border: 'border-l-red-500', text: 'text-red-400' },
+  colonize: { border: 'border-l-orange-500', text: 'text-orange-400' },
+  mine: { border: 'border-l-amber-500', text: 'text-amber-400' },
+  pirate: { border: 'border-l-rose-600', text: 'text-rose-400' },
+  recycle: { border: 'border-l-cyan-500', text: 'text-cyan-400' },
+  trade: { border: 'border-l-violet-400', text: 'text-violet-300' },
 };
 
 export const PHASE_STYLE: Record<string, { classes: string; dot: string; pulse?: boolean }> = {
-  outbound:    { classes: 'text-blue-300 bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-400', pulse: true },
-  prospecting: { classes: 'text-amber-300 bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-400', pulse: true },
-  mining:      { classes: 'text-amber-200 bg-amber-400/10 border-amber-400/20', dot: 'bg-amber-300', pulse: true },
-  exploring:   { classes: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/20', dot: 'bg-cyan-400', pulse: true },
-  return:      { classes: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
+  outbound: {
+    classes: 'text-blue-300 bg-blue-500/10 border-blue-500/20',
+    dot: 'bg-blue-400',
+    pulse: true,
+  },
+  prospecting: {
+    classes: 'text-amber-300 bg-amber-500/10 border-amber-500/20',
+    dot: 'bg-amber-400',
+    pulse: true,
+  },
+  mining: {
+    classes: 'text-amber-200 bg-amber-400/10 border-amber-400/20',
+    dot: 'bg-amber-300',
+    pulse: true,
+  },
+  exploring: {
+    classes: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/20',
+    dot: 'bg-cyan-400',
+    pulse: true,
+  },
+  return: {
+    classes: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20',
+    dot: 'bg-emerald-400',
+  },
 };
 
 // ── Progress hook (updates every second) ──
 
 export function useProgress(departure: string, arrival: string) {
-  const [pct, setPct] = useState(() => {
-    const total = new Date(arrival).getTime() - new Date(departure).getTime();
-    const elapsed = Date.now() - new Date(departure).getTime();
-    return total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 100;
-  });
-
-  useEffect(() => {
-    const dep = new Date(departure).getTime();
-    const arr = new Date(arrival).getTime();
-    const tick = () => {
-      const total = arr - dep;
-      const elapsed = Date.now() - dep;
-      setPct(total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 100);
-    };
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [departure, arrival]);
-
-  return pct;
+  const now = useNow();
+  const dep = new Date(departure).getTime();
+  const arr = new Date(arrival).getTime();
+  const total = arr - dep;
+  const elapsed = now - dep;
+  return total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 100;
 }
 
 // ── Mining Phase Stepper ──
 
 const MINE_PHASE_KEYS = ['outbound', 'prospecting', 'mining', 'return', 'base'] as const;
 
-export function MiningPhaseStepper({ phase, progress, hex, gameConfig }: { phase: string; progress: number; hex: string; gameConfig?: any }) {
+export function MiningPhaseStepper({
+  phase,
+  progress,
+  hex,
+  gameConfig,
+}: {
+  phase: string;
+  progress: number;
+  hex: string;
+  gameConfig?: any;
+}) {
   const currentIdx = MINE_PHASE_KEYS.indexOf(phase as any);
 
   return (
@@ -93,12 +110,8 @@ export function MiningPhaseStepper({ phase, progress, hex, gameConfig }: { phase
                     ...(isActive ? { background: hex, boxShadow: `0 0 10px ${hex}80` } : {}),
                   }}
                 >
-                  {isDone && (
-                    <Check className="h-2.5 w-2.5 text-white" strokeWidth={1.5} />
-                  )}
-                  {isActive && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  )}
+                  {isDone && <Check className="h-2.5 w-2.5 text-white" strokeWidth={1.5} />}
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
                 </div>
               </div>
 
@@ -130,14 +143,21 @@ export function MiningPhaseStepper({ phase, progress, hex, gameConfig }: { phase
           const isDone = i < currentIdx;
           const isActive = i === currentIdx;
           return (
-            <div key={key} className={cn('flex-1 last:flex-none', i === MINE_PHASE_KEYS.length - 1 && 'text-right')}>
-              <span className={cn(
-                'text-[10px]',
-                isDone && 'text-muted-foreground/60',
-                isActive && 'font-semibold',
-                !isDone && !isActive && 'text-muted-foreground/30',
+            <div
+              key={key}
+              className={cn(
+                'flex-1 last:flex-none',
+                i === MINE_PHASE_KEYS.length - 1 && 'text-right',
               )}
-              style={isActive ? { color: hex } : {}}
+            >
+              <span
+                className={cn(
+                  'text-[10px]',
+                  isDone && 'text-muted-foreground/60',
+                  isActive && 'font-semibold',
+                  !isDone && !isActive && 'text-muted-foreground/30',
+                )}
+                style={isActive ? { color: hex } : {}}
               >
                 {gameConfig?.labels[`phase.${key}`] ?? key}
               </span>
@@ -202,7 +222,10 @@ export function MovementCard({
     : '';
   const originLabel = originPlanet?.name ?? 'Planete';
 
-  const canRecall = onRecall && ['outbound', 'prospecting', 'mining'].includes(event.phase) && event.mission !== 'trade';
+  const canRecall =
+    onRecall &&
+    ['outbound', 'prospecting', 'mining'].includes(event.phase) &&
+    event.mission !== 'trade';
   const isReturn = event.phase === 'return';
 
   const mStyle = MISSION_STYLE[event.mission] ?? MISSION_STYLE.transport;
@@ -222,10 +245,21 @@ export function MovementCard({
 
   // Ship stats for expanded panel — merge flagship stats from DB
   const shipStats = useMemo(() => {
-    const base = gameConfig?.ships as Record<string, {
-      baseSpeed: number; cargoCapacity: number; fuelConsumption: number;
-      driveType: string; miningExtraction: number; weapons: number; shield: number; armor: number;
-    }> | undefined;
+    const base = gameConfig?.ships as
+      | Record<
+          string,
+          {
+            baseSpeed: number;
+            cargoCapacity: number;
+            fuelConsumption: number;
+            driveType: string;
+            miningExtraction: number;
+            weapons: number;
+            shield: number;
+            armor: number;
+          }
+        >
+      | undefined;
     if (!base) return undefined;
     if (!hasFlagship || !flagship) return base;
     return {
@@ -244,14 +278,28 @@ export function MovementCard({
   }, [gameConfig?.ships, hasFlagship, flagship]);
 
   // Ship name helper — uses flagship DB name for 'flagship', gameConfig for others
-  const shipName = (id: string) => id === 'flagship' ? (flagship?.name ?? 'Vaisseau amiral') : getShipName(id, gameConfig);
+  const shipName = (id: string) =>
+    id === 'flagship' ? (flagship?.name ?? 'Vaisseau amiral') : getShipName(id, gameConfig);
 
   // Ship icon helper — uses personalized flagship image when available
   const ShipIcon = ({ id, className }: { id: string; className: string }) => {
     if (id === 'flagship' && flagship?.flagshipImageIndex != null) {
-      return <img src={getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'icon')} alt={shipName(id)} className={className} loading="lazy" />;
+      return (
+        <img
+          src={getFlagshipImageUrl(
+            flagship.hullId ?? 'industrial',
+            flagship.flagshipImageIndex,
+            'icon',
+          )}
+          alt={shipName(id)}
+          className={className}
+          loading="lazy"
+        />
+      );
     }
-    return <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className={className} />;
+    return (
+      <GameImage category="ships" id={id} size="icon" alt={shipName(id)} className={className} />
+    );
   };
 
   // Cargo capacity of the fleet
@@ -266,7 +314,12 @@ export function MovementCard({
     for (const [id] of shipEntries) {
       const stats = shipStats[id];
       if (stats) {
-        const multiplier = resolveBonus('ship_speed', stats.driveType, researchLevels, gameConfig.bonuses);
+        const multiplier = resolveBonus(
+          'ship_speed',
+          stats.driveType,
+          researchLevels,
+          gameConfig.bonuses,
+        );
         speeds[id] = Math.floor(stats.baseSpeed * multiplier);
       }
     }
@@ -294,21 +347,29 @@ export function MovementCard({
             <span className={cn('text-base font-bold tracking-tight', mStyle.text)}>
               {missionLabel}
             </span>
-            <span className={cn(
-              'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border',
-              pStyle.classes,
-            )}>
-              <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', pStyle.dot, pStyle.pulse && 'animate-pulse')} />
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border',
+                pStyle.classes,
+              )}
+            >
+              <span
+                className={cn(
+                  'w-1.5 h-1.5 rounded-full flex-shrink-0',
+                  pStyle.dot,
+                  pStyle.pulse && 'animate-pulse',
+                )}
+              />
               {phaseLabel}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Timer
-              endTime={new Date(event.arrivalTime)}
-              onComplete={onTimerComplete}
-            />
+            <Timer endTime={new Date(event.arrivalTime)} onComplete={onTimerComplete} />
             <ChevronDown
-              className={cn('h-3 w-3 text-muted-foreground/40 transition-transform duration-200', expanded && 'rotate-180')}
+              className={cn(
+                'h-3 w-3 text-muted-foreground/40 transition-transform duration-200',
+                expanded && 'rotate-180',
+              )}
               strokeWidth={1.5}
             />
           </div>
@@ -318,15 +379,34 @@ export function MovementCard({
         <div className="flex items-center gap-2 text-xs">
           <span className="text-foreground font-medium truncate">{fromLabel}</span>
           <svg width="24" height="10" viewBox="0 0 24 10" className="flex-shrink-0 opacity-40">
-            <line x1="0" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
-            <polyline points="15,2 19,5 15,8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <line
+              x1="0"
+              y1="5"
+              x2="17"
+              y2="5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeDasharray="2 2"
+            />
+            <polyline
+              points="15,2 19,5 15,8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
           <span className="text-foreground font-medium truncate">{toLabel}</span>
         </div>
 
         {/* Mining stepper or standard progress bar */}
         {event.mission === 'mine' ? (
-          <MiningPhaseStepper phase={event.phase} progress={progress} hex={missionHex} gameConfig={gameConfig} />
+          <MiningPhaseStepper
+            phase={event.phase}
+            progress={progress}
+            hex={missionHex}
+            gameConfig={gameConfig}
+          />
         ) : (
           <div className="relative h-1.5">
             <div className="absolute inset-0 rounded-full bg-white/[0.04]" />
@@ -395,21 +475,20 @@ export function MovementCard({
                 </span>
               )}
             </div>
-            <span className="text-muted-foreground/30 text-[10px]">
-              ({fmt(totalCargo)} total)
-            </span>
+            <span className="text-muted-foreground/30 text-[10px]">({fmt(totalCargo)} total)</span>
           </div>
         )}
       </div>
 
       {/* ── Expanded detail panel ── */}
-      <div className={cn(
-        'grid transition-[grid-template-rows] duration-300 ease-in-out',
-        expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-      )}>
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-300 ease-in-out',
+          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
         <div className="overflow-hidden">
           <div className="border-t border-white/[0.06] px-4 py-3 space-y-4 text-xs">
-
             {/* Horaires */}
             <div>
               <div className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold mb-1.5">
@@ -418,11 +497,23 @@ export function MovementCard({
               <div className="grid grid-cols-2 gap-y-1 text-muted-foreground">
                 <span>Depart</span>
                 <span className="text-foreground text-right">
-                  {new Date(event.departureTime).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  {new Date(event.departureTime).toLocaleString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })}
                 </span>
                 <span>Arrivee estimee</span>
                 <span className="text-foreground text-right">
-                  {new Date(event.arrivalTime).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  {new Date(event.arrivalTime).toLocaleString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })}
                 </span>
                 <span>Progression</span>
                 <span className="text-foreground text-right">{Math.round(progress)}%</span>
@@ -450,7 +541,8 @@ export function MovementCard({
                       {shipEntries.map(([id, count], i) => {
                         const stats = shipStats[id];
                         const shipSpeed = effectiveSpeeds[id] ?? stats?.baseSpeed ?? 0;
-                        const isSlowest = stats && shipSpeed === slowestSpeed && slowestSpeed < Infinity;
+                        const isSlowest =
+                          stats && shipSpeed === slowestSpeed && slowestSpeed < Infinity;
                         return (
                           <tr key={id} className={i % 2 === 0 ? 'bg-white/[0.02]' : ''}>
                             <td className="px-2 py-1.5 text-foreground">
@@ -459,8 +551,15 @@ export function MovementCard({
                                 {shipName(id)}
                               </span>
                             </td>
-                            <td className="px-2 py-1.5 text-right text-foreground font-semibold">{count}</td>
-                            <td className={cn('px-2 py-1.5 text-right', isSlowest ? 'text-amber-400' : 'text-muted-foreground')}>
+                            <td className="px-2 py-1.5 text-right text-foreground font-semibold">
+                              {count}
+                            </td>
+                            <td
+                              className={cn(
+                                'px-2 py-1.5 text-right',
+                                isSlowest ? 'text-amber-400' : 'text-muted-foreground',
+                              )}
+                            >
                               {stats ? fmt(shipSpeed) : '—'}
                               {isSlowest && shipEntries.length > 1 && (
                                 <span className="ml-0.5 text-[9px] text-amber-400/60">lent</span>
@@ -470,7 +569,10 @@ export function MovementCard({
                               {stats ? fmt(stats.cargoCapacity * count) : '—'}
                             </td>
                             <td className="px-2 py-1.5 text-right text-muted-foreground">
-                              {stats ? gameConfig?.labels?.[`drive.${stats.driveType}`] ?? stats.driveType : '—'}
+                              {stats
+                                ? (gameConfig?.labels?.[`drive.${stats.driveType}`] ??
+                                  stats.driveType)
+                                : '—'}
                             </td>
                           </tr>
                         );
@@ -499,27 +601,56 @@ export function MovementCard({
                   Cargo embarque
                 </div>
                 <div className="space-y-1.5">
-                  {([
-                    { label: 'Minerai', value: minerai, color: 'bg-minerai', textColor: 'text-minerai' },
-                    { label: 'Silicium', value: silicium, color: 'bg-silicium', textColor: 'text-silicium' },
-                    { label: 'Hydrogene', value: hydrogene, color: 'bg-hydrogene', textColor: 'text-hydrogene' },
-                  ] as const).filter(r => r.value > 0).map((res) => {
-                    const pct = fleetCargoCapacity > 0 ? (res.value / fleetCargoCapacity) * 100 : 0;
-                    return (
-                      <div key={res.label}>
-                        <div className="flex justify-between mb-0.5">
-                          <span className={cn('font-medium', res.textColor)}>{res.label}</span>
-                          <span className="text-muted-foreground">{fmt(res.value)}</span>
+                  {(
+                    [
+                      {
+                        label: 'Minerai',
+                        value: minerai,
+                        color: 'bg-minerai',
+                        textColor: 'text-minerai',
+                      },
+                      {
+                        label: 'Silicium',
+                        value: silicium,
+                        color: 'bg-silicium',
+                        textColor: 'text-silicium',
+                      },
+                      {
+                        label: 'Hydrogene',
+                        value: hydrogene,
+                        color: 'bg-hydrogene',
+                        textColor: 'text-hydrogene',
+                      },
+                    ] as const
+                  )
+                    .filter((r) => r.value > 0)
+                    .map((res) => {
+                      const pct =
+                        fleetCargoCapacity > 0 ? (res.value / fleetCargoCapacity) * 100 : 0;
+                      return (
+                        <div key={res.label}>
+                          <div className="flex justify-between mb-0.5">
+                            <span className={cn('font-medium', res.textColor)}>{res.label}</span>
+                            <span className="text-muted-foreground">{fmt(res.value)}</span>
+                          </div>
+                          <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
+                            <div
+                              className={cn('h-full rounded-full', res.color)}
+                              style={{ width: `${pct}%`, opacity: 0.7 }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
-                          <div className={cn('h-full rounded-full', res.color)} style={{ width: `${pct}%`, opacity: 0.7 }} />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   <div className="flex justify-between pt-1 text-muted-foreground/60">
                     <span>Utilisation soute</span>
-                    <span>{fmt(totalCargo)} / {fmt(fleetCargoCapacity)} ({fleetCargoCapacity > 0 ? Math.round((totalCargo / fleetCargoCapacity) * 100) : 0}%)</span>
+                    <span>
+                      {fmt(totalCargo)} / {fmt(fleetCargoCapacity)} (
+                      {fleetCargoCapacity > 0
+                        ? Math.round((totalCargo / fleetCargoCapacity) * 100)
+                        : 0}
+                      %)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -533,7 +664,11 @@ export function MovementCard({
                 </div>
                 <button
                   className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); setActivePlanet(event.originPlanetId); navigate('/'); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePlanet(event.originPlanetId);
+                    navigate('/');
+                  }}
                 >
                   {originLabel} {originCoords}
                 </button>
@@ -547,7 +682,10 @@ export function MovementCard({
                   variant="outline"
                   size="sm"
                   className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/50 text-xs h-7"
-                  onClick={(e) => { e.stopPropagation(); onRecall!(event.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRecall!(event.id);
+                  }}
                   disabled={recallingId === event.id}
                 >
                   Rappeler la flotte

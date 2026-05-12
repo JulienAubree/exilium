@@ -1,4 +1,4 @@
-import type React from 'react';
+import { memo, type ReactNode } from 'react';
 import { Check, X } from 'lucide-react';
 import { GameImage } from '@/components/common/GameImage';
 import { getFlagshipImageUrl } from '@/lib/assets';
@@ -27,7 +27,7 @@ interface ShipPickCardProps {
   /** Min de la quantité (0 par défaut). Mis à 1 quand isSelected pour empêcher le retour à 0 sans onToggle. */
   minWhenSelected?: number;
   /** Badge libre (overlay top-left, ex: "Explo" cyan pour les vaisseaux d'exploration). */
-  topLeftBadge?: React.ReactNode;
+  topLeftBadge?: ReactNode;
   /** Quand shipId === 'flagship', résolution de l'image du flagship. */
   flagshipImageIndex?: number;
   hullId?: string;
@@ -48,7 +48,7 @@ interface ShipPickCardProps {
  *  - QuantityStepper en pied quand sélectionné
  *  - Label "non disponible" / "incompatible" sinon
  */
-export function ShipPickCard({
+export const ShipPickCard = memo(function ShipPickCard({
   shipId,
   shipName,
   available,
@@ -118,10 +118,7 @@ export function ShipPickCard({
         )}
       </div>
 
-      <div
-        className="p-2.5 flex flex-col gap-1.5"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="p-2.5 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
         <span className="text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
           {shipName}
         </span>
@@ -142,13 +139,13 @@ export function ShipPickCard({
       </div>
     </div>
   );
-}
+});
 
 /**
  * Grille standard pour afficher plusieurs ShipPickCard dans la même grille
  * responsive (3-4 colonnes selon viewport).
  */
-export function ShipPickGrid({ children }: { children: React.ReactNode }) {
+export function ShipPickGrid({ children }: { children: ReactNode }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
       {children}

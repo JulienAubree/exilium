@@ -4,7 +4,10 @@ import { ArrowLeft, Compass, Info } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
-import { ExpeditionMissionCard, ExpeditionInProgressCard } from '@/components/expedition/ExpeditionMissionCard';
+import {
+  ExpeditionMissionCard,
+  ExpeditionInProgressCard,
+} from '@/components/expedition/ExpeditionMissionCard';
 import { EngageFleetModal } from '@/components/expedition/EngageFleetModal';
 
 /**
@@ -20,7 +23,7 @@ export default function Expeditions() {
   const currentPlanetId = layoutContext?.planetId;
   const { data: gameConfig } = useGameConfig();
   const { data, isLoading, refetch } = trpc.expedition.list.useQuery(undefined, {
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
   });
   const { data: content } = trpc.expeditionContent.get.useQuery();
 
@@ -90,8 +93,9 @@ export default function Expeditions() {
           <Info className="h-3.5 w-3.5 text-cyan-300 shrink-0 mt-0.5" />
           <span className="text-xs text-muted-foreground">
             Engagez une flotte dans un secteur narratif. La mission se déroule en plusieurs étapes,
-            chacune avec un événement à choix. Vos vaisseaux sont indisponibles ailleurs pendant la durée du run.
-            Récompenses limitées par la <span className="text-cyan-200">capacité de soute</span> de votre flotte.
+            chacune avec un événement à choix. Vos vaisseaux sont indisponibles ailleurs pendant la
+            durée du run. Récompenses limitées par la{' '}
+            <span className="text-cyan-200">capacité de soute</span> de votre flotte.
           </span>
         </div>
       </div>
@@ -137,8 +141,8 @@ export default function Expeditions() {
         {available.length === 0 ? (
           <div className="rounded-lg border border-border/30 bg-card/30 p-6 text-center text-sm text-muted-foreground">
             {missions.length === 0
-              ? "Aucune offre pour le moment. Reviens plus tard — le pool se reconstitue automatiquement."
-              : "Tu as engagé toutes les offres disponibles. Termine une mission pour en débloquer une nouvelle."}
+              ? 'Aucune offre pour le moment. Reviens plus tard — le pool se reconstitue automatiquement.'
+              : 'Tu as engagé toutes les offres disponibles. Termine une mission pour en débloquer une nouvelle.'}
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

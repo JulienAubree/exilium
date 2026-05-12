@@ -1,51 +1,46 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useNow } from './useNow';
 
 /**
- * Compte à rebours formaté en HH:MM:SS, mis à jour chaque seconde.
+ * Compte à rebours formaté en HH:MM:SS, mis à jour chaque seconde via
+ * l'horloge globale partagée (`lib/clock.ts`).
  * Usage : `const display = useCountdownString(target)` → "02:15:30"
  */
 export function useCountdownString(target: Date): string {
-  const compute = useCallback(() => {
-    const diff = Math.max(0, Math.floor((target.getTime() - Date.now()) / 1000));
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    const s = diff % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }, [target]);
-  const [display, setDisplay] = useState(compute);
-  useEffect(() => {
-    const id = setInterval(() => setDisplay(compute()), 1000);
-    return () => clearInterval(id);
-  }, [compute]);
-  return display;
+  const now = useNow();
+  const diff = Math.max(0, Math.floor((target.getTime() - now) / 1000));
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 /**
- * Compte à rebours retournant le nombre de secondes restantes.
+ * Compte à rebours retournant le nombre de secondes restantes. Mis à jour
+ * chaque seconde via l'horloge globale partagée.
  * Optionnel : `onComplete` est appelé une fois quand seconds <= 0.
  * Usage : `const seconds = useCountdownSeconds(endTime, () => refetch())`
  */
-export function useCountdownSeconds(
-  endTime: Date | null,
-  onComplete?: () => void,
-): number {
-  const [seconds, setSeconds] = useState(() =>
-    endTime ? Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000)) : 0,
-  );
+export function useCountdownSeconds(endTime: Date | null, onComplete?: () => void): number {
+  const now = useNow();
   const cbRef = useRef(onComplete);
   cbRef.current = onComplete;
+  const firedRef = useRef(false);
+
+  const seconds = endTime ? Math.max(0, Math.floor((endTime.getTime() - now) / 1000)) : 0;
 
   useEffect(() => {
-    if (!endTime) return;
-    const tick = () => {
-      const remaining = Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000));
-      setSeconds(remaining);
-      if (remaining <= 0 && cbRef.current) cbRef.current();
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [endTime]);
+    if (!endTime) {
+      firedRef.current = false;
+      return;
+    }
+    if (seconds <= 0 && !firedRef.current) {
+      firedRef.current = true;
+      cbRef.current?.();
+    } else if (seconds > 0 && firedRef.current) {
+      firedRef.current = false;
+    }
+  }, [endTime, seconds]);
 
   return seconds;
 }
