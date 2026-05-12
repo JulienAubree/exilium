@@ -3,17 +3,49 @@ import { nonNegativeInt, optionalInt } from '../../lib/zod-schemas.js';
 import { router } from '../../trpc/router.js';
 import type { PlayerAdminService } from './player-admin.service.js';
 
+/**
+ * Whitelist des colonnes de `user_research` modifiables par l'admin.
+ * Doit rester synchronisée avec `packages/db/src/schema/user-research.ts`.
+ * Empêche le mass-assignment si un attaquant interne envoie une colonne
+ * arbitraire (ex: une colonne ajoutée plus tard avec un sens privilégié).
+ */
+const RESEARCH_KEYS = [
+  'espionageTech',
+  'computerTech',
+  'energyTech',
+  'combustion',
+  'impulse',
+  'hyperspaceDrive',
+  'weapons',
+  'shielding',
+  'armor',
+  'rockFracturing',
+  'deepSpaceRefining',
+  'sensorNetwork',
+  'stealthTech',
+  'semiconductors',
+  'armoredStorage',
+  'planetaryExploration',
+  'volcanicWeaponry',
+  'aridArmor',
+  'temperateProduction',
+  'glacialShielding',
+  'gaseousPropulsion',
+] as const;
+
 export function createPlayerAdminRouter(
   playerAdminService: PlayerAdminService,
   adminProcedure: ReturnType<typeof import('../../trpc/router.js').createAdminProcedure>,
 ) {
   return router({
     list: adminProcedure
-      .input(z.object({
-        offset: nonNegativeInt.default(0),
-        limit: z.number().int().min(1).max(100).default(20),
-        search: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          offset: nonNegativeInt.default(0),
+          limit: z.number().int().min(1).max(100).default(20),
+          search: z.string().optional(),
+        }),
+      )
       .query(async ({ input }) => {
         return playerAdminService.listPlayers(input.offset, input.limit, input.search);
       }),
@@ -25,12 +57,14 @@ export function createPlayerAdminRouter(
       }),
 
     updateResources: adminProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        minerai: z.string().optional(),
-        silicium: z.string().optional(),
-        hydrogene: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          planetId: z.string().uuid(),
+          minerai: z.string().optional(),
+          silicium: z.string().optional(),
+          hydrogene: z.string().optional(),
+        }),
+      )
       .mutation(async ({ input }) => {
         const { planetId, ...resources } = input;
         await playerAdminService.updatePlayerResources(planetId, resources);
@@ -38,24 +72,36 @@ export function createPlayerAdminRouter(
       }),
 
     updateBuildingLevel: adminProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        buildingId: z.string(),
-        level: nonNegativeInt,
-      }))
+      .input(
+        z.object({
+          planetId: z.string().uuid(),
+          buildingId: z.string(),
+          level: nonNegativeInt,
+        }),
+      )
       .mutation(async ({ input }) => {
-        await playerAdminService.updatePlayerBuildingLevel(input.planetId, input.buildingId, input.level);
+        await playerAdminService.updatePlayerBuildingLevel(
+          input.planetId,
+          input.buildingId,
+          input.level,
+        );
         return { success: true };
       }),
 
     updateResearchLevel: adminProcedure
-      .input(z.object({
-        userId: z.string().uuid(),
-        levelColumn: z.string(),
-        level: nonNegativeInt,
-      }))
+      .input(
+        z.object({
+          userId: z.string().uuid(),
+          levelColumn: z.enum(RESEARCH_KEYS),
+          level: nonNegativeInt,
+        }),
+      )
       .mutation(async ({ input }) => {
-        await playerAdminService.updatePlayerResearchLevel(input.userId, input.levelColumn, input.level);
+        await playerAdminService.updatePlayerResearchLevel(
+          input.userId,
+          input.levelColumn,
+          input.level,
+        );
         return { success: true };
       }),
 
@@ -81,25 +127,27 @@ export function createPlayerAdminRouter(
       }),
 
     updateFlagshipStats: adminProcedure
-      .input(z.object({
-        userId: z.string().uuid(),
-        stats: z.object({
-          weapons: optionalInt,
-          shield: optionalInt,
-          hull: optionalInt,
-          baseArmor: optionalInt,
-          shotCount: optionalInt,
-          baseSpeed: optionalInt,
-          fuelConsumption: optionalInt,
-          cargoCapacity: optionalInt,
-          driveType: z.string().optional(),
-          combatCategoryId: z.string().optional(),
-          status: z.string().optional(),
-          name: z.string().optional(),
-          description: z.string().optional(),
-          flagshipImageIndex: optionalInt,
+      .input(
+        z.object({
+          userId: z.string().uuid(),
+          stats: z.object({
+            weapons: optionalInt,
+            shield: optionalInt,
+            hull: optionalInt,
+            baseArmor: optionalInt,
+            shotCount: optionalInt,
+            baseSpeed: optionalInt,
+            fuelConsumption: optionalInt,
+            cargoCapacity: optionalInt,
+            driveType: z.string().optional(),
+            combatCategoryId: z.string().optional(),
+            status: z.string().optional(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            flagshipImageIndex: optionalInt,
+          }),
         }),
-      }))
+      )
       .mutation(async ({ input }) => {
         await playerAdminService.updateFlagshipStats(input.userId, input.stats);
         return { success: true };
@@ -113,52 +161,67 @@ export function createPlayerAdminRouter(
       }),
 
     setExiliumBalance: adminProcedure
-      .input(z.object({
-        userId: z.string().uuid(),
-        balance: nonNegativeInt,
-      }))
+      .input(
+        z.object({
+          userId: z.string().uuid(),
+          balance: nonNegativeInt,
+        }),
+      )
       .mutation(async ({ input }) => {
         await playerAdminService.setExiliumBalance(input.userId, input.balance);
         return { success: true };
       }),
 
     updatePlanetCoordinates: adminProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        galaxy: z.number().int().min(1),
-        system: z.number().int().min(1),
-        position: z.number().int().min(1),
-      }))
+      .input(
+        z.object({
+          planetId: z.string().uuid(),
+          galaxy: z.number().int().min(1),
+          system: z.number().int().min(1),
+          position: z.number().int().min(1),
+        }),
+      )
       .mutation(async ({ input }) => {
-        await playerAdminService.updatePlanetCoordinates(input.planetId, input.galaxy, input.system, input.position);
+        await playerAdminService.updatePlanetCoordinates(
+          input.planetId,
+          input.galaxy,
+          input.system,
+          input.position,
+        );
         return { success: true };
       }),
 
     setCapital: adminProcedure
-      .input(z.object({
-        userId: z.string().uuid(),
-        planetId: z.string().uuid(),
-      }))
+      .input(
+        z.object({
+          userId: z.string().uuid(),
+          planetId: z.string().uuid(),
+        }),
+      )
       .mutation(async ({ input }) => {
         await playerAdminService.setCapital(input.userId, input.planetId);
         return { success: true };
       }),
 
     updatePlanetShips: adminProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        ships: z.record(z.string(), nonNegativeInt),
-      }))
+      .input(
+        z.object({
+          planetId: z.string().uuid(),
+          ships: z.record(z.string(), nonNegativeInt),
+        }),
+      )
       .mutation(async ({ input }) => {
         await playerAdminService.updatePlanetShips(input.planetId, input.ships);
         return { success: true };
       }),
 
     updatePlanetDefenses: adminProcedure
-      .input(z.object({
-        planetId: z.string().uuid(),
-        defenses: z.record(z.string(), nonNegativeInt),
-      }))
+      .input(
+        z.object({
+          planetId: z.string().uuid(),
+          defenses: z.record(z.string(), nonNegativeInt),
+        }),
+      )
       .mutation(async ({ input }) => {
         await playerAdminService.updatePlanetDefenses(input.planetId, input.defenses);
         return { success: true };

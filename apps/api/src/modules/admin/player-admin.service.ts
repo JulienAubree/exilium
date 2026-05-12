@@ -1,9 +1,21 @@
 import { eq, and, like, or, sql, count, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings, flagships, userExilium, fleetEvents } from '@exilium/db';
+import {
+  users,
+  planets,
+  userResearch,
+  planetShips,
+  planetDefenses,
+  rankings,
+  planetBuildings,
+  flagships,
+  userExilium,
+  fleetEvents,
+} from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { Queue } from 'bullmq';
 import type { createPlanetService } from '../planet/planet.service.js';
+import type { GameConfigService } from './game-config.service.js';
 
 type PlanetServiceDep = Pick<ReturnType<typeof createPlanetService>, 'createHomePlanet'>;
 
@@ -11,14 +23,30 @@ export function createPlayerAdminService(
   db: Database,
   fleetQueue?: Queue,
   planetService?: PlanetServiceDep,
+  gameConfigService?: GameConfigService,
 ) {
+  /**
+   * Valide que chaque clé du record fournit par l'admin correspond à une
+   * entité connue de la config. Sans cela, `db.update().set({ ...record })`
+   * accepterait des colonnes arbitraires (mass-assignment).
+   */
+  async function assertKnownEntities(kind: 'ships' | 'defenses', record: Record<string, number>) {
+    if (!gameConfigService) return; // wiring optionnel : skip si pas injecté
+    const config = await gameConfigService.getFullConfig();
+    const valid = kind === 'ships' ? config.ships : config.defenses;
+    const unknown = Object.keys(record).filter((k) => !(k in valid));
+    if (unknown.length > 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `Clés ${kind} inconnues : ${unknown.join(', ')}`,
+      });
+    }
+  }
+
   return {
     async listPlayers(offset: number, limit: number, search?: string) {
       const conditions = search
-        ? or(
-            like(users.username, `%${search}%`),
-            like(users.email, `%${search}%`),
-          )
+        ? or(like(users.username, `%${search}%`), like(users.email, `%${search}%`))
         : undefined;
 
       const [playerRows, [countResult]] = await Promise.all([
@@ -42,10 +70,7 @@ export function createPlayerAdminService(
           .orderBy(users.createdAt)
           .offset(offset)
           .limit(limit),
-        db
-          .select({ total: count() })
-          .from(users)
-          .where(conditions),
+        db.select({ total: count() }).from(users).where(conditions),
       ]);
 
       return { players: playerRows, total: countResult?.total ?? 0 };
@@ -64,13 +89,14 @@ export function createPlayerAdminService(
       // Batch-load ships, defenses, and building levels across all planets in
       // 3 queries instead of 3×N.
       const planetIds = playerPlanets.map((p) => p.id);
-      const [shipsRows, defensesRows, buildingRows] = planetIds.length === 0
-        ? [[], [], []]
-        : await Promise.all([
-            db.select().from(planetShips).where(inArray(planetShips.planetId, planetIds)),
-            db.select().from(planetDefenses).where(inArray(planetDefenses.planetId, planetIds)),
-            db.select().from(planetBuildings).where(inArray(planetBuildings.planetId, planetIds)),
-          ]);
+      const [shipsRows, defensesRows, buildingRows] =
+        planetIds.length === 0
+          ? [[], [], []]
+          : await Promise.all([
+              db.select().from(planetShips).where(inArray(planetShips.planetId, planetIds)),
+              db.select().from(planetDefenses).where(inArray(planetDefenses.planetId, planetIds)),
+              db.select().from(planetBuildings).where(inArray(planetBuildings.planetId, planetIds)),
+            ]);
 
       const shipsByPlanet = new Map(shipsRows.map((r) => [r.planetId, r]));
       const defensesByPlanet = new Map(defensesRows.map((r) => [r.planetId, r]));
@@ -92,11 +118,26 @@ export function createPlayerAdminService(
       }));
 
       // Load flagship + exilium balance (talents removed 2026-05-03)
-      const [flagshipRow] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
-      const [exiliumRow] = await db.select().from(userExilium).where(eq(userExilium.userId, userId)).limit(1);
+      const [flagshipRow] = await db
+        .select()
+        .from(flagships)
+        .where(eq(flagships.userId, userId))
+        .limit(1);
+      const [exiliumRow] = await db
+        .select()
+        .from(userExilium)
+        .where(eq(userExilium.userId, userId))
+        .limit(1);
 
       return {
-        user: { id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin, bannedAt: user.bannedAt, createdAt: user.createdAt },
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          isAdmin: user.isAdmin,
+          bannedAt: user.bannedAt,
+          createdAt: user.createdAt,
+        },
         planets: planetsWithUnits,
         research: research[0] ?? null,
         ranking: ranking[0] ?? null,
@@ -105,7 +146,10 @@ export function createPlayerAdminService(
       };
     },
 
-    async updatePlayerResources(planetId: string, resources: { minerai?: string; silicium?: string; hydrogene?: string }) {
+    async updatePlayerResources(
+      planetId: string,
+      resources: { minerai?: string; silicium?: string; hydrogene?: string },
+    ) {
       await db.update(planets).set(resources).where(eq(planets.id, planetId));
     },
 
@@ -120,7 +164,10 @@ export function createPlayerAdminService(
     },
 
     async updatePlayerResearchLevel(userId: string, levelColumn: string, level: number) {
-      await db.update(userResearch).set({ [levelColumn]: level }).where(eq(userResearch.userId, userId));
+      await db
+        .update(userResearch)
+        .set({ [levelColumn]: level })
+        .where(eq(userResearch.userId, userId));
     },
 
     async banPlayer(userId: string) {
@@ -135,24 +182,51 @@ export function createPlayerAdminService(
       await db.delete(users).where(eq(users.id, userId));
     },
 
-    async updateFlagshipStats(userId: string, stats: Partial<{
-      weapons: number; shield: number; hull: number; baseArmor: number;
-      shotCount: number; baseSpeed: number; fuelConsumption: number;
-      cargoCapacity: number; driveType: string; combatCategoryId: string;
-      status: string; name: string; description: string; flagshipImageIndex: number;
-    }>) {
-      await db.update(flagships).set({ ...stats, updatedAt: new Date() }).where(eq(flagships.userId, userId));
+    async updateFlagshipStats(
+      userId: string,
+      stats: Partial<{
+        weapons: number;
+        shield: number;
+        hull: number;
+        baseArmor: number;
+        shotCount: number;
+        baseSpeed: number;
+        fuelConsumption: number;
+        cargoCapacity: number;
+        driveType: string;
+        combatCategoryId: string;
+        status: string;
+        name: string;
+        description: string;
+        flagshipImageIndex: number;
+      }>,
+    ) {
+      await db
+        .update(flagships)
+        .set({ ...stats, updatedAt: new Date() })
+        .where(eq(flagships.userId, userId));
     },
 
     async repairFlagship(userId: string) {
-      await db.update(flagships).set({ status: 'active', repairEndsAt: null, updatedAt: new Date() }).where(eq(flagships.userId, userId));
+      await db
+        .update(flagships)
+        .set({ status: 'active', repairEndsAt: null, updatedAt: new Date() })
+        .where(eq(flagships.userId, userId));
     },
 
     async setExiliumBalance(userId: string, balance: number) {
-      await db.update(userExilium).set({ balance, updatedAt: new Date() }).where(eq(userExilium.userId, userId));
+      await db
+        .update(userExilium)
+        .set({ balance, updatedAt: new Date() })
+        .where(eq(userExilium.userId, userId));
     },
 
-    async updatePlanetCoordinates(planetId: string, galaxy: number, system: number, position: number) {
+    async updatePlanetCoordinates(
+      planetId: string,
+      galaxy: number,
+      system: number,
+      position: number,
+    ) {
       // Recall all active outbound fleets from this planet before moving it.
       // Without this, fleets would continue traveling to/from the old coordinates.
       const activeFleets = await db
@@ -168,19 +242,20 @@ export function createPlayerAdminService(
 
       for (const fleet of activeFleets) {
         // Switch phase to return with immediate arrival
-        await db
-          .update(fleetEvents)
-          .set({ phase: 'return' })
-          .where(eq(fleetEvents.id, fleet.id));
+        await db.update(fleetEvents).set({ phase: 'return' }).where(eq(fleetEvents.id, fleet.id));
 
         // Cancel any pending arrival/phase job and schedule immediate return
         if (fleetQueue) {
           await fleetQueue.remove(`fleet-arrive-${fleet.id}`).catch(() => {});
           await fleetQueue.remove(`fleet-phase-${fleet.id}`).catch(() => {});
-          await fleetQueue.add('return', { fleetEventId: fleet.id }, {
-            delay: 1000, // 1 second — nearly instant
-            jobId: `fleet-return-${fleet.id}`,
-          });
+          await fleetQueue.add(
+            'return',
+            { fleetEventId: fleet.id },
+            {
+              delay: 1000, // 1 second — nearly instant
+              jobId: `fleet-return-${fleet.id}`,
+            },
+          );
         }
       }
 
@@ -189,6 +264,7 @@ export function createPlayerAdminService(
     },
 
     async updatePlanetShips(planetId: string, ships: Record<string, number>) {
+      await assertKnownEntities('ships', ships);
       await db
         .insert(planetShips)
         .values({ planetId, ...ships })
@@ -199,6 +275,7 @@ export function createPlayerAdminService(
     },
 
     async updatePlanetDefenses(planetId: string, defenses: Record<string, number>) {
+      await assertKnownEntities('defenses', defenses);
       await db
         .insert(planetDefenses)
         .values({ planetId, ...defenses })
@@ -226,19 +303,24 @@ export function createPlayerAdminService(
 
       if (currentHomeworld) {
         // Old homeworld gets the new capital's type
-        await db.update(planets)
+        await db
+          .update(planets)
           .set({ planetClassId: newCapital.planetClassId })
           .where(eq(planets.id, currentHomeworld.id));
 
         // Remove IPC from old homeworld
-        await db.delete(planetBuildings)
-          .where(and(
-            eq(planetBuildings.planetId, currentHomeworld.id),
-            eq(planetBuildings.buildingId, 'imperialPowerCenter'),
-          ));
+        await db
+          .delete(planetBuildings)
+          .where(
+            and(
+              eq(planetBuildings.planetId, currentHomeworld.id),
+              eq(planetBuildings.buildingId, 'imperialPowerCenter'),
+            ),
+          );
       }
 
-      await db.update(planets)
+      await db
+        .update(planets)
         .set({ planetClassId: 'homeworld' })
         .where(eq(planets.id, newCapitalPlanetId));
     },
@@ -278,7 +360,12 @@ export function createPlayerAdminService(
       }
 
       const planet = await planetService.createHomePlanet(userId);
-      return { planetId: planet.id, galaxy: planet.galaxy, system: planet.system, position: planet.position };
+      return {
+        planetId: planet.id,
+        galaxy: planet.galaxy,
+        system: planet.system,
+        position: planet.position,
+      };
     },
   };
 }
