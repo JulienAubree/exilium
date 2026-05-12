@@ -1,9 +1,23 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Zap, ChevronLeft, ChevronDown, Trophy, Skull, X, FileText, Sparkles, Star, Crosshair } from 'lucide-react';
+import {
+  Zap,
+  ChevronLeft,
+  ChevronDown,
+  Trophy,
+  Skull,
+  X,
+  FileText,
+  Sparkles,
+  Star,
+  Crosshair,
+} from 'lucide-react';
 import { ModuleTooltip } from '@/components/flagship/ModuleTooltip';
 import {
-  HullIcon, ShieldIcon, ArmorIcon, WeaponsIcon,
+  HullIcon,
+  ShieldIcon,
+  ArmorIcon,
+  WeaponsIcon,
 } from '@/components/entity-details/stat-components';
 import { resolveBonus } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
@@ -69,7 +83,7 @@ const RARITY_LABEL_FR: Record<string, string> = {
 export default function Anomaly() {
   const { data: gameConfig } = useGameConfig();
   const { data: current, isLoading: loadingCurrent } = trpc.anomaly.current.useQuery(undefined, {
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
   });
   const { data: history } = trpc.anomaly.history.useQuery({ limit: 10 });
   const utils = trpc.useUtils();
@@ -148,12 +162,8 @@ export default function Anomaly() {
       // In-run drop toast (per-combat module dropped on a survived combat).
       // Translated rarity to match the modal labelling.
       if (data.outcome === 'survived' && data.droppedModule) {
-        const rarityLabel =
-          RARITY_LABEL_FR[data.droppedModule.rarity] ?? data.droppedModule.rarity;
-        addToast(
-          `✨ +1 module : ${data.droppedModule.name} (${rarityLabel})`,
-          'success',
-        );
+        const rarityLabel = RARITY_LABEL_FR[data.droppedModule.rarity] ?? data.droppedModule.rarity;
+        addToast(`✨ +1 module : ${data.droppedModule.name} (${rarityLabel})`, 'success');
       }
 
       if (data.outcome === 'wiped') {
@@ -210,7 +220,7 @@ export default function Anomaly() {
       addToast(
         isEventPending
           ? '✨ Un événement est apparu — la page se met à jour'
-          : err.message ?? 'Combat impossible',
+          : (err.message ?? 'Combat impossible'),
         isEventPending ? 'success' : 'error',
       );
     },
@@ -373,7 +383,9 @@ function IntroHero() {
           <AnomalyIcon className="h-9 w-9 lg:h-11 lg:w-11 text-violet-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">Anomalies Gravitationnelles</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+            Anomalies Gravitationnelles
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Plongez dans le vide quantique, à vos risques et périls.
           </p>
@@ -484,7 +496,12 @@ function RunHero({
 
 function DepthMeter({ current }: { current: number }) {
   return (
-    <div className="flex gap-[2px] mt-1.5" role="progressbar" aria-valuenow={current} aria-valuemax={MAX_DEPTH}>
+    <div
+      className="flex gap-[2px] mt-1.5"
+      role="progressbar"
+      aria-valuenow={current}
+      aria-valuemax={MAX_DEPTH}
+    >
       {Array.from({ length: MAX_DEPTH }, (_, i) => (
         <div
           key={i}
@@ -504,7 +521,12 @@ function DepthMeter({ current }: { current: number }) {
 
 // ─── Intro view ──────────────────────────────────────────────────────────────
 
-function IntroView({ cost, onEngage, historyCount, wipeCount }: {
+function IntroView({
+  cost,
+  onEngage,
+  historyCount,
+  wipeCount,
+}: {
   cost: number;
   onEngage: () => void;
   historyCount: number;
@@ -514,17 +536,38 @@ function IntroView({ cost, onEngage, historyCount, wipeCount }: {
     <div className="glass-card p-6 lg:p-8 space-y-6">
       <div className="space-y-2 text-foreground/90">
         <p>
-          Les <span className="text-violet-300 font-semibold">anomalies gravitationnelles</span> sont des poches instables de l'espace-temps. Votre vaisseau mère peut en provoquer l'ouverture en injectant de l'Exilium — une opération <em>risquée mais lucrative</em>.
+          Les <span className="text-violet-300 font-semibold">anomalies gravitationnelles</span>{' '}
+          sont des poches instables de l'espace-temps. Votre vaisseau mère peut en provoquer
+          l'ouverture en injectant de l'Exilium — une opération <em>risquée mais lucrative</em>.
         </p>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Comment ça marche</h3>
+        <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+          Comment ça marche
+        </h3>
         <ol className="space-y-2 text-sm text-muted-foreground/90 list-decimal list-inside">
-          <li>Engagez votre <span className="text-foreground font-semibold">vaisseau amiral seul</span>, équipé de modules. Pas d'escorte — vos modules et vos charges de réparation feront la différence.</li>
-          <li>À l'intérieur de l'anomalie, des combats se succèdent — chacun <span className="text-foreground">plus difficile</span> que le précédent, mais aussi plus <span className="text-foreground">lucratif</span>.</li>
-          <li>Après chaque combat gagné, vous décidez : <span className="text-violet-300">continuer</span> pour empocher plus, ou <span className="text-emerald-400">rentrer</span> avec votre butin.</li>
-          <li>Si votre vaisseau amiral est détruit en combat : <span className="text-red-400 font-semibold">wipe radical</span>. Vous perdez votre Exilium engagé, le butin du run, et votre vaisseau est incapacité 30 minutes (réparation longue).</li>
+          <li>
+            Engagez votre{' '}
+            <span className="text-foreground font-semibold">vaisseau amiral seul</span>, équipé de
+            modules. Pas d'escorte — vos modules et vos charges de réparation feront la différence.
+          </li>
+          <li>
+            À l'intérieur de l'anomalie, des combats se succèdent — chacun{' '}
+            <span className="text-foreground">plus difficile</span> que le précédent, mais aussi
+            plus <span className="text-foreground">lucratif</span>.
+          </li>
+          <li>
+            Après chaque combat gagné, vous décidez :{' '}
+            <span className="text-violet-300">continuer</span> pour empocher plus, ou{' '}
+            <span className="text-emerald-400">rentrer</span> avec votre butin.
+          </li>
+          <li>
+            Si votre vaisseau amiral est détruit en combat :{' '}
+            <span className="text-red-400 font-semibold">wipe radical</span>. Vous perdez votre
+            Exilium engagé, le butin du run, et votre vaisseau est incapacité 30 minutes (réparation
+            longue).
+          </li>
         </ol>
       </div>
 
@@ -535,14 +578,18 @@ function IntroView({ cost, onEngage, historyCount, wipeCount }: {
           <span className="text-xs text-muted-foreground/70 ml-1">d'entrée</span>
         </div>
         <div className="text-xs text-muted-foreground flex-1">
-          Coût <span className="text-foreground font-semibold">perdu dans tous les cas</span> (réussite, retour volontaire ou wipe). Vous payez pour jouer.
+          Coût <span className="text-foreground font-semibold">perdu dans tous les cas</span>{' '}
+          (réussite, retour volontaire ou wipe). Vous payez pour jouer.
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs text-muted-foreground">
           {historyCount > 0 ? (
-            <>{historyCount} anomalies traversées · <span className="text-red-400">{wipeCount} wipes</span></>
+            <>
+              {historyCount} anomalies traversées ·{' '}
+              <span className="text-red-400">{wipeCount} wipes</span>
+            </>
           ) : (
             'Première anomalie ?'
           )}
@@ -618,8 +665,9 @@ function RunView({
     outcomeApplied: Record<string, unknown>;
     resolvedAt: string;
   }>;
-  const defeatedBossIds = ((anomaly.defeatedBossIds ?? []) as unknown[])
-    .filter((x): x is string => typeof x === 'string');
+  const defeatedBossIds = ((anomaly.defeatedBossIds ?? []) as unknown[]).filter(
+    (x): x is string => typeof x === 'string',
+  );
   const activeBuffs = (anomaly.activeBuffs ?? []) as Array<{
     type: BossBuffType;
     magnitude: number;
@@ -630,7 +678,7 @@ function RunView({
   // V9 Boss : récupère la pool une seule fois (statique seedée backend).
   const { data: bossesPoolData } = trpc.anomaly.bossesPool.useQuery();
   const currentBoss = anomaly.pendingBossId
-    ? (bossesPoolData?.bosses ?? []).find((b) => b.id === anomaly.pendingBossId) ?? null
+    ? ((bossesPoolData?.bosses ?? []).find((b) => b.id === anomaly.pendingBossId) ?? null)
     : null;
   const equippedModules = (anomaly.equippedModules ?? {}) as Record<
     string,
@@ -799,15 +847,18 @@ function EpicActivateButton({
 
   const hullId = (flagship?.hullId ?? 'industrial') as string;
   const epicId = equippedModules[hullId]?.epic ?? null;
-  const charges = (flagship as { epicChargesCurrent?: number } | null | undefined)?.epicChargesCurrent ?? 0;
-  const maxCharges = (flagship as { epicChargesMax?: number } | null | undefined)?.epicChargesMax ?? 0;
+  const charges =
+    (flagship as { epicChargesCurrent?: number } | null | undefined)?.epicChargesCurrent ?? 0;
+  const maxCharges =
+    (flagship as { epicChargesMax?: number } | null | undefined)?.epicChargesMax ?? 0;
 
   const activateMutation = trpc.anomaly.activateEpic.useMutation({
     onSuccess: (data) => {
       utils.flagship.get.invalidate();
       utils.anomaly.current.invalidate();
-      const where = data.applied === 'immediate' ? 'effet immédiat' : 'effet appliqué au prochain combat';
-      const epicName = epicId ? moduleMap.get(epicId)?.name ?? data.ability : data.ability;
+      const where =
+        data.applied === 'immediate' ? 'effet immédiat' : 'effet appliqué au prochain combat';
+      const epicName = epicId ? (moduleMap.get(epicId)?.name ?? data.ability) : data.ability;
       addToast(`⚡ ${epicName} activée — ${where}`, 'success');
     },
     onError: (err) => {
@@ -896,7 +947,8 @@ function RepairChargeButton({
             Réparation d'urgence
           </div>
           <div className="text-sm font-semibold text-emerald-100 truncate">
-            Coque du vaisseau amiral <span className="font-mono tabular-nums text-emerald-200/80">{hpPct}%</span>
+            Coque du vaisseau amiral{' '}
+            <span className="font-mono tabular-nums text-emerald-200/80">{hpPct}%</span>
           </div>
         </div>
         <div className="shrink-0 text-xs font-mono tabular-nums text-emerald-200">
@@ -952,7 +1004,11 @@ function useCollapsed(key: string, defaultCollapsed = false): [boolean, () => vo
   const toggle = useCallback(() => {
     setCollapsed((c) => {
       const next = !c;
-      try { window.localStorage.setItem(storageKey, String(next)); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem(storageKey, String(next));
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   }, [storageKey]);
@@ -1006,7 +1062,8 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
   const flagshipName = flagship.name ?? 'Vaisseau amiral';
   const hullName = flagship.hullConfig?.name ?? 'Coque inconnue';
   const hullPct = Math.max(0, Math.min(100, Math.round(hullPercent * 100)));
-  const hullBarColor = hullPct > 60 ? 'bg-emerald-500/70' : hullPct > 30 ? 'bg-amber-500/70' : 'bg-red-500/70';
+  const hullBarColor =
+    hullPct > 60 ? 'bg-emerald-500/70' : hullPct > 30 ? 'bg-amber-500/70' : 'bg-red-500/70';
 
   return (
     <div className="rounded-lg border border-violet-500/20 bg-card/30 backdrop-blur-sm overflow-hidden">
@@ -1019,9 +1076,7 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
       >
         <div className="space-y-1">
           <div className="flex items-baseline gap-2">
-            <h3 className="text-sm font-bold text-foreground truncate flex-1">
-              {flagshipName}
-            </h3>
+            <h3 className="text-sm font-bold text-foreground truncate flex-1">{flagshipName}</h3>
             <span className="text-[10px] font-mono tabular-nums text-violet-300/80 flex items-center gap-1 shrink-0">
               <Star className="h-3 w-3" /> Niv. {level}
             </span>
@@ -1032,10 +1087,16 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
               {hullName}
             </div>
             {collapsed && (
-              <span className={cn(
-                'text-[10px] font-mono tabular-nums shrink-0',
-                hullPct > 60 ? 'text-emerald-300/90' : hullPct > 30 ? 'text-amber-300/90' : 'text-red-300/90',
-              )}>
+              <span
+                className={cn(
+                  'text-[10px] font-mono tabular-nums shrink-0',
+                  hullPct > 60
+                    ? 'text-emerald-300/90'
+                    : hullPct > 30
+                      ? 'text-amber-300/90'
+                      : 'text-red-300/90',
+                )}
+              >
                 ❤ {hullPct}%
               </span>
             )}
@@ -1052,16 +1113,43 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
               <span className="font-mono tabular-nums text-foreground/85">{hullPct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-              <div className={cn('h-full transition-all', hullBarColor)} style={{ width: `${hullPct}%` }} />
+              <div
+                className={cn('h-full transition-all', hullBarColor)}
+                style={{ width: `${hullPct}%` }}
+              />
             </div>
           </div>
 
           {/* Stat tiles */}
           <div className="grid grid-cols-2 gap-2">
-            <SidebarStatTile icon={<HullIcon size={14} />} label="Coque" value={finalHull} tone="text-slate-200" iconTone="text-slate-400" />
-            <SidebarStatTile icon={<ShieldIcon size={14} />} label="Bouclier" value={finalShield} tone="text-sky-300" iconTone="text-sky-400" />
-            <SidebarStatTile icon={<ArmorIcon size={14} />} label="Blindage" value={finalArmor} tone="text-amber-300" iconTone="text-amber-400" />
-            <SidebarStatTile icon={<WeaponsIcon size={14} />} label="Armement" value={finalWeapons} tone="text-red-300" iconTone="text-red-400" />
+            <SidebarStatTile
+              icon={<HullIcon size={14} />}
+              label="Coque"
+              value={finalHull}
+              tone="text-slate-200"
+              iconTone="text-slate-400"
+            />
+            <SidebarStatTile
+              icon={<ShieldIcon size={14} />}
+              label="Bouclier"
+              value={finalShield}
+              tone="text-sky-300"
+              iconTone="text-sky-400"
+            />
+            <SidebarStatTile
+              icon={<ArmorIcon size={14} />}
+              label="Blindage"
+              value={finalArmor}
+              tone="text-amber-300"
+              iconTone="text-amber-400"
+            />
+            <SidebarStatTile
+              icon={<WeaponsIcon size={14} />}
+              label="Armement"
+              value={finalWeapons}
+              tone="text-red-300"
+              iconTone="text-red-400"
+            />
           </div>
         </div>
       )}
@@ -1070,7 +1158,11 @@ function RunFlagshipStatsCard({ hullPercent }: { hullPercent: number }) {
 }
 
 function SidebarStatTile({
-  icon, label, value, tone, iconTone,
+  icon,
+  label,
+  value,
+  tone,
+  iconTone,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -1100,24 +1192,35 @@ function SidebarStatTile({
 function RunFlagshipLoadoutCard({
   equippedModules,
 }: {
-  equippedModules: Record<string, {
-    epic?: string | null;
-    rare?: (string | null)[];
-    common?: (string | null)[];
-    weaponEpic?: string | null;
-    weaponRare?: string | null;
-    weaponCommon?: string | null;
-  }>;
+  equippedModules: Record<
+    string,
+    {
+      epic?: string | null;
+      rare?: (string | null)[];
+      common?: (string | null)[];
+      weaponEpic?: string | null;
+      weaponRare?: string | null;
+      weaponCommon?: string | null;
+    }
+  >;
 }) {
   const { data: flagship } = trpc.flagship.get.useQuery();
   const { data: allModules } = trpc.modules.list.useQuery();
   const [collapsed, toggleCollapsed] = useCollapsed('loadout');
 
   const moduleMap = useMemo(() => {
-    const map = new Map<string, {
-      id: string; name: string; description?: string; rarity: string;
-      kind?: string; effect?: unknown; image?: string;
-    }>();
+    const map = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        description?: string;
+        rarity: string;
+        kind?: string;
+        effect?: unknown;
+        image?: string;
+      }
+    >();
     for (const m of allModules ?? []) {
       map.set(m.id, {
         id: m.id,
@@ -1139,8 +1242,12 @@ function RunFlagshipLoadoutCard({
 
   const passiveIds: { id: string; tier: 'epic' | 'rare' | 'common' }[] = [
     ...(slot.epic ? [{ id: slot.epic, tier: 'epic' as const }] : []),
-    ...((slot.rare ?? []).filter((x): x is string => typeof x === 'string').map((id) => ({ id, tier: 'rare' as const }))),
-    ...((slot.common ?? []).filter((x): x is string => typeof x === 'string').map((id) => ({ id, tier: 'common' as const }))),
+    ...(slot.rare ?? [])
+      .filter((x): x is string => typeof x === 'string')
+      .map((id) => ({ id, tier: 'rare' as const })),
+    ...(slot.common ?? [])
+      .filter((x): x is string => typeof x === 'string')
+      .map((id) => ({ id, tier: 'common' as const })),
   ];
   const weaponIds: { id: string; tier: 'epic' | 'rare' | 'common' }[] = [
     ...(slot.weaponEpic ? [{ id: slot.weaponEpic, tier: 'epic' as const }] : []),
@@ -1152,8 +1259,8 @@ function RunFlagshipLoadoutCard({
   const hasWeapons = weaponIds.length > 0;
 
   const TIER_DOT: Record<string, string> = {
-    epic:   'bg-violet-400 shadow-[0_0_4px_rgba(167,139,250,0.5)]',
-    rare:   'bg-blue-400',
+    epic: 'bg-violet-400 shadow-[0_0_4px_rgba(167,139,250,0.5)]',
+    rare: 'bg-blue-400',
     common: 'bg-gray-400',
   };
 
@@ -1163,7 +1270,10 @@ function RunFlagshipLoadoutCard({
    * teinté selon la rareté. Dot rareté en overlay top-left.
    */
   function ItemThumb({
-    image, kind, tier, name,
+    image,
+    kind,
+    tier,
+    name,
   }: {
     image?: string;
     kind?: string;
@@ -1171,7 +1281,8 @@ function RunFlagshipLoadoutCard({
     name: string;
   }) {
     const isWeapon = kind === 'weapon';
-    const tint = tier === 'epic' ? 'text-violet-300' : tier === 'rare' ? 'text-blue-300' : 'text-gray-300';
+    const tint =
+      tier === 'epic' ? 'text-violet-300' : tier === 'rare' ? 'text-blue-300' : 'text-gray-300';
     return (
       <div className="relative shrink-0 h-6 w-6 rounded overflow-hidden bg-card/40 border border-border/30">
         {image ? (
@@ -1182,9 +1293,11 @@ function RunFlagshipLoadoutCard({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
-            {isWeapon
-              ? <Crosshair className={cn('h-3 w-3', tint)} />
-              : <Sparkles className={cn('h-3 w-3', tint)} />}
+            {isWeapon ? (
+              <Crosshair className={cn('h-3 w-3', tint)} />
+            ) : (
+              <Sparkles className={cn('h-3 w-3', tint)} />
+            )}
           </div>
         )}
         <span
@@ -1220,92 +1333,124 @@ function RunFlagshipLoadoutCard({
 
       {!collapsed && (
         <div className="px-3 pb-3 space-y-3">
-      {hasPassives && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-violet-300" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300">
-              Modules
-            </span>
-            <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
-              {passiveIds.length}
-            </span>
-          </div>
-          <ul className="space-y-0.5">
-            {passiveIds.map(({ id, tier }) => {
-              const mod = moduleMap.get(id);
-              if (!mod) {
-                return (
-                  <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
-                    Module inconnu : {id}
-                  </li>
-                );
-              }
-              return (
-                <li key={id}>
-                  <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
-                    <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
-                      <ItemThumb image={mod.image} kind={mod.kind} tier={tier} name={mod.name} />
-                      <span className="text-[11px] truncate">{mod.name}</span>
-                    </div>
-                  </ModuleTooltip>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+          {hasPassives && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-violet-300" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-violet-300">
+                  Modules
+                </span>
+                <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+                  {passiveIds.length}
+                </span>
+              </div>
+              <ul className="space-y-0.5">
+                {passiveIds.map(({ id, tier }) => {
+                  const mod = moduleMap.get(id);
+                  if (!mod) {
+                    return (
+                      <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
+                        Module inconnu : {id}
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={id}>
+                      <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
+                        <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
+                          <ItemThumb
+                            image={mod.image}
+                            kind={mod.kind}
+                            tier={tier}
+                            name={mod.name}
+                          />
+                          <span className="text-[11px] truncate">{mod.name}</span>
+                        </div>
+                      </ModuleTooltip>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
-      {hasWeapons && (
-        <div className={cn('space-y-1.5', hasPassives && 'border-t border-border/30 pt-2')}>
-          <div className="flex items-center gap-1.5">
-            <Crosshair className="h-3 w-3 text-orange-300" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-orange-300">
-              Arsenal
-            </span>
-            <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
-              {weaponIds.length}
-            </span>
-          </div>
-          <ul className="space-y-0.5">
-            {weaponIds.map(({ id, tier }) => {
-              const mod = moduleMap.get(id);
-              if (!mod) {
-                return (
-                  <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
-                    Arme inconnue : {id}
-                  </li>
-                );
-              }
-              const eff = mod.effect as { type?: string; profile?: { shots?: number; targetCategory?: string; rafale?: { count: number }; hasChainKill?: boolean } } | undefined;
-              const profile = eff?.type === 'weapon' ? eff.profile : null;
-              return (
-                <li key={id}>
-                  <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
-                    <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
-                      <ItemThumb image={mod.image} kind={mod.kind} tier={tier} name={mod.name} />
-                      <span className="text-[11px] truncate flex-1">{mod.name}</span>
-                      {profile && (
-                        <span className="flex items-center gap-0.5 shrink-0">
-                          {profile.shots !== undefined && (
-                            <span className="text-[9px] font-mono text-orange-200/80">×{profile.shots}</span>
+          {hasWeapons && (
+            <div className={cn('space-y-1.5', hasPassives && 'border-t border-border/30 pt-2')}>
+              <div className="flex items-center gap-1.5">
+                <Crosshair className="h-3 w-3 text-orange-300" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold text-orange-300">
+                  Arsenal
+                </span>
+                <span className="text-[10px] font-mono tabular-nums text-muted-foreground/60 ml-auto">
+                  {weaponIds.length}
+                </span>
+              </div>
+              <ul className="space-y-0.5">
+                {weaponIds.map(({ id, tier }) => {
+                  const mod = moduleMap.get(id);
+                  if (!mod) {
+                    return (
+                      <li key={id} className="text-[10px] text-rose-300/80 italic px-1">
+                        Arme inconnue : {id}
+                      </li>
+                    );
+                  }
+                  const eff = mod.effect as
+                    | {
+                        type?: string;
+                        profile?: {
+                          shots?: number;
+                          targetCategory?: string;
+                          rafale?: { count: number };
+                          hasChainKill?: boolean;
+                        };
+                      }
+                    | undefined;
+                  const profile = eff?.type === 'weapon' ? eff.profile : null;
+                  return (
+                    <li key={id}>
+                      <ModuleTooltip module={mod} placement="left" wrapperClassName="block w-full">
+                        <div className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-card/60 cursor-help">
+                          <ItemThumb
+                            image={mod.image}
+                            kind={mod.kind}
+                            tier={tier}
+                            name={mod.name}
+                          />
+                          <span className="text-[11px] truncate flex-1">{mod.name}</span>
+                          {profile && (
+                            <span className="flex items-center gap-0.5 shrink-0">
+                              {profile.shots !== undefined && (
+                                <span className="text-[9px] font-mono text-orange-200/80">
+                                  ×{profile.shots}
+                                </span>
+                              )}
+                              {profile.rafale && (
+                                <span
+                                  className="text-[8px] font-mono text-amber-300"
+                                  title="Rafale"
+                                >
+                                  R
+                                </span>
+                              )}
+                              {profile.hasChainKill && (
+                                <span
+                                  className="text-[8px] font-mono text-rose-300"
+                                  title="Cascade"
+                                >
+                                  C
+                                </span>
+                              )}
+                            </span>
                           )}
-                          {profile.rafale && (
-                            <span className="text-[8px] font-mono text-amber-300" title="Rafale">R</span>
-                          )}
-                          {profile.hasChainKill && (
-                            <span className="text-[8px] font-mono text-rose-300" title="Cascade">C</span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </ModuleTooltip>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+                        </div>
+                      </ModuleTooltip>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1339,7 +1484,12 @@ function SidebarCard({
 
   const headerContent = (
     <>
-      <h3 className={cn('text-[10px] font-mono uppercase tracking-[0.2em] font-semibold', accentMap[accent])}>
+      <h3
+        className={cn(
+          'text-[10px] font-mono uppercase tracking-[0.2em] font-semibold',
+          accentMap[accent],
+        )}
+      >
         {label}
       </h3>
       {count !== undefined && (
@@ -1365,9 +1515,7 @@ function SidebarCard({
       ) : (
         <div className="flex items-center gap-2 p-3">{headerContent}</div>
       )}
-      {(!isCollapsible || !collapsed) && (
-        <div className="px-3 pb-3 space-y-2">{children}</div>
-      )}
+      {(!isCollapsible || !collapsed) && <div className="px-3 pb-3 space-y-2">{children}</div>}
     </div>
   );
 }
@@ -1398,9 +1546,21 @@ function LootCard({
       <div className="space-y-1.5 text-xs">
         {totalRes > 0 && (
           <div className="grid grid-cols-3 gap-1.5">
-            <ResPill className="text-minerai bg-minerai/5 border-minerai/20" value={minerai} suffix="M" />
-            <ResPill className="text-silicium bg-silicium/5 border-silicium/20" value={silicium} suffix="Si" />
-            <ResPill className="text-hydrogene bg-hydrogene/5 border-hydrogene/20" value={hydrogene} suffix="H" />
+            <ResPill
+              className="text-minerai bg-minerai/5 border-minerai/20"
+              value={minerai}
+              suffix="M"
+            />
+            <ResPill
+              className="text-silicium bg-silicium/5 border-silicium/20"
+              value={silicium}
+              suffix="Si"
+            />
+            <ResPill
+              className="text-hydrogene bg-hydrogene/5 border-hydrogene/20"
+              value={hydrogene}
+              suffix="H"
+            />
           </div>
         )}
         {Object.keys(lootShips).length > 0 && (
@@ -1429,31 +1589,37 @@ function LootCard({
  * Pliable comme les autres cards du sidebar.
  */
 const BUFF_LABELS_FR: Record<BossBuffType, string> = {
-  damage_boost:  'Surcharge offensive',
-  hull_repair:   'Réparation héroïque',
-  shield_amp:    'Bouclier renforcé',
-  armor_amp:     'Blindage renforcé',
-  extra_charge:  'Charge épique additionnelle',
+  damage_boost: 'Surcharge offensive',
+  hull_repair: 'Réparation héroïque',
+  shield_amp: 'Bouclier renforcé',
+  armor_amp: 'Blindage renforcé',
+  extra_charge: 'Charge épique additionnelle',
   module_unlock: 'Batterie improvisée',
 };
 
 const BUFF_TONES_FR: Record<BossBuffType, string> = {
-  damage_boost:  'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  hull_repair:   'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  shield_amp:    'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  armor_amp:     'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  extra_charge:  'text-violet-300 bg-violet-500/10 border-violet-500/30',
+  damage_boost: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
+  hull_repair: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  shield_amp: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
+  armor_amp: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
+  extra_charge: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   module_unlock: 'text-orange-300 bg-orange-500/10 border-orange-500/30',
 };
 
 function describeBuff(type: BossBuffType, magnitude: number): string {
   switch (type) {
-    case 'damage_boost':  return `+${Math.round(magnitude * 100)}% dégâts`;
-    case 'hull_repair':   return `+${Math.round(magnitude * 100)}% coque appliqué`;
-    case 'shield_amp':    return `+${Math.round(magnitude * 100)}% bouclier`;
-    case 'armor_amp':     return `+${Math.round(magnitude * 100)}% blindage`;
-    case 'extra_charge':  return `+${Math.floor(magnitude)} charge épique`;
-    case 'module_unlock': return '+1 batterie weapon';
+    case 'damage_boost':
+      return `+${Math.round(magnitude * 100)}% dégâts`;
+    case 'hull_repair':
+      return `+${Math.round(magnitude * 100)}% coque appliqué`;
+    case 'shield_amp':
+      return `+${Math.round(magnitude * 100)}% bouclier`;
+    case 'armor_amp':
+      return `+${Math.round(magnitude * 100)}% blindage`;
+    case 'extra_charge':
+      return `+${Math.floor(magnitude)} charge épique`;
+    case 'module_unlock':
+      return '+1 batterie weapon';
   }
 }
 
@@ -1525,8 +1691,8 @@ function RunJournal({
 
   const TIER_TONE: Record<string, string> = {
     early: 'text-emerald-300/85 border-emerald-500/25',
-    mid:   'text-amber-300/85 border-amber-500/25',
-    deep:  'text-rose-300/85 border-rose-500/25',
+    mid: 'text-amber-300/85 border-amber-500/25',
+    deep: 'text-rose-300/85 border-rose-500/25',
   };
 
   return (
@@ -1542,13 +1708,15 @@ function RunJournal({
             <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-rose-300/80">
               <Skull className="h-3 w-3" />
               Boss vaincus
-              <span className="ml-auto tabular-nums text-muted-foreground/60">{defeatedBossIds.length}</span>
+              <span className="ml-auto tabular-nums text-muted-foreground/60">
+                {defeatedBossIds.length}
+              </span>
             </div>
             <ul className="space-y-1.5">
               {defeatedBossIds.map((bossId, i) => {
                 const boss = bossesById.get(bossId);
                 const buff = buffByBossId.get(bossId);
-                const tierTone = boss ? TIER_TONE[boss.tier] ?? '' : '';
+                const tierTone = boss ? (TIER_TONE[boss.tier] ?? '') : '';
                 return (
                   <li
                     key={`${bossId}-${i}`}
@@ -1568,10 +1736,12 @@ function RunJournal({
                         )}
                       </div>
                       {boss && (
-                        <span className={cn(
-                          'text-[8px] font-mono uppercase tracking-wider px-1 py-0.5 rounded border shrink-0',
-                          tierTone,
-                        )}>
+                        <span
+                          className={cn(
+                            'text-[8px] font-mono uppercase tracking-wider px-1 py-0.5 rounded border shrink-0',
+                            tierTone,
+                          )}
+                        >
                           {boss.tier}
                         </span>
                       )}
@@ -1606,7 +1776,9 @@ function RunJournal({
             <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-violet-300/80">
               <Sparkles className="h-3 w-3" />
               Événements résolus
-              <span className="ml-auto tabular-nums text-muted-foreground/60">{eventLog.length}</span>
+              <span className="ml-auto tabular-nums text-muted-foreground/60">
+                {eventLog.length}
+              </span>
             </div>
             <AnomalyEventLog log={eventLog as never} events={events} hideHeader />
           </div>
@@ -1643,7 +1815,13 @@ function ResPill({
 
 function ReportsCard({ reportIds }: { reportIds: string[] }) {
   return (
-    <SidebarCard label="Rapports de combat" count={reportIds.length} accent="violet" collapsibleKey="reports" defaultCollapsed>
+    <SidebarCard
+      label="Rapports de combat"
+      count={reportIds.length}
+      accent="violet"
+      collapsibleKey="reports"
+      defaultCollapsed
+    >
       <div className="flex flex-wrap gap-1.5">
         {reportIds.map((reportId, i) => (
           <Link
@@ -1651,8 +1829,7 @@ function ReportsCard({ reportIds }: { reportIds: string[] }) {
             to={`/reports/${reportId}`}
             className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[10px] text-violet-300 hover:bg-violet-500/20 transition-colors"
           >
-            <FileText className="h-2.5 w-2.5" />
-            P{i + 1}
+            <FileText className="h-2.5 w-2.5" />P{i + 1}
           </Link>
         ))}
       </div>
@@ -1717,7 +1894,10 @@ function EventNodeBlock({
 
   if (!event) {
     return (
-      <div ref={containerRef} className="rounded-xl border border-border/40 bg-card/30 p-4 text-xs text-muted-foreground">
+      <div
+        ref={containerRef}
+        className="rounded-xl border border-border/40 bg-card/30 p-4 text-xs text-muted-foreground"
+      >
         Événement en cours de chargement…
       </div>
     );
@@ -1749,7 +1929,8 @@ function HistoryAccordion({ history }: { history: AnomalyRow[] }) {
             Historique
           </h3>
           <span className="text-[10px] text-muted-foreground/70">
-            {history.length} runs · <span className="text-red-400/80">{wipes} wipes</span> · <span className="text-emerald-400/80">{completed} retours</span>
+            {history.length} runs · <span className="text-red-400/80">{wipes} wipes</span> ·{' '}
+            <span className="text-emerald-400/80">{completed} retours</span>
           </span>
         </div>
         <ChevronDown
@@ -1820,8 +2001,7 @@ function HistoryList({ history, compact = false }: { history: AnomalyRow[]; comp
                       to={`/reports/${reportId}`}
                       className="inline-flex items-center gap-1 rounded bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 text-[10px] text-violet-300 hover:bg-violet-500/20 transition-colors"
                     >
-                      <FileText className="h-2.5 w-2.5" />
-                      P{i + 1}
+                      <FileText className="h-2.5 w-2.5" />P{i + 1}
                     </Link>
                   ))}
                 </div>

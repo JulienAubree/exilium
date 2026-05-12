@@ -1,5 +1,10 @@
-import { useState } from 'react';
-import { getAssetUrl, getEntityVariantProps, type AssetCategory, type AssetSize } from '@/lib/assets';
+import { memo, useState } from 'react';
+import {
+  getAssetUrl,
+  getEntityVariantProps,
+  type AssetCategory,
+  type AssetSize,
+} from '@/lib/assets';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './Skeleton';
@@ -36,14 +41,27 @@ function getFallbackColor(id: string): string {
   return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
 }
 
-export function GameImage({ category, id, size = 'full', alt, className, planetClassId, planetType, hasVariant }: GameImageProps) {
+export const GameImage = memo(function GameImage({
+  category,
+  id,
+  size = 'full',
+  alt,
+  className,
+  planetClassId,
+  planetType,
+  hasVariant,
+}: GameImageProps) {
   const { data: gameConfig } = useGameConfig();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   let resolvedPlanetType = planetType;
   let resolvedHasVariant = hasVariant ?? false;
-  if (planetType === undefined && hasVariant === undefined && (category === 'buildings' || category === 'defenses')) {
+  if (
+    planetType === undefined &&
+    hasVariant === undefined &&
+    (category === 'buildings' || category === 'defenses')
+  ) {
     const props = getEntityVariantProps(gameConfig, category, id, planetClassId);
     resolvedPlanetType = props.planetType;
     resolvedHasVariant = props.hasVariant;
@@ -68,13 +86,19 @@ export function GameImage({ category, id, size = 'full', alt, className, planetC
     <div className={cn('relative', className)}>
       {loading && <Skeleton className={cn('absolute inset-0', className)} />}
       <img
-        src={getAssetUrl(category, id, size, { planetType: resolvedPlanetType, hasVariant: resolvedHasVariant })}
+        src={getAssetUrl(category, id, size, {
+          planetType: resolvedPlanetType,
+          hasVariant: resolvedHasVariant,
+        })}
         alt={alt}
         className={cn(className, loading && 'opacity-0')}
-        onError={() => { setError(true); setLoading(false); }}
+        onError={() => {
+          setError(true);
+          setLoading(false);
+        }}
         onLoad={() => setLoading(false)}
         loading="lazy"
       />
     </div>
   );
-}
+});

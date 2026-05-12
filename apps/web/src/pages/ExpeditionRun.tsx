@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
-  ArrowLeft, Compass, MapPin, Clock, Package, Anchor,
-  Sparkles, AlertTriangle, CheckCircle2, XCircle, Skull, LogOut,
+  ArrowLeft,
+  Compass,
+  MapPin,
+  Clock,
+  Package,
+  Anchor,
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Skull,
+  LogOut,
 } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -11,7 +21,10 @@ import { Timer } from '@/components/common/Timer';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { Button } from '@/components/ui/button';
 import { ExiliumIcon } from '@/components/common/ExiliumIcon';
-import { ExpeditionEventCard, type ExpeditionEvent } from '@/components/expedition/ExpeditionEventCard';
+import {
+  ExpeditionEventCard,
+  type ExpeditionEvent,
+} from '@/components/expedition/ExpeditionEventCard';
 import { cn } from '@/lib/utils';
 
 const TIER_LABEL = {
@@ -49,9 +62,13 @@ export default function ExpeditionRun() {
   const { data: researchData } = trpc.research.list.useQuery();
   const { data: content } = trpc.expeditionContent.get.useQuery();
 
-  const { data: mission, isLoading, refetch } = trpc.expedition.getDetail.useQuery(
+  const {
+    data: mission,
+    isLoading,
+    refetch,
+  } = trpc.expedition.getDetail.useQuery(
     { missionId: missionId! },
-    { enabled: !!missionId, refetchInterval: 15_000 },
+    { enabled: !!missionId, refetchInterval: 30_000 },
   );
 
   const shipNames = useMemo(() => {
@@ -121,8 +138,8 @@ export default function ExpeditionRun() {
   const handleRetreat = () => {
     if (!missionId) return;
     const confirmed = window.confirm(
-      'Rappeler la flotte ?\n\nLa flotte rentre immédiatement à la planète d\'origine avec ' +
-      'ce qui est dans la soute. Les étapes restantes ne seront pas explorées.',
+      "Rappeler la flotte ?\n\nLa flotte rentre immédiatement à la planète d'origine avec " +
+        'ce qui est dans la soute. Les étapes restantes ne seront pas explorées.',
     );
     if (!confirmed) return;
     retreatMutation.mutate({ missionId });
@@ -144,21 +161,34 @@ export default function ExpeditionRun() {
 
   const tier = mission.tier as keyof typeof TIER_LABEL;
   const snapshot = mission.fleetSnapshot as {
-    ships: Array<{ shipId: string; count: number; role: string; cargoPerShip: number; massPerShip: number; hullPerShip: number }>;
+    ships: Array<{
+      shipId: string;
+      count: number;
+      role: string;
+      cargoPerShip: number;
+      massPerShip: number;
+      hullPerShip: number;
+    }>;
     totalCargo: number;
     totalMass: number;
     totalHull: number;
   } | null;
   const fleetStatus = mission.fleetStatus as { shipsAlive?: Record<string, number> };
   const outcomes = mission.outcomesAccumulated as {
-    minerai: number; silicium: number; hydrogene: number; exilium: number;
+    minerai: number;
+    silicium: number;
+    hydrogene: number;
+    exilium: number;
     modules: Array<{ rarity: 'common' | 'rare' | 'epic'; count: number }>;
     biomeRevealsRequested: number;
     anomalyEngagementUnlocked: null | { tier: 1 | 2 | 3 };
   };
   const stepLog = mission.stepLog as Array<{
-    step: number; eventId: string; choiceIndex: number;
-    resolutionText: string; resolvedAt: string;
+    step: number;
+    eventId: string;
+    choiceIndex: number;
+    resolutionText: string;
+    resolvedAt: string;
     overflowed?: { minerai?: number; silicium?: number; hydrogene?: number };
   }>;
 
@@ -172,8 +202,12 @@ export default function ExpeditionRun() {
     : initialShipCount;
   const lostShipCount = Math.max(0, initialShipCount - aliveShipCount);
 
-  const statusInfo = STATUS_LABEL[mission.status] ?? { label: mission.status, color: 'text-muted-foreground' };
-  const isFinal = mission.status === 'completed' || mission.status === 'failed' || mission.status === 'expired';
+  const statusInfo = STATUS_LABEL[mission.status] ?? {
+    label: mission.status,
+    color: 'text-muted-foreground',
+  };
+  const isFinal =
+    mission.status === 'completed' || mission.status === 'failed' || mission.status === 'expired';
 
   // Image hero du secteur (uploadée admin, fallback gradient)
   const sectorDef = content?.sectors.find((s) => s.id === mission.sectorId);
@@ -182,27 +216,35 @@ export default function ExpeditionRun() {
   return (
     <div className="space-y-4 p-4 lg:p-6 max-w-5xl mx-auto">
       {/* Hero header avec image de fond */}
-      <div className={cn(
-        'relative overflow-hidden rounded-xl border',
-        TIER_COLOR[tier].replace('text-', 'border-').replace(/-300\b/, '-500/30'),
-      )}>
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-xl border',
+          TIER_COLOR[tier].replace('text-', 'border-').replace(/-300\b/, '-500/30'),
+        )}
+      >
         {sectorImage ? (
           <>
             <img
               src={sectorImage}
               alt={mission.sectorName}
               className="absolute inset-0 h-full w-full object-cover opacity-50"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
           </>
         ) : (
-          <div className={cn(
-            'absolute inset-0',
-            tier === 'early' ? 'bg-gradient-to-br from-emerald-950/60 via-background to-background' :
-            tier === 'mid' ? 'bg-gradient-to-br from-cyan-950/60 via-background to-background' :
-            'bg-gradient-to-br from-violet-950/60 via-background to-background',
-          )} />
+          <div
+            className={cn(
+              'absolute inset-0',
+              tier === 'early'
+                ? 'bg-gradient-to-br from-emerald-950/60 via-background to-background'
+                : tier === 'mid'
+                  ? 'bg-gradient-to-br from-cyan-950/60 via-background to-background'
+                  : 'bg-gradient-to-br from-violet-950/60 via-background to-background',
+            )}
+          />
         )}
         <div className="relative px-5 py-6 lg:px-8 lg:py-8 flex items-center gap-4">
           <Link
@@ -219,7 +261,12 @@ export default function ExpeditionRun() {
             <h1 className="mt-1 text-xl lg:text-2xl font-bold flex items-center gap-2.5 flex-wrap">
               <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
               <span className="truncate">{mission.sectorName}</span>
-              <span className={cn('shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wider', TIER_COLOR[tier])}>
+              <span
+                className={cn(
+                  'shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wider',
+                  TIER_COLOR[tier],
+                )}
+              >
                 {TIER_LABEL[tier]}
               </span>
             </h1>
@@ -233,7 +280,8 @@ export default function ExpeditionRun() {
           <span className={cn('text-sm font-semibold', statusInfo.color)}>{statusInfo.label}</span>
           <span className="text-xs text-muted-foreground">·</span>
           <span className="text-sm tabular-nums">
-            Étape {mission.currentStep + (mission.status === 'awaiting_decision' ? 1 : 0)} / {mission.totalSteps}
+            Étape {mission.currentStep + (mission.status === 'awaiting_decision' ? 1 : 0)} /{' '}
+            {mission.totalSteps}
           </span>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -241,14 +289,22 @@ export default function ExpeditionRun() {
             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
               Prochain événement dans{' '}
-              <Timer endTime={new Date(mission.nextStepAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
+              <Timer
+                endTime={new Date(mission.nextStepAt)}
+                className="font-mono tabular-nums text-foreground/80"
+                onComplete={() => refetch()}
+              />
             </div>
           )}
           {mission.status === 'returning' && mission.returnAt && (
             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
               Arrivée dans{' '}
-              <Timer endTime={new Date(mission.returnAt)} className="font-mono tabular-nums text-foreground/80" onComplete={() => refetch()} />
+              <Timer
+                endTime={new Date(mission.returnAt)}
+                className="font-mono tabular-nums text-foreground/80"
+                onComplete={() => refetch()}
+              />
             </div>
           )}
           {mission.status === 'awaiting_decision' && (
@@ -296,7 +352,12 @@ export default function ExpeditionRun() {
                       <span className={cn(s.role === 'exploration' && 'text-cyan-300')}>
                         {shipNames[s.shipId] ?? s.shipId}
                       </span>
-                      <span className={cn('tabular-nums', lost > 0 ? 'text-rose-300' : 'text-foreground/80')}>
+                      <span
+                        className={cn(
+                          'tabular-nums',
+                          lost > 0 ? 'text-rose-300' : 'text-foreground/80',
+                        )}
+                      >
                         {alive} / {s.count}
                         {lost > 0 && <span className="ml-1 text-[10px]">(−{lost})</span>}
                       </span>
@@ -305,8 +366,15 @@ export default function ExpeditionRun() {
                 })}
               </div>
               <div className="pt-2 border-t border-border/20 text-xs text-muted-foreground flex justify-between">
-                <span>Total : <span className="text-foreground/80 tabular-nums">{aliveShipCount} vaisseaux</span></span>
-                {lostShipCount > 0 && <span className="text-rose-300">−{lostShipCount} perdus</span>}
+                <span>
+                  Total :{' '}
+                  <span className="text-foreground/80 tabular-nums">
+                    {aliveShipCount} vaisseaux
+                  </span>
+                </span>
+                {lostShipCount > 0 && (
+                  <span className="text-rose-300">−{lostShipCount} perdus</span>
+                )}
               </div>
             </>
           ) : (
@@ -323,7 +391,9 @@ export default function ExpeditionRun() {
           <div>
             <div className="flex items-center justify-between mb-1 text-xs">
               <span className="text-muted-foreground">Soute</span>
-              <span className="tabular-nums text-foreground/80">{cargoUsed} / {cargoTotal}</span>
+              <span className="tabular-nums text-foreground/80">
+                {cargoUsed} / {cargoTotal}
+              </span>
             </div>
             <div className="h-2 rounded-full bg-white/[0.04] overflow-hidden">
               <div
@@ -338,22 +408,32 @@ export default function ExpeditionRun() {
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <p className="text-muted-foreground">Minerai</p>
-              <p className="font-mono tabular-nums text-minerai">{outcomes.minerai.toLocaleString('fr-FR')}</p>
+              <p className="font-mono tabular-nums text-minerai">
+                {outcomes.minerai.toLocaleString('fr-FR')}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Silicium</p>
-              <p className="font-mono tabular-nums text-silicium">{outcomes.silicium.toLocaleString('fr-FR')}</p>
+              <p className="font-mono tabular-nums text-silicium">
+                {outcomes.silicium.toLocaleString('fr-FR')}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Hydrogène</p>
-              <p className="font-mono tabular-nums text-hydrogene">{outcomes.hydrogene.toLocaleString('fr-FR')}</p>
+              <p className="font-mono tabular-nums text-hydrogene">
+                {outcomes.hydrogene.toLocaleString('fr-FR')}
+              </p>
             </div>
             <div>
-              <p className="text-muted-foreground flex items-center gap-1"><ExiliumIcon className="h-3 w-3" /> Exilium</p>
+              <p className="text-muted-foreground flex items-center gap-1">
+                <ExiliumIcon className="h-3 w-3" /> Exilium
+              </p>
               <p className="font-mono tabular-nums text-purple-300">{outcomes.exilium}</p>
             </div>
           </div>
-          {(outcomes.modules.length > 0 || outcomes.biomeRevealsRequested > 0 || outcomes.anomalyEngagementUnlocked) && (
+          {(outcomes.modules.length > 0 ||
+            outcomes.biomeRevealsRequested > 0 ||
+            outcomes.anomalyEngagementUnlocked) && (
             <div className="pt-2 border-t border-border/20 space-y-1 text-xs">
               {outcomes.modules.map((m, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-violet-300">
@@ -364,7 +444,8 @@ export default function ExpeditionRun() {
               {outcomes.biomeRevealsRequested > 0 && (
                 <div className="flex items-center gap-1.5 text-cyan-300">
                   <Sparkles className="h-3 w-3" />
-                  {outcomes.biomeRevealsRequested} biome{outcomes.biomeRevealsRequested > 1 ? 's' : ''} à révéler
+                  {outcomes.biomeRevealsRequested} biome
+                  {outcomes.biomeRevealsRequested > 1 ? 's' : ''} à révéler
                 </div>
               )}
               {outcomes.anomalyEngagementUnlocked && (
@@ -388,7 +469,7 @@ export default function ExpeditionRun() {
           <p className="text-xs text-muted-foreground italic">
             {mission.status === 'engaged'
               ? "La flotte est en route. Aucun événement enregistré pour l'instant."
-              : "Aucun événement résolu."}
+              : 'Aucun événement résolu.'}
           </p>
         ) : (
           <div className="space-y-2.5">
@@ -396,13 +477,19 @@ export default function ExpeditionRun() {
               const eventDef = content?.events.find((e) => e.id === entry.eventId);
               const choice = eventDef?.choices[entry.choiceIndex];
               return (
-                <div key={entry.step} className="rounded border border-border/30 bg-background/30 p-3 text-xs space-y-1">
+                <div
+                  key={entry.step}
+                  className="rounded border border-border/30 bg-background/30 p-3 text-xs space-y-1"
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-foreground/80 font-semibold">
                       Étape {entry.step} — {eventDef?.title ?? entry.eventId}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(entry.resolvedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(entry.resolvedAt).toLocaleString('fr-FR', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
                     </span>
                   </div>
                   {choice && (
@@ -411,14 +498,15 @@ export default function ExpeditionRun() {
                     </p>
                   )}
                   <p className="text-muted-foreground italic">{entry.resolutionText}</p>
-                  {entry.overflowed && Object.values(entry.overflowed).some((v) => (v ?? 0) > 0) && (
-                    <p className="text-[11px] text-amber-300">
-                      Soute pleine — pertes :{' '}
-                      {entry.overflowed.minerai ? `${entry.overflowed.minerai} M ` : ''}
-                      {entry.overflowed.silicium ? `${entry.overflowed.silicium} S ` : ''}
-                      {entry.overflowed.hydrogene ? `${entry.overflowed.hydrogene} H` : ''}
-                    </p>
-                  )}
+                  {entry.overflowed &&
+                    Object.values(entry.overflowed).some((v) => (v ?? 0) > 0) && (
+                      <p className="text-[11px] text-amber-300">
+                        Soute pleine — pertes :{' '}
+                        {entry.overflowed.minerai ? `${entry.overflowed.minerai} M ` : ''}
+                        {entry.overflowed.silicium ? `${entry.overflowed.silicium} S ` : ''}
+                        {entry.overflowed.hydrogene ? `${entry.overflowed.hydrogene} H` : ''}
+                      </p>
+                    )}
                 </div>
               );
             })}
@@ -434,17 +522,19 @@ export default function ExpeditionRun() {
             mission.status === 'completed'
               ? 'border-emerald-500/40 bg-emerald-500/5'
               : mission.status === 'failed'
-              ? 'border-rose-500/40 bg-rose-500/5'
-              : 'border-border/40 bg-card/40',
+                ? 'border-rose-500/40 bg-rose-500/5'
+                : 'border-border/40 bg-card/40',
           )}
         >
           <div className="flex items-center gap-2 mb-2">
-            {mission.status === 'completed' && <CheckCircle2 className="h-5 w-5 text-emerald-300" />}
+            {mission.status === 'completed' && (
+              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+            )}
             {mission.status === 'failed' && <Skull className="h-5 w-5 text-rose-300" />}
             {mission.status === 'expired' && <XCircle className="h-5 w-5 text-muted-foreground" />}
             <h3 className="text-sm font-semibold">
               {mission.status === 'completed' && 'Mission terminée avec succès'}
-              {mission.status === 'failed' && 'Flotte perdue dans l\'espace profond'}
+              {mission.status === 'failed' && "Flotte perdue dans l'espace profond"}
               {mission.status === 'expired' && 'Mission expirée'}
             </h3>
           </div>

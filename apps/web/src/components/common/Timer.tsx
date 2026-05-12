@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNow } from '@/hooks/useNow';
 import { cn } from '@/lib/utils';
 
 interface TimerProps {
@@ -17,45 +18,41 @@ function formatTimeLeft(seconds: number): string {
 }
 
 export function Timer({ endTime, totalDuration, onComplete, className }: TimerProps) {
+  const now = useNow();
+  const secondsLeft = Math.max(0, Math.floor((endTime.getTime() - now) / 1000));
+
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
-
-  const [secondsLeft, setSecondsLeft] = useState(() =>
-    Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000)),
-  );
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState(secondsLeft <= 0);
+  const firedRef = useRef(completed);
 
   useEffect(() => {
-    let id: ReturnType<typeof setInterval> | null = null;
+    if (secondsLeft <= 0 && !firedRef.current) {
+      firedRef.current = true;
+      setCompleted(true);
+      onCompleteRef.current?.();
+    } else if (secondsLeft > 0 && firedRef.current) {
+      firedRef.current = false;
+      setCompleted(false);
+    }
+  }, [secondsLeft]);
 
-    const tick = () => {
-      const remaining = Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000));
-      setSecondsLeft(remaining);
-      if (remaining <= 0) {
-        if (id) clearInterval(id);
-        setCompleted(true);
-        onCompleteRef.current?.();
-      }
-    };
-
-    tick();
-    id = setInterval(tick, 1000);
-    return () => { if (id) clearInterval(id); };
-  }, [endTime]);
-
-  const progress = totalDuration && totalDuration > 0
-    ? Math.min(100, ((totalDuration - secondsLeft) / totalDuration) * 100)
-    : null;
+  const progress =
+    totalDuration && totalDuration > 0
+      ? Math.min(100, ((totalDuration - secondsLeft) / totalDuration) * 100)
+      : null;
 
   const isUrgent = secondsLeft > 0 && secondsLeft < 60;
 
   return (
     <div className={className}>
-      <span className={cn(
-        'text-xs font-mono',
-        completed && 'text-green-400',
-        isUrgent && 'animate-pulse-glow text-energy',
-      )}>
+      <span
+        className={cn(
+          'text-xs font-mono',
+          completed && 'text-green-400',
+          isUrgent && 'animate-pulse-glow text-energy',
+        )}
+      >
         {formatTimeLeft(secondsLeft)}
       </span>
       {progress !== null && (
@@ -63,9 +60,7 @@ export function Timer({ endTime, totalDuration, onComplete, className }: TimerPr
           <div
             className={cn(
               'h-1.5 rounded-full transition-[width] duration-1000 ease-linear',
-              completed
-                ? 'bg-green-400'
-                : 'bg-gradient-to-r from-primary to-silicium',
+              completed ? 'bg-green-400' : 'bg-gradient-to-r from-primary to-silicium',
             )}
             style={{ width: `${progress}%` }}
           />
