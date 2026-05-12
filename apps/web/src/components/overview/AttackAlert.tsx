@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { AlertTriangle } from 'lucide-react';
 import { Timer } from '@/components/common/Timer';
 
 interface InboundFleet {
   id: string;
   senderUsername: string | null;
+  allianceId: string | null;
   allianceTag: string | null;
   originGalaxy: number;
   originSystem: number;
@@ -78,7 +79,18 @@ export function AttackAlert({ hostileFleets, onTimerComplete }: AttackAlertProps
                 <span className="text-sm font-semibold text-red-300">
                   {hasSender ? (
                     <>
-                      {event.allianceTag && <span className="text-red-400 mr-1">[{event.allianceTag}]</span>}
+                      {event.allianceTag && event.allianceId && (
+                        <Link
+                          to={`/alliances/${event.allianceId}`}
+                          className="text-red-400 mr-1 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          [{event.allianceTag}]
+                        </Link>
+                      )}
+                      {event.allianceTag && !event.allianceId && (
+                        <span className="text-red-400 mr-1">[{event.allianceTag}]</span>
+                      )}
                       {event.senderUsername}
                     </>
                   ) : (

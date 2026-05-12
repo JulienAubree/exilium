@@ -299,6 +299,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'alliances/:allianceId',
+        lazy: lazyLoad(() => import('./pages/AlliancePublic')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'history',
         lazy: lazyLoad(() => import('./pages/History')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

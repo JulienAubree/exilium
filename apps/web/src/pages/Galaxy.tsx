@@ -424,7 +424,18 @@ export default function Galaxy() {
                               {gameConfig?.planetTypes?.find((t) => t.id === (slot as any).planetClassId)?.name ?? ''}
                             </span>
                           )}
-                          {(slot as any).allianceTag && <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>}
+                          {(slot as any).allianceTag && (slot as any).allianceId && (
+                            <Link
+                              to={`/alliances/${(slot as any).allianceId}`}
+                              className="text-primary mr-1 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              [{(slot as any).allianceTag}]
+                            </Link>
+                          )}
+                          {(slot as any).allianceTag && !(slot as any).allianceId && (
+                            <span className="text-primary mr-1">[{(slot as any).allianceTag}]</span>
+                          )}
                           {(slot as any).username}
                         </div>
                       </div>

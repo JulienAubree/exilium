@@ -131,6 +131,7 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
           username: users.username,
           totalPoints: rankings.totalPoints,
           calculatedAt: rankings.calculatedAt,
+          allianceId: alliances.id,
           allianceTag: alliances.tag,
         })
         .from(rankings)

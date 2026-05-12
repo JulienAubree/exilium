@@ -342,12 +342,60 @@ export function createAllianceService(db: Database, redis: Redis | undefined, al
       const [alliance] = await db.select().from(alliances).where(eq(alliances.id, allianceId)).limit(1);
       if (!alliance) throw new TRPCError({ code: 'NOT_FOUND', message: 'Alliance introuvable.' });
 
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)::int` })
+      // Public member list: name + role + joinedAt only. No individual score
+      // (scouting concern) — aggregate rank/points are derived below.
+      const members = await db
+        .select({
+          userId: allianceMembers.userId,
+          username: users.username,
+          role: allianceMembers.role,
+          joinedAt: allianceMembers.joinedAt,
+          totalPoints: sql<number>`coalesce(${rankings.totalPoints}, 0)::int`,
+        })
         .from(allianceMembers)
-        .where(eq(allianceMembers.allianceId, allianceId));
+        .innerJoin(users, eq(users.id, allianceMembers.userId))
+        .leftJoin(rankings, eq(rankings.userId, allianceMembers.userId))
+        .where(eq(allianceMembers.allianceId, allianceId))
+        .orderBy(asc(allianceMembers.joinedAt));
 
-      return { ...alliance, memberCount: countResult.count };
+      const totalPoints = members.reduce((sum, m) => sum + (m.totalPoints ?? 0), 0);
+
+      const [rankRow] = await db.execute<{ rank: number }>(sql`
+        SELECT count(*)::int + 1 AS rank
+        FROM (
+          SELECT coalesce(sum(r.total_points), 0) AS pts
+          FROM alliances a
+          INNER JOIN alliance_members am ON am.alliance_id = a.id
+          LEFT JOIN rankings r ON r.user_id = am.user_id
+          WHERE a.id <> ${allianceId}
+          GROUP BY a.id
+        ) sub
+        WHERE sub.pts > ${totalPoints}
+      `);
+      const rank = rankRow?.rank ?? 1;
+
+      const recentMilitary = await this.getRecentMilitary(allianceId);
+
+      const founder = members.find((m) => m.userId === alliance.founderId);
+
+      // Strip individual totalPoints from the public payload — keep only the
+      // identity bits useful to navigate to a member's profile.
+      const publicMembers = members.map(({ userId, username, role, joinedAt }) => ({
+        userId,
+        username,
+        role,
+        joinedAt,
+      }));
+
+      return {
+        ...alliance,
+        memberCount: members.length,
+        members: publicMembers,
+        totalPoints,
+        rank,
+        recentMilitary,
+        founderUsername: founder?.username ?? null,
+      };
     },
 
     async myAlliance(userId: string) {

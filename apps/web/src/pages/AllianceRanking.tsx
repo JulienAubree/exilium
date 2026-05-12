@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { Link, useNavigate, useLocation } from 'react-router';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { TablePageSkeleton } from '@/components/common/PageSkeleton';
@@ -48,7 +48,11 @@ export default function AllianceRanking() {
             const rank = (page - 1) * limit + i + 1;
             const medalIdx = rank - 1;
             return (
-              <div key={entry.allianceId} className="flex items-center justify-between rounded-lg p-2">
+              <Link
+                key={entry.allianceId}
+                to={`/alliances/${entry.allianceId}`}
+                className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent/50"
+              >
                 <div className="flex items-center gap-3">
                   <span className="w-8 text-center font-mono text-sm">
                     {medalIdx < 3 ? (
@@ -63,7 +67,7 @@ export default function AllianceRanking() {
                   <span className="text-sm">[{entry.tag}] {entry.name}</span>
                 </div>
                 <span className="text-sm text-muted-foreground">{entry.totalPoints.toLocaleString('fr-FR')}</span>
-              </div>
+              </Link>
             );
           })}
           {(!rankings || rankings.length === 0) && (
@@ -89,7 +93,11 @@ export default function AllianceRanking() {
                 const rank = (page - 1) * limit + i + 1;
                 const medalIdx = rank - 1;
                 return (
-                  <tr key={entry.allianceId} className="border-b border-border/50">
+                  <tr
+                    key={entry.allianceId}
+                    className="border-b border-border/50 cursor-pointer hover:bg-accent/30 transition-colors"
+                    onClick={() => navigate(`/alliances/${entry.allianceId}`)}
+                  >
                     <td className="px-2 py-1 font-mono">
                       {medalIdx < 3 ? (
                         <span className={cn('text-lg', MEDALS[medalIdx])}>
@@ -100,10 +108,14 @@ export default function AllianceRanking() {
                       )}
                     </td>
                     <td className="px-2 py-1">
-                      <div className="flex items-center gap-2">
+                      <Link
+                        to={`/alliances/${entry.allianceId}`}
+                        className="flex items-center gap-2 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <AllianceBlason blason={entry.blason} size={32} />
                         <span>[{entry.tag}] {entry.name}</span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-2 py-1 text-right">{entry.memberCount}</td>
                     <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>

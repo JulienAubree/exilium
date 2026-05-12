@@ -37,6 +37,7 @@ interface InboundEvent {
   targetSystem: number;
   targetPosition: number;
   senderUsername: string | null;
+  allianceId: string | null;
   allianceTag: string | null;
   originPlanetName: string | null;
   originGalaxy: number;
@@ -141,7 +142,16 @@ function InboundFleetCard({
           <span className="text-muted-foreground">De :</span>
           {hasSender ? (
             <>
-              {event.allianceTag && (
+              {event.allianceTag && event.allianceId && (
+                <Link
+                  to={`/alliances/${event.allianceId}`}
+                  className={cn(isHostile ? 'text-red-400' : 'text-yellow-400', 'font-semibold hover:underline')}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  [{event.allianceTag}]
+                </Link>
+              )}
+              {event.allianceTag && !event.allianceId && (
                 <span className={cn(isHostile ? 'text-red-400' : 'text-yellow-400', 'font-semibold')}>[{event.allianceTag}]</span>
               )}
               <span className="text-foreground font-medium">{event.senderUsername ?? 'Inconnu'}</span>

@@ -109,6 +109,7 @@ function OwnView() {
               allianceName={profile.allianceName}
               allianceTag={profile.allianceTag}
               blason={profile.allianceBlason}
+              allianceId={profile.allianceId}
               allianceRole={profile.allianceRole}
               isOwn={true}
             />
@@ -178,6 +179,7 @@ function OtherView({ userId }: { userId: string }) {
               allianceName={player.stats.allianceName}
               allianceTag={allianceTag}
               blason={player.stats.allianceBlason}
+              allianceId={player.stats.allianceId}
               isOwn={false}
             />
           )}

@@ -12,6 +12,7 @@
  */
 
 import { useState, type ReactElement, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import type { SlotView } from '../slotView';
 import type { DetailPanelActions, DetailPanelContext } from './types';
 import { BiomeChips } from './BiomeChips';
@@ -212,7 +213,18 @@ export function ModePlanet({ view, ctx, actions }: Props): ReactElement {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 text-sm truncate">
               {displayName}
-              {view.allianceTag && (
+              {view.allianceTag && view.allianceId && (
+                <Link
+                  to={`/alliances/${view.allianceId}`}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {view.ownerAllianceBlason && (
+                    <AllianceBlason blason={view.ownerAllianceBlason} size={14} />
+                  )}
+                  [{view.allianceTag}]
+                </Link>
+              )}
+              {view.allianceTag && !view.allianceId && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   {view.ownerAllianceBlason && (
                     <AllianceBlason blason={view.ownerAllianceBlason} size={14} />

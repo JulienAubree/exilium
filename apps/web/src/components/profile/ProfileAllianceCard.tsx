@@ -12,6 +12,7 @@ interface ProfileAllianceCardProps {
   allianceName: string;
   allianceTag: string;
   blason: Blason;
+  allianceId?: string | null;
   allianceRole?: 'founder' | 'officer' | 'member' | null;
   isOwn: boolean;
 }
@@ -20,6 +21,7 @@ export function ProfileAllianceCard({
   allianceName,
   allianceTag,
   blason,
+  allianceId,
   allianceRole,
   isOwn,
 }: ProfileAllianceCardProps) {
@@ -44,8 +46,20 @@ export function ProfileAllianceCard({
 
   const className = 'glass-card p-4 block hover:border-amber-500/30 transition-colors';
 
+  // Own profile: link to the private hub. Other's profile: link to the public
+  // alliance page (when we know the id — otherwise no link).
+  const to = isOwn ? '/alliance' : allianceId ? `/alliances/${allianceId}` : null;
+
+  if (!to) {
+    return (
+      <div className={className} aria-label={`Alliance ${allianceName}`}>
+        {inner}
+      </div>
+    );
+  }
+
   return (
-    <Link to="/alliance" className={className} aria-label={`Alliance ${allianceName}`}>
+    <Link to={to} className={className} aria-label={`Alliance ${allianceName}`}>
       {inner}
     </Link>
   );

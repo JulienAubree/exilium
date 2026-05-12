@@ -104,16 +104,27 @@ export default function Ranking() {
                       entry.rank
                     )}
                   </span>
-                  <Link
-                    to={`/player/${entry.userId}`}
-                    className={cn('text-sm hover:underline', isMe && 'font-semibold text-primary')}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {entry.username}
-                    {entry.allianceTag && (
-                      <span className="ml-1.5 text-xs text-muted-foreground">[{entry.allianceTag}]</span>
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      to={`/player/${entry.userId}`}
+                      className={cn('text-sm hover:underline', isMe && 'font-semibold text-primary')}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {entry.username}
+                    </Link>
+                    {entry.allianceTag && entry.allianceId && (
+                      <Link
+                        to={`/alliances/${entry.allianceId}`}
+                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        [{entry.allianceTag}]
+                      </Link>
                     )}
-                  </Link>
+                    {entry.allianceTag && !entry.allianceId && (
+                      <span className="text-xs text-muted-foreground">[{entry.allianceTag}]</span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-sm text-muted-foreground">{entry.totalPoints.toLocaleString('fr-FR')}</span>
               </div>
@@ -164,7 +175,20 @@ export default function Ranking() {
                       </Link>
                     </td>
                     <td className="px-2 py-1 text-xs text-muted-foreground">
-                      {entry.allianceTag ? `[${entry.allianceTag}]` : '—'}
+                      {entry.allianceTag ? (
+                        entry.allianceId ? (
+                          <Link
+                            to={`/alliances/${entry.allianceId}`}
+                            className="hover:text-foreground hover:underline"
+                          >
+                            [{entry.allianceTag}]
+                          </Link>
+                        ) : (
+                          `[${entry.allianceTag}]`
+                        )
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="px-2 py-1 text-right">{entry.totalPoints.toLocaleString('fr-FR')}</td>
                   </tr>
