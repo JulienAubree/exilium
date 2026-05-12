@@ -12,7 +12,12 @@ import { createResearchService } from '../modules/research/research.service.js';
 import { createResearchRouter } from '../modules/research/research.router.js';
 import { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import { createShipyardRouter } from '../modules/shipyard/shipyard.router.js';
-import { buildCompletionQueue, fleetQueue, marketQueue, colonizationQueue } from '../queues/queues.js';
+import {
+  buildCompletionQueue,
+  fleetQueue,
+  marketQueue,
+  colonizationQueue,
+} from '../queues/queues.js';
 import { createGalaxyService } from '../modules/galaxy/galaxy.service.js';
 import { createGalaxyRouter } from '../modules/galaxy/galaxy.router.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
@@ -95,30 +100,100 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
   const mailerService = createMailerService();
   const authService = createAuthService(db, redis, mailerService);
-  const resourceService = createResourceService(db, gameConfigService, dailyQuestService, talentService);
+  const resourceService = createResourceService(
+    db,
+    gameConfigService,
+    dailyQuestService,
+    talentService,
+  );
   const planetService = createPlanetService(db, gameConfigService, env.ASSETS_DIR, resourceService);
   const reportService = createReportService(db);
-  const planetAbandonService = createPlanetAbandonService(db, gameConfigService, reportService, fleetQueue, redis);
-  const buildingService = createBuildingService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, dailyQuestService);
-  const researchService = createResearchService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, dailyQuestService);
+  const planetAbandonService = createPlanetAbandonService(
+    db,
+    gameConfigService,
+    reportService,
+    fleetQueue,
+    redis,
+  );
+  const buildingService = createBuildingService(
+    db,
+    resourceService,
+    buildCompletionQueue,
+    gameConfigService,
+    talentService,
+    dailyQuestService,
+  );
+  const researchService = createResearchService(
+    db,
+    resourceService,
+    buildCompletionQueue,
+    gameConfigService,
+    talentService,
+    dailyQuestService,
+  );
   const galaxyService = createGalaxyService(db, gameConfigService);
   const pushService = createPushService(db);
   const messageService = createMessageService(db, redis, pushService);
   const rankingService = createRankingService(db, gameConfigService);
   const asteroidBeltService = createAsteroidBeltService(db);
   const pirateService = createPirateService(db, gameConfigService);
-  const pveService = createPveService(db, asteroidBeltService, pirateService, gameConfigService, talentService, exiliumService);
+  const pveService = createPveService(
+    db,
+    asteroidBeltService,
+    pirateService,
+    gameConfigService,
+    talentService,
+    exiliumService,
+  );
   const userService = createUserService(db, env.ASSETS_DIR);
   const gameEventService = createGameEventService(db);
   const friendService = createFriendService(db, redis, gameEventService);
-  const flagshipService = createFlagshipService(db, exiliumService, gameConfigService, talentService, env.ASSETS_DIR, resourceService, reportService);
-  const shipyardService = createShipyardService(db, resourceService, buildCompletionQueue, gameConfigService, talentService, flagshipService);
+  const flagshipService = createFlagshipService(
+    db,
+    exiliumService,
+    gameConfigService,
+    talentService,
+    env.ASSETS_DIR,
+    resourceService,
+    reportService,
+  );
+  const shipyardService = createShipyardService(
+    db,
+    resourceService,
+    buildCompletionQueue,
+    gameConfigService,
+    talentService,
+    flagshipService,
+  );
   const colonizationService = createColonizationService(db, gameConfigService);
   const allianceLogService = createAllianceLogService(db, redis);
-  const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, talentService, gameEventService, colonizationService, allianceLogService);
+  const fleetService = createFleetService(
+    db,
+    resourceService,
+    fleetQueue,
+    messageService,
+    gameConfigService,
+    redis,
+    pveService,
+    asteroidBeltService,
+    pirateService,
+    reportService,
+    exiliumService,
+    dailyQuestService,
+    flagshipService,
+    talentService,
+    gameEventService,
+    colonizationService,
+    allianceLogService,
+  );
   const allianceService = createAllianceService(db, redis, allianceLogService);
   const contactService = createContactService(db, friendService, allianceService);
-  const playerAdminService = createPlayerAdminService(db, fleetQueue, planetService);
+  const playerAdminService = createPlayerAdminService(
+    db,
+    fleetQueue,
+    planetService,
+    gameConfigService,
+  );
   const dashboardService = createDashboardService(db, {
     'build-completion': buildCompletionQueue,
     fleet: fleetQueue,
@@ -126,12 +201,26 @@ export function buildAppRouter(db: Database, redis: Redis) {
     colonization: colonizationQueue,
   });
   const tutorialService = createTutorialService(db, pveService, exiliumService);
-  const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService, talentService, gameEventService);
+  const marketService = createMarketService(
+    db,
+    resourceService,
+    gameConfigService,
+    marketQueue,
+    redis,
+    dailyQuestService,
+    exiliumService,
+    talentService,
+    gameEventService,
+  );
   const feedbackService = createFeedbackService(db, redis);
   const changelogService = createChangelogService(db);
   const announcementService = createAnnouncementService(db);
   const notificationPreferencesService = createNotificationPreferencesService(db);
-  const explorationReportService = createExplorationReportService(db, resourceService, gameConfigService);
+  const explorationReportService = createExplorationReportService(
+    db,
+    resourceService,
+    gameConfigService,
+  );
   const homepageService = createHomepageService(db);
   const anomalyContentService = createAnomalyContentService(db);
   // V9.2 — bosses service lit la pool depuis anomaly_content.bosses (admin
@@ -140,11 +229,21 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const anomalyBossesService = createAnomalyBossesService(anomalyContentService);
   const modulesService = createModulesService(db);
   const explorationContentService = createExplorationContentService(db);
-  const explorationMissionService = createExplorationMissionService(db, gameConfigService, explorationContentService, exiliumService);
+  const explorationMissionService = createExplorationMissionService(
+    db,
+    gameConfigService,
+    explorationContentService,
+    exiliumService,
+  );
 
   const authRouter = createAuthRouter(db, authService, planetService);
   const planetRouter = createPlanetRouter(planetService, planetAbandonService);
-  const resourceRouter = createResourceRouter(resourceService, planetService, db, gameConfigService);
+  const resourceRouter = createResourceRouter(
+    resourceService,
+    planetService,
+    db,
+    gameConfigService,
+  );
   const buildingRouter = createBuildingRouter(buildingService);
   const researchRouter = createResearchRouter(researchService);
   const shipyardRouter = createShipyardRouter(shipyardService);
@@ -170,16 +269,36 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const feedbackRouter = createFeedbackRouter(feedbackService, adminProcedure);
   const changelogRouter = createChangelogRouter(changelogService, adminProcedure);
   const announcementRouter = createAnnouncementRouter(announcementService, adminProcedure);
-  const notificationPreferencesRouter = createNotificationPreferencesRouter(notificationPreferencesService);
+  const notificationPreferencesRouter = createNotificationPreferencesRouter(
+    notificationPreferencesService,
+  );
   const explorationReportRouter = createExplorationReportRouter(explorationReportService);
   const colonizationRouter = createColonizationRouter(colonizationService);
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
-  const anomalyContentRouter = createAnomalyContentRouter(anomalyContentService, adminProcedure, anomalyBossesService);
+  const anomalyContentRouter = createAnomalyContentRouter(
+    anomalyContentService,
+    adminProcedure,
+    anomalyBossesService,
+  );
   const modulesRouter = createModulesRouter(modulesService, adminProcedure);
-  const anomalyService = createAnomalyService(db, gameConfigService, exiliumService, flagshipService, reportService, anomalyContentService, modulesService, anomalyBossesService);
+  const anomalyService = createAnomalyService(
+    db,
+    gameConfigService,
+    exiliumService,
+    flagshipService,
+    reportService,
+    anomalyContentService,
+    modulesService,
+    anomalyBossesService,
+  );
   const anomalyRouter = createAnomalyRouter(anomalyService, anomalyBossesService);
   const explorationMissionRouter = createExplorationMissionRouter(explorationMissionService);
-  const explorationContentRouter = createExplorationContentRouter(explorationContentService, explorationMissionService, adminProcedure, db);
+  const explorationContentRouter = createExplorationContentRouter(
+    explorationContentService,
+    explorationMissionService,
+    adminProcedure,
+    db,
+  );
 
   const appRouter = router({
     health: publicProcedure.query(() => ({

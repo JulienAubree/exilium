@@ -31,7 +31,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
 });
 
 export function createAdminProcedure(db: Database) {
-  return protectedProcedure.use(async ({ ctx, next }) => {
+  return protectedProcedure.use(async ({ ctx, next, path, type, input }) => {
     const [user] = await db
       .select({ isAdmin: users.isAdmin })
       .from(users)
@@ -40,6 +40,23 @@ export function createAdminProcedure(db: Database) {
     if (!user?.isAdmin) {
       throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
     }
+
+    // Audit trail : on log toutes les actions admin via le logger Fastify.
+    // Niveau `warn` pour qu'elles sortent en prod (logger configuré en `warn`).
+    // Les `query` sont également loggées (utile pour tracer les regards admin
+    // sur les comptes joueurs). Le filtrage se fait côté outil d'analyse via
+    // le tag `audit: 'admin'`.
+    ctx.req.log.warn(
+      {
+        audit: 'admin',
+        adminId: ctx.userId,
+        action: path,
+        opType: type,
+        input,
+      },
+      'admin action',
+    );
+
     return next({ ctx });
   });
 }
