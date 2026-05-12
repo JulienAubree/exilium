@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
+import { RARITY_LABEL, type Rarity } from '@/lib/rarity';
 
 interface Props {
   module: {
@@ -15,8 +16,6 @@ interface Props {
   onClose: () => void;
 }
 
-const RARITY_LABEL: Record<string, string> = { common: 'Commun', rare: 'Rare', epic: 'Épique' };
-
 export function ModuleDetailModal({ module, onClose }: Props) {
   if (!module) return null;
   return (
@@ -29,7 +28,7 @@ export function ModuleDetailModal({ module, onClose }: Props) {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[10px] font-mono uppercase tracking-wider text-violet-300">
-            {RARITY_LABEL[module.rarity]} · {module.hullId}
+            {RARITY_LABEL[module.rarity as Rarity] ?? module.rarity} · {module.hullId}
           </div>
           <h3 className="text-base font-bold text-foreground/95">{module.name}</h3>
         </div>
