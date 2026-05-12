@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { notificationPreferences } from '@exilium/db';
 import type { Database } from '@exilium/db';
 
@@ -20,7 +21,7 @@ export function createNotificationPreferencesService(db: Database) {
           bellDisabled: notificationPreferences.bellDisabled,
         })
         .from(notificationPreferences)
-        .where(eq(notificationPreferences.userId, userId))
+        .where(byUser(notificationPreferences.userId, userId))
         .limit(1);
       return row ?? DEFAULTS;
     },

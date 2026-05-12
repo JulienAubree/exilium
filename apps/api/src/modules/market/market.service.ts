@@ -1,4 +1,5 @@
 import { eq, and, ne, desc, lt, sql, isNotNull, isNull } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
 import { marketOffers, planets, planetBuildings, fleetEvents, explorationReports, discoveredBiomes, users } from '@exilium/db';
@@ -467,7 +468,7 @@ export function createMarketService(
           .from(discoveredBiomes)
           .where(
             and(
-              eq(discoveredBiomes.userId, userId),
+              byUser(discoveredBiomes.userId, userId),
               sql`(${discoveredBiomes.galaxy}, ${discoveredBiomes.system}, ${discoveredBiomes.position}) IN (${sql.join(
                 tuples.map((t) => sql`(${t.g}, ${t.s}, ${t.p})`),
                 sql`, `,

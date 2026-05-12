@@ -7,7 +7,7 @@ import { DeathsList } from './DeathsList';
 import { UnitGrid } from './UnitGrid';
 import type { CombatEvent, UnitSnapshot, DetailedCombatLog, RoundResult, UnitTypeHP } from './types';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface UnitDetailPanelProps {
   selectedUnitType: string | null;

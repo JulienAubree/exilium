@@ -1,4 +1,5 @@
 import { eq, and, inArray } from 'drizzle-orm';
+import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { fleetEvents } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -30,7 +31,7 @@ export function createRecallFleet(deps: RecallFleetDeps) {
       .where(
         and(
           eq(fleetEvents.id, fleetEventId),
-          eq(fleetEvents.userId, userId),
+          byUser(fleetEvents.userId, userId),
           eq(fleetEvents.status, 'active'),
           inArray(fleetEvents.phase, ['outbound', 'prospecting', 'mining']),
         ),

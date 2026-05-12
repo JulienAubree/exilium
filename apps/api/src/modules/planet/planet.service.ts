@@ -1,4 +1,5 @@
 import { eq, asc, desc, and, sql, inArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, planetBuildings, planetShips, planetDefenses, buildQueue, fleetEvents, flagships, planetBiomes } from '@exilium/db';
 import type { Database, DbOrTx } from '@exilium/db';
@@ -217,7 +218,7 @@ export function createPlanetService(
       const planetList = await db
         .select()
         .from(planets)
-        .where(eq(planets.userId, userId))
+        .where(byUser(planets.userId, userId))
         .orderBy(asc(planets.sortOrder), asc(planets.createdAt));
 
       if (planetList.length === 0) return [];
@@ -267,7 +268,7 @@ export function createPlanetService(
           hydrogene: planets.hydrogene,
         })
         .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.status, 'active')))
+        .where(and(byUser(planets.userId, userId), eq(planets.status, 'active')))
         .orderBy(asc(planets.sortOrder), asc(planets.createdAt));
 
       if (planetRows.length === 0) return [];
@@ -352,7 +353,7 @@ export function createPlanetService(
       const userPlanets = await db
         .select({ id: planets.id })
         .from(planets)
-        .where(and(eq(planets.userId, userId), inArray(planets.id, planetIds)));
+        .where(and(byUser(planets.userId, userId), inArray(planets.id, planetIds)));
 
       if (userPlanets.length !== planetIds.length) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Some planets do not belong to user' });
@@ -381,7 +382,7 @@ export function createPlanetService(
       const [flagship] = await db
         .select({ planetId: flagships.planetId })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
       const flagshipPlanetId = flagship?.planetId ?? null;
 
@@ -429,7 +430,7 @@ export function createPlanetService(
                 .from(fleetEvents)
                 .where(and(
                   inArray(fleetEvents.originPlanetId, activePlanetIds),
-                  eq(fleetEvents.userId, userId),
+                  byUser(fleetEvents.userId, userId),
                   eq(fleetEvents.status, 'active'),
                 ))
                 .groupBy(fleetEvents.originPlanetId),
@@ -612,7 +613,7 @@ export function createPlanetService(
       const [fleetCount] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(fleetEvents)
-        .where(and(eq(fleetEvents.userId, userId), eq(fleetEvents.status, 'active')));
+        .where(and(byUser(fleetEvents.userId, userId), eq(fleetEvents.status, 'active')));
 
       const inboundAttackCount = planetData.filter(p => p.inboundAttack !== null).length;
 

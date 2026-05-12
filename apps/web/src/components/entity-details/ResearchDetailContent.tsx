@@ -7,7 +7,7 @@ import { resolveBonus, calculateSpyReport, calculateDetectionChance, calculateAt
 
 const COMBAT_STATS = new Set(['weapons', 'shielding', 'armor']);
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 interface Props {
   researchId: string;

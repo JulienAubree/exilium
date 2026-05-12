@@ -51,7 +51,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   hydrogene: 'hydrogene',
 };
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 function formatDays(seconds: number) {
   const d = Math.round(seconds / 86400);

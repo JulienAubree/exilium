@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { RoundResult } from './types';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface CombatTimelineProps {
   rounds: RoundResult[];

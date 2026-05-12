@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { byUser } from '../lib/db-helpers.js';
 import { planets, planetBuildings } from '@exilium/db';
 import { calculateGovernancePenalty } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
@@ -16,7 +17,7 @@ export async function getGovernancePenalty(
 
   // Count active colonies (active planets - 1 for homeworld)
   const userPlanets = await db.select({ id: planets.id, status: planets.status })
-    .from(planets).where(eq(planets.userId, userId));
+    .from(planets).where(byUser(planets.userId, userId));
   const colonyCount = Math.max(0, userPlanets.filter(p => p.status === 'active').length - 1);
 
   // IPC is homeworld-only by design — read only the homeworld row to avoid
@@ -26,7 +27,7 @@ export async function getGovernancePenalty(
     .from(planetBuildings)
     .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
     .where(and(
-      eq(planets.userId, userId),
+      byUser(planets.userId, userId),
       eq(planets.planetClassId, 'homeworld'),
       eq(planetBuildings.buildingId, 'imperialPowerCenter'),
     ))

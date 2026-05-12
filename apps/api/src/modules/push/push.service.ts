@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import type { Database } from '@exilium/db';
 import { pushSubscriptions, notificationPreferences } from '@exilium/db';
 import { env } from '../../config/env.js';
@@ -45,7 +46,7 @@ export function createPushService(db: Database) {
       const subs = await db
         .select()
         .from(pushSubscriptions)
-        .where(eq(pushSubscriptions.userId, userId));
+        .where(byUser(pushSubscriptions.userId, userId));
 
       for (const sub of subs) {
         const current = (sub.preferences ?? {}) as Record<string, boolean>;
@@ -60,7 +61,7 @@ export function createPushService(db: Database) {
       const [sub] = await db
         .select({ preferences: pushSubscriptions.preferences })
         .from(pushSubscriptions)
-        .where(eq(pushSubscriptions.userId, userId))
+        .where(byUser(pushSubscriptions.userId, userId))
         .limit(1);
       return (sub?.preferences ?? {
         building: true, research: true, shipyard: true,
@@ -75,7 +76,7 @@ export function createPushService(db: Database) {
       const [prefs] = await db
         .select({ pushDisabled: notificationPreferences.pushDisabled })
         .from(notificationPreferences)
-        .where(eq(notificationPreferences.userId, userId))
+        .where(byUser(notificationPreferences.userId, userId))
         .limit(1);
       if (eventType && prefs?.pushDisabled?.includes(eventType)) return;
       if (!eventType && prefs?.pushDisabled?.includes(category)) return;
@@ -83,7 +84,7 @@ export function createPushService(db: Database) {
       const subs = await db
         .select()
         .from(pushSubscriptions)
-        .where(eq(pushSubscriptions.userId, userId));
+        .where(byUser(pushSubscriptions.userId, userId));
 
       for (const sub of subs) {
         const prefs = (sub.preferences ?? {}) as Record<string, boolean>;

@@ -1,4 +1,5 @@
 import { eq, and, asc, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { tutorialProgress, tutorialChapters, planets, planetBuildings, planetShips, planetDefenses, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createPveService } from '../pve/pve.service.js';
@@ -68,7 +69,7 @@ export function createTutorialService(
         .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
         .where(
           and(
-            eq(planets.userId, userId),
+            byUser(planets.userId, userId),
             eq(planetBuildings.buildingId, condition.targetId),
           ),
         )
@@ -79,7 +80,7 @@ export function createTutorialService(
       const [research] = await db
         .select()
         .from(userResearch)
-        .where(eq(userResearch.userId, userId))
+        .where(byUser(userResearch.userId, userId))
         .limit(1);
       if (research) {
         return (research[condition.targetId as keyof typeof research] ?? 0) as number;
@@ -92,7 +93,7 @@ export function createTutorialService(
         .select()
         .from(planetShips)
         .innerJoin(planets, eq(planets.id, planetShips.planetId))
-        .where(eq(planets.userId, userId));
+        .where(byUser(planets.userId, userId));
       return ships.reduce((sum, row) => {
         return sum + ((row.planet_ships[col as keyof typeof row.planet_ships] ?? 0) as number);
       }, 0);
@@ -103,7 +104,7 @@ export function createTutorialService(
         .select()
         .from(planetDefenses)
         .innerJoin(planets, eq(planets.id, planetDefenses.planetId))
-        .where(eq(planets.userId, userId));
+        .where(byUser(planets.userId, userId));
       return defenses.reduce((sum, row) => {
         return sum + ((row.planet_defenses[col as keyof typeof row.planet_defenses] ?? 0) as number);
       }, 0);
@@ -114,7 +115,7 @@ export function createTutorialService(
         .from(fleetEvents)
         .where(
           and(
-            eq(fleetEvents.userId, userId),
+            byUser(fleetEvents.userId, userId),
             eq(fleetEvents.status, 'completed'),
           ),
         )
@@ -127,7 +128,7 @@ export function createTutorialService(
         .from(pveMissions)
         .where(
           and(
-            eq(pveMissions.userId, userId),
+            byUser(pveMissions.userId, userId),
             eq(pveMissions.missionType, condition.targetId),
             eq(pveMissions.status, 'completed'),
           ),
@@ -139,7 +140,7 @@ export function createTutorialService(
       const [flagship] = await db
         .select({ id: flagships.id })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
       return flagship ? 1 : 0;
     }
@@ -152,7 +153,7 @@ export function createTutorialService(
       const [existing] = await db
         .select()
         .from(tutorialProgress)
-        .where(eq(tutorialProgress.userId, userId))
+        .where(byUser(tutorialProgress.userId, userId))
         .limit(1);
 
       if (existing) return existing;
@@ -174,7 +175,7 @@ export function createTutorialService(
       const [planet] = await db
         .select({ galaxy: planets.galaxy, system: planets.system })
         .from(planets)
-        .where(eq(planets.userId, userId))
+        .where(byUser(planets.userId, userId))
         .limit(1);
       const playerCoords = planet ? { galaxy: planet.galaxy, system: planet.system } : null;
 
@@ -319,7 +320,7 @@ export function createTutorialService(
       const [planet] = await db
         .select()
         .from(planets)
-        .where(eq(planets.userId, userId))
+        .where(byUser(planets.userId, userId))
         .limit(1);
 
       if (planet && (quest.reward.minerai > 0 || quest.reward.silicium > 0 || quest.reward.hydrogene > 0)) {

@@ -1,4 +1,5 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { pveMissions, planets, missionCenterState, fleetEvents, planetShips, asteroidDeposits } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
 import type { Database } from '@exilium/db';
@@ -31,7 +32,7 @@ export function createPveService(
     async getMissions(userId: string) {
       const missions = await db.select().from(pveMissions)
         .where(and(
-          eq(pveMissions.userId, userId),
+          byUser(pveMissions.userId, userId),
           eq(pveMissions.status, 'available'),
         ))
         .orderBy(asc(pveMissions.createdAt));
@@ -62,7 +63,7 @@ export function createPveService(
       const [mission] = await db.select().from(pveMissions)
         .where(and(
           eq(pveMissions.id, missionId),
-          eq(pveMissions.userId, userId),
+          byUser(pveMissions.userId, userId),
         ))
         .limit(1);
       return mission ?? null;
@@ -150,7 +151,7 @@ export function createPveService(
 
     async getDiscoveryState(userId: string) {
       const [state] = await db.select().from(missionCenterState)
-        .where(eq(missionCenterState.userId, userId)).limit(1);
+        .where(byUser(missionCenterState.userId, userId)).limit(1);
       return state ?? null;
     },
 
@@ -167,7 +168,7 @@ export function createPveService(
 
       // Get or create state
       let [state] = await db.select().from(missionCenterState)
-        .where(eq(missionCenterState.userId, userId)).limit(1);
+        .where(byUser(missionCenterState.userId, userId)).limit(1);
 
       if (!state) {
         const [created] = await db.insert(missionCenterState).values({
@@ -178,12 +179,12 @@ export function createPveService(
         }).onConflictDoNothing().returning();
         if (!created) {
           [state] = await db.select().from(missionCenterState)
-            .where(eq(missionCenterState.userId, userId)).limit(1);
+            .where(byUser(missionCenterState.userId, userId)).limit(1);
         } else {
           const [homePlanet] = await db.select({
             galaxy: planets.galaxy,
             system: planets.system,
-          }).from(planets).where(eq(planets.userId, userId)).limit(1);
+          }).from(planets).where(byUser(planets.userId, userId)).limit(1);
           if (homePlanet) {
             await this.generateDiscoveredMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
             await this.generatePirateMission(userId, homePlanet.galaxy, homePlanet.system, centerLevel);
@@ -191,7 +192,7 @@ export function createPveService(
           await db.update(missionCenterState).set({
             nextDiscoveryAt: new Date(now.getTime() + cooldownMs),
             nextPirateDiscoveryAt: new Date(now.getTime() + cooldownMs + pirateOffsetMs),
-          }).where(eq(missionCenterState.userId, userId));
+          }).where(byUser(missionCenterState.userId, userId));
           return;
         }
       }
@@ -205,7 +206,7 @@ export function createPveService(
           count: sql<number>`count(*)::int`,
         })
         .from(pveMissions)
-        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')))
+        .where(and(byUser(pveMissions.userId, userId), eq(pveMissions.status, 'available')))
         .groupBy(pveMissions.missionType);
 
       const countByType: Record<string, number> = {};
@@ -218,7 +219,7 @@ export function createPveService(
       const [homePlanet] = await db.select({
         galaxy: planets.galaxy,
         system: planets.system,
-      }).from(planets).where(eq(planets.userId, userId)).limit(1);
+      }).from(planets).where(byUser(planets.userId, userId)).limit(1);
 
       const updates: Partial<typeof missionCenterState.$inferInsert> = { updatedAt: now };
 
@@ -254,7 +255,7 @@ export function createPveService(
       }
 
       await db.update(missionCenterState).set(updates)
-        .where(eq(missionCenterState.userId, userId));
+        .where(byUser(missionCenterState.userId, userId));
     },
 
     async generateDiscoveredMission(userId: string, galaxy: number, system: number, centerLevel: number) {
@@ -276,7 +277,7 @@ export function createPveService(
       // materializeDiscoveries calls in PM2 cluster.
       const existingMissions = await db.select({ missionType: pveMissions.missionType, parameters: pveMissions.parameters })
         .from(pveMissions)
-        .where(and(eq(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
+        .where(and(byUser(pveMissions.userId, userId), eq(pveMissions.status, 'available')));
       const miningCap = Number(config.universe.pve_max_concurrent_missions) || 3;
       const miningCount = existingMissions.filter((m) => m.missionType === 'mine').length;
       if (miningCount >= miningCap) return;
@@ -351,7 +352,7 @@ export function createPveService(
     async dismissMission(userId: string, missionId: string) {
       // Check mission exists and belongs to user
       const [mission] = await db.select().from(pveMissions)
-        .where(and(eq(pveMissions.id, missionId), eq(pveMissions.userId, userId)))
+        .where(and(eq(pveMissions.id, missionId), byUser(pveMissions.userId, userId)))
         .limit(1);
 
       if (!mission) {
@@ -383,7 +384,7 @@ export function createPveService(
       shipStats: Record<string, UnitCombatStats>,
       fpConfig: FPConfig,
     ): Promise<number> {
-      const playerPlanets = await db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
+      const playerPlanets = await db.select({ id: planets.id }).from(planets).where(byUser(planets.userId, userId));
       let totalFP = 0;
       for (const planet of playerPlanets) {
         const [ships] = await db.select().from(planetShips).where(eq(planetShips.planetId, planet.id)).limit(1);
@@ -408,7 +409,7 @@ export function createPveService(
         .select({ count: sql<number>`count(*)::int` })
         .from(pveMissions)
         .where(and(
-          eq(pveMissions.userId, userId),
+          byUser(pveMissions.userId, userId),
           eq(pveMissions.missionType, 'pirate'),
           eq(pveMissions.status, 'available'),
         ));

@@ -1,4 +1,5 @@
 import { eq, and, inArray, asc } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { planets } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createFriendService } from '../friend/friend.service.js';
@@ -54,7 +55,7 @@ export function createContactService(
           position: planets.position,
         })
         .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.planetType, 'planet')))
+        .where(and(byUser(planets.userId, userId), eq(planets.planetType, 'planet')))
         .orderBy(asc(planets.createdAt));
 
       // 2. Friends

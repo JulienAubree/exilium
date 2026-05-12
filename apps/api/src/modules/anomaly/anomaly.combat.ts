@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -72,7 +73,7 @@ async function loadFlagshipCombatConfig(
    *  Appliqués APRES les modules pour scaler les stats déjà mod-boostées. */
   activeBuffs?: ActiveBossBuff[],
 ): Promise<ShipCombatConfig | null> {
-  const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+  const [flagship] = await db.select().from(flagships).where(byUser(flagships.userId, userId)).limit(1);
   if (!flagship) return null;
 
   const config = await gameConfigService.getFullConfig();

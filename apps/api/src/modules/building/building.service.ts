@@ -1,4 +1,5 @@
 import { eq, and } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, buildQueue, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -71,7 +72,7 @@ export function createBuildingService(
           .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
           .from(planetBuildings)
           .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
-          .where(eq(planets.userId, userId));
+          .where(byUser(planets.userId, userId));
         globalBuildingLevels = {};
         for (const row of allRows) {
           globalBuildingLevels[row.buildingId] = Math.max(
@@ -182,7 +183,7 @@ export function createBuildingService(
           .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
           .from(planetBuildings)
           .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
-          .where(eq(planets.userId, userId));
+          .where(byUser(planets.userId, userId));
         const globalLevels: Record<string, number> = {};
         for (const row of allPlanetRows) {
           globalLevels[row.buildingId] = Math.max(globalLevels[row.buildingId] ?? 0, row.level);
@@ -281,7 +282,7 @@ export function createBuildingService(
         .where(
           and(
             eq(buildQueue.planetId, planetId),
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.type, 'building'),
             eq(buildQueue.status, 'active'),
           ),

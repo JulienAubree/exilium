@@ -1,4 +1,5 @@
 import { eq, and, inArray } from 'drizzle-orm';
+import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, planetBuildings, userResearch, flagships, allianceMembers, alliances } from '@exilium/db';
 import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat } from '@exilium/game-engine';
@@ -527,7 +528,7 @@ export class SpyHandler implements MissionHandler {
     const [research] = await db
       .select({ espionageTech: userResearch.espionageTech })
       .from(userResearch)
-      .where(eq(userResearch.userId, userId))
+      .where(byUser(userResearch.userId, userId))
       .limit(1);
 
     return research?.espionageTech ?? 0;

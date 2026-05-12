@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { getUnitName, getDefenseName } from '@/lib/entity-names';
 import type { RoundResult } from './types';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface SideStats {
   shieldAbsorbed: number;

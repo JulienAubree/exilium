@@ -1,4 +1,5 @@
 import { eq, and, desc, or, sql, inArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { messages, users, allianceMembers, alliances } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -622,7 +623,7 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
       const [membership] = await db
         .select({ allianceId: allianceMembers.allianceId })
         .from(allianceMembers)
-        .where(eq(allianceMembers.userId, userId))
+        .where(byUser(allianceMembers.userId, userId))
         .limit(1);
       if (!membership) return [];
 

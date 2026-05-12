@@ -1,4 +1,5 @@
 import { ilike, ne, and, or, eq, count } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { users, planets, rankings, allianceMembers, alliances, friendships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { readdirSync } from 'fs';
@@ -113,11 +114,11 @@ export function createUserService(db: Database, assetsDir: string) {
       const [ranking] = await db.select({
         rank: rankings.rank,
         totalPoints: rankings.totalPoints,
-      }).from(rankings).where(eq(rankings.userId, userId)).limit(1);
+      }).from(rankings).where(byUser(rankings.userId, userId)).limit(1);
 
       const [planetCount] = await db.select({
         count: count(),
-      }).from(planets).where(eq(planets.userId, userId));
+      }).from(planets).where(byUser(planets.userId, userId));
 
       const [membership] = await db.select({
         allianceName: alliances.name,
@@ -130,7 +131,7 @@ export function createUserService(db: Database, assetsDir: string) {
         blasonColor2: alliances.blasonColor2,
       }).from(allianceMembers)
         .innerJoin(alliances, eq(allianceMembers.allianceId, alliances.id))
-        .where(eq(allianceMembers.userId, userId))
+        .where(byUser(allianceMembers.userId, userId))
         .limit(1);
 
       return {

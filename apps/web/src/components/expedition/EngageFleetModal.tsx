@@ -37,7 +37,7 @@ const TIER_BADGE = {
   deep: 'border-violet-500/40 bg-violet-500/10 text-violet-300',
 } as const;
 
-const fmt = (n: number) => Number(n).toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 export function EngageFleetModal({ open, onClose, mission, defaultPlanetId, onEngaged }: Props) {
   const utils = trpc.useUtils();

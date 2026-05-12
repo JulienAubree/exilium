@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router';
 import { Diamond, Check } from 'lucide-react';
 import { trpc } from '@/trpc';
+import { useLevelMap } from '@/hooks/useLevelMap';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';

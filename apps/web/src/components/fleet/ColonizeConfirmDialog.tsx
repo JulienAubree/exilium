@@ -12,7 +12,7 @@ interface Props {
   target: { galaxy: number; system: number; position: number };
 }
 
-const fmt = (n: number) => Math.round(n).toLocaleString('fr-FR');
+import { fmtRound as fmt } from '@/lib/format';
 
 export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Props) {
   useEffect(() => {

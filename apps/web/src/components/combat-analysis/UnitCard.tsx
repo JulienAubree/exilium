@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { getUnitName } from '@/lib/entity-names';
 import type { CombatEvent, UnitSnapshot } from './types';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface UnitCardProps {
   snapshot: UnitSnapshot;

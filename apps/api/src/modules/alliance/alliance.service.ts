@@ -1,4 +1,5 @@
 import { eq, and, ilike, or, sql, asc, desc, lt, gt, gte, like, count } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { alliances, allianceMembers, allianceInvitations, allianceApplications, allianceLogs, users, rankings } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -40,7 +41,7 @@ async function getMembership(db: Database, userId: string) {
       joinedAt: allianceMembers.joinedAt,
     })
     .from(allianceMembers)
-    .where(eq(allianceMembers.userId, userId))
+    .where(byUser(allianceMembers.userId, userId))
     .limit(1);
   return membership ?? null;
 }

@@ -14,7 +14,7 @@ const RESOURCE_COLORS: Record<string, string> = {
   hydrogene: 'text-blue-400',
 };
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface CombatReportDetailProps {
   result: Record<string, any>;

@@ -17,7 +17,7 @@ const VARIANT_STYLES: Record<Variant, { text: string; border: string; bg: string
   neutral: { text: 'text-foreground', border: 'border-border', bg: '', prefix: '' },
 };
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 export function ResourceDeltaCard({ title, cargo, variant, explainer }: ResourceDeltaCardProps) {
   const styles = VARIANT_STYLES[variant];

@@ -1,7 +1,7 @@
 import { ArrowRight, X, XCircle } from 'lucide-react';
 import { getUnitName } from '@/lib/entity-names';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface CombatEvent {
   round: number;

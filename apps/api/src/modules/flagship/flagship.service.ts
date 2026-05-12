@@ -1,4 +1,5 @@
 import { eq, asc, and, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents, anomalies, flagshipModuleInventory, moduleDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -99,7 +100,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select()
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) return null;
@@ -112,7 +113,7 @@ export function createFlagshipService(
           const [homePlanet] = await db
             .select({ id: planets.id })
             .from(planets)
-            .where(eq(planets.userId, userId))
+            .where(byUser(planets.userId, userId))
             .orderBy(asc(planets.createdAt))
             .limit(1);
           const repairedPlanetId = homePlanet?.id ?? flagship.planetId;
@@ -148,7 +149,7 @@ export function createFlagshipService(
           .select({ id: fleetEvents.id })
           .from(fleetEvents)
           .where(and(
-            eq(fleetEvents.userId, userId),
+            byUser(fleetEvents.userId, userId),
             eq(fleetEvents.status, 'active'),
             sql`COALESCE((${fleetEvents.ships}->>'flagship')::int, 0) > 0`,
           ))
@@ -157,7 +158,7 @@ export function createFlagshipService(
           .select({ id: anomalies.id })
           .from(anomalies)
           .where(and(
-            eq(anomalies.userId, userId),
+            byUser(anomalies.userId, userId),
             eq(anomalies.status, 'active'),
           ))
           .limit(1);
@@ -259,7 +260,7 @@ export function createFlagshipService(
           id: flagships.id,
           xp: flagships.xp,
           level: flagships.level,
-        }).from(flagships).where(eq(flagships.userId, userId)).for('update').limit(1);
+        }).from(flagships).where(byUser(flagships.userId, userId)).for('update').limit(1);
         if (!flagship) {
           return { newXp: 0, oldLevel: 1, newLevel: 1, levelUp: false };
         }
@@ -302,7 +303,7 @@ export function createFlagshipService(
       const [existing] = await db
         .select({ id: flagships.id })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (existing) {
@@ -313,7 +314,7 @@ export function createFlagshipService(
       const [homePlanet] = await db
         .select({ id: planets.id })
         .from(planets)
-        .where(eq(planets.userId, userId))
+        .where(byUser(planets.userId, userId))
         .orderBy(asc(planets.createdAt))
         .limit(1);
 
@@ -352,7 +353,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select({ id: flagships.id })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) {
@@ -384,7 +385,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select()
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) {
@@ -428,7 +429,7 @@ export function createFlagshipService(
       const [homePlanet] = await executor
         .select({ id: planets.id })
         .from(planets)
-        .where(eq(planets.userId, userId))
+        .where(byUser(planets.userId, userId))
         .orderBy(asc(planets.createdAt))
         .limit(1);
 
@@ -444,7 +445,7 @@ export function createFlagshipService(
           planetId: homePlanet.id,
           updatedAt: new Date(),
         })
-        .where(eq(flagships.userId, userId));
+        .where(byUser(flagships.userId, userId));
     },
 
     // Helpers pour fleet integration
@@ -452,7 +453,7 @@ export function createFlagshipService(
       await db
         .update(flagships)
         .set({ status: 'in_mission', updatedAt: new Date() })
-        .where(eq(flagships.userId, userId));
+        .where(byUser(flagships.userId, userId));
     },
 
     /**
@@ -469,7 +470,7 @@ export function createFlagshipService(
       await executor
         .update(flagships)
         .set({ status: 'active', planetId, updatedAt: new Date() })
-        .where(eq(flagships.userId, userId));
+        .where(byUser(flagships.userId, userId));
     },
 
     listImages(hullId: string): number[] {
@@ -481,7 +482,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select({ id: flagships.id, hullId: flagships.hullId })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) {
@@ -498,7 +499,7 @@ export function createFlagshipService(
       const [updated] = await db
         .update(flagships)
         .set({ flagshipImageIndex: imageIndex, updatedAt: new Date() })
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .returning();
 
       return updated;
@@ -509,7 +510,7 @@ export function createFlagshipService(
       const hullConfig = config.hulls[newHullId];
       if (!hullConfig) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Coque inconnue' });
 
-      const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      const [flagship] = await db.select().from(flagships).where(byUser(flagships.userId, userId)).limit(1);
       if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vaisseau amiral introuvable' });
       if (flagship.hullId === newHullId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vous avez deja cette coque' });
       if (flagship.status !== 'active') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le vaisseau amiral doit etre stationne' });
@@ -523,7 +524,7 @@ export function createFlagshipService(
       // }
       // if (!isFirstChange && resourceService) {
       //   const [exiliumRecord] = await db.select({ totalEarned: userExilium.totalEarned })
-      //     .from(userExilium).where(eq(userExilium.userId, userId)).limit(1);
+      //     .from(userExilium).where(byUser(userExilium.userId, userId)).limit(1);
       //   const totalEarned = Number(exiliumRecord?.totalEarned ?? 0);
       //   const totalCost = totalEarned * hullConfig.changeCost.baseMultiplier;
       //   const ratioSum = hullConfig.changeCost.resourceRatio.minerai + hullConfig.changeCost.resourceRatio.silicium + hullConfig.changeCost.resourceRatio.hydrogene;
@@ -563,7 +564,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select({ id: flagships.id, unlockedShips: flagships.unlockedShips })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) return;
@@ -597,7 +598,7 @@ export function createFlagshipService(
       const [flagship] = await db
         .select({ id: flagships.id, unlockedShips: flagships.unlockedShips })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       if (!flagship) return;
@@ -630,7 +631,7 @@ export function createFlagshipService(
 
     async scan(userId: string, targetGalaxy: number, targetSystem: number, targetPosition: number) {
       // 1. Validate flagship
-      const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      const [flagship] = await db.select().from(flagships).where(byUser(flagships.userId, userId)).limit(1);
       if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vaisseau amiral introuvable' });
       if (flagship.status !== 'active') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le vaisseau amiral doit etre stationne' });
 
@@ -653,7 +654,7 @@ export function createFlagshipService(
       const espionageBonus = Number((scanAbility as any).params?.espionageBonus ?? 5);
 
       // 4. Get attacker tech
-      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
       const attackerTech = (research?.espionageTech ?? 0) + espionageBonus;
 
       // 5. Find target planet

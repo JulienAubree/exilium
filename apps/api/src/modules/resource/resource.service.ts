@@ -1,4 +1,5 @@
 import { eq, and } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, planetBuildings, planetShips, userResearch, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -134,7 +135,7 @@ export function createResourceService(
       const [planet] = await db
         .select()
         .from(planets)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
         .limit(1);
 
       if (!planet) {
@@ -158,7 +159,7 @@ export function createResourceService(
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       // Inject production research bonuses into context
-      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
       if (research) {
         const researchLevels: Record<string, number> = {};
         for (const [key, value] of Object.entries(research)) {
@@ -227,7 +228,7 @@ export function createResourceService(
       const [planet] = await db
         .select()
         .from(planets)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
         .limit(1);
 
       if (!planet) {
@@ -247,7 +248,7 @@ export function createResourceService(
       levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       // Inject production research bonuses into context
-      const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+      const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
       if (research) {
         const researchLevels: Record<string, number> = {};
         for (const [key, value] of Object.entries(research)) {
@@ -296,7 +297,7 @@ export function createResourceService(
           hydrogene: String(produced.hydrogene - cost.hydrogene),
           resourcesUpdatedAt: now,
         })
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
         .returning();
 
       if (!result) {
@@ -324,7 +325,7 @@ export function createResourceService(
       await db
         .update(planets)
         .set(updates)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)));
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)));
     },
 
     async getProductionRates(planetId: string, planet: {
@@ -379,7 +380,7 @@ export function createResourceService(
 
       // Inject energy and production research bonuses into context
       if (userId) {
-        const [research] = await db.select().from(userResearch).where(eq(userResearch.userId, userId)).limit(1);
+        const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
         if (research) {
           const researchLevels: Record<string, number> = {};
           for (const [key, value] of Object.entries(research)) {

@@ -29,7 +29,7 @@ interface Props {
 // Format helper
 // ---------------------------------------------------------------------------
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Component

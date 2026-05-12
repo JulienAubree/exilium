@@ -1,4 +1,5 @@
 import { eq, and, inArray, asc, sql, gt } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, planetDefenses, buildQueue, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -151,13 +152,13 @@ export function createShipyardService(
           planetImageIndex: planets.planetImageIndex,
         })
         .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.status, 'active')))
+        .where(and(byUser(planets.userId, userId), eq(planets.status, 'active')))
         .orderBy(asc(planets.galaxy), asc(planets.system), asc(planets.position));
 
       const [flagshipRow] = await db
         .select()
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
 
       // Build FP / cargo helpers once. Pass weaponProfiles + categoryId so
@@ -984,7 +985,7 @@ export function createShipyardService(
         .where(
           and(
             eq(buildQueue.id, batchId),
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.planetId, planetId),
           ),
         )
@@ -1092,7 +1093,7 @@ export function createShipyardService(
         .where(
           and(
             eq(buildQueue.id, batchId),
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.planetId, planetId),
           ),
         )

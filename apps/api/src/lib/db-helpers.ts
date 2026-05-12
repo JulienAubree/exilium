@@ -4,7 +4,7 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 /**
  * Helpers Drizzle pour factoriser les patterns de filtre répétés à
  * travers les services API. Permet d'éviter la duplication systémique
- * `eq(table.userId, userId)` (218 occurrences dans la codebase).
+ * `byUser(table.userId, userId)` (218 occurrences dans la codebase).
  *
  * Usage :
  *   await db.select().from(planets).where(byUser(planets.userId, userId));

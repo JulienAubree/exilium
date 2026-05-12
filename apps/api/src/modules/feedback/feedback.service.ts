@@ -1,4 +1,5 @@
 import { eq, and, ne, desc, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { feedbacks, feedbackVotes, feedbackComments, users } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -112,7 +113,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
         const [vote] = await db
           .select({ id: feedbackVotes.id })
           .from(feedbackVotes)
-          .where(and(eq(feedbackVotes.feedbackId, id), eq(feedbackVotes.userId, userId)))
+          .where(and(eq(feedbackVotes.feedbackId, id), byUser(feedbackVotes.userId, userId)))
           .limit(1);
         hasVoted = !!vote;
       }
@@ -168,7 +169,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
       const [existing] = await db
         .select({ id: feedbackVotes.id })
         .from(feedbackVotes)
-        .where(and(eq(feedbackVotes.feedbackId, feedbackId), eq(feedbackVotes.userId, userId)))
+        .where(and(eq(feedbackVotes.feedbackId, feedbackId), byUser(feedbackVotes.userId, userId)))
         .limit(1);
 
       if (existing) {
@@ -220,7 +221,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
     },
 
     async myList(userId: string, cursor?: string) {
-      const conditions = [eq(feedbacks.userId, userId)];
+      const conditions = [byUser(feedbacks.userId, userId)];
       if (cursor) {
         conditions.push(sql`${feedbacks.createdAt} < (SELECT created_at FROM feedbacks WHERE id = ${cursor})`);
       }

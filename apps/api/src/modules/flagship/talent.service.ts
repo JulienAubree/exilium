@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { flagships, planetBuildings } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -35,7 +36,7 @@ export function createTalentService(
           hullId: flagships.hullId,
         })
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
       if (!flagship) return {};
 

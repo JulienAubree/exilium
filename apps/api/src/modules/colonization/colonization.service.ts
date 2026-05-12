@@ -1,4 +1,5 @@
 import { eq, and, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { colonizationProcesses, planets, planetBuildings, planetBiomes, discoveredBiomes, planetShips } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -23,7 +24,7 @@ export function createColonizationService(
         .from(planetBuildings)
         .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
         .where(and(
-          eq(planets.userId, userId),
+          byUser(planets.userId, userId),
           eq(planets.planetClassId, 'homeworld'),
           eq(planetBuildings.buildingId, 'imperialPowerCenter'),
         ))
@@ -627,7 +628,7 @@ export function createColonizationService(
       const userPlanets = await db
         .select({ id: planets.id, status: planets.status })
         .from(planets)
-        .where(eq(planets.userId, userId));
+        .where(byUser(planets.userId, userId));
 
       const activePlanets = userPlanets.filter(p => p.status === 'active');
       const colonyCount = Math.max(0, activePlanets.length - 1);

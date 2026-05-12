@@ -1,4 +1,5 @@
 import { eq, and, like, or, sql, count, inArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import {
   users,
@@ -81,9 +82,9 @@ export function createPlayerAdminService(
       if (!user) return null;
 
       const [playerPlanets, research, ranking] = await Promise.all([
-        db.select().from(planets).where(eq(planets.userId, userId)),
-        db.select().from(userResearch).where(eq(userResearch.userId, userId)),
-        db.select().from(rankings).where(eq(rankings.userId, userId)),
+        db.select().from(planets).where(byUser(planets.userId, userId)),
+        db.select().from(userResearch).where(byUser(userResearch.userId, userId)),
+        db.select().from(rankings).where(byUser(rankings.userId, userId)),
       ]);
 
       // Batch-load ships, defenses, and building levels across all planets in
@@ -121,12 +122,12 @@ export function createPlayerAdminService(
       const [flagshipRow] = await db
         .select()
         .from(flagships)
-        .where(eq(flagships.userId, userId))
+        .where(byUser(flagships.userId, userId))
         .limit(1);
       const [exiliumRow] = await db
         .select()
         .from(userExilium)
-        .where(eq(userExilium.userId, userId))
+        .where(byUser(userExilium.userId, userId))
         .limit(1);
 
       return {
@@ -167,7 +168,7 @@ export function createPlayerAdminService(
       await db
         .update(userResearch)
         .set({ [levelColumn]: level })
-        .where(eq(userResearch.userId, userId));
+        .where(byUser(userResearch.userId, userId));
     },
 
     async banPlayer(userId: string) {
@@ -204,21 +205,21 @@ export function createPlayerAdminService(
       await db
         .update(flagships)
         .set({ ...stats, updatedAt: new Date() })
-        .where(eq(flagships.userId, userId));
+        .where(byUser(flagships.userId, userId));
     },
 
     async repairFlagship(userId: string) {
       await db
         .update(flagships)
         .set({ status: 'active', repairEndsAt: null, updatedAt: new Date() })
-        .where(eq(flagships.userId, userId));
+        .where(byUser(flagships.userId, userId));
     },
 
     async setExiliumBalance(userId: string, balance: number) {
       await db
         .update(userExilium)
         .set({ balance, updatedAt: new Date() })
-        .where(eq(userExilium.userId, userId));
+        .where(byUser(userExilium.userId, userId));
     },
 
     async updatePlanetCoordinates(
@@ -289,13 +290,13 @@ export function createPlayerAdminService(
       const [currentHomeworld] = await db
         .select({ id: planets.id, planetClassId: planets.planetClassId })
         .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
+        .where(and(byUser(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
         .limit(1);
 
       const [newCapital] = await db
         .select({ id: planets.id, planetClassId: planets.planetClassId })
         .from(planets)
-        .where(and(eq(planets.id, newCapitalPlanetId), eq(planets.userId, userId)))
+        .where(and(eq(planets.id, newCapitalPlanetId), byUser(planets.userId, userId)))
         .limit(1);
 
       if (!newCapital) throw new Error('Planet not found');
@@ -351,7 +352,7 @@ export function createPlayerAdminService(
       const userPlanets = await db
         .select({ id: planets.id })
         .from(planets)
-        .where(eq(planets.userId, userId));
+        .where(byUser(planets.userId, userId));
       if (userPlanets.length > 0) {
         throw new TRPCError({
           code: 'CONFLICT',

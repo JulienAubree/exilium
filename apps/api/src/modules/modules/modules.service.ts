@@ -1,4 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import {
   flagships, flagshipModuleInventory, moduleDefinitions,
@@ -121,7 +122,7 @@ export function createModulesService(db: Database) {
 
     /** Returns the player's inventory grouped by hull/rarity. */
     async getInventory(userId: string) {
-      const [flagship] = await db.select({ id: flagships.id }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      const [flagship] = await db.select({ id: flagships.id }).from(flagships).where(byUser(flagships.userId, userId)).limit(1);
       if (!flagship) return { items: [] };
       // V7-WeaponProfiles : on inclut `kind` pour que le front filtre
       // Arsenal (kind='weapon') vs Modules (kind='passive').
@@ -146,7 +147,7 @@ export function createModulesService(db: Database) {
     /** Returns the loadout for a given hull. */
     async getLoadout(userId: string, hullId: string) {
       const [flagship] = await db.select({ loadout: flagships.moduleLoadout, current: flagships.epicChargesCurrent, max: flagships.epicChargesMax })
-        .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
       if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
       // Pad-on-read: legacy rows may have variable-length arrays. Coerce to
       // fixed length with explicit nulls so the schema validates and the
@@ -181,7 +182,7 @@ export function createModulesService(db: Database) {
      */
     async equip(userId: string, input: { hullId: string; slotType: SlotType; slotIndex: number; moduleId: string }) {
       return await db.transaction(async (tx) => {
-        const [flagship] = await tx.select().from(flagships).where(eq(flagships.userId, userId)).for('update').limit(1);
+        const [flagship] = await tx.select().from(flagships).where(byUser(flagships.userId, userId)).for('update').limit(1);
         if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
         if (flagship.status === 'in_mission') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Loadout verrouillé : flagship en mission' });
@@ -306,7 +307,7 @@ export function createModulesService(db: Database) {
      *  correspondant est SET à null. */
     async unequip(userId: string, input: { hullId: string; slotType: SlotType; slotIndex: number }) {
       return await db.transaction(async (tx) => {
-        const [flagship] = await tx.select().from(flagships).where(eq(flagships.userId, userId)).for('update').limit(1);
+        const [flagship] = await tx.select().from(flagships).where(byUser(flagships.userId, userId)).for('update').limit(1);
         if (!flagship) throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
         if (flagship.status === 'in_mission') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Loadout verrouillé : flagship en mission' });

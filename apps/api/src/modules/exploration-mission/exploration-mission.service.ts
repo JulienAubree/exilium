@@ -1,4 +1,5 @@
 import { eq, and, gt, lt, sql, asc, desc } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import {
   explorationMissions,
@@ -182,7 +183,7 @@ export function createExplorationMissionService(
     const [research] = await db
       .select({ planetaryExploration: userResearch.planetaryExploration })
       .from(userResearch)
-      .where(eq(userResearch.userId, userId))
+      .where(byUser(userResearch.userId, userId))
       .limit(1);
     if (!research || (research.planetaryExploration ?? 0) < requiredResearchLevel) return;
 
@@ -194,7 +195,7 @@ export function createExplorationMissionService(
       .from(explorationMissions)
       .where(
         and(
-          eq(explorationMissions.userId, userId),
+          byUser(explorationMissions.userId, userId),
           sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
         ),
       );
@@ -210,7 +211,7 @@ export function createExplorationMissionService(
       .from(explorationMissions)
       .where(
         and(
-          eq(explorationMissions.userId, userId),
+          byUser(explorationMissions.userId, userId),
           gt(explorationMissions.createdAt, sevenDaysAgo),
         ),
       );
@@ -271,7 +272,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
+        .where(and(eq(explorationMissions.id, missionId), byUser(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -292,7 +293,7 @@ export function createExplorationMissionService(
       const [planet] = await tx
         .select({ id: planets.id, hydrogene: planets.hydrogene })
         .from(planets)
-        .where(and(eq(planets.id, planetId), eq(planets.userId, userId)))
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
         .for('update')
         .limit(1);
       if (!planet) {
@@ -497,7 +498,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
+        .where(and(eq(explorationMissions.id, missionId), byUser(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -758,7 +759,7 @@ export function createExplorationMissionService(
         const [check] = await tx
           .select({ id: planets.id })
           .from(planets)
-          .where(and(eq(planets.id, destinationPlanetId), eq(planets.userId, userId)))
+          .where(and(eq(planets.id, destinationPlanetId), byUser(planets.userId, userId)))
           .limit(1);
         if (!check) destinationPlanetId = null;
       }
@@ -766,7 +767,7 @@ export function createExplorationMissionService(
         const [home] = await tx
           .select({ id: planets.id })
           .from(planets)
-          .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
+          .where(and(byUser(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
           .limit(1);
         destinationPlanetId = home?.id ?? null;
       }
@@ -913,7 +914,7 @@ export function createExplorationMissionService(
       const [mission] = await tx
         .select()
         .from(explorationMissions)
-        .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
+        .where(and(eq(explorationMissions.id, missionId), byUser(explorationMissions.userId, userId)))
         .for('update')
         .limit(1);
 
@@ -1095,7 +1096,7 @@ export function createExplorationMissionService(
       .from(explorationMissions)
       .where(
         and(
-          eq(explorationMissions.userId, userId),
+          byUser(explorationMissions.userId, userId),
           sql`${explorationMissions.status} IN ('available','engaged','awaiting_decision','returning')`,
         ),
       )
@@ -1107,7 +1108,7 @@ export function createExplorationMissionService(
     const [mission] = await db
       .select()
       .from(explorationMissions)
-      .where(and(eq(explorationMissions.id, missionId), eq(explorationMissions.userId, userId)))
+      .where(and(eq(explorationMissions.id, missionId), byUser(explorationMissions.userId, userId)))
       .limit(1);
     return mission ?? null;
   }

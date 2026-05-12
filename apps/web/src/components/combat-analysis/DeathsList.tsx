@@ -2,7 +2,7 @@ import { XCircle } from 'lucide-react';
 import { getUnitName } from '@/lib/entity-names';
 import type { CombatEvent } from './types';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface DeathsListProps {
   events: CombatEvent[];

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { AlertTriangle, Layers, ChevronDown, Box, Compass, MapPin, Clock } from 'lucide-react';
 import { trpc } from '@/trpc';
+import { useLevelMap } from '@/hooks/useLevelMap';
 import { Timer } from '@/components/common/Timer';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -307,10 +308,7 @@ export default function Movements() {
   const { data: planets } = trpc.planet.list.useQuery();
   const { data: researchData } = trpc.research.list.useQuery();
   const researchList = researchData?.items;
-  const researchLevels = useMemo(() => {
-    if (!researchList) return {};
-    return Object.fromEntries(researchList.map((r) => [r.id, r.currentLevel]));
-  }, [researchList]);
+  const researchLevels = useLevelMap(researchList);
 
   const recallMutation = trpc.fleet.recall.useMutation({
     onSuccess: () => {

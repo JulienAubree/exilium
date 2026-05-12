@@ -1,4 +1,5 @@
 import { eq, and, count as dbCount, sql } from 'drizzle-orm';
+import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, planetShips, fleetEvents, userResearch, pveMissions, users, marketOffers } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -73,7 +74,7 @@ export function createSendFleet(deps: SendFleetDeps) {
     const [{ count: activeFleets }] = await db
       .select({ count: dbCount() })
       .from(fleetEvents)
-      .where(and(eq(fleetEvents.userId, userId), eq(fleetEvents.status, 'active')));
+      .where(and(byUser(fleetEvents.userId, userId), eq(fleetEvents.status, 'active')));
     if (activeFleets >= maxFleets) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -282,7 +283,7 @@ export function createSendFleet(deps: SendFleetDeps) {
       // Validate PvE mission ownership and status
       if (input.pveMissionId && pveService) {
         const [pveMission] = await db.select().from(pveMissions)
-          .where(and(eq(pveMissions.id, input.pveMissionId), eq(pveMissions.userId, userId)))
+          .where(and(eq(pveMissions.id, input.pveMissionId), byUser(pveMissions.userId, userId)))
           .limit(1);
         if (!pveMission) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Mission non trouvée ou non autorisée' });

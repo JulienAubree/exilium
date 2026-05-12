@@ -19,7 +19,7 @@ import {
 } from '@/components/entity-details/stat-components';
 import { getHullCardStyles } from './hullCardStyles';
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 interface FlagshipBaseStats {
   shield: number;

@@ -25,7 +25,7 @@ const COMBAT_CATEGORY_LABELS: Record<string, string> = {
   support: 'Support',
 };
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 interface Props {
   shipId: string;

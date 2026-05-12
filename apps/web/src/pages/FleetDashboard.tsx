@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router';
 import { Send, Package, Play, ArrowRight, Diamond, Check } from 'lucide-react';
 import { trpc } from '@/trpc';
+import { useLevelMap } from '@/hooks/useLevelMap';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';

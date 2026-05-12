@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { ChevronLeft, Download } from 'lucide-react';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('fr-FR');
+import { fmtFloor as fmt } from '@/lib/format';
 
 interface CombatAnalysisHeaderProps {
   reportId: string;

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+import { fmt } from '@/lib/format';
 
 // ── SVG Icons ──
 

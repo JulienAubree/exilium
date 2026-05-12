@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { resolveBonus } from '@exilium/game-engine';
@@ -215,7 +216,7 @@ export async function getCombatMultipliers(
   const [research] = await db
     .select()
     .from(userResearch)
-    .where(eq(userResearch.userId, userId))
+    .where(byUser(userResearch.userId, userId))
     .limit(1);
 
   const { userId: _, ...levels } = research ?? {};

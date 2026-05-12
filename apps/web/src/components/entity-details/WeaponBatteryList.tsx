@@ -8,7 +8,7 @@ interface Props {
   categoryLabels: Record<string, string>;
 }
 
-const fmt = (n: number) => Math.round(n).toLocaleString('fr-FR');
+import { fmtRound as fmt } from '@/lib/format';
 
 export function WeaponBatteryList({ profiles, weaponsMultiplier, categoryLabels }: Props) {
   return (

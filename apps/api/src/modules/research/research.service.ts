@@ -1,4 +1,5 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { planets, userResearch, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -21,7 +22,7 @@ import type { createDailyQuestService } from '../daily-quest/daily-quest.service
 const ANNEX_BUILDING_IDS = ['labVolcanic', 'labArid', 'labTemperate', 'labGlacial', 'labGaseous'];
 
 async function getAnnexLevelsSum(db: Database, userId: string): Promise<number> {
-  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(byUser(planets.userId, userId));
 
   const [result] = await db
     .select({ total: sql<number>`coalesce(sum(${planetBuildings.level}), 0)` })
@@ -36,7 +37,7 @@ async function getAnnexLevelsSum(db: Database, userId: string): Promise<number> 
 }
 
 async function getActiveBiomesCount(db: Database, userId: string): Promise<number> {
-  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(byUser(planets.userId, userId));
 
   const [result] = await db
     .select({ count: sql<number>`count(*)` })
@@ -58,14 +59,14 @@ async function getAnnexDetails(
     .from(planetBuildings)
     .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
     .where(
-      and(eq(planets.userId, userId), inArray(planetBuildings.buildingId, ANNEX_BUILDING_IDS)),
+      and(byUser(planets.userId, userId), inArray(planetBuildings.buildingId, ANNEX_BUILDING_IDS)),
     );
   return rows;
 }
 
 async function hasAnnexOfType(db: Database, userId: string, annexType: string): Promise<boolean> {
   const annexBuildingId = `lab${annexType.charAt(0).toUpperCase()}${annexType.slice(1)}`;
-  const userPlanets = db.select({ id: planets.id }).from(planets).where(eq(planets.userId, userId));
+  const userPlanets = db.select({ id: planets.id }).from(planets).where(byUser(planets.userId, userId));
 
   const [result] = await db
     .select({ level: planetBuildings.level })
@@ -95,7 +96,7 @@ export function createResearchService(
       const [homeworld] = await db
         .select()
         .from(planets)
-        .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
+        .where(and(byUser(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
         .limit(1);
       if (!homeworld)
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Planete mere introuvable' });
@@ -114,7 +115,7 @@ export function createResearchService(
         .from(buildQueue)
         .where(
           and(
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.type, 'research'),
             eq(buildQueue.status, 'active'),
           ),
@@ -247,7 +248,7 @@ export function createResearchService(
         .from(buildQueue)
         .where(
           and(
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.type, 'research'),
             eq(buildQueue.status, 'active'),
           ),
@@ -377,7 +378,7 @@ export function createResearchService(
         .from(buildQueue)
         .where(
           and(
-            eq(buildQueue.userId, userId),
+            byUser(buildQueue.userId, userId),
             eq(buildQueue.type, 'research'),
             eq(buildQueue.status, 'active'),
           ),
@@ -510,7 +511,7 @@ export function createResearchService(
       const [existing] = await db
         .select()
         .from(userResearch)
-        .where(eq(userResearch.userId, userId))
+        .where(byUser(userResearch.userId, userId))
         .limit(1);
 
       if (existing) return existing;

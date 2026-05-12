@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { userExilium, exiliumLog } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -23,7 +24,7 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
     const [existing] = await db
       .select()
       .from(userExilium)
-      .where(eq(userExilium.userId, userId))
+      .where(byUser(userExilium.userId, userId))
       .limit(1);
     if (existing) return existing;
 
@@ -60,7 +61,7 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
             totalEarned: sql`${userExilium.totalEarned} + ${amount}`,
             updatedAt: new Date(),
           })
-          .where(eq(userExilium.userId, userId));
+          .where(byUser(userExilium.userId, userId));
 
         await tx
           .insert(exiliumLog)
@@ -77,7 +78,7 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
         const [record] = await tx
           .select({ balance: userExilium.balance })
           .from(userExilium)
-          .where(eq(userExilium.userId, userId))
+          .where(byUser(userExilium.userId, userId))
           .for('update');
 
         if (!record || record.balance < amount) {
@@ -94,7 +95,7 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
             totalSpent: sql`${userExilium.totalSpent} + ${amount}`,
             updatedAt: new Date(),
           })
-          .where(eq(userExilium.userId, userId));
+          .where(byUser(userExilium.userId, userId));
 
         await tx
           .insert(exiliumLog)
@@ -119,7 +120,7 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
       return db
         .select()
         .from(exiliumLog)
-        .where(eq(exiliumLog.userId, userId))
+        .where(byUser(exiliumLog.userId, userId))
         .orderBy(sql`${exiliumLog.createdAt} DESC`)
         .limit(limit);
     },

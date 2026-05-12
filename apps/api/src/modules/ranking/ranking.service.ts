@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings, allianceMembers, alliances } from '@exilium/db';
-import { eq } from 'drizzle-orm';
 import type { Database } from '@exilium/db';
 import {
   calculateBuildingPoints,
@@ -146,7 +146,7 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
       const [result] = await db
         .select()
         .from(rankings)
-        .where(eq(rankings.userId, userId))
+        .where(byUser(rankings.userId, userId))
         .limit(1);
 
       return result ?? { totalPoints: 0, rank: 0 };

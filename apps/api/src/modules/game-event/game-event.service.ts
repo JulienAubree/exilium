@@ -1,5 +1,6 @@
 // apps/api/src/modules/game-event/game-event.service.ts
 import { eq, and, desc, lt, sql, inArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { gameEvents, notificationPreferences } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { EVENT_TYPE_TO_CATEGORY } from '@exilium/shared';
@@ -14,7 +15,7 @@ export function createGameEventService(db: Database) {
         const [prefs] = await db
           .select({ bellDisabled: notificationPreferences.bellDisabled })
           .from(notificationPreferences)
-          .where(eq(notificationPreferences.userId, userId))
+          .where(byUser(notificationPreferences.userId, userId))
           .limit(1);
         if (prefs?.bellDisabled?.includes(type)) return;
       }
@@ -25,7 +26,7 @@ export function createGameEventService(db: Database) {
       return db
         .select()
         .from(gameEvents)
-        .where(eq(gameEvents.userId, userId))
+        .where(byUser(gameEvents.userId, userId))
         .orderBy(desc(gameEvents.createdAt))
         .limit(limit);
     },
@@ -34,7 +35,7 @@ export function createGameEventService(db: Database) {
       const [result] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(gameEvents)
-        .where(and(eq(gameEvents.userId, userId), eq(gameEvents.read, false)));
+        .where(and(byUser(gameEvents.userId, userId), eq(gameEvents.read, false)));
       return result?.count ?? 0;
     },
 
@@ -42,7 +43,7 @@ export function createGameEventService(db: Database) {
       const rows = await db
         .update(gameEvents)
         .set({ read: true })
-        .where(and(eq(gameEvents.userId, userId), eq(gameEvents.read, false)))
+        .where(and(byUser(gameEvents.userId, userId), eq(gameEvents.read, false)))
         .returning({ id: gameEvents.id });
       return rows.length;
     },
@@ -51,14 +52,14 @@ export function createGameEventService(db: Database) {
       return db
         .select()
         .from(gameEvents)
-        .where(and(eq(gameEvents.userId, userId), eq(gameEvents.planetId, planetId)))
+        .where(and(byUser(gameEvents.userId, userId), eq(gameEvents.planetId, planetId)))
         .orderBy(desc(gameEvents.createdAt))
         .limit(limit);
     },
 
     async getHistory(userId: string, options: { cursor?: string; limit?: number; types?: GameEventType[] }) {
       const limit = options.limit ?? 20;
-      const conditions = [eq(gameEvents.userId, userId)];
+      const conditions = [byUser(gameEvents.userId, userId)];
 
       if (options.cursor) {
         const [cursorEvent] = await db

@@ -1,4 +1,5 @@
 import { eq, and, inArray, ne, or, sql } from 'drizzle-orm';
+import { byUser } from '../../../lib/db-helpers.js';
 import { planets, fleetEvents, users, allianceMembers, alliances } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../../admin/game-config.service.js';
@@ -23,7 +24,7 @@ export function createListInboundFleets(deps: ListInboundDeps) {
     const userPlanets = await db
       .select({ id: planets.id })
       .from(planets)
-      .where(eq(planets.userId, userId));
+      .where(byUser(planets.userId, userId));
 
     if (userPlanets.length === 0) return [];
     const planetIds = userPlanets.map((p) => p.id);

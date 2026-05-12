@@ -58,6 +58,16 @@ export function fmt(value: number): string {
   return Number(value).toLocaleString('fr-FR');
 }
 
+/** Variante avec Math.floor (stats combat tronquées). */
+export function fmtFloor(value: number): string {
+  return Math.floor(value).toLocaleString('fr-FR');
+}
+
+/** Variante avec Math.round (stats arrondies). */
+export function fmtRound(value: number): string {
+  return Math.round(value).toLocaleString('fr-FR');
+}
+
 /**
  * Date courte FR : `12 mai`, `12 mai 2026` si une autre année.
  */

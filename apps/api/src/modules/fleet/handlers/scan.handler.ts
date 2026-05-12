@@ -1,4 +1,5 @@
 import { eq, and } from 'drizzle-orm';
+import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { flagships, flagshipCooldowns } from '@exilium/db';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
@@ -19,7 +20,7 @@ export class ScanHandler implements MissionHandler {
 
     // Verify hull has scan ability
     const [flagship] = await ctx.db.select({ id: flagships.id, hullId: flagships.hullId, status: flagships.status })
-      .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
     if (!flagship) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Vaisseau amiral introuvable' });
 
     const fullConfig = await ctx.gameConfigService.getFullConfig();

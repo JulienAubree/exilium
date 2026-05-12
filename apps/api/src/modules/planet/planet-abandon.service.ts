@@ -1,4 +1,5 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import {
   planets,
@@ -181,7 +182,7 @@ export function createPlanetAbandonService(
       ));
     const marketCount = Number(marketRow?.count ?? 0);
 
-    const [flagship] = await db.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+    const [flagship] = await db.select().from(flagships).where(byUser(flagships.userId, userId)).limit(1);
     const flagshipIncluded = !!flagship && flagship.planetId === planetId && flagship.status === 'active';
 
     return { planet, destination, shipsRow, inboundHostile, outboundActive, marketCount, flagship, flagshipIncluded };
@@ -340,7 +341,7 @@ export function createPlanetAbandonService(
           ));
         const marketCount = Number(marketRow?.count ?? 0);
 
-        const [flagship] = await tx.select().from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        const [flagship] = await tx.select().from(flagships).where(byUser(flagships.userId, userId)).limit(1);
         const flagshipIncluded = !!flagship && flagship.planetId === planetId && flagship.status === 'active';
 
         const blockers = detectBlockers({
@@ -432,7 +433,7 @@ export function createPlanetAbandonService(
           await tx
             .update(flagships)
             .set({ status: 'in_mission', planetId: dest.id, updatedAt: new Date() })
-            .where(eq(flagships.userId, userId));
+            .where(byUser(flagships.userId, userId));
         }
 
         // Debris field for overflow minerai + silicium (hydrogene is lost)

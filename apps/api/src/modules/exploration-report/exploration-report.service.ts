@@ -1,4 +1,5 @@
 import { eq, and, ne, desc, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { explorationReports, discoveredPositions, discoveredBiomes, biomeDefinitions, planets, marketOffers } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -76,7 +77,7 @@ export function createExplorationReportService(
       .innerJoin(biomeDefinitions, eq(discoveredBiomes.biomeId, biomeDefinitions.id))
       .where(
         and(
-          eq(discoveredBiomes.userId, userId),
+          byUser(discoveredBiomes.userId, userId),
           eq(discoveredBiomes.galaxy, galaxy),
           eq(discoveredBiomes.system, system),
           eq(discoveredBiomes.position, position),
@@ -147,7 +148,7 @@ export function createExplorationReportService(
         .from(discoveredPositions)
         .where(
           and(
-            eq(discoveredPositions.userId, userId),
+            byUser(discoveredPositions.userId, userId),
             eq(discoveredPositions.galaxy, input.galaxy),
             eq(discoveredPositions.system, input.system),
             eq(discoveredPositions.position, input.position),
@@ -306,7 +307,7 @@ export function createExplorationReportService(
         .from(discoveredPositions)
         .where(
           and(
-            eq(discoveredPositions.userId, userId),
+            byUser(discoveredPositions.userId, userId),
             eq(discoveredPositions.galaxy, input.galaxy),
             eq(discoveredPositions.system, input.system),
             eq(discoveredPositions.position, input.position),

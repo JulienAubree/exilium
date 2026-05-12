@@ -1,4 +1,5 @@
 import { eq, and, desc, lt, inArray, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { missionReports } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { compressDetailedLog, decompressDetailedLog } from './compact-log.js';
@@ -47,7 +48,7 @@ export function createReportService(db: Database) {
         .delete(missionReports)
         .where(
           and(
-            eq(missionReports.userId, userId),
+            byUser(missionReports.userId, userId),
             lt(missionReports.createdAt, threeDaysAgo),
             sql`${missionReports.missionType}::text NOT IN ('attack', 'pirate')`,
           ),
@@ -60,7 +61,7 @@ export function createReportService(db: Database) {
         .set({ detailedLog: null })
         .where(
           and(
-            eq(missionReports.userId, userId),
+            byUser(missionReports.userId, userId),
             lt(missionReports.createdAt, thirtyDaysAgo),
             sql`${missionReports.detailedLog} IS NOT NULL`,
           ),
@@ -74,7 +75,7 @@ export function createReportService(db: Database) {
       }
 
       const limit = options?.limit ?? 20;
-      const conditions = [eq(missionReports.userId, userId)];
+      const conditions = [byUser(missionReports.userId, userId)];
 
       if (options?.cursor) {
         const [cursorReport] = await db
@@ -151,7 +152,7 @@ export function createReportService(db: Database) {
           createdAt: missionReports.createdAt,
         })
         .from(missionReports)
-        .where(and(eq(missionReports.id, reportId), eq(missionReports.userId, userId)))
+        .where(and(eq(missionReports.id, reportId), byUser(missionReports.userId, userId)))
         .limit(1);
 
       if (report && !report.read) {
@@ -168,7 +169,7 @@ export function createReportService(db: Database) {
       const [report] = await db
         .select({ detailedLog: missionReports.detailedLog })
         .from(missionReports)
-        .where(and(eq(missionReports.id, reportId), eq(missionReports.userId, userId)))
+        .where(and(eq(missionReports.id, reportId), byUser(missionReports.userId, userId)))
         .limit(1);
       return decompressDetailedLog(report?.detailedLog);
     },
@@ -193,7 +194,7 @@ export function createReportService(db: Database) {
           createdAt: missionReports.createdAt,
         })
         .from(missionReports)
-        .where(and(eq(missionReports.messageId, messageId), eq(missionReports.userId, userId)))
+        .where(and(eq(missionReports.messageId, messageId), byUser(missionReports.userId, userId)))
         .limit(1);
       return report ?? null;
     },
@@ -201,7 +202,7 @@ export function createReportService(db: Database) {
     async deleteReport(userId: string, reportId: string) {
       await db
         .delete(missionReports)
-        .where(and(eq(missionReports.id, reportId), eq(missionReports.userId, userId)));
+        .where(and(eq(missionReports.id, reportId), byUser(missionReports.userId, userId)));
       return { success: true };
     },
 
@@ -209,7 +210,7 @@ export function createReportService(db: Database) {
       const [result] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(missionReports)
-        .where(and(eq(missionReports.userId, userId), eq(missionReports.read, false)));
+        .where(and(byUser(missionReports.userId, userId), eq(missionReports.read, false)));
       return result?.count ?? 0;
     },
 
@@ -217,7 +218,7 @@ export function createReportService(db: Database) {
       await db
         .update(missionReports)
         .set({ read: true })
-        .where(and(eq(missionReports.userId, userId), eq(missionReports.read, false)));
+        .where(and(byUser(missionReports.userId, userId), eq(missionReports.read, false)));
     },
   };
 }

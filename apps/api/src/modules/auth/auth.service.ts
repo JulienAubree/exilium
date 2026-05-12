@@ -1,4 +1,5 @@
 import { eq, sql, and, isNull, gt, desc, notInArray } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { hash, verify } from 'argon2';
 import { SignJWT, jwtVerify } from 'jose';
 import { randomBytes, createHash } from 'crypto';
@@ -110,14 +111,14 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
     const keep = await db
       .select({ id: refreshTokens.id })
       .from(refreshTokens)
-      .where(eq(refreshTokens.userId, userId))
+      .where(byUser(refreshTokens.userId, userId))
       .orderBy(desc(refreshTokens.createdAt))
       .limit(MAX_SESSIONS_PER_USER);
     if (keep.length < MAX_SESSIONS_PER_USER) return;
     const keepIds = keep.map((r) => r.id);
     await db
       .delete(refreshTokens)
-      .where(and(eq(refreshTokens.userId, userId), notInArray(refreshTokens.id, keepIds)));
+      .where(and(byUser(refreshTokens.userId, userId), notInArray(refreshTokens.id, keepIds)));
   }
 
   return {

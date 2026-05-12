@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gt, inArray, sql } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import { anomalies, flagships, moduleDefinitions, planets, planetShips, users, userExilium, exiliumLog, userResearch } from '@exilium/db';
 import type { Database } from '@exilium/db';
@@ -60,7 +61,7 @@ export function createAnomalyService(
 ) {
   async function loadActive(userId: string): Promise<AnomalyRow | null> {
     const [row] = await db.select().from(anomalies)
-      .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+      .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
       .limit(1);
     return row ?? null;
   }
@@ -68,7 +69,7 @@ export function createAnomalyService(
   async function getHomeworld(userId: string) {
     const [row] = await db.select({ id: planets.id })
       .from(planets)
-      .where(and(eq(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
+      .where(and(byUser(planets.userId, userId), eq(planets.planetClassId, 'homeworld')))
       .orderBy(asc(planets.createdAt))
       .limit(1);
     return row ?? null;
@@ -96,7 +97,7 @@ export function createAnomalyService(
     depth: number,
   ): Promise<Array<{ id: string; name: string; rarity: string; image: string; isFinal: true }>> {
     const [flagshipForFinal] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
-      .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+      .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
     if (!flagshipForFinal) return [];
 
     const finalDropIds = await modulesService.rollPerRunFinalDrop({
@@ -137,7 +138,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [active] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update').limit(1);
         if (!active) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune anomalie active' });
@@ -191,7 +192,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [active] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update').limit(1);
         if (!active) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune anomalie active' });
@@ -255,7 +256,7 @@ export function createAnomalyService(
             await tx.update(flagships).set({
               epicChargesCurrent: sql`${flagships.epicChargesCurrent} + ${bump}`,
               epicChargesMax: sql`${flagships.epicChargesMax} + ${bump}`,
-            }).where(eq(flagships.userId, userId));
+            }).where(byUser(flagships.userId, userId));
           }
         }
 
@@ -304,7 +305,7 @@ export function createAnomalyService(
 
         // 2. No active anomaly
         const [active] = await tx.select({ id: anomalies.id }).from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .limit(1);
         if (active) {
           throw new TRPCError({ code: 'CONFLICT', message: 'Une anomalie est déjà en cours' });
@@ -340,7 +341,7 @@ export function createAnomalyService(
         // 5. Spend Exilium
         const [exRecord] = await tx.select({ balance: userExilium.balance })
           .from(userExilium)
-          .where(eq(userExilium.userId, userId))
+          .where(byUser(userExilium.userId, userId))
           .for('update')
           .limit(1);
         if (!exRecord || exRecord.balance < cost) {
@@ -353,7 +354,7 @@ export function createAnomalyService(
           balance: sql`${userExilium.balance} - ${cost}`,
           totalSpent: sql`${userExilium.totalSpent} + ${cost}`,
           updatedAt: new Date(),
-        }).where(eq(userExilium.userId, userId));
+        }).where(byUser(userExilium.userId, userId));
         await tx.insert(exiliumLog).values({
           userId, amount: -cost, source: 'pve', details: { source: 'anomaly_engage' },
         });
@@ -365,11 +366,11 @@ export function createAnomalyService(
         const [flagshipRow] = await tx.select({
           loadout: flagships.moduleLoadout,
           chargesMax: flagships.epicChargesMax,
-        }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        }).from(flagships).where(byUser(flagships.userId, userId)).limit(1);
         const equippedSnapshot = flagshipRow?.loadout ?? {};
         await tx.update(flagships).set({
           epicChargesCurrent: flagshipRow?.chargesMax ?? 1,
-        }).where(eq(flagships.userId, userId));
+        }).where(byUser(flagships.userId, userId));
 
         // 8. Build fleet (flagship only) + first enemy
         // V9 Boss : depth 1 spawn ALWAYS un boss (early tier).
@@ -450,7 +451,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [row] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update')
           .limit(1);
         if (!row) {
@@ -691,7 +692,7 @@ export function createAnomalyService(
       // Pool read + grant both run inside the tx so they roll back together
       // with the anomaly state if the WHERE-guard later fails.
       const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
-        .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
       const dropHullId = flagshipForDrop?.hullId ?? DEFAULT_HULL_ID;
       const droppedModuleId = await modulesService.rollPerCombatDrop({
         flagshipHullId: dropHullId,
@@ -818,7 +819,7 @@ export function createAnomalyService(
         const [flagshipTierRow] = await tx.select({
           maxTierUnlocked: flagships.maxTierUnlocked,
           maxTierCompleted: flagships.maxTierCompleted,
-        }).from(flagships).where(eq(flagships.userId, userId)).limit(1);
+        }).from(flagships).where(byUser(flagships.userId, userId)).limit(1);
         const oldMaxUnlocked = flagshipTierRow?.maxTierUnlocked ?? 1;
         const oldMaxCompleted = flagshipTierRow?.maxTierCompleted ?? 0;
         const runTier = row.tier ?? 1;
@@ -829,7 +830,7 @@ export function createAnomalyService(
             maxTierCompleted: newMaxCompleted,
             maxTierUnlocked: newMaxUnlocked,
             updatedAt: new Date(),
-          }).where(eq(flagships.userId, userId));
+          }).where(byUser(flagships.userId, userId));
         }
         const newTierUnlocked = newMaxUnlocked > oldMaxUnlocked ? newMaxUnlocked : null;
         // Audit trail: log every new tier unlock so we can correlate run
@@ -1026,7 +1027,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [row] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update')
           .limit(1);
         if (!row) {
@@ -1080,7 +1081,7 @@ export function createAnomalyService(
         // V4 : gating par hull
         if (choice.requiredHull) {
           const [flagshipHull] = await tx.select({ hullId: flagships.hullId })
-            .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+            .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
           if (flagshipHull?.hullId !== choice.requiredHull) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
@@ -1106,7 +1107,7 @@ export function createAnomalyService(
             });
           }
           const [research] = await tx.select().from(userResearch)
-            .where(eq(userResearch.userId, userId)).limit(1);
+            .where(byUser(userResearch.userId, userId)).limit(1);
           const level = (research?.[researchKey as keyof typeof research] as number | undefined) ?? 0;
           if (level < choice.requiredResearch.minLevel) {
             if (choice.failureOutcome) {
@@ -1140,7 +1141,7 @@ export function createAnomalyService(
         if (applied.exiliumDelta !== 0) {
           const [exRecord] = await tx.select({ balance: userExilium.balance })
             .from(userExilium)
-            .where(eq(userExilium.userId, userId))
+            .where(byUser(userExilium.userId, userId))
             .for('update')
             .limit(1);
           const currentBalance = exRecord?.balance ?? 0;
@@ -1149,7 +1150,7 @@ export function createAnomalyService(
               balance: sql`${userExilium.balance} + ${applied.exiliumDelta}`,
               totalEarned: sql`${userExilium.totalEarned} + ${applied.exiliumDelta}`,
               updatedAt: new Date(),
-            }).where(eq(userExilium.userId, userId));
+            }).where(byUser(userExilium.userId, userId));
             exiliumApplied = applied.exiliumDelta;
           } else {
             // Spend — clamp to current balance so we never go negative.
@@ -1159,7 +1160,7 @@ export function createAnomalyService(
                 balance: sql`${userExilium.balance} - ${toSpend}`,
                 totalSpent: sql`${userExilium.totalSpent} + ${toSpend}`,
                 updatedAt: new Date(),
-              }).where(eq(userExilium.userId, userId));
+              }).where(byUser(userExilium.userId, userId));
               exiliumApplied = -toSpend;
             }
           }
@@ -1196,7 +1197,7 @@ export function createAnomalyService(
         let droppedEventModule: { id: string; name: string; rarity: string; image: string } | null = null;
         if (outcome.moduleDrop) {
           const [flagshipForDrop] = await tx.select({ id: flagships.id, hullId: flagships.hullId })
-            .from(flagships).where(eq(flagships.userId, userId)).limit(1);
+            .from(flagships).where(byUser(flagships.userId, userId)).limit(1);
           if (flagshipForDrop && flagshipForDrop.hullId) {
             const moduleId = await modulesService.rollByRarity({
               flagshipHullId: flagshipForDrop.hullId,
@@ -1287,7 +1288,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [row] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update')
           .limit(1);
         if (!row) {
@@ -1395,7 +1396,7 @@ export function createAnomalyService(
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
 
         const [flagship] = await tx.select().from(flagships)
-          .where(eq(flagships.userId, userId)).for('update').limit(1);
+          .where(byUser(flagships.userId, userId)).for('update').limit(1);
         if (!flagship) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Flagship introuvable' });
         }
@@ -1404,7 +1405,7 @@ export function createAnomalyService(
         }
 
         const [active] = await tx.select().from(anomalies)
-          .where(and(eq(anomalies.userId, userId), eq(anomalies.status, 'active')))
+          .where(and(byUser(anomalies.userId, userId), eq(anomalies.status, 'active')))
           .for('update').limit(1);
         if (!active) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pas d\'anomalie active' });
@@ -1514,7 +1515,7 @@ export function createAnomalyService(
     /** Last N completed/wiped runs for the user. */
     async history(userId: string, limit = 10) {
       return db.select().from(anomalies)
-        .where(and(eq(anomalies.userId, userId), inArray(anomalies.status, ['completed', 'wiped'])))
+        .where(and(byUser(anomalies.userId, userId), inArray(anomalies.status, ['completed', 'wiped'])))
         .orderBy(desc(anomalies.completedAt))
         .limit(limit);
     },
@@ -1531,7 +1532,7 @@ export function createAnomalyService(
       const allRuns = await db
         .select()
         .from(anomalies)
-        .where(and(eq(anomalies.userId, userId), inArray(anomalies.status, ['completed', 'wiped'])))
+        .where(and(byUser(anomalies.userId, userId), inArray(anomalies.status, ['completed', 'wiped'])))
         .orderBy(desc(anomalies.completedAt));
 
       const stats = {

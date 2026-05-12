@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { byUser } from '../../lib/db-helpers.js';
 import { userExilium, tutorialProgress } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
@@ -47,7 +48,7 @@ export function createDailyQuestService(
     async getQuests(userId: string): Promise<DailyQuestState> {
       // Block daily quest generation during onboarding
       const [progress] = await db.select({ isComplete: tutorialProgress.isComplete })
-        .from(tutorialProgress).where(eq(tutorialProgress.userId, userId)).limit(1);
+        .from(tutorialProgress).where(byUser(tutorialProgress.userId, userId)).limit(1);
       if (!progress || !progress.isComplete) {
         return { generated_at: new Date().toISOString(), quests: [] };
       }
@@ -76,7 +77,7 @@ export function createDailyQuestService(
       await db
         .update(userExilium)
         .set({ dailyQuests: newState, updatedAt: new Date() })
-        .where(eq(userExilium.userId, userId));
+        .where(byUser(userExilium.userId, userId));
 
       return newState;
     },
