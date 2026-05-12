@@ -17,7 +17,6 @@ import {
   addResourceToOutcomes,
   pickExplorationEvent,
   validateRequirements,
-  applyHullDelta,
   type ExpeditionTier,
   type ExpeditionConfigKeys,
   type RequirementContext,
@@ -594,40 +593,11 @@ export function createExplorationMissionService(
         };
       }
 
-      // Biome reveal
-      if (effectiveOutcome.bonusBiomeReveal && effectiveOutcome.bonusBiomeReveal > 0) {
-        outcomes = {
-          ...outcomes,
-          biomeRevealsRequested: outcomes.biomeRevealsRequested + effectiveOutcome.bonusBiomeReveal,
-        };
-      }
-
-      // Hull delta
-      let newHullRatio = fleetStatus.hullRatio;
-      if (effectiveOutcome.hullDelta) {
-        newHullRatio = applyHullDelta(newHullRatio, effectiveOutcome.hullDelta);
-        outcomes = {
-          ...outcomes,
-          hullDeltaTotal: outcomes.hullDeltaTotal + effectiveOutcome.hullDelta,
-        };
-      }
-
-      // Anomaly engagement unlock
-      if (effectiveOutcome.unlockAnomalyEngagement) {
-        outcomes = {
-          ...outcomes,
-          anomalyEngagementUnlocked: { tier: effectiveOutcome.unlockAnomalyEngagement.tier },
-        };
-      }
-
-      // TriggerCombat — implémentation reportée à une phase ultérieure.
-      // En V1, on log et on continue sans appliquer de pertes.
-      if (effectiveOutcome.triggerCombat) {
-        console.info(
-          `[expedition] triggerCombat outcome ignored (not yet implemented) mission=${missionId} fp=${effectiveOutcome.triggerCombat.fp}`,
-        );
-      }
-
+      // V2 (2026-05-12) : hullDelta, bonusBiomeReveal, unlockAnomalyEngagement,
+      // triggerCombat retirés du schéma EventOutcome. Les champs accumulés
+      // restent dans OutcomesAccumulated pour ne pas casser les snapshots
+      // existants, mais ne sont plus incrémentés.
+      const newHullRatio = fleetStatus.hullRatio;
       const updatedFleetStatus: FleetStatus = { ...fleetStatus, hullRatio: newHullRatio };
 
       // Step log
@@ -977,8 +947,6 @@ export function createExplorationMissionService(
           silicium: 0,
           hydrogene: 0,
           exilium: 0,
-          hullDelta: 0,
-          bonusBiomeReveal: 0,
           resolutionText: 'Sur votre ordre, la flotte fait demi-tour avant la fin de la mission.',
         },
         resolutionText:

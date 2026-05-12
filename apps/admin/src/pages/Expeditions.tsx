@@ -6,8 +6,20 @@ import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ExpeditionImageSlot } from '@/components/ui/ExpeditionImageSlot';
 import {
-  Save, RotateCcw, Plus, Trash2, Eye, EyeOff, MapPin, Sparkles,
-  Compass, Activity, Power, AlertCircle, Copy, Download,
+  Save,
+  RotateCcw,
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff,
+  MapPin,
+  Sparkles,
+  Compass,
+  Activity,
+  Power,
+  AlertCircle,
+  Copy,
+  Download,
 } from 'lucide-react';
 
 type ExplorationContent = inferRouterOutputs<AppRouter>['expeditionContent']['get'];
@@ -41,8 +53,6 @@ function emptyOutcome(): Outcome {
     silicium: 0,
     hydrogene: 0,
     exilium: 0,
-    hullDelta: 0,
-    bonusBiomeReveal: 0,
     resolutionText: '',
   };
 }
@@ -194,13 +204,25 @@ export default function ExpeditionsAdmin() {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-border/30">
-        <TabButton active={tab === 'sectors'} onClick={() => setTab('sectors')} icon={<MapPin className="h-3.5 w-3.5" />}>
+        <TabButton
+          active={tab === 'sectors'}
+          onClick={() => setTab('sectors')}
+          icon={<MapPin className="h-3.5 w-3.5" />}
+        >
           Secteurs ({draft.sectors.length})
         </TabButton>
-        <TabButton active={tab === 'events'} onClick={() => setTab('events')} icon={<Sparkles className="h-3.5 w-3.5" />}>
+        <TabButton
+          active={tab === 'events'}
+          onClick={() => setTab('events')}
+          icon={<Sparkles className="h-3.5 w-3.5" />}
+        >
           Événements ({draft.events.length})
         </TabButton>
-        <TabButton active={tab === 'live'} onClick={() => setTab('live')} icon={<Activity className="h-3.5 w-3.5" />}>
+        <TabButton
+          active={tab === 'live'}
+          onClick={() => setTab('live')}
+          icon={<Activity className="h-3.5 w-3.5" />}
+        >
           Missions live
         </TabButton>
       </div>
@@ -223,8 +245,16 @@ export default function ExpeditionsAdmin() {
 }
 
 function TabButton({
-  active, onClick, icon, children,
-}: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -244,8 +274,12 @@ function TabButton({
 // ─── Onglet Secteurs ──────────────────────────────────────────────────────
 
 function SectorsTab({
-  draft, setDraft,
-}: { draft: ExplorationContent; setDraft: (d: ExplorationContent) => void }) {
+  draft,
+  setDraft,
+}: {
+  draft: ExplorationContent;
+  setDraft: (d: ExplorationContent) => void;
+}) {
   const addSector = () => {
     setDraft({ ...draft, sectors: [...draft.sectors, emptySector()] });
   };
@@ -268,7 +302,8 @@ function SectorsTab({
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <p className="text-xs text-muted-foreground">
-          Lieux narratifs abstraits. Chaque mission engagée tire un secteur pondéré par le palier du joueur.
+          Lieux narratifs abstraits. Chaque mission engagée tire un secteur pondéré par le palier du
+          joueur.
         </p>
         <button
           type="button"
@@ -282,7 +317,10 @@ function SectorsTab({
 
       <div className="space-y-2">
         {draft.sectors.map((s, i) => (
-          <div key={i} className={`rounded-lg border p-3 ${s.enabled ? 'border-border/40 bg-card/40' : 'border-border/20 bg-card/20 opacity-60'}`}>
+          <div
+            key={i}
+            className={`rounded-lg border p-3 ${s.enabled ? 'border-border/40 bg-card/40' : 'border-border/20 bg-card/20 opacity-60'}`}
+          >
             <div className="grid grid-cols-12 gap-3 items-start">
               <div className="col-span-2 row-span-2">
                 <ExpeditionImageSlot
@@ -295,7 +333,9 @@ function SectorsTab({
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  ID
+                </label>
                 <input
                   type="text"
                   value={s.id}
@@ -304,7 +344,9 @@ function SectorsTab({
                 />
               </div>
               <div className="col-span-3">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nom</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Nom
+                </label>
                 <input
                   type="text"
                   value={s.name}
@@ -313,14 +355,18 @@ function SectorsTab({
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Palier</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Palier
+                </label>
                 <select
                   value={s.tier}
                   onChange={(e) => updateSector(i, { tier: e.target.value as Tier })}
                   className={`w-full border rounded px-2 py-1 text-xs ${TIER_COLOR[s.tier as Tier]}`}
                 >
                   {TIERS.map((t) => (
-                    <option key={t} value={t}>{TIER_LABEL[t]}</option>
+                    <option key={t} value={t}>
+                      {TIER_LABEL[t]}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -332,18 +378,32 @@ function SectorsTab({
                     className="p-1 rounded hover:bg-white/5"
                     title={s.enabled ? 'Désactiver' : 'Activer'}
                   >
-                    {s.enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {s.enabled ? (
+                      <Eye className="h-3.5 w-3.5" />
+                    ) : (
+                      <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
                   </button>
-                  <button type="button" onClick={() => duplicateSector(i)} className="p-1 rounded hover:bg-white/5">
+                  <button
+                    type="button"
+                    onClick={() => duplicateSector(i)}
+                    className="p-1 rounded hover:bg-white/5"
+                  >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
-                  <button type="button" onClick={() => removeSector(i)} className="p-1 rounded hover:bg-rose-500/10 text-rose-400">
+                  <button
+                    type="button"
+                    onClick={() => removeSector(i)}
+                    className="p-1 rounded hover:bg-rose-500/10 text-rose-400"
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
               <div className="col-span-10 col-start-3">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Briefing</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Briefing
+                </label>
                 <textarea
                   value={s.briefingTemplate}
                   onChange={(e) => updateSector(i, { briefingTemplate: e.target.value })}
@@ -362,8 +422,12 @@ function SectorsTab({
 // ─── Onglet Événements ────────────────────────────────────────────────────
 
 function EventsTab({
-  draft, setDraft,
-}: { draft: ExplorationContent; setDraft: (d: ExplorationContent) => void }) {
+  draft,
+  setDraft,
+}: {
+  draft: ExplorationContent;
+  setDraft: (d: ExplorationContent) => void;
+}) {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
 
   const addEvent = () => {
@@ -414,27 +478,31 @@ function EventsTab({
         <div className="space-y-1 max-h-[70vh] overflow-y-auto pr-1">
           {TIERS.map((tier) => (
             <div key={tier}>
-              <p className={`text-[10px] uppercase tracking-wider font-semibold mb-1 mt-2 px-1 ${TIER_COLOR[tier]}`}>
+              <p
+                className={`text-[10px] uppercase tracking-wider font-semibold mb-1 mt-2 px-1 ${TIER_COLOR[tier]}`}
+              >
                 {TIER_LABEL[tier]}
               </p>
-              {draft.events.filter((e) => e.tier === tier).map((event) => {
-                const idx = draft.events.indexOf(event);
-                return (
-                  <button
-                    key={event.id}
-                    type="button"
-                    onClick={() => setSelectedIdx(idx)}
-                    className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors ${
-                      idx === selectedIdx
-                        ? 'bg-primary/20 border border-primary/40'
-                        : 'hover:bg-white/5 border border-transparent'
-                    } ${!event.enabled ? 'opacity-50' : ''}`}
-                  >
-                    <div className="font-medium truncate">{event.title}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">{event.id}</div>
-                  </button>
-                );
-              })}
+              {draft.events
+                .filter((e) => e.tier === tier)
+                .map((event) => {
+                  const idx = draft.events.indexOf(event);
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => setSelectedIdx(idx)}
+                      className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors ${
+                        idx === selectedIdx
+                          ? 'bg-primary/20 border border-primary/40'
+                          : 'hover:bg-white/5 border border-transparent'
+                      } ${!event.enabled ? 'opacity-50' : ''}`}
+                    >
+                      <div className="font-medium truncate">{event.title}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{event.id}</div>
+                    </button>
+                  );
+                })}
             </div>
           ))}
         </div>
@@ -446,7 +514,9 @@ function EventsTab({
           <>
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-3">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  ID
+                </label>
                 <input
                   type="text"
                   value={selected.id}
@@ -455,7 +525,9 @@ function EventsTab({
                 />
               </div>
               <div className="col-span-5">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Titre</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Titre
+                </label>
                 <input
                   type="text"
                   value={selected.title}
@@ -464,25 +536,33 @@ function EventsTab({
                 />
               </div>
               <div className="col-span-2">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Palier</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Palier
+                </label>
                 <select
                   value={selected.tier}
                   onChange={(e) => updateEvent(selectedIdx, { tier: e.target.value as Tier })}
                   className={`w-full border rounded px-2 py-1 text-xs ${TIER_COLOR[selected.tier as Tier]}`}
                 >
                   {TIERS.map((t) => (
-                    <option key={t} value={t}>{TIER_LABEL[t]}</option>
+                    <option key={t} value={t}>
+                      {TIER_LABEL[t]}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="col-span-1">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Poids</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Poids
+                </label>
                 <input
                   type="number"
                   min={0}
                   step={0.1}
                   value={selected.weight}
-                  onChange={(e) => updateEvent(selectedIdx, { weight: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    updateEvent(selectedIdx, { weight: parseFloat(e.target.value) || 0 })
+                  }
                   className="w-full bg-background/60 border border-border/30 rounded px-2 py-1 text-xs"
                 />
               </div>
@@ -492,7 +572,11 @@ function EventsTab({
                   onClick={() => updateEvent(selectedIdx, { enabled: !selected.enabled })}
                   className="p-1 rounded hover:bg-white/5"
                 >
-                  {selected.enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {selected.enabled ? (
+                    <Eye className="h-3.5 w-3.5" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </button>
                 <button
                   type="button"
@@ -516,7 +600,9 @@ function EventsTab({
                 />
               </div>
               <div className="col-span-9">
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Description narrative</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Description narrative
+                </label>
                 <textarea
                   value={selected.description}
                   onChange={(e) => updateEvent(selectedIdx, { description: e.target.value })}
@@ -566,13 +652,23 @@ function EventsTab({
 // ─── Choix éditeur ────────────────────────────────────────────────────────
 
 function ChoiceEditor({
-  choice, onUpdate, onRemove, canRemove,
-}: { choice: ChoiceEntry; onUpdate: (patch: Partial<ChoiceEntry>) => void; onRemove: () => void; canRemove: boolean }) {
+  choice,
+  onUpdate,
+  onRemove,
+  canRemove,
+}: {
+  choice: ChoiceEntry;
+  onUpdate: (patch: Partial<ChoiceEntry>) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
   return (
     <div className="rounded-lg border border-border/40 bg-card/30 p-3 space-y-2">
       <div className="grid grid-cols-12 gap-2">
         <div className="col-span-5">
-          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Libellé</label>
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Libellé
+          </label>
           <input
             type="text"
             value={choice.label}
@@ -588,7 +684,9 @@ function ChoiceEditor({
             className="w-full bg-background/60 border border-border/30 rounded px-2 py-1 text-xs"
           >
             {TONES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
@@ -604,7 +702,11 @@ function ChoiceEditor({
         </div>
         <div className="col-span-3 flex items-end justify-end pb-1">
           {canRemove && (
-            <button type="button" onClick={onRemove} className="p-1 rounded hover:bg-rose-500/10 text-rose-400">
+            <button
+              type="button"
+              onClick={onRemove}
+              className="p-1 rounded hover:bg-rose-500/10 text-rose-400"
+            >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
@@ -629,7 +731,9 @@ function ChoiceEditor({
         <input
           type="checkbox"
           checked={choice.failureOutcome !== undefined}
-          onChange={(e) => onUpdate({ failureOutcome: e.target.checked ? emptyOutcome() : undefined })}
+          onChange={(e) =>
+            onUpdate({ failureOutcome: e.target.checked ? emptyOutcome() : undefined })
+          }
           id={`fo-${choice.label}`}
         />
         <label htmlFor={`fo-${choice.label}`} className="text-[11px] text-muted-foreground">
@@ -650,24 +754,49 @@ function ChoiceEditor({
 // ─── Requirements éditeur ─────────────────────────────────────────────────
 
 function RequirementsEditor({
-  requirements, onChange,
-}: { requirements: Requirement[]; onChange: (reqs: Requirement[]) => void }) {
+  requirements,
+  onChange,
+}: {
+  requirements: Requirement[];
+  onChange: (reqs: Requirement[]) => void;
+}) {
   const addReq = (kind: 'research' | 'shipRole' | 'shipId') => {
-    const next: Requirement = kind === 'research'
-      ? { kind: 'research', researchId: '', minLevel: 1 }
-      : kind === 'shipRole'
-      ? { kind: 'shipRole', role: '', minCount: 1 }
-      : { kind: 'shipId', shipId: '', minCount: 1 };
+    const next: Requirement =
+      kind === 'research'
+        ? { kind: 'research', researchId: '', minLevel: 1 }
+        : kind === 'shipRole'
+          ? { kind: 'shipRole', role: '', minCount: 1 }
+          : { kind: 'shipId', shipId: '', minCount: 1 };
     onChange([...requirements, next]);
   };
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Requirements</span>
-        <button type="button" onClick={() => addReq('research')} className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5">+ recherche</button>
-        <button type="button" onClick={() => addReq('shipRole')} className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5">+ rôle</button>
-        <button type="button" onClick={() => addReq('shipId')} className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5">+ vaisseau</button>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Requirements
+        </span>
+        <button
+          type="button"
+          onClick={() => addReq('research')}
+          className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5"
+        >
+          + recherche
+        </button>
+        <button
+          type="button"
+          onClick={() => addReq('shipRole')}
+          className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5"
+        >
+          + rôle
+        </button>
+        <button
+          type="button"
+          onClick={() => addReq('shipId')}
+          className="text-[10px] px-1.5 py-0.5 rounded border border-border/40 hover:bg-white/5"
+        >
+          + vaisseau
+        </button>
       </div>
       {requirements.map((r, i) => (
         <div key={i} className="grid grid-cols-12 gap-2 items-center text-xs">
@@ -769,22 +898,44 @@ function RequirementsEditor({
 // ─── Outcome éditeur ──────────────────────────────────────────────────────
 
 function OutcomeEditor({
-  outcome, onChange, label,
-}: { outcome: Outcome; onChange: (o: Outcome) => void; label: string }) {
+  outcome,
+  onChange,
+  label,
+}: {
+  outcome: Outcome;
+  onChange: (o: Outcome) => void;
+  label: string;
+}) {
   const update = (patch: Partial<Outcome>) => onChange({ ...outcome, ...patch });
   return (
     <div className="space-y-1.5 rounded border border-border/20 bg-background/30 p-2">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <div className="grid grid-cols-6 gap-2 text-xs">
-        <NumField label="Minerai" value={outcome.minerai} onChange={(v) => update({ minerai: v })} />
-        <NumField label="Silicium" value={outcome.silicium} onChange={(v) => update({ silicium: v })} />
-        <NumField label="Hydrogène" value={outcome.hydrogene} onChange={(v) => update({ hydrogene: v })} />
-        <NumField label="Exilium" value={outcome.exilium} onChange={(v) => update({ exilium: v })} />
-        <NumField label="Coque Δ" value={outcome.hullDelta} step={0.05} min={-1} max={1} onChange={(v) => update({ hullDelta: v })} />
-        <NumField label="Biome" value={outcome.bonusBiomeReveal} min={0} max={5} onChange={(v) => update({ bonusBiomeReveal: v })} />
+      <div className="grid grid-cols-4 gap-2 text-xs">
+        <NumField
+          label="Minerai"
+          value={outcome.minerai}
+          onChange={(v) => update({ minerai: v })}
+        />
+        <NumField
+          label="Silicium"
+          value={outcome.silicium}
+          onChange={(v) => update({ silicium: v })}
+        />
+        <NumField
+          label="Hydrogène"
+          value={outcome.hydrogene}
+          onChange={(v) => update({ hydrogene: v })}
+        />
+        <NumField
+          label="Exilium"
+          value={outcome.exilium}
+          onChange={(v) => update({ exilium: v })}
+        />
       </div>
       <div>
-        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Narration résolution</label>
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Narration résolution
+        </label>
         <textarea
           value={outcome.resolutionText}
           onChange={(e) => update({ resolutionText: e.target.value })}
@@ -797,8 +948,20 @@ function OutcomeEditor({
 }
 
 function NumField({
-  label, value, onChange, step = 1, min, max,
-}: { label: string; value: number; onChange: (v: number) => void; step?: number; min?: number; max?: number }) {
+  label,
+  value,
+  onChange,
+  step = 1,
+  min,
+  max,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  min?: number;
+  max?: number;
+}) {
   return (
     <div>
       <label className="text-[10px] text-muted-foreground">{label}</label>
@@ -851,7 +1014,11 @@ function LiveMissionsTab() {
           className="bg-background/60 border border-border/30 rounded px-2 py-1"
         >
           <option value="">Tous paliers</option>
-          {TIERS.map((t) => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
+          {TIERS.map((t) => (
+            <option key={t} value={t}>
+              {TIER_LABEL[t]}
+            </option>
+          ))}
         </select>
         <label className="flex items-center gap-1.5 text-muted-foreground">
           <input
@@ -873,7 +1040,9 @@ function LiveMissionsTab() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
       ) : (data?.missions?.length ?? 0) === 0 ? (
-        <p className="text-sm text-muted-foreground italic">Aucune mission ne correspond aux filtres.</p>
+        <p className="text-sm text-muted-foreground italic">
+          Aucune mission ne correspond aux filtres.
+        </p>
       ) : (
         <div className="overflow-x-auto rounded border border-border/30">
           <table className="w-full text-xs">
@@ -891,20 +1060,28 @@ function LiveMissionsTab() {
             <tbody>
               {data!.missions.map((m) => (
                 <tr key={m.id} className="border-t border-border/20 hover:bg-white/[0.02]">
-                  <td className="px-2 py-1.5 font-mono text-[10px]">{String(m.userId).slice(0, 8)}…</td>
+                  <td className="px-2 py-1.5 font-mono text-[10px]">
+                    {String(m.userId).slice(0, 8)}…
+                  </td>
                   <td className="px-2 py-1.5">{m.sectorName}</td>
                   <td className="px-2 py-1.5">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${TIER_COLOR[m.tier as Tier]}`}>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] ${TIER_COLOR[m.tier as Tier]}`}
+                    >
                       {TIER_LABEL[m.tier as Tier]}
                     </span>
                   </td>
                   <td className="px-2 py-1.5">{m.status}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{m.currentStep}/{m.totalSteps}</td>
+                  <td className="px-2 py-1.5 tabular-nums">
+                    {m.currentStep}/{m.totalSteps}
+                  </td>
                   <td className="px-2 py-1.5 text-muted-foreground">
                     {new Date(m.createdAt as unknown as string).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-2 py-1.5 text-right">
-                    {(m.status === 'available' || m.status === 'engaged' || m.status === 'awaiting_decision') && (
+                    {(m.status === 'available' ||
+                      m.status === 'engaged' ||
+                      m.status === 'awaiting_decision') && (
                       <button
                         type="button"
                         onClick={() => expireMutation.mutate({ missionId: m.id })}
