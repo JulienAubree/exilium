@@ -16,7 +16,13 @@ import type { GameConfigService } from '../modules/admin/game-config.service.js'
  */
 async function batchUpdateResources(
   db: Database,
-  rows: Array<{ id: string; minerai: string; silicium: string; hydrogene: string; updatedAt: string }>,
+  rows: Array<{
+    id: string;
+    minerai: string;
+    silicium: string;
+    hydrogene: string;
+    updatedAt: string;
+  }>,
 ): Promise<void> {
   if (rows.length === 0) return;
   const BATCH = 2000;
@@ -24,7 +30,8 @@ async function batchUpdateResources(
     const slice = rows.slice(i, i + BATCH);
     const values = sql.join(
       slice.map(
-        (r) => sql`(${r.id}::uuid, ${r.minerai}::numeric, ${r.silicium}::numeric, ${r.hydrogene}::numeric, ${r.updatedAt}::timestamptz)`,
+        (r) =>
+          sql`(${r.id}::uuid, ${r.minerai}::numeric, ${r.silicium}::numeric, ${r.hydrogene}::numeric, ${r.updatedAt}::timestamptz)`,
       ),
       sql`, `,
     );
@@ -42,14 +49,48 @@ async function batchUpdateResources(
 
 export async function resourceTick(db: Database, gameConfigService: GameConfigService) {
   const now = new Date();
-  const allPlanets = await db.select().from(planets);
+  // Projection : on ne tire que les 12 colonnes réellement consommées par
+  // la boucle (sur les 23 du schema). Réduit le payload de ~50% à 50k+
+  // planets, ce qui dégage de la mémoire et du temps de désérialisation.
+  const allPlanets = await db
+    .select({
+      id: planets.id,
+      userId: planets.userId,
+      status: planets.status,
+      planetClassId: planets.planetClassId,
+      minerai: planets.minerai,
+      silicium: planets.silicium,
+      hydrogene: planets.hydrogene,
+      maxTemp: planets.maxTemp,
+      mineraiMinePercent: planets.mineraiMinePercent,
+      siliciumMinePercent: planets.siliciumMinePercent,
+      hydrogeneSynthPercent: planets.hydrogeneSynthPercent,
+      resourcesUpdatedAt: planets.resourcesUpdatedAt,
+    })
+    .from(planets);
 
   // Pre-load all planet types for bonus lookup
   const ptRows = await db.select().from(planetTypes);
-  const ptMap = new Map(ptRows.map(pt => [pt.id, { mineraiBonus: pt.mineraiBonus, siliciumBonus: pt.siliciumBonus, hydrogeneBonus: pt.hydrogeneBonus }]));
+  const ptMap = new Map(
+    ptRows.map((pt) => [
+      pt.id,
+      {
+        mineraiBonus: pt.mineraiBonus,
+        siliciumBonus: pt.siliciumBonus,
+        hydrogeneBonus: pt.hydrogeneBonus,
+      },
+    ]),
+  );
 
-  // Pre-load all building levels
-  const allBuildingRows = await db.select().from(planetBuildings);
+  // Pre-load all building levels (projection : 3 colonnes au lieu de tout
+  // le schema planet_buildings).
+  const allBuildingRows = await db
+    .select({
+      planetId: planetBuildings.planetId,
+      buildingId: planetBuildings.buildingId,
+      level: planetBuildings.level,
+    })
+    .from(planetBuildings);
   const buildingLevelsMap = new Map<string, Record<string, number>>();
   for (const row of allBuildingRows) {
     if (!buildingLevelsMap.has(row.planetId)) {
@@ -59,7 +100,9 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
   }
 
   // Pre-load solar satellite counts
-  const allShipRows = await db.select({ planetId: planetShips.planetId, solarSatellite: planetShips.solarSatellite }).from(planetShips);
+  const allShipRows = await db
+    .select({ planetId: planetShips.planetId, solarSatellite: planetShips.solarSatellite })
+    .from(planetShips);
   const satCountMap = new Map<string, number>();
   for (const row of allShipRows) {
     satCountMap.set(row.planetId, row.solarSatellite);
@@ -93,18 +136,31 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
   const ipcLevelByUser = new Map<string, number>();
   for (const planet of allPlanets) {
     if (planet.status === 'active') {
-      activePlanetCountByUser.set(planet.userId, (activePlanetCountByUser.get(planet.userId) ?? 0) + 1);
+      activePlanetCountByUser.set(
+        planet.userId,
+        (activePlanetCountByUser.get(planet.userId) ?? 0) + 1,
+      );
     }
     const ipcLevel = buildingLevelsMap.get(planet.id)?.['imperialPowerCenter'] ?? 0;
     if (ipcLevel > (ipcLevelByUser.get(planet.userId) ?? 0)) {
       ipcLevelByUser.set(planet.userId, ipcLevel);
     }
   }
-  const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];
-  const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.60];
+  const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [
+    0.15, 0.35, 0.6,
+  ];
+  const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [
+    0.15, 0.35, 0.6,
+  ];
 
   const nowIso = now.toISOString();
-  const pendingUpdates: Array<{ id: string; minerai: string; silicium: string; hydrogene: string; updatedAt: string }> = [];
+  const pendingUpdates: Array<{
+    id: string;
+    minerai: string;
+    silicium: string;
+    hydrogene: string;
+    updatedAt: string;
+  }> = [];
   for (const planet of allPlanets) {
     const bonus = planet.planetClassId ? ptMap.get(planet.planetClassId) : undefined;
     const buildingLevels = buildingLevelsMap.get(planet.id) ?? {};
@@ -127,11 +183,19 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     if (planet.planetClassId !== homeworldTypeId) {
       const colonyCount = Math.max(0, (activePlanetCountByUser.get(planet.userId) ?? 1) - 1);
       const capacity = 1 + (ipcLevelByUser.get(planet.userId) ?? 0);
-      const penalty = calculateGovernancePenalty(colonyCount, capacity, harvestPenalties, constructionPenalties);
+      const penalty = calculateGovernancePenalty(
+        colonyCount,
+        capacity,
+        harvestPenalties,
+        constructionPenalties,
+      );
       if (penalty.harvestMalus > 0) {
-        talentBonuses['production_minerai'] = (talentBonuses['production_minerai'] ?? 0) - penalty.harvestMalus;
-        talentBonuses['production_silicium'] = (talentBonuses['production_silicium'] ?? 0) - penalty.harvestMalus;
-        talentBonuses['production_hydrogene'] = (talentBonuses['production_hydrogene'] ?? 0) - penalty.harvestMalus;
+        talentBonuses['production_minerai'] =
+          (talentBonuses['production_minerai'] ?? 0) - penalty.harvestMalus;
+        talentBonuses['production_silicium'] =
+          (talentBonuses['production_silicium'] ?? 0) - penalty.harvestMalus;
+        talentBonuses['production_hydrogene'] =
+          (talentBonuses['production_hydrogene'] ?? 0) - penalty.harvestMalus;
       }
     }
 
