@@ -49,6 +49,40 @@ export function formatNumber(value: number): string {
   return value.toLocaleString('fr-FR');
 }
 
+/**
+ * Format français complet, sans compactage : `1 234 567`. Utiliser pour
+ * les chiffres importants (ressources, prix, soute) où la précision
+ * compte. Pour les badges/labels compacts, préférer `formatNumber`.
+ */
+export function fmt(value: number): string {
+  return Number(value).toLocaleString('fr-FR');
+}
+
+/**
+ * Date courte FR : `12 mai`, `12 mai 2026` si une autre année.
+ */
+export function formatDateShort(date: string | Date): string {
+  const d = new Date(date);
+  const now = new Date();
+  if (d.getFullYear() === now.getFullYear()) {
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  }
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/**
+ * Date + heure FR : `12/05/2026 14:32`.
+ */
+export function formatDateTime(date: string | Date): string {
+  return new Date(date).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function timeAgo(date: string | Date): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import {
   ArrowLeft,
   Compass,
@@ -101,12 +102,12 @@ export default function ExpeditionRun() {
     return out;
   }, [researchData]);
 
-  const [eventOpen, setEventOpen] = useState(false);
+  const eventDialog = useDisclosure(false);
 
   // Auto-ouvre l'événement quand la mission est en attente de décision
   useEffect(() => {
-    if (mission?.status === 'awaiting_decision') setEventOpen(true);
-  }, [mission?.status]);
+    if (mission?.status === 'awaiting_decision') eventDialog.open();
+  }, [mission?.status, eventDialog]);
 
   const resolveMutation = trpc.expedition.resolveStep.useMutation({
     onSuccess: (res) => {
@@ -114,7 +115,7 @@ export default function ExpeditionRun() {
       utils.expedition.list.invalidate();
       utils.expedition.getDetail.invalidate({ missionId: missionId! });
       utils.planet.list.invalidate();
-      setEventOpen(false);
+      eventDialog.close();
       refetch();
     },
     onError: (e) => {
@@ -308,7 +309,7 @@ export default function ExpeditionRun() {
             </div>
           )}
           {mission.status === 'awaiting_decision' && (
-            <Button size="sm" onClick={() => setEventOpen(true)}>
+            <Button size="sm" onClick={() => eventDialog.open()}>
               <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
               Résoudre l'événement
             </Button>
@@ -555,14 +556,14 @@ export default function ExpeditionRun() {
       )}
 
       {/* Modal d'événement */}
-      {eventOpen && pendingEvent && (
+      {eventDialog.isOpen && pendingEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-amber-500/40 bg-card/95 p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] uppercase tracking-wider text-amber-300">
                 {mission.sectorName} · Étape {mission.currentStep + 1} sur {mission.totalSteps}
               </span>
-              <Button variant="outline" size="sm" onClick={() => setEventOpen(false)}>
+              <Button variant="outline" size="sm" onClick={() => eventDialog.close()}>
                 Fermer
               </Button>
             </div>

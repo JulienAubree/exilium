@@ -7,10 +7,10 @@ import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { Timer } from '@/components/common/Timer';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { cn } from '@/lib/utils';
+import { fmt } from '@/lib/format';
 import { getBuildingIllustrationUrl } from '@/lib/assets';
-
-const fmt = (n: number) => Number(n).toLocaleString('fr-FR');
 
 const TIER_COLORS: Record<string, string> = {
   easy: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -73,9 +73,9 @@ function CategoryKpi({ label, count, color, icon, nextAt, inFuture, onClick, onT
 // ─────────────────────────────────────────────────────────────────────
 
 export default function Missions() {
-  const [combatInfoOpen, setCombatInfoOpen] = useState(false);
-  const [miningInfoOpen, setMiningInfoOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const combatInfo = useDisclosure();
+  const miningInfo = useDisclosure();
+  const help = useDisclosure();
   const [filter, setFilter] = useState<MissionFilter>('all');
   const navigate = useNavigate();
   const utils = trpc.useUtils();
@@ -177,7 +177,7 @@ export default function Missions() {
           <div className="flex items-start gap-5">
             <button
               type="button"
-              onClick={() => setHelpOpen(true)}
+              onClick={() => help.open()}
               className="relative group shrink-0"
               title="Comment fonctionnent les missions ?"
             >
@@ -290,15 +290,15 @@ export default function Missions() {
                 <button
                   type="button"
                   className="flex items-center gap-2 w-full text-left"
-                  onClick={() => setMiningInfoOpen(!miningInfoOpen)}
+                  onClick={() => miningInfo.toggle()}
                 >
                   <Info className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                   <span className="text-xs text-muted-foreground">
                     La <span className="text-amber-300 font-semibold">capacité de soute</span> de votre flotte détermine combien de ressources vous ramenez.
                   </span>
-                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', miningInfoOpen && 'rotate-180')} />
+                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', miningInfo.isOpen && 'rotate-180')} />
                 </button>
-                {miningInfoOpen && (
+                {miningInfo.isOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
                     <p>
                       Envoyez des <span className="text-foreground">cargos</span> avec votre flotte minière pour maximiser le butin. Sans cargos, vos vaisseaux ne pourront rien ramener.
@@ -401,15 +401,15 @@ export default function Missions() {
                 <button
                   type="button"
                   className="flex items-center gap-2 w-full text-left"
-                  onClick={() => setCombatInfoOpen(!combatInfoOpen)}
+                  onClick={() => combatInfo.toggle()}
                 >
                   <Info className="h-3.5 w-3.5 text-rose-400 shrink-0" />
                   <span className="text-xs text-muted-foreground">
                     Le <span className="text-rose-300 font-semibold">Facteur de Puissance (FP)</span> mesure la force d&apos;une flotte.
                   </span>
-                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', combatInfoOpen && 'rotate-180')} />
+                  <ChevronDown className={cn('h-3 w-3 text-muted-foreground/60 ml-auto shrink-0 transition-transform', combatInfo.isOpen && 'rotate-180')} />
                 </button>
-                {combatInfoOpen && (
+                {combatInfo.isOpen && (
                   <div className="space-y-2 pt-1 text-xs text-muted-foreground">
                     <p>
                       Plus le FP est élevé, plus la flotte est puissante. Comparez votre FP à celui des pirates avant d&apos;attaquer.
@@ -525,7 +525,7 @@ export default function Missions() {
       </div>
 
       {/* Help overlay */}
-      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Centre de missions">
+      <EntityDetailOverlay open={help.isOpen} onClose={() => help.close()} title="Centre de missions">
         {/* Hero image */}
         <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
           <img
