@@ -1,6 +1,6 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch, fleetPhaseEnum } from '@exilium/db';
+import { planets, planetShips, fleetEvents, fleetPhaseEnum } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getUserResearchLevels } from '@exilium/db';
 import type { createResourceService } from '../resource/resource.service.js';

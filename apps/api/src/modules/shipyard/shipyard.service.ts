@@ -1,14 +1,6 @@
 import { eq, and, inArray, asc, sql, gt } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import {
-  planets,
-  planetShips,
-  planetDefenses,
-  buildQueue,
-  userResearch,
-  planetBuildings,
-  flagships,
-} from '@exilium/db';
+import { planets, planetShips, planetDefenses, buildQueue, flagships } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getPlanetBuildingLevels, getUserResearchLevels } from '@exilium/db';
 import {
