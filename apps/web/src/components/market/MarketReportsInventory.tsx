@@ -1,3 +1,4 @@
+import { RARITY_HEX } from '@/lib/rarity';
 import { useState } from 'react';
 import { Star, ChevronDown } from 'lucide-react';
 import { trpc } from '@/trpc';
@@ -7,14 +8,6 @@ import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { useToastStore } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
 
 const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
@@ -182,7 +175,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
     report: NonNullable<typeof reports>[number],
     opts?: { clickable?: boolean; showStars?: boolean },
   ) => {
-    const rarityColor = RARITY_COLORS[report.maxRarity] ?? '#9ca3af';
+    const rarityColor = RARITY_HEX[report.maxRarity] ?? '#9ca3af';
     const biomes = biomesOf(report);
     const stars = computeValueStars(biomes);
     const isExpanded = expandedId === report.id;
@@ -272,7 +265,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
           </div>
           <div className="space-y-2">
             {biomes.map((biome) => {
-              const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+              const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
               const effects = Array.isArray(biome.effects) ? biome.effects : [];
               return (
                 <div

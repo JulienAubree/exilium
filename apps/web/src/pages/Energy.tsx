@@ -1,3 +1,4 @@
+import { RARITY_HEX, RARITY_LABEL } from '@/lib/rarity';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
@@ -24,12 +25,6 @@ const SOLAR_PLANT_ID = 'solarPlant';
 
 type View = 'flux' | 'table';
 
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af', uncommon: '#22c55e', rare: '#3b82f6', epic: '#a855f7', legendary: '#eab308',
-};
-const RARITY_LABELS: Record<string, string> = {
-  common: 'Commun', uncommon: 'Peu commun', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire',
-};
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Prod. minerai', production_silicium: 'Prod. silicium',
   production_hydrogene: 'Prod. hydrogène', energy_production: 'Prod. énergie',
@@ -49,7 +44,7 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+  const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
 
   const handleEnter = () => {
     if (triggerRef.current) {
@@ -86,7 +81,7 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
             <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
           </div>
           <span className="inline-block rounded-full px-1.5 py-px text-[10px] font-medium mb-2"
-            style={{ color, backgroundColor: `${color}20` }}>{RARITY_LABELS[biome.rarity] ?? biome.rarity}</span>
+            style={{ color, backgroundColor: `${color}20` }}>{RARITY_LABEL[biome.rarity] ?? biome.rarity}</span>
           {biome.description && <p className="text-xs text-muted-foreground mb-2 italic">{biome.description}</p>}
           {biome.effects && biome.effects.length > 0 && (
             <div className="space-y-1">

@@ -1,3 +1,4 @@
+import { RARITY_HEX } from '@/lib/rarity';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ClipboardList, ChevronDown } from 'lucide-react';
@@ -6,14 +7,6 @@ import { Button } from '@/components/ui/button';
 import { PlanetDot } from '@/components/galaxy/PlanetDot';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { cn } from '@/lib/utils';
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
 
 const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
@@ -150,7 +143,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
       {!isFetching && offers.length > 0 && (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {offers.map((offer) => {
-            const rarityColor = RARITY_COLORS[offer.maxRarity] ?? '#9ca3af';
+            const rarityColor = RARITY_HEX[offer.maxRarity] ?? '#9ca3af';
             const isExpanded = expandedId === offer.offerId;
             return (
               <div key={offer.offerId} className="retro-card p-4 flex flex-col gap-3">

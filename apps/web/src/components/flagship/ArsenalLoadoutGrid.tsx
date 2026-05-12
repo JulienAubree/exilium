@@ -1,3 +1,4 @@
+import { RARITY_LABEL } from '@/lib/rarity';
 import { Crosshair, Plus, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTargetCategory } from '@/lib/combat-helpers';
@@ -53,11 +54,6 @@ interface Props {
   onUnequip: (rarity: WeaponRarity) => void;
 }
 
-const RARITY_LABEL: Record<WeaponRarity, string> = {
-  common: 'Commun',
-  rare:   'Rare',
-  epic:   'Épique',
-};
 
 const RARITY_BORDER: Record<WeaponRarity, string> = {
   common: 'border-stone-400/40',

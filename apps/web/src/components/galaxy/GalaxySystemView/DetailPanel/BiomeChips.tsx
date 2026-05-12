@@ -7,6 +7,7 @@
  * DetailPanel stays visually consistent with the existing screen.
  */
 
+import { RARITY_HEX } from '@/lib/rarity';
 import type { ReactElement } from 'react';
 import type { BiomeView } from '../slotView';
 
@@ -18,14 +19,6 @@ interface Props {
 // Kept duplicated intentionally: mobile list and desktop DetailPanel have
 // separate styling needs. If a future task extracts a shared module,
 // consolidate there.
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
-
 // Mirrored from apps/web/src/pages/Galaxy.tsx (mobile list still uses them).
 // Kept duplicated intentionally: mobile list and desktop DetailPanel have
 // separate styling needs. If a future task extracts a shared module,
@@ -60,7 +53,7 @@ export function BiomeChips({ biomes }: Props): ReactElement | null {
   return (
     <div className="space-y-1.5">
       {biomes.map((biome) => {
-        const color = RARITY_COLORS[biome.rarity] ?? RARITY_COLORS.common;
+        const color = RARITY_HEX[biome.rarity] ?? RARITY_HEX.common;
         const effects = formatEffects(biome.effects);
         return (
           <div

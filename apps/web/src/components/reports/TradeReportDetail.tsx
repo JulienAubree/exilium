@@ -1,17 +1,10 @@
 // apps/web/src/components/reports/TradeReportDetail.tsx
+import { RARITY_HEX } from '@/lib/rarity';
 import { ArrowLeftRight } from 'lucide-react';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { PlanetVisual } from '@/components/galaxy/PlanetVisual';
 import { CoordsLink } from '@/components/common/CoordsLink';
 import { cn } from '@/lib/utils';
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
 
 const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
@@ -62,7 +55,7 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
     return idx > max ? idx : max;
   }, -1);
   const maxRarityLabel = maxRarity >= 0 ? RARITY_LABELS[RARITY_ORDER[maxRarity]] : null;
-  const maxRarityColor = maxRarity >= 0 ? RARITY_COLORS[RARITY_ORDER[maxRarity]] : null;
+  const maxRarityColor = maxRarity >= 0 ? RARITY_HEX[RARITY_ORDER[maxRarity]] : null;
 
   const statusBadge = isComplete
     ? { label: 'Complet', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' }
@@ -140,7 +133,7 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
           </h3>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {biomes.map((biome) => {
-              const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+              const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
               const effects = biome.effects ?? [];
               return (
                 <div

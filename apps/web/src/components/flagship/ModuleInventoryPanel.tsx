@@ -1,3 +1,4 @@
+import { RARITY_LABEL } from '@/lib/rarity';
 import { useState, useMemo, useEffect } from 'react';
 import { Search, X, Crosshair, Sparkles, ArrowRight, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -114,11 +115,6 @@ const RARITY_TONE: Record<string, string> = {
   epic:   'text-violet-300 border-violet-400/50',
 };
 
-const RARITY_LABEL: Record<string, string> = {
-  common: 'Commun',
-  rare: 'Rare',
-  epic: 'Épique',
-};
 
 type KindFilter = 'all' | 'passive' | 'weapon';
 type RarityFilter = 'all' | 'common' | 'rare' | 'epic';

@@ -9,20 +9,13 @@
  * when the canvas highlights a slot, the matching ribbon row highlights too.
  */
 
+import { RARITY_HEX } from '@/lib/rarity';
 import type { ReactElement } from 'react';
 import { PlanetDot } from '../PlanetDot';
 import { PlanetVisual } from '../PlanetVisual';
 import { DebrisFieldIcon } from '../DebrisFieldIcon';
 import { BELT_DEBRIS_COLOR } from '../planetPalette';
 import type { SlotView } from './slotView';
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
 
 function hasDebris(view: SlotView): boolean {
   if (view.kind !== 'planet') return false;
@@ -133,7 +126,7 @@ export function Ribbon({
                       <span
                         key={b.id}
                         className="w-[6px] h-[6px] rounded-full flex-shrink-0"
-                        style={{ backgroundColor: RARITY_COLORS[b.rarity] ?? '#9ca3af' }}
+                        style={{ backgroundColor: RARITY_HEX[b.rarity] ?? '#9ca3af' }}
                         title={`${b.name} (${b.rarity})`}
                       />
                     ))}

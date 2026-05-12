@@ -1,3 +1,4 @@
+import { RARITY_LABEL } from '@/lib/rarity';
 import type { ReactNode } from 'react';
 import { Crosshair, Sparkles, Zap, AlertTriangle, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,11 +36,6 @@ interface Props {
   wrapperClassName?: string;
 }
 
-const RARITY_LABEL: Record<string, string> = {
-  common: 'Commun',
-  rare:   'Rare',
-  epic:   'Épique',
-};
 
 const RARITY_COLOR: Record<string, string> = {
   common: 'text-gray-300 border-gray-400/40 bg-gray-900/60',

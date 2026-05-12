@@ -1,3 +1,4 @@
+import { RARITY_HEX } from '@/lib/rarity';
 import { useState, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
@@ -27,14 +28,6 @@ const OverviewEvents = lazy(() => import('@/components/overview/OverviewEvents')
 const LazySkel = () => <div className="h-20 rounded-md bg-panel-bg/40 animate-pulse" />;
 
 // ── Rarity / biome constants (used by BiomeBadge) ──
-
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
 
 const RARITY_LABELS: Record<string, string> = {
   common: 'Commun',
@@ -66,7 +59,7 @@ function BiomeBadge({ biome, size = 'sm' }: { biome: BiomeLike; size?: 'sm' | 'x
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+  const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
   const textSize = size === 'xs' ? 'text-[10px]' : 'text-[11px]';
   const dotSize = 'w-1.5 h-1.5';
   const padding = size === 'xs' ? 'px-1.5 py-px' : 'px-2 py-0.5';
@@ -255,7 +248,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
         {biomes.length > 0 ? (
           <div className="space-y-2">
             {biomes.map((biome) => {
-              const bColor = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+              const bColor = RARITY_HEX[biome.rarity] ?? '#9ca3af';
               const configBiome = gameConfig?.biomes?.find((b: { id: string }) => b.id === biome.id);
               const effects = (configBiome?.effects ?? biome.effects ?? []) as Array<{ stat: string; modifier: number }>;
               return (

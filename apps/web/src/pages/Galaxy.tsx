@@ -1,3 +1,4 @@
+import { RARITY_HEX } from '@/lib/rarity';
 import { useState, useRef, useEffect, useMemo, useCallback, type TouchEvent } from 'react';
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
@@ -20,14 +21,6 @@ import { useToastStore } from '@/stores/toast.store';
 // Note: these biome constants are intentionally duplicated with
 // apps/web/src/components/galaxy/GalaxySystemView/DetailPanel/BiomeChips.tsx —
 // the mobile list below and the desktop DetailPanel are styled independently.
-const RARITY_COLORS: Record<string, string> = {
-  common: '#9ca3af',
-  uncommon: '#22c55e',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#eab308',
-};
-
 const STAT_LABELS: Record<string, string> = {
   production_minerai: 'Production minerai',
   production_silicium: 'Production silicium',
@@ -62,7 +55,7 @@ function BiomeDetails({ biomes }: { biomes: BiomeLike[] }) {
   return (
     <div className="space-y-1 py-1">
       {biomes.map((biome) => {
-        const color = RARITY_COLORS[biome.rarity] ?? '#9ca3af';
+        const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
         return (
           <div key={biome.id} className="flex items-center gap-1.5 text-xs">
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />

@@ -1,3 +1,4 @@
+import { RARITY_LABEL } from '@/lib/rarity';
 import { Link } from 'react-router';
 import { X, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,11 +29,6 @@ const RARITY_TONE: Record<string, string> = {
   epic: 'border-violet-400/60 bg-violet-500/15 text-violet-200',
 };
 
-const RARITY_LABEL: Record<string, string> = {
-  common: 'Commun',
-  rare: 'Rare',
-  epic: 'Épique',
-};
 
 export function AnomalyLootSummaryModal({
   open,
