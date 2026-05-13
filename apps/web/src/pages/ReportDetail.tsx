@@ -15,6 +15,7 @@ import { CoordsLink } from '@/components/common/CoordsLink';
 const CombatReportDetail = lazy(() => import('@/components/reports/CombatReportDetail').then((m) => ({ default: m.CombatReportDetail })));
 const MineReportDetail = lazy(() => import('@/components/reports/MineReportDetail').then((m) => ({ default: m.MineReportDetail })));
 const SpyReportDetail = lazy(() => import('@/components/reports/SpyReportDetail').then((m) => ({ default: m.SpyReportDetail })));
+const CounterEspionageReportDetail = lazy(() => import('@/components/reports/CounterEspionageReportDetail').then((m) => ({ default: m.CounterEspionageReportDetail })));
 const RecycleReportDetail = lazy(() => import('@/components/reports/RecycleReportDetail').then((m) => ({ default: m.RecycleReportDetail })));
 const ExploreReportDetail = lazy(() => import('@/components/reports/ExploreReportDetail').then((m) => ({ default: m.ExploreReportDetail })));
 const TradeReportDetail = lazy(() => import('@/components/reports/TradeReportDetail').then((m) => ({ default: m.TradeReportDetail })));
@@ -120,7 +121,13 @@ export default function ReportDetail() {
           <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
             <div>
               Cible : <CoordsLink galaxy={coords.galaxy} system={coords.system} position={coords.position} />
-              {origin && <> — Origine : {origin.planetName} <CoordsLink galaxy={origin.galaxy} system={origin.system} position={origin.position} /></>}
+              {origin && (
+                <>
+                  {' — Origine : '}
+                  {origin.planetName && <span>{origin.planetName} </span>}
+                  <CoordsLink galaxy={origin.galaxy} system={origin.system} position={origin.position} />
+                </>
+              )}
             </div>
             <div>{formatDate(report.completionTime)}</div>
           </div>
@@ -193,7 +200,9 @@ export default function ReportDetail() {
           <MineReportDetail result={result} fleet={fleet} gameConfig={gameConfig} />
         )}
         {(report.missionType === 'spy' || report.missionType === 'scan') && (
-          <SpyReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
+          result.counterEspionage === true
+            ? <CounterEspionageReportDetail result={result} origin={origin} />
+            : <SpyReportDetail result={result} gameConfig={gameConfig} coordinates={coords} />
         )}
         {report.missionType === 'recycle' && (
           <RecycleReportDetail result={result} coordinates={coords} />
