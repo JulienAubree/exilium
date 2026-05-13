@@ -36,6 +36,16 @@ git reset --hard "$REF"
 echo "[deploy-staging] installing deps..."
 pnpm install --frozen-lockfile
 
+# tsc -b consults a per-project .tsbuildinfo and skips type checks when it
+# believes inputs haven't changed. After a deploy chain (where deploy.sh
+# runs prod first and leaves a partially-shared pnpm store / hoisted state),
+# we've observed phantom type errors here that vanish after a clean rebuild.
+# Wiping the .tsbuildinfo files is cheap (~1s rebuild penalty) and avoids
+# the failure mode entirely. node_modules is left alone — pnpm install
+# above is already responsible for keeping it in sync with the lockfile.
+echo "[deploy-staging] clearing stale TS build cache..."
+find apps packages -maxdepth 4 -name "*.tsbuildinfo" -not -path "*/node_modules/*" -delete 2>/dev/null || true
+
 echo "[deploy-staging] building..."
 pnpm build
 
