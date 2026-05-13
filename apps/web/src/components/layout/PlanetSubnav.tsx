@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { NavLink } from 'react-router';
-import { Zap } from 'lucide-react';
+import { Zap, AlertTriangle } from 'lucide-react';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -36,13 +36,14 @@ const PLANET_NAV_ITEMS: PlanetNavItem[] = [
   { label: 'Défense', path: '/defense', icon: DefenseIcon },
 ];
 
-function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity }: {
+function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, warning }: {
   label: string;
   value: number;
   glowClass: string;
   colorClass: string;
   icon?: React.ReactNode;
   capacity?: number;
+  warning?: string;
 }) {
   const overCap = capacity != null && value > capacity;
   return (
@@ -55,10 +56,11 @@ function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity }: 
           overCap ? 'text-amber-400' : colorClass,
           overCap ? '' : glowClass,
         )}
-        title={overCap ? 'Stock au-delà de la capacité (production à l\'arrêt)' : undefined}
+        title={warning ?? (overCap ? 'Stock au-delà de la capacité (production à l\'arrêt)' : undefined)}
       >
         {value.toLocaleString('fr-FR')}
       </span>
+      {warning && <AlertTriangle className="h-3 w-3 text-red-400 animate-pulse" />}
     </div>
   );
 }
@@ -119,6 +121,9 @@ export function PlanetSubnav() {
   const energyBalance = resourceData
     ? resourceData.rates.energyProduced - resourceData.rates.energyConsumed
     : 0;
+  const productionFactor = resourceData?.rates.productionFactor ?? 1;
+  const brownout = productionFactor < 0.999;
+  const brownoutPct = Math.round((1 - productionFactor) * 100);
 
   if (items.length === 0) return null;
 
@@ -167,6 +172,7 @@ export function PlanetSubnav() {
               glowClass={energyBalance >= 0 ? 'glow-energy' : ''}
               colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
               icon={<EnergieIcon size={14} />}
+              warning={brownout ? `Production des mines à ${100 - brownoutPct}% — déficit de ${Math.abs(energyBalance)} d'énergie.` : undefined}
             />
             {activePlanetId && (
               <ImportResourcesButton targetPlanetId={activePlanetId} size="sm" />

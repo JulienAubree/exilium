@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { formatNumber } from '@/lib/format';
@@ -40,6 +41,9 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
   );
 
   const energyBalance = data ? data.rates.energyProduced - data.rates.energyConsumed : 0;
+  const productionFactor = data?.rates.productionFactor ?? 1;
+  const brownout = productionFactor < 0.999;
+  const brownoutPct = Math.round((1 - productionFactor) * 100);
 
   return (
     <>
@@ -50,7 +54,12 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
         <ResourceCounter icon={<MineraiIcon size={14} className="text-minerai" />} value={resources.minerai} colorClass="text-minerai" capacity={data?.rates.storageMineraiCapacity} />
         <ResourceCounter icon={<SiliciumIcon size={14} className="text-silicium" />} value={resources.silicium} colorClass="text-silicium" capacity={data?.rates.storageSiliciumCapacity} />
         <ResourceCounter icon={<HydrogeneIcon size={14} className="text-hydrogene" />} value={resources.hydrogene} colorClass="text-hydrogene" capacity={data?.rates.storageHydrogeneCapacity} />
-        <ResourceCounter icon={<EnergieIcon size={14} className="text-energy" />} value={energyBalance} colorClass={energyBalance < 0 ? 'text-red-400' : 'text-energy'} />
+        <ResourceCounter
+          icon={<EnergieIcon size={14} className="text-energy" />}
+          value={energyBalance}
+          colorClass={energyBalance < 0 ? 'text-red-400' : 'text-energy'}
+          warning={brownout ? `Production à ${100 - brownoutPct}% — déficit énergétique de ${Math.abs(energyBalance)} (touche le détail).` : undefined}
+        />
       </div>
 
       {detailOpen && (
@@ -61,9 +70,18 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
               <DetailRow label="Silicium" value={resources.silicium} perHour={data?.rates.siliciumPerHour ?? 0} capacity={data?.rates.storageSiliciumCapacity ?? 0} colorClass="text-silicium" />
               <DetailRow label="Hydrogène" value={resources.hydrogene} perHour={data?.rates.hydrogenePerHour ?? 0} capacity={data?.rates.storageHydrogeneCapacity ?? 0} colorClass="text-hydrogene" />
               <div className="flex items-center justify-between border-t border-white/5 pt-2">
-                <span className="text-energy">Énergie</span>
-                <span className="text-energy tabular-nums">{data?.rates.energyProduced ?? 0} / {data?.rates.energyConsumed ?? 0}</span>
+                <span className={brownout ? 'text-red-400 inline-flex items-center gap-1' : 'text-energy'}>
+                  {brownout && <AlertTriangle className="h-3 w-3" />} Énergie
+                </span>
+                <span className={cn('tabular-nums', brownout ? 'text-red-400' : 'text-energy')}>
+                  {data?.rates.energyProduced ?? 0} / {data?.rates.energyConsumed ?? 0}
+                </span>
               </div>
+              {brownout && (
+                <div className="rounded-md border border-red-500/40 bg-red-950/30 px-2 py-1.5 text-[11px] text-red-200">
+                  Déficit énergétique : production des mines réduite à {100 - brownoutPct}%. Construis un Centre énergétique ou réduis ta conso.
+                </div>
+              )}
               {planetId && (
                 <div className="flex justify-end border-t border-white/5 pt-2">
                   <ImportResourcesButton targetPlanetId={planetId} size="sm" />
@@ -77,17 +95,18 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
   );
 }
 
-function ResourceCounter({ icon, value, colorClass, suffix, capacity }: { icon: React.ReactNode; value: number; colorClass: string; suffix?: string; capacity?: number }) {
+function ResourceCounter({ icon, value, colorClass, suffix, capacity, warning }: { icon: React.ReactNode; value: number; colorClass: string; suffix?: string; capacity?: number; warning?: string }) {
   const overCap = capacity != null && value > capacity;
   return (
     <div className="flex items-center gap-1">
       {icon}
       <span
         className={cn('text-sm font-medium tabular-nums', overCap ? 'text-amber-400' : colorClass)}
-        title={overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined}
+        title={warning ?? (overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined)}
       >
         {formatNumber(Math.floor(value))}{suffix}
       </span>
+      {warning && <AlertTriangle className="h-3 w-3 text-red-400 animate-pulse" />}
     </div>
   );
 }
