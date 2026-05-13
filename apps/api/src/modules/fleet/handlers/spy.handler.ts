@@ -352,8 +352,41 @@ export class SpyHandler implements MissionHandler {
       const hasDefenders = Object.values(defenderFleet).some(v => v > 0) ||
                            Object.values(defenderDefenses).some(v => v > 0);
 
-      // If no defenders exist, probes pass through despite detection
+      // If no defenders exist, probes pass through despite detection.
+      // Still alert the defender via a counter-espionage report — they
+      // learn that someone tried to spy on them and where the probes came
+      // from, but never the attacker's identity or fleet size.
       if (!hasDefenders) {
+        if (ctx.reportService) {
+          await ctx.reportService.create({
+            userId: targetPlanet.userId,
+            missionType: 'spy',
+            title: `Tentative d'espionnage détectée — ${targetPlanet.name} ${coords}`,
+            coordinates: {
+              galaxy: fleetEvent.targetGalaxy,
+              system: fleetEvent.targetSystem,
+              position: fleetEvent.targetPosition,
+            },
+            originCoordinates: originPlanet ? {
+              galaxy: originPlanet.galaxy,
+              system: originPlanet.system,
+              position: originPlanet.position,
+              // No planetName: keep the attacker anonymous on this report.
+              planetName: '',
+            } : undefined,
+            fleet: { ships: {}, totalCargo: 0 },
+            departureTime: fleetEvent.departureTime,
+            completionTime: fleetEvent.arrivalTime,
+            result: {
+              counterEspionage: true,
+              detected: true,
+              detectionChance,
+              // Defender learns the probes got through without finding
+              // anyone to fight — useful intel about their own defense gap.
+              undefended: true,
+            },
+          });
+        }
         return { scheduleReturn: true, cargo: { minerai: 0, silicium: 0, hydrogene: 0 }, reportId };
       }
 
