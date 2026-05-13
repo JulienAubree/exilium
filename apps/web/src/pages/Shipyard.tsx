@@ -196,6 +196,7 @@ export default function Shipyard() {
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
+            rates={resourceData?.rates}
             onUpgrade={() =>
               upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })
             }
@@ -285,6 +286,7 @@ export default function Shipyard() {
               upgradePending={upgradeMutation.isPending}
               cancelPending={buildingCancelMutation.isPending}
               gameConfig={gameConfig}
+              rates={resourceData?.rates}
               onUpgrade={() =>
                 upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })
               }

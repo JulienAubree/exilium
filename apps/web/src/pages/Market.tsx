@@ -175,6 +175,7 @@ export default function Market() {
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
+            rates={resourceData?.rates}
             onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'galacticMarket' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {

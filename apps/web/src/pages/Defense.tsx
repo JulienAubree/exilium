@@ -195,6 +195,7 @@ export default function Defense() {
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
+            rates={resourceData?.rates}
             onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'arsenal' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {
@@ -278,6 +279,7 @@ export default function Defense() {
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
+            rates={resourceData?.rates}
             onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'arsenal' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {

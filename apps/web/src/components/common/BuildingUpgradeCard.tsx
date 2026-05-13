@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
 import { Timer } from '@/components/common/Timer';
 import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
+import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
 import { ClockIcon } from '@/components/icons/utility-icons';
 import { formatDuration } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import type { CraftRates } from '@/lib/craft-eta';
 
 type GameConfigData = ReturnType<typeof useGameConfig>['data'];
 
@@ -25,6 +27,9 @@ interface BuildingUpgradeCardProps {
   upgradePending: boolean;
   cancelPending: boolean;
   gameConfig: GameConfigData;
+  /** Production rates — when provided, displays a "Dispo dans ~Xh" ETA on cards
+   *  whose cost exceeds the current resources. */
+  rates?: CraftRates;
   onUpgrade: () => void;
   onCancel: () => void;
   onTimerComplete: () => void;
@@ -43,6 +48,7 @@ export function BuildingUpgradeCard({
   upgradePending,
   cancelPending,
   gameConfig,
+  rates,
   onUpgrade,
   onCancel,
   onTimerComplete,
@@ -112,9 +118,18 @@ export function BuildingUpgradeCard({
         currentHydrogene={resources.hydrogene}
       />
 
-      <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
-        <ClockIcon className="h-3 w-3" />
-        {formatDuration(nextLevelTime)}
+      <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground font-mono">
+        <span className="inline-flex items-center gap-1">
+          <ClockIcon className="h-3 w-3" />
+          {formatDuration(nextLevelTime)}
+        </span>
+        {!canAfford && rates && (
+          <CraftEtaBadge
+            cost={nextLevelCost}
+            stock={resources}
+            rates={rates}
+          />
+        )}
       </div>
 
       {missingPrereqs ? (

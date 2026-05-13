@@ -220,6 +220,7 @@ export default function Research() {
               upgradePending={upgradeMutation.isPending}
               cancelPending={buildingCancelMutation.isPending}
               gameConfig={gameConfig}
+              rates={craftRates}
               onUpgrade={() =>
                 upgradeMutation.mutate({ planetId: planetId!, buildingId: annex.id as any })
               }
@@ -277,6 +278,7 @@ export default function Research() {
             upgradePending={upgradeMutation.isPending}
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
+            rates={craftRates}
             onUpgrade={() =>
               upgradeMutation.mutate({ planetId: homePlanet.id, buildingId: 'researchLab' as any })
             }
@@ -339,6 +341,7 @@ export default function Research() {
               upgradePending={upgradeMutation.isPending}
               cancelPending={buildingCancelMutation.isPending}
               gameConfig={gameConfig}
+              rates={craftRates}
               onUpgrade={() =>
                 upgradeMutation.mutate({
                   planetId: homePlanet.id,
