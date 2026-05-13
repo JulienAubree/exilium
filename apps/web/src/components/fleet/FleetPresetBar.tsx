@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Bookmark, Plus, Trash2, Check, X } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Input } from '@/components/ui/input';
 import { trpc } from '@/trpc';
 import { useToastStore } from '@/stores/toast.store';
@@ -20,6 +21,7 @@ export function FleetPresetBar({ selectedShips, onLoad }: Props) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [overwriteId, setOverwriteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const activeCount = useMemo(
     () => Object.values(selectedShips).filter((c) => c > 0).length,
@@ -95,8 +97,14 @@ export function FleetPresetBar({ selectedShips, onLoad }: Props) {
   };
 
   const handleDelete = (preset: (typeof presets)[number]) => {
-    if (!confirm(`Supprimer le preset « ${preset.name} » ?`)) return;
-    deleteMutation.mutate({ id: preset.id });
+    setDeleteTarget({ id: preset.id, name: preset.name });
+  };
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      deleteMutation.mutate({ id: deleteTarget.id });
+      setDeleteTarget(null);
+    }
   };
 
   const submitting = createMutation.isPending || updateMutation.isPending;
@@ -218,6 +226,16 @@ export function FleetPresetBar({ selectedShips, onLoad }: Props) {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        title="Supprimer le preset"
+        description={deleteTarget ? `Le preset « ${deleteTarget.name} » sera supprimé définitivement.` : undefined}
+        confirmLabel="Supprimer"
+        variant="destructive"
+      />
     </div>
   );
 }
