@@ -1,9 +1,15 @@
-import { and, eq, desc } from 'drizzle-orm';
+import { and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { byUser, byId } from '../../lib/db-helpers.js';
 import { fleetPresets } from '@exilium/db';
 import type { Database } from '@exilium/db';
 
 const MAX_PRESETS_PER_USER = 20;
+
+// PostgreSQL SQLSTATE for unique_violation. Matching on err.code is stable
+// across driver versions; the previous message-string match broke whenever
+// the driver wording changed.
+const PG_UNIQUE_VIOLATION = '23505';
 
 export type FleetPresetShips = Record<string, number>;
 
@@ -16,13 +22,22 @@ function sanitizeShips(input: Record<string, number>): FleetPresetShips {
   return out;
 }
 
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === PG_UNIQUE_VIOLATION
+  );
+}
+
 export function createFleetPresetService(db: Database) {
   return {
     async list(userId: string) {
       const rows = await db
         .select()
         .from(fleetPresets)
-        .where(eq(fleetPresets.userId, userId))
+        .where(byUser(fleetPresets.userId, userId))
         .orderBy(desc(fleetPresets.updatedAt));
       return rows.map((row) => ({
         id: row.id,
@@ -44,7 +59,7 @@ export function createFleetPresetService(db: Database) {
       const existing = await db
         .select({ id: fleetPresets.id })
         .from(fleetPresets)
-        .where(eq(fleetPresets.userId, userId));
+        .where(byUser(fleetPresets.userId, userId));
 
       if (existing.length >= MAX_PRESETS_PER_USER) {
         throw new TRPCError({
@@ -65,8 +80,7 @@ export function createFleetPresetService(db: Database) {
           .returning();
         return { id: row.id, name: row.name, ships: cleanShips, updatedAt: row.updatedAt };
       } catch (err) {
-        const message = err instanceof Error ? err.message : '';
-        if (message.includes('fleet_presets_user_name_idx')) {
+        if (isUniqueViolation(err)) {
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'Un preset porte déjà ce nom. Choisis-en un autre ou écrase-le.',
@@ -84,7 +98,7 @@ export function createFleetPresetService(db: Database) {
       const [current] = await db
         .select()
         .from(fleetPresets)
-        .where(and(eq(fleetPresets.id, presetId), eq(fleetPresets.userId, userId)))
+        .where(and(byId(fleetPresets.id, presetId), byUser(fleetPresets.userId, userId)))
         .limit(1);
       if (!current) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Preset introuvable.' });
@@ -107,12 +121,11 @@ export function createFleetPresetService(db: Database) {
         const [row] = await db
           .update(fleetPresets)
           .set({ name: nextName, ships: nextShips, updatedAt: new Date() })
-          .where(and(eq(fleetPresets.id, presetId), eq(fleetPresets.userId, userId)))
+          .where(and(byId(fleetPresets.id, presetId), byUser(fleetPresets.userId, userId)))
           .returning();
         return { id: row.id, name: row.name, ships: nextShips, updatedAt: row.updatedAt };
       } catch (err) {
-        const message = err instanceof Error ? err.message : '';
-        if (message.includes('fleet_presets_user_name_idx')) {
+        if (isUniqueViolation(err)) {
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'Un autre preset porte déjà ce nom.',
@@ -125,7 +138,7 @@ export function createFleetPresetService(db: Database) {
     async delete(userId: string, presetId: string) {
       const deleted = await db
         .delete(fleetPresets)
-        .where(and(eq(fleetPresets.id, presetId), eq(fleetPresets.userId, userId)))
+        .where(and(byId(fleetPresets.id, presetId), byUser(fleetPresets.userId, userId)))
         .returning({ id: fleetPresets.id });
       if (deleted.length === 0) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Preset introuvable.' });

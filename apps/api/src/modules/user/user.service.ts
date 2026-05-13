@@ -103,7 +103,7 @@ export function createUserService(db: Database, assetsDir: string) {
       const [user] = await db
         .select({ previousLoginAt: users.previousLoginAt })
         .from(users)
-        .where(eq(users.id, userId))
+        .where(byUser(users.id, userId))
         .limit(1);
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
 
@@ -125,17 +125,17 @@ export function createUserService(db: Database, assetsDir: string) {
         db
           .select({ type: gameEvents.type, c: count() })
           .from(gameEvents)
-          .where(and(eq(gameEvents.userId, userId), gt(gameEvents.createdAt, since)))
+          .where(and(byUser(gameEvents.userId, userId), gt(gameEvents.createdAt, since)))
           .groupBy(gameEvents.type),
         db
           .select({ c: count() })
           .from(missionReports)
-          .where(and(eq(missionReports.userId, userId), gt(missionReports.createdAt, since))),
+          .where(and(byUser(missionReports.userId, userId), gt(missionReports.createdAt, since))),
         db
           .select({ c: count() })
           .from(messages)
           .where(and(
-            eq(messages.recipientId, userId),
+            byUser(messages.recipientId, userId),
             gt(messages.createdAt, since),
             eq(messages.read, false),
           )),
@@ -163,7 +163,7 @@ export function createUserService(db: Database, assetsDir: string) {
       await db
         .update(users)
         .set({ previousLoginAt: sql`now()` })
-        .where(eq(users.id, userId));
+        .where(byUser(users.id, userId));
     },
 
     listAvatars(): string[] {
