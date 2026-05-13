@@ -43,7 +43,7 @@ echo "[deploy-staging] applying DB migrations..."
 bash scripts/apply-migrations.sh
 
 echo "[deploy-staging] reloading PM2 processes..."
-pm2 reload ecosystem.staging.cjs --update-env
+pm2 reload staging.config.cjs --update-env
 pm2 save
 
 echo "[deploy-staging] done. Check: pm2 logs exilium-api-staging"
