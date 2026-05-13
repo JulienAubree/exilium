@@ -46,3 +46,4 @@ export * from './anomaly-content.js';
 export * from './exploration-missions.js';
 export * from './exploration-content.js';
 export * from './expedition-anomaly-credits.js';
+export * from './fleet-presets.js';

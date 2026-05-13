@@ -12,6 +12,7 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { MissionSelector } from '@/components/fleet/MissionSelector';
 import { PveMissionBanner } from '@/components/fleet/PveMissionBanner';
 import { FleetComposition } from '@/components/fleet/FleetComposition';
+import { FleetPresetBar } from '@/components/fleet/FleetPresetBar';
 import { FleetSummaryBar } from '@/components/fleet/FleetSummaryBar';
 import { TargetContactsDropdown } from '@/components/fleet/TargetContactsDropdown';
 import { ColonizeConfirmDialog } from '@/components/fleet/ColonizeConfirmDialog';
@@ -403,23 +404,32 @@ export default function Fleet() {
       )}
 
       {/* Fleet Composition */}
-      <FleetComposition
-        ships={allShips}
-        mission={mission}
-        selectedShips={selectedShips}
-        onChange={handleShipChange}
-        onToggle={(shipId) => {
-          setSelectedShips((prev) => {
-            if ((prev[shipId] ?? 0) > 0) {
-              const next = { ...prev };
-              delete next[shipId];
-              return next;
-            }
-            const ship = allShips.find((s) => s.id === shipId);
-            return ship ? { ...prev, [shipId]: ship.count } : prev;
-          });
-        }}
-      />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Composition</span>
+          <FleetPresetBar
+            selectedShips={selectedShips}
+            onLoad={(ships) => setSelectedShips(ships)}
+          />
+        </div>
+        <FleetComposition
+          ships={allShips}
+          mission={mission}
+          selectedShips={selectedShips}
+          onChange={handleShipChange}
+          onToggle={(shipId) => {
+            setSelectedShips((prev) => {
+              if ((prev[shipId] ?? 0) > 0) {
+                const next = { ...prev };
+                delete next[shipId];
+                return next;
+              }
+              const ship = allShips.find((s) => s.id === shipId);
+              return ship ? { ...prev, [shipId]: ship.count } : prev;
+            });
+          }}
+        />
+      </div>
 
       {/* Cargo */}
       <div className="rounded-lg border border-border bg-card p-3">
