@@ -58,7 +58,7 @@ export function ResourceBar({ planetId }: ResourceBarProps) {
           icon={<EnergieIcon size={14} className="text-energy" />}
           value={energyBalance}
           colorClass={energyBalance < 0 ? 'text-red-400' : 'text-energy'}
-          warning={brownout ? `Production à ${100 - brownoutPct}% — déficit énergétique de ${Math.abs(energyBalance)} (touche le détail).` : undefined}
+          warning={brownout ? `Production à ${100 - brownoutPct}% — déficit énergétique de ${Math.abs(energyBalance).toLocaleString('fr-FR')} (touche le détail).` : undefined}
         />
       </div>
 

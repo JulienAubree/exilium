@@ -172,7 +172,7 @@ export function PlanetSubnav() {
               glowClass={energyBalance >= 0 ? 'glow-energy' : ''}
               colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
               icon={<EnergieIcon size={14} />}
-              warning={brownout ? `Production des mines à ${100 - brownoutPct}% — déficit de ${Math.abs(energyBalance)} d'énergie.` : undefined}
+              warning={brownout ? `Production des mines à ${100 - brownoutPct}% — déficit de ${Math.abs(energyBalance).toLocaleString('fr-FR')} d'énergie.` : undefined}
             />
             {activePlanetId && (
               <ImportResourcesButton targetPlanetId={activePlanetId} size="sm" />
