@@ -12,6 +12,7 @@ import { AnnouncementBanner } from './AnnouncementBanner';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { FloatingFeedbackButton } from '@/components/feedback/FloatingFeedbackButton';
+import { AbsenceSummaryModal } from '@/components/AbsenceSummaryModal';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -105,6 +106,7 @@ export function Layout() {
       <ChatOverlay />
       <Toaster />
       <UpdatePrompt />
+      <AbsenceSummaryModal />
     </div>
   );
 }

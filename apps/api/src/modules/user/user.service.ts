@@ -1,11 +1,12 @@
-import { ilike, ne, and, or, eq, count } from 'drizzle-orm';
+import { ilike, ne, and, or, eq, gt, count, sql } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
-import { users, planets, rankings, allianceMembers, alliances, friendships } from '@exilium/db';
+import { users, planets, rankings, allianceMembers, alliances, friendships, gameEvents, missionReports, messages } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { TRPCError } from '@trpc/server';
 import type { Blason } from '@exilium/shared';
+import { ABSENCE_THRESHOLD_MS } from '../../lib/absence.js';
 
 export function createUserService(db: Database, assetsDir: string) {
   const service = {
@@ -96,6 +97,73 @@ export function createUserService(db: Database, assetsDir: string) {
       if (Object.keys(update).length > 0) {
         await db.update(users).set(update).where(eq(users.id, userId));
       }
+    },
+
+    async getAbsenceSummary(userId: string) {
+      const [user] = await db
+        .select({ previousLoginAt: users.previousLoginAt })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const empty = {
+        hasAbsence: false as const,
+        since: null,
+        durationMs: 0,
+        groups: {} as Record<string, number>,
+        combats: 0,
+        messages: 0,
+      };
+
+      const since = user.previousLoginAt;
+      if (!since) return empty;
+      const durationMs = Date.now() - since.getTime();
+      if (durationMs < ABSENCE_THRESHOLD_MS) return empty;
+
+      const [eventRows, combatRows, messageRows] = await Promise.all([
+        db
+          .select({ type: gameEvents.type, c: count() })
+          .from(gameEvents)
+          .where(and(eq(gameEvents.userId, userId), gt(gameEvents.createdAt, since)))
+          .groupBy(gameEvents.type),
+        db
+          .select({ c: count() })
+          .from(missionReports)
+          .where(and(eq(missionReports.userId, userId), gt(missionReports.createdAt, since))),
+        db
+          .select({ c: count() })
+          .from(messages)
+          .where(and(
+            eq(messages.recipientId, userId),
+            gt(messages.createdAt, since),
+            eq(messages.read, false),
+          )),
+      ]);
+
+      const groups: Record<string, number> = {};
+      for (const row of eventRows) groups[row.type] = Number(row.c);
+      const combats = Number(combatRows[0]?.c ?? 0);
+      const messagesCount = Number(messageRows[0]?.c ?? 0);
+
+      const hasAny =
+        Object.values(groups).some((c) => c > 0) || combats > 0 || messagesCount > 0;
+
+      return {
+        hasAbsence: hasAny,
+        since,
+        durationMs,
+        groups,
+        combats,
+        messages: messagesCount,
+      };
+    },
+
+    async dismissAbsenceSummary(userId: string) {
+      await db
+        .update(users)
+        .set({ previousLoginAt: sql`now()` })
+        .where(eq(users.id, userId));
     },
 
     listAvatars(): string[] {

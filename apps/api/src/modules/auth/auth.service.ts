@@ -11,6 +11,18 @@ import { env } from '../../config/env.js';
 import { enforceRateLimit } from '../../lib/rate-limit.js';
 import type { MailerService } from '../mailer/mailer.service.js';
 import { passwordResetEmail, emailVerificationEmail } from '../mailer/templates.js';
+import { ABSENCE_THRESHOLD_MS } from '../../lib/absence.js';
+
+// Snapshots previous_login_at only when the user has been idle past the
+// absence threshold (see lib/absence.ts). Otherwise refresh cycles would
+// keep overwriting the original "session start" with the most recent
+// token refresh, and the absence summary would always be empty.
+const PREVIOUS_LOGIN_SNAPSHOT = sql`CASE
+  WHEN ${users.lastLoginAt} IS NULL
+    OR (now() - ${users.lastLoginAt}) > make_interval(secs => ${ABSENCE_THRESHOLD_MS / 1000})
+  THEN ${users.lastLoginAt}
+  ELSE ${users.previousLoginAt}
+END`;
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 
@@ -212,6 +224,7 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
         .set({
           failedLoginAttempts: 0,
           lockedUntil: null,
+          previousLoginAt: PREVIOUS_LOGIN_SNAPSHOT,
           lastLoginAt: sql`now()`,
         })
         .where(eq(users.id, user.id));
@@ -283,7 +296,10 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
       // not just explicit logins. Refresh fires ~every JWT lifetime (15 min by default).
       await db
         .update(users)
-        .set({ lastLoginAt: sql`now()` })
+        .set({
+          previousLoginAt: PREVIOUS_LOGIN_SNAPSHOT,
+          lastLoginAt: sql`now()`,
+        })
         .where(eq(users.id, stored.userId));
 
       const accessToken = await new SignJWT({ userId: stored.userId })

@@ -36,5 +36,16 @@ export function createUserRouter(userService: ReturnType<typeof createUserServic
       .query(async () => {
         return userService.listAvatars();
       }),
+
+    getAbsenceSummary: protectedProcedure
+      .query(async ({ ctx }) => {
+        return userService.getAbsenceSummary(ctx.userId!);
+      }),
+
+    dismissAbsenceSummary: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await userService.dismissAbsenceSummary(ctx.userId!);
+        return { ok: true as const };
+      }),
   });
 }
