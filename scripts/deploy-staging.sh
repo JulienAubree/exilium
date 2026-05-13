@@ -52,6 +52,18 @@ pnpm build
 echo "[deploy-staging] applying DB migrations..."
 bash scripts/apply-migrations.sh
 
+# The seed upserts game_config rows (buildings, research, bonuses, etc.)
+# from packages/db/src/seed-game-config.ts. Without this step, any seed-only
+# tuning (rebalance, new fields like max_level / bonus_type) lands in code
+# but never reaches the staging DB — observed on Sprint 1 deploy.
+# We must override DATABASE_URL with the staging .env value because the
+# seed script defaults to the prod connection string.
+echo "[deploy-staging] seeding game config..."
+STAGING_DB_URL=$(grep -E '^DATABASE_URL=' "$STAGING_DIR/.env" | head -1 | cut -d'=' -f2-)
+STAGING_DB_URL="${STAGING_DB_URL%\"}"
+STAGING_DB_URL="${STAGING_DB_URL#\"}"
+DATABASE_URL="$STAGING_DB_URL" pnpm --filter @exilium/db db:seed
+
 echo "[deploy-staging] reloading PM2 processes..."
 pm2 reload staging.config.cjs --update-env
 pm2 save
