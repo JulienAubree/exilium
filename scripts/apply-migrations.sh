@@ -10,8 +10,13 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MIGRATIONS_DIR="$PROJECT_DIR/packages/db/drizzle"
 
 # Extract DATABASE_URL from .env without sourcing it
-# (sourcing .env files breaks on values containing apostrophes/spaces)
-if [ -z "$DATABASE_URL" ] && [ -f "$PROJECT_DIR/.env" ]; then
+# (sourcing .env files breaks on values containing apostrophes/spaces).
+# Always prefer the local .env over any ambient DATABASE_URL: deploy.sh
+# exports prod env vars when it runs, and that environment leaks into the
+# chained deploy-staging.sh invocation. If we let the ambient win, staging's
+# apply-migrations would silently query prod's _migrations table and skip
+# every staging migration as "already applied".
+if [ -f "$PROJECT_DIR/.env" ]; then
   DATABASE_URL=$(grep -E '^DATABASE_URL=' "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2-)
   # Strip surrounding quotes if any
   DATABASE_URL="${DATABASE_URL%\"}"
