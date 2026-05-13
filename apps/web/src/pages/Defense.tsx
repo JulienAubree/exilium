@@ -184,6 +184,7 @@ export default function Defense() {
         {arsenalBuilding && (
           <BuildingUpgradeCard
             currentLevel={arsenalBuilding.currentLevel}
+            maxLevel={arsenalBuilding.maxLevel}
             nextLevelCost={arsenalBuilding.nextLevelCost}
             nextLevelTime={arsenalBuilding.nextLevelTime}
             prerequisites={arsenalBuilding.prerequisites as any}
@@ -268,6 +269,7 @@ export default function Defense() {
         upgradeCard={arsenalBuilding && (
           <BuildingUpgradeCard
             currentLevel={arsenalBuilding.currentLevel}
+            maxLevel={arsenalBuilding.maxLevel}
             nextLevelCost={arsenalBuilding.nextLevelCost}
             nextLevelTime={arsenalBuilding.nextLevelTime}
             prerequisites={arsenalBuilding.prerequisites as any}

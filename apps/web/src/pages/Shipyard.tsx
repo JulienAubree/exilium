@@ -181,6 +181,7 @@ export default function Shipyard() {
         {shipyardBuilding && (
           <BuildingUpgradeCard
             currentLevel={shipyardBuilding.currentLevel}
+            maxLevel={shipyardBuilding.maxLevel}
             nextLevelCost={shipyardBuilding.nextLevelCost}
             nextLevelTime={shipyardBuilding.nextLevelTime}
             prerequisites={shipyardBuilding.prerequisites as any}
@@ -271,6 +272,7 @@ export default function Shipyard() {
           shipyardBuilding && (
             <BuildingUpgradeCard
               currentLevel={shipyardBuilding.currentLevel}
+              maxLevel={shipyardBuilding.maxLevel}
               nextLevelCost={shipyardBuilding.nextLevelCost}
               nextLevelTime={shipyardBuilding.nextLevelTime}
               prerequisites={shipyardBuilding.prerequisites as any}

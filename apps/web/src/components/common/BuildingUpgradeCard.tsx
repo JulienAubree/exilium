@@ -16,6 +16,8 @@ type BuildingPrereq = { buildingId: string; level: number; currentLevel?: number
 
 interface BuildingUpgradeCardProps {
   currentLevel: number;
+  /** Sprint 1 rebalance — hard cap on the building. null = uncapped. */
+  maxLevel?: number | null;
   nextLevelCost: { minerai: number; silicium: number; hydrogene: number };
   nextLevelTime: number;
   prerequisites: BuildingPrereq[];
@@ -37,6 +39,7 @@ interface BuildingUpgradeCardProps {
 
 export function BuildingUpgradeCard({
   currentLevel,
+  maxLevel,
   nextLevelCost,
   nextLevelTime,
   prerequisites,
@@ -55,6 +58,7 @@ export function BuildingUpgradeCard({
 }: BuildingUpgradeCardProps) {
   const nextLevel = currentLevel + 1;
   const isConstruction = currentLevel === 0;
+  const atMaxLevel = maxLevel != null && currentLevel >= maxLevel;
 
   const canAfford =
     resources.minerai >= nextLevelCost.minerai &&
@@ -92,6 +96,25 @@ export function BuildingUpgradeCard({
     );
   }
 
+  // ── Niveau max atteint : afficher un état stable, pas de bouton ──────────
+  if (atMaxLevel) {
+    return (
+      <div className="w-full sm:w-64 shrink-0 rounded-xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-sm p-3 space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
+            Niveau maximum atteint
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            Niv. {currentLevel}/{maxLevel}
+          </span>
+        </div>
+        <p className="text-[11px] text-emerald-200/80">
+          Ce bâtiment a atteint son plafond. Les autres systèmes peuvent encore monter.
+        </p>
+      </div>
+    );
+  }
+
   // ── Not upgrading: show next-level cost + button ────────────────────────
   const missingPrereqs = !prereqsMet;
 
@@ -106,7 +129,9 @@ export function BuildingUpgradeCard({
     >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{isConstruction ? 'Construction' : 'Amélioration'}</span>
-        <span className="text-[10px] font-mono text-muted-foreground">Niv. {currentLevel} → {nextLevel}</span>
+        <span className="text-[10px] font-mono text-muted-foreground">
+          Niv. {currentLevel} → {nextLevel}{maxLevel != null && <span className="text-muted-foreground-soft"> / {maxLevel}</span>}
+        </span>
       </div>
 
       <ResourceCost

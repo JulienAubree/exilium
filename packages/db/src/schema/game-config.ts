@@ -20,6 +20,7 @@ export const buildingDefinitions = pgTable('building_definitions', {
   baseCostHydrogene: integer('base_cost_hydrogene').notNull().default(0),
   costFactor: real('cost_factor').notNull().default(1.5),
   baseTime: integer('base_time').notNull().default(60),
+  maxLevel: smallint('max_level'),
   categoryId: varchar('category_id', { length: 64 }).references(() => entityCategories.id, { onDelete: 'set null' }),
   sortOrder: integer('sort_order').notNull().default(0),
   role: varchar('role', { length: 64 }).unique(),
@@ -46,6 +47,14 @@ export const bonusDefinitions = pgTable('bonus_definitions', {
   percentPerLevel: real('percent_per_level').notNull(),
   category: varchar('category', { length: 64 }),
   statLabel: varchar('stat_label', { length: 128 }),
+  // Soft-cap fields (Sprint 1 of the rebalance roadmap).
+  // bonusType='linear' (default) keeps the existing per-level percentage.
+  // bonusType='asymptotic' applies an exponential soft-cap:
+  //   bonus(level) = softCapMax × (1 - exp(-softCapK × level))
+  // so vétérans gain less per level at high tiers while newcomers ramp normally.
+  bonusType: varchar('bonus_type', { length: 16 }).notNull().default('linear'),
+  softCapMax: real('soft_cap_max'),
+  softCapK: real('soft_cap_k'),
 });
 
 // ── Research Definitions ──

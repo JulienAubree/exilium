@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBonus, buildingBonusAtLevel, researchAnnexBonus, researchBiomeBonus, type BonusDefinition } from './bonus.js';
+import { resolveBonus, buildingBonusAtLevel, researchAnnexBonus, researchBiomeBonus, softCapBonus, type BonusDefinition } from './bonus.js';
 
 const bonusDefs: BonusDefinition[] = [
   { sourceType: 'building', sourceId: 'robotics', stat: 'building_time', percentPerLevel: -15, category: null },
@@ -119,5 +119,100 @@ describe('researchBiomeBonus', () => {
 
   it('clamps to minimum 0.01', () => {
     expect(researchBiomeBonus(200)).toBe(0.01);
+  });
+});
+
+// ── Sprint 1 rebalance — soft-cap asymptotic ──
+
+describe('softCapBonus', () => {
+  it('returns 0 at level 0', () => {
+    expect(softCapBonus(0, 1.5, 0.15)).toBe(0);
+  });
+
+  it('approaches softCapMax as level grows', () => {
+    // Avec k=0.15 : niv 20 ≈ 0.95 × max
+    expect(softCapBonus(20, 1.5, 0.15)).toBeCloseTo(1.5 * (1 - Math.exp(-3)), 4);
+    expect(softCapBonus(20, 1.5, 0.15)).toBeLessThan(1.5);
+  });
+
+  it('never crosses softCapMax', () => {
+    expect(softCapBonus(10_000, 1.5, 0.15)).toBeLessThanOrEqual(1.5);
+    expect(softCapBonus(100, 1.5, 0.15)).toBeLessThan(1.5);
+  });
+
+  it('returns 0 when max or k is invalid', () => {
+    expect(softCapBonus(10, 0, 0.15)).toBe(0);
+    expect(softCapBonus(10, -1, 0.15)).toBe(0);
+    expect(softCapBonus(10, 1.5, 0)).toBe(0);
+  });
+});
+
+describe('resolveBonus with asymptotic bonusType', () => {
+  const asymptoticDef: BonusDefinition = {
+    sourceType: 'research',
+    sourceId: 'weapons',
+    stat: 'weapons',
+    percentPerLevel: 10,
+    category: null,
+    bonusType: 'asymptotic',
+    softCapMax: 1.5,
+    softCapK: 0.15,
+  };
+
+  it('soft-caps a positive bonus at high level', () => {
+    // Linear : niv 20 → 1 + 0.10×20 = 3.0 (+200%)
+    // Asymptotic : niv 20 → 1 + 1.5×(1 - e^-3) ≈ 1 + 1.43 = 2.43 (+143%)
+    const result = resolveBonus('weapons', null, { weapons: 20 }, [asymptoticDef]);
+    expect(result).toBeCloseTo(1 + 1.5 * (1 - Math.exp(-3)), 4);
+    expect(result).toBeLessThan(2.5); // never crosses 1 + softCapMax
+    expect(result).toBeGreaterThan(2.4);
+  });
+
+  it('compresses the gap newcomer/vétéran (soft-cap design)', () => {
+    // Avec max=1.5/k=0.15, l'asymptote choisit de booster les niveaux bas
+    // (le débutant à niv 5 reçoit plus que +50% linéaire) et de capper les
+    // niveaux hauts (le vétéran à niv 30 reste plafonné autour de +150%).
+    // → compression du gap dans les deux sens, c'est le design intentionnel.
+    const newcomer = resolveBonus('weapons', null, { weapons: 5 }, [asymptoticDef]);
+    const veteran = resolveBonus('weapons', null, { weapons: 30 }, [asymptoticDef]);
+
+    // Newcomer gagne MOINS qu'asymptote
+    expect(newcomer).toBeLessThan(1 + 1.5);
+    // Vétéran approche asymptote sans la dépasser
+    expect(veteran).toBeLessThan(1 + 1.5);
+    expect(veteran).toBeGreaterThan(1 + 1.4);
+    // Le ratio veteran/newcomer doit être < 2 (compression vs linear où il serait > 4)
+    expect((veteran - 1) / (newcomer - 1)).toBeLessThan(2);
+  });
+
+  it('falls back to linear when softCapMax/K are missing', () => {
+    const broken: BonusDefinition = {
+      sourceType: 'research',
+      sourceId: 'weapons',
+      stat: 'weapons',
+      percentPerLevel: 10,
+      category: null,
+      bonusType: 'asymptotic',
+      // softCapMax / softCapK missing
+    };
+    const result = resolveBonus('weapons', null, { weapons: 5 }, [broken]);
+    expect(result).toBeCloseTo(1.5, 4); // linear : 1 + 0.10*5
+  });
+
+  it('soft-caps a negative bonus (cost reduction)', () => {
+    const neg: BonusDefinition = {
+      sourceType: 'research',
+      sourceId: 'semiconductors',
+      stat: 'energy_consumption',
+      percentPerLevel: -2,
+      category: null,
+      bonusType: 'asymptotic',
+      softCapMax: 0.5, // can reduce up to -50%
+      softCapK: 0.2,
+    };
+    // niv 20 → 1 - 0.5×(1-e^-4) ≈ 1 - 0.49 = 0.51
+    const result = resolveBonus('energy_consumption', null, { semiconductors: 20 }, [neg]);
+    expect(result).toBeCloseTo(1 - 0.5 * (1 - Math.exp(-4)), 4);
+    expect(result).toBeGreaterThan(0.5); // jamais en-dessous de 1 - softCapMax
   });
 });

@@ -91,6 +91,36 @@ export function storageCapacity(
 }
 
 /**
+ * Effective storage capacity = min(theoretical, capHours × hourlyProduction).
+ *
+ * Sprint 1 of the 5-pillar rebalance : the theoretical exponential storage
+ * formula scales much faster than production, leaving vétérans with rooms
+ * that hold 100× their hourly output (purely anti-pillage, never a tradeoff).
+ *
+ * The effective cap ties storage to a duration of production — by default
+ * `capHoursFactor=24`, so the storage can hold up to 24h of production. A
+ * player away for a full day doesn't lose anything, and upgrading mines
+ * actually expands stockage horizon at the same time.
+ *
+ * When `hourlyProduction` is 0 the cap returns the theoretical floor
+ * (avoids new players being locked at 0 capacity before their mines start).
+ */
+export function effectiveStorageCapacity(
+  level: number,
+  hourlyProduction: number,
+  capHoursFactor: number = 24,
+  config?: { storageBase: number; coeffA: number; coeffB: number; coeffC: number },
+): number {
+  const theoretical = storageCapacity(level, config);
+  if (hourlyProduction <= 0) return theoretical;
+  const productionBasedCap = Math.floor(hourlyProduction * capHoursFactor);
+  // Floor cap to the theoretical level-1 value so a starting player isn't
+  // crushed by their own ramp-up.
+  const floor = storageCapacity(1, config);
+  return Math.max(floor, Math.min(theoretical, productionBasedCap));
+}
+
+/**
  * Calculate the production factor based on energy balance.
  * If energy produced >= energy consumed, factor is 1.
  * Otherwise, factor is produced / consumed.

@@ -122,6 +122,7 @@ export function createBuildingService(
             name: def.name,
             description: def.description,
             currentLevel,
+            maxLevel: def.maxLevel ?? null,
             nextLevelCost: cost,
             nextLevelTime: time,
             prerequisites: resolvedPrereqs,
@@ -212,6 +213,14 @@ export function createBuildingService(
         : undefined;
 
       const currentLevel = buildingLevels[buildingId] ?? 0;
+      // Sprint 1 of the 5-pillar rebalance : enforce per-building hard cap.
+      // maxLevel is null/undefined for buildings that stay uncapped.
+      if (def.maxLevel != null && currentLevel >= def.maxLevel) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Niveau maximum atteint (${def.maxLevel})`,
+        });
+      }
       const nextLevel = currentLevel + 1;
       const cost = buildingCost(def, nextLevel, phaseMap);
       const bonusMultiplier = resolveBonus('building_time', null, buildingLevels, config.bonuses);

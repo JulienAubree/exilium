@@ -16,6 +16,10 @@ export interface BonusConfig {
   percentPerLevel: number;
   category: string | null;
   statLabel: string | null;
+  /** Sprint 1 rebalance — see packages/game-engine/src/formulas/bonus.ts. */
+  bonusType?: 'linear' | 'asymptotic';
+  softCapMax?: number | null;
+  softCapK?: number | null;
 }
 
 export interface MissionConfig {
@@ -144,6 +148,7 @@ export interface BuildingConfig {
   baseCost: { minerai: number; silicium: number; hydrogene: number };
   costFactor: number;
   baseTime: number;
+  maxLevel: number | null;
   flavorText: string | null;
   categoryId: string | null;
   sortOrder: number;

@@ -109,6 +109,7 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
       baseCost: { minerai: b.baseCostMinerai, silicium: b.baseCostSilicium, hydrogene: b.baseCostHydrogene },
       costFactor: b.costFactor,
       baseTime: b.baseTime,
+      maxLevel: b.maxLevel ?? null,
       flavorText: b.flavorText ?? null,
       categoryId: b.categoryId,
       sortOrder: b.sortOrder,
@@ -257,6 +258,9 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
     percentPerLevel: b.percentPerLevel,
     category: b.category,
     statLabel: b.statLabel ?? null,
+    bonusType: (b.bonusType as 'linear' | 'asymptotic') ?? 'linear',
+    softCapMax: b.softCapMax ?? null,
+    softCapK: b.softCapK ?? null,
   }));
 
   const missions: Record<string, MissionConfig> = {};

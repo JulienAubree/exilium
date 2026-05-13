@@ -164,6 +164,7 @@ export default function Market() {
         {marketBuilding && (
           <BuildingUpgradeCard
             currentLevel={marketBuilding.currentLevel}
+            maxLevel={marketBuilding.maxLevel}
             nextLevelCost={marketBuilding.nextLevelCost}
             nextLevelTime={marketBuilding.nextLevelTime}
             prerequisites={marketBuilding.prerequisites as any}

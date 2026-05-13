@@ -191,6 +191,7 @@ export function createResearchService(
               name: def.name,
               description: def.description,
               currentLevel,
+              maxLevel: def.maxLevel ?? null,
               nextLevelCost: cost,
               nextLevelTime: time,
               prerequisitesMet: prereqCheck.met && annexMet,

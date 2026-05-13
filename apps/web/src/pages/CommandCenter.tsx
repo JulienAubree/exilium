@@ -160,6 +160,7 @@ export default function CommandCenter() {
         {commandCenterBuilding && (
           <BuildingUpgradeCard
             currentLevel={commandCenterBuilding.currentLevel}
+            maxLevel={commandCenterBuilding.maxLevel}
             nextLevelCost={commandCenterBuilding.nextLevelCost}
             nextLevelTime={commandCenterBuilding.nextLevelTime}
             prerequisites={commandCenterBuilding.prerequisites as any}
@@ -217,6 +218,7 @@ export default function CommandCenter() {
         upgradeCard={commandCenterBuilding && (
           <BuildingUpgradeCard
             currentLevel={commandCenterBuilding.currentLevel}
+            maxLevel={commandCenterBuilding.maxLevel}
             nextLevelCost={commandCenterBuilding.nextLevelCost}
             nextLevelTime={commandCenterBuilding.nextLevelTime}
             prerequisites={commandCenterBuilding.prerequisites as any}

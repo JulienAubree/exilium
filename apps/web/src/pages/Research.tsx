@@ -205,6 +205,7 @@ export default function Research() {
           {annex && annexBuilding && (
             <BuildingUpgradeCard
               currentLevel={annexBuilding.currentLevel}
+              maxLevel={annexBuilding.maxLevel}
               nextLevelCost={annexBuilding.nextLevelCost}
               nextLevelTime={annexBuilding.nextLevelTime}
               prerequisites={annexBuilding.prerequisites as any}
@@ -263,6 +264,7 @@ export default function Research() {
         {researchLabBuilding && homePlanet && (
           <BuildingUpgradeCard
             currentLevel={researchLabBuilding.currentLevel}
+            maxLevel={researchLabBuilding.maxLevel}
             nextLevelCost={researchLabBuilding.nextLevelCost}
             nextLevelTime={researchLabBuilding.nextLevelTime}
             prerequisites={researchLabBuilding.prerequisites as any}
@@ -326,6 +328,7 @@ export default function Research() {
           homePlanet && (
             <BuildingUpgradeCard
               currentLevel={researchLabBuilding.currentLevel}
+              maxLevel={researchLabBuilding.maxLevel}
               nextLevelCost={researchLabBuilding.nextLevelCost}
               nextLevelTime={researchLabBuilding.nextLevelTime}
               prerequisites={researchLabBuilding.prerequisites as any}
