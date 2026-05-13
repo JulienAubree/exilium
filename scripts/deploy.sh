@@ -55,5 +55,9 @@ echo "==> Reloading Caddy config..."
 sudo caddy reload --config "$PROJECT_DIR/Caddyfile" 2>/dev/null || echo "    (Caddy reload skipped — not running or no permission)"
 
 echo ""
+echo "==> Deploying staging from the freshly-deployed main..."
+"$PROJECT_DIR/scripts/deploy-staging.sh"
+
+echo ""
 echo "==> Deploy complete! Checking status..."
 pm2 list
