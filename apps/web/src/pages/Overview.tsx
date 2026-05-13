@@ -20,6 +20,7 @@ import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
 // Placeholder is a subtle skeleton — users rarely notice since the hero is
 // already paintable while these resolve.
 const OverviewActivities = lazy(() => import('@/components/overview/OverviewActivities').then((m) => ({ default: m.OverviewActivities })));
+const OverviewBonuses = lazy(() => import('@/components/overview/OverviewBonuses').then((m) => ({ default: m.OverviewBonuses })));
 const AttackAlert = lazy(() => import('@/components/overview/AttackAlert').then((m) => ({ default: m.AttackAlert })));
 const GovernanceAlert = lazy(() => import('@/components/overview/GovernanceAlert').then((m) => ({ default: m.GovernanceAlert })));
 const OverviewGrid = lazy(() => import('@/components/overview/OverviewGrid').then((m) => ({ default: m.OverviewGrid })));
@@ -449,6 +450,14 @@ export default function Overview() {
       />
 
       <Suspense fallback={<LazySkel />}>
+        {/* 2b. Active bonuses (type + biomes + governance malus) */}
+        <OverviewBonuses
+          planet={planet as any}
+          resourceData={resourceData as any}
+          gameConfig={gameConfig as any}
+          governance={effectiveGovernance}
+        />
+
         {/* 3. Activities */}
         <OverviewActivities
           activeBuilding={activeBuilding as any}
