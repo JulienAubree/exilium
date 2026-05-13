@@ -77,6 +77,22 @@ export default function Missions() {
   const miningInfo = useDisclosure();
   const help = useDisclosure();
   const [filter, setFilter] = useState<MissionFilter>('all');
+  // V1 — FP minimum filter for pirate missions. Persisted in localStorage so
+  // high-level players don't have to re-set it after each visit. The user
+  // explicitly asked for this (idea feedback: "éviter les missions pirates
+  // faibles à 16-20 FP" once mission center is high level).
+  const [minPirateFP, setMinPirateFP] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = Number(window.localStorage.getItem('exilium.pirateMinFP'));
+    return Number.isFinite(stored) && stored >= 0 ? stored : 0;
+  });
+  const updateMinPirateFP = (value: number) => {
+    const clean = Math.max(0, Math.floor(value));
+    setMinPirateFP(clean);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('exilium.pirateMinFP', String(clean));
+    }
+  };
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
@@ -106,7 +122,11 @@ export default function Missions() {
   const inFuture = (d: Date | null) => !!d && d.getTime() > Date.now();
 
   const miningMissions = missions.filter((m) => m.missionType === 'mine');
-  const pirateMissions = missions.filter((m) => m.missionType === 'pirate');
+  const allPirateMissions = missions.filter((m) => m.missionType === 'pirate');
+  const pirateMissions = allPirateMissions.filter(
+    (m) => (m.pirateFP ?? 0) >= minPirateFP,
+  );
+  const filteredOutPirates = allPirateMissions.length - pirateMissions.length;
 
   // Build lookup: pveMissionId → active fleet events
   const fleetsByMission = new Map<string, typeof movements>();
@@ -391,8 +411,43 @@ export default function Missions() {
                 <div className="flex items-center gap-2 mb-4">
                   <Frown className="h-4 w-4 text-rose-400" />
                   <h3 className="text-xs font-semibold text-rose-400 uppercase tracking-wider">
-                    Repaires pirates ({pirateMissions.length}/2)
+                    Repaires pirates ({pirateMissions.length}/{allPirateMissions.length || 2})
                   </h3>
+                </div>
+              )}
+
+              {/* FP min filter */}
+              {allPirateMissions.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border/30 bg-card/40 px-3 py-2">
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground">FP min</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={10}
+                    value={minPirateFP}
+                    onChange={(e) => updateMinPirateFP(Number(e.target.value) || 0)}
+                    className="w-20 h-7 rounded border border-border bg-card/60 px-2 text-sm tabular-nums focus:outline-none focus:border-rose-500/40"
+                  />
+                  {[0, 50, 100, 250, 500, 1000].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => updateMinPirateFP(preset)}
+                      className={cn(
+                        'rounded border px-2 py-0.5 text-[11px] font-mono transition-colors',
+                        minPirateFP === preset
+                          ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
+                          : 'border-border/40 bg-card/30 text-muted-foreground hover:bg-card/60',
+                      )}
+                    >
+                      {preset === 0 ? 'Tout' : `≥${preset}`}
+                    </button>
+                  ))}
+                  {filteredOutPirates > 0 && (
+                    <span className="ml-auto text-[11px] text-muted-foreground italic">
+                      {filteredOutPirates} repaire{filteredOutPirates > 1 ? 's' : ''} masqué{filteredOutPirates > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
               )}
 
