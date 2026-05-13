@@ -56,6 +56,15 @@ sudo caddy reload --config "$PROJECT_DIR/Caddyfile" 2>/dev/null || echo "    (Ca
 
 echo ""
 echo "==> Deploying staging from the freshly-deployed main..."
+# Unset every variable we sourced from prod's .env so it doesn't leak into
+# the staging deploy. Otherwise pm2 reload --update-env propagates prod's
+# API_PORT/REDIS_URL/etc. onto the staging processes (port 3000 conflict
+# observed in production), and apply-migrations.sh inherits prod's
+# DATABASE_URL — making it query prod's _migrations table while pretending
+# to run against staging.
+for var in $(grep -v '^#' .env | grep -E '^[A-Z_][A-Z0-9_]*=' | cut -d'=' -f1); do
+  unset "$var"
+done
 "$PROJECT_DIR/scripts/deploy-staging.sh"
 
 echo ""
