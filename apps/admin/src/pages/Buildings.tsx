@@ -18,6 +18,7 @@ function getFields() {
     { key: 'baseCostHydrogene', label: 'Coût Hydrogène (base)', type: 'number' as const },
     { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
     { key: 'baseTime', label: 'Temps de base (s)', type: 'number' as const },
+    { key: 'maxLevel', label: 'Niveau max (vide = aucun cap)', type: 'number' as const },
     { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
     { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
     { key: 'role', label: 'Rôle', type: 'text' as const },
@@ -31,7 +32,7 @@ function getCreateFields() {
   ];
 }
 
-const MAX_LEVEL = 25;
+const DEFAULT_MAX_LEVEL = 25;
 
 // Production-related building IDs mapped to their production config ID
 const PRODUCTION_MAP: Record<string, string> = {
@@ -67,12 +68,13 @@ interface LevelRow {
 }
 
 function computeLevelRows(
-  building: { baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; baseTime: number },
+  building: { baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; baseTime: number; maxLevel: number | null },
   productionConf: { baseProduction: number; exponentBase: number; energyConsumption: number | null; storageBase: number | null } | null,
   isStorage: boolean,
 ): LevelRow[] {
   const rows: LevelRow[] = [];
-  for (let level = 1; level <= MAX_LEVEL; level++) {
+  const upper = building.maxLevel ?? DEFAULT_MAX_LEVEL;
+  for (let level = 1; level <= upper; level++) {
     const factor = Math.pow(building.costFactor, level - 1);
     const costMinerai = Math.floor(building.baseCost.minerai * factor);
     const costSilicium = Math.floor(building.baseCost.silicium * factor);
@@ -162,6 +164,9 @@ export default function Buildings() {
   const [newBonusStat, setNewBonusStat] = useState('building_time');
   const [newBonusPct, setNewBonusPct] = useState(-15);
   const [newBonusCategory, setNewBonusCategory] = useState('');
+  const [newBonusType, setNewBonusType] = useState<'linear' | 'asymptotic'>('linear');
+  const [newSoftCapMax, setNewSoftCapMax] = useState<number>(1.5);
+  const [newSoftCapK, setNewSoftCapK] = useState<number>(0.15);
 
   if (isLoading) return <PageSkeleton />;
   if (!data) return null;
@@ -269,6 +274,11 @@ export default function Buildings() {
                                 <span className={bn.percentPerLevel < 0 ? 'text-emerald-400' : 'text-sky-400'}>
                                   {bn.percentPerLevel > 0 ? '+' : ''}{bn.percentPerLevel}%/niv
                                 </span>
+                                {bn.bonusType === 'asymptotic' && (
+                                  <span className="text-purple-400 text-[10px]" title={`Asymptotic — plafond ${((bn.softCapMax ?? 0) * 100).toFixed(0)}%, k=${bn.softCapK}`}>
+                                    asym→{((bn.softCapMax ?? 0) * 100).toFixed(0)}%
+                                  </span>
+                                )}
                                 {bn.category && <span className="text-gray-500">({bn.category})</span>}
                                 <button
                                   onClick={() => deleteBonusMutation.mutate({ id: bn.id })}
@@ -280,56 +290,94 @@ export default function Buildings() {
                               </div>
                             ))}
                             {addingBonusFor === b.id ? (
-                              <div className="flex items-center gap-1 mt-1">
-                                <select
-                                  value={newBonusStat}
-                                  onChange={(e) => setNewBonusStat(e.target.value)}
-                                  className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
-                                >
-                                  {statOptions.map((s) => (
-                                    <option key={s.value} value={s.value}>{s.label}</option>
-                                  ))}
-                                </select>
-                                <input
-                                  type="number"
-                                  value={newBonusPct}
-                                  onChange={(e) => setNewBonusPct(Number(e.target.value))}
-                                  className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
-                                  placeholder="%/niv"
-                                />
-                                <input
-                                  type="text"
-                                  value={newBonusCategory}
-                                  onChange={(e) => setNewBonusCategory(e.target.value)}
-                                  className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-20"
-                                  placeholder="catégorie"
-                                />
-                                <button
-                                  onClick={() => {
-                                    const cat = newBonusCategory || null;
-                                    const id = cat
-                                      ? `${b.id}__${newBonusStat}__${cat}`
-                                      : `${b.id}__${newBonusStat}`;
-                                    createBonusMutation.mutate({
-                                      id,
-                                      sourceType: 'building',
-                                      sourceId: b.id,
-                                      stat: newBonusStat,
-                                      percentPerLevel: newBonusPct,
-                                      category: cat,
-                                    });
-                                    setAddingBonusFor(null);
-                                  }}
-                                  className="admin-btn-primary text-xs px-1.5 py-0.5"
-                                >
-                                  OK
-                                </button>
-                                <button
-                                  onClick={() => setAddingBonusFor(null)}
-                                  className="admin-btn-ghost text-xs px-1 py-0.5"
-                                >
-                                  ✕
-                                </button>
+                              <div className="flex flex-col gap-1 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <select
+                                    value={newBonusStat}
+                                    onChange={(e) => setNewBonusStat(e.target.value)}
+                                    className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
+                                  >
+                                    {statOptions.map((s) => (
+                                      <option key={s.value} value={s.value}>{s.label}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    type="number"
+                                    value={newBonusPct}
+                                    onChange={(e) => setNewBonusPct(Number(e.target.value))}
+                                    className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                    placeholder="%/niv"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={newBonusCategory}
+                                    onChange={(e) => setNewBonusCategory(e.target.value)}
+                                    className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-20"
+                                    placeholder="catégorie"
+                                  />
+                                  <select
+                                    value={newBonusType}
+                                    onChange={(e) => setNewBonusType(e.target.value as 'linear' | 'asymptotic')}
+                                    className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
+                                    title="Type de scaling"
+                                  >
+                                    <option value="linear">linéaire</option>
+                                    <option value="asymptotic">asymptotique</option>
+                                  </select>
+                                </div>
+                                {newBonusType === 'asymptotic' && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-gray-500">plafond</span>
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      value={newSoftCapMax}
+                                      onChange={(e) => setNewSoftCapMax(Number(e.target.value))}
+                                      className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                      placeholder="max (ex 1.5 = +150%)"
+                                    />
+                                    <span className="text-xs text-gray-500">k</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={newSoftCapK}
+                                      onChange={(e) => setNewSoftCapK(Number(e.target.value))}
+                                      className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                      placeholder="0.15"
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => {
+                                      const cat = newBonusCategory || null;
+                                      const id = cat
+                                        ? `${b.id}__${newBonusStat}__${cat}`
+                                        : `${b.id}__${newBonusStat}`;
+                                      createBonusMutation.mutate({
+                                        id,
+                                        sourceType: 'building',
+                                        sourceId: b.id,
+                                        stat: newBonusStat,
+                                        percentPerLevel: newBonusPct,
+                                        category: cat,
+                                        bonusType: newBonusType,
+                                        softCapMax: newBonusType === 'asymptotic' ? newSoftCapMax : null,
+                                        softCapK: newBonusType === 'asymptotic' ? newSoftCapK : null,
+                                      });
+                                      setAddingBonusFor(null);
+                                    }}
+                                    className="admin-btn-primary text-xs px-1.5 py-0.5"
+                                  >
+                                    OK
+                                  </button>
+                                  <button
+                                    onClick={() => setAddingBonusFor(null)}
+                                    className="admin-btn-ghost text-xs px-1 py-0.5"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <button
@@ -384,7 +432,7 @@ export default function Buildings() {
                       <td colSpan={13} className="!p-0 !bg-panel/60">
                         <div className="px-6 py-3">
                           <div className="text-xs font-medium text-hull-400 mb-2 uppercase tracking-wider">
-                            Progression niveaux 1–{MAX_LEVEL}
+                            Progression niveaux 1–{b.maxLevel ?? DEFAULT_MAX_LEVEL}{b.maxLevel != null && ' (plafond)'}
                             <span className="text-gray-500 normal-case tracking-normal ml-2">(temps sans usine de robots)</span>
                           </div>
                           <div className="max-h-[400px] overflow-y-auto rounded border border-panel-border/50">
@@ -461,10 +509,15 @@ export default function Buildings() {
             baseCostHydrogene: editingBuilding.baseCost.hydrogene,
             costFactor: editingBuilding.costFactor,
             baseTime: editingBuilding.baseTime,
+            maxLevel: editingBuilding.maxLevel ?? '',
             sortOrder: editingBuilding.sortOrder,
             role: editingBuilding.role ?? '',
           }}
           onSave={(values) => {
+            const ml = values.maxLevel;
+            const maxLevel = ml === '' || ml === null || ml === undefined
+              ? null
+              : Number(ml);
             updateMutation.mutate({
               id: editing!,
               data: {
@@ -475,6 +528,7 @@ export default function Buildings() {
                 baseCostHydrogene: values.baseCostHydrogene as number,
                 costFactor: values.costFactor as number,
                 baseTime: values.baseTime as number,
+                maxLevel,
                 sortOrder: values.sortOrder as number,
                 role: (values.role as string) || null,
               },
@@ -499,10 +553,15 @@ export default function Buildings() {
             baseCostHydrogene: 0,
             costFactor: 1.5,
             baseTime: 60,
+            maxLevel: 25,
             sortOrder: 0,
             role: '',
           }}
           onSave={(values) => {
+            const ml = values.maxLevel;
+            const maxLevel = ml === '' || ml === null || ml === undefined
+              ? null
+              : Number(ml);
             createMutation.mutate({
               id: values.id as string,
               name: values.name as string,
@@ -512,6 +571,7 @@ export default function Buildings() {
               baseCostHydrogene: values.baseCostHydrogene as number,
               costFactor: values.costFactor as number,
               baseTime: values.baseTime as number,
+              maxLevel,
               sortOrder: values.sortOrder as number,
               role: (values.role as string) || null,
             });

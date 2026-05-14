@@ -432,7 +432,7 @@ export default function Research() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium truncate">{tech.name}</span>
                             <Badge variant="secondary" className="text-xs ml-2">
-                              Niv. {tech.currentLevel}
+                              Niv. {tech.currentLevel}{tech.maxLevel != null && `/${tech.maxLevel}`}
                             </Badge>
                           </div>
                           {tech.isResearching && tech.researchEndTime ? (
@@ -533,7 +533,7 @@ export default function Research() {
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-2 right-2 bg-emerald-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                            Niv. {tech.currentLevel}
+                            Niv. {tech.currentLevel}{tech.maxLevel != null && `/${tech.maxLevel}`}
                           </span>
                         </div>
 

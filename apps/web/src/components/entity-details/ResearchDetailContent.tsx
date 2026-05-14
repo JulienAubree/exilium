@@ -185,12 +185,32 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
           className="w-full h-full object-cover"
         />
         <span className="absolute bottom-3 right-3 bg-emerald-700 text-white text-xs font-bold px-3 py-1 rounded-full">
-          Niveau {currentLevel}
+          Niveau {currentLevel}{(() => {
+            const ml = (gameConfig?.research?.[researchId] as { maxLevel?: number | null } | undefined)?.maxLevel;
+            return ml != null ? ` / ${ml}` : '';
+          })()}
         </span>
       </div>
 
       {/* Research name */}
       <h3 className="text-lg font-semibold text-white">{details.name}</h3>
+
+      {/* Asymptotic badge — appears when at least one of this research's bonuses
+          uses the soft-cap curve. Lets the player know the +X%/niv slows down. */}
+      {matchingBonuses.some((bn) => bn.bonusType === 'asymptotic') && (
+        <div className="flex items-center gap-2 rounded-md border border-violet-500/40 bg-violet-950/30 px-3 py-1.5 text-xs">
+          <span className="text-violet-300 font-semibold uppercase tracking-wider text-[10px]">
+            Rendements décroissants
+          </span>
+          <span className="text-violet-200/80">
+            {(() => {
+              const asymp = matchingBonuses.find((bn) => bn.bonusType === 'asymptotic');
+              if (!asymp?.softCapMax) return null;
+              return `plafond +${Math.round(asymp.softCapMax * 100)}% (le bonus ralentit avec le niveau)`;
+            })()}
+          </span>
+        </div>
+      )}
 
       {/* Flavor text */}
       {details.flavorText && (

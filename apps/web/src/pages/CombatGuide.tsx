@@ -102,6 +102,32 @@ function BeginnerTab() {
         </div>
       </section>
 
+      {/* Section 2quater: Soft-cap des recherches combat */}
+      <section className="glass-card p-4 space-y-2 border border-violet-500/30">
+        <h3 className="text-sm font-semibold text-violet-300">Rendements décroissants des recherches combat</h3>
+        <div className="text-xs text-muted-foreground space-y-2">
+          <p>
+            Les recherches d'armement, blindage, boucliers et propulsion ne sont <span className="text-foreground font-semibold">plus linéaires</span> :
+            chaque niveau apporte moins que le précédent, et le bonus tend vers un plafond.
+          </p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li>
+              <span className="text-foreground">Armes / Bouclier / Protection</span> : asymptote +150% (vs +200% au niv. 20 en linéaire).
+              Au niv. 5 le bonus vaut déjà <span className="text-foreground">+79%</span>, au niv. 20 <span className="text-foreground">+143%</span>.
+            </li>
+            <li>
+              <span className="text-foreground">Propulsion</span> : asymptotes proportionnelles à la techno (Combustion +150%, Impulsion +300%, Hyperespace +450%).
+            </li>
+            <li>
+              <span className="text-foreground">Annexes biomes</span> (volcanique, aride, glaciale, gazeuse) suivent la même courbe et <span className="text-foreground">cumulent</span> avec leur parent.
+            </li>
+          </ul>
+          <p className="mt-2">
+            <span className="text-foreground font-semibold">Pourquoi ?</span> Pour compresser le gap entre vétérans et débutants — un joueur à niv. 5 ne se fait pas écraser par un joueur à niv. 50 avec +500% de dégâts.
+          </p>
+        </div>
+      </section>
+
       {/* Section 2bis: Traits de combat */}
       <section className="glass-card p-4 space-y-2">
         <h3 className="text-sm font-semibold text-primary">Traits de combat</h3>

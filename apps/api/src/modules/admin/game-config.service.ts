@@ -105,6 +105,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       baseCostHydrogene?: number;
       costFactor?: number;
       baseTime?: number;
+      maxLevel?: number | null;
       flavorText?: string | null;
       categoryId?: string | null;
       sortOrder?: number;
@@ -119,6 +120,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
         baseCostHydrogene: data.baseCostHydrogene ?? 0,
         costFactor: data.costFactor ?? 1.5,
         baseTime: data.baseTime ?? 60,
+        maxLevel: data.maxLevel ?? null,
         flavorText: data.flavorText ?? null,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
@@ -176,6 +178,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       baseCostHydrogene: number;
       costFactor: number;
       baseTime: number;
+      maxLevel: number | null;
       flavorText: string | null;
       categoryId: string | null;
       sortOrder: number;
@@ -207,6 +210,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       baseCostSilicium?: number;
       baseCostHydrogene?: number;
       costFactor?: number;
+      maxLevel?: number | null;
       flavorText?: string | null;
       effectDescription?: string | null;
       levelColumn: string;
@@ -221,6 +225,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
         baseCostSilicium: data.baseCostSilicium ?? 0,
         baseCostHydrogene: data.baseCostHydrogene ?? 0,
         costFactor: data.costFactor ?? 2,
+        maxLevel: data.maxLevel ?? null,
         flavorText: data.flavorText ?? null,
         effectDescription: data.effectDescription ?? null,
         levelColumn: data.levelColumn,
@@ -266,6 +271,7 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       baseCostSilicium: number;
       baseCostHydrogene: number;
       costFactor: number;
+      maxLevel: number | null;
       flavorText: string | null;
       effectDescription: string | null;
       categoryId: string | null;
@@ -646,6 +652,9 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       percentPerLevel: number;
       category?: string | null;
       statLabel?: string | null;
+      bonusType?: 'linear' | 'asymptotic';
+      softCapMax?: number | null;
+      softCapK?: number | null;
     }) {
       await db.insert(bonusDefinitions).values({
         id: data.id,
@@ -655,6 +664,9 @@ export function createGameConfigService(db: Database, redis?: Redis) {
         percentPerLevel: data.percentPerLevel,
         category: data.category ?? null,
         statLabel: data.statLabel ?? null,
+        bonusType: data.bonusType ?? 'linear',
+        softCapMax: data.softCapMax ?? null,
+        softCapK: data.softCapK ?? null,
       });
       invalidateCache();
     },
@@ -664,6 +676,9 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       percentPerLevel: number;
       category: string | null;
       statLabel: string | null;
+      bonusType: 'linear' | 'asymptotic';
+      softCapMax: number | null;
+      softCapK: number | null;
     }>) {
       await db.update(bonusDefinitions).set(data).where(eq(bonusDefinitions.id, id));
       invalidateCache();

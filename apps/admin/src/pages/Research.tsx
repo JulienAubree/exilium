@@ -15,6 +15,7 @@ const FIELDS = [
   { key: 'baseCostSilicium', label: 'Coût Silicium (base)', type: 'number' as const },
   { key: 'baseCostHydrogene', label: 'Coût Hydrogène (base)', type: 'number' as const },
   { key: 'costFactor', label: 'Facteur de cout', type: 'number' as const, step: '0.1' },
+  { key: 'maxLevel', label: 'Niveau max (vide = aucun cap)', type: 'number' as const },
   { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
   { key: 'effectDescription', label: "Description d'effet", type: 'textarea' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
@@ -89,6 +90,9 @@ export default function Research() {
   const [newBonusStat, setNewBonusStat] = useState('weapons');
   const [newBonusPct, setNewBonusPct] = useState(10);
   const [newBonusCategory, setNewBonusCategory] = useState('');
+  const [newBonusType, setNewBonusType] = useState<'linear' | 'asymptotic'>('asymptotic');
+  const [newSoftCapMax, setNewSoftCapMax] = useState<number>(1.5);
+  const [newSoftCapK, setNewSoftCapK] = useState<number>(0.15);
 
   if (isLoading) return <PageSkeleton />;
   if (!data) return null;
@@ -153,6 +157,11 @@ export default function Research() {
                             <span className={bn.percentPerLevel < 0 ? 'text-emerald-400' : 'text-sky-400'}>
                               {bn.percentPerLevel > 0 ? '+' : ''}{bn.percentPerLevel}%/niv
                             </span>
+                            {bn.bonusType === 'asymptotic' && (
+                              <span className="text-purple-400 text-[10px]" title={`Asymptotic — plafond ${((bn.softCapMax ?? 0) * 100).toFixed(0)}%, k=${bn.softCapK}`}>
+                                asym→{((bn.softCapMax ?? 0) * 100).toFixed(0)}%
+                              </span>
+                            )}
                             {bn.category && <span className="text-gray-500">({bn.category})</span>}
                             <button
                               onClick={() => deleteBonusMutation.mutate({ id: bn.id })}
@@ -164,56 +173,94 @@ export default function Research() {
                           </div>
                         ))}
                         {addingBonusFor === r.id ? (
-                          <div className="flex items-center gap-1 mt-1">
-                            <select
-                              value={newBonusStat}
-                              onChange={(e) => setNewBonusStat(e.target.value)}
-                              className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
-                            >
-                              {statOptions.map((s) => (
-                                <option key={s.value} value={s.value}>{s.label}</option>
-                              ))}
-                            </select>
-                            <input
-                              type="number"
-                              value={newBonusPct}
-                              onChange={(e) => setNewBonusPct(Number(e.target.value))}
-                              className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
-                              placeholder="%/niv"
-                            />
-                            <input
-                              type="text"
-                              value={newBonusCategory}
-                              onChange={(e) => setNewBonusCategory(e.target.value)}
-                              className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-20"
-                              placeholder="catégorie"
-                            />
-                            <button
-                              onClick={() => {
-                                const cat = newBonusCategory || null;
-                                const id = cat
-                                  ? `${r.id}__${newBonusStat}__${cat}`
-                                  : `${r.id}__${newBonusStat}`;
-                                createBonusMutation.mutate({
-                                  id,
-                                  sourceType: 'research',
-                                  sourceId: r.id,
-                                  stat: newBonusStat,
-                                  percentPerLevel: newBonusPct,
-                                  category: cat,
-                                });
-                                setAddingBonusFor(null);
-                              }}
-                              className="admin-btn-primary text-xs px-1.5 py-0.5"
-                            >
-                              OK
-                            </button>
-                            <button
-                              onClick={() => setAddingBonusFor(null)}
-                              className="admin-btn-ghost text-xs px-1 py-0.5"
-                            >
-                              ✕
-                            </button>
+                          <div className="flex flex-col gap-1 mt-1">
+                            <div className="flex items-center gap-1">
+                              <select
+                                value={newBonusStat}
+                                onChange={(e) => setNewBonusStat(e.target.value)}
+                                className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
+                              >
+                                {statOptions.map((s) => (
+                                  <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                value={newBonusPct}
+                                onChange={(e) => setNewBonusPct(Number(e.target.value))}
+                                className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                placeholder="%/niv"
+                              />
+                              <input
+                                type="text"
+                                value={newBonusCategory}
+                                onChange={(e) => setNewBonusCategory(e.target.value)}
+                                className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-20"
+                                placeholder="catégorie"
+                              />
+                              <select
+                                value={newBonusType}
+                                onChange={(e) => setNewBonusType(e.target.value as 'linear' | 'asymptotic')}
+                                className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs"
+                                title="Type de scaling"
+                              >
+                                <option value="linear">linéaire</option>
+                                <option value="asymptotic">asymptotique</option>
+                              </select>
+                            </div>
+                            {newBonusType === 'asymptotic' && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500">plafond</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={newSoftCapMax}
+                                  onChange={(e) => setNewSoftCapMax(Number(e.target.value))}
+                                  className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                  placeholder="max (1.5 = +150%)"
+                                />
+                                <span className="text-xs text-gray-500">k</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={newSoftCapK}
+                                  onChange={(e) => setNewSoftCapK(Number(e.target.value))}
+                                  className="bg-panel border border-panel-border rounded px-1 py-0.5 text-xs w-16"
+                                  placeholder="0.15"
+                                />
+                              </div>
+                            )}
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  const cat = newBonusCategory || null;
+                                  const id = cat
+                                    ? `${r.id}__${newBonusStat}__${cat}`
+                                    : `${r.id}__${newBonusStat}`;
+                                  createBonusMutation.mutate({
+                                    id,
+                                    sourceType: 'research',
+                                    sourceId: r.id,
+                                    stat: newBonusStat,
+                                    percentPerLevel: newBonusPct,
+                                    category: cat,
+                                    bonusType: newBonusType,
+                                    softCapMax: newBonusType === 'asymptotic' ? newSoftCapMax : null,
+                                    softCapK: newBonusType === 'asymptotic' ? newSoftCapK : null,
+                                  });
+                                  setAddingBonusFor(null);
+                                }}
+                                className="admin-btn-primary text-xs px-1.5 py-0.5"
+                              >
+                                OK
+                              </button>
+                              <button
+                                onClick={() => setAddingBonusFor(null)}
+                                className="admin-btn-ghost text-xs px-1 py-0.5"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
@@ -281,9 +328,16 @@ export default function Research() {
             baseCostSilicium: editingResearch.baseCost.silicium,
             baseCostHydrogene: editingResearch.baseCost.hydrogene,
             costFactor: editingResearch.costFactor,
+            maxLevel: editingResearch.maxLevel ?? '',
+            flavorText: editingResearch.flavorText ?? '',
+            effectDescription: editingResearch.effectDescription ?? '',
             sortOrder: editingResearch.sortOrder,
           }}
           onSave={(values) => {
+            const ml = values.maxLevel;
+            const maxLevel = ml === '' || ml === null || ml === undefined
+              ? null
+              : Number(ml);
             updateMutation.mutate({
               id: editing!,
               data: {
@@ -293,6 +347,9 @@ export default function Research() {
                 baseCostSilicium: values.baseCostSilicium as number,
                 baseCostHydrogene: values.baseCostHydrogene as number,
                 costFactor: values.costFactor as number,
+                maxLevel,
+                flavorText: (values.flavorText as string) || null,
+                effectDescription: (values.effectDescription as string) || null,
                 sortOrder: values.sortOrder as number,
               },
             });
@@ -316,9 +373,16 @@ export default function Research() {
             baseCostSilicium: 0,
             baseCostHydrogene: 0,
             costFactor: 2,
+            maxLevel: 20,
+            flavorText: '',
+            effectDescription: '',
             sortOrder: 0,
           }}
           onSave={(values) => {
+            const ml = values.maxLevel;
+            const maxLevel = ml === '' || ml === null || ml === undefined
+              ? null
+              : Number(ml);
             createMutation.mutate({
               id: values.id as string,
               name: values.name as string,
@@ -327,6 +391,9 @@ export default function Research() {
               baseCostSilicium: values.baseCostSilicium as number,
               baseCostHydrogene: values.baseCostHydrogene as number,
               costFactor: values.costFactor as number,
+              maxLevel,
+              flavorText: (values.flavorText as string) || null,
+              effectDescription: (values.effectDescription as string) || null,
               levelColumn: values.levelColumn as string,
               sortOrder: values.sortOrder as number,
             });

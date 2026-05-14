@@ -117,7 +117,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
           hasVariant={hasVariant}
         />
         <span className="absolute bottom-3 right-3 bg-emerald-700 text-white text-xs font-bold px-3 py-1 rounded-full">
-          Niveau {currentLevel}
+          Niveau {currentLevel}{configDef?.maxLevel != null && ` / ${configDef.maxLevel}`}
         </span>
       </div>
 
