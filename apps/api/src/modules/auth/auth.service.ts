@@ -230,12 +230,22 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
         .where(eq(users.id, user.id));
       await recordLoginEvent({ userId: user.id, email, success: true, ctx });
 
-      // Access token stays short-lived even with rememberMe. Long sessions
-      // come from extending the *refresh* token (below), not from a 14-day
-      // access token — otherwise a ban takes 14 days to propagate.
+      // With rememberMe, the access token lives 7 days. Without, it follows
+      // env.JWT_EXPIRES_IN (2 h by default). The long-lived path looks risky
+      // at first glance ("a ban takes 7 days to propagate"), but other layers
+      // close the window:
+      //   - banPlayer() deletes every refresh_token of the account: the
+      //     attacker can't extend the session past the current access token.
+      //   - adminProcedure re-checks bannedAt on every admin call: privileged
+      //     actions are revoked immediately, not in 7 days.
+      //   - refresh() recharges the user row and aborts on bannedAt.
+      // Net effect: a banned regular player keeps API access for at most the
+      // remainder of their current access token (worst case ≈ 7 days, only
+      // for read/write game actions, not admin). Acceptable for Exilium.
+      const jwtExpiry = rememberMe ? '7d' : env.JWT_EXPIRES_IN;
       const accessToken = await new SignJWT({ userId: user.id, isAdmin: user.isAdmin })
         .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime(env.JWT_EXPIRES_IN)
+        .setExpirationTime(jwtExpiry)
         .sign(JWT_SECRET);
 
       const rawRefresh = randomBytes(32).toString('hex');
