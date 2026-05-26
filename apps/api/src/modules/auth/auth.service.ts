@@ -276,43 +276,75 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
     async refresh(rawRefreshToken: string) {
       const tokenHash = hashToken(rawRefreshToken);
 
-      const [stored] = await db
-        .select()
-        .from(refreshTokens)
-        .where(eq(refreshTokens.tokenHash, tokenHash))
-        .limit(1);
+      // Run the whole rotation in a single transaction so two concurrent
+      // refreshes can't end up with the old token deleted and one of the
+      // new tokens orphaned. The DELETE returns rows so we can detect the
+      // race: if no row was deleted, another tab beat us to it and we
+      // refuse this attempt rather than create a parallel session.
+      const result = await db.transaction(async (tx) => {
+        const [stored] = await tx
+          .select()
+          .from(refreshTokens)
+          .where(eq(refreshTokens.tokenHash, tokenHash))
+          .limit(1);
 
-      if (!stored || stored.expiresAt < new Date()) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid refresh token' });
+        if (!stored || stored.expiresAt < new Date()) {
+          return { ok: false as const, reason: 'invalid_token' as const };
+        }
+
+        // Re-check the account before minting a new access token. Without
+        // this, a banned/deleted player keeps refreshing indefinitely.
+        const [user] = await tx
+          .select({ id: users.id, bannedAt: users.bannedAt, isAdmin: users.isAdmin })
+          .from(users)
+          .where(eq(users.id, stored.userId))
+          .limit(1);
+        if (!user) {
+          await tx.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
+          return { ok: false as const, reason: 'user_missing' as const };
+        }
+        if (user.bannedAt) {
+          await tx.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
+          return { ok: false as const, reason: 'banned' as const, userId: stored.userId };
+        }
+
+        // Returning to detect a lost race: if rowCount === 0, another tab
+        // already rotated this token and consumed it. We must NOT mint a
+        // fresh session for the loser.
+        const deleted = await tx
+          .delete(refreshTokens)
+          .where(eq(refreshTokens.id, stored.id))
+          .returning({ id: refreshTokens.id });
+        if (deleted.length === 0) {
+          return { ok: false as const, reason: 'race_lost' as const, userId: stored.userId };
+        }
+
+        await tx
+          .update(users)
+          .set({
+            previousLoginAt: PREVIOUS_LOGIN_SNAPSHOT,
+            lastLoginAt: sql`now()`,
+          })
+          .where(eq(users.id, stored.userId));
+
+        return { ok: true as const, userId: stored.userId, isAdmin: user.isAdmin };
+      });
+
+      if (!result.ok) {
+        // Only `race_lost` is benign and expected (multi-tab). The rest are
+        // either genuine auth failures or signals to investigate.
+        if (result.reason !== 'race_lost') {
+          console.warn(
+            `[auth.refresh] rejected: ${result.reason}${'userId' in result ? ` (user ${result.userId})` : ''}`,
+          );
+        }
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: result.reason === 'banned' ? 'Account disabled' : 'Invalid refresh token',
+        });
       }
 
-      // Re-check the account before minting a new access token. Without this,
-      // a banned/deleted player keeps refreshing indefinitely.
-      const [user] = await db
-        .select({ id: users.id, bannedAt: users.bannedAt })
-        .from(users)
-        .where(eq(users.id, stored.userId))
-        .limit(1);
-      if (!user || user.bannedAt) {
-        // Revoke every refresh token on the account so the client cannot
-        // simply retry.
-        await db.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Account disabled' });
-      }
-
-      await db.delete(refreshTokens).where(eq(refreshTokens.id, stored.id));
-
-      // Update lastLoginAt so admin "Actifs 1h/24h/7j" reflects ongoing activity,
-      // not just explicit logins. Refresh fires ~every JWT lifetime (15 min by default).
-      await db
-        .update(users)
-        .set({
-          previousLoginAt: PREVIOUS_LOGIN_SNAPSHOT,
-          lastLoginAt: sql`now()`,
-        })
-        .where(eq(users.id, stored.userId));
-
-      const accessToken = await new SignJWT({ userId: stored.userId })
+      const accessToken = await new SignJWT({ userId: result.userId, isAdmin: result.isAdmin })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime(env.JWT_EXPIRES_IN)
         .sign(JWT_SECRET);
@@ -321,7 +353,7 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
       const expiresAt = new Date(Date.now() + parseExpiry(env.REFRESH_TOKEN_EXPIRES_IN) * 1000);
 
       await db.insert(refreshTokens).values({
-        userId: stored.userId,
+        userId: result.userId,
         tokenHash: hashToken(newRawRefresh),
         expiresAt,
       });
