@@ -1,8 +1,19 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@exilium/api/trpc';
+import { useAuthStore } from './stores/auth.store';
 
 export const trpc = createTRPCReact<AppRouter>();
+
+// Bridge to React Query, wired up by App.tsx. A successful background token
+// refresh (startup, proactive timer, or returning to the app) calls this so
+// the on-screen queries get re-pulled. Without it, any query that errored out
+// during the brief window where the access token was expired stays stuck with
+// no data — the "logged in but everything is zero until I re-login" bug.
+let onRefreshSuccess: (() => void) | null = null;
+export function setOnRefreshSuccess(cb: (() => void) | null) {
+  onRefreshSuccess = cb;
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Token refresh strategy
@@ -76,8 +87,11 @@ async function callRefresh(refreshToken: string): Promise<RefreshAttempt> {
       const json = await res.json();
       const result = json?.result?.data?.json;
       if (result?.accessToken && result?.refreshToken) {
-        localStorage.setItem('accessToken', result.accessToken);
-        localStorage.setItem('refreshToken', result.refreshToken);
+        // Update the Zustand store (not just localStorage) so subscribers —
+        // the router's auth gate and the SSE connection — see the fresh token.
+        // Writing straight to localStorage left useSSE pinned to the stale
+        // token, silently killing real-time updates after every refresh.
+        useAuthStore.getState().setTokens(result.accessToken, result.refreshToken);
         return { kind: 'ok' };
       }
       // Malformed success — treat as transient so we retry.
@@ -103,8 +117,9 @@ const REFRESH_RETRY_DELAYS_MS = [800, 2_000, 4_000];
 
 function forceLogout() {
   if (proactiveRefreshTimer) clearTimeout(proactiveRefreshTimer);
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
+  // Clear through the store so in-memory subscribers drop the session too,
+  // not just localStorage.
+  useAuthStore.getState().clearAuth();
   // Redirect to login only if not already there.
   if (!window.location.pathname.startsWith('/login')) {
     window.location.href = '/login';
@@ -138,6 +153,10 @@ async function performCoordinatedRefresh(forceLogoutOnInvalid: boolean): Promise
         lastKind = result.kind;
         if (result.kind === 'ok') {
           scheduleProactiveRefresh();
+          // Re-pull on-screen data now that a valid token is in place. This is
+          // what rescues a dashboard that errored out to zeros while the token
+          // was expired, without waiting for a manual re-login.
+          onRefreshSuccess?.();
           return true;
         }
         if (result.kind === 'invalid') break;
