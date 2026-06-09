@@ -1,4 +1,4 @@
-import { Sparkles, Star, Crosshair, Wrench, Layers, Shield, FlaskConical, Sword } from 'lucide-react';
+import { Sparkles, Wrench, Layers, FlaskConical } from 'lucide-react';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { FacilityHelpSection } from '@/components/common/FacilityHelp';
 
@@ -8,8 +8,8 @@ interface FlagshipHelpProps {
 }
 
 /**
- * V8-FlagshipRework : aide modale ouverte au clic sur le rond image du
- * FlagshipHero. Pattern aligné sur ResearchHelp / ShipyardHelp / etc.
+ * Aide modale ouverte au clic sur le rond image du FlagshipHero.
+ * Pattern aligné sur ResearchHelp / ShipyardHelp / etc.
  */
 export function FlagshipHelp({ open, onClose }: FlagshipHelpProps) {
   return (
@@ -18,7 +18,7 @@ export function FlagshipHelp({ open, onClose }: FlagshipHelpProps) {
         icon={<Sparkles className="h-3.5 w-3.5 text-violet-400" />}
         title="Rôle"
       >
-        Votre vaisseau amiral est l'<span className="text-foreground font-medium">avatar de combat</span> de votre empire. Il s'engage seul dans les <span className="text-foreground font-medium">anomalies gravitationnelles</span> (rogue-lite à profondeur croissante) et débloque des <span className="text-foreground font-medium">missions spécialisées</span> selon sa coque (minage, recyclage, scan, exploration).
+        Votre vaisseau amiral est l'<span className="text-foreground font-medium">avatar de combat</span> de votre empire. Il combat à la tête de vos flottes et débloque des <span className="text-foreground font-medium">capacités spécialisées</span> selon sa coque (scan, minage, exploration).
       </FacilityHelpSection>
 
       <FacilityHelpSection
@@ -27,60 +27,25 @@ export function FlagshipHelp({ open, onClose }: FlagshipHelpProps) {
       >
         Trois familles, chacune avec son rôle&nbsp;:
         <span className="block mt-1.5 space-y-0.5">
-          <span className="block"><span className="text-red-400 font-medium">Combat</span> — armement+, blindage+, profil de tir agressif (anti-medium / rafales / cascade).</span>
-          <span className="block"><span className="text-amber-400 font-medium">Industrielle</span> — coque robuste, missions de minage et recyclage de débris.</span>
-          <span className="block"><span className="text-cyan-400 font-medium">Scientifique</span> — vitesse, capacités scan/exploration, missions de découverte.</span>
+          <span className="block"><span className="text-red-400 font-medium">Combat</span> — armement et blindage renforcés.</span>
+          <span className="block"><span className="text-amber-400 font-medium">Industrielle</span> — coque robuste, capacités de minage et de recyclage de débris.</span>
+          <span className="block"><span className="text-cyan-400 font-medium">Scientifique</span> — vitesse accrue, capacités de scan et d'exploration.</span>
         </span>
-        Le bouton <span className="text-foreground font-medium">Coque</span> en haut permet de changer de coque (cooldown + coût d'Exilium selon config).
-      </FacilityHelpSection>
-
-      <FacilityHelpSection
-        icon={<Shield className="h-3.5 w-3.5 text-sky-400" />}
-        title="Modules passifs"
-      >
-        Neuf slots passifs au total&nbsp;: <span className="text-foreground font-medium">1 épique</span>, <span className="text-foreground font-medium">3 rares</span>, <span className="text-foreground font-medium">5 communs</span>. Ils apportent des bonus de stat (coque, bouclier, blindage, dégâts), des effets <span className="text-foreground font-medium">conditionnels</span> (premier round, coque basse, FP ennemi élevé) ou des <span className="text-foreground font-medium">capacités actives</span> consommant des charges épiques (réparation, surcharge, bouclier, scan).
-      </FacilityHelpSection>
-
-      <FacilityHelpSection
-        icon={<Crosshair className="h-3.5 w-3.5 text-orange-400" />}
-        title="Arsenal"
-      >
-        Trois slots d'arme indépendants des passives&nbsp;: <span className="text-foreground font-medium">1 commun</span>, <span className="text-foreground font-medium">1 rare</span>, <span className="text-foreground font-medium">1 épique</span>. Chaque arme ajoute un <span className="text-foreground font-medium">profil de tir</span> distinct (dégâts, nombre de tirs, cible privilégiée, rafale, cascade) qui se cumule avec celui de la coque. Le combat tire avec <span className="text-foreground font-medium">tous</span> les profils par tour.
-      </FacilityHelpSection>
-
-      <FacilityHelpSection
-        icon={<Sparkles className="h-3.5 w-3.5 text-violet-400" />}
-        title="Champ d'application"
-      >
-        <span className="text-violet-300 font-medium">Modules passifs</span> et <span className="text-violet-300 font-medium">Arsenal</span> sont actifs <span className="text-foreground font-medium">uniquement pendant les runs d'anomalie</span>. En PvP, raid pirate, défense de planète ou riposte d'espionnage, le vaisseau amiral combat avec ses <span className="text-foreground font-medium">stats brutes</span> uniquement&nbsp;: niveau pilote, bonus de coque (passifs de hull) et recherches. Les modules et batteries d'armes équipées ici n'apportent aucun bonus hors anomalie.
-      </FacilityHelpSection>
-
-      <FacilityHelpSection
-        icon={<Star className="h-3.5 w-3.5 text-yellow-400" />}
-        title="XP & niveau pilote"
-      >
-        Le vaisseau gagne de l'XP en fin de combat (proportionnel au FP ennemi tué) et en fin de run (bonus profondeur). Chaque niveau ajoute <span className="text-foreground font-medium">+5&nbsp;%</span> aux stats combat (armement, bouclier, coque, blindage). Cap actuel&nbsp;: <span className="text-foreground font-medium">niveau 60</span>.
+        Chaque coque apporte aussi des <span className="text-foreground font-medium">bonus passifs</span> à votre empire. Le bouton <span className="text-foreground font-medium">Coque</span> en haut permet d'en changer (cooldown + coût d'Exilium selon config).
       </FacilityHelpSection>
 
       <FacilityHelpSection
         icon={<FlaskConical className="h-3.5 w-3.5 text-emerald-400" />}
         title="Recherche"
       >
-        Les recherches <span className="text-foreground font-medium">armement</span>, <span className="text-foreground font-medium">bouclier</span> et <span className="text-foreground font-medium">blindage</span> s'appliquent sur les stats finales. Le bloc «&nbsp;Stats de combat&nbsp;» à droite affiche les chiffres exacts utilisés en anomalie (niveau × coque × modules × recherches).
+        Les recherches <span className="text-foreground font-medium">armement</span>, <span className="text-foreground font-medium">bouclier</span> et <span className="text-foreground font-medium">blindage</span> s'appliquent sur les stats de combat. Le bloc «&nbsp;Stats de combat&nbsp;» affiche les chiffres exacts (stats de base × bonus de coque × recherches).
       </FacilityHelpSection>
 
       <FacilityHelpSection
         icon={<Wrench className="h-3.5 w-3.5 text-amber-400" />}
         title="Statuts"
       >
-        <span className="text-emerald-400 font-medium">Opérationnel</span> = prêt à engager. <span className="text-blue-400 font-medium">En mission</span> = parti en flotte ou anomalie active. <span className="text-red-400 font-medium">Incapacité</span> = wipe en anomalie, immobilisé jusqu'à réparation (instant via Exilium ou attente). <span className="text-amber-400 font-medium">Refit</span> = changement de coque en cours.
-      </FacilityHelpSection>
-
-      <FacilityHelpSection
-        icon={<Sword className="h-3.5 w-3.5 text-red-400" />}
-        title="Combat anomalie"
-      >
-        En anomalie, votre flagship part <span className="text-foreground font-medium">seul</span>. Pas de flotte d'escorte&nbsp;: ce sont vos <span className="text-foreground font-medium">modules</span>, votre <span className="text-foreground font-medium">arsenal</span> et vos <span className="text-foreground font-medium">charges épiques</span> qui font la différence. Un wipe = perte du run + 30&nbsp;min d'incapacitation. Un retour volontaire conserve le butin.
+        <span className="text-emerald-400 font-medium">Opérationnel</span> = prêt au combat. <span className="text-blue-400 font-medium">En mission</span> = parti avec une flotte. <span className="text-red-400 font-medium">Incapacité</span> = vaisseau détruit au combat, immobilisé jusqu'à réparation (instantanée via Exilium ou attente). <span className="text-amber-400 font-medium">Refit</span> = changement de coque en cours.
       </FacilityHelpSection>
     </EntityDetailOverlay>
   );
