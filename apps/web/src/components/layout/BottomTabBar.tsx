@@ -11,7 +11,6 @@ import {
   GalaxyIcon,
   MarketIcon,
   MissionsIcon,
-  AnomalyIcon,
   MessagesIcon,
   RankingIcon,
   AllianceIcon,
@@ -28,7 +27,7 @@ import { BottomSheet } from './BottomSheet';
 const TAB_GROUPS = {
   empire: ['/empire', '/research', '/flagship'],
   planete: ['/', '/resources', '/infrastructures', '/energy', '/shipyard', '/command-center', '/defense'],
-  espace: ['/galaxy', '/fleet', '/missions', '/anomalies', '/market'],
+  espace: ['/galaxy', '/fleet', '/missions', '/market'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking', '/changelog', '/feedback'],
 };
 
@@ -53,7 +52,6 @@ const SHEET_ITEMS = {
     { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
     { label: 'Flotte', path: '/fleet', icon: FleetIcon },
     { label: 'Missions', path: '/missions', icon: MissionsIcon },
-    { label: 'Anomalies', path: '/anomalies', icon: AnomalyIcon },
     { label: 'Marché', path: '/market', icon: MarketIcon },
   ],
   social: [

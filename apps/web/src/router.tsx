@@ -183,31 +183,6 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
-        path: 'missions/expeditions',
-        lazy: lazyLoad(() => import('./pages/Expeditions')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'missions/expeditions/:missionId',
-        lazy: lazyLoad(() => import('./pages/ExpeditionRun')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'anomalies',
-        lazy: lazyLoad(() => import('./pages/Anomaly')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'anomalies/leaderboard',
-        lazy: lazyLoad(() => import('./pages/AnomalyLeaderboard')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'anomalies/history',
-        lazy: lazyLoad(() => import('./pages/AnomalyHistory')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
         path: 'movements',
         element: <Navigate to="/fleet/movements" replace />,
       },
