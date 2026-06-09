@@ -9,6 +9,7 @@ import { ProfileAllianceCard } from './ProfileAllianceCard';
 import { ProfileSocialCard } from './ProfileSocialCard';
 import { ProfilePreferencesCard } from './ProfilePreferencesCard';
 import { AvatarPicker } from './AvatarPicker';
+import { EmpireLevelCard } from '@/components/empire/EmpireLevelCard';
 
 interface ProfileViewProps {
   userId: string;
@@ -90,6 +91,8 @@ function OwnView() {
 
       <div className="px-4 pb-4 lg:px-6 lg:pb-6">
         <div className="mx-auto w-full max-w-[720px] space-y-4">
+          <EmpireLevelCard />
+
           <ProfileStatsCard
             rank={profile.rank}
             totalPoints={profile.totalPoints}
