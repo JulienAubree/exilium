@@ -1,7 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { planets, planetTypes, planetBuildings, planetShips, userResearch } from '@exilium/db';
+import { planets, planetTypes, planetBuildings, planetShips, userResearch, empireProgression } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { calculateResources, resolveBonus, calculateGovernancePenalty } from '@exilium/game-engine';
+import {
+  calculateResources,
+  resolveBonus,
+  calculateGovernancePenalty,
+  buildEmpireLevelConfig,
+  empireGovernanceCapacity,
+} from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../lib/config-helpers.js';
 import { buildProductionConfig } from '../lib/production-config.js';
 import type { GameConfigService } from '../modules/admin/game-config.service.js';
@@ -133,7 +139,6 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
 
   // Pre-compute governance data per user
   const activePlanetCountByUser = new Map<string, number>();
-  const ipcLevelByUser = new Map<string, number>();
   for (const planet of allPlanets) {
     if (planet.status === 'active') {
       activePlanetCountByUser.set(
@@ -141,11 +146,23 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
         (activePlanetCountByUser.get(planet.userId) ?? 0) + 1,
       );
     }
-    const ipcLevel = buildingLevelsMap.get(planet.id)?.['imperialPowerCenter'] ?? 0;
-    if (ipcLevel > (ipcLevelByUser.get(planet.userId) ?? 0)) {
-      ipcLevelByUser.set(planet.userId, ipcLevel);
-    }
   }
+
+  // Capacité de gouvernance par user : niveau d'empire + plancher ex-IPC.
+  // Les users sans ligne empire_progression sont niveau 1 (capacité formule).
+  const levelConfig = buildEmpireLevelConfig(config.universe);
+  const allProgressions = await db
+    .select({
+      userId: empireProgression.userId,
+      level: empireProgression.level,
+      governanceFloor: empireProgression.governanceFloor,
+    })
+    .from(empireProgression);
+  const capacityByUser = new Map<string, number>();
+  for (const row of allProgressions) {
+    capacityByUser.set(row.userId, empireGovernanceCapacity(row.level, levelConfig, row.governanceFloor));
+  }
+  const defaultCapacity = empireGovernanceCapacity(1, levelConfig);
   const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [
     0.15, 0.35, 0.6,
   ];
@@ -182,7 +199,7 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     // Governance harvest penalty (homeworld exempt)
     if (planet.planetClassId !== homeworldTypeId) {
       const colonyCount = Math.max(0, (activePlanetCountByUser.get(planet.userId) ?? 1) - 1);
-      const capacity = 1 + (ipcLevelByUser.get(planet.userId) ?? 0);
+      const capacity = capacityByUser.get(planet.userId) ?? defaultCapacity;
       const penalty = calculateGovernancePenalty(
         colonyCount,
         capacity,

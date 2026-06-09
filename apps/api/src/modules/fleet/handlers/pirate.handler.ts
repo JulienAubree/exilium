@@ -260,6 +260,15 @@ export class PirateHandler implements MissionHandler {
       }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
     }
 
+    // Hook: empire XP on PvE victory
+    if (result.outcome === 'attacker' && ctx.empireProgressionService) {
+      await ctx.empireProgressionService.processEvent({
+        type: 'pve:victory',
+        userId: fleetEvent.userId,
+        payload: { missionId: fleetEvent.pveMissionId },
+      }).catch((e) => console.warn('[empire-progression] processEvent failed:', e));
+    }
+
     // Hook: Exilium drop on PvE victory
     if (result.outcome === 'attacker' && ctx.exiliumService) {
       await ctx.exiliumService.tryDrop(fleetEvent.userId, 'pve', {

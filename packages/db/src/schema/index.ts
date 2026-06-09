@@ -38,3 +38,4 @@ export * from './exploration-reports.js';
 export * from './colonization.js';
 export * from './homepage-content.js';
 export * from './fleet-presets.js';
+export * from './empire-progression.js';

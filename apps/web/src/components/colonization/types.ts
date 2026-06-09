@@ -30,7 +30,7 @@ export interface ColonizationStatus {
   stockSufficient: boolean;
   stationedShips: Record<string, number>;
   stationedFP: number;
-  ipcLevel: number;
+  adminLevel: number;
   outpostThresholdMinerai: number;
   outpostThresholdSilicium: number;
   gracePeriodEndsAt: string | Date;

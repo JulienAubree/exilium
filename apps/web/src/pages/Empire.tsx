@@ -5,6 +5,7 @@ import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { EmpireHero } from '@/components/empire/EmpireHero';
 import { EmpireHelp } from '@/components/empire/EmpireHelp';
 import { EmpireKpiBar } from '@/components/empire/EmpireKpiBar';
+import { EmpireLevelCard } from '@/components/empire/EmpireLevelCard';
 import { EmpirePlanetCard } from '@/components/empire/EmpirePlanetCard';
 import { EmpirePlanetRow } from '@/components/empire/EmpirePlanetRow';
 import { EmpireViewToggle } from '@/components/empire/EmpireViewToggle';
@@ -90,6 +91,7 @@ export default function Empire() {
       />
 
       <div className="space-y-4 px-4 lg:px-6">
+        <EmpireLevelCard />
         <EmpireKpiBar
           totalRates={data.totalRates}
           activeFleetCount={data.activeFleetCount}

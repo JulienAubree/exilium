@@ -59,6 +59,12 @@ interface FakeDiscoveredBiome {
   biomeId: string;
 }
 
+interface FakeEmpireProgression {
+  userId: string;
+  level: number;
+  governanceFloor: number;
+}
+
 interface FakeState {
   processes: FakeProcess[];
   planets: FakePlanet[];
@@ -66,6 +72,7 @@ interface FakeState {
   planetShips: FakePlanetShip[];
   planetBiomes: FakePlanetBiome[];
   discoveredBiomes: FakeDiscoveredBiome[];
+  empireProgressions: FakeEmpireProgression[];
 }
 
 let state: FakeState;
@@ -115,6 +122,7 @@ function resetState() {
     planetShips: [],
     planetBiomes: [],
     discoveredBiomes: [],
+    empireProgressions: [],
   };
 }
 
@@ -122,7 +130,6 @@ function resetState() {
 //
 // On simule juste ce dont le service a besoin :
 // - select().from(table).where(...).limit(...) => ligne(s) en memoire
-// - select().from(table).innerJoin(...).where(...).limit(...) (pour getIpcLevel)
 // - update(table).set(values).where(...) => mute le state
 // - delete(table).where(...) => supprime de l'etat
 // - insert(table).values(...).returning() => insere et retourne
@@ -138,7 +145,8 @@ type TableMarker =
   | 'planetBuildings'
   | 'planetShips'
   | 'planetBiomes'
-  | 'discoveredBiomes';
+  | 'discoveredBiomes'
+  | 'empireProgression';
 
 function tableOf(token: unknown): TableMarker | null {
   // Drizzle table objects sont remplaces par des marqueurs identifiables via
@@ -151,6 +159,7 @@ function tableOf(token: unknown): TableMarker | null {
   if (marker === 'planetShips') return 'planetShips';
   if (marker === 'planetBiomes') return 'planetBiomes';
   if (marker === 'discoveredBiomes') return 'discoveredBiomes';
+  if (marker === 'empireProgression') return 'empireProgression';
   return null;
 }
 
@@ -165,6 +174,7 @@ vi.mock('@exilium/db', () => ({
   planetShips: { __t: 'planetShips' },
   planetBiomes: { __t: 'planetBiomes' },
   discoveredBiomes: { __t: 'discoveredBiomes' },
+  empireProgression: { __t: 'empireProgression' },
 }));
 
 // Mock drizzle-orm helpers : on ne se sert pas de la valeur retournee
@@ -194,32 +204,9 @@ function buildSelectChain(_projection?: Record<string, unknown>) {
     }
     if (ctx.table === 'planets') {
       // Si jointure planetBuildings : on retourne (level + planet)
-      if (ctx.joinedWith === 'planetBuildings') {
-        const rows: Array<{ level: number }> = [];
-        for (const pb of state.planetBuildings) {
-          const planet = state.planets.find(p => p.id === pb.planetId);
-          if (!planet) continue;
-          if (planet.planetClassId !== 'homeworld') continue;
-          if (pb.buildingId !== 'imperialPowerCenter') continue;
-          rows.push({ level: pb.level });
-        }
-        return rows;
-      }
       return state.planets.map(p => ({ ...p }));
     }
     if (ctx.table === 'planetBuildings') {
-      // Cas inverse : select.from(planetBuildings).innerJoin(planets, ...)
-      if (ctx.joinedWith === 'planets') {
-        const rows: Array<{ level: number }> = [];
-        for (const pb of state.planetBuildings) {
-          const planet = state.planets.find(p => p.id === pb.planetId);
-          if (!planet) continue;
-          if (planet.planetClassId !== 'homeworld') continue;
-          if (pb.buildingId !== 'imperialPowerCenter') continue;
-          rows.push({ level: pb.level });
-        }
-        return rows;
-      }
       return state.planetBuildings.map(pb => ({ ...pb }));
     }
     if (ctx.table === 'planetShips') {
@@ -230,6 +217,9 @@ function buildSelectChain(_projection?: Record<string, unknown>) {
     }
     if (ctx.table === 'discoveredBiomes') {
       return state.discoveredBiomes.map(b => ({ ...b }));
+    }
+    if (ctx.table === 'empireProgression') {
+      return state.empireProgressions.map(e => ({ ...e }));
     }
     return [];
   }
@@ -444,24 +434,24 @@ describe('colonization.service', () => {
     });
   });
 
-  // ── getIpcLevel ─────────────────────────────────────────────────
+  // ── getAdminLevel ───────────────────────────────────────────────
 
-  describe('getIpcLevel()', () => {
-    it('retourne 0 si le joueur n\'a pas de homeworld avec IPC', async () => {
-      const level = await service.getIpcLevel('user-1');
+  describe('getAdminLevel()', () => {
+    it('retourne 0 sans progression d\'empire (niveau 1, capacité 1)', async () => {
+      const level = await service.getAdminLevel('user-1');
       expect(level).toBe(0);
     });
 
-    it('retourne le niveau IPC du homeworld', async () => {
-      state.planets.push(makePlanet({ id: 'hw-1', planetClassId: 'homeworld' }));
-      state.planetBuildings.push({
-        planetId: 'hw-1',
-        buildingId: 'imperialPowerCenter',
-        level: 3,
-      });
-
-      const level = await service.getIpcLevel('user-1');
+    it('suit le plancher grandfathered ex-IPC (floor 4 → admin 3)', async () => {
+      state.empireProgressions.push({ userId: 'user-1', level: 1, governanceFloor: 4 });
+      const level = await service.getAdminLevel('user-1');
       expect(level).toBe(3);
+    });
+
+    it('suit le niveau d\'empire (niveau 5 → capacité 3 → admin 2)', async () => {
+      state.empireProgressions.push({ userId: 'user-1', level: 5, governanceFloor: 0 });
+      const level = await service.getAdminLevel('user-1');
+      expect(level).toBe(2);
     });
   });
 
@@ -586,13 +576,8 @@ describe('colonization.service', () => {
       expect(thresholds).toEqual({ minerai: 500, silicium: 250 });
     });
 
-    it('scale les seuils avec le niveau IPC', async () => {
-      state.planets.push(makePlanet({ id: 'hw-1', planetClassId: 'homeworld' }));
-      state.planetBuildings.push({
-        planetId: 'hw-1',
-        buildingId: 'imperialPowerCenter',
-        level: 2,
-      });
+    it('scale les seuils avec le niveau administratif (ex-IPC 2)', async () => {
+      state.empireProgressions.push({ userId: 'user-1', level: 1, governanceFloor: 3 });
 
       const thresholds = await service.getOutpostThresholds('user-1');
       // 500 * (1 + 0.5 * 2) = 1000

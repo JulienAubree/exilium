@@ -554,6 +554,15 @@ export class AttackHandler implements MissionHandler {
       }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
     }
 
+    // Hook: empire XP on PvP victory (attacker only)
+    if (ctx.empireProgressionService) {
+      await ctx.empireProgressionService.processEvent({
+        type: 'pvp:battle_resolved',
+        userId: fleetEvent.userId,
+        payload: { role: 'attacker', result: outcome },
+      }).catch((e) => console.warn('[empire-progression] processEvent failed:', e));
+    }
+
     // Hook: Exilium drop on PvP victory
     if (outcome === 'attacker' && ctx.exiliumService) {
       await ctx.exiliumService.tryDrop(fleetEvent.userId, 'pvp', {

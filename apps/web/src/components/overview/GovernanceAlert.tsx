@@ -44,7 +44,7 @@ export function GovernanceAlert({ planetClassId }: GovernanceAlertProps) {
         </div>
 
         <p className="mt-1.5 text-[11px] text-amber-300/50 leading-relaxed">
-          Votre empire dépasse sa capacité de gouvernance. Améliorez le Centre de Pouvoir Impérial pour lever ces pénalités.
+          Votre empire dépasse sa capacité de gouvernance. Gagnez des niveaux d'empire pour lever ces pénalités.
         </p>
       </div>
     </section>

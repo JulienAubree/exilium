@@ -336,6 +336,14 @@ export function useNotifications() {
           showBrowserNotification('Mission completee', `+${event.payload.reward} Exilium`);
         }
         break;
+      case 'empire-level-up':
+        utils.empireProgression.get.invalidate();
+        utils.colonization.governance.invalidate();
+        if (isToastEnabled(event.type)) {
+          addToast(`Votre empire atteint le niveau ${event.payload.to} !`, 'success', '/empire');
+          showBrowserNotification('Niveau d\'empire', `Niveau ${event.payload.to} — capacité de gouvernance : ${event.payload.capacity}`);
+        }
+        break;
       case 'flagship-incapacitated':
         utils.flagship.get.invalidate();
         if (isToastEnabled(event.type)) {

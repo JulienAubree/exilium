@@ -1,7 +1,10 @@
-import { and, eq } from 'drizzle-orm';
 import { byUser } from '../lib/db-helpers.js';
-import { planets, planetBuildings } from '@exilium/db';
-import { calculateGovernancePenalty } from '@exilium/game-engine';
+import { planets, empireProgression } from '@exilium/db';
+import {
+  calculateGovernancePenalty,
+  buildEmpireLevelConfig,
+  empireGovernanceCapacity,
+} from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
 
 export async function getGovernancePenalty(
@@ -20,19 +23,18 @@ export async function getGovernancePenalty(
     .from(planets).where(byUser(planets.userId, userId));
   const colonyCount = Math.max(0, userPlanets.filter(p => p.status === 'active').length - 1);
 
-  // IPC is homeworld-only by design — read only the homeworld row to avoid
-  // picking stale rows on other planets non-deterministically.
-  const [ipcRow] = await db
-    .select({ level: planetBuildings.level })
-    .from(planetBuildings)
-    .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
-    .where(and(
-      byUser(planets.userId, userId),
-      eq(planets.planetClassId, 'homeworld'),
-      eq(planetBuildings.buildingId, 'imperialPowerCenter'),
-    ))
+  // Capacité portée par le niveau d'empire (+ plancher grandfathered ex-IPC)
+  const [progression] = await db
+    .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+    .from(empireProgression)
+    .where(byUser(empireProgression.userId, userId))
     .limit(1);
-  const capacity = 1 + (ipcRow?.level ?? 0);
+  const levelConfig = buildEmpireLevelConfig(config.universe);
+  const capacity = empireGovernanceCapacity(
+    progression?.level ?? 1,
+    levelConfig,
+    progression?.governanceFloor ?? 0,
+  );
 
   const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];
   const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.60];

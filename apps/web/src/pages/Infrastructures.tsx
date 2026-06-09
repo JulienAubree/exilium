@@ -51,8 +51,6 @@ function getEffectLine(buildingId: string, level: number): string | null {
       return `−${Math.round((1 - Math.pow(0.85, level)) * 100)}% temps de construction (×${Math.pow(0.85, level).toFixed(2)})`;
     case 'planetaryShield':
       return `${formatCompact(calculateShieldCapacity(level))} de bouclier`;
-    case 'imperialPowerCenter':
-      return `+${level} colonie${level > 1 ? 's' : ''} en gouvernance`;
     case 'researchLab':
       return 'Pilote toute la recherche';
     case 'labVolcanic':
@@ -184,9 +182,6 @@ export default function Infrastructures() {
         : annexId
           ? make(annexId, false)
           : make('researchLab', true, 'Le laboratoire principal vit sur votre planète-mère.'),
-      isHomeworld
-        ? make('imperialPowerCenter', false)
-        : make('imperialPowerCenter', true, 'Réservé à la planète-mère.'),
       make('planetaryShield', false),
     ];
   }, [gameConfig, buildingLevels, isHomeworld, planetClassId]);

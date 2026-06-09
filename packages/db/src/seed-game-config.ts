@@ -38,7 +38,6 @@ const CATEGORIES = [
   { id: 'building_recherche', entityType: 'building', name: 'Recherche', sortOrder: 4 },
   { id: 'building_militaire', entityType: 'building', name: 'Militaire', sortOrder: 5 },
   { id: 'building_defense', entityType: 'building', name: 'Défense', sortOrder: 8 },
-  { id: 'building_gouvernance', entityType: 'building', name: 'Gouvernance', sortOrder: 9 },
   // Research
   { id: 'research_propulsion', entityType: 'research', name: 'Propulsion', sortOrder: 0 },
   { id: 'research_combat', entityType: 'research', name: 'Combat', sortOrder: 1 },
@@ -78,7 +77,6 @@ const BUILDINGS = [
   { id: 'labTemperate', name: 'Bio-Laboratoire', description: "Annexe de recherche specialisee dans l'optimisation de la production, s'appuyant sur la biodiversite locale.", baseCostMinerai: 8000, baseCostSilicium: 16000, baseCostHydrogene: 8000, costFactor: 2, baseTime: 3600, maxLevel: 25, categoryId: 'building_recherche', sortOrder: 3, role: null, flavorText: "La richesse biologique des mondes temperes inspire des procedes d'optimisation energetique et productive sans equivalent.", prerequisites: [{ buildingId: 'researchLab', level: 6 }], allowedPlanetTypes: ['temperate'] },
   { id: 'labGlacial', name: 'Cryo-Laboratoire', description: "Annexe de recherche specialisee dans les technologies defensives, exploitant les proprietes cryogeniques.", baseCostMinerai: 8000, baseCostSilicium: 16000, baseCostHydrogene: 8000, costFactor: 2, baseTime: 3600, maxLevel: 25, categoryId: 'building_recherche', sortOrder: 4, role: null, flavorText: "Les temperatures proches du zero absolu permettent de developper des supraconducteurs et des boucliers d'une efficacite inegalee.", prerequisites: [{ buildingId: 'researchLab', level: 6 }], allowedPlanetTypes: ['glacial'] },
   { id: 'labGaseous', name: 'Nebula-Lab', description: "Annexe de recherche specialisee dans la propulsion, exploitant les courants atmospheriques et les gaz rares.", baseCostMinerai: 8000, baseCostSilicium: 16000, baseCostHydrogene: 8000, costFactor: 2, baseTime: 3600, maxLevel: 25, categoryId: 'building_recherche', sortOrder: 5, role: null, flavorText: "Flottant dans l'atmosphere dense des geantes gazeuses, le Nebula-Lab teste des systemes de propulsion dans des conditions extremes.", prerequisites: [{ buildingId: 'researchLab', level: 6 }], allowedPlanetTypes: ['gaseous'] },
-  { id: 'imperialPowerCenter', name: 'Centre de Pouvoir Impérial', description: "Siège du pouvoir politique de votre empire. Chaque niveau augmente votre capacité de gouvernance, permettant de gérer efficacement davantage de colonies.", baseCostMinerai: 5000, baseCostSilicium: 8000, baseCostHydrogene: 3000, costFactor: 1.8, baseTime: 7200, maxLevel: 25, categoryId: 'building_gouvernance', sortOrder: 0, role: 'governance', flavorText: "Le cœur politique d'un empire en expansion.", allowedPlanetTypes: ['homeworld'], prerequisites: [{ buildingId: 'robotics', level: 4 }] },
 ];
 
 // ── Research data ──
@@ -539,7 +537,18 @@ const UNIVERSE_CONFIG = [
 
   // ── Formulas (consumed by SP3, created here) ──
   { key: 'pve_discovery_cooldown_base', value: 7 },
-  { key: 'mission_default_level', value: 3, label: 'Niveau de missions par défaut (cadence + scaling, sans bâtiment ; à lier au niveau d\'empire)' },
+  { key: 'mission_default_level', value: 3, label: 'Niveau de missions de base (cadence + scaling) ; bonus via le niveau d\'empire' },
+
+  // ── Niveau d'empire (remplace le Centre de Pouvoir Impérial) ──
+  { key: 'empire_xp_curve_base', value: 100, label: 'Base de la courbe d\'XP d\'empire (XP pour niveau L = base × (L-1) × L / 2)' },
+  { key: 'empire_level_max', value: 100, label: 'Niveau d\'empire maximum' },
+  { key: 'empire_capacity_levels_per_colony', value: 2, label: 'Niveaux d\'empire requis par +1 de capacité de gouvernance' },
+  { key: 'empire_mission_levels_per_bonus', value: 5, label: 'Niveaux d\'empire requis par +1 de niveau de missions' },
+  { key: 'empire_xp_per_building_level', value: 2, label: 'XP d\'empire par niveau de bâtiment construit' },
+  { key: 'empire_xp_per_research_level', value: 5, label: 'XP d\'empire par niveau de recherche terminé' },
+  { key: 'empire_xp_pve_victory', value: 15, label: 'XP d\'empire par victoire PvE' },
+  { key: 'empire_xp_pvp_victory', value: 40, label: 'XP d\'empire par victoire PvP (attaquant)' },
+  { key: 'empire_xp_colonization', value: 150, label: 'XP d\'empire par colonisation aboutie' },
   { key: 'pve_deposit_size_base', value: 15000 },
   { key: 'spy_visibility_thresholds', value: [1, 3, 5, 7, 9] },
   { key: 'ranking_points_divisor', value: 1000 },

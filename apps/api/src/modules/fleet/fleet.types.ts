@@ -17,6 +17,7 @@ import type { createPirateService } from '../pve/pirate.service.js';
 import type { createReportService } from '../report/report.service.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
+import type { createEmpireProgressionService } from '../empire-progression/empire-progression.service.js';
 import type { createFlagshipService } from '../flagship/flagship.service.js';
 import type { createGameEventService } from '../game-event/game-event.service.js';
 import type { createColonizationService } from '../colonization/colonization.service.js';
@@ -86,6 +87,7 @@ export interface MissionHandlerContext {
   reportService?: ReturnType<typeof createReportService>;
   exiliumService?: ReturnType<typeof createExiliumService>;
   dailyQuestService?: ReturnType<typeof createDailyQuestService>;
+  empireProgressionService?: ReturnType<typeof createEmpireProgressionService>;
   flagshipService?: ReturnType<typeof createFlagshipService>;
   gameEventService?: ReturnType<typeof createGameEventService>;
   colonizationService?: ReturnType<typeof createColonizationService>;

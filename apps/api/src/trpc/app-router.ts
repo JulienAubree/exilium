@@ -62,6 +62,8 @@ import { createFlagshipService } from '../modules/flagship/flagship.service.js';
 import { createFlagshipRouter } from '../modules/flagship/flagship.router.js';
 import { createTalentService } from '../modules/flagship/talent.service.js';
 import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
+import { createEmpireProgressionService } from '../modules/empire-progression/empire-progression.service.js';
+import { createEmpireProgressionRouter } from '../modules/empire-progression/empire-progression.router.js';
 import { createDailyQuestRouter } from '../modules/daily-quest/daily-quest.router.js';
 import { createFeedbackService } from '../modules/feedback/feedback.service.js';
 import { createFeedbackRouter } from '../modules/feedback/feedback.router.js';
@@ -89,6 +91,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const exiliumService = createExiliumService(db, gameConfigService);
   const talentService = createTalentService(db, gameConfigService);
   const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
+  const empireProgressionService = createEmpireProgressionService(db, gameConfigService, redis);
   const mailerService = createMailerService();
   const authService = createAuthService(db, redis, mailerService);
   const resourceService = createResourceService(
@@ -156,7 +159,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     talentService,
     flagshipService,
   );
-  const colonizationService = createColonizationService(db, gameConfigService);
+  const colonizationService = createColonizationService(db, gameConfigService, empireProgressionService);
   const allianceLogService = createAllianceLogService(db, redis);
   const fleetService = createFleetService(
     db,
@@ -176,6 +179,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     gameEventService,
     colonizationService,
     allianceLogService,
+    empireProgressionService,
   );
   const allianceService = createAllianceService(db, redis, allianceLogService);
   const contactService = createContactService(db, friendService, allianceService);
@@ -254,6 +258,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   );
   const explorationReportRouter = createExplorationReportRouter(explorationReportService);
   const colonizationRouter = createColonizationRouter(colonizationService);
+  const empireProgressionRouter = createEmpireProgressionRouter(empireProgressionService);
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
 
   const appRouter = router({
@@ -293,6 +298,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     notificationPreferences: notificationPreferencesRouter,
     explorationReport: explorationReportRouter,
     colonization: colonizationRouter,
+    empireProgression: empireProgressionRouter,
     homepage: homepageRouter,
   });
 

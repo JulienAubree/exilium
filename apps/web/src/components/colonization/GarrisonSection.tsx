@@ -57,7 +57,7 @@ export function GarrisonSection({
               Bonus garnison : avec au moins <span className="font-bold">{status.garrisonFpThreshold} FP stationnés</span>, la colonisation gagne <span className="font-bold">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en permanence. Cumulable avec le bonus convoi (plafond +{(status.bonusCap * 100).toFixed(0)}%/h).
             </p>
             <p>
-              La taille des raids croît avec le niveau IPC (actuellement <span className="text-foreground font-medium">niv. {status.ipcLevel}</span>) et, dans une moindre mesure, avec votre garnison elle-même. Maintenez un FP suffisant pour vaincre les raids sans surdimensionner.
+              La taille des raids croît avec l'envergure administrative de votre empire (actuellement <span className="text-foreground font-medium">niv. {status.adminLevel}</span>) et, dans une moindre mesure, avec votre garnison elle-même. Maintenez un FP suffisant pour vaincre les raids sans surdimensionner.
             </p>
             <p className="text-muted-foreground">
               Conseil : envoyez des renforts dès que vous voyez des menaces en approche. Sans garnison, les raids détruisent vos stocks et peuvent ralentir la colonisation.

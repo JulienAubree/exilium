@@ -480,7 +480,7 @@ export default function Fleet() {
           <p className="text-amber-300/90">
             Toutes vos planètes secondaires subiront <span className="font-semibold">−{Math.round(colonizeOverextendWarning.futureMalus * 100)}% de production</span>
             {colonizeOverextendWarning.currentMalus > 0 && ` (actuellement −${Math.round(colonizeOverextendWarning.currentMalus * 100)}%)`}.
-            Améliorez le Centre de Pouvoir Impérial pour augmenter votre capacité.
+            Gagnez des niveaux d'empire pour augmenter votre capacité.
           </p>
         </div>
       )}

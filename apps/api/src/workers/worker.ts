@@ -18,6 +18,7 @@ import { createExiliumService } from '../modules/exilium/exilium.service.js';
 import { createFlagshipService } from '../modules/flagship/flagship.service.js';
 import { createTalentService } from '../modules/flagship/talent.service.js';
 import { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
+import { createEmpireProgressionService } from '../modules/empire-progression/empire-progression.service.js';
 import { createGameEventService } from '../modules/game-event/game-event.service.js';
 import { buildCompletionQueue, fleetQueue, marketQueue } from '../queues/queues.js';
 import { startBuildCompletionWorker } from './build-completion.worker.js';
@@ -40,6 +41,7 @@ const redis = new Redis(env.REDIS_URL);
 const gameConfigService = createGameConfigService(db, redis);
 const exiliumService = createExiliumService(db, gameConfigService);
 const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
+const empireProgressionService = createEmpireProgressionService(db, gameConfigService, redis);
 const resourceService = createResourceService(db, gameConfigService, dailyQuestService);
 const pushService = createPushService(db);
 const messageService = createMessageService(db, redis, pushService);
@@ -60,18 +62,18 @@ const shipyardService = createShipyardService(db, resourceService, buildCompleti
 const gameEventService = createGameEventService(db);
 
 // Colonization service
-const colonizationService = createColonizationService(db, gameConfigService);
+const colonizationService = createColonizationService(db, gameConfigService, empireProgressionService);
 
 const allianceLogService = createAllianceLogService(db, redis);
 
-const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService);
+const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService, empireProgressionService);
 
 // Market service
 const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);
 
 console.log('[worker] Starting workers...');
 
-startBuildCompletionWorker(db, redis, { buildingService, researchService, shipyardService, tutorialService, pushService, dailyQuestService });
+startBuildCompletionWorker(db, redis, { buildingService, researchService, shipyardService, tutorialService, pushService, dailyQuestService, empireProgressionService });
 console.log('[worker] Build completion worker started');
 
 startFleetWorker(db, redis, { fleetService, tutorialService, pushService });

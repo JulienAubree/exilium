@@ -1,40 +1,44 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { colonizationProcesses, planets, planetBuildings, planetBiomes, discoveredBiomes, planetShips } from '@exilium/db';
+import { colonizationProcesses, planets, planetBiomes, discoveredBiomes, planetShips, empireProgression } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { calculateGovernancePenalty, computeFleetFP, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
+import { calculateGovernancePenalty, computeFleetFP, buildEmpireLevelConfig, empireGovernanceCapacity, type UnitCombatStats, type FPConfig } from '@exilium/game-engine';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 
 export function createColonizationService(
   db: Database,
   gameConfigService: GameConfigService,
+  empireProgressionService?: {
+    processEvent(event: { type: string; userId: string; payload: Record<string, unknown> }): Promise<unknown>;
+  },
 ) {
   return {
-    /** Get Imperial Power Center level for a user.
-     * IPC is homeworld-only (allowedPlanetTypes=['homeworld']), so read the
-     * homeworld's IPC row directly. Any stale rows on other planets (e.g.
-     * legacy data from before the restriction, or rows on abandoned planets)
-     * are ignored — otherwise `find()` could non-deterministically pick them.
+    /** Niveau administratif de l'empire = capacité de gouvernance - 1.
+     * Équivalent direct de l'ex-niveau IPC (capacité = 1 + IPC) : porté par
+     * le niveau d'empire (+ plancher grandfathered des ex-détenteurs d'IPC).
+     * Sert à scaler l'entretien de colonisation et la taille des raids.
      */
-    async getIpcLevel(userId: string): Promise<number> {
-      const [row] = await db
-        .select({ level: planetBuildings.level })
-        .from(planetBuildings)
-        .innerJoin(planets, eq(planets.id, planetBuildings.planetId))
-        .where(and(
-          byUser(planets.userId, userId),
-          eq(planets.planetClassId, 'homeworld'),
-          eq(planetBuildings.buildingId, 'imperialPowerCenter'),
-        ))
+    async getAdminLevel(userId: string): Promise<number> {
+      const [progression] = await db
+        .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+        .from(empireProgression)
+        .where(byUser(empireProgression.userId, userId))
         .limit(1);
-      return row?.level ?? 0;
+      const config = await gameConfigService.getFullConfig();
+      const levelConfig = buildEmpireLevelConfig(config.universe);
+      const capacity = empireGovernanceCapacity(
+        progression?.level ?? 1,
+        levelConfig,
+        progression?.governanceFloor ?? 0,
+      );
+      return capacity - 1;
     },
 
-    /** Scale a base cost by IPC level and scaling factor */
-    scaleCost(baseCost: number, ipcLevel: number, scalingFactor: number): number {
-      return baseCost * (1 + scalingFactor * ipcLevel);
+    /** Scale a base cost by empire admin level and scaling factor */
+    scaleCost(baseCost: number, adminLevel: number, scalingFactor: number): number {
+      return baseCost * (1 + scalingFactor * adminLevel);
     },
 
     /** Get active colonization process for a planet */
@@ -58,12 +62,12 @@ export function createColonizationService(
       const config = await gameConfigService.getFullConfig();
       const passiveRate = Number(config.universe.colonization_passive_rate) || 0.10;
       const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-      const ipcLevel = await this.getIpcLevel(userId);
+      const adminLevel = await this.getAdminLevel(userId);
 
       const baseMinerai = Number(config.universe.colonization_consumption_minerai) || 200;
       const baseSilicium = Number(config.universe.colonization_consumption_silicium) || 100;
-      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, ipcLevel, sf);
-      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, ipcLevel, sf);
+      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, adminLevel, sf);
+      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, adminLevel, sf);
 
       // Fetch planet resources
       const [planet] = await db
@@ -158,12 +162,12 @@ export function createColonizationService(
       // Outpost thresholds
       const outpostThresholdMinerai = this.scaleCost(
         Number(config.universe.colonization_outpost_threshold_minerai) || 500,
-        ipcLevel,
+        adminLevel,
         sf,
       );
       const outpostThresholdSilicium = this.scaleCost(
         Number(config.universe.colonization_outpost_threshold_silicium) || 250,
-        ipcLevel,
+        adminLevel,
         sf,
       );
 
@@ -189,7 +193,7 @@ export function createColonizationService(
         stockSufficient,
         stationedShips,
         stationedFP,
-        ipcLevel,
+        adminLevel,
         outpostThresholdMinerai,
         outpostThresholdSilicium,
         gracePeriodEndsAt,
@@ -233,15 +237,15 @@ export function createColonizationService(
     async getOutpostThresholds(userId: string) {
       const config = await gameConfigService.getFullConfig();
       const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-      const ipcLevel = await this.getIpcLevel(userId);
+      const adminLevel = await this.getAdminLevel(userId);
       const minerai = this.scaleCost(
         Number(config.universe.colonization_outpost_threshold_minerai) || 500,
-        ipcLevel,
+        adminLevel,
         sf,
       );
       const silicium = this.scaleCost(
         Number(config.universe.colonization_outpost_threshold_silicium) || 250,
-        ipcLevel,
+        adminLevel,
         sf,
       );
       return { minerai, silicium };
@@ -270,12 +274,12 @@ export function createColonizationService(
       }
 
       const sf = Number(config.universe.colonization_cost_scaling_factor) || 0.5;
-      const ipcLevel = await this.getIpcLevel(process.userId);
+      const adminLevel = await this.getAdminLevel(process.userId);
 
       const baseMinerai = Number(config.universe.colonization_consumption_minerai) || 200;
       const baseSilicium = Number(config.universe.colonization_consumption_silicium) || 100;
-      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, ipcLevel, sf);
-      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, ipcLevel, sf);
+      const consumptionMineraiPerHour = this.scaleCost(baseMinerai, adminLevel, sf);
+      const consumptionSiliciumPerHour = this.scaleCost(baseSilicium, adminLevel, sf);
 
       const now = new Date();
       const elapsedHours = (now.getTime() - new Date(process.lastTickAt).getTime()) / (1000 * 60 * 60);
@@ -338,7 +342,7 @@ export function createColonizationService(
       const interval = intervalMin + Math.random() * (intervalMax - intervalMin);
       if (elapsed < interval) return null;
 
-      const ipcLevel = await this.getIpcLevel(process.userId);
+      const adminLevel = await this.getAdminLevel(process.userId);
 
       // Compute stationed FP for scaling
       const [ships] = await db
@@ -373,7 +377,7 @@ export function createColonizationService(
 
       // Target FP for the pirate raid (wave-based, IPC-scaled, capped)
       const waveIndex = (process.raidCount ?? 0) + 1;
-      const ipc = Math.max(ipcLevel, 1);
+      const ipc = Math.max(adminLevel, 1);
       const garrisonBonus = Math.min(stationedFPRatio * stationedFP, stationedMaxBonus);
       const startFP = baseStartFP * Math.pow(ipc, ipcStartExp) * (1 + garrisonBonus);
       const capFP = baseCapFP * Math.pow(ipc, ipcCapExp);
@@ -596,6 +600,16 @@ export function createColonizationService(
         .update(planets)
         .set({ status: 'active' })
         .where(eq(planets.id, process.planetId));
+
+      // Hook: empire XP on successful colonization (couvre les deux chemins :
+      // tick worker et completeFromPlayer)
+      if (empireProgressionService) {
+        await empireProgressionService.processEvent({
+          type: 'colonization:completed',
+          userId: process.userId,
+          payload: { planetId: process.planetId },
+        }).catch((e) => console.warn('[empire-progression] processEvent failed:', e));
+      }
     },
 
     /** Fail a colonization -- delete planet, return colony ship */
@@ -633,10 +647,16 @@ export function createColonizationService(
       const activePlanets = userPlanets.filter(p => p.status === 'active');
       const colonyCount = Math.max(0, activePlanets.length - 1);
 
-      const ipcLevel = await this.getIpcLevel(userId);
+      const [progression] = await db
+        .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+        .from(empireProgression)
+        .where(byUser(empireProgression.userId, userId))
+        .limit(1);
       const config = await gameConfigService.getFullConfig();
+      const levelConfig = buildEmpireLevelConfig(config.universe);
+      const empireLevel = progression?.level ?? 1;
+      const capacity = empireGovernanceCapacity(empireLevel, levelConfig, progression?.governanceFloor ?? 0);
 
-      const capacity = 1 + ipcLevel;
       const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];
       const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.60];
 
@@ -645,7 +665,7 @@ export function createColonizationService(
       return {
         colonyCount,
         capacity,
-        ipcLevel,
+        empireLevel,
         ...penalty,
       };
     },

@@ -33,9 +33,9 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
   if (!open) return null;
 
   const universe = gameConfig?.universe ?? {};
-  const ipcLevel = governance?.ipcLevel ?? 0;
+  const adminLevel = Math.max(0, (governance?.capacity ?? 1) - 1);
   const sf = Number(universe['colonization_cost_scaling_factor']) || 0.5;
-  const scale = (base: number) => base * (1 + sf * ipcLevel);
+  const scale = (base: number) => base * (1 + sf * adminLevel);
 
   const baseMinerai = Number(universe['colonization_consumption_minerai']) || 200;
   const baseSilicium = Number(universe['colonization_consumption_silicium']) || 100;

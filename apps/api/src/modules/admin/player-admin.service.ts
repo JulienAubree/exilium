@@ -315,15 +315,6 @@ export function createPlayerAdminService(
           .set({ planetClassId: newCapital.planetClassId })
           .where(eq(planets.id, currentHomeworld.id));
 
-        // Remove IPC from old homeworld
-        await db
-          .delete(planetBuildings)
-          .where(
-            and(
-              eq(planetBuildings.planetId, currentHomeworld.id),
-              eq(planetBuildings.buildingId, 'imperialPowerCenter'),
-            ),
-          );
       }
 
       await db

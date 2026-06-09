@@ -310,7 +310,7 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
       </div>
       <div className="text-xs text-muted-foreground">
         {isOver
-          ? `Dépassement de +${governance.overextend}. Améliorez le Centre de Pouvoir Impérial pour réduire les pénalités.`
+          ? `Dépassement de +${governance.overextend}. Gagnez des niveaux d'empire pour réduire les pénalités.`
           : freeSlots > 0
             ? `${freeSlots} slot${freeSlots > 1 ? 's' : ''} disponible${freeSlots > 1 ? 's' : ''} pour coloniser sans pénalité.`
             : 'Capacité atteinte. Prochaine colonie = pénalités sur toutes les colonies.'}

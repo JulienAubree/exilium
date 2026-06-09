@@ -148,6 +148,7 @@ export function eventNavigationTarget(type: string, payload?: unknown): string {
     case 'report-sold':
     case 'report-purchased': return '/market';
     case 'daily-quest-completed': return '/overview';
+    case 'empire-level-up': return '/empire';
     case 'alliance-activity':
     case 'new-alliance-message': return '/alliance';
     default: return '/';

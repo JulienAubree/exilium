@@ -14,7 +14,7 @@ export function InfrastructuresHelp({ planetClassId }: { planetClassId?: string 
     <>
       <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
         <img
-          src={getBuildingIllustrationUrl(gameConfig, 'imperialPowerCenter', planetClassId)}
+          src={getBuildingIllustrationUrl(gameConfig, 'robotics', planetClassId)}
           alt=""
           className="w-full h-40 object-cover"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -43,7 +43,7 @@ export function InfrastructuresHelp({ planetClassId }: { planetClassId?: string 
         icon={<Compass className="h-3.5 w-3.5 text-cyan-400" />}
         title="Exploration"
       >
-        Le <span className="text-foreground font-medium">Centre de missions</span> (planète-mère) découvre les gisements et détecte les pirates. Les <span className="text-foreground font-medium">Relais</span> sur les colonies augmentent les récompenses PvE selon le biome local, avec un bonus de diversité par biome distinct couvert.
+        Les <span className="text-foreground font-medium">missions</span> découvrent gisements et pirates sans bâtiment dédié : leur cadence et leur ampleur progressent avec votre <span className="text-foreground font-medium">niveau d'empire</span>.
       </FacilityHelpSection>
 
       <FacilityHelpSection
@@ -57,7 +57,7 @@ export function InfrastructuresHelp({ planetClassId }: { planetClassId?: string 
         icon={<Crown className="h-3.5 w-3.5 text-amber-300" />}
         title="Gouvernance"
       >
-        Le <span className="text-foreground font-medium">Centre de pouvoir impérial</span> (planète-mère uniquement) augmente votre capacité à gérer plusieurs colonies sans malus. Au-delà de cette capacité, vos colonies souffrent d'<span className="text-foreground font-medium">overextend</span>.
+        Votre <span className="text-foreground font-medium">niveau d'empire</span> (gagné en jouant : constructions, recherches, missions, conquêtes) fixe votre capacité à gérer plusieurs colonies sans malus. Au-delà, vos colonies souffrent d'<span className="text-foreground font-medium">overextend</span>.
       </FacilityHelpSection>
 
       <FacilityHelpSection

@@ -1,6 +1,6 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
-import { pveMissions, planets, missionCenterState, fleetEvents, planetShips, asteroidDeposits } from '@exilium/db';
+import { pveMissions, planets, missionCenterState, fleetEvents, planetShips, asteroidDeposits, empireProgression } from '@exilium/db';
 import { TRPCError } from '@trpc/server';
 import type { Database } from '@exilium/db';
 import {
@@ -8,6 +8,8 @@ import {
   depositSize,
   depositComposition,
   computeFleetFP,
+  buildEmpireLevelConfig,
+  empireMissionLevel,
   type UnitCombatStats,
   type FPConfig,
 } from '@exilium/game-engine';
@@ -67,13 +69,18 @@ export function createPveService(
     },
 
     /**
-     * Niveau effectif du système de missions. Le Centre de missions n'est plus
-     * un bâtiment : on renvoie un niveau par défaut piloté par la config.
-     * TODO: à brancher sur le niveau d'empire (cadence + scaling des missions).
+     * Niveau effectif du système de missions (cadence + scaling) :
+     * niveau de base (config) + bonus par paliers de niveau d'empire.
      */
-    async getMissionCenterLevel(_userId: string): Promise<number> {
+    async getMissionCenterLevel(userId: string): Promise<number> {
       const config = await gameConfigService.getFullConfig();
-      return Number(config.universe.mission_default_level) || 3;
+      const missionDefault = Number(config.universe.mission_default_level) || 3;
+      const [progression] = await db
+        .select({ level: empireProgression.level })
+        .from(empireProgression)
+        .where(byUser(empireProgression.userId, userId))
+        .limit(1);
+      return empireMissionLevel(progression?.level ?? 1, missionDefault, buildEmpireLevelConfig(config.universe));
     },
 
     async startMission(missionId: string) {

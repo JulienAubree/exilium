@@ -69,6 +69,9 @@ export function createFleetService(
     typeof import('../colonization/colonization.service.js').createColonizationService
   >,
   allianceLogService?: AllianceLogService,
+  empireProgressionService?: ReturnType<
+    typeof import('../empire-progression/empire-progression.service.js').createEmpireProgressionService
+  >,
 ) {
   const handlers: Record<string, MissionHandler> = {
     transport: new TransportHandler(),
@@ -101,6 +104,7 @@ export function createFleetService(
     flagshipService,
     talentService,
     allianceLogService,
+    empireProgressionService,
     fleetQueue,
     assetsDir: env.ASSETS_DIR,
     redis,

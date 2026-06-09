@@ -9,7 +9,6 @@ import { getBuildingName } from '@/lib/entity-names';
 import { buildProductionConfig } from '@/lib/production-config';
 import { storageCapacity, buildingBonusAtLevel } from '@exilium/game-engine';
 import { getContextualTable } from './building-tables';
-import { GovernanceSection } from './GovernanceSection';
 
 interface BuildingListItem {
   id: string;
@@ -222,9 +221,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
           </div>
         </div>
       )}
-
-      {/* 3e. Imperial Power Center governance */}
-      {buildingId === 'imperialPowerCenter' && <GovernanceSection currentLevel={currentLevel} />}
 
       {/* 4. Bonus de ce bâtiment */}
       {buildingBonus && (

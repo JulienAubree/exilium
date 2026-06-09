@@ -11,6 +11,7 @@ import type { createShipyardService } from '../modules/shipyard/shipyard.service
 import type { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import type { createPushService } from '../modules/push/push.service.js';
 import type { createDailyQuestService } from '../modules/daily-quest/daily-quest.service.js';
+import type { createEmpireProgressionService } from '../modules/empire-progression/empire-progression.service.js';
 
 type Services = {
   buildingService: ReturnType<typeof createBuildingService>;
@@ -19,6 +20,7 @@ type Services = {
   tutorialService: ReturnType<typeof createTutorialService>;
   pushService: ReturnType<typeof createPushService>;
   dailyQuestService?: ReturnType<typeof createDailyQuestService>;
+  empireProgressionService?: ReturnType<typeof createEmpireProgressionService>;
 };
 
 export function startBuildCompletionWorker(db: Database, redis: Redis, services: Services) {
@@ -105,6 +107,19 @@ export function startBuildCompletionWorker(db: Database, redis: Redis, services:
           userId: result.userId,
           payload: { buildingId: result.notificationPayload.buildingId ?? result.notificationPayload.techId ?? result.notificationPayload.unitId },
         }).catch((e) => console.warn('[daily-quest] processEvent failed:', e));
+      }
+
+      // Hook: empire XP for building/research completion (∝ niveau atteint)
+      if (services.empireProgressionService && (job.name === 'building' || job.name === 'research')) {
+        await services.empireProgressionService.processEvent({
+          type: 'construction:completed',
+          userId: result.userId,
+          payload: {
+            kind: job.name,
+            itemId: result.notificationPayload.buildingId ?? result.notificationPayload.techId,
+            level: result.notificationPayload.level,
+          },
+        }).catch((e) => console.warn('[empire-progression] processEvent failed:', e));
       }
 
       console.log(`[build-completion] ${job.name} completed for ${buildQueueId}`);
