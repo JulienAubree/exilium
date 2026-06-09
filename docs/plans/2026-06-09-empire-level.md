@@ -32,7 +32,7 @@ Pas d'XP sur : ressources collectées, flotte expédiée, marché (macro-ables �
 
 - **Courbe** : XP cumulée pour atteindre le niveau L : `empire_xp_curve_base × (L-1) × L / 2` (quadratique, même forme que l'ex-flagship-xp). Base v1 : `100`. Niveau 1=0 XP (départ), niv 2=100, niv 5=1000, niv 10=4500, niv 20=19000. **Le niveau affiché démarre à 1** (un empereur niveau 0, ça ne se dit pas) ; en interne xp=0 → level=1.
 - **Capacité de gouvernance** : `1 + floor((level - 1) / empire_capacity_levels_per_colony)` (v1 : `2`). Level 1 → 1 (équivalent IPC 0), level 3 → 2, level 19 → 10.
-- **Plancher grandfathered** : `capacité = max(formule, governance_floor)` où `governance_floor = 1 + niveau IPC archivé` (migration). Personne ne perd de colonie ; le plancher devient obsolète quand le niveau rattrape.
+- ~~Plancher grandfathered~~ **Révisé (0095, décision user)** : les ex-détenteurs d'IPC reçoivent directement le **niveau d'empire équivalent** à leur ancienne capacité (`L = 2×capacité − 1`, XP créditée et tracée dans `empire_xp_log` source `admin`). Le plancher `governance_floor` a été supprimé — capacité = f(niveau), une seule règle. Effet de bord assumé : leur niveau leur donne aussi le bonus missions.
 - **Niveau de missions** : `mission_default_level + floor((level - 1) / empire_mission_levels_per_bonus)` (v1 : `5`). Level 1 → 3 (continuité avec l'existant), level 6 → 4…
 - **Scaling coût colonisation** : remplace `ipcLevel` par `(capacité - 1)` dans `scaleCost` (même intention : plus d'envergure administrative = entretien colonial plus cher).
 - **Flagship** : hooks à terme (coques gatées par niveau, bonus aux paliers) — PAS dans cette implémentation, juste noté ici.

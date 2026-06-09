@@ -63,17 +63,11 @@ export function empireLevelFromXp(xp: number, config: EmpireLevelConfig): number
 /**
  * Capacité de gouvernance pour un niveau d'empire donné.
  * Niveau 1 → 1 colonie (équivalent ex-IPC 0), puis +1 tous les
- * `capacityLevelsPerColony` niveaux.
- * `governanceFloor` = plancher grandfathered des joueurs ayant possédé
- * un Centre de Pouvoir Impérial (1 + niveau IPC archivé).
+ * `capacityLevelsPerColony` niveaux. Les ex-détenteurs d'IPC ont reçu le
+ * niveau équivalent à leur ancienne capacité (migration 0095).
  */
-export function empireGovernanceCapacity(
-  level: number,
-  config: EmpireLevelConfig,
-  governanceFloor = 0,
-): number {
-  const fromLevel = 1 + Math.floor(Math.max(0, level - 1) / config.capacityLevelsPerColony);
-  return Math.max(fromLevel, governanceFloor);
+export function empireGovernanceCapacity(level: number, config: EmpireLevelConfig): number {
+  return 1 + Math.floor(Math.max(0, level - 1) / config.capacityLevelsPerColony);
 }
 
 /**

@@ -62,7 +62,6 @@ interface FakeDiscoveredBiome {
 interface FakeEmpireProgression {
   userId: string;
   level: number;
-  governanceFloor: number;
 }
 
 interface FakeState {
@@ -442,16 +441,16 @@ describe('colonization.service', () => {
       expect(level).toBe(0);
     });
 
-    it('suit le plancher grandfathered ex-IPC (floor 4 → admin 3)', async () => {
-      state.empireProgressions.push({ userId: 'user-1', level: 1, governanceFloor: 4 });
-      const level = await service.getAdminLevel('user-1');
-      expect(level).toBe(3);
-    });
-
     it('suit le niveau d\'empire (niveau 5 → capacité 3 → admin 2)', async () => {
-      state.empireProgressions.push({ userId: 'user-1', level: 5, governanceFloor: 0 });
+      state.empireProgressions.push({ userId: 'user-1', level: 5 });
       const level = await service.getAdminLevel('user-1');
       expect(level).toBe(2);
+    });
+
+    it('niveau de compensation ex-IPC 7 (niveau 15 → capacité 8 → admin 7)', async () => {
+      state.empireProgressions.push({ userId: 'user-1', level: 15 });
+      const level = await service.getAdminLevel('user-1');
+      expect(level).toBe(7);
     });
   });
 
@@ -576,8 +575,8 @@ describe('colonization.service', () => {
       expect(thresholds).toEqual({ minerai: 500, silicium: 250 });
     });
 
-    it('scale les seuils avec le niveau administratif (ex-IPC 2)', async () => {
-      state.empireProgressions.push({ userId: 'user-1', level: 1, governanceFloor: 3 });
+    it('scale les seuils avec le niveau administratif (niveau 5 → admin 2)', async () => {
+      state.empireProgressions.push({ userId: 'user-1', level: 5 });
 
       const thresholds = await service.getOutpostThresholds('user-1');
       // 500 * (1 + 0.5 * 2) = 1000

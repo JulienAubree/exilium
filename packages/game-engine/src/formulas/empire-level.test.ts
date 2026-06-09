@@ -59,11 +59,10 @@ describe('empireGovernanceCapacity', () => {
     expect(empireGovernanceCapacity(19, config)).toBe(10);
   });
 
-  it('le plancher grandfathered prime tant que la formule est en dessous', () => {
-    // ex-joueur IPC 9 : floor = 10
-    expect(empireGovernanceCapacity(1, config, 10)).toBe(10);
-    expect(empireGovernanceCapacity(19, config, 10)).toBe(10);
-    expect(empireGovernanceCapacity(21, config, 10)).toBe(11);
+  it('niveau de compensation ex-IPC : 2×capacité−1 redonne la capacité', () => {
+    // ex-joueur IPC 7 (capacité 8) → niveau 15 ; IPC 9 (capacité 10) → niveau 19
+    expect(empireGovernanceCapacity(15, config)).toBe(8);
+    expect(empireGovernanceCapacity(19, config)).toBe(10);
   });
 });
 

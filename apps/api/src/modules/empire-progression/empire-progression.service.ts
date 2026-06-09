@@ -122,7 +122,6 @@ export function createEmpireProgressionService(
 
       const level = record?.level ?? 1;
       const xp = record?.xp ?? 0;
-      const governanceFloor = record?.governanceFloor ?? 0;
 
       return {
         xp,
@@ -130,8 +129,7 @@ export function createEmpireProgressionService(
         currentLevelXp: empireXpRequiredForLevel(level, levelConfig),
         nextLevelXp: level >= levelConfig.maxLevel ? null : empireXpRequiredForLevel(level + 1, levelConfig),
         maxLevel: levelConfig.maxLevel,
-        capacity: empireGovernanceCapacity(level, levelConfig, governanceFloor),
-        governanceFloor,
+        capacity: empireGovernanceCapacity(level, levelConfig),
         missionLevel: empireMissionLevel(level, missionDefault, levelConfig),
         capacityLevelsPerColony: levelConfig.capacityLevelsPerColony,
         missionLevelsPerBonus: levelConfig.missionLevelsPerBonus,

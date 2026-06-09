@@ -17,23 +17,18 @@ export function createColonizationService(
   return {
     /** Niveau administratif de l'empire = capacité de gouvernance - 1.
      * Équivalent direct de l'ex-niveau IPC (capacité = 1 + IPC) : porté par
-     * le niveau d'empire (+ plancher grandfathered des ex-détenteurs d'IPC).
-     * Sert à scaler l'entretien de colonisation et la taille des raids.
+     * le niveau d'empire. Sert à scaler l'entretien de colonisation et la
+     * taille des raids.
      */
     async getAdminLevel(userId: string): Promise<number> {
       const [progression] = await db
-        .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+        .select({ level: empireProgression.level })
         .from(empireProgression)
         .where(byUser(empireProgression.userId, userId))
         .limit(1);
       const config = await gameConfigService.getFullConfig();
       const levelConfig = buildEmpireLevelConfig(config.universe);
-      const capacity = empireGovernanceCapacity(
-        progression?.level ?? 1,
-        levelConfig,
-        progression?.governanceFloor ?? 0,
-      );
-      return capacity - 1;
+      return empireGovernanceCapacity(progression?.level ?? 1, levelConfig) - 1;
     },
 
     /** Scale a base cost by empire admin level and scaling factor */
@@ -648,14 +643,14 @@ export function createColonizationService(
       const colonyCount = Math.max(0, activePlanets.length - 1);
 
       const [progression] = await db
-        .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+        .select({ level: empireProgression.level })
         .from(empireProgression)
         .where(byUser(empireProgression.userId, userId))
         .limit(1);
       const config = await gameConfigService.getFullConfig();
       const levelConfig = buildEmpireLevelConfig(config.universe);
       const empireLevel = progression?.level ?? 1;
-      const capacity = empireGovernanceCapacity(empireLevel, levelConfig, progression?.governanceFloor ?? 0);
+      const capacity = empireGovernanceCapacity(empireLevel, levelConfig);
 
       const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];
       const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.60];

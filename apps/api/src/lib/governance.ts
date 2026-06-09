@@ -23,18 +23,14 @@ export async function getGovernancePenalty(
     .from(planets).where(byUser(planets.userId, userId));
   const colonyCount = Math.max(0, userPlanets.filter(p => p.status === 'active').length - 1);
 
-  // Capacité portée par le niveau d'empire (+ plancher grandfathered ex-IPC)
+  // Capacité portée par le niveau d'empire
   const [progression] = await db
-    .select({ level: empireProgression.level, governanceFloor: empireProgression.governanceFloor })
+    .select({ level: empireProgression.level })
     .from(empireProgression)
     .where(byUser(empireProgression.userId, userId))
     .limit(1);
   const levelConfig = buildEmpireLevelConfig(config.universe);
-  const capacity = empireGovernanceCapacity(
-    progression?.level ?? 1,
-    levelConfig,
-    progression?.governanceFloor ?? 0,
-  );
+  const capacity = empireGovernanceCapacity(progression?.level ?? 1, levelConfig);
 
   const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.60];
   const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.60];

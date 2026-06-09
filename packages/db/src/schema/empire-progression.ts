@@ -4,8 +4,8 @@ import { users } from './users.js';
 
 /**
  * Progression d'empire : XP cumulée + niveau (remplace le bâtiment
- * « Centre de Pouvoir Impérial »). `governance_floor` = plancher de capacité
- * grandfathered pour les joueurs qui possédaient un IPC (1 + niveau archivé).
+ * « Centre de Pouvoir Impérial » — les ex-détenteurs ont reçu le niveau
+ * équivalent à leur capacité via la migration 0095).
  */
 export const empireProgression = pgTable('empire_progression', {
   userId: uuid('user_id')
@@ -14,7 +14,6 @@ export const empireProgression = pgTable('empire_progression', {
     .references(() => users.id, { onDelete: 'cascade' }),
   xp: bigint('xp', { mode: 'number' }).notNull().default(0),
   level: integer('level').notNull().default(1),
-  governanceFloor: integer('governance_floor').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

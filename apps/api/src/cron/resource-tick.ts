@@ -148,19 +148,15 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     }
   }
 
-  // Capacité de gouvernance par user : niveau d'empire + plancher ex-IPC.
+  // Capacité de gouvernance par user : niveau d'empire.
   // Les users sans ligne empire_progression sont niveau 1 (capacité formule).
   const levelConfig = buildEmpireLevelConfig(config.universe);
   const allProgressions = await db
-    .select({
-      userId: empireProgression.userId,
-      level: empireProgression.level,
-      governanceFloor: empireProgression.governanceFloor,
-    })
+    .select({ userId: empireProgression.userId, level: empireProgression.level })
     .from(empireProgression);
   const capacityByUser = new Map<string, number>();
   for (const row of allProgressions) {
-    capacityByUser.set(row.userId, empireGovernanceCapacity(row.level, levelConfig, row.governanceFloor));
+    capacityByUser.set(row.userId, empireGovernanceCapacity(row.level, levelConfig));
   }
   const defaultCapacity = empireGovernanceCapacity(1, levelConfig);
   const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [
