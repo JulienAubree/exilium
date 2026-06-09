@@ -2,9 +2,7 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
-  discoveryCooldown, depositSize,
   calculateShieldCapacity, calculateShieldEnergy,
-  getMissionRelayBonusPerLevel,
 } from '@exilium/game-engine';
 import { buildProductionConfig } from '@/lib/production-config';
 
@@ -16,19 +14,13 @@ import { buildProductionConfig } from '@/lib/production-config';
 export interface MineRow { level: number; production: number; gain: number | null; energy: number }
 export interface SolarRow { level: number; production: number; gain: number | null }
 export interface StorageRow { level: number; capacity: number; gain: number | null; armored: number }
-export interface MissionCenterRow { level: number; cooldown: number; depositSize: number }
-export interface MissionRelayRow { level: number; minerai: number; silicium: number; hydrogene: number; pirate: number }
 export interface MarketRow { level: number; maxOffers: number }
 export interface ShieldRow { level: number; shield: number; energy: number }
-
-export type MissionRelayBiome = 'volcanic' | 'arid' | 'temperate' | 'glacial' | 'gaseous' | null;
 
 export type TableData =
   | { type: 'mine'; title: string; rows: MineRow[] }
   | { type: 'solar'; title: string; rows: SolarRow[] }
   | { type: 'storage'; title: string; rows: StorageRow[] }
-  | { type: 'missionCenter'; title: string; rows: MissionCenterRow[] }
-  | { type: 'missionRelay'; title: string; rows: MissionRelayRow[]; biome: MissionRelayBiome }
   | { type: 'market'; title: string; rows: MarketRow[] }
   | { type: 'shield'; title: string; rows: ShieldRow[] };
 
@@ -40,7 +32,7 @@ export function getContextualTable(
   prodConfig?: ReturnType<typeof buildProductionConfig>,
   protectedBaseRatio?: number,
   armoredMultiplier?: number,
-  planetClassId?: string | null,
+  _planetClassId?: string | null,
 ): TableData | null {
   const pf = productionFactor;
   const levels = Array.from({ length: 6 }, (_, i) => currentLevel + i);
@@ -107,32 +99,6 @@ export function getContextualTable(
           capacity: storageCapacity(level, prodConfig?.storage),
           gain: i === 0 ? null : storageCapacity(level, prodConfig?.storage) - storageCapacity(level - 1, prodConfig?.storage),
           armored: Math.floor(storageCapacity(level, prodConfig?.storage) * baseRatio * armoredMult),
-        })),
-      };
-    }
-    case 'missionCenter':
-      return {
-        type: 'missionCenter',
-        title: 'Progression du Centre de missions',
-        rows: levels.map((level) => ({
-          level,
-          cooldown: discoveryCooldown(level),
-          depositSize: depositSize(level, 1.0),
-        })),
-      };
-    case 'missionRelay': {
-      const biome = (planetClassId ?? null) as MissionRelayBiome;
-      const perLevel = getMissionRelayBonusPerLevel(biome);
-      return {
-        type: 'missionRelay',
-        title: 'Bonus de récompenses PvE',
-        biome,
-        rows: levels.map((level) => ({
-          level,
-          minerai:   perLevel.minerai   * level,
-          silicium:  perLevel.silicium  * level,
-          hydrogene: perLevel.hydrogene * level,
-          pirate:    perLevel.pirate    * level,
         })),
       };
     }

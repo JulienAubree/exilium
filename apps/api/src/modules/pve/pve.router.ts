@@ -12,9 +12,7 @@ export function createPveRouter(
   return router({
     getMissions: protectedProcedure.query(async ({ ctx }) => {
       const centerLevel = await pveService.getMissionCenterLevel(ctx.userId!);
-      if (centerLevel > 0) {
-        await pveService.materializeDiscoveries(ctx.userId!);
-      }
+      await pveService.materializeDiscoveries(ctx.userId!);
       const missions = await pveService.getMissions(ctx.userId!);
       const discoveryState = await pveService.getDiscoveryState(ctx.userId!);
       const enrichedMissions = missions.map(m => {
@@ -51,9 +49,7 @@ export function createPveRouter(
         galaxy: z.number().int().min(1).max(9),
         system: z.number().int().min(1).max(499),
       }))
-      .query(async ({ ctx, input }) => {
-        const centerLevel = await pveService.getMissionCenterLevel(ctx.userId!);
-        if (centerLevel === 0) return {};
+      .query(async ({ input }) => {
         return asteroidBeltService.getSystemDeposits(input.galaxy, input.system);
       }),
   });

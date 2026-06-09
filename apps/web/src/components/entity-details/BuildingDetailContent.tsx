@@ -172,34 +172,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
         );
       })()}
 
-      {/* 3b-bis. Mission relay explanation */}
-      {buildingId === 'missionRelay' && (
-        <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 p-3 space-y-2">
-          <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Relais de missions</div>
-          <div className="text-xs text-slate-300 space-y-2">
-            <p>Avant-poste relié au <span className="text-amber-400 font-medium">Centre de missions</span> de la planète mère. Augmente les <span className="text-amber-400 font-medium">récompenses PvE</span> selon le biome de la colonie.</p>
-
-            <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
-              <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Bonus par biome (par niveau)</div>
-              <ul className="space-y-1 text-slate-300">
-                <li><span className="text-amber-400 font-medium">Volcanique</span> : +2%/niv. minerai sur le butin minier</li>
-                <li><span className="text-cyan-400 font-medium">Aride</span> : +2%/niv. silicium sur le butin minier</li>
-                <li><span className="text-fuchsia-400 font-medium">Gazeuse</span> : +2%/niv. hydrogène sur le butin minier</li>
-                <li><span className="text-emerald-400 font-medium">Tempérée</span> : +1%/niv. sur chaque ressource minière</li>
-                <li><span className="text-rose-400 font-medium">Glaciale</span> : +2%/niv. sur le butin pirate (toutes ressources)</li>
-              </ul>
-            </div>
-
-            <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
-              <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Bonus de diversité</div>
-              <p className="text-slate-300">Tous les bonus relais sont multipliés par <span className="text-violet-400 font-medium">+5% par biome distinct</span> couvert par au moins un relais. Avec les 5 biomes représentés : <span className="text-violet-400 font-medium">×1.25</span> sur l&apos;ensemble.</p>
-            </div>
-
-            <p className="text-slate-500 text-[11px]">Les bonus de plusieurs relais sur le même biome se cumulent. Le bonus s&apos;additionne au multiplicateur global <span className="text-slate-400">pve_loot</span>.</p>
-          </div>
-        </div>
-      )}
-
       {/* 3c. Main lab explanation */}
       {buildingId === 'researchLab' && (
         <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
@@ -337,42 +309,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                     </th>
                   </>
                 )}
-                {tableData.type === 'missionCenter' && (
-                  <>
-                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">
-                      Cooldown
-                    </th>
-                    <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">
-                      Gisement moy.
-                    </th>
-                  </>
-                )}
-                {tableData.type === 'missionRelay' && (
-                  <>
-                    {tableData.biome === 'volcanic' && (
-                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Bonus minerai</th>
-                    )}
-                    {tableData.biome === 'arid' && (
-                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">Bonus silicium</th>
-                    )}
-                    {tableData.biome === 'gaseous' && (
-                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-fuchsia-400">Bonus hydrogène</th>
-                    )}
-                    {tableData.biome === 'temperate' && (
-                      <>
-                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-500">Minerai</th>
-                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">Silicium</th>
-                        <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-fuchsia-400">Hydrogène</th>
-                      </>
-                    )}
-                    {tableData.biome === 'glacial' && (
-                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-rose-400">Bonus butin pirate</th>
-                    )}
-                    {!tableData.biome && (
-                      <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-slate-400">Bonus</th>
-                    )}
-                  </>
-                )}
                 {tableData.type === 'market' && (
                   <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
                     Offres max
@@ -440,55 +376,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                     <td className="px-2 py-1.5 text-right text-green-500">{fmt(row.armored)}</td>
                   </tr>
                 ))}
-              {tableData.type === 'missionCenter' &&
-                tableData.rows.map((row, i) => (
-                  <tr
-                    key={row.level}
-                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
-                  >
-                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
-                      {row.level}{i === 0 ? ' \u25C4' : ''}
-                    </td>
-                    <td className="px-2 py-1.5 text-right text-cyan-400">{row.cooldown}h</td>
-                    <td className="px-2 py-1.5 text-right">{fmt(row.depositSize)}</td>
-                  </tr>
-                ))}
-              {tableData.type === 'missionRelay' &&
-                tableData.rows.map((row, i) => {
-                  const pct = (n: number) => `+${(n * 100).toFixed(0)}%`;
-                  return (
-                    <tr
-                      key={row.level}
-                      className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
-                    >
-                      <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
-                        {row.level}{i === 0 ? ' \u25C4' : ''}
-                      </td>
-                      {tableData.biome === 'volcanic' && (
-                        <td className="px-2 py-1.5 text-right text-amber-500">{pct(row.minerai)}</td>
-                      )}
-                      {tableData.biome === 'arid' && (
-                        <td className="px-2 py-1.5 text-right text-cyan-400">{pct(row.silicium)}</td>
-                      )}
-                      {tableData.biome === 'gaseous' && (
-                        <td className="px-2 py-1.5 text-right text-fuchsia-400">{pct(row.hydrogene)}</td>
-                      )}
-                      {tableData.biome === 'temperate' && (
-                        <>
-                          <td className="px-2 py-1.5 text-right text-amber-500">{pct(row.minerai)}</td>
-                          <td className="px-2 py-1.5 text-right text-cyan-400">{pct(row.silicium)}</td>
-                          <td className="px-2 py-1.5 text-right text-fuchsia-400">{pct(row.hydrogene)}</td>
-                        </>
-                      )}
-                      {tableData.biome === 'glacial' && (
-                        <td className="px-2 py-1.5 text-right text-rose-400">{pct(row.pirate)}</td>
-                      )}
-                      {!tableData.biome && (
-                        <td className="px-2 py-1.5 text-right text-slate-400">—</td>
-                      )}
-                    </tr>
-                  );
-                })}
               {tableData.type === 'market' &&
                 tableData.rows.map((row, i) => (
                   <tr

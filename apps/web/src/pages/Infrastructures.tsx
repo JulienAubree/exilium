@@ -3,8 +3,6 @@ import { useOutletContext } from 'react-router';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import {
   calculateShieldCapacity,
-  discoveryCooldown,
-  getMissionRelayBonusPerLevel,
 } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { estimateRefund } from '@/lib/refund';
@@ -53,14 +51,8 @@ function getEffectLine(buildingId: string, level: number): string | null {
       return `−${Math.round((1 - Math.pow(0.85, level)) * 100)}% temps de construction (×${Math.pow(0.85, level).toFixed(2)})`;
     case 'planetaryShield':
       return `${formatCompact(calculateShieldCapacity(level))} de bouclier`;
-    case 'missionCenter':
-      return `1 découverte / ${discoveryCooldown(level)} h`;
     case 'imperialPowerCenter':
       return `+${level} colonie${level > 1 ? 's' : ''} en gouvernance`;
-    case 'missionRelay': {
-      // For relay we show the planet-class-specific bonus
-      return `Bonus PvE actif (niv. ${level})`;
-    }
     case 'researchLab':
       return 'Pilote toute la recherche';
     case 'labVolcanic':
@@ -72,19 +64,6 @@ function getEffectLine(buildingId: string, level: number): string | null {
     default:
       return null;
   }
-}
-
-/** Returns a relay-specific effect line that shows the actual bonus per resource. */
-function getRelayEffectLine(level: number, planetClassId: string | null): string | null {
-  if (level <= 0) return null;
-  const bonus = getMissionRelayBonusPerLevel(planetClassId);
-  const parts: string[] = [];
-  if (bonus.minerai > 0) parts.push(`+${Math.round(bonus.minerai * level * 100)}% minerai`);
-  if (bonus.silicium > 0) parts.push(`+${Math.round(bonus.silicium * level * 100)}% silicium`);
-  if (bonus.hydrogene > 0) parts.push(`+${Math.round(bonus.hydrogene * level * 100)}% hydrogène`);
-  if (bonus.pirate > 0) parts.push(`+${Math.round(bonus.pirate * level * 100)}% butin pirates`);
-  if (parts.length === 0) return null;
-  return `${parts.join(' · ')} (cumulé niv. ${level})`;
 }
 
 interface InfraSlot {
@@ -184,10 +163,7 @@ export default function Infrastructures() {
     const make = (id: string, locked: boolean, lockReason?: string): InfraSlot => {
       const def = gameConfig?.buildings[id];
       const level = buildingLevels[id] ?? 0;
-      const effect =
-        id === 'missionRelay'
-          ? getRelayEffectLine(level, planetClassId ?? null)
-          : getEffectLine(id, level);
+      const effect = getEffectLine(id, level);
       return {
         id,
         label: def?.name ?? id,
@@ -208,7 +184,6 @@ export default function Infrastructures() {
         : annexId
           ? make(annexId, false)
           : make('researchLab', true, 'Le laboratoire principal vit sur votre planète-mère.'),
-      isHomeworld ? make('missionCenter', false) : make('missionRelay', false),
       isHomeworld
         ? make('imperialPowerCenter', false)
         : make('imperialPowerCenter', true, 'Réservé à la planète-mère.'),

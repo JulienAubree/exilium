@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { Lock, Home, HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus } from 'lucide-react';
+import { HelpCircle, Sun, Frown, Clock, Info, ChevronDown, Boxes, ArrowRight, Plus } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
@@ -146,36 +146,6 @@ export default function Missions() {
   const phaseLabel = (phase: string): string =>
     gameConfig?.labels?.[`phase.${phase}`] ?? phase;
 
-  // ── Locked state ────────────────────────────────────────────────────
-
-  if (centerLevel === 0) {
-    return (
-      <div className="space-y-4">
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-950/80 via-slate-950 to-rose-950/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center px-5 py-16 lg:py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-card/50 mb-6">
-              <Lock className="h-10 w-10 text-muted-foreground-faint" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Centre de missions</h1>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              Construisez le <span className="text-foreground font-semibold">Centre de missions</span> pour
-              decouvrir des gisements de ressources et traquer des repaires pirates.
-            </p>
-            <Link
-              to="/buildings"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Home className="h-3.5 w-3.5" />
-              Aller aux bâtiments
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ── Main layout ─────────────────────────────────────────────────────
 
   return (
@@ -215,7 +185,7 @@ export default function Missions() {
             <div className="flex-1 min-w-0 pt-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">Centre de missions</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Niveau {centerLevel} · Decouverte toutes les {Math.max(1, 7 - centerLevel)}h
+                Decouverte automatique toutes les {Math.max(1, 7 - centerLevel)}h
               </p>
               <p className="text-xs text-muted-foreground mt-2 max-w-lg leading-relaxed hidden lg:block">
                 Decouvrez des gisements de ressources et traquez des repaires pirates.
@@ -572,8 +542,7 @@ export default function Missions() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
           <div className="absolute bottom-3 left-5">
-            <p className="text-sm font-semibold text-foreground">Niveau {centerLevel}</p>
-            <p className="text-xs text-muted-foreground">Decouverte toutes les {Math.max(1, 7 - centerLevel)}h</p>
+            <p className="text-xs text-muted-foreground">Decouverte automatique toutes les {Math.max(1, 7 - centerLevel)}h</p>
           </div>
         </div>
 
