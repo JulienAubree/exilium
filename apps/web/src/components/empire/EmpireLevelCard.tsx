@@ -18,8 +18,11 @@ export function EmpireLevelCard() {
   const span = isMaxLevel ? 1 : nextLevelXp - currentLevelXp;
   const progress = isMaxLevel ? 1 : Math.min(1, Math.max(0, (xp - currentLevelXp) / span));
 
-  // Prochain niveau qui débloque +1 capacité / +1 missions
-  const nextCapacityLevel = level + (capacityLevelsPerColony - ((level - 1) % capacityLevelsPerColony));
+  // Prochain niveau qui débloque +1 capacité / +1 missions.
+  // Capacité : la formule (1 + (niv-1)/c) doit dépasser la capacité ACTUELLE,
+  // qui peut être tenue par le plancher grandfathered ex-IPC — le prochain
+  // palier est donc le niveau où la formule atteint capacité+1.
+  const nextCapacityLevel = capacity * capacityLevelsPerColony + 1;
   const nextMissionLevel = level + (missionLevelsPerBonus - ((level - 1) % missionLevelsPerBonus));
 
   return (
