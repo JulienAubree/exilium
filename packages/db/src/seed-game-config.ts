@@ -536,19 +536,6 @@ const UNIVERSE_CONFIG = [
   { key: 'pve_deposit_variance_max', value: 1.6 },
   { key: 'pve_loot_multiplier', value: 0.1 },
 
-  // Anomalie gravitationnelle (rogue-lite V1 + V5-Tiers + V6-AbsoluteFP + V8.9-Rebalance)
-  { key: 'anomaly_entry_cost_exilium', value: 5 },
-  { key: 'anomaly_difficulty_growth', value: 1.06 },        // V6 : intra-palier smooth depth 1→20
-  { key: 'anomaly_enemy_max_ratio', value: 2.0 },           // V8.9 : ×2 cap au depth max (ex 3.0, trop violent)
-  { key: 'anomaly_tier_base_fp', value: 40 },               // V8.9 : 40 FP au palier 1 depth 1 (ex 80, trop dur)
-  { key: 'anomaly_tier_fp_growth', value: 1.6 },            // V8.9 : paliers moins steep (ex 1.7)
-  { key: 'anomaly_loot_base', value: 1500 },                // V8.9 : base réduite ~3× (ex 5000)
-  { key: 'anomaly_loot_growth', value: 1.20 },              // V8.9 : depth 20 = ×32 au lieu de ×275 (ex 1.4)
-  { key: 'anomaly_loot_tier_cap', value: 10 },              // V5-Tiers : loot scaling capped à palier 10
-  { key: 'anomaly_tier_engage_cost_factor', value: 1.0 },   // V5-Tiers : cost engage scale linéaire ×tier
-  { key: 'anomaly_enemy_recovery_ratio', value: 0.15 },
-  { key: 'anomaly_node_travel_seconds', value: 120 },
-
   // ── FP (Facteur de Puissance) ──
   { key: 'fp_shotcount_exponent', value: 1.5 },
   { key: 'fp_divisor', value: 100 },
@@ -595,7 +582,6 @@ const UNIVERSE_CONFIG = [
   // ── Exilium ──
   { key: 'exilium_daily_quest_reward', value: 1 },
   { key: 'exilium_drop_amount', value: 1 },
-  { key: 'exilium_drop_rate_expedition', value: 0.05 },
   { key: 'exilium_drop_rate_pvp', value: 0.03 },
   { key: 'exilium_drop_rate_pve', value: 0.04 },
   { key: 'exilium_drop_rate_market', value: 0.02 },
