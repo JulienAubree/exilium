@@ -9,7 +9,6 @@ import { ProfileAllianceCard } from './ProfileAllianceCard';
 import { ProfileSocialCard } from './ProfileSocialCard';
 import { ProfilePreferencesCard } from './ProfilePreferencesCard';
 import { AvatarPicker } from './AvatarPicker';
-import { EmpireLevelCard } from '@/components/empire/EmpireLevelCard';
 
 interface ProfileViewProps {
   userId: string;
@@ -44,6 +43,7 @@ function NotFound() {
 function OwnView() {
   const utils = trpc.useUtils();
   const { data: profile, isLoading } = trpc.user.getMyProfile.useQuery();
+  const { data: empire } = trpc.empireProgression.get.useQuery();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const updateMutation = trpc.user.updateProfile.useMutation({
@@ -87,12 +87,11 @@ function OwnView() {
         seekingAlliance={profile.seekingAlliance}
         allianceTag={profile.allianceTag}
         onEditAvatar={() => setShowAvatarPicker(true)}
+        empire={empire}
       />
 
       <div className="px-4 pb-4 lg:px-6 lg:pb-6">
         <div className="mx-auto w-full max-w-[720px] space-y-4">
-          <EmpireLevelCard />
-
           <ProfileStatsCard
             rank={profile.rank}
             totalPoints={profile.totalPoints}
