@@ -1,7 +1,7 @@
 import { eq, asc, and, sql } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents, anomalies, flagshipModuleInventory, moduleDefinitions } from '@exilium/db';
+import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -9,7 +9,7 @@ import type { createTalentService } from './talent.service.js';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { createReportService } from '../report/report.service.js';
 import { listFlagshipImageIndexes, getRandomFlagshipImageIndex } from '../../lib/flagship-image.util.js';
-import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport, xpToLevel, levelMultiplier } from '@exilium/game-engine';
+import { computeBaseStatsFromShips, FLAGSHIP_EXCLUDED_SHIPS, calculateSpyReport } from '@exilium/game-engine';
 
 // Regex de validation du nom : lettres (toutes langues), chiffres, espaces, tirets, apostrophes
 const NAME_REGEX = /^[\p{L}\p{N}\s\-']{2,32}$/u;
@@ -39,60 +39,6 @@ export function createFlagshipService(
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
       .trim();
-  }
-
-  /**
-   * V7.1 Starter weapons : grant les 3 starter weapon modules du hull
-   * (1 par rareté) à l'inventaire du flagship + auto-équipe dans les
-   * slots Arsenal SI vides. Idempotent — peut être appelé sans risque
-   * à la création + à chaque change de hull.
-   *
-   * Convention : id = `<hullId>-w-starter-<rarity>` (cf migration 0075).
-   * Si le hull n'a pas de starters seedés, no-op silencieux.
-   */
-  async function grantAndEquipStarterWeapons(flagshipId: string, hullId: string) {
-    const starters = await db
-      .select({ id: moduleDefinitions.id, rarity: moduleDefinitions.rarity })
-      .from(moduleDefinitions)
-      .where(and(
-        eq(moduleDefinitions.hullId, hullId),
-        eq(moduleDefinitions.kind, 'weapon'),
-        sql`${moduleDefinitions.id} LIKE '%-w-starter-%'`,
-        eq(moduleDefinitions.enabled, true),
-      ));
-    if (starters.length === 0) return;
-
-    // Grant inventory (idempotent on the unique flagship_id + module_id key)
-    for (const s of starters) {
-      await db.insert(flagshipModuleInventory)
-        .values({ flagshipId, moduleId: s.id, count: 1 })
-        .onConflictDoNothing();
-    }
-
-    // Auto-equip in empty Arsenal slots only (preserve player choices)
-    const [row] = await db.select({ loadout: flagships.moduleLoadout })
-      .from(flagships).where(eq(flagships.id, flagshipId)).limit(1);
-    if (!row) return;
-    const loadout = ((row.loadout ?? {}) as Record<string, unknown>);
-    const slot = ({ ...((loadout[hullId] ?? {}) as Record<string, unknown>) });
-    let changed = false;
-    for (const s of starters) {
-      const slotKey = s.rarity === 'common' ? 'weaponCommon'
-        : s.rarity === 'rare' ? 'weaponRare'
-        : s.rarity === 'epic' ? 'weaponEpic'
-        : null;
-      if (!slotKey) continue;
-      if (!slot[slotKey]) {
-        slot[slotKey] = s.id;
-        changed = true;
-      }
-    }
-    if (changed) {
-      loadout[hullId] = slot;
-      await db.update(flagships)
-        .set({ moduleLoadout: loadout })
-        .where(eq(flagships.id, flagshipId));
-    }
   }
 
   return {
@@ -138,12 +84,10 @@ export function createFlagshipService(
         Object.assign(flagship, { status: 'active', refitEndsAt: null });
       }
 
-      // Lazy recovery: in_mission with no matching active fleet event AND no
-      // active anomaly means the mission ended without resetting the flagship
-      // (server crash, lost queue job, or unhandled exception). Snap back to
-      // active so the player isn't permanently locked out.
-      // The anomaly check is critical: anomalies don't create fleet events,
-      // so without it the flagship would be silently freed mid-run.
+      // Lazy recovery: in_mission with no matching active fleet event means the
+      // mission ended without resetting the flagship (server crash, lost queue
+      // job, or unhandled exception). Snap back to active so the player isn't
+      // permanently locked out.
       if (flagship.status === 'in_mission') {
         const [activeFleet] = await db
           .select({ id: fleetEvents.id })
@@ -154,15 +98,7 @@ export function createFlagshipService(
             sql`COALESCE((${fleetEvents.ships}->>'flagship')::int, 0) > 0`,
           ))
           .limit(1);
-        const [activeAnomaly] = await db
-          .select({ id: anomalies.id })
-          .from(anomalies)
-          .where(and(
-            byUser(anomalies.userId, userId),
-            eq(anomalies.status, 'active'),
-          ))
-          .limit(1);
-        if (!activeFleet && !activeAnomaly) {
+        if (!activeFleet) {
           await db
             .update(flagships)
             .set({ status: 'active', updatedAt: new Date() })
@@ -176,29 +112,23 @@ export function createFlagshipService(
       // Always return hull config + effective stats for display
       const hullConfig = flagship.hullId ? (config.hulls[flagship.hullId] ?? null) : null;
 
-      // V4-XP : compute level multiplier from config + flagship.level
-      // Number.isFinite preserves intentional 0 (admin kill-switch via universe_config)
-      const rawLevelPct = Number(config.universe.flagship_xp_level_multiplier_pct);
-      const levelPct = Number.isFinite(rawLevelPct) ? rawLevelPct : 0.05;
-      const levelMult = levelMultiplier(flagship.level, levelPct);
-
       const effectiveStats = {
-        weapons:         Math.round(flagship.weapons * levelMult),
-        shield:          Math.round(flagship.shield * levelMult),
-        hull:            Math.round(flagship.hull * levelMult),
-        baseArmor:       Math.round(flagship.baseArmor * levelMult),
-        shotCount:       flagship.shotCount,        // pas multiplié (count entier)
-        cargoCapacity:   flagship.cargoCapacity,    // pas multiplié (stat non-combat)
-        fuelConsumption: flagship.fuelConsumption,  // pas multiplié
-        baseSpeed:       flagship.baseSpeed,        // pas multiplié
+        weapons:         flagship.weapons,
+        shield:          flagship.shield,
+        hull:            flagship.hull,
+        baseArmor:       flagship.baseArmor,
+        shotCount:       flagship.shotCount,
+        cargoCapacity:   flagship.cargoCapacity,
+        fuelConsumption: flagship.fuelConsumption,
+        baseSpeed:       flagship.baseSpeed,
         driveType:       flagship.driveType,
       };
 
-      // Apply hull combat bonuses (only when stationed) — multiplied too
+      // Apply hull combat bonuses (only when stationed)
       if (hullConfig && flagship.status === 'active') {
-        effectiveStats.weapons   += Math.round((hullConfig.passiveBonuses.bonus_weapons   ?? 0) * levelMult);
-        effectiveStats.baseArmor += Math.round((hullConfig.passiveBonuses.bonus_armor     ?? 0) * levelMult);
-        effectiveStats.shotCount += (hullConfig.passiveBonuses.bonus_shot_count ?? 0);  // pas multiplié
+        effectiveStats.weapons   += hullConfig.passiveBonuses.bonus_weapons   ?? 0;
+        effectiveStats.baseArmor += hullConfig.passiveBonuses.bonus_armor     ?? 0;
+        effectiveStats.shotCount += hullConfig.passiveBonuses.bonus_shot_count ?? 0;
       }
 
       // Fetch active cooldowns for hull abilities (replaces the talent.list cooldowns
@@ -225,69 +155,6 @@ export function createFlagshipService(
       }
 
       return { ...flagship, effectiveStats, hullConfig, cooldowns };
-    },
-
-    /**
-     * V4-XP (2026-05-04) : grant XP to the flagship + recompute level.
-     * No-op for amount <= 0.
-     *
-     * If `executor` is provided (typically a tx from a caller's transaction),
-     * runs WITHOUT opening a new transaction or taking an advisory lock — assumes
-     * the caller already holds them. Prevents two-connection deadlock when called
-     * from within anomalyService.advance/retreat (which already lock on userId).
-     *
-     * If `executor` is omitted, opens its own transaction with advisory lock
-     * (standalone usage).
-     */
-    async grantXp(userId: string, amount: number, executor?: Database): Promise<{
-      newXp: number;
-      oldLevel: number;
-      newLevel: number;
-      levelUp: boolean;
-    }> {
-      if (amount <= 0) return { newXp: 0, oldLevel: 1, newLevel: 1, levelUp: false };
-
-      const config = await gameConfigService.getFullConfig();
-      // Number.isFinite preserves intentional 0 (admin kill-switch via universe_config)
-      const rawMaxLevel = Number(config.universe.flagship_max_level);
-      const maxLevel = Number.isFinite(rawMaxLevel) ? rawMaxLevel : 60;
-
-      // Inner work — same logic, just runs against either the provided executor
-      // or a fresh transaction. The executor branch skips the advisory lock
-      // (caller already holds it for the same userId).
-      const work = async (tx: Database) => {
-        const [flagship] = await tx.select({
-          id: flagships.id,
-          xp: flagships.xp,
-          level: flagships.level,
-        }).from(flagships).where(byUser(flagships.userId, userId)).for('update').limit(1);
-        if (!flagship) {
-          return { newXp: 0, oldLevel: 1, newLevel: 1, levelUp: false };
-        }
-
-        const oldLevel = flagship.level;
-        const newXp = flagship.xp + amount;
-        const newLevel = xpToLevel(newXp, maxLevel);
-
-        await tx.update(flagships).set({
-          xp: newXp,
-          level: newLevel,
-          updatedAt: new Date(),
-        }).where(eq(flagships.id, flagship.id));
-
-        return { newXp, oldLevel, newLevel, levelUp: newLevel > oldLevel };
-      };
-
-      if (executor) {
-        // Caller's transaction — skip new tx + advisory lock (caller holds it)
-        return work(executor);
-      }
-
-      // Standalone — fresh transaction with advisory lock
-      return await db.transaction(async (tx) => {
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`);
-        return work(tx as unknown as Database);
-      });
     },
 
     async create(userId: string, name: string, hullId: string, description?: string) {
@@ -339,10 +206,6 @@ export function createFlagshipService(
         .returning();
 
       await db.update(users).set({ playstyle: hullConfig.playstyle }).where(eq(users.id, userId));
-
-      // V7.1 : grant + auto-équipe les 3 starter weapons du hull (1 par rareté).
-      // Idempotent — pas de blocage si pas de starters seedés pour ce hull.
-      await grantAndEquipStarterWeapons(created.id, hullId);
 
       return created;
     },
@@ -551,11 +414,6 @@ export function createFlagshipService(
       }).where(eq(flagships.id, flagship.id));
 
       await db.update(users).set({ playstyle: hullConfig.playstyle }).where(eq(users.id, userId));
-
-      // V7.1 : grant + auto-équipe les starters du nouveau hull (vu que les
-      // anciens starters appartiennent à l'autre hull). Le player peut
-      // toujours déséquiper s'il a déjà mieux dans le slot.
-      await grantAndEquipStarterWeapons(flagship.id, newHullId);
 
       return { newHullId, refitEndsAt: refitEnd, cooldownEndsAt: cooldownEnd };
     },

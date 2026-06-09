@@ -43,8 +43,6 @@ import { createGameEventRouter } from '../modules/game-event/game-event.router.j
 import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
-import { createAnomalyService } from '../modules/anomaly/anomaly.service.js';
-import { createAnomalyRouter } from '../modules/anomaly/anomaly.router.js';
 import { createPveRouter } from '../modules/pve/pve.router.js';
 import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
 import { createTutorialRouter } from '../modules/tutorial/tutorial.router.js';
@@ -79,15 +77,6 @@ import { createColonizationService } from '../modules/colonization/colonization.
 import { createColonizationRouter } from '../modules/colonization/colonization.router.js';
 import { createHomepageService } from '../modules/homepage/homepage.service.js';
 import { createHomepageRouter } from '../modules/homepage/homepage.router.js';
-import { createAnomalyContentService } from '../modules/anomaly-content/anomaly-content.service.js';
-import { createAnomalyBossesService } from '../modules/anomaly-content/anomaly-bosses.service.js';
-import { createAnomalyContentRouter } from '../modules/anomaly-content/anomaly-content.router.js';
-import { createExplorationContentService } from '../modules/exploration-content/exploration-content.service.js';
-import { createExplorationContentRouter } from '../modules/exploration-content/exploration-content.router.js';
-import { createExplorationMissionService } from '../modules/exploration-mission/exploration-mission.service.js';
-import { createExplorationMissionRouter } from '../modules/exploration-mission/exploration-mission.router.js';
-import { createModulesService } from '../modules/modules/modules.service.js';
-import { createModulesRouter } from '../modules/modules/modules.router.js';
 import { createMailerService } from '../modules/mailer/mailer.service.js';
 import { env } from '../config/env.js';
 import type { Database } from '@exilium/db';
@@ -224,19 +213,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
     gameConfigService,
   );
   const homepageService = createHomepageService(db);
-  const anomalyContentService = createAnomalyContentService(db);
-  // V9.2 — bosses service lit la pool depuis anomaly_content.bosses (admin
-  // éditable) avec fallback sur le seed. Sans le content service injecté,
-  // il retombe automatiquement sur le seed in-memory (back-compat).
-  const anomalyBossesService = createAnomalyBossesService(anomalyContentService);
-  const modulesService = createModulesService(db);
-  const explorationContentService = createExplorationContentService(db);
-  const explorationMissionService = createExplorationMissionService(
-    db,
-    gameConfigService,
-    explorationContentService,
-    exiliumService,
-  );
 
   const authRouter = createAuthRouter(db, authService, planetService);
   const planetRouter = createPlanetRouter(planetService, planetAbandonService);
@@ -279,30 +255,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const explorationReportRouter = createExplorationReportRouter(explorationReportService);
   const colonizationRouter = createColonizationRouter(colonizationService);
   const homepageRouter = createHomepageRouter(homepageService, adminProcedure);
-  const anomalyContentRouter = createAnomalyContentRouter(
-    anomalyContentService,
-    adminProcedure,
-    anomalyBossesService,
-  );
-  const modulesRouter = createModulesRouter(modulesService, adminProcedure);
-  const anomalyService = createAnomalyService(
-    db,
-    gameConfigService,
-    exiliumService,
-    flagshipService,
-    reportService,
-    anomalyContentService,
-    modulesService,
-    anomalyBossesService,
-  );
-  const anomalyRouter = createAnomalyRouter(anomalyService, anomalyBossesService);
-  const explorationMissionRouter = createExplorationMissionRouter(explorationMissionService);
-  const explorationContentRouter = createExplorationContentRouter(
-    explorationContentService,
-    explorationMissionService,
-    adminProcedure,
-    db,
-  );
 
   const appRouter = router({
     health: publicProcedure.query(() => ({
@@ -342,11 +294,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
     explorationReport: explorationReportRouter,
     colonization: colonizationRouter,
     homepage: homepageRouter,
-    anomaly: anomalyRouter,
-    anomalyContent: anomalyContentRouter,
-    expedition: explorationMissionRouter,
-    expeditionContent: explorationContentRouter,
-    modules: modulesRouter,
   });
 
   return { router: appRouter, authService };
