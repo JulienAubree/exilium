@@ -6,7 +6,6 @@ import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { PlanetSubnav } from './PlanetSubnav';
 import { Toaster } from '@/components/ui/Toaster';
-import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { AnnouncementBanner } from './AnnouncementBanner';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
@@ -105,7 +104,6 @@ export function Layout() {
 
       <ChatOverlay />
       <Toaster />
-      <UpdatePrompt />
       <AbsenceSummaryModal />
     </div>
   );

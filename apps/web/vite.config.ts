@@ -7,7 +7,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      // autoUpdate: the new service worker installs and activates itself, then
+      // the page reloads on the next navigation — no "Nouvelle version" banner
+      // to miss. Critical on mobile, where a stale precache used to keep serving
+      // old JS until the user manually accepted the update.
+      registerType: 'autoUpdate',
       manifest: {
         name: 'Exilium',
         short_name: 'Exilium',
