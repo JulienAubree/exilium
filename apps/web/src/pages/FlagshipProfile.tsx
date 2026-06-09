@@ -1,6 +1,4 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link } from 'react-router';
-import { Sparkles, ExternalLink } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
 import { IncapacitatedBanner } from '@/components/flagship/IncapacitatedBanner';
@@ -8,15 +6,9 @@ import { HullRefitBanner } from '@/components/flagship/HullRefitBanner';
 import { HullAbilitiesPanel } from '@/components/flagship/HullAbilitiesPanel';
 import { FlagshipHero } from '@/components/flagship/FlagshipHero';
 import { FlagshipHelp } from '@/components/flagship/FlagshipHelp';
-import { FlagshipModeIntro } from '@/components/flagship/FlagshipModeIntro';
 import { FlagshipStatsClearCard } from '@/components/flagship/FlagshipStatsClearCard';
 import { FlagshipImagePicker } from '@/components/flagship/FlagshipImagePicker';
 import { FlagshipSkeleton } from '@/components/flagship/FlagshipSkeleton';
-import { ModuleLoadoutGrid } from '@/components/flagship/ModuleLoadoutGrid';
-import { ModuleInventoryPanel } from '@/components/flagship/ModuleInventoryPanel';
-import { ModuleDetailModal } from '@/components/flagship/ModuleDetailModal';
-import { ModuleHullTabs } from '@/components/flagship/ModuleHullTabs';
-import { ArsenalLoadoutGrid, type WeaponRarity } from '@/components/flagship/ArsenalLoadoutGrid';
 import { DEFAULT_HULL_ID } from '@exilium/shared';
 
 interface PlanetLite {
@@ -116,61 +108,25 @@ export default function FlagshipProfile() {
       )}
 
       <div className="px-3 sm:px-4 lg:px-6">
-        <FlagshipModeIntro onOpenHelp={() => setHelpOpen(true)} />
-      </div>
-
-      <div className="px-3 sm:px-4 lg:px-6">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-4 lg:gap-6">
-          {/* Main : Modules + Arsenal + Inventory — affected only in anomaly runs */}
-          <main className="min-w-0 space-y-4">
-            <section className="rounded-xl border border-violet-500/25 bg-violet-950/10 px-4 py-3 flex items-start gap-3">
-              <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 flex-wrap">
-                  Loadout d&apos;anomalie
-                  <span className="rounded bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-300">
-                    Mode anomalie
-                  </span>
-                </h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Configuration utilisée <span className="text-foreground font-medium">uniquement</span> pendant les runs.
-                  Aucun effet en PvP / pirate / défense.
-                </p>
-              </div>
-              <Link
-                to="/anomalies"
-                className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-300 font-medium hover:bg-violet-500/20 transition-colors"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Aller aux anomalies
-              </Link>
-            </section>
-            <ModulesTab activeHullId={flagship.hullId ?? DEFAULT_HULL_ID} />
-          </main>
-
-          {/* Sidebar : Stats clairs + Hull abilities (sticky on desktop) */}
-          <aside className="min-w-0 space-y-4 lg:sticky lg:top-4 lg:self-start">
-            <FlagshipStatsClearCard
-              flagship={{
-                shield: flagship.shield,
-                baseArmor: flagship.baseArmor,
-                hull: flagship.hull,
-                weapons: flagship.weapons,
-                shotCount: flagship.shotCount,
-                hullId: flagship.hullId,
-                level: (flagship as { level?: number }).level,
-                status: flagship.status,
-                moduleLoadout: (flagship as { moduleLoadout?: unknown }).moduleLoadout,
-              }}
+        <div className="lg:max-w-md space-y-4">
+          <FlagshipStatsClearCard
+            flagship={{
+              shield: flagship.shield,
+              baseArmor: flagship.baseArmor,
+              hull: flagship.hull,
+              weapons: flagship.weapons,
+              shotCount: flagship.shotCount,
+              hullId: flagship.hullId,
+              status: flagship.status,
+            }}
+          />
+          {hullConfig && (
+            <HullAbilitiesPanel
+              flagship={flagship}
+              hullConfig={hullConfig}
+              hullId={flagship.hullId ?? DEFAULT_HULL_ID}
             />
-            {hullConfig && (
-              <HullAbilitiesPanel
-                flagship={flagship}
-                hullConfig={hullConfig}
-                hullId={flagship.hullId ?? DEFAULT_HULL_ID}
-              />
-            )}
-          </aside>
+          )}
         </div>
       </div>
 
@@ -190,174 +146,6 @@ export default function FlagshipProfile() {
       />
 
       <FlagshipHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
-    </div>
-  );
-}
-
-/**
- * V7-WeaponProfiles : pendingSlot encode soit un slot passive
- * ({ kind: 'passive', slotType: 'epic'|'rare'|'common', slotIndex }) soit un
- * slot Arsenal ({ kind: 'weapon', rarity }). Les deux types se partagent
- * le même panneau d'inventaire qui filtre selon le contexte.
- */
-type PendingSlot =
-  | { kind: 'passive'; slotType: 'epic' | 'rare' | 'common'; slotIndex: number }
-  | { kind: 'weapon'; rarity: WeaponRarity };
-
-function ModulesTab({ activeHullId }: { activeHullId: string }) {
-  const [selectedHull, setSelectedHull] = useState(activeHullId);
-  const [pendingSlot, setPendingSlot] = useState<PendingSlot | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
-
-  const { data: inventory } = trpc.modules.inventory.list.useQuery();
-  const { data: loadout, refetch: refetchLoadout } = trpc.modules.loadout.get.useQuery({ hullId: selectedHull });
-  const { data: allModules } = trpc.modules.list.useQuery();
-  const utils = trpc.useUtils();
-
-  // V8.3 : on invalide aussi `flagship.get` parce que FlagshipStatsClearCard
-  // lit `flagship.moduleLoadout` directement depuis ce cache (le query
-  // `modules.loadout.get` est désactivé quand directLoadout existe). Sans ça,
-  // le tile stats ne reflète jamais l'équipement jusqu'à un refresh manuel.
-  // On invalide aussi `modules.inventory.list` pour prendre en compte
-  // d'éventuels changements de count futurs.
-  const equipMutation = trpc.modules.loadout.equip.useMutation({
-    onSuccess: () => {
-      utils.modules.loadout.get.invalidate();
-      utils.flagship.get.invalidate();
-      utils.modules.inventory.list.invalidate();
-      refetchLoadout();
-      setPendingSlot(null);
-    },
-  });
-  const unequipMutation = trpc.modules.loadout.unequip.useMutation({
-    onSuccess: () => {
-      utils.modules.loadout.get.invalidate();
-      utils.flagship.get.invalidate();
-      utils.modules.inventory.list.invalidate();
-      refetchLoadout();
-    },
-  });
-
-  // V7-WeaponProfiles : map d'inventaire enrichie avec kind + effect, exposée
-  // au ArsenalLoadoutGrid pour afficher les badges (X tirs, anti-cat, rafale,
-  // chainKill) directement sur les slots.
-  const inventoryMap = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; image: string; rarity: string; kind?: string; effect?: unknown; description?: string }>();
-    for (const m of allModules ?? []) {
-      map.set(m.id, {
-        id: m.id, name: m.name, image: m.image, rarity: m.rarity,
-        kind: (m as { kind?: string }).kind ?? 'passive',
-        effect: m.effect,
-        description: (m as { description?: string }).description,
-      });
-    }
-    return map;
-  }, [allModules]);
-
-  const slot = loadout?.slot ?? { epic: null, rare: [], common: [], weaponEpic: null, weaponRare: null, weaponCommon: null };
-  // Slots are fixed-length arrays with `null` placeholders for empty cells —
-  // filter so the equipped set only contains real ids.
-  // V7-WeaponProfiles : on inclut aussi les 3 weapon slots dans l'ensemble
-  // équipé pour empêcher le double-equip d'un module entre Arsenal et passive.
-  const equippedIds = new Set<string>([
-    ...(slot.epic ? [slot.epic] : []),
-    ...(slot.rare as (string | null)[]).filter((x): x is string => typeof x === 'string'),
-    ...(slot.common as (string | null)[]).filter((x): x is string => typeof x === 'string'),
-    ...((slot as { weaponEpic?: string | null }).weaponEpic ? [(slot as { weaponEpic: string }).weaponEpic] : []),
-    ...((slot as { weaponRare?: string | null }).weaponRare ? [(slot as { weaponRare: string }).weaponRare] : []),
-    ...((slot as { weaponCommon?: string | null }).weaponCommon ? [(slot as { weaponCommon: string }).weaponCommon] : []),
-  ]);
-
-  const detailModule = detailId
-    ? (inventory?.items ?? []).find((i) => i.moduleId === detailId)
-    : null;
-
-  // V8.3-FlagshipModulesUX : on délègue au panneau le filtrage kind+rareté.
-  // Il auto-applique le filtre correspondant à `pendingSlot` (override-able)
-  // et affiche un banner explicite "→ Équiper dans : <slot>" qui se ferme
-  // au clic sur la croix. Ici on ne filtre que par hull pour qu'il puisse
-  // toggler kind sans perdre l'inventaire.
-  const inventoryForPanel = useMemo(
-    () => (inventory?.items ?? []).filter((i) => i.hullId === selectedHull),
-    [inventory, selectedHull],
-  );
-
-  function handleEquipFromInventory(moduleId: string) {
-    if (!pendingSlot) return;
-    if (pendingSlot.kind === 'passive') {
-      equipMutation.mutate({
-        hullId: selectedHull,
-        slotType: pendingSlot.slotType,
-        slotIndex: pendingSlot.slotIndex,
-        moduleId,
-      });
-    } else {
-      // V7-WeaponProfiles : Arsenal slot → slotType `weapon-{rarity}`,
-      // slotIndex est ignoré côté backend mais on envoie 0 pour respecter
-      // la signature.
-      equipMutation.mutate({
-        hullId: selectedHull,
-        slotType: `weapon-${pendingSlot.rarity}` as 'weapon-epic' | 'weapon-rare' | 'weapon-common',
-        slotIndex: 0,
-        moduleId,
-      });
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <ModuleHullTabs activeHullId={activeHullId} selectedHull={selectedHull} onSelect={setSelectedHull} />
-
-      {/* V7-WeaponProfiles : Arsenal section au-dessus du grid passif pour
-          que les armes soient visuellement la première chose qu'on configure
-          (le combat dépend en grande partie du loadout d'arsenal). */}
-      <ArsenalLoadoutGrid
-        slot={{
-          weaponEpic: (slot as { weaponEpic?: string | null }).weaponEpic ?? null,
-          weaponRare: (slot as { weaponRare?: string | null }).weaponRare ?? null,
-          weaponCommon: (slot as { weaponCommon?: string | null }).weaponCommon ?? null,
-        }}
-        inventory={inventoryMap}
-        onSlotClick={(rarity) => setPendingSlot({ kind: 'weapon', rarity })}
-        onUnequip={(rarity) => unequipMutation.mutate({
-          hullId: selectedHull,
-          slotType: `weapon-${rarity}` as 'weapon-epic' | 'weapon-rare' | 'weapon-common',
-          slotIndex: 0,
-        })}
-      />
-
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
-        <div className="min-w-0">
-          <ModuleLoadoutGrid
-            slot={slot}
-            inventory={inventoryMap}
-            onSlotClick={(slotType, slotIndex) => setPendingSlot({ kind: 'passive', slotType, slotIndex })}
-            onUnequip={(slotType, slotIndex) => unequipMutation.mutate({ hullId: selectedHull, slotType, slotIndex })}
-          />
-          {loadout && (
-            <div className="mt-4 text-center text-xs text-muted-foreground font-mono">
-              ⚡ Charges épiques : {loadout.epicChargesCurrent} / {loadout.epicChargesMax}
-            </div>
-          )}
-        </div>
-        <ModuleInventoryPanel
-          items={inventoryForPanel}
-          hullFilter={selectedHull}
-          pendingSlot={pendingSlot}
-          equippedIds={equippedIds}
-          onEquip={handleEquipFromInventory}
-          onDetails={(moduleId) => setDetailId(moduleId)}
-          onClearPending={() => setPendingSlot(null)}
-        />
-      </div>
-      <ModuleDetailModal
-        module={detailModule ? {
-          id: detailModule.moduleId, name: detailModule.name, description: detailModule.description,
-          rarity: detailModule.rarity, hullId: detailModule.hullId, image: detailModule.image,
-          effect: detailModule.effect, count: detailModule.count,
-        } : null}
-        onClose={() => setDetailId(null)}
-      />
     </div>
   );
 }

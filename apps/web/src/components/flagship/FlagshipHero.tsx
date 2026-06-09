@@ -1,6 +1,5 @@
 import { Link } from 'react-router';
-import { Star, HelpCircle, ImageIcon, AlertTriangle } from 'lucide-react';
-import { xpRequiredForLevel } from '@exilium/game-engine';
+import { HelpCircle, ImageIcon, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getFlagshipImageUrl } from '@/lib/assets';
@@ -10,8 +9,6 @@ import { getHullCardStyles } from './hullCardStyles';
 
 interface FlagshipLite {
   name: string;
-  level?: number;
-  xp?: number;
   hullId: string | null;
   status: string;
   flagshipImageIndex: number | null;
@@ -42,8 +39,6 @@ interface FlagshipHeroProps {
   onOpenHelp: () => void;
 }
 
-const MAX_LEVEL = 60;
-
 const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
   incapacitated: { label: 'Incapacité', tone: 'bg-red-500/20 border-red-500/40 text-red-200' },
   hull_refit: { label: 'Refit', tone: 'bg-amber-500/20 border-amber-500/40 text-amber-200' },
@@ -51,9 +46,8 @@ const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
 };
 
 /**
- * V8-FlagshipRework : hero atmosphérique pour la page Vaisseau amiral.
- * Pattern aligné sur Anomaly IntroHero / FacilityHero : rond image cliquable
- * (ouvre l'aide), titre + niveau + XP au centre, boutons compacts à droite.
+ * Hero atmosphérique pour la page Vaisseau amiral : rond image cliquable
+ * (ouvre l'aide), titre + planète au centre, boutons compacts à droite.
  */
 export function FlagshipHero({
   flagship,
@@ -64,16 +58,6 @@ export function FlagshipHero({
   onOpenHelp,
 }: FlagshipHeroProps) {
   const styles = getHullCardStyles(flagship.hullId);
-  const level = flagship.level ?? 1;
-  const xp = flagship.xp ?? 0;
-  const isMaxLevel = level >= MAX_LEVEL;
-  const currentLevelXp = xpRequiredForLevel(level);
-  const nextLevelXp = isMaxLevel ? xp : xpRequiredForLevel(level + 1);
-  const xpProgress = isMaxLevel
-    ? 1
-    : nextLevelXp > currentLevelXp
-      ? Math.max(0, Math.min(1, (xp - currentLevelXp) / (nextLevelXp - currentLevelXp)))
-      : 0;
 
   const heroImage = flagship.flagshipImageIndex
     ? getFlagshipImageUrl(flagship.hullId ?? 'industrial', flagship.flagshipImageIndex, 'full')
@@ -147,36 +131,11 @@ export function FlagshipHero({
             )}
           </button>
 
-          {/* Center : name + level + planet */}
+          {/* Center : name + planet */}
           <div className="flex-1 min-w-0 pt-0.5 lg:pt-1">
             <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-foreground truncate">
               {flagship.name}
             </h1>
-
-            {/* Level + XP bar */}
-            <div className="mt-1.5 flex items-center gap-2 max-w-md">
-              <div className="flex items-center gap-1 shrink-0">
-                <Star className="h-3.5 w-3.5 text-yellow-400" />
-                <span className="text-xs font-semibold text-foreground tabular-nums">
-                  Niv. {level}
-                </span>
-                <span className="text-[10px] text-muted-foreground">/ {MAX_LEVEL}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="h-1.5 rounded-full bg-violet-950/60 overflow-hidden border border-violet-500/10">
-                  <div
-                    className="h-full bg-gradient-to-r from-violet-400 to-yellow-400 transition-all"
-                    style={{ width: `${Math.round(xpProgress * 100)}%` }}
-                  />
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5 font-mono tabular-nums truncate">
-                  {isMaxLevel
-                    ? `${xp.toLocaleString('fr-FR')} XP (max)`
-                    : `${xp.toLocaleString('fr-FR')} / ${nextLevelXp.toLocaleString('fr-FR')} XP`
-                  }
-                </div>
-              </div>
-            </div>
 
             {/* Stationed planet */}
             {stationedPlanet && (
