@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router';
 import { HelpCircle, ShoppingCart, DollarSign, Check, Layers, FileText } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { ResourceBuy } from '@/components/market/ResourceBuy';
 import { ResourceSell } from '@/components/market/ResourceSell';
 import { ResourceMyOffers } from '@/components/market/ResourceMyOffers';
@@ -13,8 +12,6 @@ import { cn } from '@/lib/utils';
 import { getBuildingIllustrationUrl } from '@/lib/assets';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { KpiTile } from '@/components/common/KpiTile';
-import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
-import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -74,73 +71,14 @@ export default function Market() {
 
   const commissionPercent = Number(gameConfig?.universe?.market_commission_percent) || 5;
 
-  const utils = trpc.useUtils();
-  const { data: buildings } = trpc.building.list.useQuery(
-    { planetId: planetId! },
-    { enabled: !!planetId },
-  );
-  const marketBuilding = buildings?.find((b) => b.id === 'galacticMarket');
-  const marketLevel = marketBuilding?.currentLevel ?? 0;
-  const marketReady = !!buildings && marketLevel >= 1;
-
-  const { data: resourceData } = trpc.resource.production.useQuery(
-    { planetId: planetId! },
-    { enabled: !!planetId },
-  );
-  const resources = useResourceCounter(
-    resourceData
-      ? {
-          minerai: resourceData.minerai,
-          silicium: resourceData.silicium,
-          hydrogene: resourceData.hydrogene,
-          resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          mineraiPerHour: resourceData.rates.mineraiPerHour,
-          siliciumPerHour: resourceData.rates.siliciumPerHour,
-          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
-          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
-          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
-          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
-        }
-      : undefined,
-  );
-
-  const buildingLevels = useMemo(() => {
-    const levels: Record<string, number> = {};
-    buildings?.forEach((b) => { levels[b.id] = b.currentLevel; });
-    return levels;
-  }, [buildings]);
-
-  const isAnyBuildingUpgrading = buildings?.some((b) => b.isUpgrading) ?? false;
-
-  const upgradeMutation = trpc.building.upgrade.useMutation({
-    onSuccess: () => {
-      utils.building.list.invalidate({ planetId: planetId! });
-      utils.resource.production.invalidate({ planetId: planetId! });
-      utils.planet.empire.invalidate();
-    },
-  });
-
-  const buildingCancelMutation = trpc.building.cancel.useMutation({
-    onSuccess: () => {
-      utils.building.list.invalidate({ planetId: planetId! });
-      utils.resource.production.invalidate({ planetId: planetId! });
-      utils.planet.empire.invalidate();
-    },
-  });
-
-  // KPI data — queries share React Query cache with child components
+  // KPI data — queries share React Query cache with child components.
+  // Le marché est une fonctionnalité toujours disponible (plus de bâtiment requis).
   const { data: offersData } = trpc.market.list.useQuery(
     { planetId: planetId! },
-    { enabled: !!planetId && marketReady },
+    { enabled: !!planetId },
   );
-  const { data: myOffers } = trpc.market.myOffers.useQuery(
-    undefined,
-    { enabled: marketReady },
-  );
-  const { data: reports } = trpc.explorationReport.list.useQuery(
-    undefined,
-    { enabled: marketReady },
-  );
+  const { data: myOffers } = trpc.market.myOffers.useQuery();
+  const { data: reports } = trpc.explorationReport.list.useQuery();
 
   // KPI computations
   const totalOffers = offersData?.offers?.length ?? 0;
@@ -150,44 +88,6 @@ export default function Market() {
   const soldResourceOffers = (myOffers ?? []).filter((o) => o.status === 'sold').length;
   const soldReports = (reports ?? []).filter((r) => r.status === 'sold').length;
   const totalTrades = soldResourceOffers + soldReports;
-
-  // ── Locked state (building not constructed) ──────────────────────────
-
-  if (buildings && marketLevel < 1) {
-    return (
-      <FacilityLockedHero
-        buildingId="galacticMarket"
-        title="Marché Galactique"
-        planetClassId={planetClassId}
-        description={<>Construisez le <span className="text-foreground font-semibold">Marché Galactique</span> sur cette planète pour échanger des ressources et des rapports d'exploration avec les autres joueurs.</>}
-      >
-        {marketBuilding && (
-          <BuildingUpgradeCard
-            currentLevel={marketBuilding.currentLevel}
-            maxLevel={marketBuilding.maxLevel}
-            nextLevelCost={marketBuilding.nextLevelCost}
-            nextLevelTime={marketBuilding.nextLevelTime}
-            prerequisites={marketBuilding.prerequisites as any}
-            isUpgrading={!!marketBuilding.isUpgrading}
-            upgradeEndTime={marketBuilding.upgradeEndTime ?? null}
-            resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
-            buildingLevels={buildingLevels}
-            isAnyUpgrading={isAnyBuildingUpgrading}
-            upgradePending={upgradeMutation.isPending}
-            cancelPending={buildingCancelMutation.isPending}
-            gameConfig={gameConfig}
-            rates={resourceData?.rates}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'galacticMarket' as any })}
-            onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
-            onTimerComplete={() => {
-              utils.building.list.invalidate({ planetId: planetId! });
-              utils.resource.production.invalidate({ planetId: planetId! });
-            }}
-          />
-        )}
-      </FacilityLockedHero>
-    );
-  }
 
   // ── Main layout ──────────────────────────────────────────────────────
 
@@ -228,7 +128,7 @@ export default function Market() {
             <div className="flex-1 min-w-0 pt-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">Marche Galactique</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Niveau {marketLevel} · Commission {commissionPercent}%
+                Commission {commissionPercent}%
               </p>
               <p className="text-xs text-muted-foreground mt-2 max-w-lg leading-relaxed hidden lg:block">
                 Echangez des ressources et des rapports d'exploration avec les autres joueurs.
@@ -355,7 +255,6 @@ export default function Market() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
           <div className="absolute bottom-3 left-5">
-            <p className="text-sm font-semibold text-foreground">Niveau {marketLevel}</p>
             <p className="text-xs text-muted-foreground">Commission : {commissionPercent}%</p>
           </div>
         </div>

@@ -2,9 +2,9 @@ import { eq, and, ne, desc, lt, sql, isNotNull, isNull } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
 import type { Queue } from 'bullmq';
-import { marketOffers, planets, planetBuildings, fleetEvents, explorationReports, discoveredBiomes, users } from '@exilium/db';
+import { marketOffers, planets, fleetEvents, explorationReports, discoveredBiomes, users } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { maxMarketOffers, calculateSellerCommission } from '@exilium/game-engine';
+import { calculateSellerCommission } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createExiliumService } from '../exilium/exilium.service.js';
@@ -26,18 +26,13 @@ export function createMarketService(
   talentService?: { computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>> },
   _gameEventService?: ReturnType<typeof createGameEventService>,
 ) {
-  async function getMarketLevel(planetId: string): Promise<number> {
-    const [row] = await db
-      .select({ level: planetBuildings.level })
-      .from(planetBuildings)
-      .where(
-        and(
-          eq(planetBuildings.planetId, planetId),
-          eq(planetBuildings.buildingId, 'galacticMarket'),
-        ),
-      )
-      .limit(1);
-    return row?.level ?? 0;
+  /**
+   * Max simultaneous offers per player. Le marché est désormais une
+   * fonctionnalité (plus un bâtiment) → plafond global piloté par la config.
+   */
+  async function getMaxOffers(): Promise<number> {
+    const config = await gameConfigService.getFullConfig();
+    return Number(config.universe.market_max_offers) || 10;
   }
 
   async function hasHostileInbound(planetId: string): Promise<boolean> {
@@ -95,15 +90,11 @@ export function createMarketService(
       priceSilicium: number;
       priceHydrogene: number;
     }) {
-      const marketLevel = await getMarketLevel(planetId);
-      if (marketLevel < 1) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis' });
-      }
-
-      // Check max offers (active + reserved both count against the limit)
+      // Cap on simultaneous offers per player (active + reserved both count).
+      const maxOffers = await getMaxOffers();
       const count = await countActiveOffers(userId);
-      if (count >= maxMarketOffers(marketLevel)) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxMarketOffers(marketLevel)})` });
+      if (count >= maxOffers) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxOffers})` });
       }
 
       // Check hostile inbound
@@ -540,16 +531,11 @@ export function createMarketService(
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Rapport non trouvé ou non disponible' });
         }
 
-        // 2. Check market building level
-        const marketLevel = await getMarketLevel(planetId);
-        if (marketLevel < 1) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Marché Galactique requis' });
-        }
-
-        // 3. Check max offers (report offers count against the same limit)
+        // 2. Cap on simultaneous offers per player (report offers count too).
+        const maxOffers = await getMaxOffers();
         const count = await countActiveOffers(userId);
-        if (count >= maxMarketOffers(marketLevel)) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxMarketOffers(marketLevel)})` });
+        if (count >= maxOffers) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Nombre maximum d'offres atteint (${maxOffers})` });
         }
 
         // 4. Validate price (at least one > 0)

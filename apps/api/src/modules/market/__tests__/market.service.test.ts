@@ -244,6 +244,7 @@ const mockGameConfigService = {
     universe: {
       market_commission_percent: 5,
       market_offer_duration_hours: 48,
+      market_max_offers: 6,
     },
   }),
 } as unknown;
@@ -320,29 +321,6 @@ describe('market.service', () => {
       );
     });
 
-    it("refuse si le Marché Galactique n'est pas construit", async () => {
-      buildings = []; // pas de bâtiment
-
-      await expect(
-        service.createOffer('user-1', 'planet-1', {
-          resourceType: 'minerai',
-          quantity: 1000,
-          priceMinerai: 100,
-          priceSilicium: 0,
-          priceHydrogene: 0,
-        }),
-      ).rejects.toThrow(TRPCError);
-      await expect(
-        service.createOffer('user-1', 'planet-1', {
-          resourceType: 'minerai',
-          quantity: 1000,
-          priceMinerai: 100,
-          priceSilicium: 0,
-          priceHydrogene: 0,
-        }),
-      ).rejects.toThrow('Marché Galactique requis');
-    });
-
     it("refuse si une flotte hostile est en route vers la planète", async () => {
       fleetEvents = [
         {
@@ -368,7 +346,7 @@ describe('market.service', () => {
     });
 
     it('refuse si la limite max d\'offres actives est atteinte', async () => {
-      // Marché niveau 3 = max 6 offres ; on en a déjà 6
+      // Plafond config (market_max_offers) = 6 ; on en a déjà 6
       offers = Array.from({ length: 6 }, (_, i) => ({
         id: `offer-${i + 1}`,
         sellerId: 'user-1',

@@ -3,7 +3,6 @@ import {
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   storageCapacity,
   discoveryCooldown, depositSize,
-  maxMarketOffers,
   calculateShieldCapacity, calculateShieldEnergy,
   getMissionRelayBonusPerLevel,
 } from '@exilium/game-engine';
@@ -137,15 +136,6 @@ export function getContextualTable(
         })),
       };
     }
-    case 'galacticMarket':
-      return {
-        type: 'market',
-        title: 'Offres simultanées',
-        rows: levels.map((level) => ({
-          level,
-          maxOffers: maxMarketOffers(level),
-        })),
-      };
     case 'planetaryShield':
       return {
         type: 'shield',

@@ -3,7 +3,6 @@ import { useOutletContext } from 'react-router';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import {
   calculateShieldCapacity,
-  maxMarketOffers,
   discoveryCooldown,
   getMissionRelayBonusPerLevel,
 } from '@exilium/game-engine';
@@ -52,8 +51,6 @@ function getEffectLine(buildingId: string, level: number): string | null {
   switch (buildingId) {
     case 'robotics':
       return `−${Math.round((1 - Math.pow(0.85, level)) * 100)}% temps de construction (×${Math.pow(0.85, level).toFixed(2)})`;
-    case 'galacticMarket':
-      return `${maxMarketOffers(level)} offres simultanées`;
     case 'planetaryShield':
       return `${formatCompact(calculateShieldCapacity(level))} de bouclier`;
     case 'missionCenter':
@@ -212,7 +209,6 @@ export default function Infrastructures() {
           ? make(annexId, false)
           : make('researchLab', true, 'Le laboratoire principal vit sur votre planète-mère.'),
       isHomeworld ? make('missionCenter', false) : make('missionRelay', false),
-      make('galacticMarket', false),
       isHomeworld
         ? make('imperialPowerCenter', false)
         : make('imperialPowerCenter', true, 'Réservé à la planète-mère.'),

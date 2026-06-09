@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSellerCommission, maxMarketOffers } from './market.js';
+import { calculateSellerCommission } from './market.js';
 
 describe('calculateSellerCommission', () => {
   it('returns 5% of quantity rounded up', () => {
@@ -21,12 +21,5 @@ describe('calculateSellerCommission', () => {
   it('handles reduced commission from talent', () => {
     const adjusted = 5 / (1 + 0.5);
     expect(calculateSellerCommission(10000, adjusted)).toBe(334);
-  });
-});
-
-describe('maxMarketOffers', () => {
-  it('returns level * 2', () => {
-    expect(maxMarketOffers(1)).toBe(2);
-    expect(maxMarketOffers(5)).toBe(10);
   });
 });
