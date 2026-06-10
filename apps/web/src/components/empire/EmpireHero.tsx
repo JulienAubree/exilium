@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Crown } from 'lucide-react';
+import { trpc } from '@/trpc';
 import { HeroAtmosphere } from '@/components/common/HeroAtmosphere';
 import { useHomepageContent } from '@/components/landing/useHomepageContent';
 
@@ -38,6 +39,8 @@ export function EmpireHero({
   onOpenHelp,
   actions,
 }: EmpireHeroProps) {
+  const { data: progression } = trpc.empireProgression.get.useQuery();
+  const empireLevel = progression?.level ?? null;
   const avatarUrl = avatarId ? `/assets/avatars/${avatarId}.webp` : null;
   // Use the same key art as the public landing — keeps the in-game empire
   // view visually anchored to the brand image the admin curates.
@@ -81,9 +84,20 @@ export function EmpireHero({
 
             {/* Title + sub-line */}
             <div className="flex-1 min-w-0 pt-1">
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
-                {username}
-              </h1>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
+                  {username}
+                </h1>
+                {empireLevel != null && (
+                  <span
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400 tabular-nums"
+                    title={`Empereur niveau ${empireLevel}`}
+                  >
+                    <Crown className="h-3 w-3" aria-hidden />
+                    {empireLevel}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {planetCount} {planetCount > 1 ? 'colonies' : 'colonie'}
                 {activeFleetCount > 0 && (

@@ -108,7 +108,7 @@ export default function Empire() {
         ) : (
           <>
             {/* Desktop grid */}
-            <div className="hidden lg:grid lg:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] lg:gap-4">
+            <div className="hidden lg:grid lg:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] lg:gap-4 lg:items-start">
               {data.planets.map((planet, i) => (
                 <EmpirePlanetCard
                   key={planet.id}

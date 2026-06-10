@@ -253,13 +253,13 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
                   <span className={cn('flex items-center gap-1.5 text-xs font-semibold', r.color)}>
                     {r.icon}
                     {formatRate(r.value)}
-                    {isFull && <span className="text-amber-400 font-normal">plein</span>}
+                    {isFull && <span className="text-xs font-normal text-amber-400/80">· plein</span>}
                   </span>
                   <span className="text-xs text-muted-foreground">+{formatRate(r.rate)}/h</span>
                 </div>
                 <div className="h-[4px] overflow-hidden rounded-full bg-secondary">
                   <div
-                    className={cn('h-full rounded-full transition-all', isFull ? 'bg-amber-400' : r.fill)}
+                    className={cn('h-full rounded-full transition-all', r.fill)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
