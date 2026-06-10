@@ -12,6 +12,7 @@ import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingName, getResearchName, getShipName, getDefenseName } from '@/lib/entity-names';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { OverviewIcon, ShipyardIcon } from '@/lib/icons';
+import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 
 function formatCompact(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -151,6 +152,10 @@ export function PlanetPanel() {
 
         {/* Ressources */}
         <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Ressources</span>
+            <ImportResourcesButton targetPlanetId={planet.id} size="sm" />
+          </div>
           {resources.map((r) => {
             const pct = r.max > 0 ? Math.min(100, (r.value / r.max) * 100) : 0;
             const isFull = pct > 95;
