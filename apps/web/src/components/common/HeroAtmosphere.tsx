@@ -7,20 +7,26 @@ interface HeroAtmosphereProps {
   fallbackGradient?: string;
 }
 
+// Design v2 « calme spatial » : les washes colorés (violet/cyan/ambre) sont
+// neutralisés — l'image clé apporte déjà sa couleur ; l'UI reste muette.
+// Les variants sont conservés dans l'API pour compat, tous rendus neutres.
+const NEUTRAL_TINT = 'bg-slate-950/50';
+const NEUTRAL_FALLBACK = 'bg-surface-raised';
+
 const TINT_CLASSES: Record<NonNullable<HeroAtmosphereProps['variant']>, string> = {
-  'cyan-purple': 'bg-gradient-to-br from-cyan-950/50 via-slate-950/45 to-purple-950/50',
-  'cyan-cyan': 'bg-gradient-to-br from-cyan-950/50 via-slate-950/45 to-cyan-900/40',
-  'gold-red': 'bg-gradient-to-br from-amber-950/50 via-slate-950/45 to-red-950/50',
-  'green-cyan': 'bg-gradient-to-br from-emerald-950/45 via-slate-950/45 to-cyan-950/45',
-  indigo: 'bg-gradient-to-br from-indigo-950/55 via-purple-900/30 to-slate-950/50',
+  'cyan-purple': NEUTRAL_TINT,
+  'cyan-cyan': NEUTRAL_TINT,
+  'gold-red': NEUTRAL_TINT,
+  'green-cyan': NEUTRAL_TINT,
+  indigo: NEUTRAL_TINT,
 };
 
 const FALLBACK_GRADIENTS: Record<NonNullable<HeroAtmosphereProps['variant']>, string> = {
-  'cyan-purple': 'bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950',
-  'cyan-cyan': 'bg-gradient-to-br from-cyan-950 via-slate-900/70 to-slate-950',
-  'gold-red': 'bg-gradient-to-br from-amber-950 via-red-900/50 to-slate-950',
-  'green-cyan': 'bg-gradient-to-br from-emerald-950 via-cyan-900/50 to-slate-950',
-  indigo: 'bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950',
+  'cyan-purple': NEUTRAL_FALLBACK,
+  'cyan-cyan': NEUTRAL_FALLBACK,
+  'gold-red': NEUTRAL_FALLBACK,
+  'green-cyan': NEUTRAL_FALLBACK,
+  indigo: NEUTRAL_FALLBACK,
 };
 
 /**

@@ -6,6 +6,7 @@ import { TabBar } from '@/components/ui/tabs';
 import { Stat } from '@/components/ui/stat';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { AlertBanner } from '@/components/ui/alert-banner';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
 import * as GameIcons from '@/lib/icons';
 
@@ -161,6 +162,18 @@ export default function DesignSheet() {
             <Button variant="destructive">Danger</Button>
           </Inline>
         </Surface>
+      </section>
+
+      <section>
+        <Text variant="title" className="mb-3">AlertBanner — la seule voix forte de l'UI</Text>
+        <Stack gap={3}>
+          <AlertBanner tone="danger" title="Attaque entrante" meta="arrivée 12 min" pulse>
+            Flotte hostile détectée en [1:4:9] — seule alerte autorisée à pulser en continu.
+          </AlertBanner>
+          <AlertBanner tone="warning" title="Surextension impériale" meta="9/8 colonies (+1)" onClick={() => undefined}>
+            −15 % récolte · +15 % construction — cliquable, navigation vers la page concernée.
+          </AlertBanner>
+        </Stack>
       </section>
 
       <section>

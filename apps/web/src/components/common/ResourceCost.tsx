@@ -28,7 +28,7 @@ export function ResourceCost({
   ];
 
   return (
-    <div className="flex flex-wrap gap-3 text-xs">
+    <div className="flex flex-wrap gap-3 text-xs tabular-nums">
       {items.map((item) =>
         item.value > 0 ? (
           <span

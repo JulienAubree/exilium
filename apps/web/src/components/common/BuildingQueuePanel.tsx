@@ -57,7 +57,7 @@ export function BuildingQueuePanel({
   return (
     <div
       className={cn(
-        'mt-4 rounded-xl border bg-black/30 backdrop-blur-sm overflow-hidden transition-colors',
+        'mt-4 rounded-lg border bg-surface overflow-hidden transition-colors',
         expanded ? 'border-amber-500/40 shadow-lg shadow-amber-500/5' : 'border-white/10',
       )}
     >
@@ -97,13 +97,13 @@ export function BuildingQueuePanel({
               <div
                 className={cn(
                   'h-full rounded-full transition-[width] duration-500 ease-linear',
-                  upgradingBuilding ? 'bg-gradient-to-r from-amber-500 to-amber-300' : 'bg-white/10',
+                  upgradingBuilding ? 'bg-amber-400' : 'bg-secondary',
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             {upgradingBuilding?.upgradeEndTime && (
-              <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                 fin {new Date(upgradingBuilding.upgradeEndTime).toLocaleString('fr-FR', {
                   hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit',
                 })}

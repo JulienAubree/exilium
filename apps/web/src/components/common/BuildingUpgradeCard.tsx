@@ -73,10 +73,10 @@ export function BuildingUpgradeCard({
   // ── Currently upgrading: show timer + cancel ────────────────────────────
   if (isUpgrading && upgradeEndTime) {
     return (
-      <div className="w-full sm:w-64 shrink-0 rounded-xl border border-amber-500/40 bg-black/30 backdrop-blur-sm p-3 space-y-2 shadow-lg shadow-amber-500/5">
+      <div className="w-full sm:w-64 shrink-0 rounded-lg border border-amber-500/40 bg-surface p-3 space-y-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">{isConstruction ? 'Construction en cours' : 'Amélioration en cours'}</span>
-          <span className="text-[10px] font-mono text-muted-foreground">Niv. {currentLevel} → {nextLevel}</span>
+          <span className="text-xs text-amber-400 font-semibold">{isConstruction ? 'Construction en cours' : 'Amélioration en cours'}</span>
+          <span className="text-xs tabular-nums text-muted-foreground">Niv. {currentLevel} → {nextLevel}</span>
         </div>
         <Timer
           endTime={new Date(upgradeEndTime)}
@@ -99,16 +99,16 @@ export function BuildingUpgradeCard({
   // ── Niveau max atteint : afficher un état stable, pas de bouton ──────────
   if (atMaxLevel) {
     return (
-      <div className="w-full sm:w-64 shrink-0 rounded-xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-sm p-3 space-y-2">
+      <div className="w-full sm:w-64 shrink-0 rounded-lg border border-emerald-500/30 bg-surface p-3 space-y-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
+          <span className="text-xs text-emerald-400 font-semibold">
             Niveau maximum atteint
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             Niv. {currentLevel}/{maxLevel}
           </span>
         </div>
-        <p className="text-[11px] text-emerald-200/80">
+        <p className="text-xs text-muted-foreground">
           Ce bâtiment a atteint son plafond. Les autres systèmes peuvent encore monter.
         </p>
       </div>
@@ -121,15 +121,15 @@ export function BuildingUpgradeCard({
   return (
     <div
       className={cn(
-        'w-full sm:w-64 shrink-0 rounded-xl border bg-black/30 backdrop-blur-sm p-3 space-y-2',
+        'w-full sm:w-64 shrink-0 rounded-lg border bg-surface p-3 space-y-2',
         canAfford && !missingPrereqs && !isAnyUpgrading
-          ? 'border-primary/30 shadow-lg shadow-cyan-500/5'
-          : 'border-white/10',
+          ? 'border-primary/40'
+          : 'border-border',
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{isConstruction ? 'Construction' : 'Amélioration'}</span>
-        <span className="text-[10px] font-mono text-muted-foreground">
+        <span className="text-xs text-muted-foreground font-semibold">{isConstruction ? 'Construction' : 'Amélioration'}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">
           Niv. {currentLevel} → {nextLevel}{maxLevel != null && <span className="text-muted-foreground-soft"> / {maxLevel}</span>}
         </span>
       </div>
@@ -143,7 +143,7 @@ export function BuildingUpgradeCard({
         currentHydrogene={resources.hydrogene}
       />
 
-      <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground font-mono">
+      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground tabular-nums">
         <span className="inline-flex items-center gap-1">
           <ClockIcon className="h-3 w-3" />
           {formatDuration(nextLevelTime)}
@@ -169,7 +169,6 @@ export function BuildingUpgradeCard({
         />
       ) : (
         <Button
-          variant="retro"
           size="sm"
           className="w-full h-8 text-xs"
           onClick={onUpgrade}

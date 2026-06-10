@@ -107,7 +107,7 @@ export function FacilityQueue({
   return (
     <div
       className={cn(
-        'mt-4 rounded-xl border bg-black/30 backdrop-blur-sm overflow-hidden transition-colors',
+        'mt-4 rounded-lg border bg-surface overflow-hidden transition-colors',
         expanded ? 'border-cyan-500/40 shadow-lg shadow-cyan-500/5' : 'border-white/10',
       )}
     >
@@ -141,12 +141,12 @@ export function FacilityQueue({
           <div className="mt-1.5 flex items-center gap-2">
             <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 transition-[width] duration-500 ease-linear"
+                className="h-full bg-primary transition-[width] duration-500 ease-linear"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             {queueEndTime && (
-              <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                 fin {queueEndTime.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
               </span>
             )}
@@ -175,7 +175,7 @@ export function FacilityQueue({
                   <span className="font-medium">
                     {remaining}x {name}
                     {item.status === 'active' && parallelSlots > 1 && (
-                      <span className="ml-1.5 text-[10px] text-cyan-400 font-normal">(slot actif)</span>
+                      <span className="ml-1.5 text-xs text-primary font-normal">(slot actif)</span>
                     )}
                   </span>
                   <div className="flex items-center gap-1">
