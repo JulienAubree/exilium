@@ -22,10 +22,9 @@ export function PanelWindow({ title, icon, shortcut, side = 'right', onClose, ch
       role="dialog"
       aria-label={title}
       className={cn(
-        'fixed z-40 flex flex-col overflow-hidden rounded-t-2xl border border-border bg-surface-raised shadow-raised animate-slide-up',
-        'inset-x-0 bottom-0 top-24',
-        'lg:inset-auto lg:top-16 lg:bottom-4 lg:w-[420px] lg:rounded-lg',
-        side === 'right' ? 'lg:right-16' : 'lg:left-4',
+        'fixed z-40 hidden lg:flex flex-col overflow-hidden border border-border bg-surface-raised shadow-raised animate-slide-up',
+        'lg:bottom-20 lg:w-[340px] lg:max-h-[calc(100dvh-9rem)] lg:rounded-lg',
+        side === 'right' ? 'lg:right-6' : 'lg:left-6',
         className,
       )}
     >

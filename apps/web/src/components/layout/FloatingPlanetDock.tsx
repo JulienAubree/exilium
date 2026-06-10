@@ -32,7 +32,7 @@ export function FloatingPlanetDock() {
   if (!active) return null;
 
   return (
-    <div ref={ref} className="fixed bottom-20 left-4 z-40 hidden lg:block">
+    <div ref={ref} className="fixed bottom-4 left-6 z-40 hidden lg:block">
       {open && (
         <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-border bg-surface-raised p-1 shadow-raised animate-slide-up">
           {planets?.map((p) => {

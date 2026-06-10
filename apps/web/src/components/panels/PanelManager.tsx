@@ -48,8 +48,8 @@ export function PanelManager() {
 
   return (
     <>
-      {/* Rail de panneaux — bord droit, desktop */}
-      <div className="fixed right-2 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-1.5 lg:flex">
+      {/* Command bar — bas de l'écran, centrée (desktop) */}
+      <div className="fixed bottom-4 left-1/2 z-40 hidden -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-surface-raised px-2 py-1.5 shadow-raised lg:flex">
         {RAIL.map((r) => (
           <button
             key={r.id}
@@ -58,14 +58,15 @@ export function PanelManager() {
             aria-pressed={!!open[r.id]}
             title={`${r.label} (${r.shortcut})`}
             className={cn(
-              'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border transition-colors duration-fast',
+              'flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-fast',
               open[r.id]
-                ? 'border-primary/40 bg-primary/15 text-primary'
-                : 'border-border bg-surface-raised text-muted-foreground hover:text-foreground hover:border-border-strong',
+                ? 'bg-primary/15 text-primary'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
           >
-            <r.icon width={17} height={17} />
-            <span className="text-xs font-semibold leading-none">{r.shortcut}</span>
+            <r.icon width={16} height={16} />
+            <span>{r.label}</span>
+            <kbd className="rounded border border-border px-1 text-xs leading-tight text-muted-foreground">{r.shortcut}</kbd>
           </button>
         ))}
       </div>
