@@ -29,10 +29,12 @@ import { hash01, slotAngle } from './geometry';
 import type { SlotView } from './slotView';
 import { SlotMarker } from './SlotMarker';
 
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 420;
-const STAR_X = CANVAS_WIDTH / 2; // 300
-const STAR_Y = 60;
+export const CANVAS_WIDTH = 600;
+export const CANVAS_HEIGHT = 420;
+export const STAR_X = CANVAS_WIDTH / 2; // 300
+export const STAR_Y = 60;
+export const ORBIT_TOTAL_POSITIONS = 16;
+export const ORBIT_R_MAX = 310;
 const STAR_OUTER_RADIUS = 26;
 const STAR_CORE_RADIUS = 9;
 const STARFIELD_COUNT = 60;
@@ -62,7 +64,7 @@ const PAN_DEFAULT = { x: STAR_X, y: STAR_Y + (R_MAX - R_MIN) / 2 + R_MIN };
  * Linear spacing feels right in the narrower radial band; no power easing
  * like the full-circle version had.
  */
-function halfCircleOrbitRadius(position: number, total: number): number {
+export function halfCircleOrbitRadius(position: number, total: number): number {
   const t = (position - 1) / Math.max(1, total - 1);
   return R_MIN + (R_MAX - R_MIN) * t;
 }
@@ -70,7 +72,7 @@ function halfCircleOrbitRadius(position: number, total: number): number {
 /**
  * Map the deterministic full-circle slot angle into the half-circle range.
  */
-function halfCircleSlotAngle(galaxy: number, system: number, position: number): number {
+export function halfCircleSlotAngle(galaxy: number, system: number, position: number): number {
   const rawAngle = slotAngle(galaxy, system, position);
   return MIN_ANGLE + (rawAngle / 360) * (MAX_ANGLE - MIN_ANGLE);
 }
@@ -86,6 +88,8 @@ export interface OrbitalCanvasProps {
   /** Click on the central star → deselect everything → mode A. */
   onSelectStar: () => void;
   onHoverPosition: (position: number | null) => void;
+  /** Couche additionnelle rendue dans l'espace du système (P5 : flottes). */
+  overlay?: React.ReactNode;
 }
 
 interface StarfieldDot {
@@ -121,6 +125,7 @@ const TOOLTIP_WIDTH = 200;
 const TOOLTIP_HEIGHT = 46;
 
 export function OrbitalCanvas({
+  overlay,
   views,
   galaxy,
   system,
@@ -532,6 +537,8 @@ export function OrbitalCanvas({
       </g>
 
       {/* Slot markers — one per non-belt slot. */}
+      {overlay}
+
       {placedSlots.map(({ view, cx, cy }) => (
         <SlotMarker
           key={view.position}

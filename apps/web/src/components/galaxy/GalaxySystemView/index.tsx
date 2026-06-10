@@ -37,6 +37,7 @@ import type {
   PlanetTypeMeta,
 } from './DetailPanel';
 import { OrbitalCanvas } from './OrbitalCanvas';
+import { FleetTrailsLayer } from './FleetTrailsLayer';
 import { Ribbon } from './Ribbon';
 import { toSlotView, type SlotView } from './slotView';
 
@@ -288,6 +289,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
           onSelectPosition={selectPosition}
           onSelectStar={selectStar}
           onHoverPosition={setHoveredPosition}
+          overlay={<FleetTrailsLayer galaxy={galaxy} system={system} />}
         />
         {/* System selector overlay — top-left */}
         <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 z-10">
