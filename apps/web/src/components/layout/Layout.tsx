@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
-import { Outlet, useLocation } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { TopBar } from './TopBar';
 import { ResourceBar } from './ResourceBar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
-import { GlobalTopbar } from './GlobalTopbar';
+import { PlanetSubnav } from './PlanetSubnav';
 import { Toaster } from '@/components/ui/Toaster';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { AnnouncementBanner } from './AnnouncementBanner';
@@ -18,11 +18,17 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 
+// Pages that are planet-specific and should redirect when the active planet
+// is being colonized.  Empire-wide pages (/empire, /fleet, etc.) are NOT
+// redirected — only pages that operate on a single planet.
+const PLANET_PAGES = ['/', '/resources', '/infrastructures', '/energy', '/production'];
+
 export function Layout() {
   const { data: planets } = trpc.planet.list.useQuery();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Trust localStorage activePlanetId while planet.list is loading
   // This avoids a query waterfall: dependent queries can fire immediately
@@ -36,9 +42,18 @@ export function Layout() {
     }
   }, [resolvedPlanetId, activePlanetId, setActivePlanet]);
 
-  // (Le verrouillage colonisation vit désormais dans PlanetLayout.)
+  // Redirect planet-specific pages to Overview when active planet is colonizing.
+  // Overview itself handles the ColonizationProgress display.
   const activePlanet = planets?.find((p) => p.id === resolvedPlanetId);
-  const onPlanetRoute = location.pathname.startsWith('/planet/');
+  useEffect(() => {
+    if (
+      activePlanet?.status === 'colonizing' &&
+      PLANET_PAGES.includes(location.pathname) &&
+      location.pathname !== '/'
+    ) {
+      navigate('/', { replace: true });
+    }
+  }, [activePlanet?.status, location.pathname, navigate]);
 
   useNotifications();
   useDocumentTitle();
@@ -65,11 +80,11 @@ export function Layout() {
       {/* Main area */}
       <div className="flex flex-1 flex-col min-h-0 lg:ml-56">
         <TopBar planetId={resolvedPlanetId} planets={planets ?? []} />
-        <GlobalTopbar />
         <OfflineBanner />
         <EmailVerificationBanner />
         <AnnouncementBanner />
-        {onPlanetRoute && <ResourceBar planetId={resolvedPlanetId} />}
+        <ResourceBar planetId={resolvedPlanetId} />
+        <PlanetSubnav />
         <HostileAlertBanner hostileFleets={hostileFleets} fixed />
 
         {/* Page content — scrolls independently; the mobile BottomTabBar

@@ -1,8 +1,8 @@
 # La Passerelle — shell RTS à panneaux (concept B, retiré)
 
 > **Statut** : **retiré (2026-06-10 soir)** — P1→P5 ont été livrés dans la journée puis
-> **annulés par rollback** : le user a tranché pour le retour à l'itération sidebar
-> (shell Empire-first, `ebd2c409`). Le code reste dans l'historique git. Conservé comme
+> **annulés par rollback** : le user a tranché pour le retour à l'état
+> pré-Empire-first (`eb8a7457` — ressources en haut, bloc planète unifié, sidebar). Le code reste dans l'historique git. Conservé comme
 > trace du concept et de ses leçons (cf. contrainte n°3 : 4 métamorphoses en 48 h, c'est
 > précisément le risque qui s'est matérialisé).
 > *(Historique : suite logique du shell Empire-first — le user demandait le paradigme RTS,

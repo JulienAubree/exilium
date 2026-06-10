@@ -12,9 +12,13 @@ export type SidebarVisibilityRule = (ctx: SidebarContext) => boolean;
 const always: SidebarVisibilityRule = () => true;
 const atChapter = (n: number): SidebarVisibilityRule => (ctx) => ctx.chapterOrder >= n;
 const afterTutorial: SidebarVisibilityRule = (ctx) => ctx.isComplete;
+const afterTutorialWithColonies = (min: number): SidebarVisibilityRule =>
+  (ctx) => ctx.isComplete && ctx.colonyCount >= min;
+
 /** Source of truth: path → visibility rule. Order reflects the hub layout
  * (refonte IA 2026-06 : Empire / Galaxie / Flotte / Social + bloc planète). */
 export const SIDEBAR_VISIBILITY_RULES = {
+  '/empire': afterTutorialWithColonies(2),
   '/research': atChapter(2),
   '/': always,
   '/energy': always,

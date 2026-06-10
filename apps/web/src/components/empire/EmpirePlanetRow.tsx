@@ -65,7 +65,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
 
   const handleClick = () => {
     setActivePlanet(planet.id);
-    navigate(`/planet/${planet.id}`, { viewTransition: true });
+    navigate('/');
   };
 
   // Colonizing planets: simplified row

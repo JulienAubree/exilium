@@ -3,7 +3,6 @@ import { lazy, Suspense } from 'react';
 import { Layout } from './components/layout/Layout';
 import { useAuthStore } from './stores/auth.store';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { RedirectToActivePlanet } from './components/layout/RedirectToActivePlanet';
 
 const Landing = lazy(() => import('./pages/Landing'));
 
@@ -97,60 +96,32 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        lazy: lazyLoad(() => import('./pages/Empire')),
+        lazy: lazyLoad(() => import('./pages/Overview')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'empire',
-        element: <Navigate to="/" replace />,
-      },
-      {
-        path: 'planet/:planetId',
-        lazy: lazyLoad(() => import('./pages/PlanetLayout')),
+        lazy: lazyLoad(() => import('./pages/Empire')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-        children: [
-          {
-            index: true,
-            lazy: lazyLoad(() => import('./pages/Overview')),
-            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-          },
-          {
-            path: 'resources',
-            lazy: lazyLoad(() => import('./pages/Resources')),
-            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-          },
-          {
-            path: 'energy',
-            lazy: lazyLoad(() => import('./pages/Energy')),
-            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-          },
-          {
-            path: 'infrastructures',
-            lazy: lazyLoad(() => import('./pages/Infrastructures')),
-            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-          },
-          {
-            path: 'production',
-            lazy: lazyLoad(() => import('./pages/Production')),
-            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-          },
-        ],
       },
       {
         path: 'energy',
-        element: <RedirectToActivePlanet sub="energy" />,
+        lazy: lazyLoad(() => import('./pages/Energy')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'resources',
-        element: <RedirectToActivePlanet sub="resources" />,
+        lazy: lazyLoad(() => import('./pages/Resources')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'infrastructures',
-        element: <RedirectToActivePlanet sub="infrastructures" />,
+        lazy: lazyLoad(() => import('./pages/Infrastructures')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'buildings',
-        element: <RedirectToActivePlanet sub="resources" />,
+        element: <Navigate to="/resources" replace />,
       },
       {
         path: 'research',
@@ -159,7 +130,8 @@ export const router = createBrowserRouter([
       },
       {
         path: 'production',
-        element: <RedirectToActivePlanet sub="production" />,
+        lazy: lazyLoad(() => import('./pages/Production')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
         path: 'shipyard',

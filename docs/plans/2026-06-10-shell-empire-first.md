@@ -1,6 +1,9 @@
-# Shell « Empire-first » — spec (concept A, big bang de la coquille)
+# Shell « Empire-first » — spec (concept A, retiré)
 
-> **Décision user 2026-06-10** : concept A maintenant (B « passerelle/carte vivante » = horizon ultérieur).
+> **Statut : retiré (2026-06-10 soir)** — livré le matin même (`ebd2c409`) puis annulé par le
+> rollback #2 : retour à l'état pré-Empire-first (`eb8a7457`, ressources en haut + bloc planète
+> unifié + sidebar), décision user. Le code reste dans l'historique git.
+> *(Historique : décision user 2026-06-10 matin — concept A maintenant, B « passerelle/carte vivante » = horizon ultérieur.)*
 > Réalise les lots 3-4 de la refonte IA sous forme de swap de shell — le contenu des pages (fraîchement
 > redesigné v2) se glisse dans la nouvelle coquille sans réécriture.
 

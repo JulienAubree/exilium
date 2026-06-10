@@ -33,16 +33,26 @@ describe('getVisibleSidebarPaths', () => {
     expect(visible.has('/market')).toBe(false);
   });
 
-  it('tutorial complete: adds market, alliance, ranking (le home / est l\'Empire, toujours visible)', () => {
+  it('tutorial complete with 1 colony: adds market, alliance, ranking but NOT empire', () => {
     const visible = getVisibleSidebarPaths({ chapterOrder: 4, isComplete: true, colonyCount: 1 });
     expect(visible.has('/market')).toBe(true);
     expect(visible.has('/alliance')).toBe(true);
     expect(visible.has('/ranking')).toBe(true);
-    expect(visible.has('/')).toBe(true);
+    expect(visible.has('/empire')).toBe(false);
   });
 
-  it('fully unlocked state: all 15 items visible', () => {
+  it('tutorial complete with 2 colonies: adds empire', () => {
     const visible = getVisibleSidebarPaths({ chapterOrder: 4, isComplete: true, colonyCount: 2 });
-    expect(visible.size).toBe(15);
+    expect(visible.has('/empire')).toBe(true);
+  });
+
+  it('tutorial NOT complete but 2 colonies: empire still hidden', () => {
+    const visible = getVisibleSidebarPaths({ chapterOrder: 3, isComplete: false, colonyCount: 2 });
+    expect(visible.has('/empire')).toBe(false);
+  });
+
+  it('fully unlocked state: all 16 items visible', () => {
+    const visible = getVisibleSidebarPaths({ chapterOrder: 4, isComplete: true, colonyCount: 2 });
+    expect(visible.size).toBe(16);
   });
 });

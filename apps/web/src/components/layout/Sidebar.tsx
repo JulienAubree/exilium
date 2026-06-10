@@ -25,7 +25,7 @@ const sections: { title: string; items: NavItem[] }[] = [
   {
     title: 'Empire',
     items: [
-      { label: 'Empire', path: '/', icon: EmpireIcon },
+      { label: 'Empire', path: '/empire', icon: EmpireIcon },
       { label: 'Recherche', path: '/research', icon: ResearchIcon },
     ],
   },
