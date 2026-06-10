@@ -6,11 +6,13 @@ import { cn } from '@/lib/utils';
  * Fenêtre flottante de la Passerelle : cadre commun des panneaux.
  * Desktop : fenêtre ancrée à droite ; mobile : feuille plein écran.
  */
-export function PanelWindow({ title, icon, shortcut, onClose, children, className }: {
+export function PanelWindow({ title, icon, shortcut, side = 'right', onClose, children, className }: {
   title: string;
   icon?: ReactNode;
   /** Raccourci affiché dans l'en-tête (ex. « F »). */
   shortcut?: string;
+  /** Côté d'ancrage desktop (un panneau max par côté). */
+  side?: 'left' | 'right';
   onClose: () => void;
   children: ReactNode;
   className?: string;
@@ -22,7 +24,8 @@ export function PanelWindow({ title, icon, shortcut, onClose, children, classNam
       className={cn(
         'fixed z-40 flex flex-col overflow-hidden rounded-t-2xl border border-border bg-surface-raised shadow-raised animate-slide-up',
         'inset-x-0 bottom-0 top-24',
-        'lg:inset-auto lg:right-16 lg:top-16 lg:bottom-4 lg:w-[420px] lg:rounded-lg',
+        'lg:inset-auto lg:top-16 lg:bottom-4 lg:w-[420px] lg:rounded-lg',
+        side === 'right' ? 'lg:right-16' : 'lg:left-4',
         className,
       )}
     >

@@ -4,6 +4,7 @@ import { ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
+import { usePanelStore } from '@/stores/panel.store';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 import { getPlanetImageUrl } from '@/lib/assets';
 
@@ -20,6 +21,7 @@ export function FloatingPlanetDock() {
   const { data: planets } = trpc.planet.list.useQuery();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
+  const togglePanel = usePanelStore((s) => s.toggle);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOutsideClick(ref, open, () => setOpen(false));
@@ -91,8 +93,8 @@ export function FloatingPlanetDock() {
       <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface-raised py-1.5 pl-1.5 pr-3 shadow-raised">
         <button
           type="button"
-          onClick={() => navigate(`/planet/${active.id}`, { viewTransition: true })}
-          title={`Ouvrir ${active.name}`}
+          onClick={() => { setOpen(false); togglePanel('planete'); }}
+          title={`${active.name} — panneau (P)`}
           className="shrink-0 rounded-full transition-transform duration-fast hover:scale-105"
         >
           {active.planetClassId && active.planetImageIndex != null ? (

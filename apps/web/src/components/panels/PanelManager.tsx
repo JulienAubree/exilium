@@ -2,10 +2,14 @@ import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { usePanelStore, type PanelId } from '@/stores/panel.store';
 import { FleetPanel } from './FleetPanel';
-import { FleetIcon } from '@/lib/icons';
+import { PlanetPanel } from './PlanetPanel';
+import { EmpirePanel } from './EmpirePanel';
+import { FleetIcon, OverviewIcon, EmpireIcon } from '@/lib/icons';
 
 const RAIL: { id: PanelId; label: string; shortcut: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
+  { id: 'planete', label: 'Planète', shortcut: 'P', icon: OverviewIcon },
   { id: 'flotte', label: 'Flotte', shortcut: 'F', icon: FleetIcon },
+  { id: 'empire', label: 'Empire', shortcut: 'E', icon: EmpireIcon },
 ];
 
 function isTypingTarget(el: EventTarget | null): boolean {
@@ -66,7 +70,9 @@ export function PanelManager() {
         ))}
       </div>
 
+      {open.planete && <PlanetPanel />}
       {open.flotte && <FleetPanel />}
+      {open.empire && <EmpirePanel />}
     </>
   );
 }
