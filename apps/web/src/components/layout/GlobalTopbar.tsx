@@ -10,6 +10,7 @@ import { trpc } from '@/trpc';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import { TopBarActions } from './topbar/TopBarActions';
+import { Zap } from 'lucide-react';
 import {
   EmpireIcon,
   ResearchIcon,
@@ -19,7 +20,20 @@ import {
   FleetIcon,
   AllianceIcon,
   RankingIcon,
+  OverviewIcon,
+  ResourcesIcon,
+  BuildingsIcon,
+  ShipyardIcon,
 } from '@/lib/icons';
+
+/** Onglets du mode focus planète — remplacent la nav des hubs dans la barre. */
+const PLANET_TABS: { label: string; sub: string; visKey: SidebarPath; icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; end?: boolean }[] = [
+  { label: "Vue d'ensemble", sub: '', visKey: '/', icon: OverviewIcon, end: true },
+  { label: 'Ressources', sub: 'resources', visKey: '/resources', icon: ResourcesIcon },
+  { label: 'Énergie', sub: 'energy', visKey: '/energy', icon: Zap as React.ComponentType<React.SVGProps<SVGSVGElement>> },
+  { label: 'Infrastructures', sub: 'infrastructures', visKey: '/infrastructures', icon: BuildingsIcon },
+  { label: 'Production', sub: 'production', visKey: '/production', icon: ShipyardIcon },
+];
 
 interface NavItem {
   label: string;
@@ -149,6 +163,29 @@ export function GlobalTopbar() {
         </NavLink>
       )}
 
+      {contextPlanetId ? (
+        <nav aria-label="Navigation planète" className="justify-self-center flex min-w-0 items-center gap-0.5 overflow-x-auto">
+          {PLANET_TABS.filter((t) => visiblePaths.has(t.visKey)).map((t) => (
+            <NavLink
+              key={t.sub}
+              to={t.sub ? `/planet/${contextPlanetId}/${t.sub}` : `/planet/${contextPlanetId}`}
+              end={t.end}
+              viewTransition
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-fast ease-standard',
+                  isActive
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                )
+              }
+            >
+              <t.icon width={16} height={16} />
+              <span className="hidden lg:inline">{t.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      ) : (
       <nav aria-label="Navigation principale" className="justify-self-center flex min-w-0 items-center overflow-x-auto">
         {groups.map((group, gi) => (
           <ul key={gi} className={cn('flex items-center gap-0.5', gi > 0 && 'ml-3 border-l border-border-strong/50 pl-3')}>
@@ -186,6 +223,7 @@ export function GlobalTopbar() {
           </ul>
         ))}
       </nav>
+      )}
 
       <div className="justify-self-end flex shrink-0 items-center gap-3">
         {contextPlanetId && resourceData && (

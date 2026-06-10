@@ -1,31 +1,13 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useParams, useLocation } from 'react-router';
-import { Zap } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
-import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
-import { useMemo } from 'react';
-import { TabBar, type TabItem } from '@/components/ui/tabs';
-import {
-  OverviewIcon,
-  ResourcesIcon,
-  BuildingsIcon,
-  ShipyardIcon,
-} from '@/lib/icons';
-
-/** Onglet → clé de visibilité historique (divulgation progressive du tutoriel). */
-const PLANET_TABS: { label: string; sub: string; visKey: SidebarPath; icon: TabItem['icon']; end?: boolean }[] = [
-  { label: "Vue d'ensemble", sub: '', visKey: '/', icon: OverviewIcon, end: true },
-  { label: 'Ressources', sub: 'resources', visKey: '/resources', icon: ResourcesIcon },
-  { label: 'Énergie', sub: 'energy', visKey: '/energy', icon: Zap as TabItem['icon'] },
-  { label: 'Infrastructures', sub: 'infrastructures', visKey: '/infrastructures', icon: BuildingsIcon },
-  { label: 'Production', sub: 'production', visKey: '/production', icon: ShipyardIcon },
-];
 
 /**
- * Drill-down planète du shell « Empire-first » : la planète n'est plus un
- * monde parallèle mais un détail de l'Empire, adressable (/planet/:id).
- * En-tête : retour Empire + sélecteur + ressources ; puis onglets.
+ * Drill-down planète du shell « Empire-first » : la planète est un détail
+ * de l'Empire, adressable (/planet/:id). Tout le chrome (retour, sélecteur,
+ * onglets, ressources) vit dans la GlobalTopbar en mode focus — ce layout
+ * ne porte plus que la logique : sync du store, garde-fous, contexte.
  * Spec : docs/plans/2026-06-10-shell-empire-first.md
  */
 export default function PlanetLayout() {
@@ -59,38 +41,5 @@ export default function PlanetLayout() {
     }
   }, [isColonizing, atIndex, navigate, planetId]);
 
-  const { data: tutorialData } = trpc.tutorial.getCurrent.useQuery();
-  const isComplete = tutorialData?.isComplete ?? false;
-  const parsedChapter = tutorialData?.chapter
-    ? Number.parseInt(tutorialData.chapter.id.replace('chapter_', ''), 10)
-    : NaN;
-  const chapterOrder = Number.isFinite(parsedChapter) ? parsedChapter : (isComplete ? 4 : 1);
-  const colonyCount = planets?.length ?? 1;
-  const visiblePaths = useMemo(
-    () => getVisibleSidebarPaths({ chapterOrder, isComplete, colonyCount }),
-    [chapterOrder, isComplete, colonyCount],
-  );
-
-  const tabs: TabItem[] = PLANET_TABS
-    .filter((t) => visiblePaths.has(t.visKey))
-    .map((t) => ({
-      label: t.label,
-      icon: t.icon,
-      to: t.sub ? `/planet/${planetId}/${t.sub}` : `/planet/${planetId}`,
-      end: t.end,
-    }));
-
-  return (
-    <div>
-      {/* Onglets seuls — le contexte (retour, sélecteur, ressources) vit
-          désormais dans la GlobalTopbar : une seule barre. */}
-      <div className="sticky top-0 lg:top-12 z-30 border-b border-border bg-surface">
-        {!isColonizing && tabs.length > 0 && (
-          <TabBar items={tabs} ariaLabel="Navigation planète" className="border-b-0" />
-        )}
-      </div>
-
-      <Outlet context={{ planetId: planetId ?? null, planetClassId: planet?.planetClassId ?? null }} />
-    </div>
-  );
+  return <Outlet context={{ planetId: planetId ?? null, planetClassId: planet?.planetClassId ?? null }} />;
 }
