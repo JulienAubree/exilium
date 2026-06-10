@@ -37,7 +37,7 @@ export function EntityDetailOverlay({ open, onClose, title, children }: EntityDe
         className={cn(
           'relative z-50 w-full overflow-y-auto shadow-lg',
           'max-h-[85vh] rounded-t-2xl animate-slide-up-sheet bg-surface-raised border-t border-white/10',
-          'lg:max-w-2xl lg:max-h-[85vh] lg:rounded-lg lg:mx-4 lg:border lg:border-border lg:bg-card lg:backdrop-blur-none lg:animate-slide-up',
+          'lg:max-w-2xl lg:max-h-[85vh] lg:rounded-lg lg:mx-4 lg:border lg:border-border lg:bg-card lg:animate-slide-up',
         )}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4">
