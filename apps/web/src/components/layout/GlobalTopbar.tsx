@@ -71,14 +71,14 @@ export function GlobalTopbar() {
   );
 
   return (
-    <header className="sticky top-0 z-40 hidden lg:flex items-center gap-4 border-b border-border bg-surface px-4 lg:px-6">
-      <NavLink to="/" viewTransition className="py-2.5 text-base font-semibold text-primary shrink-0">
+    <header className="sticky top-0 z-40 hidden lg:grid grid-cols-[1fr_auto_1fr] items-center h-12 border-b border-border bg-surface px-4 lg:px-6">
+      <NavLink to="/" viewTransition className="justify-self-start text-base font-semibold text-primary shrink-0">
         Exilium
       </NavLink>
 
-      <nav aria-label="Navigation principale" className="flex min-w-0 flex-1 items-center overflow-x-auto">
+      <nav aria-label="Navigation principale" className="justify-self-center flex min-w-0 items-center overflow-x-auto">
         {groups.map((group, gi) => (
-          <ul key={gi} className={cn('flex items-center gap-0.5', gi > 0 && 'ml-2 border-l border-border pl-2')}>
+          <ul key={gi} className={cn('flex items-center gap-0.5', gi > 0 && 'ml-3 border-l border-border-strong/50 pl-3')}>
             {group.map((item) => {
               const active =
                 item.path === '/'
@@ -114,7 +114,7 @@ export function GlobalTopbar() {
         ))}
       </nav>
 
-      <div className="shrink-0">
+      <div className="justify-self-end shrink-0">
         <TopBarActions />
       </div>
     </header>

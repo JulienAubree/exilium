@@ -48,7 +48,7 @@ export function EmpireHero({
     <div className="relative overflow-hidden">
       <HeroAtmosphere imageUrl={keyArtUrl} variant="cyan-purple" />
 
-      <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
+      <div className="relative px-5 pt-5 pb-5 lg:px-8 lg:pt-6 lg:pb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
           <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
             {/* Round avatar — clickable to open the help overlay */}
