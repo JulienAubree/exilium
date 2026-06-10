@@ -127,14 +127,14 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
               aria-label="Actions"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-background/40 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-background/70 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-background/40 text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
             >
               <span className="text-base leading-none">{'⋯'}</span>
             </button>
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up"
+                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up"
               >
                 {canRename && (
                   <button

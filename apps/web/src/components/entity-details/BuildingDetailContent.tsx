@@ -146,18 +146,18 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
 
         return (
           <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
-            <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire annexe</div>
+            <div className="text-xs uppercase text-violet-400 font-semibold tracking-wider">Laboratoire annexe</div>
             <div className="text-xs text-slate-300 space-y-2">
               <p>Ce laboratoire est une <span className="text-violet-400 font-medium">annexe de recherche</span> spécialisée, constructible uniquement sur une planète <span className="text-violet-400 font-medium">{planetTypeNames[annexType] ?? annexType}</span>.</p>
 
               <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
-                <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Bonus passif</div>
+                <div className="text-xs uppercase text-emerald-400 font-semibold tracking-wider">Bonus passif</div>
                 <p className="text-slate-300">Chaque niveau de ce laboratoire réduit le <span className="text-emerald-400 font-medium">temps de toutes les recherches de 5%</span>. Ce bonus se cumule avec les autres laboratoires annexes de votre empire.</p>
               </div>
 
               {exclusiveResearch && (
                 <div className="rounded bg-[#0d1628] px-2.5 py-2 space-y-1.5">
-                  <div className="text-[10px] uppercase text-amber-400 font-semibold tracking-wider">Recherche exclusive</div>
+                  <div className="text-xs uppercase text-amber-400 font-semibold tracking-wider">Recherche exclusive</div>
                   <p className="text-slate-300">
                     Debloque la recherche <span className="text-amber-400 font-medium">{exclusiveResearch.name}</span> :
                     {' '}{exclusiveResearch.effectDescription ?? exclusiveResearch.description}
@@ -165,7 +165,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                 </div>
               )}
 
-              <p className="text-slate-500 text-[11px]">Le laboratoire principal (planète mère) doit être au niveau 6 minimum.</p>
+              <p className="text-slate-500 text-xs">Le laboratoire principal (planète mère) doit être au niveau 6 minimum.</p>
             </div>
           </div>
         );
@@ -174,7 +174,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       {/* 3c. Main lab explanation */}
       {buildingId === 'researchLab' && (
         <div className="rounded-lg border border-violet-500/20 bg-violet-950/20 p-3 space-y-2">
-          <div className="text-[10px] uppercase text-violet-400 font-semibold tracking-wider">Laboratoire principal</div>
+          <div className="text-xs uppercase text-violet-400 font-semibold tracking-wider">Laboratoire principal</div>
           <div className="text-xs text-slate-300 space-y-1.5">
             <p>Le laboratoire de recherche est le <span className="text-violet-400 font-medium">centre névralgique</span> de la recherche de votre empire. Toutes les recherches sont lancées depuis ce laboratoire.</p>
             <ul className="list-disc list-inside space-y-1 text-slate-400">
@@ -189,7 +189,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       {/* 3d. Shield combat explanation */}
       {buildingId === 'planetaryShield' && (
         <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 space-y-1.5">
-          <div className="text-[10px] uppercase text-cyan-400 font-semibold tracking-wider">Comportement en combat</div>
+          <div className="text-xs uppercase text-cyan-400 font-semibold tracking-wider">Comportement en combat</div>
           <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
             <li>Le bouclier est <span className="text-cyan-400 font-medium">indestructible</span> et se <span className="text-cyan-400 font-medium">régénère à chaque round</span></li>
             <li>Il <span className="text-red-400">ne protège pas la flotte</span> stationnée sur la planète</li>
@@ -203,10 +203,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       {/* 3c. Storage armored explanation */}
       {isStorageBuilding && (
         <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3 space-y-2">
-          <div className="text-[10px] uppercase text-green-400 font-semibold tracking-wider">Protection blindée</div>
+          <div className="text-xs uppercase text-green-400 font-semibold tracking-wider">Protection blindée</div>
           <div className="text-xs text-slate-300 space-y-1.5">
             <p>En cas d'attaque, <span className="text-green-400 font-medium">{fmt(currentProtected)}</span> ressources sont protégées et <span className="text-green-400 font-medium">impossibles à piller</span>.</p>
-            <div className="rounded bg-[#0d1628] px-2.5 py-2 text-[11px] font-mono text-slate-400 space-y-0.5">
+            <div className="rounded bg-[#0d1628] px-2.5 py-2 text-xs font-mono text-slate-400 space-y-0.5">
               <div>Capacité stockage : <span className="text-slate-200">{fmt(currentStorageCap)}</span></div>
               <div>Ratio de base : <span className="text-slate-200">{Math.round(protectedBaseRatio * 100)}%</span></div>
               <div>
@@ -225,10 +225,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       {/* 4. Bonus de ce bâtiment */}
       {buildingBonus && (
         <div>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
             Bonus : {buildingBonus.label}
           </div>
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="text-slate-500 text-left">
                 <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
@@ -262,10 +262,10 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
       {/* 5. Contextual table */}
       {tableData && (
         <div>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
             {tableData.title}
           </div>
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="text-slate-500 text-left">
                 <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
@@ -400,7 +400,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
             </tbody>
           </table>
           {tableData.type === 'mine' && harvestMalus > 0 && (
-            <p className="text-[11px] text-amber-400/80 mt-1.5">
+            <p className="text-xs text-amber-400/80 mt-1.5">
               Pénalité gouvernance appliquée : <span className="font-semibold">−{Math.round(harvestMalus * 100)}%</span> sur la production affichée.
             </p>
           )}
@@ -418,7 +418,7 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
         }));
         return (
           <div>
-            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
               Prérequis
             </div>
             <PrerequisiteList items={prereqItems} />

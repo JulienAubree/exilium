@@ -95,7 +95,7 @@ export function ResourceSell({ planetId, commissionPercent }: ResourceSellProps)
             { key: 'hydrogene' as const, value: sellPriceHydrogene, setter: setSellPriceHydrogene },
           ]).map(({ key, value, setter }) => (
             <div key={key}>
-              <div className={cn('text-[10px] mb-1.5 font-medium uppercase tracking-wider', RESOURCE_COLORS[key])}>
+              <div className={cn('text-xs mb-1.5 font-medium uppercase tracking-wider', RESOURCE_COLORS[key])}>
                 {RESOURCE_LABELS[key]}
               </div>
               <input
@@ -129,7 +129,7 @@ export function ResourceSell({ planetId, commissionPercent }: ResourceSellProps)
       )}
 
       <Button
-        variant="retro"
+       
         className="w-full"
         onClick={handleCreateOffer}
         disabled={

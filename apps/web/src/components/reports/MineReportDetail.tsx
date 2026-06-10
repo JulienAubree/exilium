@@ -33,10 +33,10 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
           {/* Step 1: Extraction brute */}
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">1</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold">1</span>
               <span className="text-xs font-semibold text-foreground">Extraction du gisement</span>
               {result.fleetExtraction && (
-                <span className="text-[10px] text-muted-foreground">(capacité d'extraction : {result.fleetExtraction.toLocaleString('fr-FR')}/cycle)</span>
+                <span className="text-xs text-muted-foreground">(capacité d'extraction : {result.fleetExtraction.toLocaleString('fr-FR')}/cycle)</span>
               )}
             </div>
             {hasGross ? (
@@ -69,7 +69,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 })}
               </div>
             )}
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
+            <p className="ml-7 mt-1 text-xs text-muted-foreground">
               Ressources brutes prélevées sur l'astéroïde, réparties proportionnellement aux réserves restantes.
             </p>
           </div>
@@ -77,9 +77,9 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
           {/* Step 2: Scories */}
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold">2</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold">2</span>
               <span className="text-xs font-semibold text-foreground">Pertes en scories</span>
-              <span className="text-[10px] text-muted-foreground">({slagPct}% du minerai brut)</span>
+              <span className="text-xs text-muted-foreground">({slagPct}% du minerai brut)</span>
             </div>
             <div className="ml-7">
               <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 </span>
               </div>
             </div>
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
+            <p className="ml-7 mt-1 text-xs text-muted-foreground">
               {slagPct > 0
                 ? "Une partie des ressources est perdue lors du raffinage. Améliorez Raffinage spatial profond pour réduire ce taux."
                 : 'Aucune perte ! Votre technologie de raffinage élimine toutes les scories.'}
@@ -101,9 +101,9 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
           {/* Step 3: Chargement en soute */}
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">3</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">3</span>
               <span className="text-xs font-semibold text-foreground">Chargement en soute</span>
-              <span className="text-[10px] text-muted-foreground">({totalRewards.toLocaleString('fr-FR')} / {cargoCapacity.toLocaleString('fr-FR')})</span>
+              <span className="text-xs text-muted-foreground">({totalRewards.toLocaleString('fr-FR')} / {cargoCapacity.toLocaleString('fr-FR')})</span>
             </div>
             <div className="ml-7">
               <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
                 </span>
               </div>
             </div>
-            <p className="ml-7 mt-1 text-[10px] text-muted-foreground">
+            <p className="ml-7 mt-1 text-xs text-muted-foreground">
               {cargoPct >= 95
                 ? 'Soute pleine ! Pour transporter plus, ajoutez des vaisseaux cargo ou améliorez la capacité de soute.'
                 : cargoPct >= 50
@@ -127,7 +127,7 @@ export function MineReportDetail({ result, fleet, gameConfig: _gameConfig }: Min
           {/* Step 4: Résultat final */}
           <div className="border-t border-border pt-3">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold">4</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">4</span>
               <span className="text-xs font-semibold text-foreground">Ressources rapportées</span>
             </div>
             <div className="ml-7 flex flex-wrap gap-4">

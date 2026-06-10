@@ -135,12 +135,12 @@ function BeginnerTab() {
           <p>Certaines batteries ont des traits spéciaux qui modifient leur puissance :</p>
           <ul className="space-y-1.5 list-none">
             <li>
-              <span className="inline-block px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-semibold mr-1.5">Rafale N Catégorie</span>
+              <span className="inline-block px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-semibold mr-1.5">Rafale N Catégorie</span>
               Quand la cible appartient à la catégorie indiquée, la batterie tire <span className="text-foreground">N coups supplémentaires</span> (en plus de ses tirs de base).
               Exemple : le croiseur a <span className="text-foreground">Rafale 6 Léger</span> sur sa batterie secondaire → elle tire 8 coups au lieu de 2 contre les intercepteurs.
             </li>
             <li>
-              <span className="inline-block px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-semibold mr-1.5">Enchaînement</span>
+              <span className="inline-block px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-xs font-semibold mr-1.5">Enchaînement</span>
               Quand un tir détruit sa cible, la batterie tire <span className="text-foreground">un coup bonus</span> sur une autre unité de la même catégorie.
               Typique des unités légères (intercepteurs, lanceurs de missiles) qui excellent à nettoyer les essaims.
             </li>

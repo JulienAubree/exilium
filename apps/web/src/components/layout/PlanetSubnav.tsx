@@ -126,7 +126,7 @@ export function PlanetSubnav() {
   return (
     <section
       aria-label="Bloc planète"
-      className="sticky top-0 z-40 hidden lg:block border-b border-primary/20 bg-gradient-to-b from-primary/[0.05] to-card/80 backdrop-blur-md"
+      className="sticky top-0 z-40 hidden lg:block border-b border-border bg-surface"
     >
       {/* Row 1 : planet selector + resources + global actions */}
       <div className="flex items-center justify-between gap-4 px-4 py-1.5 border-b border-white/5">
@@ -141,7 +141,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Minerai"
               value={resources.minerai}
-              glowClass="glow-minerai"
+              glowClass=""
               colorClass="text-minerai"
               icon={<MineraiIcon size={14} />}
               capacity={resourceData?.rates.storageMineraiCapacity}
@@ -149,7 +149,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Silicium"
               value={resources.silicium}
-              glowClass="glow-silicium"
+              glowClass=""
               colorClass="text-silicium"
               icon={<SiliciumIcon size={14} />}
               capacity={resourceData?.rates.storageSiliciumCapacity}
@@ -157,7 +157,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Hydrogène"
               value={resources.hydrogene}
-              glowClass="glow-hydrogene"
+              glowClass=""
               colorClass="text-hydrogene"
               icon={<HydrogeneIcon size={14} />}
               capacity={resourceData?.rates.storageHydrogeneCapacity}
@@ -165,7 +165,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Énergie"
               value={energyBalance}
-              glowClass={energyBalance >= 0 ? 'glow-energy' : ''}
+              glowClass={energyBalance >= 0 ? '' : ''}
               colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
               icon={<EnergieIcon size={14} />}
               warning={brownout ? `Production des mines à ${100 - brownoutPct}% — déficit de ${Math.abs(energyBalance).toLocaleString('fr-FR')} d'énergie.` : undefined}
@@ -191,7 +191,7 @@ export function PlanetSubnav() {
                   cn(
                     'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap',
                     isActive
-                      ? 'bg-primary/15 text-primary border border-primary/30 shadow-[0_0_12px_-4px_hsl(var(--accent-glow))]'
+                      ? 'bg-primary/15 text-primary border border-primary/30'
                       : 'text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent',
                   )
                 }

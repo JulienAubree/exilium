@@ -239,14 +239,14 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
           />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
             Position cartographiée
           </div>
           <h3 className="text-lg font-bold text-foreground leading-tight">{planetTypeName}</h3>
           <div className="mt-0.5"><CoordsLink galaxy={coordinates.galaxy} system={coordinates.system} position={coordinates.position} /></div>
           <div className="mt-3">
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${statusBadge.cls}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider ${statusBadge.cls}`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
               {statusBadge.label}
@@ -267,7 +267,7 @@ export function ExploreReportDetail({ result, coordinates }: ExploreReportDetail
 
       {/* Scientific report flavor block */}
       <div className="mt-4 rounded-lg border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent p-4">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-cyan-400/80 mb-2">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-cyan-400/80 mb-2">
           <FlaskConical className="h-3 w-3" aria-hidden="true" />
           <span>Rapport scientifique</span>
         </div>

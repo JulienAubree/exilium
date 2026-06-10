@@ -38,35 +38,35 @@ export function LogisticsSection({ status, onSendResources }: LogisticsSectionPr
           {stockStatus === 'sufficient' && (
             <>
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-medium">Stock suffisant</span>
+              <span className="text-xs text-emerald-400 font-medium">Stock suffisant</span>
             </>
           )}
           {stockStatus === 'critical' && (
             <>
               <span className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
-              <span className="text-[11px] text-orange-400 font-medium">Stock critique — moins de 2h</span>
+              <span className="text-xs text-orange-400 font-medium">Stock critique — moins de 2h</span>
             </>
           )}
           {stockStatus === 'stockout' && (
             <>
               <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[11px] text-red-400 font-medium">Rupture de stock — progression ralentie</span>
+              <span className="text-xs text-red-400 font-medium">Rupture de stock — progression ralentie</span>
             </>
           )}
         </div>
       </div>
 
       <div className="px-4 pb-2">
-        <p className="text-[11px] text-muted-foreground leading-tight">
+        <p className="text-xs text-muted-foreground leading-tight">
           Envoyez des ressources pour prolonger l'autonomie et eviter la rupture de stock
           {!status.stockSufficient && <span className="text-red-300 font-medium"> (progression actuellement divisee par 2)</span>}.
         </p>
         {status.convoyBonusActive && status.convoyBonusEndsAt ? (
-          <p className="mt-1 text-[11px] text-emerald-300">
+          <p className="mt-1 text-xs text-emerald-300">
             Convoi recent actif : <span className="font-bold">+{(status.convoyBonusValue * 100).toFixed(0)}%/h</span> encore <BonusCountdown target={new Date(status.convoyBonusEndsAt)} />.
           </p>
         ) : (
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground">
             Chaque livraison declenche <span className="text-emerald-300 font-medium">+{(status.convoyBonusValue * 100).toFixed(0)}%/h pendant {status.convoyWindowHours}h</span>.
           </p>
         )}
@@ -80,7 +80,7 @@ export function LogisticsSection({ status, onSendResources }: LogisticsSectionPr
               Bonus convoi : chaque livraison (meme symbolique) accorde <span className="font-bold">+{(status.convoyBonusValue * 100).toFixed(0)}%/h pendant {status.convoyWindowHours}h</span>. Le compteur se remet a zero a chaque nouveau convoi — enchainez les livraisons pour maintenir le bonus en continu.
             </p>
             <div className="rounded-md bg-card/60 border border-border/20 p-2 space-y-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Prolongation d'autonomie</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Prolongation d'autonomie</p>
               <p>
                 1 000 minerai = +<span className="text-foreground font-medium">{formatHoursMinutes(1000 / Math.max(1, status.consumptionMineraiPerHour))}</span>
               </p>

@@ -116,7 +116,7 @@ export default function StationedFleet() {
               Vaisseau amiral
             </span>
             {flagshipInFlight && (
-              <span className="text-[10px] font-medium text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded-full">
                 En vol
               </span>
             )}
@@ -153,7 +153,7 @@ export default function StationedFleet() {
                 ) : (
                   <Diamond className="h-12 w-12 text-amber-400/60" strokeWidth={1.5} />
                 )}
-                <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                <span className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded-full ">
                   x1
                 </span>
                 {selectedIds.has('flagship') && (
@@ -193,7 +193,7 @@ export default function StationedFleet() {
               )}
               <button
                 onClick={() => setOverlayShipId(ship.id)}
-                className="text-[10px] text-muted-foreground-soft hover:text-muted-foreground transition-colors"
+                className="text-xs text-muted-foreground-soft hover:text-muted-foreground transition-colors"
               >
                 Détails
               </button>
@@ -204,7 +204,7 @@ export default function StationedFleet() {
 
       {/* Sticky bottom bar */}
       {selectedCount > 0 && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-lg px-4 py-3 lg:bottom-0">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-surface-raised px-4 py-3 lg:bottom-0">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
             <span className="text-sm text-muted-foreground">
               {selectedCount} type{selectedCount > 1 ? 's' : ''} selectione{selectedCount > 1 ? 's' : ''}

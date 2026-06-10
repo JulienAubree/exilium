@@ -457,7 +457,7 @@ export default function Research() {
                                   currentSilicium={resources.silicium}
                                   currentHydrogene={resources.hydrogene}
                                 />
-                                <span className="font-mono text-[10px] shrink-0">
+                                <span className="font-mono text-xs shrink-0">
                                   {formatDuration(tech.nextLevelTime)}
                                 </span>
                               </div>
@@ -532,7 +532,7 @@ export default function Research() {
                             alt={tech.name}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                             Niv. {tech.currentLevel}{tech.maxLevel != null && `/${tech.maxLevel}`}
                           </span>
                         </div>
@@ -563,7 +563,7 @@ export default function Research() {
                                 currentSilicium={resources.silicium}
                                 currentHydrogene={resources.hydrogene}
                               />
-                              <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+                              <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                                 <ClockIcon className="h-3 w-3" />
                                 {formatDuration(tech.nextLevelTime)}
                               </div>
@@ -590,7 +590,7 @@ export default function Research() {
                                 />
                               ) : (
                                 <Button
-                                  variant="retro"
+                                 
                                   size="sm"
                                   className="w-full"
                                   onClick={(e) => {

@@ -80,15 +80,15 @@ export function Sidebar() {
     .filter((section) => section.items.length > 0);
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-card/80 backdrop-blur-md border-r border-white/10">
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-surface border-r border-white/10">
       <div className="flex h-14 items-center border-b border-border/50 px-4">
-        <span className="text-lg font-bold text-primary glow-silicium">Exilium</span>
+        <span className="text-lg font-bold text-primary">Exilium</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-2">
         {renderedSections.map((section, idx) => (
           <div key={section.title} className="sidebar-section-fade-in">
             {idx > 0 && <div className="mx-3 my-2 border-t border-border/30" />}
-            <p className="mb-1 px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1 px-3 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {section.title}
             </p>
             <ul className="space-y-0.5">
@@ -114,7 +114,7 @@ export function Sidebar() {
                       {isNew && (
                         <span
                           aria-label="Nouveau"
-                          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary text-primary shadow-[0_0_6px_currentColor]"
+                          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary text-primary"
                         />
                       )}
                     </NavLink>

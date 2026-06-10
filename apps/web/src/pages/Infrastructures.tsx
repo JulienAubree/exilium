@@ -217,7 +217,7 @@ export default function Infrastructures() {
               }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-slate-950/70 to-cyan-950/30" />
+          <div className="absolute inset-0 bg-slate-950/60-950/70 to-cyan-950/30" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
@@ -399,7 +399,7 @@ export default function Infrastructures() {
           );
           return (
             <div className="rounded-md border border-border bg-card/50 p-3 space-y-1.5">
-              <div className="text-[11px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
+              <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">
                 Remboursement estimé ({refund.ratio}%)
               </div>
               <div className="flex flex-wrap gap-3 text-xs">

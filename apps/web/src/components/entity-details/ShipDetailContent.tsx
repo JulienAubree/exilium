@@ -94,12 +94,12 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
       {(role || combatCategoryId) && (
         <div className="flex gap-1.5 flex-wrap">
           {role && ROLE_LABELS[role] && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
               {ROLE_LABELS[role]}
             </span>
           )}
           {combatCategoryId && ARMOR_LABELS[combatCategoryId] && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border/30">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border/30">
               {ARMOR_LABELS[combatCategoryId]}
             </span>
           )}
@@ -173,17 +173,17 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
       {/* Energy production (stationary ships only) */}
       {details.isStationary && (
         <div className="bg-[#1e293b] rounded-lg p-3 space-y-2 mt-2">
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
             Production d&apos;énergie
           </div>
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400">Par satellite</span>
             <span className="text-energy font-mono font-semibold flex items-center gap-1">
               <EnergieIcon size={12} className="text-energy" />
               +{fmt(solarSatelliteEnergy(maxTemp ?? 50, isHomePlanet, prodConfig?.satellite))}
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             L&apos;énergie produite dépend de la température de la planète et de sa position par rapport au soleil.
             Ce vaisseau est stationnaire : il ne peut pas être envoyé en mission et est vulnérable aux attaques.
           </p>
@@ -202,7 +202,7 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
             <div className="flex items-center gap-2">
               <SpeedIcon size={14} className="text-slate-500 shrink-0" />
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Vitesse</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Vitesse</div>
                 <div className="text-xs text-slate-200 font-mono font-semibold">
                   {fmt(effective.speed)}
                   {effective.speedMult > 1 && (
@@ -214,7 +214,7 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
             <div className="flex items-center gap-2">
               <PropulsionIcon size={14} className="text-slate-500 shrink-0" />
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Propulsion</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Propulsion</div>
                 <div className="text-xs text-slate-200 font-mono font-semibold">
                   {gameConfig?.labels[`drive.${details.stats.driveType}`] ?? details.stats.driveType}
                 </div>
@@ -223,14 +223,14 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
             <div className="flex items-center gap-2">
               <FuelIcon size={14} className="text-slate-500 shrink-0" />
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Consommation</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Consommation</div>
                 <div className="text-xs text-slate-200 font-mono font-semibold">{fmt(details.stats.fuelConsumption)}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <CargoIcon size={14} className="text-slate-500 shrink-0" />
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wide">Fret</div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Fret</div>
                 <div className="text-xs text-slate-200 font-mono font-semibold">{fmt(details.stats.cargoCapacity)}</div>
               </div>
             </div>
@@ -241,10 +241,10 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
       {/* Mining capacity */}
       {details.stats.miningExtraction > 0 && (
         <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
             Capacité de minage
           </div>
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400">Extraction par voyage</span>
             <span className="text-slate-200 font-mono font-semibold">
               {fmt(effective.mining)}
@@ -265,7 +265,7 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
         />
         <CostPills cost={details.cost} />
         {timePerUnit != null && (
-          <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400">
             <ClockIcon className="h-3.5 w-3.5 text-slate-500" />
             {formatDuration(timePerUnit)}
           </div>
@@ -292,7 +292,7 @@ export function ShipDetailContent({ shipId, researchLevels, buildingLevels, maxT
         ];
         return (
           <div>
-            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
               Prérequis
             </div>
             <PrerequisiteList items={prereqItems} />

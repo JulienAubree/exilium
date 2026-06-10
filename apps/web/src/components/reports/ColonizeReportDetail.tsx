@@ -171,7 +171,7 @@ export function ColonizeReportDetail({ result, fleet, gameConfig, coordinates }:
             </div>
           )}
 
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3 mb-2">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mt-3 mb-2">
             Biomes identifiés
           </div>
           {knownBiomes.length > 0 ? (

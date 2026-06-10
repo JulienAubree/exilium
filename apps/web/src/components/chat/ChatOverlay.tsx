@@ -116,7 +116,7 @@ function ChatFab() {
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>
                       </div>
-                      <p className={`text-[10px] truncate ${conv.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {conv.lastMessage.body}
                       </p>
                     </div>
@@ -136,7 +136,7 @@ function ChatFab() {
       >
         <MessageCircle className="h-5 w-5" aria-hidden="true" />
         {(unreadCount ?? 0) > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-xs font-bold text-white flex items-center justify-center">
             {unreadCount! > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -204,7 +204,7 @@ export function ChatOverlay() {
             )}
           </button>
           {w.unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center pointer-events-none">
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-xs font-bold text-white flex items-center justify-center pointer-events-none">
               {w.unreadCount > 9 ? '9+' : w.unreadCount}
             </span>
           )}

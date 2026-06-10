@@ -64,7 +64,7 @@ function PillarCard({
   image: string;
 }) {
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-white/5 bg-gradient-to-b from-card/80 to-card/40 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_0_40px_-8px_hsl(200,85%,65%,0.5)]">
+    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-white/5 bg-gradient-to-b from-card/80 to-card/40 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:">
       {/* Top hover line */}
       <div
         aria-hidden

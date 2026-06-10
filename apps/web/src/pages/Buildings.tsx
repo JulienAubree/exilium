@@ -328,7 +328,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold truncate">{building.name}</span>
-                            <span className="ml-2 shrink-0 bg-primary/12 text-primary border border-primary/20 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                            <span className="ml-2 shrink-0 bg-primary/12 text-primary border border-primary/20 font-mono text-xs font-semibold px-1.5 py-0.5 rounded">
                               {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-primary ml-0.5">+{shieldLevelBonus}</span>}
                             </span>
                           </div>
@@ -354,7 +354,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                                 currentSilicium={resources.silicium}
                                 currentHydrogene={resources.hydrogene}
                               />
-                              <span className="font-mono text-[10px] text-muted-foreground shrink-0">{formatDuration(building.nextLevelTime)}</span>
+                              <span className="font-mono text-xs text-muted-foreground shrink-0">{formatDuration(building.nextLevelTime)}</span>
                             </div>
                           )}
                         </div>
@@ -372,7 +372,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                           </Button>
                         ) : (
                           <Button
-                            variant="retro"
+                           
                             size="sm"
                             className="shrink-0"
                             onClick={(e) => {
@@ -449,7 +449,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                             className="w-full h-full object-cover"
                             {...getBuildingVariantProps(building.id)}
                           />
-                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                             Niv. {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-cyan-300 ml-0.5">+{shieldLevelBonus}</span>}
                           </span>
                         </div>
@@ -509,7 +509,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                                 currentSilicium={resources.silicium}
                                 currentHydrogene={resources.hydrogene}
                               />
-                              <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+                              <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                                 <ClockIcon className="h-3 w-3" />
                                 {formatDuration(building.nextLevelTime)}
                               </div>
@@ -517,7 +517,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                                 <PrerequisiteList items={buildPrerequisiteItems({ buildings: building.prerequisites }, Object.fromEntries(building.prerequisites.map((p) => [p.buildingId, p.currentLevel ?? buildingLevels[p.buildingId] ?? 0])), {}, gameConfig)} missingOnly />
                               ) : (
                                 <Button
-                                  variant="retro"
+                                 
                                   size="sm"
                                   className="w-full"
                                   onClick={(e) => {
@@ -591,7 +591,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
           );
           return (
             <div className="rounded-md border border-border bg-card/50 p-3 space-y-1.5">
-              <div className="text-[11px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
+              <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">
                 Remboursement estimé ({refund.ratio}%)
               </div>
               <div className="flex flex-wrap gap-3 text-xs">

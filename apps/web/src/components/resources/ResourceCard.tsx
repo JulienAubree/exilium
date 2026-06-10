@@ -181,7 +181,7 @@ export function ResourceCard({
           </div>
           <span
             className={cn(
-              'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold backdrop-blur-sm',
+              'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono font-semibold ',
               factorTrend === 'up' &&
                 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
               factorTrend === 'down' &&
@@ -209,7 +209,7 @@ export function ResourceCard({
 
         {/* Storage */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Stockage</span>
             <span
               className={cn(
@@ -230,7 +230,7 @@ export function ResourceCard({
               style={{ width: `${fillPercent}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{Math.round(fillPercent)}%</span>
             {isFull ? (
               <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
@@ -255,12 +255,12 @@ export function ResourceCard({
               <span className="text-xs font-medium text-foreground group-hover:text-primary transition-colors">
                 {buildingLabel}
               </span>
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 Niv. {building.currentLevel}
               </span>
             </button>
             {nextLevelGain != null && nextLevelGain > 0 && (
-              <div className={cn('text-[11px]', accentColor)}>
+              <div className={cn('text-xs', accentColor)}>
                 <span className="font-mono">+{formatCompact(nextLevelGain)}/h</span>
                 <span className="text-muted-foreground"> au niv. {nextLevel}</span>
               </div>
@@ -269,10 +269,10 @@ export function ResourceCard({
             {building.isUpgrading && building.upgradeEndTime ? (
               <div className="space-y-1.5">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">
+                  <span className="text-xs uppercase tracking-wider text-amber-400 font-semibold">
                     {isConstruction ? 'Construction' : 'Amélioration'} en cours
                   </span>
-                  <span className="text-[10px] font-mono text-muted-foreground">→ {nextLevel}</span>
+                  <span className="text-xs font-mono text-muted-foreground">→ {nextLevel}</span>
                 </div>
                 <Timer
                   endTime={new Date(building.upgradeEndTime)}
@@ -299,7 +299,7 @@ export function ResourceCard({
                   currentSilicium={resources.silicium}
                   currentHydrogene={resources.hydrogene}
                 />
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
                   <ClockIcon className="h-3 w-3" />
                   {formatDuration(building.nextLevelTime)}
                 </div>
@@ -323,7 +323,7 @@ export function ResourceCard({
                   />
                 ) : (
                   <Button
-                    variant="retro"
+                   
                     size="sm"
                     className="w-full h-8 text-xs"
                     onClick={onUpgrade}

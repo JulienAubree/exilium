@@ -58,7 +58,7 @@ export function BiomeChips({ biomes }: Props): ReactElement | null {
         return (
           <div
             key={biome.id}
-            className="rounded-md px-2.5 py-1.5 text-[11px]"
+            className="rounded-md px-2.5 py-1.5 text-xs"
             style={{
               backgroundColor: `${color}10`,
               borderLeft: `3px solid ${color}`,

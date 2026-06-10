@@ -152,7 +152,7 @@ export function MiningPhaseStepper({
             >
               <span
                 className={cn(
-                  'text-[10px]',
+                  'text-xs',
                   isDone && 'text-muted-foreground-soft',
                   isActive && 'font-semibold',
                   !isDone && !isActive && 'text-muted-foreground-faint',
@@ -349,7 +349,7 @@ export function MovementCard({
             </span>
             <span
               className={cn(
-                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border',
+                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border',
                 pStyle.classes,
               )}
             >
@@ -435,7 +435,7 @@ export function MovementCard({
           {shipEntries.map(([id, count]) => (
             <span
               key={id}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-xs"
             >
               <ShipIcon id={id} className="h-5 w-5 rounded-sm" />
               <span className="text-foreground font-semibold">{count}&times;</span>
@@ -443,7 +443,7 @@ export function MovementCard({
             </span>
           ))}
           {shipCount > 1 && (
-            <span className="text-[10px] text-muted-foreground-soft ml-1">
+            <span className="text-xs text-muted-foreground-soft ml-1">
               ({shipCount} vaisseaux)
             </span>
           )}
@@ -452,30 +452,30 @@ export function MovementCard({
         {/* Cargo (summary) */}
         {hasCargo && (
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
+            <span className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">
               Cargo
             </span>
             <div className="flex gap-3">
               {minerai > 0 && (
                 <span className="text-minerai">
                   <span className="font-semibold">{fmt(minerai)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">M</span>
+                  <span className="opacity-50 ml-0.5 text-xs">M</span>
                 </span>
               )}
               {silicium > 0 && (
                 <span className="text-silicium">
                   <span className="font-semibold">{fmt(silicium)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">S</span>
+                  <span className="opacity-50 ml-0.5 text-xs">S</span>
                 </span>
               )}
               {hydrogene > 0 && (
                 <span className="text-hydrogene">
                   <span className="font-semibold">{fmt(hydrogene)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">H</span>
+                  <span className="opacity-50 ml-0.5 text-xs">H</span>
                 </span>
               )}
             </div>
-            <span className="text-muted-foreground-faint text-[10px]">({fmt(totalCargo)} total)</span>
+            <span className="text-muted-foreground-faint text-xs">({fmt(totalCargo)} total)</span>
           </div>
         )}
       </div>
@@ -491,7 +491,7 @@ export function MovementCard({
           <div className="border-t border-white/[0.06] px-4 py-3 space-y-4 text-xs">
             {/* Horaires */}
             <div>
-              <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
+              <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                 Horaires
               </div>
               <div className="grid grid-cols-2 gap-y-1 text-muted-foreground">
@@ -523,11 +523,11 @@ export function MovementCard({
             {/* Detail des vaisseaux */}
             {shipStats && (
               <div>
-                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Detail des vaisseaux
                 </div>
                 <div className="rounded-md border border-white/[0.06] overflow-hidden">
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="text-muted-foreground-soft border-b border-white/[0.06]">
                         <th className="text-left px-2 py-1.5 font-medium">Vaisseau</th>
@@ -597,7 +597,7 @@ export function MovementCard({
             {/* Detail du cargo */}
             {hasCargo && (
               <div>
-                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Cargo embarque
                 </div>
                 <div className="space-y-1.5">
@@ -659,7 +659,7 @@ export function MovementCard({
             {/* Origine */}
             {originPlanet && (
               <div>
-                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Origine
                 </div>
                 <button

@@ -67,7 +67,7 @@ export function MarketMobileTabs({ view, onViewChange }: MarketMobileTabsProps) 
             className={cn(
               'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
               view === key
-                ? 'border-primary/50 text-primary bg-primary/10 shadow-[0_0_8px_rgba(103,212,232,0.15)]'
+                ? 'border-primary/50 text-primary bg-primary/10'
                 : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
             )}
           >

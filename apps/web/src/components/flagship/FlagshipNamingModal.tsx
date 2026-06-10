@@ -63,7 +63,7 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
       onClose={onClose}
       closeOnEsc={false}
       closeOnBackdropClick={false}
-      backdropClassName="bg-black/60 backdrop-blur-sm"
+      backdropClassName="bg-black/60 "
       className="max-w-2xl lg:max-w-2xl border-amber-500/30 p-5 sm:p-6 shadow-xl rounded-lg"
     >
       <h2 className="text-lg font-bold text-amber-400">Votre vaisseau amiral</h2>
@@ -104,14 +104,14 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
                 >
                   {hull.name}
                 </div>
-                <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                <p className="mt-1 text-xs text-muted-foreground leading-snug">
                   {hull.description}
                 </p>
                 <ul className="mt-2 space-y-0.5">
                   {(hull.bonusLabels ?? []).map((bonus, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-1.5 text-[11px] text-muted-foreground"
+                      className="flex items-start gap-1.5 text-xs text-muted-foreground"
                     >
                       <span
                         className={cn(
@@ -147,7 +147,7 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
             maxLength={32}
             className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
           />
-          <span className="text-[10px] text-muted-foreground">{name.length}/32 caracteres</span>
+          <span className="text-xs text-muted-foreground">{name.length}/32 caracteres</span>
         </div>
 
         <div>
@@ -159,7 +159,7 @@ export function FlagshipNamingModal({ open, onClose }: FlagshipNamingModalProps)
             rows={2}
             className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
           />
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {description.length}/256 caracteres
           </span>
         </div>

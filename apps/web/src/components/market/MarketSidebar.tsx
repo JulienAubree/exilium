@@ -31,7 +31,7 @@ export function MarketSidebar({ view, onViewChange }: MarketSidebarProps) {
   return (
     <aside className="w-[180px] flex-shrink-0 bg-black/30 border-r border-cyan-500/10 py-2">
       {/* Resources section */}
-      <div className="text-[10px] uppercase tracking-wider px-4 pt-4 pb-1 text-orange-400/70">
+      <div className="text-xs uppercase tracking-wider px-4 pt-4 pb-1 text-orange-400/70">
         Ressources
       </div>
       {RESOURCE_ITEMS.map(({ key, label }) => (
@@ -53,7 +53,7 @@ export function MarketSidebar({ view, onViewChange }: MarketSidebarProps) {
       <div className="border-t border-white/10 mx-4 my-2" />
 
       {/* Reports section */}
-      <div className="text-[10px] uppercase tracking-wider px-4 pt-4 pb-1 text-purple-400/70">
+      <div className="text-xs uppercase tracking-wider px-4 pt-4 pb-1 text-purple-400/70">
         Rapports
       </div>
       {REPORT_ITEMS.map(({ key, label }) => (

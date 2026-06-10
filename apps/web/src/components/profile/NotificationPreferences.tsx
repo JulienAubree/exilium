@@ -155,7 +155,7 @@ export function NotificationPreferences() {
             <span className="mt-0.5 text-primary/70 shrink-0">{CHANNEL_META[ch].icon}</span>
             <div>
               <div className="text-xs font-semibold text-foreground">{CHANNEL_META[ch].label}</div>
-              <div className="text-[10px] text-muted-foreground leading-snug mt-0.5">{CHANNEL_META[ch].desc}</div>
+              <div className="text-xs text-muted-foreground leading-snug mt-0.5">{CHANNEL_META[ch].desc}</div>
             </div>
           </div>
         ))}
@@ -167,7 +167,7 @@ export function NotificationPreferences() {
           <div className={`h-2.5 w-2.5 rounded-full ${globalAllDisabled ? 'bg-muted' : globalSomeDisabled ? 'bg-amber-400' : 'bg-emerald-400'}`} />
           <div>
             <div className="text-sm font-semibold">Toutes les notifications</div>
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {globalAllDisabled ? 'Tout est désactivé' : globalSomeDisabled ? 'Configuration personnalisée' : 'Tout est activé'}
             </div>
           </div>
@@ -214,7 +214,7 @@ export function NotificationPreferences() {
                     {NOTIFICATION_CATEGORY_LABELS[cat]}
                   </span>
                   {eventTypes.length > 1 && (
-                    <span className="text-[10px] text-muted-foreground-soft">{eventTypes.length}</span>
+                    <span className="text-xs text-muted-foreground-soft">{eventTypes.length}</span>
                   )}
                 </button>
                 {CHANNELS.map((ch) => {

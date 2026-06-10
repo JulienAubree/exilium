@@ -90,7 +90,7 @@ export function Gauge({ value, onChange, onChangeEnd, color, disabled = false }:
         >
           {/* Handle */}
           <div
-            className="absolute right-0 inset-y-0 w-1 bg-white/80 rounded-r-md shadow-[0_0_6px_rgba(255,255,255,0.3)]"
+            className="absolute right-0 inset-y-0 w-1 bg-white/80 rounded-r-md"
           />
         </div>
 

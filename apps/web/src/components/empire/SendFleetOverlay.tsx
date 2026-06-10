@@ -185,7 +185,7 @@ export function SendFleetOverlay({
 
         {/* Target picker */}
         <section className="space-y-1.5">
-          <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Destination</label>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Destination</label>
           {availablePlanets.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">Aucune autre planète disponible.</p>
           ) : (
@@ -215,7 +215,7 @@ export function SendFleetOverlay({
                     )}
                     <div className="min-w-0">
                       <div className={cn('text-xs font-semibold truncate', isSelected ? 'text-primary' : 'text-foreground')}>{p.name}</div>
-                      <div className="font-mono text-[10px] text-muted-foreground">[{p.galaxy}:{p.system}:{p.position}]</div>
+                      <div className="font-mono text-xs text-muted-foreground">[{p.galaxy}:{p.system}:{p.position}]</div>
                     </div>
                   </button>
                 );
@@ -227,7 +227,7 @@ export function SendFleetOverlay({
         {/* Ship selection */}
         <section className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Vaisseaux</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Vaisseaux</label>
             <div className="flex gap-1">
               <button
                 type="button"
@@ -236,15 +236,15 @@ export function SendFleetOverlay({
                   for (const ship of sendableShips) next[ship.id] = ship.count;
                   setSelectedShips(next);
                 }}
-                className="text-[10px] text-primary hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 Tout
               </button>
-              <span className="text-[10px] text-muted-foreground">·</span>
+              <span className="text-xs text-muted-foreground">·</span>
               <button
                 type="button"
                 onClick={() => setSelectedShips({})}
-                className="text-[10px] text-muted-foreground hover:text-foreground hover:underline"
+                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
               >
                 Aucun
               </button>
@@ -288,7 +288,7 @@ export function SendFleetOverlay({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-medium text-foreground truncate">{ship.name}</div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       Stock <span className="font-mono">{ship.count.toLocaleString('fr-FR')}</span>
                       {ship.cargoCapacity > 0 && <> · Cargo/u <span className="font-mono">{formatCompact(ship.cargoCapacity)}</span></>}
                     </div>
@@ -309,8 +309,8 @@ export function SendFleetOverlay({
         {/* Cargo */}
         <section className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Ressources à transporter</label>
-            <span className={cn('text-[10px] font-mono', cargoOverflow ? 'text-destructive' : 'text-muted-foreground')}>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Ressources à transporter</label>
+            <span className={cn('text-xs font-mono', cargoOverflow ? 'text-destructive' : 'text-muted-foreground')}>
               {formatCompact(cargoUsed)} / {formatCompact(totalCargoCapacity)}
             </span>
           </div>
@@ -368,7 +368,7 @@ export function SendFleetOverlay({
             <p className="text-xs text-destructive">{sendMutation.error.message}</p>
           )}
           <Button
-            variant="retro"
+           
             className="w-full"
             disabled={!canSubmit}
             onClick={handleSubmit}
@@ -410,7 +410,7 @@ function MissionTab({
         {icon}
         {label}
       </span>
-      <span className={cn('text-[10px]', active ? 'text-primary/80' : 'text-muted-foreground')}>{hint}</span>
+      <span className={cn('text-xs', active ? 'text-primary/80' : 'text-muted-foreground')}>{hint}</span>
     </button>
   );
 }
@@ -441,7 +441,7 @@ function CargoInput({
       <div className="shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium text-foreground">{label}</div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           Stock <span className="font-mono">{Math.floor(stock).toLocaleString('fr-FR')}</span>
           {stockHint && <span className="ml-1">{stockHint}</span>}
         </div>
@@ -462,7 +462,7 @@ function CargoInput({
         type="button"
         onClick={onMax}
         disabled={disabled}
-        className="rounded-md border border-border bg-card/40 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-accent disabled:opacity-50"
+        className="rounded-md border border-border bg-card/40 px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-50"
       >
         Max
       </button>

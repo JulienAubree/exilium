@@ -95,7 +95,7 @@ export function IncapacitatedBanner({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground-faint">
+              <div className="flex justify-between text-xs text-muted-foreground-faint">
                 <span>Reparation {Math.round(progress)}%</span>
                 <span>{String(h).padStart(2, '0')}h {String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s</span>
               </div>
@@ -112,7 +112,7 @@ export function IncapacitatedBanner({
               {repairMutation.isPending ? 'Reparation...' : `Reparer (${repairCost} Exilium)`}
             </button>
             {balance < repairCost && (
-              <p className="text-[10px] text-red-400/70">Solde insuffisant</p>
+              <p className="text-xs text-red-400/70">Solde insuffisant</p>
             )}
           </div>
         </div>

@@ -49,7 +49,7 @@ export function TutorialPanel() {
     return (
       <button
         onClick={() => setMinimized(false)}
-        className="fixed bottom-16 right-3 z-40 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-card/95 px-3 py-2 text-xs text-amber-400 shadow-lg backdrop-blur-sm transition-colors hover:border-amber-500/50 lg:bottom-4"
+        className="fixed bottom-16 right-3 z-40 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-card/95 px-3 py-2 text-xs text-amber-400 shadow-lg transition-colors hover:border-amber-500/50 lg:bottom-4"
       >
         <span className="text-sm">&#9733;</span>
         <span>Ch.{chapterNumber} — {completedInChapter}/{questCount}</span>
@@ -61,7 +61,7 @@ export function TutorialPanel() {
   const isChapterIntro = chapter && completedInChapter === 0 && !data.pendingCompletion && quest && !introSeen;
   if (isChapterIntro && chapter) {
     return (
-      <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
+      <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
         <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
           <div className="flex items-center gap-2">
             <span className="text-amber-400">&#9733;</span>
@@ -77,7 +77,7 @@ export function TutorialPanel() {
           </button>
         </div>
         <div className="p-3">
-          <p className="border-l-2 border-amber-500/30 pl-3 text-[11px] italic leading-relaxed text-muted-foreground">
+          <p className="border-l-2 border-amber-500/30 pl-3 text-xs italic leading-relaxed text-muted-foreground">
             {chapter.journalIntro}
           </p>
           <button
@@ -161,7 +161,7 @@ export function TutorialPanel() {
 
   // State 3 & 4: Active quest / Pending completion
   return (
-    <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg backdrop-blur-sm sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
+    <div className="fixed bottom-16 left-3 right-3 z-40 max-h-[50vh] overflow-y-auto rounded-lg border border-amber-500/30 bg-card/95 shadow-lg sm:left-auto sm:w-72 lg:bottom-4 lg:w-80">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
         <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ export function TutorialPanel() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {completedInChapter}/{questCount}
           </span>
           <button
@@ -197,14 +197,14 @@ export function TutorialPanel() {
       <div className="p-3">
         {/* Journal entry */}
         {journalEntry && (
-          <p className="border-l-2 border-amber-500/30 pl-3 text-[11px] italic leading-relaxed text-muted-foreground">
+          <p className="border-l-2 border-amber-500/30 pl-3 text-xs italic leading-relaxed text-muted-foreground">
             {journalEntry}
           </p>
         )}
 
         {/* Objective box */}
         <div className="mt-2 rounded-md bg-background/50 px-2.5 py-2">
-          <p className="text-[11px] font-medium text-foreground">{objectiveLabel}</p>
+          <p className="text-xs font-medium text-foreground">{objectiveLabel}</p>
           <div className="mt-1.5 flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
               <div
@@ -214,7 +214,7 @@ export function TutorialPanel() {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-[10px] tabular-nums text-muted-foreground">
+            <span className="text-xs tabular-nums text-muted-foreground">
               {currentProgress}/{targetValue}
             </span>
           </div>
@@ -222,8 +222,8 @@ export function TutorialPanel() {
 
         {/* Rewards */}
         <div className="mt-2 flex items-center gap-3 rounded bg-background/50 px-2 py-1.5">
-          <span className="text-[10px] text-muted-foreground">Récompense :</span>
-          <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-xs text-muted-foreground">Récompense :</span>
+          <div className="flex items-center gap-2 text-xs">
             {reward.minerai > 0 && (
               <span className="flex items-center gap-0.5 text-minerai">
                 <MineraiIcon size={10} />
@@ -259,7 +259,7 @@ export function TutorialPanel() {
             {actionLink && (
               <button
                 onClick={actionLink.action}
-                className="mt-2 text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+                className="mt-2 text-xs font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
               >
                 {actionLink.label}
               </button>
@@ -268,7 +268,7 @@ export function TutorialPanel() {
               <>
                 <button
                   onClick={() => setShowNamingModal(true)}
-                  className="mt-2 text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+                  className="mt-2 text-xs font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
                 >
                   Nommer votre vaisseau &rarr;
                 </button>

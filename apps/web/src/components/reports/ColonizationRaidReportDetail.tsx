@@ -74,7 +74,7 @@ export function ColonizationRaidReportDetail({ result, fleet, gameConfig, coordi
             Progression perdue
           </h3>
           <div className="text-lg font-bold text-rose-400 tabular-nums">−{fmt(progressPenalty)}%</div>
-          <p className="text-[11px] text-muted-foreground mt-2 italic">
+          <p className="text-xs text-muted-foreground mt-2 italic">
             La colonisation a reculé.
           </p>
         </div>
@@ -123,7 +123,7 @@ export function ColonizationRaidReportDetail({ result, fleet, gameConfig, coordi
 
         {/* FP bar */}
         <div>
-          <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
+          <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Pirates · <span className="text-rose-400 tabular-nums">{fmt(attackerFP)}</span> FP</span>
             <span><span className="text-cyan-400 tabular-nums">{fmt(defenderFP)}</span> FP · Garnison</span>
           </div>
@@ -146,18 +146,18 @@ export function ColonizationRaidReportDetail({ result, fleet, gameConfig, coordi
 
         {/* Losses */}
         <div>
-          <div className="text-[11px] text-muted-foreground mb-1">Pertes garnison</div>
+          <div className="text-xs text-muted-foreground mb-1">Pertes garnison</div>
           <ShipGrid ships={defenderLosses} gameConfig={gameConfig} />
         </div>
         <div>
-          <div className="text-[11px] text-muted-foreground mb-1">Pertes pirates</div>
+          <div className="text-xs text-muted-foreground mb-1">Pertes pirates</div>
           <ShipGrid ships={attackerLosses} gameConfig={gameConfig} />
         </div>
 
         <button
           type="button"
           onClick={() => setDetailOpen(!detailOpen)}
-          className="w-full flex items-center justify-between text-[11px] text-muted-foreground hover:text-foreground transition-colors pt-2 border-t border-border/50"
+          className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors pt-2 border-t border-border/50"
         >
           <span>{detailOpen ? 'Masquer le détail' : 'Voir le détail du combat'}</span>
           <ChevronDown className={cn('h-3 w-3 transition-transform', detailOpen && 'rotate-180')} />
@@ -188,7 +188,7 @@ export function ColonizationRaidReportDetail({ result, fleet, gameConfig, coordi
           )}>
             −{fmt(progressPenalty)}%
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2 italic">
+          <p className="text-xs text-muted-foreground mt-2 italic">
             {outcome === 'draw'
               ? 'Pénalité réduite de moitié grâce à la résistance.'
               : 'La colonisation a reculé.'}

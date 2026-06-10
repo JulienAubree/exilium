@@ -39,7 +39,7 @@ export function TopBarActions() {
         >
           <Mail className="h-5 w-5" />
           {(unreadCount ?? 0) > 0 && (
-            <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground">
               {unreadCount}
             </span>
           )}
@@ -54,7 +54,7 @@ export function TopBarActions() {
         >
           <ReportsIcon width={18} height={18} />
           {(reportUnreadCount?.count ?? 0) > 0 && (
-            <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground">
               {reportUnreadCount!.count}
             </span>
           )}

@@ -40,7 +40,7 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onCancel} />
+      <div className="absolute inset-0 bg-surface animate-fade-in" onClick={onCancel} />
       <div
         {...dialogProps}
         className="relative z-10 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-xl animate-slide-up"

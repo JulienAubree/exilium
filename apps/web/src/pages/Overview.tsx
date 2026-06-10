@@ -61,7 +61,7 @@ function BiomeBadge({ biome, size = 'sm' }: { biome: BiomeLike; size?: 'sm' | 'x
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const color = RARITY_HEX[biome.rarity] ?? '#9ca3af';
-  const textSize = size === 'xs' ? 'text-[10px]' : 'text-[11px]';
+  const textSize = size === 'xs' ? 'text-xs' : 'text-xs';
   const dotSize = 'w-1.5 h-1.5';
   const padding = size === 'xs' ? 'px-1.5 py-px' : 'px-2 py-0.5';
 
@@ -105,7 +105,7 @@ function BiomeBadge({ biome, size = 'sm' }: { biome: BiomeLike; size?: 'sm' | 'x
             <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
           </div>
           <span
-            className="inline-block rounded-full px-1.5 py-px text-[10px] font-medium mb-2"
+            className="inline-block rounded-full px-1.5 py-px text-xs font-medium mb-2"
             style={{ color, backgroundColor: `${color}20` }}
           >
             {RARITY_LABELS[biome.rarity] ?? biome.rarity}
@@ -176,7 +176,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
         {planet.planetClassId && planet.planetImageIndex != null ? (
           <img src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex)} alt={planet.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+          <div className="h-full w-full bg-slate-950/60-900/60 to-slate-950" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
         <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
@@ -184,14 +184,14 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
             <h3 className="text-lg font-bold text-white">{planet.name}</h3>
             <p className="text-xs text-white/70">[{planet.galaxy}:{planet.system}:{planet.position}]</p>
           </div>
-          <span className="text-xs font-medium text-white/80 bg-white/10 rounded-full px-2.5 py-0.5 backdrop-blur-sm">{planetTypeName}</span>
+          <span className="text-xs font-medium text-white/80 bg-white/10 rounded-full px-2.5 py-0.5 ">{planetTypeName}</span>
         </div>
       </div>
 
       {/* Bonus cumules (type + biomes) — tout en haut */}
       {Object.keys(totalBonuses).length > 0 && (
         <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-          <div className="text-[10px] uppercase text-primary/70 font-semibold tracking-wider mb-2">Bonus cumules (type + biomes)</div>
+          <div className="text-xs uppercase text-primary/70 font-semibold tracking-wider mb-2">Bonus cumules (type + biomes)</div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {Object.entries(totalBonuses).map(([stat, mod]) => (
               <span key={stat} className={`text-sm font-semibold ${mod > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -204,7 +204,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
 
       {/* Type de planete + ses bonus */}
       <div className="mt-4">
-        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Type de planète</div>
+        <div className="text-xs uppercase text-muted-foreground font-semibold tracking-wider mb-2">Type de planète</div>
         <div className="rounded-md border border-border/30 bg-card/50 px-3 py-2.5">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-foreground">{planetTypeName}</span>
@@ -226,12 +226,12 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
       {/* Gouvernance (surextension) */}
       {governance && governance.overextend > 0 && (
         <div className="mt-4">
-          <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">Gouvernance</div>
+          <div className="text-xs uppercase text-muted-foreground font-semibold tracking-wider mb-2">Gouvernance</div>
           <div className="rounded-md border border-amber-500/30 bg-amber-950/20 px-3 py-2.5 space-y-1.5">
             <div className="flex items-center gap-2 text-xs">
               <Building2 className="h-3.5 w-3.5" stroke="#d97706" strokeWidth={2} />
               <span className="text-amber-400 font-semibold">Surextension impériale</span>
-              <span className="text-amber-400/60 text-[10px] ml-auto">{governance.colonyCount}/{governance.capacity} colonies (+{governance.overextend})</span>
+              <span className="text-amber-400/60 text-xs ml-auto">{governance.colonyCount}/{governance.capacity} colonies (+{governance.overextend})</span>
             </div>
             <div className="flex flex-wrap gap-x-4 ml-5">
               <span className="text-xs text-red-400">Malus récolte : -{Math.round(governance.harvestMalus * 100)}%</span>
@@ -243,7 +243,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
 
       {/* Biomes + leurs bonus */}
       <div className="mt-4">
-        <div className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider mb-2">
+        <div className="text-xs uppercase text-muted-foreground font-semibold tracking-wider mb-2">
           Biomes {biomes.length > 0 && <span className="text-muted-foreground-soft">({biomes.length})</span>}
         </div>
         {biomes.length > 0 ? (
@@ -264,7 +264,7 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
                   {effects.length > 0 && (
                     <div className="flex flex-wrap gap-x-3 mt-1 ml-4">
                       {effects.map((e, i) => (
-                        <span key={i} className={`text-[10px] ${e.modifier > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span key={i} className={`text-xs ${e.modifier > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {e.modifier > 0 ? '+' : ''}{Math.round(e.modifier * 100)}% {STAT_LABELS[e.stat] ?? e.stat}
                         </span>
                       ))}

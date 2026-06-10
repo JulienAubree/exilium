@@ -50,7 +50,7 @@ export function TableView({
   return (
     <div className="glass-card overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[2fr_minmax(100px,1.5fr)_1fr_1fr] items-center px-4 py-2.5 bg-black/20 border-b border-border/30 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+      <div className="grid grid-cols-[2fr_minmax(100px,1.5fr)_1fr_1fr] items-center px-4 py-2.5 bg-black/20 border-b border-border/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         <span>Bâtiment</span>
         <span className="text-center">Allocation</span>
         <span className="text-center">Prod.</span>
@@ -58,7 +58,7 @@ export function TableView({
       </div>
 
       {/* Consumers first — actionable */}
-      <div className="px-4 py-1.5 border-b border-border/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+      <div className="px-4 py-1.5 border-b border-border/20 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         Consommateurs
       </div>
       {consumers.map((c) => (
@@ -72,7 +72,7 @@ export function TableView({
             </div>
             <div>
               <div className="text-sm font-medium text-foreground">{c.name}</div>
-              <div className="text-[11px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-[10px] text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
+              <div className="text-xs text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-xs text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
             </div>
           </div>
           <div className="px-1">
@@ -86,7 +86,7 @@ export function TableView({
           </div>
           <div className="text-center">
             <div className={`text-sm font-mono font-semibold ${c.colorClass}`}>{c.production}</div>
-            <div className="text-[10px] text-muted-foreground">{c.productionUnit}</div>
+            <div className="text-xs text-muted-foreground">{c.productionUnit}</div>
           </div>
           <div className="text-center text-sm font-mono font-semibold text-destructive">
             -{c.energyConsumption}
@@ -95,7 +95,7 @@ export function TableView({
       ))}
 
       {/* Sources — informational */}
-      <div className="px-4 py-1.5 bg-energy/5 border-b border-border/20 text-[10px] font-semibold text-energy uppercase tracking-wider">
+      <div className="px-4 py-1.5 bg-energy/5 border-b border-border/20 text-xs font-semibold text-energy uppercase tracking-wider">
         Sources
       </div>
       {sources.map((s) => (
@@ -109,7 +109,7 @@ export function TableView({
             </div>
             <div>
               <div className="text-sm font-medium text-foreground">{s.name}</div>
-              <div className="text-[11px] text-muted-foreground">{s.detail}</div>
+              <div className="text-xs text-muted-foreground">{s.detail}</div>
             </div>
           </div>
           <div className="text-center">
@@ -130,7 +130,7 @@ export function TableView({
           <div className={`text-base font-mono font-bold ${sufficient ? 'text-energy' : 'text-destructive'}`}>
             {(productionFactor * 100).toFixed(0)}%
           </div>
-          <div className="text-[10px] text-muted-foreground">facteur</div>
+          <div className="text-xs text-muted-foreground">facteur</div>
         </div>
         <div className={`text-center text-lg font-mono font-bold ${sufficient ? 'text-energy' : 'text-destructive'}`}>
           {energySurplus >= 0 ? '+' : ''}{energySurplus}

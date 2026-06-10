@@ -53,9 +53,9 @@ function CategoryKpi({ label, count, color, icon, nextAt, inFuture, onClick, onT
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className={cn('text-lg font-bold tabular-nums leading-tight', color)}>{count}</span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>Prochaine dans</span>
             {inFuture && nextAt ? (
@@ -316,13 +316,13 @@ export default function Missions() {
                             className="flex items-center gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-2.5 py-1.5"
                           >
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
-                            <span className="text-[11px] text-blue-300">
+                            <span className="text-xs text-blue-300">
                               {phaseLabel(fleet.phase)}
                             </span>
                             <Timer
                               endTime={new Date(fleet.arrivalTime)}
                               onComplete={() => utils.fleet.movements.invalidate()}
-                              className="text-[11px] text-blue-400"
+                              className="text-xs text-blue-400"
                             />
                           </div>
                         ))}
@@ -370,7 +370,7 @@ export default function Missions() {
               {/* FP min filter */}
               {allPirateMissions.length > 0 && (
                 <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border/30 bg-card/40 px-3 py-2">
-                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground">FP min</span>
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">FP min</span>
                   <input
                     type="number"
                     min={0}
@@ -385,7 +385,7 @@ export default function Missions() {
                       type="button"
                       onClick={() => updateMinPirateFP(preset)}
                       className={cn(
-                        'rounded border px-2 py-0.5 text-[11px] font-mono transition-colors',
+                        'rounded border px-2 py-0.5 text-xs font-mono transition-colors',
                         minPirateFP === preset
                           ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
                           : 'border-border/40 bg-card/30 text-muted-foreground hover:bg-card/60',
@@ -395,7 +395,7 @@ export default function Missions() {
                     </button>
                   ))}
                   {filteredOutPirates > 0 && (
-                    <span className="ml-auto text-[11px] text-muted-foreground italic">
+                    <span className="ml-auto text-xs text-muted-foreground italic">
                       {filteredOutPirates} repaire{filteredOutPirates > 1 ? 's' : ''} masqué{filteredOutPirates > 1 ? 's' : ''}
                     </span>
                   )}
@@ -451,7 +451,7 @@ export default function Missions() {
                           {mission.difficultyTier && (
                             <span
                               className={cn(
-                                'rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase',
+                                'rounded-full border px-2 py-0.5 text-xs font-bold uppercase',
                                 TIER_COLORS[mission.difficultyTier],
                               )}
                             >
@@ -477,7 +477,7 @@ export default function Missions() {
                             {rewards.hydrogene > 0 && <span className="text-hydrogene">H: {fmt(rewards.hydrogene)}</span>}
                           </div>
                           {rewards.bonusShips?.length > 0 && (
-                            <div className="text-[11px] text-emerald-400/80 flex items-center gap-1">
+                            <div className="text-xs text-emerald-400/80 flex items-center gap-1">
                               <Plus className="h-3 w-3" />
                               Vaisseaux bonus possibles
                             </div>
@@ -489,13 +489,13 @@ export default function Missions() {
                             className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/20 px-2.5 py-1.5"
                           >
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shrink-0" />
-                            <span className="text-[11px] text-rose-300">
+                            <span className="text-xs text-rose-300">
                               {phaseLabel(fleet.phase)}
                             </span>
                             <Timer
                               endTime={new Date(fleet.arrivalTime)}
                               onComplete={() => utils.fleet.movements.invalidate()}
-                              className="text-[11px] text-rose-400"
+                              className="text-xs text-rose-400"
                             />
                           </div>
                         ))}

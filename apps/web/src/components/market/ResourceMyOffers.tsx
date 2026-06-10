@@ -63,7 +63,7 @@ export function ResourceMyOffers({ planetId: _planetId, statuses }: ResourceMyOf
                   <span className={cn('text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>
                     {RESOURCE_LABELS[offer.resourceType]}
                   </span>
-                  <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-medium', STATUS_STYLES[offer.status])}>
+                  <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium', STATUS_STYLES[offer.status])}>
                     {STATUS_LABELS[offer.status]}
                   </span>
                 </div>

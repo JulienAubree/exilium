@@ -32,15 +32,15 @@ export function GarrisonSection({
       </div>
 
       <div className="px-4 pb-2">
-        <p className="text-[11px] text-muted-foreground leading-tight">
+        <p className="text-xs text-muted-foreground leading-tight">
           Les vaisseaux stationnés défendent la colonie contre les raids pirates qui peuvent survenir pendant la colonisation.
         </p>
         {status.garrisonBonusActive ? (
-          <p className="mt-1 text-[11px] text-emerald-300">
+          <p className="mt-1 text-xs text-emerald-300">
             Bonus garnison actif : <span className="font-bold">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> tant que la garnison reste au-dessus de {status.garrisonFpThreshold} FP.
           </p>
         ) : (
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground">
             Atteignez <span className="text-blue-300 font-medium">{status.garrisonFpThreshold} FP</span> stationnés pour débloquer <span className="text-emerald-300 font-medium">+{(status.garrisonBonusValue * 100).toFixed(0)}%/h</span> en continu.
             {status.stationedFP > 0 && (
               <span className="text-muted-foreground"> (actuellement {formatNumber(status.stationedFP)} FP)</span>

@@ -94,7 +94,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
         <div className="min-w-0 flex-1">
           <span className="truncate text-sm font-semibold text-foreground">{planet.name}</span>
           <div className="text-xs text-muted-foreground">[{planet.galaxy}:{planet.system}:{planet.position}]</div>
-          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-400">
+          <div className="mt-0.5 flex items-center gap-1 text-xs text-amber-400">
             <Rocket className="h-3 w-3" />
             <span>Colonisation en cours</span>
           </div>
@@ -149,7 +149,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
             </div>
             <div className="text-xs text-muted-foreground">[{planet.galaxy}:{planet.system}:{planet.position}]</div>
             {badge && (
-              <div className={cn('mt-0.5 flex items-center gap-1 text-[11px]', badge.className)}>
+              <div className={cn('mt-0.5 flex items-center gap-1 text-xs', badge.className)}>
                 <badge.icon className="h-3 w-3" width={12} height={12} />
                 <Timer endTime={new Date(badge.endTime)} className="inline" />
               </div>
@@ -166,11 +166,11 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
               {fleet && fleet.totalShips > 0 ? (
                 <>
                   <span className="font-mono font-semibold text-foreground">{fleet.totalShips.toLocaleString('fr-FR')}</span>
-                  <span className="text-[10px] text-muted-foreground">vsx</span>
-                  <span className="text-[10px]">FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
+                  <span className="text-xs text-muted-foreground">vsx</span>
+                  <span className="text-xs">FP <strong className="font-mono text-amber-400">{formatRate(fleet.totalFP)}</strong></span>
                 </>
               ) : (
-                <span className="text-[10px] text-muted-foreground-soft italic">vide</span>
+                <span className="text-xs text-muted-foreground-soft italic">vide</span>
               )}
             </div>
           )}
@@ -191,7 +191,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-2 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up"
+                className="absolute right-2 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up"
               >
                 <button
                   role="menuitem"

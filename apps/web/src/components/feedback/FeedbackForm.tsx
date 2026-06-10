@@ -124,7 +124,7 @@ export function FeedbackForm({ open, onClose }: FeedbackFormProps) {
               placeholder={selectedType!.titlePlaceholder}
               maxLength={200}
             />
-            <div className="text-right text-[10px] text-muted-foreground">{title.length}/200</div>
+            <div className="text-right text-xs text-muted-foreground">{title.length}/200</div>
           </div>
 
           <div className="space-y-1.5">
@@ -138,7 +138,7 @@ export function FeedbackForm({ open, onClose }: FeedbackFormProps) {
               rows={4}
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
             />
-            <div className="text-right text-[10px] text-muted-foreground">{description.length}/2000</div>
+            <div className="text-right text-xs text-muted-foreground">{description.length}/2000</div>
           </div>
 
           <label className="flex items-start gap-2 rounded-md border border-border/40 bg-card/40 p-2.5 cursor-pointer hover:bg-card/60 transition-colors">

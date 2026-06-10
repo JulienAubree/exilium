@@ -139,14 +139,14 @@ export default function ColonizationProgress() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-sky-300">Sursis d'installation</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight">
+                    <p className="text-xs text-muted-foreground leading-tight">
                       Pas de consommation de ressources. Préparez vos convois.
                     </p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <DeadlineCountdown target={new Date(status.gracePeriodEndsAt)} tone="info" />
-                  <p className="text-[10px] text-muted-foreground">avant consommation</p>
+                  <p className="text-xs text-muted-foreground">avant consommation</p>
                 </div>
               </section>
             )}

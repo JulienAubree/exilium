@@ -144,7 +144,7 @@ export function FlagshipHero({
                 className="mt-1.5 inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="truncate max-w-[140px] sm:max-w-[180px]">{stationedPlanet.name}</span>
-                <span className="text-muted-foreground-soft font-mono text-[10px] shrink-0">
+                <span className="text-muted-foreground-soft font-mono text-xs shrink-0">
                   [{stationedPlanet.galaxy}:{stationedPlanet.system}:{stationedPlanet.position}]
                 </span>
               </Link>
@@ -153,7 +153,7 @@ export function FlagshipHero({
             {hullConfig && (
               <div className="mt-1 hidden sm:block">
                 <span className={cn(
-                  'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+                  'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium uppercase tracking-wider',
                   styles.badge,
                   styles.badgeText,
                 )}>

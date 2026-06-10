@@ -85,7 +85,7 @@ export function AllianceHero({ alliance }: AllianceHeroProps) {
         <div className="relative px-5 pb-6 pt-8 lg:px-8 lg:pb-8 lg:pt-10">
           <div className="flex items-start gap-5">
             <div className="relative shrink-0">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-background/40 p-2 shadow-lg shadow-primary/10 backdrop-blur lg:h-24 lg:w-24">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-surface p-2 lg:h-24 lg:w-24">
                 <AllianceBlason blason={blason} size={72} title={`Blason de ${alliance.name}`} />
               </div>
             </div>
@@ -100,27 +100,27 @@ export function AllianceHero({ alliance }: AllianceHeroProps) {
                 <p className="mt-2 text-xs italic leading-relaxed text-muted-foreground">« {alliance.motto} »</p>
               )}
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <span className="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-2 py-0.5 text-[10px] text-sky-300">
+                <span className="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-2 py-0.5 text-xs text-sky-300">
                   {memberCount} membre{memberCount > 1 ? 's' : ''}
                 </span>
-                <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-300">
+                <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">
                   {alliance.totalPoints.toLocaleString('fr-FR')} pts
                 </span>
-                <span className="inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">
+                <span className="inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 text-xs text-violet-300">
                   Fondée en {formatFounded(alliance.createdAt)}
                 </span>
                 {militaryTone === 'positive' && (
-                  <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+                  <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300">
                     {windowDays}j · {wins}V / {losses}D
                   </span>
                 )}
                 {militaryTone === 'negative' && (
-                  <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] text-red-300">
+                  <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-xs text-red-300">
                     {windowDays}j · {wins}V / {losses}D
                   </span>
                 )}
                 {militaryTone === 'neutral' && (
-                  <span className="inline-flex items-center rounded-full border border-border/40 bg-muted/30 px-2 py-0.5 text-[10px] text-muted-foreground">
+                  <span className="inline-flex items-center rounded-full border border-border/40 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
                     {windowDays}j · aucun combat
                   </span>
                 )}

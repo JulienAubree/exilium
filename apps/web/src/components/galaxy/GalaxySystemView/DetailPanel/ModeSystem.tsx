@@ -25,7 +25,7 @@ interface StatCardProps {
 function StatCard({ label, value }: StatCardProps): ReactElement {
   return (
     <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-md px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-cyan-500/70">
+      <div className="text-xs uppercase tracking-wider text-cyan-500/70">
         {label}
       </div>
       <div className="text-sm font-mono">{value}</div>

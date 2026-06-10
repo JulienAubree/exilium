@@ -199,7 +199,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
           uses the soft-cap curve. Lets the player know the +X%/niv slows down. */}
       {matchingBonuses.some((bn) => bn.bonusType === 'asymptotic') && (
         <div className="flex items-center gap-2 rounded-md border border-violet-500/40 bg-violet-950/30 px-3 py-1.5 text-xs">
-          <span className="text-violet-300 font-semibold uppercase tracking-wider text-[10px]">
+          <span className="text-violet-300 font-semibold uppercase tracking-wider text-xs">
             Rendements décroissants
           </span>
           <span className="text-violet-200/80">
@@ -220,10 +220,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
       {/* Effect description */}
       {effectDescription && (
         <div className="bg-[#1e293b] rounded-lg p-3">
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-1">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-1">
             Effet en jeu
           </div>
-          <p className="text-[11px] text-slate-300">{effectDescription}</p>
+          <p className="text-xs text-slate-300">{effectDescription}</p>
         </div>
       )}
 
@@ -236,14 +236,14 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
         return (
           <>
             <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
                 Taux de scories
               </div>
-              <div className="text-[11px] text-slate-300 space-y-1.5">
+              <div className="text-xs text-slate-300 space-y-1.5">
                 <p>Base : <span className="text-amber-400 font-mono">{(baseRate * 100).toFixed(0)}%</span> de scories sur chaque extraction.</p>
                 <p>Chaque niveau réduit les scories de <span className="text-emerald-400">15%</span> (multiplicatif : taux = {(baseRate * 100).toFixed(0)}% x 0.85^niveau).</p>
               </div>
-              <div className="flex gap-4 text-[11px]">
+              <div className="flex gap-4 text-xs">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-400">Actuel (niv. {currentLevel}) :</span>
                   <span className="text-emerald-400 font-mono font-semibold">{(effectiveRate * 100).toFixed(1)}%</span>
@@ -255,10 +255,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Progression des scories
               </div>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
@@ -299,10 +299,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
         return (
           <>
             <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
                 Comment fonctionne l'espionnage ?
               </div>
-              <div className="text-[11px] text-slate-300 space-y-1.5">
+              <div className="text-xs text-slate-300 space-y-1.5">
                 <p>Envoyez des <span className="text-violet-400">sondes d'espionnage</span> sur une planète ennemie pour obtenir des renseignements.</p>
                 <p>Les informations visibles dépendent du <span className="text-emerald-400">nombre de sondes</span> et de la <span className="text-amber-400">différence de niveau</span> entre votre techno espionnage et celle du défenseur.</p>
                 <p className="text-slate-500">Formule : Info effective = Sondes − (Niveau ennemi − Votre niveau)</p>
@@ -310,18 +310,18 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Visibilité selon le nombre de sondes
               </div>
-              <p className="text-[10px] text-slate-500 mb-2">
+              <p className="text-xs text-slate-500 mb-2">
                 Hypothèse : ennemi niveau {enemyLevel} (votre niveau : {currentLevel})
               </p>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Sondes</th>
                     {visLabels.map((l) => (
-                      <th key={l} className="px-1.5 py-1.5 border-b border-[#1e293b] text-center text-[10px]">{l}</th>
+                      <th key={l} className="px-1.5 py-1.5 border-b border-[#1e293b] text-center text-xs">{l}</th>
                     ))}
                   </tr>
                 </thead>
@@ -344,13 +344,13 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               </table>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Risque de détection
               </div>
-              <p className="text-[10px] text-slate-500 mb-2">
+              <p className="text-xs text-slate-500 mb-2">
                 Formule : Sondes × 2 − (Votre niv. − Niv. ennemi) × 4, borné entre 0% et 100%
               </p>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Sondes</th>
@@ -371,7 +371,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                   })}
                 </tbody>
               </table>
-              <p className="text-[10px] text-slate-500 mt-2">
+              <p className="text-xs text-slate-500 mt-2">
                 Augmenter votre niveau d'espionnage réduit la détection de 4% par niveau d'avance sur l'ennemi.
               </p>
             </div>
@@ -388,20 +388,20 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
         return (
           <>
             <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
                 Comment fonctionne la détection ?
               </div>
-              <div className="text-[11px] text-slate-300 space-y-1.5">
+              <div className="text-xs text-slate-300 space-y-1.5">
                 <p>Le réseau de capteurs <span className="text-cyan-400">détecte automatiquement</span> les flottes hostiles en approche de vos planètes.</p>
                 <p>Le <span className="text-emerald-400">score de détection</span> = votre niveau capteurs − niveau furtivité de l'attaquant.</p>
                 <p>Plus le score est élevé, plus la détection est <span className="text-amber-400">précoce</span> (temps restant avant impact) et plus les <span className="text-violet-400">informations</span> sont détaillées.</p>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Paliers de détection
               </div>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Score</th>
@@ -414,20 +414,20 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                     <tr key={i} className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}>
                       <td className="px-2 py-1.5 font-mono">≥ {threshold}</td>
                       <td className="px-2 py-1.5 text-right text-cyan-400">{timingPercents[i]}%</td>
-                      <td className="px-2 py-1.5 text-[10px]">{tierLabels[i]}</td>
+                      <td className="px-2 py-1.5 text-xs">{tierLabels[i]}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Délai = % du temps de trajet restant quand l'alerte se déclenche. 100% = détection immédiate au départ.
               </p>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Comparatif : votre capteurs vs furtivité ennemie
               </div>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre niv.</th>
@@ -455,7 +455,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                   ))}
                 </tbody>
               </table>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Valeurs = % du trajet restant à la détection. Plus c'est élevé, plus vous avez le temps de réagir.
               </p>
             </div>
@@ -471,10 +471,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
         return (
           <>
             <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
                 Comment fonctionne la furtivité ?
               </div>
-              <div className="text-[11px] text-slate-300 space-y-1.5">
+              <div className="text-xs text-slate-300 space-y-1.5">
                 <p>La technologie furtive <span className="text-violet-400">réduit l'efficacité</span> du réseau de capteurs ennemi lorsque vous attaquez.</p>
                 <p>Le score de détection de l'ennemi = <span className="text-cyan-400">son niveau capteurs</span> − <span className="text-violet-400">votre niveau furtivité</span>.</p>
                 <p>Un score plus bas signifie une détection <span className="text-emerald-400">plus tardive</span> et <span className="text-emerald-400">moins d'informations</span> révélées à l'ennemi.</p>
@@ -482,10 +482,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Comparatif : votre furtivité vs capteurs ennemis
               </div>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre niv.</th>
@@ -520,15 +520,15 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                   ))}
                 </tbody>
               </table>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Valeurs = % du trajet restant quand l'ennemi vous détecte. Plus c'est bas, mieux c'est pour vous.
               </p>
             </div>
             <div>
-              <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+              <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
                 Informations masquées par niveau
               </div>
-              <table className="w-full text-[11px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="text-slate-500 text-left">
                     <th className="px-2 py-1.5 border-b border-[#1e293b]">Votre furtivité</th>
@@ -549,7 +549,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                         <td className={`px-2 py-1.5 ${stealth === currentLevel ? 'font-semibold text-violet-400' : ''}`}>
                           {stealth}{stealth === currentLevel ? ' \u25C4' : ''}
                         </td>
-                        <td className="px-2 py-1.5 text-[10px]">
+                        <td className="px-2 py-1.5 text-xs">
                           {hidden.length > 0 ? (
                             <span className="text-emerald-400">{hidden.join(', ')}</span>
                           ) : (
@@ -561,7 +561,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
                   })}
                 </tbody>
               </table>
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Contre un ennemi avec capteurs niv. 5 : chaque point de furtivité masque des informations supplémentaires.
               </p>
             </div>
@@ -572,13 +572,13 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
       {/* Affected entities */}
       {affectedEntities?.map((section, idx) => (
         <div key={idx}>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
             {section.label}
           </div>
           {section.type === 'units' && section.items ? (
             <div className="space-y-1.5">
               {section.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 text-[11px]">
+                <div key={item.id} className="flex items-center gap-2 text-xs">
                   <GameImage
                     category={item.category as any}
                     id={item.id}
@@ -594,7 +594,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-300">{section.description}</p>
+            <p className="text-xs text-slate-300">{section.description}</p>
           )}
         </div>
       ))}
@@ -602,10 +602,10 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
       {/* Progression table */}
       {progressionData && (
         <div>
-          <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+          <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
             Progression
           </div>
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="text-slate-500 text-left">
                 <th className="px-2 py-1.5 border-b border-[#1e293b]">Niveau</th>
@@ -665,7 +665,7 @@ export function ResearchDetailContent({ researchId, researchLevels, buildingLeve
         ];
         return (
           <div>
-            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
               Prérequis
             </div>
             <PrerequisiteList items={prereqItems} />

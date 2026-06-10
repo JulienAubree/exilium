@@ -82,7 +82,7 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
           <Sparkles className={cn('h-3.5 w-3.5 shrink-0', styles.badgeText)} />
           <span className="truncate">Stats de combat</span>
         </h3>
-        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
           Stats appliquées en combat (multiplicateurs de recherche inclus).
         </p>
       </div>

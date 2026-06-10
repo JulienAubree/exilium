@@ -71,7 +71,7 @@ export function DamagePanel({ events, unitType, round, side: _side, gameConfig }
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Damage dealt */}
       <div className="glass-card p-3 border-emerald-500/10">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
           Degats infliges
         </div>
         {dealtGroups.length === 0 ? (
@@ -107,7 +107,7 @@ export function DamagePanel({ events, unitType, round, side: _side, gameConfig }
 
       {/* Damage received */}
       <div className="glass-card p-3 border-red-500/10">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-red-400 mb-2">
+        <div className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-2">
           Degats recus
         </div>
         {receivedGroups.length === 0 ? (
@@ -124,7 +124,7 @@ export function DamagePanel({ events, unitType, round, side: _side, gameConfig }
                     {fmt(g.totalDamage)}
                   </span>
                 </div>
-                <div className="flex gap-1 text-[10px] text-muted-foreground mb-0.5">
+                <div className="flex gap-1 text-xs text-muted-foreground mb-0.5">
                   <span className="text-cyan-400/70">{fmt(g.shieldAbsorbed)} bouclier</span>
                   <span>-</span>
                   <span className="text-orange-400/70">{fmt(g.hullDamage)} coque</span>

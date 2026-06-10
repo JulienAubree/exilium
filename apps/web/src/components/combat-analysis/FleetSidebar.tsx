@@ -42,7 +42,7 @@ export function FleetSidebar({
         hidden && 'hidden lg:block',
       )}
     >
-      <div className={cn('text-[10px] font-semibold uppercase tracking-wider px-1 mb-1', headerColor)}>
+      <div className={cn('text-xs font-semibold uppercase tracking-wider px-1 mb-1', headerColor)}>
         {label}
       </div>
 
@@ -70,15 +70,15 @@ export function FleetSidebar({
                 : 'border border-transparent',
             )}
           >
-            <div className="text-[11px] font-medium text-foreground truncate">
+            <div className="text-xs font-medium text-foreground truncate">
               {getUnitName(type, gameConfig)}
             </div>
             <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {current}/{initial}
               </span>
               {current < initial && (
-                <span className="text-[10px] text-red-400">
+                <span className="text-xs text-red-400">
                   -{initial - current}
                 </span>
               )}

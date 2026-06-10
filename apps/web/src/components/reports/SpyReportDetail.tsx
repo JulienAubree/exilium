@@ -37,7 +37,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
       {(targetPlanetName || targetOwnerName) && (
         <div className="glass-card flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Cible</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Cible</div>
             <div className="text-sm">
               {targetPlanetName && <span className="font-semibold text-foreground">{targetPlanetName}</span>}
               {coordinates && (
@@ -49,7 +49,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
           </div>
           {targetOwnerName && (
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Propriétaire</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Propriétaire</div>
               <div className="text-sm font-semibold text-foreground">{targetOwnerName}</div>
             </div>
           )}
@@ -111,10 +111,10 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
           {/* Step 1: Effective info */}
           <div className="glass-card p-4">
             <div className="flex items-start gap-2.5">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">1</div>
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-xs font-bold text-violet-400">1</div>
               <div className="flex-1 space-y-1.5">
                 <div className="text-xs font-medium text-foreground">Calcul de l'info effective</div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   <span className="text-violet-400 font-mono">{probeCount}</span> sondes
                   {techDiff !== 0 && (
                     <> − (<span className="text-red-400 font-mono">{defenderTech}</span> tech ennemi − <span className="text-emerald-400 font-mono">{attackerTech}</span> votre tech) </>
@@ -123,12 +123,12 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                   = <span className="text-foreground font-bold font-mono">{effectiveInfo}</span> info effective
                 </div>
                 {techDiff > 0 && (
-                  <div className="text-[10px] text-amber-400/80">
+                  <div className="text-xs text-amber-400/80">
                     L'ennemi a {techDiff} niveau{techDiff > 1 ? 'x' : ''} d'avance en espionnage, ce qui réduit vos informations de {techDiff} point{techDiff > 1 ? 's' : ''}.
                   </div>
                 )}
                 {techDiff < 0 && (
-                  <div className="text-[10px] text-emerald-400/80">
+                  <div className="text-xs text-emerald-400/80">
                     Vous avez {-techDiff} niveau{-techDiff > 1 ? 'x' : ''} d'avance en espionnage, ce qui augmente vos informations de {-techDiff} point{-techDiff > 1 ? 's' : ''}.
                   </div>
                 )}
@@ -139,17 +139,17 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
           {/* Step 2: Visibility thresholds */}
           <div className="glass-card p-4">
             <div className="flex items-start gap-2.5">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">2</div>
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-xs font-bold text-violet-400">2</div>
               <div className="flex-1 space-y-1.5">
                 <div className="text-xs font-medium text-foreground">Seuils de visibilité</div>
-                <div className="text-[11px] text-muted-foreground mb-1">
+                <div className="text-xs text-muted-foreground mb-1">
                   Votre score de <span className="text-foreground font-bold">{effectiveInfo}</span> débloque les catégories dont le seuil est inférieur ou égal.
                 </div>
                 <div className="space-y-0.5">
                   {thresholds.map((t, i) => {
                     const unlocked = effectiveInfo >= t;
                     return (
-                      <div key={i} className="flex items-center gap-2 text-[11px]">
+                      <div key={i} className="flex items-center gap-2 text-xs">
                         <div className={cn('w-14 text-right font-mono', unlocked ? 'text-emerald-400' : 'text-muted-foreground-soft')}>
                           ≥ {t}
                         </div>
@@ -159,7 +159,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                             style={{ width: unlocked ? '100%' : '0%' }}
                           />
                         </div>
-                        <span className={cn('w-24 text-[10px]', unlocked ? 'text-emerald-400' : 'text-muted-foreground-soft')}>
+                        <span className={cn('w-24 text-xs', unlocked ? 'text-emerald-400' : 'text-muted-foreground-soft')}>
                           {unlocked ? '\u2713' : '\u2717'} {thresholdLabels[i]}
                         </span>
                       </div>
@@ -167,7 +167,7 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                   })}
                 </div>
                 {effectiveInfo < 9 && (
-                  <div className="text-[10px] text-slate-500 mt-1">
+                  <div className="text-xs text-slate-500 mt-1">
                     Pour tout voir : envoyez {9 + techDiff} sonde{9 + techDiff > 1 ? 's' : ''}{techDiff > 0 ? ` (ou montez votre tech espionnage pour réduire l'écart)` : ''}.
                   </div>
                 )}
@@ -178,10 +178,10 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
           {/* Step 3: Detection */}
           <div className="glass-card p-4">
             <div className="flex items-start gap-2.5">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-bold text-violet-400">3</div>
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-xs font-bold text-violet-400">3</div>
               <div className="flex-1 space-y-1.5">
                 <div className="text-xs font-medium text-foreground">Risque de détection</div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   <span className="text-violet-400 font-mono">{probeCount}</span> × 2
                   {attackerTech !== defenderTech && (
                     <> − (<span className="text-emerald-400 font-mono">{attackerTech}</span> − <span className="text-red-400 font-mono">{defenderTech}</span>) × 4</>
@@ -195,16 +195,16 @@ export function SpyReportDetail({ result, gameConfig, coordinates }: SpyReportDe
                       style={{ width: `${Math.min(100, detectionChance)}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-muted-foreground w-8 text-right">{detectionChance}%</span>
+                  <span className="text-xs text-muted-foreground w-8 text-right">{detectionChance}%</span>
                 </div>
                 {result.detected ? (
-                  <div className="text-[10px] text-red-400">Vos sondes ont été détectées et détruites par l'ennemi.</div>
+                  <div className="text-xs text-red-400">Vos sondes ont été détectées et détruites par l'ennemi.</div>
                 ) : detectionChance > 0 ? (
-                  <div className="text-[10px] text-emerald-400/80">Vos sondes n'ont pas été détectées cette fois-ci.</div>
+                  <div className="text-xs text-emerald-400/80">Vos sondes n'ont pas été détectées cette fois-ci.</div>
                 ) : (
-                  <div className="text-[10px] text-emerald-400/80">Aucun risque de détection grâce à votre avance technologique.</div>
+                  <div className="text-xs text-emerald-400/80">Aucun risque de détection grâce à votre avance technologique.</div>
                 )}
-                <div className="text-[10px] text-slate-500">
+                <div className="text-xs text-slate-500">
                   Chaque niveau d'avance en tech espionnage réduit la détection de 4%. Chaque sonde supplémentaire augmente le risque de 2%.
                 </div>
               </div>

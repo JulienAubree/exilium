@@ -9,7 +9,7 @@ interface AllianceTagBadgeProps {
 }
 
 const SIZE_STYLES: Record<Size, { box: string; text: string; maxChars: number }> = {
-  sm: { box: 'w-7 h-8', text: 'text-[10px]', maxChars: 2 },
+  sm: { box: 'w-7 h-8', text: 'text-xs', maxChars: 2 },
   md: { box: 'w-10 h-11', text: 'text-xs', maxChars: 3 },
   lg: { box: 'w-12 h-14', text: 'text-sm', maxChars: 3 },
 };

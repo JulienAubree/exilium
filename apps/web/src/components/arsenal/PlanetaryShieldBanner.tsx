@@ -97,7 +97,7 @@ export function PlanetaryShieldBanner({
                 : "Construisez le bouclier pour protéger vos défenses planétaires derrière un champ de force régénérant."}
             </p>
             {currentLevel > 0 && effectiveCapacity !== undefined && effectiveCapacity > 0 && (
-              <div className="mt-1.5 flex items-baseline gap-1.5 text-[11px]">
+              <div className="mt-1.5 flex items-baseline gap-1.5 text-xs">
                 <span className="text-muted-foreground">Capacité par round :</span>
                 <span className="font-mono font-semibold text-cyan-300">{fmt(effectiveCapacity)}</span>
                 {shieldingMultiplier !== undefined && shieldingMultiplier > 1 && (
@@ -140,12 +140,12 @@ export function PlanetaryShieldBanner({
               currentHydrogene={resources.hydrogene}
             />
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+              <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                 <ClockIcon className="h-3 w-3" />
                 {formatDuration(nextLevelTime)}
               </span>
               <Button
-                variant="retro"
+               
                 size="sm"
                 className={cn('h-7 text-xs px-3', !canAfford && 'opacity-80')}
                 onClick={onUpgrade}

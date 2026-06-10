@@ -133,7 +133,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                 {/* My planets */}
                 {filtered.myPlanets.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                    <div className="sticky top-0 bg-muted/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-400">
                       Mes planètes
                     </div>
                     {filtered.myPlanets.map((p) => (
@@ -144,7 +144,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                         className="flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-primary/10 transition-colors"
                       >
                         <span className="text-foreground truncate">{p.name}</span>
-                        <span className="text-muted-foreground font-mono text-[11px]">{fmtCoords(p.galaxy, p.system, p.position)}</span>
+                        <span className="text-muted-foreground font-mono text-xs">{fmtCoords(p.galaxy, p.system, p.position)}</span>
                       </button>
                     ))}
                   </div>
@@ -153,12 +153,12 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                 {/* Friends */}
                 {filtered.friends.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+                    <div className="sticky top-0 bg-muted/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-400">
                       Amis
                     </div>
                     {filtered.friends.map((f) => (
                       <div key={f.userId}>
-                        <div className="px-3 py-1 text-[11px] font-medium text-blue-300">{f.username}</div>
+                        <div className="px-3 py-1 text-xs font-medium text-blue-300">{f.username}</div>
                         {f.planets.map((p, i) => (
                           <button
                             key={i}
@@ -167,7 +167,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                             className="flex w-full items-center justify-between px-3 py-2 pl-6 text-xs hover:bg-primary/10 transition-colors"
                           >
                             <span className="text-foreground/80 truncate">{p.name}</span>
-                            <span className="text-muted-foreground font-mono text-[11px]">{fmtCoords(p.galaxy, p.system, p.position)}</span>
+                            <span className="text-muted-foreground font-mono text-xs">{fmtCoords(p.galaxy, p.system, p.position)}</span>
                           </button>
                         ))}
                       </div>
@@ -178,12 +178,12 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                 {/* Alliance members */}
                 {filtered.allianceMembers.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                    <div className="sticky top-0 bg-muted/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
                       Alliance{filtered.allianceTag ? ` [${filtered.allianceTag}]` : ''}
                     </div>
                     {filtered.allianceMembers.map((m) => (
                       <div key={m.userId}>
-                        <div className="px-3 py-1 text-[11px] font-medium text-amber-300">
+                        <div className="px-3 py-1 text-xs font-medium text-amber-300">
                           {m.username}
                           <span className="ml-1.5 text-[9px] text-amber-500/70 uppercase">{m.role}</span>
                         </div>
@@ -195,7 +195,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                             className="flex w-full items-center justify-between px-3 py-2 pl-6 text-xs hover:bg-primary/10 transition-colors"
                           >
                             <span className="text-foreground/80 truncate">{p.name}</span>
-                            <span className="text-muted-foreground font-mono text-[11px]">{fmtCoords(p.galaxy, p.system, p.position)}</span>
+                            <span className="text-muted-foreground font-mono text-xs">{fmtCoords(p.galaxy, p.system, p.position)}</span>
                           </button>
                         ))}
                       </div>
@@ -206,7 +206,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                 {/* Empty states (no search active) */}
                 {!q && data && data.friends.length === 0 && (
                   <div>
-                    <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+                    <div className="sticky top-0 bg-muted/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-400">
                       Amis
                     </div>
                     <div className="px-3 py-3 text-xs text-muted-foreground">Aucun ami ajouté.</div>
@@ -214,7 +214,7 @@ export function TargetContactsDropdown({ onSelect, disabled }: Props) {
                 )}
                 {!q && data && !data.allianceTag && (
                   <div>
-                    <div className="sticky top-0 bg-muted/80 backdrop-blur-sm px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                    <div className="sticky top-0 bg-muted/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
                       Alliance
                     </div>
                     <div className="px-3 py-3 text-xs text-muted-foreground">Pas d'alliance.</div>

@@ -122,7 +122,7 @@ function planetTypeName(
 
 function SectionLabel({ children }: { children: string }): ReactElement {
   return (
-    <div className="text-[10px] uppercase tracking-wider text-cyan-500/70 mb-1.5">
+    <div className="text-xs uppercase tracking-wider text-cyan-500/70 mb-1.5">
       {children}
     </div>
   );
@@ -417,7 +417,7 @@ function EmptyDiscoveredPanel({
 
       {view.biomes.length === 0 ? (
         <div className="mt-3 rounded-md border border-dashed border-cyan-500/30 bg-cyan-500/5 px-3 py-3">
-          <div className="text-[10px] uppercase tracking-wider text-cyan-500/70 mb-1">
+          <div className="text-xs uppercase tracking-wider text-cyan-500/70 mb-1">
             Position inexploree
           </div>
           <p className="text-xs text-muted-foreground">
@@ -437,7 +437,7 @@ function EmptyDiscoveredPanel({
         const willOverextend = governance.colonyCount + 1 > governance.capacity;
         const ratioColor = willOverextend ? 'text-amber-400' : 'text-emerald-400';
         return (
-          <div className="mt-3 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-[11px] flex items-center justify-between gap-2">
+          <div className="mt-3 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs flex items-center justify-between gap-2">
             <span className="text-muted-foreground">Capacité de gouvernance</span>
             <span className={`font-semibold ${ratioColor}`}>
               {governance.colonyCount}/{governance.capacity} colonies

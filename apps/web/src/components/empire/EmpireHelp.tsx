@@ -10,7 +10,7 @@ export function EmpireHelp() {
   return (
     <>
       <div className="relative -mx-5 -mt-5 overflow-hidden rounded-t-lg">
-        <div className="h-40 w-full bg-gradient-to-br from-indigo-900/70 via-cyan-900/50 to-purple-900/70" />
+        <div className="h-40 w-full bg-slate-950/60-900/50 to-purple-900/70" />
         <div
           aria-hidden
           className="absolute inset-0 opacity-60"

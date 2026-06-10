@@ -78,7 +78,7 @@ export default function Empire() {
                 <button
                   type="button"
                   onClick={() => setIsReordering(true)}
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-background/40 px-3 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:bg-accent/50 hover:text-foreground"
+                  className="inline-flex items-center gap-2 rounded-md border border-border bg-background/40 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
                 >
                   <ArrowUpDown className="h-4 w-4" />
                   <span className="hidden sm:inline">Réorganiser</span>

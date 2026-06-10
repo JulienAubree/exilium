@@ -41,14 +41,14 @@ export function NotificationsBell() {
       >
         <Bell className="h-5 w-5" />
         {(eventUnreadCount?.count ?? 0) > 0 && (
-          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground">
             {eventUnreadCount!.count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-80 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+        <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-80 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up">
           <div className="flex items-center justify-between border-b border-border/30 px-3 py-2">
             <span className="text-xs font-semibold text-muted-foreground">Notifications</span>
             <button

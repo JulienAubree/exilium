@@ -119,14 +119,14 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
             </div>
           </div>
-          <span className="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-400">
+          <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-500/15 text-amber-400">
             Colonisation
           </span>
         </div>
 
         {/* Colonization status */}
         <div className="px-3.5 pb-3.5">
-          <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-400">
+          <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
             <Rocket className="h-3.5 w-3.5 shrink-0" />
             <span>Colonisation en cours — cliquez pour voir la progression</span>
           </div>
@@ -180,7 +180,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
           </div>
         </div>
         <span className={cn(
-          'shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium',
+          'shrink-0 rounded-md px-2 py-0.5 text-xs font-medium',
           isFirst ? 'bg-primary/15 text-primary' : 'bg-purple-500/15 text-purple-400',
         )}>
           {isFirst ? 'Capitale' : 'Colonie'}
@@ -200,7 +200,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up"
+                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up"
               >
                 <button
                   role="menuitem"
@@ -228,11 +228,11 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             return (
               <div key={r.label} className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between">
-                  <span className={cn('text-[10px] font-bold', r.color)}>{r.label}</span>
+                  <span className={cn('text-xs font-bold', r.color)}>{r.label}</span>
                   <div className="flex items-baseline gap-1.5">
                     <span className={cn('text-xs font-semibold', r.color)}>{formatRate(r.value)}</span>
-                    <span className="text-[10px] text-muted-foreground">/ {formatRate(r.max)}</span>
-                    <span className={cn('text-[10px]', r.color)}>+{formatRate(r.rate)}/h</span>
+                    <span className="text-xs text-muted-foreground">/ {formatRate(r.max)}</span>
+                    <span className={cn('text-xs', r.color)}>+{formatRate(r.rate)}/h</span>
                   </div>
                 </div>
                 <div className="h-[4px] overflow-hidden rounded-full bg-muted">
@@ -247,7 +247,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         </div>
       ) : (
         <div className="mx-3.5 mb-2.5 rounded-lg border border-border/30 bg-background/30 p-2">
-          <div className="flex items-center justify-between gap-2 mb-1.5 text-[10px]">
+          <div className="flex items-center justify-between gap-2 mb-1.5 text-xs">
             <button
               type="button"
               onClick={() => goTo('/fleet/stationed')}
@@ -284,7 +284,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               </div>
             </button>
           ) : (
-            <div className="rounded border border-dashed border-border/30 py-2 text-center text-[10px] text-muted-foreground-soft">
+            <div className="rounded border border-dashed border-border/30 py-2 text-center text-xs text-muted-foreground-soft">
               Aucun vaisseau stationné
             </div>
           )}
@@ -294,61 +294,61 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
       {/* Status badges */}
       <div className="flex flex-1 flex-wrap content-start gap-1.5 px-3.5 pb-2.5">
         {planet.activeBuild && (
-          <button onClick={() => goTo('/buildings')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/80 transition-colors">
+          <button onClick={() => goTo('/buildings')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted/80 transition-colors">
             <Hammer className="h-3 w-3" />
             <span>{getBuildingName(planet.activeBuild.buildingId, gameConfig)} Nv.{planet.activeBuild.level}</span>
             <Timer endTime={new Date(planet.activeBuild.endTime)} className="inline [&>span]:text-energy" />
           </button>
         )}
         {planet.activeResearch && (
-          <button onClick={() => goTo('/research')} className="flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-1 text-[11px] text-purple-400 hover:bg-purple-500/20 transition-colors">
+          <button onClick={() => goTo('/research')} className="flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-1 text-xs text-purple-400 hover:bg-purple-500/20 transition-colors">
             <FlaskConical className="h-3 w-3" />
             <span>{getResearchName(planet.activeResearch.researchId, gameConfig)}</span>
             <Timer endTime={new Date(planet.activeResearch.endTime)} className="inline [&>span]:text-purple-400" />
           </button>
         )}
         {planet.activeShipyard && (
-          <button onClick={() => goTo(planet.activeShipyard!.facilityId === 'commandCenter' ? '/production?tab=combat' : '/production?tab=utilitaires')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
+          <button onClick={() => goTo(planet.activeShipyard!.facilityId === 'commandCenter' ? '/production?tab=combat' : '/production?tab=utilitaires')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20 transition-colors">
             <ShipyardIcon width={12} height={12} />
             <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} x{planet.activeShipyard.quantity}</span>
             <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />
           </button>
         )}
         {planet.activeDefense && (
-          <button onClick={() => goTo('/production?tab=defenses')} className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+          <button onClick={() => goTo('/production?tab=defenses')} className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-400 hover:bg-cyan-500/20 transition-colors">
             <ShieldPlus className="h-3 w-3" />
             <span>{getDefenseName(planet.activeDefense.defenseId, gameConfig)} x{planet.activeDefense.quantity}</span>
             <Timer endTime={new Date(planet.activeDefense.endTime)} className="inline [&>span]:text-cyan-400" />
           </button>
         )}
         {planet.outboundFleets && (
-          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/80 transition-colors">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-border/50 bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted/80 transition-colors">
             <ArrowUpRight className="h-3 w-3" />
             <span>{planet.outboundFleets.count} sortie{planet.outboundFleets.count > 1 ? 's' : ''}</span>
             <Timer endTime={new Date(planet.outboundFleets.earliestArrival)} className="inline [&>span]:text-muted-foreground" />
           </button>
         )}
         {planet.inboundFriendlyFleets && (
-          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20 transition-colors">
             <ArrowDownLeft className="h-3 w-3" />
             <span>{planet.inboundFriendlyFleets.count} arrivee{planet.inboundFriendlyFleets.count > 1 ? 's' : ''}</span>
             <Timer endTime={new Date(planet.inboundFriendlyFleets.earliestArrival)} className="inline [&>span]:text-primary" />
           </button>
         )}
         {hasAttack && (
-          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1 text-[11px] text-destructive hover:bg-destructive/20 transition-colors">
+          <button onClick={() => goTo('/fleet/movements')} className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs text-destructive hover:bg-destructive/20 transition-colors">
             <ShieldAlert className="h-3 w-3" />
             <span>Attaque</span>
             <Timer endTime={new Date(planet.inboundAttack!.arrivalTime)} className="inline [&>span]:text-destructive" />
           </button>
         )}
         {(planet.energyConsumed ?? 0) > (planet.energyProduced ?? 0) && !hasAttack && (
-          <button onClick={() => goTo('/energy')} className="flex items-center gap-1 rounded-md border border-energy/20 bg-energy/10 px-2 py-1 text-[11px] text-energy hover:bg-energy/20 transition-colors">
+          <button onClick={() => goTo('/energy')} className="flex items-center gap-1 rounded-md border border-energy/20 bg-energy/10 px-2 py-1 text-xs text-energy hover:bg-energy/20 transition-colors">
             ⚡ Deficit energie
           </button>
         )}
         {!hasActivity && (planet.energyConsumed ?? 0) <= (planet.energyProduced ?? 0) && (
-          <div className="flex items-center gap-1 rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1 text-[11px] text-green-500">
+          <div className="flex items-center gap-1 rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1 text-xs text-green-500">
             <Check className="h-3 w-3" />
             <span>Aucune activite</span>
           </div>
@@ -368,7 +368,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               key={item.path}
               onClick={() => goTo(item.path)}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 py-2 text-[11px] text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary',
+                'flex flex-1 items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary',
                 i < arr.length - 1 && 'border-r border-border/30',
               )}
             >
@@ -382,7 +382,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               onClick={() => openSend('transport')}
               disabled={!canSendFleet}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 border-r border-border/30 py-2 text-[11px] transition-colors',
+                'flex flex-1 items-center justify-center gap-1.5 border-r border-border/30 py-2 text-xs transition-colors',
                 canSendFleet
                   ? 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
                   : 'text-muted-foreground-faint cursor-not-allowed',
@@ -396,7 +396,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               onClick={() => openSend('station')}
               disabled={!canSendFleet}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 py-2 text-[11px] transition-colors',
+                'flex flex-1 items-center justify-center gap-1.5 py-2 text-xs transition-colors',
                 canSendFleet
                   ? 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
                   : 'text-muted-foreground-faint cursor-not-allowed',

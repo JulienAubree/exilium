@@ -212,17 +212,17 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
           </div>
           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
               style={{ color: rarityColor, backgroundColor: `${rarityColor}20` }}
             >
               {RARITY_LABELS[report.maxRarity] ?? report.maxRarity}
             </span>
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-cyan-500/15 text-cyan-400">
+            <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-cyan-500/15 text-cyan-400">
               {report.biomeCount} biome{report.biomeCount > 1 ? 's' : ''}
             </span>
             <span
               className={cn(
-                'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                'rounded-full px-2 py-0.5 text-xs font-medium',
                 report.isComplete
                   ? 'bg-emerald-500/15 text-emerald-400'
                   : 'bg-amber-500/15 text-amber-400',
@@ -260,7 +260,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
 
         {/* Biomes list */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-cyan-500/70 mb-2">
+          <div className="text-xs uppercase tracking-wider text-cyan-500/70 mb-2">
             Biomes du rapport
           </div>
           <div className="space-y-2">
@@ -279,7 +279,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                       {biome.name}
                     </span>
                     <span
-                      className="text-[10px] rounded-full px-1.5 py-px font-medium"
+                      className="text-xs rounded-full px-1.5 py-px font-medium"
                       style={{ color, backgroundColor: `${color}20` }}
                     >
                       {RARITY_LABELS[biome.rarity] ?? biome.rarity}
@@ -349,7 +349,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                   {/* Sell form */}
                   {isExpanded && sellingReportId === report.id ? (
                     <div className="border border-primary/20 bg-primary/5 rounded-md p-3 space-y-3 mt-3">
-                      <label className="text-[10px] text-muted-foreground uppercase tracking-wider block">
+                      <label className="text-xs text-muted-foreground uppercase tracking-wider block">
                         Prix demande
                       </label>
                       <div className="grid grid-cols-3 gap-2">
@@ -359,7 +359,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                           { key: 'hydrogene' as const, value: priceHydrogene, setter: setPriceHydrogene },
                         ]).map(({ key, value, setter }) => (
                           <div key={key}>
-                            <div className={cn('text-[10px] mb-1 font-medium uppercase tracking-wider', RESOURCE_COLORS[key])}>
+                            <div className={cn('text-xs mb-1 font-medium uppercase tracking-wider', RESOURCE_COLORS[key])}>
                               {RESOURCE_LABELS[key]}
                             </div>
                             <input
@@ -374,7 +374,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                       </div>
                       <div className="flex gap-2">
                         <Button
-                          variant="retro"
+                         
                           size="sm"
                           onClick={() => handleCreateOffer(report.id)}
                           disabled={
@@ -396,7 +396,7 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                   ) : isExpanded ? (
                     <div className="flex gap-2 mt-3">
                       <Button
-                        variant="retro"
+                       
                         size="sm"
                         onClick={() => openSellForm(report.id)}
                       >
@@ -494,10 +494,10 @@ export function MarketReportsInventory({ planetId, sections }: MarketReportsInve
                   {renderCardHeader(report, { clickable: true })}
                   {isExpanded && renderBiomeDetail(report)}
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                    <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30">
                       Vendu
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(report.createdAt).toLocaleDateString('fr-FR')}
                     </span>
                   </div>

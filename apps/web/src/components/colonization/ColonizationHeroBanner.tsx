@@ -63,7 +63,7 @@ export function ColonizationHeroBanner({
           {/* Title + info */}
           <div className="flex-1 min-w-0 pt-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">
                 {outpostNotEstablished ? 'En attente' : 'Colonisation en cours'}
               </span>
             </div>
@@ -92,7 +92,7 @@ export function ColonizationHeroBanner({
                 'absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear',
                 outpostNotEstablished
                   ? 'bg-gradient-to-r from-amber-600/50 to-amber-500/30'
-                  : 'bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]',
+                  : 'bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400',
               )}
               style={{ width: outpostNotEstablished ? '0%' : `${progressPct}%` }}
             />
@@ -119,7 +119,7 @@ export function ColonizationHeroBanner({
                   Progression : <span className="text-amber-400 font-medium">{passiveRatePct}%/h</span>
                 </span>
                 {status.totalRateBonus > 0 && (
-                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0 text-[10px] font-bold text-emerald-300">
+                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0 text-xs font-bold text-emerald-300">
                     +{(status.totalRateBonus * 100).toFixed(0)}%/h bonus
                   </span>
                 )}
@@ -138,7 +138,7 @@ export function ColonizationHeroBanner({
                 {(() => {
                   const baseRow = status.basePassiveRate * status.difficultyFactor * (status.stockSufficient ? 1 : 0.5);
                   return (
-                    <div className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-[11px]">
+                    <div className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-xs">
                       <span className="text-muted-foreground">Taux de base</span>
                       <span className="tabular-nums font-medium">{(status.basePassiveRate * 100).toFixed(1)}%/h</span>
                       <span className="text-muted-foreground">× Difficulte</span>
@@ -167,7 +167,7 @@ export function ColonizationHeroBanner({
                           <span className="tabular-nums font-medium text-emerald-300">
                             +{(status.totalRateBonus * 100).toFixed(0)}%/h
                             {status.totalRateBonus >= status.bonusCap && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">(plafond)</span>
+                              <span className="ml-1 text-xs text-muted-foreground">(plafond)</span>
                             )}
                           </span>
                         </>

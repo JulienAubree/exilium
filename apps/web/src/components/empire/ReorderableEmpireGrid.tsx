@@ -108,7 +108,7 @@ export function ReorderableEmpireGrid({
       </div>
 
       {/* Sticky bottom bar */}
-      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-lg px-4 py-3 lg:bottom-0">
+      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-surface-raised px-4 py-3 lg:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <button
             type="button"

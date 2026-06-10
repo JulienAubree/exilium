@@ -100,7 +100,7 @@ export function UnitDetailPanel({
           <div className="flex items-center gap-1.5 rounded-md bg-white/5 border border-border/20 px-3 py-2">
             <Users className="h-3.5 w-3.5 text-foreground/60" />
             <span className="text-lg font-bold text-foreground">{initialCount}</span>
-            <span className="text-[10px] text-muted-foreground">deployes</span>
+            <span className="text-xs text-muted-foreground">deployes</span>
           </div>
         </div>
       ) : (
@@ -166,7 +166,7 @@ export function UnitDetailPanel({
         <div className="grid grid-cols-2 gap-3">
           {/* Shield */}
           <div>
-            <div className="flex justify-between text-[10px] mb-1">
+            <div className="flex justify-between text-xs mb-1">
               <span className="text-cyan-400 font-semibold uppercase tracking-wider">
                 Bouclier
               </span>
@@ -185,7 +185,7 @@ export function UnitDetailPanel({
           </div>
           {/* Hull */}
           <div>
-            <div className="flex justify-between text-[10px] mb-1">
+            <div className="flex justify-between text-xs mb-1">
               <span className="text-orange-400 font-semibold uppercase tracking-wider">Coque</span>
               <span className="text-muted-foreground font-mono">
                 {fmt(hp.hullRemaining)} / {fmt(hp.hullMax)}
@@ -208,7 +208,7 @@ export function UnitDetailPanel({
         <div className="space-y-2">
           {/* View toggle */}
           {detailedLog?.initialUnits && (
-            <div className="flex items-center gap-1 text-[10px]">
+            <div className="flex items-center gap-1 text-xs">
               <button
                 type="button"
                 className={`px-2.5 py-1 rounded transition-colors ${damageView === 'summary' ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -268,7 +268,7 @@ export function UnitDetailPanel({
       {/* Unit grid (individual units) */}
       {sideSnapshots.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Unites individuelles
           </div>
           <UnitGrid

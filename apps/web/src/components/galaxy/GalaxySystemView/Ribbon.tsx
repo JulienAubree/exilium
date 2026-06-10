@@ -76,8 +76,8 @@ export function Ribbon({
   return (
     <aside className="w-[168px] flex-shrink-0 flex flex-col bg-black/30 border-r border-cyan-500/10">
       <div className="px-2 py-2 border-b border-cyan-500/10">
-        <div className="text-[10px] uppercase tracking-wider text-cyan-500/70">Slots</div>
-        <div className="text-[11px] font-mono text-muted-foreground">
+        <div className="text-xs uppercase tracking-wider text-cyan-500/70">Slots</div>
+        <div className="text-xs font-mono text-muted-foreground">
           {discoveredCount}/{discoverable}
         </div>
       </div>
@@ -158,7 +158,7 @@ export function Ribbon({
               onMouseEnter={() => onHoverPosition(position)}
               onMouseLeave={() => onHoverPosition(null)}
             >
-              <div className="w-5 text-[10px] font-mono text-muted-foreground flex-shrink-0">
+              <div className="w-5 text-xs font-mono text-muted-foreground flex-shrink-0">
                 {position.toString().padStart(2, '0')}
               </div>
               <div className="flex-shrink-0">

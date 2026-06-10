@@ -60,7 +60,7 @@ export function Timer({ endTime, totalDuration, onComplete, className }: TimerPr
           <div
             className={cn(
               'h-1.5 rounded-full transition-[width] duration-1000 ease-linear',
-              completed ? 'bg-green-400' : 'bg-gradient-to-r from-primary to-silicium',
+              completed ? 'bg-green-400' : 'bg-primary',
             )}
             style={{ width: `${progress}%` }}
           />

@@ -104,7 +104,7 @@ export function ShipCategoryGrid({
                         alt={ship.name}
                         className="w-full h-full object-cover"
                       />
-                      <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                      <span className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded-full ">
                         x{ship.count.toLocaleString()}
                       </span>
                       {isSelected && (

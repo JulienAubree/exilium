@@ -49,11 +49,11 @@ export function ReportHero({ coords, title, statusLabel, status, planetClassId, 
         {planetClassId ? <PlanetDot planetClassId={planetClassId} size={72} /> : icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className={cn('text-[10px] uppercase tracking-[0.15em] font-medium', styles.accent)}>
+        <div className={cn('text-xs uppercase tracking-[0.15em] font-medium', styles.accent)}>
           {statusLabel}
         </div>
         <h2 className="text-lg font-bold text-foreground mt-1 truncate">{title}</h2>
-        <div className="text-[11px] font-mono text-muted-foreground mt-1">
+        <div className="text-xs font-mono text-muted-foreground mt-1">
           <CoordsLink galaxy={coords.galaxy} system={coords.system} position={coords.position} />
         </div>
         {lore && (

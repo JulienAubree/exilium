@@ -87,7 +87,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 mb-5">
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Galaxie</label>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Galaxie</label>
           <input
             type="number"
             min={1}
@@ -98,7 +98,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
           />
         </div>
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Systeme</label>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Systeme</label>
           <input
             type="number"
             min={1}
@@ -109,7 +109,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
           />
         </div>
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Rarete min.</label>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Rarete min.</label>
           <select
             value={minRarityFilter}
             onChange={(e) => setMinRarityFilter(e.target.value)}
@@ -161,7 +161,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
                     </div>
                     <div className="mt-1">
                       <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        className="rounded-full px-2 py-0.5 text-xs font-medium"
                         style={{ color: rarityColor, backgroundColor: `${rarityColor}20` }}
                       >
                         {RARITY_LABELS[offer.maxRarity] ?? offer.maxRarity}
@@ -182,7 +182,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : offer.offerId)}
-                  className="flex items-center justify-between text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <span>{isExpanded ? 'Masquer les details' : 'Voir les details'}</span>
                   <ChevronDown className={cn('h-3 w-3 transition-transform', isExpanded && 'rotate-180')} />
@@ -190,7 +190,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
 
                 {/* Expanded details */}
                 {isExpanded && (
-                  <div className="space-y-1.5 text-[11px] border-t border-border/50 pt-2">
+                  <div className="space-y-1.5 text-xs border-t border-border/50 pt-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Vendeur</span>
                       <span className="text-foreground">{offer.sellerUsername}</span>
@@ -211,7 +211,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
 
                 {/* Buy button */}
                 <Button
-                  variant="retro"
+                 
                   size="sm"
                   className="w-full mt-auto"
                   onClick={() => handleBuy(offer)}

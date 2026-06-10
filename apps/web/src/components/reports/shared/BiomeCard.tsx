@@ -35,7 +35,7 @@ export function BiomeCard({ biome, gameConfig }: Props) {
           {biome.name}
         </span>
         <span
-          className="text-[10px] rounded-full px-1.5 py-px font-medium"
+          className="text-xs rounded-full px-1.5 py-px font-medium"
           style={{ color, backgroundColor: `${color}20` }}
         >
           {RARITY_LABELS[biome.rarity] ?? biome.rarity}

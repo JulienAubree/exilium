@@ -442,7 +442,7 @@ export default function Defense() {
                       className="w-full h-full object-cover"
                       {...getDefenseVariantProps(defense.id)}
                     />
-                    <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                       x{defense.count}
                       {defense.maxPerPlanet ? ` / ${defense.maxPerPlanet}` : ''}
                     </span>
@@ -456,7 +456,7 @@ export default function Defense() {
                     <div className="flex-1" />
 
                     {d.atMax ? (
-                      <div className="text-[10px] text-muted-foreground">{d.queuedCount > 0 ? 'En construction' : 'Maximum atteint'}</div>
+                      <div className="text-xs text-muted-foreground">{d.queuedCount > 0 ? 'En construction' : 'Maximum atteint'}</div>
                     ) : (
                       <>
                         <ResourceCost
@@ -467,7 +467,7 @@ export default function Defense() {
                           currentSilicium={resources.silicium}
                           currentHydrogene={resources.hydrogene}
                         />
-                        <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+                        <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                           <ClockIcon className="h-3 w-3" />
                           {formatDuration(defense.timePerUnit)}
                         </div>
@@ -481,7 +481,7 @@ export default function Defense() {
                               max={d.maxQty}
                             />
                             <Button
-                              variant="retro"
+                             
                               size="sm"
                               className="w-full"
                               onClick={(e) => {

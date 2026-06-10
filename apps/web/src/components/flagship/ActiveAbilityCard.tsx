@@ -71,7 +71,7 @@ export function ActiveAbilityCard({
           />
         )}
         {onCooldown ? (
-          <span className="absolute top-2 right-2 bg-slate-800/90 text-slate-400 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border border-slate-700/50">
+          <span className="absolute top-2 right-2 bg-slate-800/90 text-slate-400 text-xs font-mono font-semibold px-2 py-0.5 rounded-full border border-slate-700/50">
             {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
           </span>
         ) : (
@@ -84,7 +84,7 @@ export function ActiveAbilityCard({
       {/* Content */}
       <div className="p-3 flex flex-col flex-1 gap-2">
         <div className="text-[13px] font-semibold text-foreground">{ability.name}</div>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">{ability.description}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{ability.description}</p>
         <div className="flex-1" />
 
         {/* Scan-specific UI */}
@@ -110,8 +110,8 @@ export function ActiveAbilityCard({
             >
               {scanMutation.isPending ? 'Scan en cours...' : 'Scanner'}
             </button>
-            {scanError && <p className="text-[11px] text-red-400">{scanError}</p>}
-            {scanMutation.isSuccess && <p className="text-[11px] text-emerald-400">Scan termine !</p>}
+            {scanError && <p className="text-xs text-red-400">{scanError}</p>}
+            {scanMutation.isSuccess && <p className="text-xs text-emerald-400">Scan termine !</p>}
           </>
         )}
       </div>

@@ -123,12 +123,12 @@ export function EnergyCard({
                 {net >= 0 ? '+' : ''}{formatCompact(net)}
               </span>
             </div>
-            <div className="text-[11px] text-muted-foreground mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               <span className="font-mono text-foreground">{formatCompact(produced)}</span> produits ·{' '}
               <span className="font-mono text-foreground">{formatCompact(consumed)}</span> consommés
             </div>
             {isDeficit && (
-              <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-destructive font-semibold">
+              <div className="mt-1.5 inline-flex items-center gap-1 text-xs text-destructive font-semibold">
                 <AlertTriangle className="h-3 w-3" /> Déficit — production des mines réduite
               </div>
             )}
@@ -146,10 +146,10 @@ export function EnergyCard({
               <span className="text-xs font-medium text-foreground group-hover:text-primary transition-colors">
                 Centrale solaire
               </span>
-              <span className="font-mono text-[10px] text-muted-foreground">Niv. {building.currentLevel}</span>
+              <span className="font-mono text-xs text-muted-foreground">Niv. {building.currentLevel}</span>
             </button>
             {nextLevelGain != null && nextLevelGain > 0 && (
-              <div className="text-[11px] text-energy">
+              <div className="text-xs text-energy">
                 <span className="font-mono">+{formatCompact(nextLevelGain)}</span>
                 <span className="text-muted-foreground"> au niv. {nextLevel}</span>
               </div>
@@ -163,10 +163,10 @@ export function EnergyCard({
             {building.isUpgrading && building.upgradeEndTime ? (
               <div className="space-y-1.5">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">
+                  <span className="text-xs uppercase tracking-wider text-amber-400 font-semibold">
                     {isConstruction ? 'Construction' : 'Amélioration'} en cours
                   </span>
-                  <span className="text-[10px] font-mono text-muted-foreground">→ {nextLevel}</span>
+                  <span className="text-xs font-mono text-muted-foreground">→ {nextLevel}</span>
                 </div>
                 <Timer
                   endTime={new Date(building.upgradeEndTime)}
@@ -193,7 +193,7 @@ export function EnergyCard({
                   currentSilicium={resources.silicium}
                   currentHydrogene={resources.hydrogene}
                 />
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
                   <ClockIcon className="h-3 w-3" />
                   {formatDuration(building.nextLevelTime)}
                 </div>
@@ -211,7 +211,7 @@ export function EnergyCard({
                   />
                 ) : (
                   <Button
-                    variant="retro"
+                   
                     size="sm"
                     className="w-full h-8 text-xs"
                     onClick={onUpgrade}

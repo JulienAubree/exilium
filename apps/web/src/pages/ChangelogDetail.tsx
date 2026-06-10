@@ -124,7 +124,7 @@ function TableOfContents({ toc }: { toc: TocEntry[] }) {
   if (sections.length < 2) return null;
   return (
     <nav className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 mb-6">
-      <div className="text-[10px] uppercase tracking-wider text-cyan-400/70 mb-2">Sommaire</div>
+      <div className="text-xs uppercase tracking-wider text-cyan-400/70 mb-2">Sommaire</div>
       <ol className="space-y-1">
         {sections.map((entry, i) => (
           <li key={entry.id}>
@@ -171,7 +171,7 @@ function renderMarkdown(content: string) {
           <thead>
             <tr className="border-b border-white/10">
               {headerCells.map((cell, i) => (
-                <th key={i} className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                <th key={i} className="px-3 py-2 text-left text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                   {inlineFormat(cell)}
                 </th>
               ))}
@@ -416,7 +416,7 @@ export default function ChangelogDetail() {
             <div className="flex items-center gap-2 text-xs">
               <span className="font-medium text-foreground">{comment.username ?? 'Inconnu'}</span>
               {comment.isAdmin && (
-                <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-bold text-primary">
                   Equipe
                 </span>
               )}

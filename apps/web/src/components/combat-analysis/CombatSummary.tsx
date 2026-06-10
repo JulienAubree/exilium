@@ -53,10 +53,10 @@ function FleetSummaryColumn({
 
   return (
     <div className="space-y-2">
-      <div className={`text-[10px] font-semibold uppercase tracking-wider ${color}`}>{label}</div>
+      <div className={`text-xs font-semibold uppercase tracking-wider ${color}`}>{label}</div>
       {/* Overall bar */}
       <div>
-        <div className="flex justify-between text-[10px] mb-0.5">
+        <div className="flex justify-between text-xs mb-0.5">
           <span className="text-muted-foreground">{totalSurvived}/{totalDeployed} survivants</span>
           <span className={totalSurvived > 0 ? 'text-emerald-400' : 'text-red-400'}>
             {Math.round(survivalPct)}%
@@ -83,7 +83,7 @@ function FleetSummaryColumn({
                 <span className={survived === 0 ? 'text-muted-foreground-faint line-through' : 'text-foreground'}>
                   {getName(type, gameConfig)}
                 </span>
-                <div className="flex items-center gap-2 text-[10px]">
+                <div className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground">{deployed}</span>
                   {lost > 0 && (
                     <>
@@ -188,7 +188,7 @@ export function CombatSummary({
       {/* Damage comparison bar */}
       {totalDamage > 0 && (
         <div className="glass-card p-4">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Degats infliges (coque)
           </div>
           <div className="flex justify-between text-xs mb-1.5">
@@ -206,25 +206,25 @@ export function CombatSummary({
       {(attackerStats || defenderStats) && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="glass-card p-3 text-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Bouclier absorbe</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Bouclier absorbe</div>
             <div className="text-sm font-bold text-cyan-400">
               {fmt((attackerStats?.shieldAbsorbed ?? 0) + (defenderStats?.shieldAbsorbed ?? 0))}
             </div>
           </div>
           <div className="glass-card p-3 text-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Armure bloquee</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Armure bloquee</div>
             <div className="text-sm font-bold text-amber-400">
               {fmt((attackerStats?.armorBlocked ?? 0) + (defenderStats?.armorBlocked ?? 0))}
             </div>
           </div>
           <div className="glass-card p-3 text-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Overkill gaspille</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Overkill gaspille</div>
             <div className="text-sm font-bold text-muted-foreground">
               {fmt((attackerStats?.overkillWasted ?? 0) + (defenderStats?.overkillWasted ?? 0))}
             </div>
           </div>
           <div className="glass-card p-3 text-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Rounds</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Rounds</div>
             <div className="text-sm font-bold text-foreground">{rounds.length}</div>
           </div>
         </div>
@@ -234,7 +234,7 @@ export function CombatSummary({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {pillage && Object.values(pillage).some((v) => v > 0) && (
           <div className="glass-card p-4">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 mb-2">Butin</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-2">Butin</div>
             <div className="flex flex-wrap gap-3">
               {Object.entries(pillage).map(([res, amount]) =>
                 amount > 0 ? (
@@ -251,7 +251,7 @@ export function CombatSummary({
         )}
         {debris && (debris.minerai > 0 || debris.silicium > 0) && (
           <div className="glass-card p-4">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Debris</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Debris</div>
             <div className="flex flex-wrap gap-3">
               {debris.minerai > 0 && (
                 <div className="flex items-center gap-1.5">
@@ -273,7 +273,7 @@ export function CombatSummary({
       {/* Repaired defenses */}
       {repairedDefenses && Object.keys(repairedDefenses).length > 0 && (
         <div className="glass-card p-4">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 mb-2">Defenses reparees</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">Defenses reparees</div>
           <div className="flex flex-wrap gap-3">
             {Object.entries(repairedDefenses).map(([def, count]) => (
               <span key={def} className="text-sm">

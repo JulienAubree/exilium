@@ -22,7 +22,7 @@ export function FlagshipImagePicker({
     <Modal
       open={open}
       onClose={onClose}
-      backdropClassName="bg-black/60 backdrop-blur-sm"
+      backdropClassName="bg-black/60 "
       className="glass-card max-w-lg lg:max-w-lg p-4 sm:p-6"
     >
       <h3 className="text-lg font-semibold mb-4">Choisir une image</h3>

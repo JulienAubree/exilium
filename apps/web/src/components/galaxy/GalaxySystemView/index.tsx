@@ -290,7 +290,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
           onHoverPosition={setHoveredPosition}
         />
         {/* System selector overlay — top-left */}
-        <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 backdrop-blur-sm z-10">
+        <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 z-10">
           <button
             type="button"
             onClick={onSystemPrev}

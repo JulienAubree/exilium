@@ -66,10 +66,10 @@ export default function FeedbackDetail() {
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', typeConfig.className)}>
+              <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold uppercase', typeConfig.className)}>
                 {typeConfig.emoji} {typeConfig.label}
               </span>
-              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', statusConfig.className)}>
+              <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold uppercase', statusConfig.className)}>
                 {statusConfig.label}
               </span>
             </div>
@@ -82,7 +82,7 @@ export default function FeedbackDetail() {
         {feedback.pagePath && (
           <Link
             to={feedback.pagePath}
-            className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors rounded-md border border-border/40 bg-card/40 px-2.5 py-1 font-mono"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors rounded-md border border-border/40 bg-card/40 px-2.5 py-1 font-mono"
             title="Page consultée par l'auteur lors du report"
           >
             <ExternalLink className="h-3 w-3" />
@@ -126,7 +126,7 @@ export default function FeedbackDetail() {
             <div className="flex items-center gap-2 text-xs">
               <span className="font-medium text-foreground">{comment.username ?? 'Inconnu'}</span>
               {comment.isAdmin && (
-                <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-bold text-primary">
                   Équipe
                 </span>
               )}

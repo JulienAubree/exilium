@@ -140,7 +140,7 @@ export function BottomTabBar() {
               </div>
               <span className="text-xs font-medium">{tab.label}</span>
               {isActive && (
-                <div className="absolute bottom-0 h-0.5 w-8 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--accent-glow))]" />
+                <div className="absolute bottom-0 h-0.5 w-8 rounded-full bg-primary" />
               )}
             </button>
           );

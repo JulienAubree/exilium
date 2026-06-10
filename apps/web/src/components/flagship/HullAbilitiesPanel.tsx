@@ -96,7 +96,7 @@ export function HullAbilitiesPanel({ flagship, hullConfig, hullId }: HullAbiliti
           ))}
         </div>
         {!isActive && (hullConfig.bonusLabels?.length ?? 0) > 0 && (
-          <p className="mt-2 text-[10px] text-muted-foreground italic">
+          <p className="mt-2 text-xs text-muted-foreground italic">
             Les effets passifs ne s'appliquent que lorsque le flagship est stationné.
           </p>
         )}

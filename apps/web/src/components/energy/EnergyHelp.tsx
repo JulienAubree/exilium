@@ -21,12 +21,12 @@ export function EnergyHelp({ planetName, planetClassId, planetImageIndex }: Ener
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
           />
         ) : (
-          <div className="w-full h-40 bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+          <div className="w-full h-40 bg-slate-950/60-900/60 to-slate-950" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
         <div className="absolute bottom-3 left-5 right-5">
           <p className="text-sm font-semibold text-foreground truncate">{planetName}</p>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Gestion de l'énergie</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Gestion de l'énergie</p>
         </div>
       </div>
 

@@ -33,11 +33,6 @@
     --ring: 210 80% 55%;
     --radius: 0.5rem;
 
-    --glow-minerai: 0 0 8px rgba(251, 146, 60, 0.3);
-    --glow-silicium: 0 0 8px rgba(52, 211, 153, 0.3);
-    --glow-hydrogene: 0 0 8px rgba(96, 165, 250, 0.3);
-    --glow-energy: 0 0 8px rgba(240, 192, 64, 0.3);
-
     /* ── Design system v2 (« calme spatial ») ─────────────────────────
        Tokens sémantiques. Les pages ne consomment QUE ces tokens via les
        primitives ui/. Réf : docs/reference/design-system.md */
@@ -103,25 +98,11 @@
     background-size: 200px 200px;
   }
 
+  /* v2 « calme spatial » : glass-card est redéfinie en matière pleine —
+     les ~100 usages existants migrent d'un coup. Alias déprécié de Surface,
+     à remplacer par <Surface> au fil de l'eau (M2). */
   .glass-card {
-    @apply bg-card border border-white/10 rounded-lg shadow-lg;
-    box-shadow: 0 4px 24px hsla(220, 55%, 3%, 0.5), 0 0 1px hsla(195, 100%, 90%, 0.1);
-  }
-
-  .glow-minerai {
-    text-shadow: var(--glow-minerai);
-  }
-
-  .glow-silicium {
-    text-shadow: var(--glow-silicium);
-  }
-
-  .glow-hydrogene {
-    text-shadow: var(--glow-hydrogene);
-  }
-
-  .glow-energy {
-    text-shadow: var(--glow-energy);
+    @apply bg-surface border border-border rounded-lg;
   }
 
   /* Halo around an icon container — works on non-text elements where
@@ -139,29 +120,16 @@
                 0 0 24px -4px rgba(96, 165, 250, 0.35);
   }
 
+  /* v2 : hovers des retro-cards sans glow — bordure renforcée uniquement. */
   .retro-card {
-    @apply bg-card border border-border rounded-md transition-colors;
+    @apply bg-surface border border-border rounded-md transition-colors;
   }
-  .retro-card:hover {
-    border-color: rgba(103, 212, 232, 0.3);
-    box-shadow: 0 0 10px rgba(103, 212, 232, 0.08);
-  }
-
-  .retro-card-minerai:hover {
-    border-color: rgba(251, 146, 60, 0.35);
-    box-shadow: 0 0 10px rgba(251, 146, 60, 0.1);
-  }
-  .retro-card-silicium:hover {
-    border-color: rgba(52, 211, 153, 0.35);
-    box-shadow: 0 0 10px rgba(52, 211, 153, 0.1);
-  }
-  .retro-card-hydrogene:hover {
-    border-color: rgba(96, 165, 250, 0.35);
-    box-shadow: 0 0 10px rgba(96, 165, 250, 0.1);
-  }
+  .retro-card:hover,
+  .retro-card-minerai:hover,
+  .retro-card-silicium:hover,
+  .retro-card-hydrogene:hover,
   .retro-card-energy:hover {
-    border-color: rgba(240, 192, 64, 0.35);
-    box-shadow: 0 0 10px rgba(240, 192, 64, 0.1);
+    border-color: hsl(var(--border-strong));
   }
 
   /* Viewport height with fallback: 100vh for browsers that don't

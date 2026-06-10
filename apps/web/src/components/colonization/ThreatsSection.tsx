@@ -22,14 +22,14 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
           Menaces
         </h3>
         {planetRaids.length > 0 && (
-          <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-[10px] font-bold text-red-400">
+          <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-xs font-bold text-red-400">
             {planetRaids.length} en approche
           </span>
         )}
       </div>
 
       <div className="px-4 pb-2">
-        <p className="text-[11px] text-muted-foreground leading-tight">
+        <p className="text-xs text-muted-foreground leading-tight">
           Les pirates lancent des raids à intervalles irréguliers tant que la colonisation n'est pas terminée.
         </p>
         <div className="mt-1.5">
@@ -81,7 +81,7 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
                       {shipEntries.map(([shipId, count]) => (
                         <span
                           key={shipId}
-                          className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-[10px] text-muted-foreground"
+                          className="rounded-md bg-card/80 border border-border/30 px-2 py-0.5 text-xs text-muted-foreground"
                         >
                           {getShipName(shipId, gameConfig)} x{count}
                         </span>
@@ -89,7 +89,7 @@ export function ThreatsSection({ planetRaids, gameConfig }: ThreatsSectionProps)
                     </div>
                   )}
                   {tier >= 2 && tier < 3 && raid.shipCount != null && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Flotte estimée : {raid.shipCount} vaisseaux
                     </p>
                   )}

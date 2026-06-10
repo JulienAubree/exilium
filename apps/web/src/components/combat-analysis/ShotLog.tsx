@@ -77,11 +77,11 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Shots fired by each unit */}
       <div className="glass-card p-3 border-emerald-500/10">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
           Tirs individuels
         </div>
         {shotsByShooter.length === 0 ? (
-          <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
+          <div className="text-xs text-muted-foreground-soft">Aucun tir</div>
         ) : (
           <div className="space-y-2">
             {shotsByShooter.map(({ shooterId, shots }) => {
@@ -92,12 +92,12 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
                 <div key={shooterId}>
                   <div className="flex items-center justify-between text-xs mb-0.5">
                     <span className="font-medium text-foreground">{shooterLabel}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {fmt(totalDmg)} dmg{kills > 0 && <span className="text-red-400 ml-1">{kills}K</span>}
                     </span>
                   </div>
                   {shots.map((e, i) => (
-                    <div key={i} className="flex items-center gap-1 text-[10px] py-0.5 pl-2">
+                    <div key={i} className="flex items-center gap-1 text-xs py-0.5 pl-2">
                       <ArrowRight className="h-2 w-2 text-emerald-400/40 shrink-0" />
                       <span className="text-foreground/80 truncate">
                         {label(e.targetId, e.targetType, gameConfig, numberMap)}
@@ -121,11 +121,11 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
 
       {/* Impacts received by each unit */}
       <div className="glass-card p-3 border-red-500/10">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-red-400 mb-2">
+        <div className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-2">
           Impacts individuels
         </div>
         {impactsByTarget.length === 0 ? (
-          <div className="text-[10px] text-muted-foreground-soft">Aucun impact</div>
+          <div className="text-xs text-muted-foreground-soft">Aucun impact</div>
         ) : (
           <div className="space-y-2">
             {impactsByTarget.map(({ targetId, impacts }) => {
@@ -139,7 +139,7 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
                     <span className={`font-medium ${destroyed ? 'text-red-400 line-through' : 'text-foreground'}`}>
                       {targetLabel}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {totalShield > 0 && <span className="text-cyan-400/70">{fmt(totalShield)}</span>}
                       {totalShield > 0 && totalHull > 0 && ' '}
                       {totalHull > 0 && <span className="text-orange-400/70">{fmt(totalHull)}</span>}
@@ -147,7 +147,7 @@ export function ShotLog({ events, initialUnits, unitType, side, round, gameConfi
                     </span>
                   </div>
                   {impacts.map((e, i) => (
-                    <div key={i} className="flex items-center gap-1 text-[10px] py-0.5 pl-2">
+                    <div key={i} className="flex items-center gap-1 text-xs py-0.5 pl-2">
                       <ArrowRight className="h-2 w-2 text-red-400/40 shrink-0" />
                       <span className="text-foreground/80 truncate">
                         {label(e.shooterId, e.shooterType, gameConfig, numberMap)}

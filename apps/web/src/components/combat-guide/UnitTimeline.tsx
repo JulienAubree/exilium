@@ -88,7 +88,7 @@ export function UnitTimeline({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-foreground">{label}</h3>
-          <div className="flex items-center gap-2 text-[10px] mt-0.5">
+          <div className="flex items-center gap-2 text-xs mt-0.5">
             <span className={sideColor}>{sideLabel}</span>
             <span className="text-muted-foreground">Coque : {fmt(initial.hull)}</span>
             <span className="text-muted-foreground">Bouclier : {fmt(initial.shield)}</span>
@@ -134,15 +134,15 @@ export function UnitTimeline({
 
               {/* Round header */}
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-foreground">Round {round}</span>
+                <span className="text-xs font-bold text-foreground">Round {round}</span>
                 {isAlive && snapshot && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span className="text-cyan-400/70 font-mono">{fmt(snapshot.shield)}</span>
                     <span className="text-orange-400/70 font-mono">{fmt(snapshot.hull)}</span>
                   </div>
                 )}
                 {snapshot?.destroyed && (
-                  <span className="text-[10px] text-red-400 font-bold">Detruit</span>
+                  <span className="text-xs text-red-400 font-bold">Detruit</span>
                 )}
               </div>
 
@@ -173,7 +173,7 @@ export function UnitTimeline({
                     <button
                       key={i}
                       type="button"
-                      className="flex items-center gap-1 text-[10px] py-0.5 w-full text-left hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
+                      className="flex items-center gap-1 text-xs py-0.5 w-full text-left hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
                       onClick={() => onSelectUnit(e.targetId)}
                     >
                       <ArrowRight className="h-2 w-2 text-emerald-400/40 shrink-0" />
@@ -203,7 +203,7 @@ export function UnitTimeline({
                     <button
                       key={i}
                       type="button"
-                      className="flex items-center gap-1 text-[10px] py-0.5 w-full text-left hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
+                      className="flex items-center gap-1 text-xs py-0.5 w-full text-left hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
                       onClick={() => onSelectUnit(e.shooterId)}
                     >
                       <ArrowRight className="h-2 w-2 text-red-400/40 shrink-0" />
@@ -221,7 +221,7 @@ export function UnitTimeline({
 
               {/* No activity */}
               {shotsFired.length === 0 && shotsReceived.length === 0 && isAlive && (
-                <div className="text-[10px] text-muted-foreground-faint">Aucune activite</div>
+                <div className="text-xs text-muted-foreground-faint">Aucune activite</div>
               )}
             </div>
           );

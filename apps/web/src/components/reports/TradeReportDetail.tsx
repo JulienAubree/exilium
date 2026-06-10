@@ -75,7 +75,7 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-purple-400/70 mb-1">
+            <div className="text-xs uppercase tracking-wider text-purple-400/70 mb-1">
               Donnees acquises via le marche
             </div>
             <h3 className="text-xl font-bold text-foreground leading-tight">
@@ -89,19 +89,19 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider',
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider',
                   statusBadge.cls,
                 )}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 {statusBadge.label}
               </span>
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+              <span className="rounded-full px-2.5 py-1 text-xs font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
                 {biomeCount} biome{biomeCount > 1 ? 's' : ''}
               </span>
               {maxRarityLabel && maxRarityColor && (
                 <span
-                  className="rounded-full px-2.5 py-1 text-[10px] font-semibold border"
+                  className="rounded-full px-2.5 py-1 text-xs font-semibold border"
                   style={{ color: maxRarityColor, backgroundColor: `${maxRarityColor}15`, borderColor: `${maxRarityColor}30` }}
                 >
                   {maxRarityLabel}
@@ -113,8 +113,8 @@ export function TradeReportDetail({ result }: TradeReportDetailProps) {
       </div>
 
       {/* ── Transaction info block ── */}
-      <div className="rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent p-4">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-purple-400/80 mb-2">
+      <div className="rounded-lg border border-purple-500/20 bg-slate-950/60 p-4">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-purple-400/80 mb-2">
           <ArrowLeftRight className="h-3 w-3" aria-hidden="true" />
           <span>Transaction commerciale</span>
         </div>

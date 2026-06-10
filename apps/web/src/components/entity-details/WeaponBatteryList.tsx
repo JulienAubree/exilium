@@ -23,15 +23,15 @@ export function WeaponBatteryList({ profiles, weaponsMultiplier, categoryLabels 
             className="rounded-md border border-border/30 bg-muted/30 px-2.5 py-1.5"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold text-foreground">
+              <span className="text-xs font-semibold text-foreground">
                 {isPrimary ? 'Canon principal' : 'Batterie secondaire'}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 Cible : <span className="text-foreground">{targetLabel}</span>
               </span>
             </div>
             <div className="mt-1 flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[11px] text-foreground font-mono">
+              <div className="flex items-center gap-1 text-xs text-foreground font-mono">
                 <WeaponsIcon size={12} className="text-red-400" />
                 {fmt(effectiveDamage)}
                 {weaponsMultiplier > 1 && (
@@ -40,7 +40,7 @@ export function WeaponBatteryList({ profiles, weaponsMultiplier, categoryLabels 
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-foreground font-mono">
+              <div className="flex items-center gap-1 text-xs text-foreground font-mono">
                 <ShotsIcon size={12} className="text-amber-400" />
                 ×{w.shots}
               </div>

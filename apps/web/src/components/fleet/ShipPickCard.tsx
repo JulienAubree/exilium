@@ -99,7 +99,7 @@ export const ShipPickCard = memo(function ShipPickCard({
           />
         )}
 
-        <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm tabular-nums">
+        <span className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums">
           x{available.toLocaleString('fr-FR')}
         </span>
 
@@ -123,11 +123,11 @@ export const ShipPickCard = memo(function ShipPickCard({
           {shipName}
         </span>
         {isConflict ? (
-          <span className="text-[10px] text-destructive">
+          <span className="text-xs text-destructive">
             x{value} — {conflictLabel ?? 'incompatible'}
           </span>
         ) : disabled ? (
-          <span className="text-[10px] text-muted-foreground-soft">non disponible</span>
+          <span className="text-xs text-muted-foreground-soft">non disponible</span>
         ) : isSelected ? (
           <QuantityStepper
             value={value}

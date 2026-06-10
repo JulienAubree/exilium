@@ -93,7 +93,7 @@ export function QuantityStepper({
           type="button"
           onClick={() => onChange(max)}
           disabled={value >= max}
-          className="h-7 rounded-md px-1.5 text-[10px] font-bold text-emerald-400 transition-colors hover:text-emerald-300 disabled:opacity-30 disabled:pointer-events-none"
+          className="h-7 rounded-md px-1.5 text-xs font-bold text-emerald-400 transition-colors hover:text-emerald-300 disabled:opacity-30 disabled:pointer-events-none"
         >
           MAX
         </button>

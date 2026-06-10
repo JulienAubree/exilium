@@ -158,8 +158,8 @@ export function RoundDisplay({
         return (
           <div className="rounded-lg border border-cyan-500/15 bg-cyan-950/10 p-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-cyan-400 font-semibold uppercase tracking-wider text-[10px]">Bouclier planétaire</span>
-              <span className="text-muted-foreground font-mono text-[10px]">{Math.floor(shieldMax)} pts</span>
+              <span className="text-cyan-400 font-semibold uppercase tracking-wider text-xs">Bouclier planétaire</span>
+              <span className="text-muted-foreground font-mono text-xs">{Math.floor(shieldMax)} pts</span>
             </div>
             <div className="flex gap-1.5">
               {result.rounds.map((round, i) => {
@@ -174,7 +174,7 @@ export function RoundDisplay({
                     className={`flex-1 h-5 rounded transition-all duration-700 ease-in-out ${
                       dark
                         ? 'bg-muted/15 border border-red-500/20'
-                        : 'bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.3)]'
+                        : 'bg-gradient-to-r from-cyan-600 to-cyan-400'
                     } ${isCurrentRound ? 'ring-1 ring-white/40' : ''}`}
                     title={`Round ${i + 1}${pierced ? ' — Percé' : ' — Tenu'}`}
                   />
@@ -192,7 +192,7 @@ export function RoundDisplay({
         const enemyDamage = isDefPerspective ? round.attackerDamageByType : round.defenderDamageByType;
 
         return (
-          <div className="grid grid-cols-2 gap-4 text-[11px]">
+          <div className="grid grid-cols-2 gap-4 text-xs">
             <DamageRoundSummary title="Dégâts subis" damageByType={myDamage} gameConfig={gameConfig} />
             <DamageRoundSummary title="Dégâts infligés" damageByType={enemyDamage} gameConfig={gameConfig} />
           </div>
@@ -204,7 +204,7 @@ export function RoundDisplay({
         <div className="rounded-lg border border-border/20 overflow-hidden">
           <button
             type="button"
-            className="w-full px-3 py-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-colors"
+            className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-colors"
             onClick={() => setShotDetailOpen(!shotDetailOpen)}
           >
             <span>Detail des salves</span>
@@ -383,7 +383,7 @@ function DamageRoundSummary({
 
   return (
     <div className="space-y-1">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{title}</div>
       {entries.map(([type, d]) => {
         const name = type === '__planetaryShield__' ? 'Bouclier planétaire' : getUnitName(type, gameConfig);
         const isShieldOnly = type === '__planetaryShield__';

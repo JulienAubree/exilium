@@ -23,7 +23,7 @@ export function DeathsList({ events, unitType, round, gameConfig }: DeathsListPr
     <div className="glass-card p-3 border-red-500/10">
       <div className="flex items-center gap-2 mb-2">
         <XCircle className="h-3.5 w-3.5 text-red-400" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
           Unites detruites ({kills.length})
         </span>
       </div>
@@ -34,7 +34,7 @@ export function DeathsList({ events, unitType, round, gameConfig }: DeathsListPr
             className="flex items-center justify-between text-xs rounded-md bg-red-500/5 px-2 py-1.5"
           >
             <div className="flex items-center gap-2">
-              <span className="text-red-400/70 font-mono text-[10px]">
+              <span className="text-red-400/70 font-mono text-xs">
                 {e.targetId.split('-').pop()?.slice(0, 4) ?? e.targetId}
               </span>
               <span className="text-muted-foreground">par</span>

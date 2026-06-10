@@ -123,7 +123,7 @@ export function AbandonColonyModal({
                       <div className="truncate text-sm font-medium text-foreground">
                         {p.name}
                         {p.planetClassId === 'homeworld' && (
-                          <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-xs font-medium text-primary">
                             Capitale
                           </span>
                         )}
@@ -400,7 +400,7 @@ function FleetCard({
               <div className="bg-hydrogene" style={{ width: `${pct(loaded.hydrogene)}%` }} />
             )}
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] tabular-nums">
+          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums">
             <span className="inline-flex items-center gap-1 text-minerai">
               <MineraiIcon size={10} /> {loaded.minerai.toLocaleString('fr-FR')}
             </span>

@@ -90,7 +90,7 @@ export function FleetSummaryBar({ mission, selectedShips, totalCargo, cargoCapac
                 <span className="text-amber-300 font-bold">{fmt(miningStats.maxPerCycle)}</span>
               </div>
               {miningStats.maxPerCycle < cargoCapacity * 0.9 && miningStats.fleetExtraction < (miningStats.effectiveCargo ?? cargoCapacity) && (
-                <div className="text-[10px] text-amber-400/80 mt-0.5">
+                <div className="text-xs text-amber-400/80 mt-0.5">
                   Extraction limitee par les prospecteurs — ajoutez-en ou retirez des transporteurs
                 </div>
               )}

@@ -55,7 +55,7 @@ export function CombatTimeline({
             className={cn(
               'shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold transition-all',
               selectedRound === index
-                ? 'bg-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.4)]'
+                ? 'bg-blue-500 text-white'
                 : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground',
             )}
           >
@@ -76,25 +76,25 @@ export function CombatTimeline({
       ) : stats ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">
               Bouclier
             </div>
             <div className="text-sm font-bold text-cyan-400">{fmt(stats.shield)}</div>
           </div>
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">
               Armure
             </div>
             <div className="text-sm font-bold text-amber-400">{fmt(stats.armor)}</div>
           </div>
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">
               Degats att.
             </div>
             <div className="text-sm font-bold text-blue-400">{fmt(stats.attackerLost)}</div>
           </div>
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">
               Degats def.
             </div>
             <div className="text-sm font-bold text-rose-400">{fmt(stats.defenderLost)}</div>

@@ -111,7 +111,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
   const reward = quest?.reward;
 
   return (
-    <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-80 rounded-md border border-amber-500/30 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+    <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-80 rounded-md border border-amber-500/30 bg-surface-raised shadow-lg animate-slide-up">
       <div className="flex items-center justify-between border-b border-border/30 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-400">{'\u2605'}</span>
@@ -119,7 +119,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
             Chapitre {chapterNumber} : {chapter?.title}
           </span>
         </div>
-        <span className="text-[10px] text-muted-foreground">{completedInChapter}/{questCount}</span>
+        <span className="text-xs text-muted-foreground">{completedInChapter}/{questCount}</span>
       </div>
 
       <div className="px-3 pt-2">
@@ -130,7 +130,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
 
       {isChapterIntro && chapter ? (
         <div className="p-3">
-          <p className="border-l-2 border-amber-500/30 pl-3 text-[11px] italic leading-relaxed text-muted-foreground">
+          <p className="border-l-2 border-amber-500/30 pl-3 text-xs italic leading-relaxed text-muted-foreground">
             {chapter.journalIntro}
           </p>
           <button
@@ -143,13 +143,13 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
       ) : quest ? (
         <div className="p-3 space-y-2">
           {journalEntry && (
-            <p className="border-l-2 border-amber-500/30 pl-3 text-[11px] italic leading-relaxed text-muted-foreground">
+            <p className="border-l-2 border-amber-500/30 pl-3 text-xs italic leading-relaxed text-muted-foreground">
               {journalEntry}
             </p>
           )}
 
           <div className="rounded-md bg-background/50 px-2.5 py-2">
-            <p className="text-[11px] font-medium text-foreground">{objectiveLabel}</p>
+            <p className="text-xs font-medium text-foreground">{objectiveLabel}</p>
             <div className="mt-1.5 flex items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
@@ -157,14 +157,14 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] tabular-nums text-muted-foreground">{currentProgress}/{targetValue}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{currentProgress}/{targetValue}</span>
             </div>
           </div>
 
           {reward && (
             <div className="flex items-center gap-3 rounded bg-background/50 px-2 py-1.5">
-              <span className="text-[10px] text-muted-foreground">Recompense :</span>
-              <div className="flex items-center gap-2 text-[10px]">
+              <span className="text-xs text-muted-foreground">Recompense :</span>
+              <div className="flex items-center gap-2 text-xs">
                 {reward.minerai > 0 && <span className="flex items-center gap-0.5 text-minerai"><MineraiIcon size={10} />{reward.minerai.toLocaleString()}</span>}
                 {reward.silicium > 0 && <span className="flex items-center gap-0.5 text-silicium"><SiliciumIcon size={10} />{reward.silicium.toLocaleString()}</span>}
                 {reward.hydrogene > 0 && <span className="flex items-center gap-0.5 text-hydrogene"><HydrogeneIcon size={10} />{reward.hydrogene.toLocaleString()}</span>}
@@ -185,7 +185,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
               {actionLink && (
                 <button
                   onClick={actionLink.action}
-                  className="text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+                  className="text-xs font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
                 >
                   {actionLink.label}
                 </button>
@@ -193,7 +193,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
               {quest.id === 'quest_11' && (
                 <button
                   onClick={() => { showNamingModal(); onClose(); }}
-                  className="text-[11px] font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
+                  className="text-xs font-medium text-amber-400 underline underline-offset-2 transition-colors hover:text-amber-300"
                 >
                   Nommer votre vaisseau {'\u2192'}
                 </button>

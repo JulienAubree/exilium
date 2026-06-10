@@ -43,7 +43,7 @@ export function CraftEtaBadge({ cost, stock, rates, quantity = 1, className }: C
     return (
       <span
         className={cn(
-          'inline-flex items-center gap-1 font-mono text-[10px] text-destructive/80',
+          'inline-flex items-center gap-1 font-mono text-xs text-destructive/80',
           className,
         )}
         title="Production insuffisante pour atteindre ce coût avec les rates actuels"
@@ -57,7 +57,7 @@ export function CraftEtaBadge({ cost, stock, rates, quantity = 1, className }: C
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground',
+        'inline-flex items-center gap-1 font-mono text-xs text-muted-foreground',
         className,
       )}
       title="Temps estimé pour accumuler les ressources manquantes au taux de production actuel"

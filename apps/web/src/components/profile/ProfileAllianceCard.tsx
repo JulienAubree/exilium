@@ -31,7 +31,7 @@ export function ProfileAllianceCard({
       <div className="flex-1 min-w-0">
         <div className="text-base font-bold text-foreground truncate">{allianceName}</div>
         {isOwn && allianceRole && (
-          <div className="text-[11px] text-muted-foreground mt-0.5">{ROLE_LABELS[allianceRole] ?? allianceRole}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{ROLE_LABELS[allianceRole] ?? allianceRole}</div>
         )}
       </div>
       {isOwn ? (

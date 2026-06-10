@@ -68,14 +68,14 @@ export function UnitCard({
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              'text-[11px] font-medium',
+              'text-xs font-medium',
               snapshot.destroyed ? 'text-red-400 line-through' : 'text-foreground',
             )}
           >
             {getUnitName(snapshot.unitType, gameConfig)} #{shortId}
           </span>
         </div>
-        <span className="text-[10px] text-muted-foreground font-mono">
+        <span className="text-xs text-muted-foreground font-mono">
           {snapshot.destroyed ? 'Detruit' : `${fmt(snapshot.hull)}/${fmt(maxHull)}`}
         </span>
       </div>
@@ -92,7 +92,7 @@ export function UnitCard({
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           {/* Shots fired */}
           <div className="space-y-1">
             <div className="text-emerald-400 font-semibold uppercase tracking-wider">

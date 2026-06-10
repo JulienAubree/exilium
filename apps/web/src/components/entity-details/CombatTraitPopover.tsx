@@ -85,7 +85,7 @@ export function CombatTraitPopover({ variant, label, categoryLabel, count }: Pro
           </div>
           <p className="text-xs text-foreground leading-relaxed">{content.description}</p>
           {content.example && (
-            <p className="mt-2 text-[11px] text-muted-foreground italic leading-relaxed">{content.example}</p>
+            <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed">{content.example}</p>
           )}
         </div>,
         document.body,

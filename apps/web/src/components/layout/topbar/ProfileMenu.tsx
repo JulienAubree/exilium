@@ -40,7 +40,7 @@ export function ProfileMenu() {
         ) : (
           <div
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white',
+              'flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground',
               open && 'ring-2 ring-primary',
             )}
           >
@@ -52,7 +52,7 @@ export function ProfileMenu() {
       </button>
 
       {open && (
-        <div className="fixed right-2 top-12 z-50 mt-1 w-48 sm:absolute sm:top-full sm:right-0 rounded-lg border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+        <div className="fixed right-2 top-12 z-50 mt-1 w-48 sm:absolute sm:top-full sm:right-0 rounded-lg border border-white/10 bg-surface-raised shadow-lg animate-slide-up">
           <div className="p-1.5">
             <button
               onClick={() => { navigate('/profile'); setOpen(false); }}

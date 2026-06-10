@@ -93,7 +93,7 @@ function ResourcePanel({ mineLevel, mineLabel, production, storageLevel, capacit
       <div className="flex items-center gap-4 text-xs">
         {/* Mine */}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] text-muted-foreground">{mineLabel}</div>
+          <div className="text-xs text-muted-foreground">{mineLabel}</div>
           <div className="flex items-baseline gap-1.5">
             <span className="font-bold" style={{ color }}>Niv. {mineLevel}</span>
             <span className="text-muted-foreground">·</span>
@@ -102,7 +102,7 @@ function ResourcePanel({ mineLevel, mineLabel, production, storageLevel, capacit
         </div>
         {/* Storage */}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Hangar{storageLevel != null && <span> Niv. {storageLevel}</span>}
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -221,15 +221,15 @@ export function OverviewKpiBar({ resources, liveResources, ships, levels }: Over
         <div className="border-t border-border/30 px-4 py-3">
           <div className="flex items-center justify-around text-center">
             <div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Produite</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Produite</div>
               <div className="text-sm font-bold text-yellow-400">{Math.floor(resources.energyProduced).toLocaleString('fr-FR')}</div>
             </div>
             <div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Consommee</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Consommee</div>
               <div className="text-sm font-bold text-orange-400">{Math.floor(resources.energyConsumed).toLocaleString('fr-FR')}</div>
             </div>
             <div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Balance</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Balance</div>
               <div className={`text-sm font-bold ${energyPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                 {energyPositive ? '+' : ''}{Math.floor(energyBalance).toLocaleString('fr-FR')}
               </div>

@@ -43,7 +43,7 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
 
 /**
  * Typographie du design system — 6 rôles, plancher 12px, pas d'uppercase.
- * Remplace les text-[10px]/text-[11px] et l'uppercase tracking-wider sauvages.
+ * Remplace les text-xs/text-xs et l'uppercase tracking-wider sauvages.
  */
 export const Text = forwardRef<HTMLElement, TextProps>(
   ({ variant = 'body', tone = 'default', nums = false, as, className, ...props }, ref) => {

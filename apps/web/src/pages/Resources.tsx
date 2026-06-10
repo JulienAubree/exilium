@@ -441,7 +441,7 @@ export default function Resources() {
           );
           return (
             <div className="rounded-md border border-border bg-card/50 p-3 space-y-1.5">
-              <div className="text-[11px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
+              <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">
                 Remboursement estimé ({refund.ratio}%)
               </div>
               <div className="flex flex-wrap gap-3 text-xs">

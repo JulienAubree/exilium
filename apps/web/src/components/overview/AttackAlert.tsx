@@ -54,7 +54,7 @@ export function AttackAlert({ hostileFleets, onTimerComplete }: AttackAlertProps
             <AlertTriangle className="h-[18px] w-[18px] flex-shrink-0" stroke="#ef4444" />
           </div>
           <span className="text-red-400 font-bold text-sm uppercase tracking-wider">Attaque imminente</span>
-          <span className="text-red-400/60 text-[10px] font-semibold ml-auto">
+          <span className="text-red-400/60 text-xs font-semibold ml-auto">
             {hostileFleets.length} flotte{hostileFleets.length > 1 ? 's' : ''}
           </span>
         </div>
@@ -101,7 +101,7 @@ export function AttackAlert({ hostileFleets, onTimerComplete }: AttackAlertProps
                   <Timer endTime={new Date(event.arrivalTime)} onComplete={onTimerComplete} className="!text-red-400 font-bold" />
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-red-300/60">
+              <div className="flex items-center gap-1.5 text-xs text-red-300/60">
                 <span>{hasOrigin ? `[${event.originGalaxy}:${event.originSystem}:${event.originPosition}]` : '???'} → ici</span>
                 {shipCount > 0 && (
                   <>

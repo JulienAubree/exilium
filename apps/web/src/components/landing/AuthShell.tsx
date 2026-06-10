@@ -48,7 +48,7 @@ export function AuthShell({ title, eyebrow, children, footer }: AuthShellProps) 
         <div className="w-full max-w-sm rounded-xl border border-white/10 bg-card/70 p-7 shadow-[0_8px_60px_-8px_hsl(220,55%,3%,0.7)] backdrop-blur-xl sm:p-8">
           <div className="mb-6 text-center">
             {eyebrow && (
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.4em] text-primary">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.4em] text-primary">
                 {eyebrow}
               </p>
             )}
@@ -61,7 +61,7 @@ export function AuthShell({ title, eyebrow, children, footer }: AuthShellProps) 
         </div>
       </main>
 
-      <footer className="relative z-10 px-4 py-5 text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground-soft sm:px-8">
+      <footer className="relative z-10 px-4 py-5 text-center text-xs uppercase tracking-[0.25em] text-muted-foreground-soft sm:px-8">
         Exilium · Stratégie spatiale en bêta
       </footer>
     </div>

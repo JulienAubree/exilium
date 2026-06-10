@@ -14,7 +14,7 @@ export function AvatarPicker({ currentAvatarId, onSelect, onClose }: AvatarPicke
     <Modal
       open
       onClose={onClose}
-      backdropClassName="bg-black/60 backdrop-blur-sm"
+      backdropClassName="bg-black/60 "
       className="glass-card max-w-lg lg:max-w-lg p-6"
     >
       <h3 className="text-lg font-semibold mb-4">Choisir un avatar</h3>

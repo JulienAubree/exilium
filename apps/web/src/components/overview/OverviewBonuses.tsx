@@ -63,7 +63,7 @@ export function OverviewBonuses({ planet, resourceData, gameConfig, governance }
 
   return (
     <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase text-primary/70 font-semibold tracking-wider mb-2">
+      <div className="flex items-center gap-1.5 text-xs uppercase text-primary/70 font-semibold tracking-wider mb-2">
         <Sparkles className="h-3 w-3" />
         Bonus actifs sur la planète
       </div>

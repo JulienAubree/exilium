@@ -126,7 +126,7 @@ export function StatCell({ icon, label, value, variant, wide }: {
         <span className={v.iconColor}>{icon}</span>
       </div>
       <div>
-        <div className="text-[10px] text-slate-500 uppercase tracking-wide">{label}</div>
+        <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
         <div className={`text-base font-bold font-mono leading-tight ${v.valueColor}`}>{fmt(value)}</div>
       </div>
     </div>
@@ -151,7 +151,7 @@ export function EffectiveStatCell({ icon, label, base, effective, multiplier, va
         <span className={v.iconColor}>{icon}</span>
       </div>
       <div>
-        <div className="text-[10px] text-slate-500 uppercase tracking-wide">{label}</div>
+        <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
         <div className={`text-base font-bold font-mono leading-tight ${v.valueColor}`}>{fmt(effective)}</div>
         {hasBonus && (
           <div className="text-[9px] text-emerald-500">base {fmt(base)} · +{bonusPercent}%</div>
@@ -165,19 +165,19 @@ export function CostPills({ cost }: { cost: { minerai: number; silicium: number;
   return (
     <div className="flex gap-2 flex-wrap">
       {cost.minerai > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-minerai/[0.08] text-minerai border border-minerai/15 flex items-center gap-1.5">
+        <span className="text-xs font-semibold font-mono px-2.5 py-1 rounded-md bg-minerai/[0.08] text-minerai border border-minerai/15 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-minerai" />
           {fmt(cost.minerai)}
         </span>
       )}
       {cost.silicium > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-silicium/[0.08] text-silicium border border-silicium/15 flex items-center gap-1.5">
+        <span className="text-xs font-semibold font-mono px-2.5 py-1 rounded-md bg-silicium/[0.08] text-silicium border border-silicium/15 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-silicium" />
           {fmt(cost.silicium)}
         </span>
       )}
       {cost.hydrogene > 0 && (
-        <span className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md bg-hydrogene/[0.08] text-hydrogene border border-hydrogene/15 flex items-center gap-1.5">
+        <span className="text-xs font-semibold font-mono px-2.5 py-1 rounded-md bg-hydrogene/[0.08] text-hydrogene border border-hydrogene/15 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-hydrogene" />
           {fmt(cost.hydrogene)}
         </span>

@@ -44,7 +44,7 @@ export function EnergyBar({ totalProduced, totalConsumed, segments, productionFa
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[10px] text-muted-foreground">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-muted-foreground">
         {segments.map((seg) => (
           <span key={seg.label} className="flex items-center gap-1">
             <span className="inline-block size-1.5 rounded-full" style={{ backgroundColor: seg.color }} />

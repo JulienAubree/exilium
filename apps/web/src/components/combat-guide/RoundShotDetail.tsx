@@ -142,7 +142,7 @@ function AggregatedRow({ group, gameConfig }: { group: ShotGroup; gameConfig: Ga
           <div className="rounded-full bg-orange-500/60" style={{ flex: group.hullDamage / maxDmg }} title={`Coque : ${fmt(group.hullDamage)}`} />
         )}
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {group.shieldAbsorbed > 0 && <span className="text-cyan-400/80">{fmt(group.shieldAbsorbed)} bouclier</span>}
         {group.hullDamage > 0 && <span className="text-orange-400/80">{fmt(group.hullDamage)} coque</span>}
         {group.kills > 0 && <span className="text-red-400">{group.kills} detruit{group.kills > 1 ? 's' : ''}</span>}
@@ -165,7 +165,7 @@ function IndividualShotRow({
   const targetLabel = unitLabel(event.targetId, event.targetType, gameConfig, numberMap);
 
   return (
-    <div className="flex items-center gap-1.5 text-[10px] py-0.5">
+    <div className="flex items-center gap-1.5 text-xs py-0.5">
       <ArrowRight className="h-2 w-2 text-muted-foreground-faint shrink-0" />
       {onSelectUnit ? (
         <button
@@ -220,7 +220,7 @@ function ShooterBlock({
         ) : (
           <span className="font-medium text-foreground">{label}</span>
         )}
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {group.shots.length} tir{group.shots.length > 1 ? 's' : ''}
           {totalShield > 0 && <span className="text-cyan-400/70 ml-1">{fmt(totalShield)}</span>}
           {totalHull > 0 && <span className="text-orange-400/70 ml-1">{fmt(totalHull)}</span>}
@@ -269,7 +269,7 @@ export function RoundShotDetail({
   return (
     <div className="space-y-2">
       {/* View toggle */}
-      <div className="flex items-center gap-1 text-[10px]">
+      <div className="flex items-center gap-1 text-xs">
         <button
           type="button"
           className={`px-2 py-0.5 rounded transition-colors ${viewMode === 'summary' ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -296,16 +296,16 @@ export function RoundShotDetail({
       {viewMode === 'summary' && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
+            <div className="text-xs uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
             {aggLeft.length === 0
-              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
+              ? <div className="text-xs text-muted-foreground-soft">Aucun tir</div>
               : aggLeft.map((g) => <AggregatedRow key={`${g.shooterType}-${g.targetType}`} group={g} gameConfig={gameConfig} />)
             }
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
+            <div className="text-xs uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
             {aggRight.length === 0
-              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
+              ? <div className="text-xs text-muted-foreground-soft">Aucun tir</div>
               : aggRight.map((g) => <AggregatedRow key={`${g.shooterType}-${g.targetType}`} group={g} gameConfig={gameConfig} />)
             }
           </div>
@@ -316,16 +316,16 @@ export function RoundShotDetail({
       {viewMode === 'individual' && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <div className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
+            <div className="text-xs uppercase tracking-wider text-blue-400 font-semibold">{leftLabel}</div>
             {indLeft.length === 0
-              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
+              ? <div className="text-xs text-muted-foreground-soft">Aucun tir</div>
               : indLeft.map((g) => <ShooterBlock key={g.shooterId} group={g} gameConfig={gameConfig} numberMap={unitNumberMap} onSelectUnit={onSelectUnit} />)
             }
           </div>
           <div className="space-y-1.5">
-            <div className="text-[10px] uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
+            <div className="text-xs uppercase tracking-wider text-rose-400 font-semibold">{rightLabel}</div>
             {indRight.length === 0
-              ? <div className="text-[10px] text-muted-foreground-soft">Aucun tir</div>
+              ? <div className="text-xs text-muted-foreground-soft">Aucun tir</div>
               : indRight.map((g) => <ShooterBlock key={g.shooterId} group={g} gameConfig={gameConfig} numberMap={unitNumberMap} onSelectUnit={onSelectUnit} />)
             }
           </div>

@@ -117,7 +117,7 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
     <Modal
       open={open}
       onClose={onClose}
-      backdropClassName="bg-black/60 backdrop-blur-sm"
+      backdropClassName="bg-black/60 "
       closeOnBackdropClick={false}
       className="max-w-2xl lg:max-w-2xl max-h-[90vh] border-slate-600 bg-slate-800/95 p-4 sm:p-6 shadow-xl rounded-lg"
     >
@@ -152,7 +152,7 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
               )}
             >
               {isCurrent && (
-                <span className="inline-block mb-1.5 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 uppercase tracking-wide">
+                <span className="inline-block mb-1.5 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400 uppercase tracking-wide">
                   Coque actuelle
                 </span>
               )}
@@ -164,10 +164,10 @@ export function HullChangeModal({ open, onClose, flagship }: HullChangeModalProp
               >
                 {hull.name}
               </div>
-              <p className="mt-1 text-[11px] text-slate-400 leading-snug">{hull.description}</p>
+              <p className="mt-1 text-xs text-slate-400 leading-snug">{hull.description}</p>
               <ul className="mt-2 space-y-0.5">
                 {(hull.bonusLabels ?? []).map((bonus: string, i: number) => (
-                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
                     <span
                       className={cn(
                         'mt-0.5 shrink-0',

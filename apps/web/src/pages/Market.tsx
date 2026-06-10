@@ -102,7 +102,7 @@ export default function Market() {
             className="h-full w-full object-cover opacity-40 blur-sm scale-110"
             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/60 via-slate-950/80 to-purple-950/60" />
+          <div className="absolute inset-0 bg-slate-950/60" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 

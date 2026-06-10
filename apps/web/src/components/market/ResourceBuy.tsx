@@ -47,7 +47,7 @@ export function ResourceBuy({ planetId }: ResourceBuyProps) {
           className={cn(
             'rounded-md border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all',
             !resourceFilter
-              ? 'border-primary/50 text-primary bg-primary/10 shadow-[0_0_8px_rgba(103,212,232,0.15)]'
+              ? 'border-primary/50 text-primary bg-primary/10'
               : 'border-border text-muted-foreground hover:border-white/20 hover:text-foreground',
           )}
         >
@@ -98,7 +98,7 @@ export function ResourceBuy({ planetId }: ResourceBuyProps) {
                     {RESOURCE_LABELS[offer.resourceType]}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-xs text-muted-foreground font-mono">
                   [{offer.sellerCoords.galaxy}:{offer.sellerCoords.system}:{offer.sellerCoords.position}]
                 </span>
               </div>
@@ -111,7 +111,7 @@ export function ResourceBuy({ planetId }: ResourceBuyProps) {
               </div>
 
               <Button
-                variant="retro"
+               
                 size="sm"
                 className="w-full mt-auto"
                 onClick={() => handleBuy(offer)}

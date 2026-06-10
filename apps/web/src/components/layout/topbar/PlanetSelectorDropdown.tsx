@@ -53,7 +53,7 @@ export function PlanetSelectorDropdown({ planetId, planets, onSelect }: Props) {
       </button>
 
       {open && (
-        <div className="fixed left-2 right-2 top-12 z-50 mt-1 sm:absolute sm:right-auto sm:left-0 sm:top-full sm:min-w-48 rounded-md border border-white/10 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+        <div className="fixed left-2 right-2 top-12 z-50 mt-1 sm:absolute sm:right-auto sm:left-0 sm:top-full sm:min-w-48 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up">
           {planets.map((planet) => {
             const isColonizing = planet.status === 'colonizing';
             return (
@@ -81,7 +81,7 @@ export function PlanetSelectorDropdown({ planetId, planets, onSelect }: Props) {
                 </span>
                 {isColonizing && (
                   <span
-                    className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
+                    className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-xs font-medium text-amber-400"
                     title="Colonisation en cours"
                   >
                     <Rocket className="h-2.5 w-2.5 animate-pulse" />

@@ -36,7 +36,7 @@ export function EntityDetailOverlay({ open, onClose, title, children }: EntityDe
         {...dialogProps}
         className={cn(
           'relative z-50 w-full overflow-y-auto shadow-lg',
-          'max-h-[85vh] rounded-t-2xl animate-slide-up-sheet bg-card/95 backdrop-blur-lg border-t border-white/10',
+          'max-h-[85vh] rounded-t-2xl animate-slide-up-sheet bg-surface-raised border-t border-white/10',
           'lg:max-w-2xl lg:max-h-[85vh] lg:rounded-lg lg:mx-4 lg:border lg:border-border lg:bg-card lg:backdrop-blur-none lg:animate-slide-up',
         )}
       >

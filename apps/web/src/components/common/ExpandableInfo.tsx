@@ -42,7 +42,7 @@ export function ExpandableInfo({
         onClick={toggle}
         aria-expanded={isOpen}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+          'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium transition-colors',
           BTN_COLOR[accent],
         )}
       >
@@ -51,7 +51,7 @@ export function ExpandableInfo({
         <ChevronDown className={cn('h-3 w-3 transition-transform', isOpen && 'rotate-180')} />
       </button>
       {isOpen && (
-        <div className={cn('mt-2 rounded-lg border p-3 text-[11px] leading-relaxed space-y-2', COLOR_MAP[accent])}>
+        <div className={cn('mt-2 rounded-lg border p-3 text-xs leading-relaxed space-y-2', COLOR_MAP[accent])}>
           {children}
         </div>
       )}

@@ -29,7 +29,7 @@ export function FacilityLockedHero({
           fetchPriority="low"
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-slate-950/70 to-purple-950/50" />
+        <div className="absolute inset-0 bg-slate-950/60" />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 

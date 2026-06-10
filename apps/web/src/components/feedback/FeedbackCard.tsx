@@ -57,10 +57,10 @@ export function FeedbackCard({ feedback }: FeedbackCardProps) {
             <span className="text-sm font-medium truncate text-foreground">{feedback.title}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', typeConfig.className)}>
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold uppercase', typeConfig.className)}>
               {typeConfig.label}
             </span>
-            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', statusConfig.className)}>
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold uppercase', statusConfig.className)}>
               {statusConfig.label}
             </span>
           </div>

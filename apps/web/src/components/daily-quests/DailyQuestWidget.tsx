@@ -25,7 +25,7 @@ export function DailyQuestWidget() {
     return (
       <button
         onClick={() => setUserToggled(false)}
-        className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-card/95 px-3 py-2 text-xs backdrop-blur-sm"
+        className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-card/95 px-3 py-2 text-xs "
       >
         <ExiliumIcon size={12} className="text-purple-400" />
         <span className="text-purple-400">
@@ -36,14 +36,14 @@ export function DailyQuestWidget() {
   }
 
   return (
-    <div className="w-72 rounded-lg border border-purple-500/30 bg-card/95 shadow-lg backdrop-blur-sm">
+    <div className="w-72 rounded-lg border border-purple-500/30 bg-card/95 shadow-lg ">
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
         <div className="flex items-center gap-2">
           <ExiliumIcon size={14} className="text-purple-400" />
           <span className="text-xs font-semibold text-purple-400">Quetes du jour</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">1 Exilium</span>
+          <span className="text-xs text-muted-foreground">1 Exilium</span>
           <button
             onClick={() => setUserToggled(true)}
             className="text-muted-foreground transition-colors hover:text-foreground"
@@ -73,7 +73,7 @@ export function DailyQuestWidget() {
               }`}>
                 {quest.name}
               </span>
-              <p className={`text-[10px] ${
+              <p className={`text-xs ${
                 quest.status === 'expired' ? 'text-muted-foreground-faint' : 'text-muted-foreground'
               }`}>
                 {quest.description}
@@ -84,7 +84,7 @@ export function DailyQuestWidget() {
       </div>
 
       <div className="border-t border-border/50 px-3 py-1.5">
-        <span className={`text-[10px] ${hoursRemaining < 1 ? 'text-destructive' : 'text-muted-foreground'}`}>
+        <span className={`text-xs ${hoursRemaining < 1 ? 'text-destructive' : 'text-muted-foreground'}`}>
           Expire dans {hoursRemaining}h {minutesRemaining.toString().padStart(2, '0')}m
         </span>
       </div>

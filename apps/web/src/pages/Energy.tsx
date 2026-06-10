@@ -65,7 +65,7 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
         ref={triggerRef}
         onMouseEnter={handleEnter}
         onMouseLeave={() => { setIsOpen(false); setCoords(null); }}
-        className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium border cursor-default transition-colors"
+        className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-xs font-medium border cursor-default transition-colors"
         style={{ color, borderColor: `${color}${isOpen ? '55' : '33'}`, backgroundColor: `${color}${isOpen ? '25' : '15'}` }}
       >
         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
@@ -80,7 +80,7 @@ function BiomePopover({ biome }: { biome: { id: string; name: string; rarity: st
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-sm font-semibold" style={{ color }}>{biome.name}</span>
           </div>
-          <span className="inline-block rounded-full px-1.5 py-px text-[10px] font-medium mb-2"
+          <span className="inline-block rounded-full px-1.5 py-px text-xs font-medium mb-2"
             style={{ color, backgroundColor: `${color}20` }}>{RARITY_LABEL[biome.rarity] ?? biome.rarity}</span>
           {biome.description && <p className="text-xs text-muted-foreground mb-2 italic">{biome.description}</p>}
           {biome.effects && biome.effects.length > 0 && (
@@ -334,7 +334,7 @@ export default function Energy() {
               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-purple-900/60 to-slate-950" />
+            <div className="h-full w-full bg-slate-950/60-900/60 to-slate-950" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         </div>
@@ -409,7 +409,7 @@ export default function Energy() {
                     );
                   })()}
                   <button type="button" onClick={() => setBonusExpanded(!bonusExpanded)}
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5 ml-1">
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5 ml-1">
                     Detail
                     <ChevronDown className={`h-3 w-3 transition-transform ${bonusExpanded ? 'rotate-180' : ''}`} />
                   </button>
@@ -430,7 +430,7 @@ export default function Energy() {
             <div className="mt-4 pt-3 border-t border-white/10 space-y-3 text-xs">
               {Object.keys(planetTypeEffects).length > 0 && (
                 <div>
-                  <div className="text-[11px] text-muted-foreground font-medium mb-1.5">Type : {data.planetTypeName}</div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1.5">Type : {data.planetTypeName}</div>
                   <div className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 ml-2">
                     {Object.entries(planetTypeEffects).map(([stat, val]) => (
                       <div key={stat} className="contents">
@@ -443,7 +443,7 @@ export default function Energy() {
               )}
               {biomes.length > 0 && Object.keys(biomeEffects).length > 0 && (
                 <div>
-                  <div className="text-[11px] text-muted-foreground font-medium mb-1.5">Biomes</div>
+                  <div className="text-xs text-muted-foreground font-medium mb-1.5">Biomes</div>
                   <div className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 ml-2">
                     {Object.entries(biomeEffects).map(([stat, val]) => (
                       <div key={stat} className="contents">

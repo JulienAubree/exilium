@@ -55,7 +55,7 @@ export function ResourceDeltaCard({ title, cargo, variant, explainer }: Resource
           </span>
         )}
       </div>
-      {explainer && <p className="text-[11px] text-muted-foreground mt-2 italic">{explainer}</p>}
+      {explainer && <p className="text-xs text-muted-foreground mt-2 italic">{explainer}</p>}
     </div>
   );
 }

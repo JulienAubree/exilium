@@ -77,7 +77,7 @@ export function ResearchActivePanel({
   return (
     <div
       className={cn(
-        'mt-4 rounded-xl border bg-black/30 backdrop-blur-sm overflow-hidden transition-colors',
+        'mt-4 rounded-xl border bg-surface overflow-hidden transition-colors',
         expanded ? 'border-violet-500/40 shadow-lg shadow-violet-500/5' : 'border-white/10',
       )}
     >
@@ -114,13 +114,13 @@ export function ResearchActivePanel({
               <div
                 className={cn(
                   'h-full rounded-full transition-[width] duration-500 ease-linear',
-                  researchingTech ? 'bg-gradient-to-r from-violet-500 to-violet-300' : 'bg-white/10',
+                  researchingTech ? 'bg-slate-950/60-300' : 'bg-white/10',
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             {researchingTech?.researchEndTime && (
-              <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                 fin {new Date(researchingTech.researchEndTime).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
               </span>
             )}
@@ -158,7 +158,7 @@ export function ResearchActivePanel({
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Labs */}
             <div className="flex-1 space-y-2">
-              <h3 className="text-[10px] uppercase tracking-wider font-semibold text-violet-400 flex items-center gap-1.5">
+              <h3 className="text-xs uppercase tracking-wider font-semibold text-violet-400 flex items-center gap-1.5">
                 <BuildingsIcon width={14} height={14} />
                 Laboratoires de l'empire
               </h3>
@@ -172,12 +172,12 @@ export function ResearchActivePanel({
                   <div key={i} className="flex items-center gap-2 bg-card/50 border border-white/10 rounded-lg px-3 py-1.5">
                     <BuildingsIcon width={12} height={12} className="text-violet-400/60 shrink-0" />
                     <span className="text-xs text-foreground truncate">{ANNEX_NAMES[annex.buildingId] ?? annex.buildingId}</span>
-                    <span className="text-[10px] text-muted-foreground truncate">({annex.planetName})</span>
+                    <span className="text-xs text-muted-foreground truncate">({annex.planetName})</span>
                     <span className="ml-auto text-xs text-violet-400/80 font-semibold shrink-0">Niv. {annex.level}</span>
                   </div>
                 ))}
                 {bonuses.annexDetails.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground italic px-1">Aucun laboratoire annexe</p>
+                  <p className="text-xs text-muted-foreground italic px-1">Aucun laboratoire annexe</p>
                 )}
               </div>
             </div>
@@ -187,7 +187,7 @@ export function ResearchActivePanel({
 
             {/* Bonuses breakdown */}
             <div className="flex-1 space-y-2">
-              <h3 className="text-[10px] uppercase tracking-wider font-semibold text-emerald-400 flex items-center gap-1.5">
+              <h3 className="text-xs uppercase tracking-wider font-semibold text-emerald-400 flex items-center gap-1.5">
                 <Zap className="h-3.5 w-3.5" />
                 Bonus de vitesse
               </h3>
@@ -216,11 +216,11 @@ function BonusLine({ icon, label, detail, reduction, color }: {
   return (
     <div className="flex items-center gap-2 px-2 py-1">
       <span className={cn('shrink-0', active ? color : 'text-muted-foreground-soft')}>{icon}</span>
-      <span className={cn('text-[11px] flex-1 min-w-0 truncate', active ? 'text-foreground' : 'text-muted-foreground')}>
+      <span className={cn('text-xs flex-1 min-w-0 truncate', active ? 'text-foreground' : 'text-muted-foreground')}>
         {label}
         {detail && <span className="text-muted-foreground ml-1">({detail})</span>}
       </span>
-      <span className={cn('text-[11px] font-semibold shrink-0', active ? 'text-emerald-400' : 'text-muted-foreground-soft')}>−{reduction}%</span>
+      <span className={cn('text-xs font-semibold shrink-0', active ? 'text-emerald-400' : 'text-muted-foreground-soft')}>−{reduction}%</span>
       <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden shrink-0">
         <div className="h-full rounded-full bg-emerald-500/60" style={{ width: `${Math.min(reduction, 100)}%` }} />
       </div>

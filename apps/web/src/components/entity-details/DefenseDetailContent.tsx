@@ -80,7 +80,7 @@ export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels
       {/* Armor badge */}
       {combatCategoryId && ARMOR_LABELS[combatCategoryId] && (
         <div className="flex gap-1.5">
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border/30">
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border/30">
             {ARMOR_LABELS[combatCategoryId]}
           </span>
         </div>
@@ -159,7 +159,7 @@ export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels
         />
         <CostPills cost={details.cost} />
         {timePerUnit != null && (
-          <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400">
             <ClockIcon className="h-3.5 w-3.5 text-slate-500" />
             {formatDuration(timePerUnit)}
           </div>
@@ -193,7 +193,7 @@ export function DefenseDetailContent({ defenseId, researchLevels, buildingLevels
         ];
         return (
           <div>
-            <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider mb-2">
+            <div className="text-xs uppercase text-slate-500 font-semibold tracking-wider mb-2">
               Prérequis
             </div>
             <PrerequisiteList items={prereqItems} />

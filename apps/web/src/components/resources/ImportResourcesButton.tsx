@@ -193,7 +193,7 @@ export function ImportResourcesButton({ targetPlanetId, size = 'md' }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-x-2 top-16 z-50 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-1.5 sm:w-80 max-h-[70vh] overflow-y-auto rounded-md border border-border bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+        <div className="fixed inset-x-2 top-16 z-50 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-1.5 sm:w-80 max-h-[70vh] overflow-y-auto rounded-md border border-border bg-surface-raised shadow-lg animate-slide-up">
           {!selectedSourceId ? (
             <SourcePicker
               sources={sources}
@@ -265,20 +265,20 @@ function SourcePicker({ sources, loading, onPick, onClose }: SourcePickerProps) 
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">{s.name}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       [{s.galaxy}:{s.system}:{s.position}]
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11px] tabular-nums text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
                     <span className="text-minerai">{formatNumber(s.minerai)}</span>
                     <span className="text-silicium">{formatNumber(s.silicium)}</span>
                     <span className="text-hydrogene">{formatNumber(s.hydrogene)}</span>
-                    <span className="ml-auto text-[10px]">
+                    <span className="ml-auto text-xs">
                       {noCargo ? 'aucun cargo' : `cargo ${formatNumber(s.cargoCapacity)}`}
                     </span>
                   </div>
                   {total === 0 && !noCargo && (
-                    <div className="text-[10px] text-amber-400/80">Stock vide</div>
+                    <div className="text-xs text-amber-400/80">Stock vide</div>
                   )}
                 </button>
               </li>
@@ -340,7 +340,7 @@ function SourceDetail({ source, targetName, cargo, setResource, pack, cargoOverf
           onChange={(v) => setResource('hydrogene', v)}
         />
 
-        <div className="border-t border-border/30 pt-2 text-[11px] text-muted-foreground space-y-1">
+        <div className="border-t border-border/30 pt-2 text-xs text-muted-foreground space-y-1">
           <div className="flex items-center justify-between">
             <span>Cargo :</span>
             <span className={cn('tabular-nums', cargoOverflow ? 'text-amber-400' : 'text-foreground')}>
@@ -354,12 +354,12 @@ function SourceDetail({ source, targetName, cargo, setResource, pack, cargoOverf
             </div>
           )}
           {Object.keys(pack.picked).length > 0 && (
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               → {Object.entries(pack.picked).map(([id, n]) => `${n} ${id}`).join(' + ')}
             </div>
           )}
           {cargoOverflow && (
-            <div className="text-[10px] text-amber-400">
+            <div className="text-xs text-amber-400">
               Cargo limité : les montants seront capés à l'envoi.
             </div>
           )}
@@ -396,7 +396,7 @@ interface ResourceLineProps {
 function ResourceLine({ label, icon, stock, value, onChange }: ResourceLineProps) {
   return (
     <div className="space-y-0.5">
-      <div className="flex items-center justify-between text-[11px]">
+      <div className="flex items-center justify-between text-xs">
         <span className="flex items-center gap-1 text-muted-foreground">
           {icon}
           {label}
@@ -416,14 +416,14 @@ function ResourceLine({ label, icon, stock, value, onChange }: ResourceLineProps
         <button
           type="button"
           onClick={() => onChange(0)}
-          className="rounded-md border border-border bg-card px-2 py-1 text-[11px] hover:bg-accent"
+          className="rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent"
         >
           0
         </button>
         <button
           type="button"
           onClick={() => onChange(stock)}
-          className="rounded-md border border-border bg-card px-2 py-1 text-[11px] hover:bg-accent"
+          className="rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent"
         >
           Max
         </button>

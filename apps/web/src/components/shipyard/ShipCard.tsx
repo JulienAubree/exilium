@@ -77,7 +77,7 @@ export function ShipCard({
           alt={ship.name}
           className="w-full h-full object-cover"
         />
-        <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+        <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
           x{ship.count}
         </span>
       </div>
@@ -94,7 +94,7 @@ export function ShipCard({
           currentSilicium={resources.silicium}
           currentHydrogene={resources.hydrogene}
         />
-        <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
+        <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
           <ClockIcon className="h-3 w-3" />
           {formatDuration(ship.timePerUnit)}
         </div>
@@ -115,7 +115,7 @@ export function ShipCard({
           <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
             <QuantityStepper value={quantity} onChange={onQuantityChange} max={maxAffordable} />
             <Button
-              variant="retro"
+             
               size="sm"
               className="w-full"
               onClick={(e) => {

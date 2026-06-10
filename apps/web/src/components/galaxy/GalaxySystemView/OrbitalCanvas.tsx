@@ -561,7 +561,7 @@ export function OrbitalCanvas({
             width={TOOLTIP_WIDTH}
             height={TOOLTIP_HEIGHT}
           >
-            <div className="w-full h-full rounded-md bg-black/85 border border-cyan-500/30 px-2 py-1 flex items-center gap-2 backdrop-blur-sm">
+            <div className="w-full h-full rounded-md bg-black/85 border border-cyan-500/30 px-2 py-1 flex items-center gap-2 ">
               <div className="flex-shrink-0">
                 <PlanetVisual
                   planetClassId={tooltip.planetClassId}
@@ -573,13 +573,13 @@ export function OrbitalCanvas({
               </div>
               <div className="min-w-0 flex-1">
                 <div
-                  className={`text-[10px] leading-tight font-semibold truncate ${tooltip.line1Class}`}
+                  className={`text-xs leading-tight font-semibold truncate ${tooltip.line1Class}`}
                 >
                   {tooltip.line1}
                 </div>
                 {tooltip.line2 && (
                   <div
-                    className={`text-[10px] leading-tight truncate ${tooltip.line2Class ?? ''}`}
+                    className={`text-xs leading-tight truncate ${tooltip.line2Class ?? ''}`}
                   >
                     {tooltip.line2}
                   </div>
@@ -590,7 +590,7 @@ export function OrbitalCanvas({
         </g>
       )}
     </svg>
-      <div className="absolute top-2 right-2 flex flex-col gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 backdrop-blur-sm">
+      <div className="absolute top-2 right-2 flex flex-col gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 ">
         <button
           type="button"
           onClick={() => zoomBy(1.2)}
@@ -612,7 +612,7 @@ export function OrbitalCanvas({
         <button
           type="button"
           onClick={handleReset}
-          className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-[10px]"
+          className="w-7 h-7 flex items-center justify-center text-cyan-300 hover:bg-cyan-500/20 rounded text-xs"
           aria-label="Réinitialiser la vue"
           title="Réinitialiser"
         >

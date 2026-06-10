@@ -43,7 +43,7 @@ function BiomeToggle({ count, expanded, onToggle }: { count: number; expanded: b
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+      className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
     >
       <span>{count} biome{count > 1 ? 's' : ''}</span>
       <ChevronDown className={`h-2.5 w-2.5 transition-transform ${expanded ? 'rotate-180' : ''}`} strokeWidth={1.5} />
@@ -351,7 +351,7 @@ export default function Galaxy() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 backdrop-blur-sm"
+                        className="relative z-10 text-xs h-6 px-2 border-orange-500/40 text-orange-400 hover:bg-orange-500/20 "
                         onClick={() => navigate(`/fleet/send?mission=mine&galaxy=${galaxy}&system=${system}&position=${i + 1}&pveMissionId=${beltMission.id}`)}
                       >
                         Miner

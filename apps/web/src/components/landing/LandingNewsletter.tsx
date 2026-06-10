@@ -71,7 +71,7 @@ export function LandingNewsletter({ content }: LandingNewsletterProps) {
           />
           <button
             type="submit"
-            className="rounded-md bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-primary-foreground shadow-[0_0_24px_-6px_hsl(200,85%,65%,0.7)] transition-all hover:bg-primary/90 hover:shadow-[0_0_30px_-4px_hsl(200,85%,65%,0.9)] active:scale-[0.98]"
+            className="rounded-md bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-all hover:bg-primary/90 hover: active:scale-[0.98]"
           >
             {newsletter.submitLabel || "S'inscrire"}
           </button>

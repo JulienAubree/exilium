@@ -46,10 +46,10 @@ function DailyQuestPanel({ quests }: { quests: { id: string; name: string; descr
   const minutesRemaining = Math.floor((msRemaining % 3600000) / 60000);
 
   return (
-    <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-72 rounded-md border border-purple-500/30 bg-card/95 backdrop-blur-lg shadow-lg animate-slide-up">
+    <div className="fixed right-2 left-2 top-12 z-50 mt-1 sm:absolute sm:left-auto sm:top-full sm:right-0 sm:w-72 rounded-md border border-purple-500/30 bg-surface-raised shadow-lg animate-slide-up">
       <div className="flex items-center justify-between border-b border-border/30 px-3 py-2">
         <span className="text-xs font-semibold text-purple-400">Missions journalieres</span>
-        <span className="text-[10px] text-muted-foreground">+1 Exilium</span>
+        <span className="text-xs text-muted-foreground">+1 Exilium</span>
       </div>
       <div className="p-3 space-y-2">
         {quests.map((quest) => (
@@ -76,7 +76,7 @@ function DailyQuestPanel({ quests }: { quests: { id: string; name: string; descr
               >
                 {quest.name}
               </span>
-              <p className={cn('text-[10px]', quest.status === 'expired' ? 'text-muted-foreground-faint' : 'text-muted-foreground')}>
+              <p className={cn('text-xs', quest.status === 'expired' ? 'text-muted-foreground-faint' : 'text-muted-foreground')}>
                 {quest.description}
               </p>
             </div>
@@ -84,7 +84,7 @@ function DailyQuestPanel({ quests }: { quests: { id: string; name: string; descr
         ))}
       </div>
       <div className="border-t border-border/30 px-3 py-1.5">
-        <span className={cn('text-[10px]', hoursRemaining < 1 ? 'text-destructive' : 'text-muted-foreground')}>
+        <span className={cn('text-xs', hoursRemaining < 1 ? 'text-destructive' : 'text-muted-foreground')}>
           Expire dans {hoursRemaining}h {minutesRemaining.toString().padStart(2, '0')}m
         </span>
       </div>

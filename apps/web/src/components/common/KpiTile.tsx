@@ -26,7 +26,7 @@ export function KpiTile({ label, value, icon, color, onClick }: KpiTileProps) {
         </div>
         <div className="min-w-0">
           <div className={cn('text-lg font-bold tabular-nums leading-tight', color)}>{value}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-tight">{label}</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground leading-tight">{label}</div>
         </div>
       </div>
     </Tag>

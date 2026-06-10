@@ -58,7 +58,7 @@ export default function ResetPassword() {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background bg-stars p-4">
         <div className="w-full max-w-sm glass-card p-6 animate-slide-up space-y-4">
-          <h1 className="text-center text-2xl font-bold glow-silicium">Exilium</h1>
+          <h1 className="text-center text-2xl font-bold">Exilium</h1>
           <p className="text-sm text-destructive">Lien invalide. Le jeton de réinitialisation est manquant.</p>
           <Link to="/forgot-password" className="block text-center text-sm text-primary hover:underline">
             Demander un nouveau lien
@@ -71,7 +71,7 @@ export default function ResetPassword() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background bg-stars p-4">
       <div className="w-full max-w-sm glass-card p-6 animate-slide-up">
-        <h1 className="text-center text-2xl font-bold glow-silicium mb-2">Exilium</h1>
+        <h1 className="text-center text-2xl font-bold mb-2">Exilium</h1>
         <p className="text-center text-sm text-muted-foreground mb-6">Nouveau mot de passe</p>
 
         {success ? (

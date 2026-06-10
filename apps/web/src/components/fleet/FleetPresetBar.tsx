@@ -152,7 +152,7 @@ export function FleetPresetBar({ selectedShips, onLoad }: Props) {
                     className="flex-1 min-w-0 text-left"
                   >
                     <div className="text-sm font-medium text-foreground truncate">{preset.name}</div>
-                    <div className="text-[11px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {totalShips.toLocaleString()} vaisseaux · {kinds} type{kinds > 1 ? 's' : ''}
                     </div>
                   </button>

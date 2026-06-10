@@ -20,7 +20,7 @@ export function ChatBubble({ body, isSent, senderUsername, senderAvatarId, allia
       <div className="flex justify-end">
         <div className="max-w-[75%] rounded-xl rounded-br-sm bg-primary px-3 py-2 text-primary-foreground text-sm">
           <p className="whitespace-pre-wrap break-words">{body}</p>
-          <div className="text-[10px] opacity-60 text-right mt-0.5">{time}</div>
+          <div className="text-xs opacity-60 text-right mt-0.5">{time}</div>
         </div>
       </div>
     );
@@ -31,7 +31,7 @@ export function ChatBubble({ body, isSent, senderUsername, senderAvatarId, allia
       {senderUsername && <UserAvatar username={senderUsername} avatarId={senderAvatarId} size="sm" />}
       <div className="rounded-xl rounded-bl-sm bg-muted/50 px-3 py-2 text-foreground text-sm">
         {showName && senderUsername && (
-          <p className="text-[10px] font-semibold text-primary/80 mb-0.5 flex items-center gap-0.5">
+          <p className="text-xs font-semibold text-primary/80 mb-0.5 flex items-center gap-0.5">
             {allianceBlason && (
               <AllianceBlason blason={allianceBlason} size={16} />
             )}
@@ -39,7 +39,7 @@ export function ChatBubble({ body, isSent, senderUsername, senderAvatarId, allia
           </p>
         )}
         <p className="whitespace-pre-wrap break-words">{body}</p>
-        <div className="text-[10px] text-muted-foreground mt-0.5">{time}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">{time}</div>
       </div>
     </div>
   );

@@ -442,7 +442,7 @@ export default function Fleet() {
         <div className="flex gap-2">
           {(['minerai', 'silicium', 'hydrogene'] as const).map((res) => (
             <div key={res} className="flex-1 text-center">
-              <div className="mb-1 text-[10px] text-muted-foreground capitalize">{res === 'hydrogene' ? 'Hydrogène' : res.charAt(0).toUpperCase() + res.slice(1)}</div>
+              <div className="mb-1 text-xs text-muted-foreground capitalize">{res === 'hydrogene' ? 'Hydrogène' : res.charAt(0).toUpperCase() + res.slice(1)}</div>
               <Input
                 type="number"
                 min={0}
@@ -471,7 +471,7 @@ export default function Fleet() {
       {/* Governance overextend warning for colonize missions */}
       {colonizeOverextendWarning && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-xs text-amber-200 space-y-1">
-          <div className="flex items-center gap-2 font-semibold text-amber-400 uppercase tracking-wider text-[11px]">
+          <div className="flex items-center gap-2 font-semibold text-amber-400 uppercase tracking-wider text-xs">
             Surextension impériale {colonizeOverextendWarning.currentMalus > 0 ? 'aggravée' : 'à venir'}
           </div>
           <p>

@@ -71,17 +71,17 @@ export function ReportCard({ report, gameConfig: _gameConfig }: ReportCardProps)
           </span>
         </div>
         {isCombat && outcomeLabel && (
-          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', outcomeStyle)}>
+          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase', outcomeStyle)}>
             {outcomeLabel}
           </span>
         )}
         {isMine && (
-          <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase bg-blue-500/20 text-blue-400">
+          <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase bg-blue-500/20 text-blue-400">
             Terminée
           </span>
         )}
         {isRecycle && (
-          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
+          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase',
             result.empty ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
           )}>
             {result.empty ? 'Vide' : result.debrisRemaining ? 'Partiel' : 'Complet'}

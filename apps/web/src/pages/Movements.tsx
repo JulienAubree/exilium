@@ -112,7 +112,7 @@ function InboundFleetCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border', badgeBorder)}>
+            <span className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border', badgeBorder)}>
               {isHostile ? (
                 <AlertTriangle className="h-2.5 w-2.5 flex-shrink-0" strokeWidth={2.5} />
               ) : (
@@ -124,7 +124,7 @@ function InboundFleetCard({
               {missionLabel}
             </span>
             <span className={cn(
-              'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border',
+              'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border',
               pStyle.classes,
             )}>
               <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', pStyle.dot, pStyle.pulse && 'animate-pulse')} />
@@ -199,7 +199,7 @@ function InboundFleetCard({
             {shipEntries.map(([id, count]) => (
               <span
                 key={id}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px]"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-xs"
               >
                 <GameImage category="ships" id={id} size="icon" alt={getShipName(id, gameConfig)} className="h-5 w-5 rounded-sm" />
                 <span className="text-foreground font-semibold">{count}&times;</span>
@@ -207,7 +207,7 @@ function InboundFleetCard({
               </span>
             ))}
             {shipCount > 1 && (
-              <span className="text-[10px] text-muted-foreground-soft ml-1">
+              <span className="text-xs text-muted-foreground-soft ml-1">
                 ({shipCount} vaisseaux)
               </span>
             )}
@@ -216,7 +216,7 @@ function InboundFleetCard({
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-muted-foreground-soft">Vaisseaux :</span>
             <span className="text-foreground font-semibold">{shipCount}</span>
-            <span className="text-muted-foreground-faint italic text-[10px]">(composition inconnue)</span>
+            <span className="text-muted-foreground-faint italic text-xs">(composition inconnue)</span>
           </div>
         ) : (
           <div className="text-xs text-muted-foreground-faint italic">Composition de la flotte inconnue</div>
@@ -225,26 +225,26 @@ function InboundFleetCard({
         {/* Cargo */}
         {hasCargo && !isHostile && (
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">
+            <span className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">
               Cargo
             </span>
             <div className="flex gap-3">
               {minerai > 0 && (
                 <span className="text-minerai">
                   <span className="font-semibold">{fmt(minerai)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">M</span>
+                  <span className="opacity-50 ml-0.5 text-xs">M</span>
                 </span>
               )}
               {silicium > 0 && (
                 <span className="text-silicium">
                   <span className="font-semibold">{fmt(silicium)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">S</span>
+                  <span className="opacity-50 ml-0.5 text-xs">S</span>
                 </span>
               )}
               {hydrogene > 0 && (
                 <span className="text-hydrogene">
                   <span className="font-semibold">{fmt(hydrogene)}</span>
-                  <span className="opacity-50 ml-0.5 text-[10px]">H</span>
+                  <span className="opacity-50 ml-0.5 text-xs">H</span>
                 </span>
               )}
             </div>
@@ -275,7 +275,7 @@ function InboundFleetCard({
             {/* Detection tier info for hostile fleets */}
             {isHostile && (
               <div className="pt-1 border-t border-white/[0.06]">
-                <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
+                <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold mb-1.5">
                   Niveau de detection
                 </div>
                 <div className="flex gap-1">
@@ -289,7 +289,7 @@ function InboundFleetCard({
                     />
                   ))}
                 </div>
-                <div className="text-[10px] text-muted-foreground-faint mt-1">
+                <div className="text-xs text-muted-foreground-faint mt-1">
                   {tier === 0 && 'Alerte minimale — origine et composition inconnues'}
                   {tier === 1 && 'Coordonnées d\'origine détectées'}
                   {tier === 2 && 'Nombre de vaisseaux détecté'}
@@ -381,12 +381,12 @@ export default function Movements() {
                   <Box className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground-soft uppercase tracking-wider font-semibold">Emplacements de flotte</div>
+                  <div className="text-xs text-muted-foreground-soft uppercase tracking-wider font-semibold">Emplacements de flotte</div>
                   <div className="text-sm font-bold tabular-nums">
                     {fleetSlots.current}
                     <span className="text-muted-foreground font-normal"> / {fleetSlots.max}</span>
                     {fleetSlots.current >= fleetSlots.max && (
-                      <span className="text-amber-400 text-[10px] font-semibold ml-2">COMPLET</span>
+                      <span className="text-amber-400 text-xs font-semibold ml-2">COMPLET</span>
                     )}
                   </div>
                 </div>
@@ -395,25 +395,25 @@ export default function Movements() {
               {/* Breakdown pills */}
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 {outboundCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     <span className="w-1 h-1 rounded-full bg-blue-400" />
                     {outboundCount} en route
                   </span>
                 )}
                 {returnCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <span className="w-1 h-1 rounded-full bg-emerald-400" />
                     {returnCount} en retour
                   </span>
                 )}
                 {peacefulInboundCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
                     <span className="w-1 h-1 rounded-full bg-yellow-400" />
                     {peacefulInboundCount} entrante{peacefulInboundCount > 1 ? 's' : ''}
                   </span>
                 )}
                 {hostileInboundCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                     {hostileInboundCount} hostile{hostileInboundCount > 1 ? 's' : ''}
                   </span>
@@ -433,7 +433,7 @@ export default function Movements() {
             </div>
 
             {/* Explainer */}
-            <p className="text-[11px] text-muted-foreground-soft leading-relaxed">
+            <p className="text-xs text-muted-foreground-soft leading-relaxed">
               Chaque flotte en mission occupe un emplacement jusqu&apos;a son retour.
               La <span className="text-muted-foreground font-medium">Technologie Ordinateur</span> augmente
               le nombre d&apos;emplacements disponibles (+1 par niveau).

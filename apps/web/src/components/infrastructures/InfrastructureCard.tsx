@@ -116,17 +116,17 @@ export function InfrastructureCard({
             {buildingLabel}
           </span>
           {!locked && building && currentLevel > 0 && (
-            <span className="font-mono text-[11px] text-muted-foreground bg-background/40 backdrop-blur-sm rounded px-1.5 py-0.5">
+            <span className="font-mono text-xs text-muted-foreground bg-surface-raised rounded px-1.5 py-0.5">
               Niv. {currentLevel}
             </span>
           )}
           {!locked && currentLevel === 0 && (
-            <span className="font-mono text-[10px] text-amber-300 bg-amber-500/20 backdrop-blur-sm rounded px-1.5 py-0.5 border border-amber-500/30">
+            <span className="font-mono text-xs text-amber-300 bg-amber-500/20 rounded px-1.5 py-0.5 border border-amber-500/30">
               Non construit
             </span>
           )}
           {locked && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-background/50 backdrop-blur-sm rounded px-1.5 py-0.5">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-surface-raised rounded px-1.5 py-0.5">
               <Lock className="h-2.5 w-2.5" /> Verrouillé
             </span>
           )}
@@ -135,7 +135,7 @@ export function InfrastructureCard({
 
       {/* Body */}
       <div className="p-3 lg:p-4 space-y-2 flex flex-col flex-1">
-        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
           {description}
         </p>
 
@@ -145,7 +145,7 @@ export function InfrastructureCard({
 
         {locked ? (
           <div className="mt-auto space-y-1.5">
-            {lockReason && <p className="text-[11px] text-muted-foreground italic">{lockReason}</p>}
+            {lockReason && <p className="text-xs text-muted-foreground italic">{lockReason}</p>}
             {onSwitchToHome && (
               <Button
                 variant="outline"
@@ -162,10 +162,10 @@ export function InfrastructureCard({
           building.isUpgrading && building.upgradeEndTime ? (
             <div className="mt-auto space-y-1.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold">
+                <span className="text-xs uppercase tracking-wider text-amber-400 font-semibold">
                   {isConstruction ? 'Construction' : 'Amélioration'} en cours
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">→ {nextLevel}</span>
+                <span className="text-xs font-mono text-muted-foreground">→ {nextLevel}</span>
               </div>
               <Timer
                 endTime={new Date(building.upgradeEndTime)}
@@ -192,7 +192,7 @@ export function InfrastructureCard({
                 currentSilicium={resources.silicium}
                 currentHydrogene={resources.hydrogene}
               />
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
                 <ClockIcon className="h-3 w-3" />
                 {formatDuration(building.nextLevelTime)}
               </div>
@@ -216,7 +216,7 @@ export function InfrastructureCard({
                 />
               ) : (
                 <Button
-                  variant="retro"
+                 
                   size="sm"
                   className="w-full h-8 text-xs"
                   onClick={onUpgrade}
@@ -229,7 +229,7 @@ export function InfrastructureCard({
             </div>
           )
         ) : (
-          <p className="mt-auto text-[11px] text-muted-foreground italic">Bâtiment indisponible.</p>
+          <p className="mt-auto text-xs text-muted-foreground italic">Bâtiment indisponible.</p>
         )}
       </div>
     </article>

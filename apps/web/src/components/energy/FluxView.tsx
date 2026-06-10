@@ -42,7 +42,7 @@ export function FluxView({
   return (
     <div className="space-y-4">
       {/* CONSUMERS — Actionable, on top */}
-      <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
         Réglages de production
       </h3>
       <div className={`grid gap-3 ${consumerCount <= 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
@@ -64,7 +64,7 @@ export function FluxView({
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-foreground truncate">{c.name}</div>
-                <div className="text-[10px] text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
+                <div className="text-xs text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
               </div>
             </div>
 
@@ -78,7 +78,7 @@ export function FluxView({
             />
 
             {/* Stats: production + energy */}
-            <div className="flex justify-between items-center mt-2 text-[11px]">
+            <div className="flex justify-between items-center mt-2 text-xs">
               <span className={`font-mono font-semibold ${c.colorClass}`}>{c.production}</span>
               <span className="font-mono text-destructive">-{c.energyConsumption} <span className="text-energy">⚡</span></span>
             </div>
@@ -87,7 +87,7 @@ export function FluxView({
       </div>
 
       {/* SOURCES — Informational, at bottom */}
-      <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest pt-2">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest pt-2">
         Sources d'énergie
       </h3>
       <div className="flex flex-col sm:flex-row gap-3">
@@ -100,9 +100,9 @@ export function FluxView({
               {s.icon}
             </div>
             <div>
-              <div className="text-[11px] text-muted-foreground">{s.name}</div>
+              <div className="text-xs text-muted-foreground">{s.name}</div>
               <div className="text-base font-bold text-energy font-mono">+{s.energy}</div>
-              <div className="text-[10px] text-muted-foreground">{s.detail}</div>
+              <div className="text-xs text-muted-foreground">{s.detail}</div>
             </div>
           </div>
         ))}

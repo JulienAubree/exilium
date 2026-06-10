@@ -141,7 +141,7 @@ function NavItem({ href, label }: { href: string; label: string }) {
 function CtaLink({ href, children }: { href: string; children: React.ReactNode }) {
   const safe = safeLinkHref(href);
   const className =
-    'inline-flex items-center justify-center rounded-md border border-primary/40 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-primary transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_-4px_hsl(200,85%,65%,0.6)]';
+    'inline-flex items-center justify-center rounded-md border border-primary/40 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-primary transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:';
   if (!safe) {
     return <span className={className}>{children}</span>;
   }

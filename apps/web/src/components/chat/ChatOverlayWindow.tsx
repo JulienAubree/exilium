@@ -103,7 +103,7 @@ export function ChatOverlayWindow({ userId: otherUserId, username, avatarId, thr
         onClick={() => minimizeChat(windowKey)}
       >
         {isAlliance ? (
-          <div className="w-7 h-7 rounded-full bg-yellow-500/30 border border-yellow-500/50 flex items-center justify-center text-[10px] font-bold text-yellow-400">
+          <div className="w-7 h-7 rounded-full bg-yellow-500/30 border border-yellow-500/50 flex items-center justify-center text-xs font-bold text-yellow-400">
             {allianceTag?.slice(0, 2)}
           </div>
         ) : (

@@ -21,7 +21,7 @@ export function LandingHero({ content }: LandingHeroProps) {
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-10 lg:py-40">
         <div className="max-w-2xl">
           {hero.eyebrow && (
-            <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.4em] text-primary">
+            <p className="mb-6 text-xs font-semibold uppercase tracking-[0.4em] text-primary">
               {hero.eyebrow}
             </p>
           )}
@@ -92,7 +92,7 @@ function HeroTitle({ text }: { text: string }) {
 function PrimaryCta({ href, children }: { href: string; children: React.ReactNode }) {
   const safe = safeLinkHref(href);
   const className =
-    'group relative inline-flex items-center justify-center overflow-hidden rounded-md bg-primary px-8 py-3.5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-[0_0_30px_-6px_hsl(200,85%,65%,0.7)] transition-all duration-200 hover:bg-primary/90 hover:shadow-[0_0_40px_-4px_hsl(200,85%,65%,0.9)] active:scale-[0.98]';
+    'group relative inline-flex items-center justify-center overflow-hidden rounded-md bg-primary px-8 py-3.5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover: active:scale-[0.98]';
   const content = (
     <>
       <span className="relative z-10">{children}</span>
@@ -122,7 +122,7 @@ function PrimaryCta({ href, children }: { href: string; children: React.ReactNod
 function SecondaryCta({ href, children }: { href: string; children: React.ReactNode }) {
   const safe = safeLinkHref(href);
   const className =
-    'group inline-flex items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.03] px-6 py-3 text-sm font-medium uppercase tracking-[0.2em] text-foreground/90 backdrop-blur-sm transition-all duration-200 hover:border-white/30 hover:bg-white/[0.07]';
+    'group inline-flex items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.03] px-6 py-3 text-sm font-medium uppercase tracking-[0.2em] text-foreground/90 transition-all duration-200 hover:border-white/30 hover:bg-white/[0.07]';
   const content = (
     <>
       <Play className="h-3.5 w-3.5 fill-current text-primary" />

@@ -95,7 +95,7 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onCancel} />
+      <div className="absolute inset-0 bg-black/60 animate-fade-in" onClick={onCancel} />
       <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-emerald-500/30 bg-card shadow-2xl animate-slide-up">
         {/* Header */}
         <div className="border-b border-emerald-500/20 bg-gradient-to-r from-emerald-950/40 to-transparent px-6 py-4">
@@ -122,7 +122,7 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
               <Stat label="Distance" value={`×${distanceFactor.toFixed(2)}`} hint={`${Math.abs(target.system - homeworldSystem)} systèmes`} />
               <Stat label="Total" value={`×${difficulty.toFixed(2)}`} highlight />
             </div>
-            <p className="mt-2 text-[11px] text-cyan-300/70">
+            <p className="mt-2 text-xs text-cyan-300/70">
               Taux de progression effectif : <span className="font-semibold text-cyan-300">{(effectiveRate * 100).toFixed(1)}%/h</span>
               {' '}(base {Math.round(passiveRate * 100)}% × difficulté).
             </p>
@@ -137,7 +137,7 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
               <ResourcePill label="Minerai" value={fmt(outpostMinerai)} color="amber" />
               <ResourcePill label="Silicium" value={fmt(outpostSilicium)} color="slate" />
             </div>
-            <p className="mt-2 text-[11px] text-amber-300/80">
+            <p className="mt-2 text-xs text-amber-300/80">
               Délai : <span className="font-semibold">{outpostTimeoutHours}h</span> sinon la colonisation échoue.
             </p>
           </Section>
@@ -151,7 +151,7 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
               <ResourcePill label="Minerai/h" value={fmt(consumptionMinerai)} color="amber" />
               <ResourcePill label="Silicium/h" value={fmt(consumptionSilicium)} color="slate" />
             </div>
-            <p className="mt-2 text-[11px] text-amber-300/70">
+            <p className="mt-2 text-xs text-amber-300/70">
               Stock épuisé : progression divisée par 2. Pensez à ravitailler par mission Transport.
             </p>
           </Section>
@@ -176,14 +176,14 @@ export function ColonizeConfirmDialog({ open, onConfirm, onCancel, target }: Pro
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="rounded bg-violet-950/30 border border-violet-500/20 p-2">
                 <div className="text-violet-300 font-semibold">+{Math.round(garrisonBonus * 100)}%/h Garnison</div>
-                <p className="text-slate-400 text-[11px] mt-0.5">Stationner ≥ {garrisonFpThreshold} FP de flotte</p>
+                <p className="text-slate-400 text-xs mt-0.5">Stationner ≥ {garrisonFpThreshold} FP de flotte</p>
               </div>
               <div className="rounded bg-violet-950/30 border border-violet-500/20 p-2">
                 <div className="text-violet-300 font-semibold">+{Math.round(convoyBonus * 100)}%/h Convoi récent</div>
-                <p className="text-slate-400 text-[11px] mt-0.5">Tout transport reçu &lt; {convoyWindowHours}h</p>
+                <p className="text-slate-400 text-xs mt-0.5">Tout transport reçu &lt; {convoyWindowHours}h</p>
               </div>
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">Cumulables, plafonnés à +30%/h.</p>
+            <p className="mt-2 text-xs text-slate-500">Cumulables, plafonnés à +30%/h.</p>
           </Section>
 
           {/* Estimation */}
@@ -235,7 +235,7 @@ function Section({
     <div className={`rounded-lg border ${c.border} ${c.bg} px-3.5 py-3`}>
       <div className="flex items-center gap-2 mb-2">
         <div className={`${c.icon} ${c.text} rounded p-1`}>{icon}</div>
-        <div className={`text-[11px] uppercase tracking-wider font-semibold ${c.text}`}>{title}</div>
+        <div className={`text-xs uppercase tracking-wider font-semibold ${c.text}`}>{title}</div>
       </div>
       {children}
     </div>
@@ -245,9 +245,9 @@ function Section({
 function Stat({ label, value, hint, highlight }: { label: string; value: string; hint?: string; highlight?: boolean }) {
   return (
     <div className={`rounded bg-[#0d1628] px-2.5 py-2 ${highlight ? 'ring-1 ring-cyan-500/40' : ''}`}>
-      <div className="text-[10px] uppercase text-slate-500 tracking-wider">{label}</div>
+      <div className="text-xs uppercase text-slate-500 tracking-wider">{label}</div>
       <div className={`text-sm font-bold ${highlight ? 'text-cyan-300' : 'text-slate-200'}`}>{value}</div>
-      {hint && <div className="text-[10px] text-slate-500 mt-0.5 truncate">{hint}</div>}
+      {hint && <div className="text-xs text-slate-500 mt-0.5 truncate">{hint}</div>}
     </div>
   );
 }

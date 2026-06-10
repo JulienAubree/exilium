@@ -24,7 +24,7 @@ export function PrerequisiteList({ items, missingOnly }: PrerequisiteListProps) 
         const isMet = item.currentLevel >= item.requiredLevel;
 
         return (
-          <div key={item.id} className="flex items-center gap-1.5 text-[11px]">
+          <div key={item.id} className="flex items-center gap-1.5 text-xs">
             {isMet ? (
               <>
                 <span className="text-emerald-500">

@@ -57,7 +57,7 @@ function ImmersiveTile({ src, alt, index }: { src: string; alt: string; index: n
   const [errored, setErrored] = useState(false);
   const safeSrc = safeImageSrc(src);
   return (
-    <figure className="group relative overflow-hidden rounded-lg border border-white/5 bg-card/40 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_-10px_hsl(200,85%,65%,0.4)]">
+    <figure className="group relative overflow-hidden rounded-lg border border-white/5 bg-card/40 transition-all duration-300 hover:border-primary/30 hover:">
       <div className="aspect-[3/4]">
         {!errored && safeSrc ? (
           <img
@@ -77,7 +77,7 @@ function ImmersiveTile({ src, alt, index }: { src: string; alt: string; index: n
         className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-4 opacity-90"
       >
         {alt && (
-          <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-foreground/80">
+          <span className="text-xs font-medium uppercase tracking-[0.25em] text-foreground/80">
             {alt}
           </span>
         )}

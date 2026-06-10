@@ -111,7 +111,7 @@ export function EmpireKpiBar({
           onClick={() => toggle('fleets')}
         />
         {inboundAttackCount > 0 && (
-          <div className="flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive animate-pulse">
+          <div className="flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive animate-pulse">
             <ShieldAlert className="h-3.5 w-3.5" />
             {inboundAttackCount}
           </div>
@@ -233,7 +233,7 @@ function ResourcePanel({
 
   return (
     <div className="space-y-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
         Production {label} par planète
       </div>
       <div className="space-y-1">
@@ -258,7 +258,7 @@ function ResourcePanel({
                   style={{ width: `${Math.min(100, pct)}%` }}
                 />
               </div>
-              <span className={cn('w-16 text-right font-mono text-[11px]', colorMap[resource])}>
+              <span className={cn('w-16 text-right font-mono text-xs', colorMap[resource])}>
                 {formatRate(rate)}/h
               </span>
             </div>
@@ -283,7 +283,7 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
 
   return (
     <div className="space-y-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
         Gouvernance impériale
       </div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -374,13 +374,13 @@ function FleetRow({ movement, gameConfig }: { movement: any; gameConfig: any }) 
           <span className="text-muted-foreground">-</span>
           <span className="text-muted-foreground">{phaseLabel}</span>
         </div>
-        <div className="text-[10px] text-muted-foreground truncate">
+        <div className="text-xs text-muted-foreground truncate">
           {coords} · {shipCount} vaisseau{shipCount > 1 ? 'x' : ''}
         </div>
       </div>
       <div className="text-right shrink-0">
         <div className="font-mono text-foreground tabular-nums">{countdown}</div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {arrival.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
@@ -420,13 +420,13 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
           {totalFleets} flotte{totalFleets > 1 ? 's' : ''} en vol
         </div>
         <button
           type="button"
           onClick={() => navigate('/fleet/movements')}
-          className="text-[10px] text-primary hover:underline"
+          className="text-xs text-primary hover:underline"
         >
           Voir les mouvements
         </button>
@@ -444,7 +444,7 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
       )}
       {underAttack.length > 0 && (
         <div className="space-y-1 pt-1 border-t border-border/30">
-          <div className="text-[10px] uppercase tracking-wider text-destructive font-semibold">
+          <div className="text-xs uppercase tracking-wider text-destructive font-semibold">
             Planètes attaquées
           </div>
           {underAttack.map((p) => (
@@ -469,7 +469,7 @@ function FleetsPanel({ planets, totalFleets }: { planets: PlanetData[]; totalFle
 function MiniCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-1.5">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={cn('text-sm font-bold', color)}>{value}</div>
     </div>
   );

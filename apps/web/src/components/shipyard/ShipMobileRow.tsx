@@ -76,7 +76,7 @@ export function ShipMobileRow({
             silicium={ship.cost.silicium}
             hydrogene={ship.cost.hydrogene}
           />
-          <span className="font-mono text-[10px] shrink-0">{formatDuration(ship.timePerUnit)}</span>
+          <span className="font-mono text-xs shrink-0">{formatDuration(ship.timePerUnit)}</span>
         </div>
         {rates && resources && !canAfford && ship.prerequisitesMet && (
           <div className="mt-1">

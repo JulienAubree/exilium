@@ -141,7 +141,7 @@ export function ProfileHero({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onEditAvatar(); }}
-                className="absolute bottom-0 right-0 flex items-center justify-center w-7 h-7 rounded-full bg-background/80 backdrop-blur-sm border border-primary/40 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute bottom-0 right-0 flex items-center justify-center w-7 h-7 rounded-full bg-surface border border-primary/40 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Changer d'avatar"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -158,12 +158,12 @@ export function ProfileHero({
             <p className="text-xs italic text-muted-foreground mt-2 leading-relaxed">{phrase}</p>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {playstyle && (
-                <span className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">
+                <span className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 text-xs text-violet-300">
                   {PLAYSTYLE_LABELS[playstyle] ?? playstyle}
                 </span>
               )}
               {seekingAlliance === true && (
-                <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+                <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300">
                   Cherche une alliance
                 </span>
               )}
@@ -174,7 +174,7 @@ export function ProfileHero({
         {/* Progression impériale intégrée */}
         {empire && (
           <div className="mt-5">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
               <span>
                 {isMaxLevel
                   ? 'Niveau maximum atteint'
@@ -194,7 +194,7 @@ export function ProfileHero({
                 style={{ width: `${Math.round(xpProgress * 100)}%` }}
               />
             </div>
-            <div className="mt-1.5 text-[10px] text-muted-foreground/70 sm:hidden">
+            <div className="mt-1.5 text-xs text-muted-foreground/70 sm:hidden">
               Gouvernance {empire.capacity}{!isMaxLevel && ` (+1 niv. ${nextCapacityLevel})`} · Missions niv. {empire.missionLevel}{!isMaxLevel && ` (+1 niv. ${nextMissionLevel})`}
             </div>
           </div>

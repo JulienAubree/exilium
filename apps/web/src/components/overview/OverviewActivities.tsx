@@ -54,8 +54,8 @@ function ActiveSlot({ icon, label, sublabel, endTime, startTime, totalDuration, 
       <div className="flex items-center gap-2 mb-1.5">
         {icon}
         <div className="flex-1 min-w-0">
-          <div className="text-[11px] font-semibold text-foreground truncate">{label}</div>
-          <div className="text-[10px] text-muted-foreground">{sublabel}</div>
+          <div className="text-xs font-semibold text-foreground truncate">{label}</div>
+          <div className="text-xs text-muted-foreground">{sublabel}</div>
         </div>
       </div>
       <div className="h-[2px] rounded-full bg-white/[0.06] overflow-hidden">
@@ -68,7 +68,7 @@ function ActiveSlot({ icon, label, sublabel, endTime, startTime, totalDuration, 
         <Timer
           endTime={new Date(endTime)}
           totalDuration={totalDuration}
-          className="text-[10px]"
+          className="text-xs"
           onComplete={onComplete}
         />
       </div>
@@ -84,9 +84,9 @@ function EmptySlot({ label, cta, onClick }: { label: string; cta: string; onClic
     >
       <div className="flex items-center gap-2">
         <div className="w-5 h-5 rounded bg-white/[0.04]" />
-        <span className="text-[11px] text-muted-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
       </div>
-      <div className="text-[10px] text-muted-foreground-soft mt-2">{cta} →</div>
+      <div className="text-xs text-muted-foreground-soft mt-2">{cta} →</div>
     </div>
   );
 }
