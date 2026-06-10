@@ -62,14 +62,14 @@ Rapports et Historique, deux pages de feedback de boucle de jeu (qu'ai-je gagné
 
 ### 🌌 GALAXIE — « Qu'y a-t-il dehors ? » *(l'eXplore/eXpand)*
 - Carte (inchangée), **Missions** (la découverte PvE, c'est « dehors »), colonisations en cours, rapports d'exploration.
-- Le **Marché** y trouve sa place (le commerce galactique est une activité « dehors ») — ou reste un hub propre si le flux le justifie.
+- ~~Marché ici ?~~ → **tranché : le Marché va dans Social** (le commerce est une interaction entre joueurs).
 
 ### 🚀 FLOTTE — « Mes forces » *(l'eXterminate)*
 - Un hub unique avec onglets internes : Dashboard · Envoyer · Mouvements · Stationnées · **Vaisseau amiral** (il quitte la section "Empire" — c'est une force) · **Rapports de combat** (ils quittent la topbar).
 - Le workflow complet — armer, envoyer, suivre, débriefer — au même endroit.
 
-### 🤝 GALACTOPOLITIQUE — « Les autres » *(le futur pilier Alliances)*
-- Alliance (hub existant), **Classements fusionnés** (1 page, onglets Joueurs/Alliances), profils publics, et demain : diplomatie, territoire.
+### 🤝 SOCIAL — « Les autres » *(décision user 2026-06-09 : nommage « Social », Marché inclus)*
+- Alliance (hub existant), **Marché** (le commerce est une interaction entre joueurs), **Classements fusionnés** (1 page, onglets Joueurs/Alliances), profils publics, et demain : diplomatie, territoire.
 - Messages reste en topbar (transversal) mais le chat d'alliance vit ici.
 
 ### 👤 EMPEREUR — « Moi » *(profil, déjà amorcé aujourd'hui)*
@@ -107,10 +107,10 @@ Chaque lot est livrable indépendamment (pas de big-bang) :
 
 ## 4. Questions ouvertes
 
-1. **Marché** : dans Galaxie, ou hub autonome ? (dépend de l'usage réel — à vérifier dans les stats de fréquentation si on en a).
+1. ~~Marché~~ → **tranché : Social**.
 2. **Missions** : Galaxie (cohérence « dehors ») ou Flotte (c'est la flotte qui les exécute) ? Intuition : Galaxie pour la découverte, l'envoi se fait déjà via Flotte.
 3. La fusion Développement (lot 3) doit-elle attendre les **gouverneurs/templates** du chantier Empire (§5.3) pour fusionner directement vers la bonne cible (consignes plutôt que listes de bâtiments) ?
-4. Nommage : « Galactopolitique » vs « Diplomatie » vs garder « Alliance » ?
+4. ~~Nommage~~ → **tranché : « Social »**.
 
 ---
 
