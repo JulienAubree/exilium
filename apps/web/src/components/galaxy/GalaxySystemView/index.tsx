@@ -271,7 +271,16 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
     selection.kind === 'slot' ? selection.position : null;
 
   return (
-    <div className="flex h-[calc(100vh-3.75rem)] min-h-[480px] overflow-hidden bg-black/40">
+    <div
+      className="flex h-[calc(100dvh-3rem)] min-h-[480px] overflow-hidden"
+      style={{
+        background:
+          'radial-gradient(1100px 600px at 72% 12%, rgba(38,80,140,0.22), transparent 62%), ' +
+          'radial-gradient(900px 560px at 18% 80%, rgba(16,90,110,0.20), transparent 65%), ' +
+          'radial-gradient(700px 420px at 50% 45%, rgba(70,40,110,0.10), transparent 70%), ' +
+          '#04060d',
+      }}
+    >
       <Ribbon
         views={views}
         selectedPosition={selectedPosition}

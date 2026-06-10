@@ -76,7 +76,7 @@ export function Layout() {
           {/* Nav fantôme DANS le conteneur de scroll : les héros qui remontent
               en -mt-12 peignent leur atmosphère derrière elle (fusion). */}
           <GlobalTopbar />
-          <div className="mx-auto w-full lg:max-w-7xl">
+          <div className={location.pathname.startsWith('/galaxy') ? 'w-full' : 'mx-auto w-full lg:max-w-7xl'}>
             <Outlet context={{ planetId: resolvedPlanetId, planetClassId: activePlanet?.planetClassId ?? null }} />
           </div>
         </main>
