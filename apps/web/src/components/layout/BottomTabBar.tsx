@@ -1,10 +1,6 @@
 import { useLocation, useNavigate } from 'react-router';
 import {
-  OverviewIcon,
-  ResourcesIcon,
-  BuildingsIcon,
   ResearchIcon,
-  ShipyardIcon,
   FleetIcon,
   GalaxyIcon,
   MarketIcon,
@@ -14,14 +10,12 @@ import {
   AllianceIcon,
   EmpireIcon,
 } from '@/lib/icons';
-import { Zap } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';
 import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
-  empire: ['/empire', '/research'],
-  planete: ['/', '/resources', '/infrastructures', '/energy', '/production'],
+  empire: ['/', '/planet', '/research'],
   galaxie: ['/galaxy', '/missions', '/market'],
   flotte: ['/fleet'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
@@ -31,15 +25,8 @@ type TabGroup = keyof typeof TAB_GROUPS;
 
 const SHEET_ITEMS = {
   empire: [
-    { label: 'Empire', path: '/empire', icon: EmpireIcon },
+    { label: 'Empire', path: '/', icon: EmpireIcon },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
-  ],
-  planete: [
-    { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-    { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
-    { label: 'Énergie', path: '/energy', icon: Zap as any },
-    { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
-    { label: 'Production', path: '/production', icon: ShipyardIcon },
   ],
   galaxie: [
     { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
@@ -55,17 +42,11 @@ const SHEET_ITEMS = {
 };
 
 function getActiveTab(pathname: string): TabGroup | null {
-  if (pathname === '/') return 'planete';
-  // Check non-planete groups first (they don't include the root path).
+  if (pathname === '/') return 'empire';
   for (const [group, paths] of Object.entries(TAB_GROUPS)) {
-    if (group === 'planete') continue;
-    if ((paths as readonly string[]).some((p) => pathname.startsWith(p))) {
+    if ((paths as readonly string[]).some((p) => p !== '/' && pathname.startsWith(p))) {
       return group as TabGroup;
     }
-  }
-  // Fallback: any non-root planete path.
-  if ((TAB_GROUPS.planete as readonly string[]).some((p) => p !== '/' && pathname.startsWith(p))) {
-    return 'planete';
   }
   return null;
 }
@@ -84,7 +65,6 @@ export function BottomTabBar() {
 
   const tabs = [
     { id: 'empire' as const, label: 'Empire', icon: EmpireIcon, action: () => toggleSheet('empire') },
-    { id: 'planete' as const, label: 'Planète', icon: OverviewIcon, action: () => toggleSheet('planete') },
     { id: 'galaxie' as const, label: 'Galaxie', icon: GalaxyIcon, action: () => toggleSheet('galaxie') },
     { id: 'flotte' as const, label: 'Flotte', icon: FleetIcon, action: () => { closeSheet(); navigate('/fleet', { viewTransition: true }); } },
     { id: 'social' as const, label: 'Social', icon: MessagesIcon, action: () => toggleSheet('social'), badge: unreadCount ?? 0 },

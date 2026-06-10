@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type SheetType = 'empire' | 'planete' | 'galaxie' | 'flotte' | 'social' | null;
+type SheetType = 'empire' | 'galaxie' | 'flotte' | 'social' | null;
 
 interface UIState {
   activeSheet: SheetType;

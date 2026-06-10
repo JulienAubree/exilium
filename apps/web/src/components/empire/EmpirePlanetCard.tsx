@@ -85,7 +85,9 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
 
   const goTo = (path: string) => {
     setActivePlanet(planet.id);
-    navigate(path);
+    // Shell Empire-first : la planète est un drill-down adressable.
+    const target = path === '/' ? `/planet/${planet.id}` : `/planet/${planet.id}${path}`;
+    navigate(target, { viewTransition: true });
   };
 
   // Colonizing planets: simplified clickable card → navigates to Overview which shows ColonizationProgress
