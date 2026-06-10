@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowRight, Hammer, FlaskConical, ShieldPlus } from 'lucide-react';
+import { ArrowRight, ArrowUp, Hammer, FlaskConical, ShieldPlus, X } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
@@ -25,6 +26,7 @@ function formatCompact(value: number): string {
  */
 export function PlanetPanel() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState<'apercu' | 'construire'>('apercu');
   const close = usePanelStore((s) => s.close);
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const { data: gameConfig } = useGameConfig();
@@ -101,6 +103,26 @@ export function PlanetPanel() {
       onClose={() => close('planete')}
     >
       <div className="space-y-3">
+        <div className="flex gap-1 rounded-lg border border-border bg-surface p-1">
+          {([['apercu', 'Aperçu'], ['construire', 'Construire']] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={cn(
+                'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-fast',
+                tab === id ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'construire' ? (
+          <BuildTab planet={planet} onNavigate={go} />
+        ) : (
+        <>
         {/* Bannière — même langage que les cartes du home */}
         <button
           type="button"
@@ -193,7 +215,160 @@ export function PlanetPanel() {
             Production
           </button>
         </div>
+        </>
+        )}
       </div>
     </PanelWindow>
+  );
+}
+
+/**
+ * Onglet Construire : la file de bâtiments pilotable depuis le panneau —
+ * lancer/annuler une amélioration sans quitter l'écran courant.
+ * Même optimistic UI que la page (M4) : la file démarre instantanément.
+ */
+function BuildTab({ planet, onNavigate }: {
+  planet: { id: string; minerai: number; silicium: number; hydrogene: number };
+  onNavigate: (path: string) => void;
+}) {
+  const utils = trpc.useUtils();
+  const { data: buildings } = trpc.building.list.useQuery({ planetId: planet.id });
+
+  const invalidate = () => {
+    utils.building.list.invalidate({ planetId: planet.id });
+    utils.planet.empire.invalidate();
+    utils.resource.production.invalidate({ planetId: planet.id });
+  };
+
+  const upgradeMutation = trpc.building.upgrade.useMutation({
+    onMutate: async (vars) => {
+      await utils.building.list.cancel({ planetId: planet.id });
+      const previous = utils.building.list.getData({ planetId: planet.id });
+      utils.building.list.setData({ planetId: planet.id }, (old) =>
+        old?.map((b) =>
+          b.id === vars.buildingId
+            ? { ...b, isUpgrading: true, upgradeEndTime: new Date(Date.now() + b.nextLevelTime * 1000).toISOString() }
+            : b,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) utils.building.list.setData({ planetId: planet.id }, ctx.previous);
+    },
+    onSettled: invalidate,
+  });
+  const cancelMutation = trpc.building.cancel.useMutation({ onSettled: invalidate });
+
+  if (!buildings) {
+    return (
+      <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+        Chargement…
+      </div>
+    );
+  }
+
+  const levels = Object.fromEntries(buildings.map((b) => [b.id, b.currentLevel]));
+  const upgrading = buildings.find((b) => b.isUpgrading && b.upgradeEndTime);
+  const rows = buildings.filter((b) => {
+    const atMax = b.maxLevel != null && b.currentLevel >= b.maxLevel;
+    const prereqsMet = b.prerequisites.every((pr) => (pr.currentLevel ?? levels[pr.buildingId] ?? 0) >= pr.level);
+    return !atMax && prereqsMet;
+  });
+  const lockedCount = buildings.length - rows.length;
+
+  return (
+    <div className="space-y-2">
+      {upgrading && upgrading.upgradeEndTime && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-xs font-semibold text-amber-400">
+              {upgrading.name} → Nv.{upgrading.currentLevel + 1}
+            </span>
+            <button
+              type="button"
+              onClick={() => cancelMutation.mutate({ planetId: planet.id })}
+              disabled={cancelMutation.isPending}
+              aria-label="Annuler la construction"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-amber-400 transition-colors duration-fast hover:bg-destructive/20 hover:text-destructive"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <Timer
+            endTime={new Date(upgrading.upgradeEndTime)}
+            totalDuration={upgrading.nextLevelTime}
+            onComplete={invalidate}
+          />
+        </div>
+      )}
+
+      <ul className="space-y-1.5">
+        {rows.map((b) => {
+          const canAfford =
+            planet.minerai >= b.nextLevelCost.minerai &&
+            planet.silicium >= b.nextLevelCost.silicium &&
+            planet.hydrogene >= b.nextLevelCost.hydrogene;
+          const disabled = !!upgrading || !canAfford || upgradeMutation.isPending;
+          return (
+            <li
+              key={b.id}
+              className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm text-foreground">
+                  {b.name}
+                  <span className="text-muted-foreground tabular-nums"> · Nv.{b.currentLevel}</span>
+                </span>
+                <span className="flex items-center gap-2.5 text-xs tabular-nums">
+                  {b.nextLevelCost.minerai > 0 && (
+                    <span className={planet.minerai >= b.nextLevelCost.minerai ? 'text-minerai' : 'text-destructive'}>
+                      <MineraiIcon size={10} className="mr-0.5 inline" />
+                      {formatCompact(b.nextLevelCost.minerai)}
+                    </span>
+                  )}
+                  {b.nextLevelCost.silicium > 0 && (
+                    <span className={planet.silicium >= b.nextLevelCost.silicium ? 'text-silicium' : 'text-destructive'}>
+                      <SiliciumIcon size={10} className="mr-0.5 inline" />
+                      {formatCompact(b.nextLevelCost.silicium)}
+                    </span>
+                  )}
+                  {b.nextLevelCost.hydrogene > 0 && (
+                    <span className={planet.hydrogene >= b.nextLevelCost.hydrogene ? 'text-hydrogene' : 'text-destructive'}>
+                      <HydrogeneIcon size={10} className="mr-0.5 inline" />
+                      {formatCompact(b.nextLevelCost.hydrogene)}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => upgradeMutation.mutate({ planetId: planet.id, buildingId: b.id as never })}
+                disabled={disabled}
+                title={!canAfford ? 'Ressources insuffisantes' : upgrading ? 'Une construction est déjà en cours' : `Améliorer ${b.name}`}
+                className={cn(
+                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors duration-fast',
+                  disabled
+                    ? 'border border-border text-muted-foreground-soft cursor-not-allowed'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90',
+                )}
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {lockedCount > 0 && (
+        <button
+          type="button"
+          onClick={() => onNavigate(`/planet/${planet.id}/infrastructures`)}
+          className="block w-full rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-muted-foreground transition-colors duration-fast hover:text-foreground"
+        >
+          {lockedCount} bâtiment{lockedCount > 1 ? 's' : ''} au niveau max ou verrouillé{lockedCount > 1 ? 's' : ''} — voir la page
+        </button>
+      )}
+    </div>
   );
 }
