@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * Desktop : fenêtre ancrée à droite ; mobile : feuille plein écran.
  */
 export function PanelWindow({ title, icon, shortcut, side = 'right', onClose, children, className }: {
-  title: string;
+  title: ReactNode;
   icon?: ReactNode;
   /** Raccourci affiché dans l'en-tête (ex. « F »). */
   shortcut?: string;
@@ -20,7 +20,7 @@ export function PanelWindow({ title, icon, shortcut, side = 'right', onClose, ch
   return (
     <div
       role="dialog"
-      aria-label={title}
+      aria-label={typeof title === 'string' ? title : undefined}
       className={cn(
         'fixed z-40 hidden lg:flex flex-col overflow-hidden border border-border bg-surface-raised shadow-raised animate-slide-up',
         'lg:bottom-20 lg:w-[340px] lg:max-h-[calc(100dvh-9rem)] lg:rounded-lg',

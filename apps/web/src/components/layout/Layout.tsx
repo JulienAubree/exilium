@@ -10,7 +10,6 @@ import { AnnouncementBanner } from './AnnouncementBanner';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { FloatingFeedbackButton } from '@/components/feedback/FloatingFeedbackButton';
-import { FloatingPlanetDock } from './FloatingPlanetDock';
 import { PanelManager } from '@/components/panels/PanelManager';
 import { AbsenceSummaryModal } from '@/components/AbsenceSummaryModal';
 import { trpc } from '@/trpc';
@@ -87,7 +86,6 @@ export function Layout() {
       </div>
 
       <PanelManager />
-      <FloatingPlanetDock />
       <FloatingFeedbackButton />
 
       <ChatOverlay />

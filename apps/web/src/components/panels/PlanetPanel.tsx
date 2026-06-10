@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowRight, ArrowUp, Hammer, FlaskConical, ShieldPlus, X } from 'lucide-react';
+import { ArrowRight, ArrowUp, ChevronDown, Hammer, FlaskConical, ShieldPlus, X } from 'lucide-react';
+import { useOutsideClick } from '@/hooks/useOutsideClick';
 import { trpc } from '@/trpc';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
@@ -28,8 +29,12 @@ function formatCompact(value: number): string {
 export function PlanetPanel() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'apercu' | 'construire'>('apercu');
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const selectorRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(selectorRef, selectorOpen, () => setSelectorOpen(false));
   const close = usePanelStore((s) => s.close);
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
+  const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const { data: gameConfig } = useGameConfig();
   const { data: empire } = trpc.planet.empire.useQuery(undefined, { refetchInterval: 60_000 });
 
@@ -95,9 +100,69 @@ export function PlanetPanel() {
     });
   }
 
+  const allPlanets = empire?.planets ?? [];
+
+  // Sélecteur fusionné dans l'en-tête (ex-dock) : changer de planète
+  // directement depuis la carte.
+  const titleSelector = (
+    <div ref={selectorRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setSelectorOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={selectorOpen}
+        className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-sm font-semibold text-foreground transition-colors duration-fast hover:bg-accent"
+      >
+        {planet.name}
+        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-fast', selectorOpen && 'rotate-180')} />
+      </button>
+      {selectorOpen && (
+        <div className="absolute left-0 top-full z-50 mt-1 max-h-72 w-60 overflow-y-auto rounded-lg border border-border bg-surface-raised p-1 shadow-raised animate-slide-up">
+          {allPlanets.map((p) => {
+            const isActive = p.id === planet.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setActivePlanet(p.id);
+                  setSelectorOpen(false);
+                }}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-fast',
+                  isActive ? 'bg-primary/10' : 'hover:bg-accent',
+                )}
+              >
+                {p.planetClassId && p.planetImageIndex != null ? (
+                  <img
+                    src={getPlanetImageUrl(p.planetClassId, p.planetImageIndex, 'icon')}
+                    alt=""
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
+                    {p.name.charAt(0)}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className={cn('block truncate text-sm', isActive ? 'font-semibold text-primary' : 'text-foreground')}>
+                    {p.name}
+                  </span>
+                  <span className="block text-xs tabular-nums text-muted-foreground">
+                    [{p.galaxy}:{p.system}:{p.position}]{p.status === 'colonizing' && ' · colonisation'}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <PanelWindow
-      title={planet.name}
+      title={titleSelector}
       icon={<OverviewIcon width={16} height={16} className="text-primary" />}
       side="left"
       shortcut="P"
