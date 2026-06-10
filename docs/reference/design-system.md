@@ -45,7 +45,7 @@ Inter partout (pas de fonte display) · thème sombre uniquement · `bg-stars` g
 
 ### Migration
 
-M0 fondations ✅ → M1 patterns (`EntityCard`, `QueuePanel`, `PageHero` neutre, `AlertBanner`, `DataList`) → M2 page par page (les plus visibles d'abord, screenshots avant/après) → M3 enforcement par dossier → M4 View Transitions + optimistic UI.
+M0 fondations ✅ · M1 patterns partagés ✅ (héros neutres, `AlertBanner`, restyle `BuildingUpgradeCard`/files) · M2 purge globale ✅ (codemods : 609 micro-typos → 12px, 52 blurs, glows/ombres néon/washes violets supprimés, `glass-card`/`retro-card` redéfinies en v2) · M3 enforcement ESLint ✅ (interdits en erreur, CI) · M4 ✅ (View Transitions sur la nav, optimistic UI sur les constructions, compteurs déjà vivants). **Au fil de l'eau** : migrer `glass-card`/`retro-card` vers `<Surface>`, dédensifier l'uppercase résiduel, `EntityCard` unifiée (avec le chantier gouverneurs).
 
 ---
 
