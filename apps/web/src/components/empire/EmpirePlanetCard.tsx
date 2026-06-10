@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Hammer, FlaskConical, Rocket, ShieldAlert, Check, Building2, Wrench, Layers, Shield, ShieldPlus, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Hammer, FlaskConical, Rocket, ShieldAlert, ShieldPlus, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { cn } from '@/lib/utils';
 import { getPlanetImageUrl } from '@/lib/assets';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -138,20 +139,18 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
   }
 
   const resources = [
-    { label: 'Fe', value: planet.minerai, max: planet.storageMineraiCapacity ?? 0, rate: planet.mineraiPerHour ?? 0, color: 'text-minerai', fill: 'bg-minerai' },
-    { label: 'Si', value: planet.silicium, max: planet.storageSiliciumCapacity ?? 0, rate: planet.siliciumPerHour ?? 0, color: 'text-silicium', fill: 'bg-silicium' },
-    { label: 'H', value: planet.hydrogene, max: planet.storageHydrogeneCapacity ?? 0, rate: planet.hydrogenePerHour ?? 0, color: 'text-hydrogene', fill: 'bg-hydrogene' },
+    { label: 'Minerai', icon: <MineraiIcon size={13} />, value: planet.minerai, max: planet.storageMineraiCapacity ?? 0, rate: planet.mineraiPerHour ?? 0, color: 'text-minerai', fill: 'bg-minerai' },
+    { label: 'Silicium', icon: <SiliciumIcon size={13} />, value: planet.silicium, max: planet.storageSiliciumCapacity ?? 0, rate: planet.siliciumPerHour ?? 0, color: 'text-silicium', fill: 'bg-silicium' },
+    { label: 'Hydrogène', icon: <HydrogeneIcon size={13} />, value: planet.hydrogene, max: planet.storageHydrogeneCapacity ?? 0, rate: planet.hydrogenePerHour ?? 0, color: 'text-hydrogene', fill: 'bg-hydrogene' },
   ];
-
-  const hasActivity = planet.activeBuild || planet.activeResearch || planet.activeShipyard || planet.activeDefense || planet.outboundFleets || planet.inboundFriendlyFleets || hasAttack;
 
   return (
     <>
     <div className={cn(
-      'flex flex-col rounded-xl border bg-card/80 overflow-hidden transition-colors',
+      'flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors duration-fast',
       hasAttack
-        ? 'border-destructive/25 hover:border-destructive/60 hover:shadow-lg hover:shadow-destructive/10'
-        : 'border-border/50 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/5',
+        ? 'border-destructive/40 hover:border-destructive/70'
+        : 'border-border hover:border-border-strong',
     )}>
       {/* Header */}
       <div className="flex items-center gap-3 p-3.5 pb-2.5">
@@ -160,17 +159,17 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             <img
               src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
               alt={planet.name}
-              className={cn('h-11 w-11 rounded-full border-2 object-cover cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border/50')}
+              className={cn('h-14 w-14 rounded-full border-2 object-cover cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border')}
             />
           ) : (
-            <div className={cn('flex h-11 w-11 items-center justify-center rounded-full border-2 bg-muted font-semibold text-muted-foreground cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border/50')}>
+            <div className={cn('flex h-14 w-14 items-center justify-center rounded-full border-2 bg-muted font-semibold text-muted-foreground cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border')}>
               {planet.name.charAt(0)}
             </div>
           )}
         </button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <button onClick={() => goTo('/')} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
+            <button onClick={() => goTo('/')} className="truncate text-base font-semibold text-foreground hover:text-primary transition-colors text-left">
               {planet.name}
             </button>
             {planet.hasFlagship && (
@@ -183,11 +182,11 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         </div>
         <span className={cn(
           'shrink-0 rounded-md px-2 py-0.5 text-xs font-medium',
-          isFirst ? 'bg-primary/15 text-primary' : 'bg-purple-500/15 text-purple-400',
+          isFirst ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground',
         )}>
           {isFirst ? 'Capitale' : 'Colonie'}
         </span>
-        {canAbandon && (
+        {(
           <div className="relative shrink-0" ref={menuRef}>
             <button
               type="button"
@@ -202,19 +201,40 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-white/10 bg-surface-raised shadow-lg animate-slide-up"
+                className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-border bg-surface-raised shadow-raised animate-slide-up p-1"
               >
-                <button
-                  role="menuitem"
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setAbandonOpen(true);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-                >
-                  Abandonner la colonie
-                </button>
+                {[
+                  { label: 'Bâtiments', path: '/resources' },
+                  { label: 'Production', path: '/production' },
+                  { label: 'Flottes', path: '/fleet' },
+                  { label: 'Défenses', path: '/production?tab=defenses' },
+                ].map((item) => (
+                  <button
+                    key={item.path}
+                    role="menuitem"
+                    type="button"
+                    onClick={() => { setMenuOpen(false); goTo(item.path); }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                {canAbandon && (
+                  <>
+                    <div className="my-1 border-t border-border" />
+                    <button
+                      role="menuitem"
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setAbandonOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+                    >
+                      Abandonner la colonie
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -228,18 +248,18 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             const pct = r.max > 0 ? Math.min(100, (r.value / r.max) * 100) : 0;
             const isFull = pct > 95;
             return (
-              <div key={r.label} className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between">
-                  <span className={cn('text-xs font-bold', r.color)}>{r.label}</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={cn('text-xs font-semibold', r.color)}>{formatRate(r.value)}</span>
-                    <span className="text-xs text-muted-foreground">/ {formatRate(r.max)}</span>
-                    <span className={cn('text-xs', r.color)}>+{formatRate(r.rate)}/h</span>
-                  </div>
+              <div key={r.label} className="flex flex-col gap-0.5" title={`${r.label} : ${r.value.toLocaleString('fr-FR')} / ${r.max.toLocaleString('fr-FR')}`}>
+                <div className="flex items-center justify-between tabular-nums">
+                  <span className={cn('flex items-center gap-1.5 text-xs font-semibold', r.color)}>
+                    {r.icon}
+                    {formatRate(r.value)}
+                    {isFull && <span className="text-amber-400 font-normal">plein</span>}
+                  </span>
+                  <span className="text-xs text-muted-foreground">+{formatRate(r.rate)}/h</span>
                 </div>
-                <div className="h-[4px] overflow-hidden rounded-full bg-muted">
+                <div className="h-[4px] overflow-hidden rounded-full bg-secondary">
                   <div
-                    className={cn('h-full rounded-full transition-all', r.fill, isFull && 'animate-pulse')}
+                    className={cn('h-full rounded-full transition-all', isFull ? 'bg-amber-400' : r.fill)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -253,7 +273,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             <button
               type="button"
               onClick={() => goTo('/fleet/stationed')}
-              className="flex-1 text-left uppercase tracking-wider text-muted-foreground font-semibold hover:text-foreground transition-colors"
+              className="flex-1 text-left text-muted-foreground font-semibold hover:text-foreground transition-colors"
             >
               Flotte stationnée
             </button>
@@ -349,36 +369,13 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             ⚡ Deficit energie
           </button>
         )}
-        {!hasActivity && (planet.energyConsumed ?? 0) <= (planet.energyProduced ?? 0) && (
-          <div className="flex items-center gap-1 rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1 text-xs text-green-500">
-            <Check className="h-3 w-3" />
-            <span>Aucune activite</span>
-          </div>
-        )}
+
       </div>
 
-      {/* Footer shortcuts — swap based on viewMode */}
+      {/* Footer : uniquement les vraies actions (mode flotte) — les raccourcis
+          de navigation vivent dans le menu ⋯ et le drill-down */}
+      {viewMode === 'fleet' && (
       <div className="mt-auto flex border-t border-border/30">
-        {viewMode === 'resources' ? (
-          [
-            { label: 'Bâtiments', icon: Building2, path: '/buildings' },
-            { label: 'Production', icon: Wrench, path: '/production' },
-            { label: 'Flottes', icon: Layers, path: '/fleet' },
-            { label: 'Défenses', icon: Shield, path: '/production?tab=defenses' },
-          ].map((item, i, arr) => (
-            <button
-              key={item.path}
-              onClick={() => goTo(item.path)}
-              className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary',
-                i < arr.length - 1 && 'border-r border-border/30',
-              )}
-            >
-              <item.icon className="h-3.5 w-3.5" />
-              {item.label}
-            </button>
-          ))
-        ) : (
           <>
             <button
               onClick={() => openSend('transport')}
@@ -409,8 +406,8 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               Stationner
             </button>
           </>
-        )}
       </div>
+      )}
     </div>
     {canAbandon && (
       <AbandonColonyModal
