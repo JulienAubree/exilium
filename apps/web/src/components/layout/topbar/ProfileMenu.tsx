@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronDown, Settings, LogOut, MessageSquarePlus, Moon } from 'lucide-react';
+import { ChevronDown, Settings, LogOut, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePlanetStore } from '@/stores/planet.store';
-import { useThemeStore, themeLabEnabled } from '@/stores/theme.store';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 import { ProfileIcon, HistoryIcon } from '@/lib/icons';
 
@@ -15,8 +14,6 @@ export function ProfileMenu() {
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const clearActivePlanet = usePlanetStore((s) => s.clearActivePlanet);
-  const theme = useThemeStore((s) => s.theme);
-  const setTheme = useThemeStore((s) => s.setTheme);
 
   useOutsideClick(ref, open, () => setOpen(false));
 
@@ -92,22 +89,6 @@ export function ProfileMenu() {
               <MessageSquarePlus className="h-4 w-4" />
               Feedback
             </button>
-            {themeLabEnabled && (
-              <button
-                onClick={() => setTheme(theme === 'quart' ? 'default' : 'quart')}
-                aria-pressed={theme === 'quart'}
-                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                <Moon className="h-4 w-4" />
-                <span className="flex-1 text-left">Quart de nuit</span>
-                <span
-                  className={cn(
-                    'h-2 w-2 rounded-full',
-                    theme === 'quart' ? 'bg-primary' : 'bg-muted-foreground-faint',
-                  )}
-                />
-              </button>
-            )}
           </div>
           <div className="mx-2 border-t border-white/5" />
           <div className="p-1.5">

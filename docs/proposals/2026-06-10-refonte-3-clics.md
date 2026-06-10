@@ -1,6 +1,7 @@
 # Refonte « 3 clics » — l'empire au bout des doigts
 
 > **Statut** : brainstorm ouvert (proposal). Rien d'implémenté.
+> **Note (2026-06-10 soir)** : le shell Passerelle (panneaux P/F/E, command bar) a été **retiré** — rollback vers l'itération sidebar. Les constats « déjà livré » côté panneaux ne tiennent plus ; les chantiers (presets, carte d'intention, alertes actionnables, délégation) restent valables dans le shell sidebar.
 > **Date** : 2026-06-10
 > **Règle user** : *chaque action doit pouvoir se faire en 2 ou 3 clics max.*
 > **Lié à** : `2026-06-09-modernisation-4x-empire.md` (altitude), `2026-06-09-refonte-architecture-information.md` (4 hubs), `2026-06-10-la-passerelle-rts-shell.md` (panneaux), `2026-06-10-design-refonte-calme-spatial.md` (calme).

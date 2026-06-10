@@ -1,7 +1,7 @@
 # Quart de nuit — S0, l'écran témoin
 
-> **Statut** : spec S0 — première étape de la refonte « peau & âme » (proposal du 2026-06-10 : direction **A « Quart de nuit » + âme OGame** tranchée par le user).
-> **But** : valider le langage visuel avec les joueurs sur staging avant de dérouler S1-S5. Aucune mécanique touchée.
+> **Statut** : **gelé** — implémenté (commit `998361c6`) puis **retiré le 2026-06-10 au soir** par le rollback du shell (retour à l'itération sidebar, décision user). Conservé comme spec de référence si le chantier rouvre ; le code est dans l'historique git.
+> **But initial** : valider le langage visuel avec les joueurs sur staging avant de dérouler S1-S5. Aucune mécanique touchée.
 
 ## Périmètre
 

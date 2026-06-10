@@ -8,7 +8,6 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { AlertBanner } from '@/components/ui/alert-banner';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
-import { useThemeStore, themeLabEnabled } from '@/stores/theme.store';
 import * as GameIcons from '@/lib/icons';
 
 /** Itération programmatique : toute nouvelle icône exportée par lib/icons
@@ -46,8 +45,6 @@ export default function DesignSheet() {
   const [demoTab, setDemoTab] = useState('a');
   const [demoValue, setDemoValue] = useState(465_000);
   const [demoProgress, setDemoProgress] = useState(0.35);
-  const theme = useThemeStore((s) => s.theme);
-  const setTheme = useThemeStore((s) => s.setTheme);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 lg:p-6">
@@ -57,34 +54,6 @@ export default function DesignSheet() {
           « Calme spatial » — la couleur appartient au contenu. Réf : docs/reference/design-system.md
         </Text>
       </div>
-
-      {themeLabEnabled && (
-        <section>
-          <Text variant="title" className="mb-3">Thème (lab)</Text>
-          <Surface>
-            <Inline gap={3} align="center">
-              <Text variant="body" tone="secondary" className="flex-1">
-                « Quart de nuit » — bleu-noir spatial, donnée phosphore en mono, table Empire.
-                Réf : docs/plans/2026-06-10-quart-de-nuit-s0.md
-              </Text>
-              <Button
-                variant={theme === 'default' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTheme('default')}
-              >
-                Défaut
-              </Button>
-              <Button
-                variant={theme === 'quart' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTheme('quart')}
-              >
-                Quart de nuit
-              </Button>
-            </Inline>
-          </Surface>
-        </section>
-      )}
 
       <section>
         <Text variant="title" className="mb-3">Couleurs (sémantiques uniquement)</Text>

@@ -1,6 +1,7 @@
 # Refonte « peau & âme » — même jeu, autre monde
 
-> **Statut** : **direction tranchée (2026-06-10)** — A « Quart de nuit » retenue, avec tempérament « âme OGame » (voir §4 A′). Spec S0 : `docs/plans/2026-06-10-quart-de-nuit-s0.md`.
+> **Statut** : **gelé (2026-06-10 soir)** — le S0 « Quart de nuit » a été implémenté (commit `998361c6`) puis **retiré le jour même** par le rollback du shell (retour à l'itération sidebar, décision user). Le code S0 reste dans l'historique git. La direction A + âme OGame reste documentée ici si on rouvre le chantier.
+> *(Historique : direction tranchée le 2026-06-10 — A « Quart de nuit » + tempérament « âme OGame », voir §4 A′. Spec : `docs/plans/2026-06-10-quart-de-nuit-s0.md`.)*
 > **Date** : 2026-06-10
 > **Commande user** : *les mécaniques d'Exilium restent telles quelles (« je les ADORE »). Changer complètement le design, l'interface et le feeling.*
 > **Périmètre** : zéro formule touchée, zéro règle touchée, zéro donnée touchée. Tout ce qui se voit, s'entend et se ressent.

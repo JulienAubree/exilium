@@ -37,7 +37,6 @@ import type {
   PlanetTypeMeta,
 } from './DetailPanel';
 import { OrbitalCanvas } from './OrbitalCanvas';
-import { FleetTrailsLayer } from './FleetTrailsLayer';
 import { Ribbon } from './Ribbon';
 import { toSlotView, type SlotView } from './slotView';
 
@@ -271,16 +270,7 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
     selection.kind === 'slot' ? selection.position : null;
 
   return (
-    <div
-      className="flex h-[calc(100dvh-3rem)] min-h-[480px] overflow-hidden"
-      style={{
-        background:
-          'radial-gradient(1100px 600px at 72% 12%, rgba(38,80,140,0.22), transparent 62%), ' +
-          'radial-gradient(900px 560px at 18% 80%, rgba(16,90,110,0.20), transparent 65%), ' +
-          'radial-gradient(700px 420px at 50% 45%, rgba(70,40,110,0.10), transparent 70%), ' +
-          '#04060d',
-      }}
-    >
+    <div className="flex h-[calc(100vh-3.75rem)] min-h-[480px] overflow-hidden bg-black/40">
       <Ribbon
         views={views}
         selectedPosition={selectedPosition}
@@ -298,7 +288,6 @@ export function GalaxySystemView(props: GalaxySystemViewProps): ReactElement {
           onSelectPosition={selectPosition}
           onSelectStar={selectStar}
           onHoverPosition={setHoveredPosition}
-          overlay={<FleetTrailsLayer galaxy={galaxy} system={system} />}
         />
         {/* System selector overlay — top-left */}
         <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 border border-cyan-500/20 rounded-md p-1 z-10">

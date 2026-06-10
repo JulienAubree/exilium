@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { TopBar } from './TopBar';
 import { ResourceBar } from './ResourceBar';
+import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { GlobalTopbar } from './GlobalTopbar';
 import { Toaster } from '@/components/ui/Toaster';
@@ -10,13 +11,11 @@ import { AnnouncementBanner } from './AnnouncementBanner';
 import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { FloatingFeedbackButton } from '@/components/feedback/FloatingFeedbackButton';
-import { PanelManager } from '@/components/panels/PanelManager';
 import { AbsenceSummaryModal } from '@/components/AbsenceSummaryModal';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useThemeManager } from '@/hooks/useThemeManager';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 
 export function Layout() {
@@ -43,7 +42,6 @@ export function Layout() {
 
   useNotifications();
   useDocumentTitle();
-  useThemeManager();
 
   const { data: inboundFleets } = trpc.fleet.inbound.useQuery();
   const hostileFleets = useMemo(
@@ -61,10 +59,13 @@ export function Layout() {
         Aller au contenu
       </a>
 
-      {/* Main area — plus de sidebar : la nav vit dans GlobalTopbar (desktop)
-          et BottomTabBar (mobile) */}
-      <div className="flex flex-1 flex-col min-h-0">
+      {/* Desktop sidebar */}
+      <Sidebar />
+
+      {/* Main area */}
+      <div className="flex flex-1 flex-col min-h-0 lg:ml-56">
         <TopBar planetId={resolvedPlanetId} planets={planets ?? []} />
+        <GlobalTopbar />
         <OfflineBanner />
         <EmailVerificationBanner />
         <AnnouncementBanner />
@@ -75,10 +76,7 @@ export function Layout() {
             below is a flex sibling, so it is anchored naturally at the
             bottom of the viewport without position:fixed. */}
         <main id="main-content" className="flex-1 overflow-y-auto min-h-0">
-          {/* Nav fantôme DANS le conteneur de scroll : les héros qui remontent
-              en -mt-12 peignent leur atmosphère derrière elle (fusion). */}
-          <GlobalTopbar />
-          <div className={location.pathname.startsWith('/galaxy') ? 'w-full' : 'mx-auto w-full lg:max-w-7xl'}>
+          <div className="mx-auto lg:max-w-6xl">
             <Outlet context={{ planetId: resolvedPlanetId, planetClassId: activePlanet?.planetClassId ?? null }} />
           </div>
         </main>
@@ -87,7 +85,6 @@ export function Layout() {
         <BottomTabBar />
       </div>
 
-      <PanelManager />
       <FloatingFeedbackButton />
 
       <ChatOverlay />

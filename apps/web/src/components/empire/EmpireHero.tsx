@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { HelpCircle, Crown } from 'lucide-react';
-import { trpc } from '@/trpc';
+import { HelpCircle } from 'lucide-react';
 import { HeroAtmosphere } from '@/components/common/HeroAtmosphere';
 import { useHomepageContent } from '@/components/landing/useHomepageContent';
 
@@ -39,8 +38,6 @@ export function EmpireHero({
   onOpenHelp,
   actions,
 }: EmpireHeroProps) {
-  const { data: progression } = trpc.empireProgression.get.useQuery();
-  const empireLevel = progression?.level ?? null;
   const avatarUrl = avatarId ? `/assets/avatars/${avatarId}.webp` : null;
   // Use the same key art as the public landing — keeps the in-game empire
   // view visually anchored to the brand image the admin curates.
@@ -48,12 +45,10 @@ export function EmpireHero({
   const keyArtUrl = homepage.hero.backgroundImage || null;
 
   return (
-    // Fusion héro/nav (desktop) : le bloc remonte sous la nav fantôme (-mt-12),
-    // l'atmosphère peint derrière elle ; le contenu se décale d'autant (pt-16).
-    <div className="relative overflow-hidden lg:-mt-12">
+    <div className="relative overflow-hidden">
       <HeroAtmosphere imageUrl={keyArtUrl} variant="cyan-purple" />
 
-      <div className="relative px-5 pt-5 pb-5 lg:px-8 lg:pt-16 lg:pb-6">
+      <div className="relative px-5 pt-8 pb-6 lg:px-8 lg:pt-10 lg:pb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
           <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
             {/* Round avatar — clickable to open the help overlay */}
@@ -86,20 +81,9 @@ export function EmpireHero({
 
             {/* Title + sub-line */}
             <div className="flex-1 min-w-0 pt-1">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
-                  {username}
-                </h1>
-                {empireLevel != null && (
-                  <span
-                    className="flex shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400 tabular-nums"
-                    title={`Empereur niveau ${empireLevel}`}
-                  >
-                    <Crown className="h-3 w-3" aria-hidden />
-                    {empireLevel}
-                  </span>
-                )}
-              </div>
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
+                {username}
+              </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {planetCount} {planetCount > 1 ? 'colonies' : 'colonie'}
                 {activeFleetCount > 0 && (

@@ -50,10 +50,6 @@ export default {
         hydrogene: '#60a5fa',
         energy: '#f0c040',
         shield: '#22d3ee',
-        'live-data': 'hsl(var(--live-data))',
-      },
-      fontFamily: {
-        data: 'var(--font-data)',
       },
       borderRadius: {
         lg: 'var(--radius)',

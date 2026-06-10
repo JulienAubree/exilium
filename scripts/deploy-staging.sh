@@ -47,9 +47,7 @@ echo "[deploy-staging] clearing stale TS build cache..."
 find apps packages -maxdepth 4 -name "*.tsbuildinfo" -not -path "*/node_modules/*" -delete 2>/dev/null || true
 
 echo "[deploy-staging] building..."
-# Thème lab « Quart de nuit » (S0) : le switcher de thème n'est exposé que
-# sur staging. Réf : docs/plans/2026-06-10-quart-de-nuit-s0.md
-VITE_THEME_LAB=1 pnpm build
+pnpm build
 
 echo "[deploy-staging] applying DB migrations..."
 bash scripts/apply-migrations.sh

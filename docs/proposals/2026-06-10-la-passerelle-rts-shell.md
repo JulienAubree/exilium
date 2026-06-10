@@ -1,9 +1,12 @@
-# La Passerelle — shell RTS à panneaux (concept B, activé)
+# La Passerelle — shell RTS à panneaux (concept B, retiré)
 
-> **Statut** : brainstorm ouvert. Suite logique du shell Empire-first : le user demande le
-> paradigme RTS (« les infos en cartes flottantes qui s'ouvrent et se ferment selon ce que
-> je veux faire »). Le dock planète flottant (2026-06-10) en était le précurseur.
-> **Décision antérieure** : A maintenant, B en horizon — l'horizon se rapproche.
+> **Statut** : **retiré (2026-06-10 soir)** — P1→P5 ont été livrés dans la journée puis
+> **annulés par rollback** : le user a tranché pour le retour à l'itération sidebar
+> (shell Empire-first, `ebd2c409`). Le code reste dans l'historique git. Conservé comme
+> trace du concept et de ses leçons (cf. contrainte n°3 : 4 métamorphoses en 48 h, c'est
+> précisément le risque qui s'est matérialisé).
+> *(Historique : suite logique du shell Empire-first — le user demandait le paradigme RTS,
+> le dock planète flottant en était le précurseur.)*
 
 ## 1. Le paradigme
 

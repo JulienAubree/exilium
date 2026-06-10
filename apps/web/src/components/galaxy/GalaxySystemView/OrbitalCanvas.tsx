@@ -29,15 +29,13 @@ import { hash01, slotAngle } from './geometry';
 import type { SlotView } from './slotView';
 import { SlotMarker } from './SlotMarker';
 
-export const CANVAS_WIDTH = 600;
-export const CANVAS_HEIGHT = 420;
-export const STAR_X = CANVAS_WIDTH / 2; // 300
-export const STAR_Y = 60;
-export const ORBIT_TOTAL_POSITIONS = 16;
-export const ORBIT_R_MAX = 310;
+const CANVAS_WIDTH = 600;
+const CANVAS_HEIGHT = 420;
+const STAR_X = CANVAS_WIDTH / 2; // 300
+const STAR_Y = 60;
 const STAR_OUTER_RADIUS = 26;
 const STAR_CORE_RADIUS = 9;
-const STARFIELD_COUNT = 110;
+const STARFIELD_COUNT = 60;
 const TOTAL_POSITIONS = 16;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
@@ -64,7 +62,7 @@ const PAN_DEFAULT = { x: STAR_X, y: STAR_Y + (R_MAX - R_MIN) / 2 + R_MIN };
  * Linear spacing feels right in the narrower radial band; no power easing
  * like the full-circle version had.
  */
-export function halfCircleOrbitRadius(position: number, total: number): number {
+function halfCircleOrbitRadius(position: number, total: number): number {
   const t = (position - 1) / Math.max(1, total - 1);
   return R_MIN + (R_MAX - R_MIN) * t;
 }
@@ -72,7 +70,7 @@ export function halfCircleOrbitRadius(position: number, total: number): number {
 /**
  * Map the deterministic full-circle slot angle into the half-circle range.
  */
-export function halfCircleSlotAngle(galaxy: number, system: number, position: number): number {
+function halfCircleSlotAngle(galaxy: number, system: number, position: number): number {
   const rawAngle = slotAngle(galaxy, system, position);
   return MIN_ANGLE + (rawAngle / 360) * (MAX_ANGLE - MIN_ANGLE);
 }
@@ -88,8 +86,6 @@ export interface OrbitalCanvasProps {
   /** Click on the central star → deselect everything → mode A. */
   onSelectStar: () => void;
   onHoverPosition: (position: number | null) => void;
-  /** Couche additionnelle rendue dans l'espace du système (P5 : flottes). */
-  overlay?: React.ReactNode;
 }
 
 interface StarfieldDot {
@@ -125,7 +121,6 @@ const TOOLTIP_WIDTH = 200;
 const TOOLTIP_HEIGHT = 46;
 
 export function OrbitalCanvas({
-  overlay,
   views,
   galaxy,
   system,
@@ -425,7 +420,7 @@ export function OrbitalCanvas({
       onClickCapture={handleClickCapture}
       onDoubleClick={handleReset}
       style={{
-        background: 'transparent',
+        background: 'radial-gradient(ellipse at 30% 20%, #1a1535 0%, #05070f 75%)',
         cursor: zoom > 1 ? 'grab' : 'default',
         touchAction: 'none',
       }}
@@ -437,43 +432,21 @@ export function OrbitalCanvas({
           <stop offset="60%" stopColor="#ff8438" stopOpacity={0.85} />
           <stop offset="100%" stopColor="#ff5b1c" stopOpacity={0} />
         </radialGradient>
-        <radialGradient id="starHalo" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ffd97a" stopOpacity={0.28} />
-          <stop offset="55%" stopColor="#ff8438" stopOpacity={0.10} />
-          <stop offset="100%" stopColor="#ff5b1c" stopOpacity={0} />
-        </radialGradient>
-        <radialGradient id="nebulaA" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#2b5d9e" stopOpacity={0.18} />
-          <stop offset="100%" stopColor="#2b5d9e" stopOpacity={0} />
-        </radialGradient>
-        <radialGradient id="nebulaB" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#1c8a96" stopOpacity={0.14} />
-          <stop offset="100%" stopColor="#1c8a96" stopOpacity={0} />
-        </radialGradient>
       </defs>
 
-      {/* Profondeur : nappes de nébuleuse derrière le champ d'étoiles. */}
-      <g aria-hidden="true">
-        <ellipse cx={CANVAS_WIDTH * 0.72} cy={CANVAS_HEIGHT * 0.2} rx={260} ry={150} fill="url(#nebulaA)" />
-        <ellipse cx={CANVAS_WIDTH * 0.22} cy={CANVAS_HEIGHT * 0.75} rx={220} ry={140} fill="url(#nebulaB)" />
-      </g>
-
-      {/* Decorative background starfield — la moitié lointaine scintille à peine. */}
+      {/* Decorative background starfield. */}
       <g aria-hidden="true">
         {starfield.map((dot, i) => (
           <circle
             key={i}
             cx={dot.cx}
             cy={dot.cy}
-            r={i >= 60 ? dot.r * 0.6 : dot.r}
+            r={dot.r}
             fill="white"
-            opacity={i >= 60 ? dot.opacity * 0.45 : dot.opacity}
+            opacity={dot.opacity}
           />
         ))}
       </g>
-
-      {/* Halo large de l'étoile — la pièce maîtresse respire. */}
-      <circle aria-hidden="true" cx={STAR_X} cy={STAR_Y} r={STAR_OUTER_RADIUS * 3.2} fill="url(#starHalo)" />
 
       {/* 16 concentric full-circle orbits, styled by slot kind. */}
       <g aria-hidden="true">
@@ -559,8 +532,6 @@ export function OrbitalCanvas({
       </g>
 
       {/* Slot markers — one per non-belt slot. */}
-      {overlay}
-
       {placedSlots.map(({ view, cx, cy }) => (
         <SlotMarker
           key={view.position}
