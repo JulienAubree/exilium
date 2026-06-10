@@ -48,6 +48,13 @@
     --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   }
 
+  /* View Transitions (M4) : crossfade natif entre pages, durée tokenisée. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-base);
+    animation-timing-function: var(--ease-standard);
+  }
+
   /* Accessibilité motion : neutralise les animations/transitions du jeu.
      S'applique globalement — pas de cas par cas. */
   @media (prefers-reduced-motion: reduce) {

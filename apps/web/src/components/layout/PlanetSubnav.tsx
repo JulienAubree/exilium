@@ -185,6 +185,7 @@ export function PlanetSubnav() {
           {items.map((item) => (
             <li key={item.path} className="shrink-0">
               <NavLink
+                viewTransition
                 to={item.path}
                 end={item.end}
                 className={({ isActive }) =>

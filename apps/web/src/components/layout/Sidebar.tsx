@@ -97,6 +97,7 @@ export function Sidebar() {
                 return (
                   <li key={item.path} className={isNew ? 'sidebar-item-new' : undefined}>
                     <NavLink
+                      viewTransition
                       to={item.path}
                       end={item.path === '/'}
                       onClick={() => markSeen(item.path)}

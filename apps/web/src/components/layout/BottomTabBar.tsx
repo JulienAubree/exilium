@@ -78,7 +78,7 @@ export function BottomTabBar() {
   const activeTab = getActiveTab(location.pathname);
 
   const handleSheetNav = (path: string) => {
-    navigate(path);
+    navigate(path, { viewTransition: true });
     closeSheet();
   };
 
@@ -86,7 +86,7 @@ export function BottomTabBar() {
     { id: 'empire' as const, label: 'Empire', icon: EmpireIcon, action: () => toggleSheet('empire') },
     { id: 'planete' as const, label: 'Planète', icon: OverviewIcon, action: () => toggleSheet('planete') },
     { id: 'galaxie' as const, label: 'Galaxie', icon: GalaxyIcon, action: () => toggleSheet('galaxie') },
-    { id: 'flotte' as const, label: 'Flotte', icon: FleetIcon, action: () => { closeSheet(); navigate('/fleet'); } },
+    { id: 'flotte' as const, label: 'Flotte', icon: FleetIcon, action: () => { closeSheet(); navigate('/fleet', { viewTransition: true }); } },
     { id: 'social' as const, label: 'Social', icon: MessagesIcon, action: () => toggleSheet('social'), badge: unreadCount ?? 0 },
   ];
 

@@ -34,6 +34,7 @@ export function TabBar({ items, ariaLabel, className }: {
           <li key={item.label} className="shrink-0">
             {item.to ? (
               <NavLink
+                viewTransition
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) => cn(TAB_BASE, isActive ? TAB_ACTIVE : TAB_INACTIVE)}

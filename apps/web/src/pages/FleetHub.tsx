@@ -34,6 +34,7 @@ export default function FleetHub() {
           {TABS.map((tab) => (
             <li key={tab.path} className="shrink-0">
               <NavLink
+                viewTransition
                 to={tab.path}
                 end={tab.end}
                 className={({ isActive }) =>

@@ -188,7 +188,29 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
   );
 
   const upgradeMutation = trpc.building.upgrade.useMutation({
-    onSuccess: () => {
+    // Optimistic UI (design v2 M4) : la construction apparaît lancée
+    // instantanément — le serveur corrige l'endTime exact au refetch,
+    // rollback si la mutation échoue.
+    onMutate: async (vars) => {
+      await utils.building.list.cancel({ planetId: planetId! });
+      const previous = utils.building.list.getData({ planetId: planetId! });
+      utils.building.list.setData({ planetId: planetId! }, (old) =>
+        old?.map((b) =>
+          b.id === vars.buildingId
+            ? {
+                ...b,
+                isUpgrading: true,
+                upgradeEndTime: new Date(Date.now() + b.nextLevelTime * 1000).toISOString(),
+              }
+            : b,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) utils.building.list.setData({ planetId: planetId! }, ctx.previous);
+    },
+    onSettled: () => {
       utils.building.list.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
       utils.planet.empire.invalidate();
