@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
@@ -50,6 +50,17 @@ const NAV_GROUPS: NavItem[][] = [
  */
 export function GlobalTopbar() {
   const location = useLocation();
+  // Nav « fantôme » : transparente posée sur l'atmosphère du héro, elle ne
+  // devient une surface qu'au scroll (lisibilité). Le scroll vit sur <main>.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const el = document.getElementById('main-content');
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 8);
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [location.pathname]);
   const { data: tutorialData } = trpc.tutorial.getCurrent.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
 
@@ -71,7 +82,12 @@ export function GlobalTopbar() {
   );
 
   return (
-    <header className="sticky top-0 z-40 hidden lg:grid grid-cols-[1fr_auto_1fr] items-center h-12 border-b border-border bg-surface px-4 lg:px-6">
+    <header
+      className={cn(
+        'sticky top-0 z-40 hidden lg:grid grid-cols-[1fr_auto_1fr] items-center h-12 px-4 lg:px-6 border-b transition-colors duration-base ease-standard',
+        scrolled ? 'border-border bg-surface' : 'border-transparent bg-transparent',
+      )}
+    >
       <NavLink to="/" viewTransition className="justify-self-start text-base font-semibold text-primary shrink-0">
         Exilium
       </NavLink>
