@@ -7,6 +7,8 @@ import { PlanetSelectorDropdown } from './topbar/PlanetSelectorDropdown';
 import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
+import { usePlanetStore } from '@/stores/planet.store';
+import { useIsQuart } from '@/stores/theme.store';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import { TopBarActions } from './topbar/TopBarActions';
@@ -74,6 +76,11 @@ export function GlobalTopbar() {
   // + ressources — une seule barre, plus d'étage empilé.
   const planetMatch = location.pathname.match(/^\/planet\/([0-9a-f-]{36})/);
   const contextPlanetId = planetMatch?.[1] ?? null;
+  // « Quart de nuit » S0 — la barre de ressources est éternelle : hors
+  // contexte planète, elle suit la planète active (commandement n°1).
+  const isQuart = useIsQuart();
+  const activePlanetId = usePlanetStore((s) => s.activePlanetId);
+  const resourcePlanetId = contextPlanetId ?? (isQuart ? activePlanetId : null);
   // Nav « fantôme » : transparente posée sur l'atmosphère du héro, elle ne
   // devient une surface qu'au scroll (lisibilité). Le scroll vit sur <main>.
   const [scrolled, setScrolled] = useState(false);
@@ -106,11 +113,11 @@ export function GlobalTopbar() {
   );
 
   const { data: resourceData } = trpc.resource.production.useQuery(
-    { planetId: contextPlanetId! },
-    { enabled: !!contextPlanetId, refetchInterval: 300_000 },
+    { planetId: resourcePlanetId! },
+    { enabled: !!resourcePlanetId, refetchInterval: 300_000 },
   );
   const liveResources = useResourceCounter(
-    contextPlanetId && resourceData
+    resourcePlanetId && resourceData
       ? {
           minerai: resourceData.minerai,
           silicium: resourceData.silicium,
@@ -226,13 +233,13 @@ export function GlobalTopbar() {
       )}
 
       <div className="justify-self-end flex shrink-0 items-center gap-3">
-        {contextPlanetId && resourceData && (
+        {resourcePlanetId && resourceData && (
           <div className="hidden xl:flex items-center gap-3 tabular-nums">
             <span className="flex items-center gap-1 text-sm font-semibold text-minerai"><MineraiIcon size={13} />{liveResources.minerai.toLocaleString('fr-FR')}</span>
             <span className="flex items-center gap-1 text-sm font-semibold text-silicium"><SiliciumIcon size={13} />{liveResources.silicium.toLocaleString('fr-FR')}</span>
             <span className="flex items-center gap-1 text-sm font-semibold text-hydrogene"><HydrogeneIcon size={13} />{liveResources.hydrogene.toLocaleString('fr-FR')}</span>
             <span className={cn('flex items-center gap-1 text-sm font-semibold', energyBalance >= 0 ? 'text-energy' : 'text-destructive')}><EnergieIcon size={13} />{energyBalance.toLocaleString('fr-FR')}</span>
-            <ImportResourcesButton targetPlanetId={contextPlanetId} size="sm" />
+            <ImportResourcesButton targetPlanetId={resourcePlanetId} size="sm" />
           </div>
         )}
         <TopBarActions />

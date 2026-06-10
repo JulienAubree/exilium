@@ -16,6 +16,7 @@ import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useThemeManager } from '@/hooks/useThemeManager';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 
 export function Layout() {
@@ -42,6 +43,7 @@ export function Layout() {
 
   useNotifications();
   useDocumentTitle();
+  useThemeManager();
 
   const { data: inboundFleets } = trpc.fleet.inbound.useQuery();
   const hostileFleets = useMemo(

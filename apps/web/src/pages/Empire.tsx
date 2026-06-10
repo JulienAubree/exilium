@@ -7,11 +7,14 @@ import { EmpireHelp } from '@/components/empire/EmpireHelp';
 import { EmpireKpiBar } from '@/components/empire/EmpireKpiBar';
 import { EmpirePlanetCard } from '@/components/empire/EmpirePlanetCard';
 import { EmpirePlanetRow } from '@/components/empire/EmpirePlanetRow';
+import { EmpirePlanetTable } from '@/components/empire/EmpirePlanetTable';
 import { EmpireViewToggle } from '@/components/empire/EmpireViewToggle';
 import { ReorderableEmpireGrid } from '@/components/empire/ReorderableEmpireGrid';
 import type { EmpireViewMode, PlanetFleetData } from '@/components/empire/empire-types';
 import { useAuthStore } from '@/stores/auth.store';
-import { ArrowUpDown } from 'lucide-react';
+import { useThemeStore, useIsQuart } from '@/stores/theme.store';
+import { cn } from '@/lib/utils';
+import { ArrowUpDown, LayoutGrid, Table2 } from 'lucide-react';
 
 export default function Empire() {
   const utils = trpc.useUtils();
@@ -22,6 +25,13 @@ export default function Empire() {
   const [isReordering, setIsReordering] = useState(false);
   const [viewMode, setViewMode] = useState<EmpireViewMode>('resources');
   const [helpOpen, setHelpOpen] = useState(false);
+
+  // « Quart de nuit » S0 : sous le thème lab, le home se lit en table
+  // (défaut), les cartes restent à un clic. Hors thème : cartes, comme avant.
+  const isQuart = useIsQuart();
+  const empireDisplay = useThemeStore((s) => s.empireDisplay);
+  const setEmpireDisplay = useThemeStore((s) => s.setEmpireDisplay);
+  const display: 'cards' | 'table' = isQuart ? (empireDisplay ?? 'table') : 'cards';
 
   const fleetByPlanet = useMemo(() => {
     const map = new Map<string, PlanetFleetData>();
@@ -73,7 +83,39 @@ export default function Empire() {
         actions={
           !isReordering ? (
             <div className="flex items-center gap-2">
-              <EmpireViewToggle mode={viewMode} onChange={setViewMode} />
+              {isQuart && (
+                <div className="hidden lg:inline-flex rounded-md border border-border p-0.5 bg-card/40">
+                  <button
+                    type="button"
+                    onClick={() => setEmpireDisplay('table')}
+                    aria-pressed={display === 'table'}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs font-medium transition-colors',
+                      display === 'table' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <Table2 className="h-3.5 w-3.5" />
+                    Table
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmpireDisplay('cards')}
+                    aria-pressed={display === 'cards'}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs font-medium transition-colors',
+                      display === 'cards' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    Cartes
+                  </button>
+                </div>
+              )}
+              {/* Le toggle ressources/flotte pilote cartes (desktop) et lignes
+                  (mobile) — quand la table est active il ne sert qu'au mobile. */}
+              <div className={display === 'table' ? 'lg:hidden' : undefined}>
+                <EmpireViewToggle mode={viewMode} onChange={setViewMode} />
+              </div>
               {data.planets.length > 1 && (
                 <button
                   type="button"
@@ -107,19 +149,25 @@ export default function Empire() {
           />
         ) : (
           <>
-            {/* Desktop grid */}
-            <div className="hidden lg:grid lg:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] lg:gap-4 lg:items-start">
-              {data.planets.map((planet, i) => (
-                <EmpirePlanetCard
-                  key={planet.id}
-                  planet={planet}
-                  isFirst={i === 0}
-                  allPlanets={data.planets}
-                  fleet={fleetByPlanet.get(planet.id)}
-                  viewMode={viewMode}
-                />
-              ))}
-            </div>
+            {/* Desktop : table (« Quart de nuit » S0) ou grille de cartes */}
+            {display === 'table' ? (
+              <div className="hidden lg:block">
+                <EmpirePlanetTable planets={data.planets} />
+              </div>
+            ) : (
+              <div className="hidden lg:grid lg:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] lg:gap-4 lg:items-start">
+                {data.planets.map((planet, i) => (
+                  <EmpirePlanetCard
+                    key={planet.id}
+                    planet={planet}
+                    isFirst={i === 0}
+                    allPlanets={data.planets}
+                    fleet={fleetByPlanet.get(planet.id)}
+                    viewMode={viewMode}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Mobile list */}
             <div className="lg:hidden">
