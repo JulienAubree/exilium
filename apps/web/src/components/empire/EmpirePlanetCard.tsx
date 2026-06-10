@@ -99,36 +99,31 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         onClick={() => goTo('/')}
         className="flex flex-col rounded-xl border border-amber-500/25 bg-card/80 overflow-hidden text-left transition-colors hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5 cursor-pointer"
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 p-3.5 pb-2.5">
-          <div className="shrink-0">
-            {planet.planetClassId && planet.planetImageIndex != null ? (
-              <img
-                src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
-                alt={planet.name}
-                className="h-11 w-11 rounded-full border-2 border-amber-500/30 object-cover opacity-70"
-              />
-            ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-500/30 bg-muted font-semibold text-muted-foreground opacity-70">
-                {planet.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-foreground">
-              {planet.name}
-            </div>
-            <div className="text-xs text-muted-foreground">
+        {/* Bannière (voile ambre : colonisation en cours) */}
+        <div className="relative h-28 overflow-hidden">
+          {planet.planetClassId && planet.planetImageIndex != null ? (
+            <img
+              src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-secondary" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
+          <span className="absolute right-2.5 top-2.5 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-400">
+            Colonisation
+          </span>
+          <div className="absolute bottom-2 left-3.5 right-3.5">
+            <div className="truncate text-base font-semibold text-foreground">{planet.name}</div>
+            <div className="text-xs text-muted-foreground tabular-nums">
               [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
             </div>
           </div>
-          <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-500/15 text-amber-400">
-            Colonisation
-          </span>
         </div>
 
         {/* Colonization status */}
-        <div className="px-3.5 pb-3.5">
+        <div className="px-3.5 pt-2.5 pb-3.5">
           <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
             <Rocket className="h-3.5 w-3.5 shrink-0" />
             <span>Colonisation en cours — cliquez pour voir la progression</span>
@@ -152,41 +147,46 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         ? 'border-destructive/40 hover:border-destructive/70'
         : 'border-border hover:border-border-strong',
     )}>
-      {/* Header */}
-      <div className="flex items-center gap-3 p-3.5 pb-2.5">
-        <button onClick={() => goTo('/')} className="shrink-0">
+      {/* Bannière planète : l'illustration EST l'en-tête */}
+      <div className="relative h-28 shrink-0 overflow-hidden group">
+        <button
+          type="button"
+          onClick={() => goTo('/')}
+          aria-label={`Ouvrir ${planet.name}`}
+          className="absolute inset-0 block w-full text-left"
+        >
           {planet.planetClassId && planet.planetImageIndex != null ? (
             <img
               src={getPlanetImageUrl(planet.planetClassId, planet.planetImageIndex, 'thumb')}
-              alt={planet.name}
-              className={cn('h-14 w-14 rounded-full border-2 object-cover cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border')}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-slow ease-standard group-hover:scale-105"
             />
           ) : (
-            <div className={cn('flex h-14 w-14 items-center justify-center rounded-full border-2 bg-muted font-semibold text-muted-foreground cursor-pointer hover:ring-2 hover:ring-primary/40 transition-shadow', hasAttack ? 'border-destructive/40' : 'border-border')}>
-              {planet.name.charAt(0)}
-            </div>
+            <div className="absolute inset-0 bg-secondary" />
           )}
+          {/* Fondu fonctionnel : lisibilité du nom sur l'image */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
+          <div className="absolute bottom-2 left-3.5 right-3.5">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-base font-semibold text-foreground drop-shadow-sm group-hover:text-primary transition-colors">
+                {planet.name}
+              </span>
+              {planet.hasFlagship && (
+                <FlagshipIcon width={14} height={14} className="shrink-0 text-energy" />
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground tabular-nums">
+              [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
+            </div>
+          </div>
         </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => goTo('/')} className="truncate text-base font-semibold text-foreground hover:text-primary transition-colors text-left">
-              {planet.name}
-            </button>
-            {planet.hasFlagship && (
-              <FlagshipIcon width={14} height={14} className="shrink-0 text-energy" />
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            [{planet.galaxy}:{planet.system}:{planet.position}] · {planet.diameter.toLocaleString('fr-FR')} km
-          </div>
-        </div>
-        <span className={cn(
-          'shrink-0 rounded-md px-2 py-0.5 text-xs font-medium',
-          isFirst ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground',
-        )}>
-          {isFirst ? 'Capitale' : 'Colonie'}
-        </span>
-        {(
+        <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5">
+          <span className={cn(
+            'rounded-md px-2 py-0.5 text-xs font-medium backdrop-saturate-150',
+            isFirst ? 'bg-primary/20 text-primary' : 'bg-background/60 text-muted-foreground',
+          )}>
+            {isFirst ? 'Capitale' : 'Colonie'}
+          </span>
           <div className="relative shrink-0" ref={menuRef}>
             <button
               type="button"
@@ -194,7 +194,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               aria-label="Actions"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <span className="text-base leading-none">{'\u22EF'}</span>
             </button>
@@ -238,12 +238,12 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Resource bars OR fleet chips, depending on viewMode */}
       {viewMode === 'resources' ? (
-        <div className="flex flex-col gap-1.5 px-3.5 pb-2.5">
+        <div className="flex flex-col gap-1.5 px-3.5 pt-2.5 pb-2.5">
           {resources.map((r) => {
             const pct = r.max > 0 ? Math.min(100, (r.value / r.max) * 100) : 0;
             const isFull = pct > 95;
