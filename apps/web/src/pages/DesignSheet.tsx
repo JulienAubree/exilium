@@ -7,6 +7,20 @@ import { Stat } from '@/components/ui/stat';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
+import * as GameIcons from '@/lib/icons';
+
+/** Itération programmatique : toute nouvelle icône exportée par lib/icons
+ * apparaît ici automatiquement — la bibliothèque reste exhaustive. */
+const GAME_ICON_ENTRIES = Object.entries(GameIcons).filter(
+  ([name, value]) => name.endsWith('Icon') && typeof value === 'function',
+) as [string, React.ComponentType<React.SVGProps<SVGSVGElement>>][];
+
+const RESOURCE_ICON_ENTRIES = [
+  { name: 'MineraiIcon', node: <MineraiIcon size={20} className="text-minerai" /> },
+  { name: 'SiliciumIcon', node: <SiliciumIcon size={20} className="text-silicium" /> },
+  { name: 'HydrogeneIcon', node: <HydrogeneIcon size={20} className="text-hydrogene" /> },
+  { name: 'EnergieIcon', node: <EnergieIcon size={20} className="text-energy" /> },
+];
 
 const COLOR_TOKENS = [
   { name: 'background', cls: 'bg-background', note: 'page' },
@@ -146,6 +160,40 @@ export default function DesignSheet() {
             <Button variant="ghost">Ghost</Button>
             <Button variant="destructive">Danger</Button>
           </Inline>
+        </Surface>
+      </section>
+
+      <section>
+        <Text variant="title" className="mb-3">Icônes — bibliothèque exhaustive (lib/icons + ressources)</Text>
+        <Surface>
+          <Stack gap={4}>
+            <div>
+              <Text variant="caption" tone="faint" className="mb-2 block">Ressources (ResourceIcons — prop size, couleur sémantique)</Text>
+              <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
+                {RESOURCE_ICON_ENTRIES.map(({ name, node }) => (
+                  <div key={name} className="flex flex-col items-center gap-1.5 rounded-md border border-border/50 p-3">
+                    {node}
+                    <Text variant="caption" tone="secondary" className="text-center break-all">{name.replace('Icon', '')}</Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Text variant="caption" tone="faint" className="mb-2 block">Jeu & navigation (lib/icons — props width/height, currentColor)</Text>
+              <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
+                {GAME_ICON_ENTRIES.map(([name, IconComponent]) => (
+                  <div key={name} className="flex flex-col items-center gap-1.5 rounded-md border border-border/50 p-3 text-foreground">
+                    <IconComponent width={20} height={20} />
+                    <Text variant="caption" tone="secondary" className="text-center break-all">{name.replace('Icon', '')}</Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Text variant="secondary" tone="secondary">
+              Pour le reste de l'UI générique : lucide-react (16-20px, currentColor). Avant de créer une icône custom,
+              vérifier qu'elle n'existe ni ici ni dans lucide.
+            </Text>
+          </Stack>
         </Surface>
       </section>
 
