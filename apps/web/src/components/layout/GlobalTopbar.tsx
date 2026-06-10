@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
+import { ArrowLeft } from 'lucide-react';
+import { useResourceCounter } from '@/hooks/useResourceCounter';
+import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/components/common/ResourceIcons';
+import { PlanetSelectorDropdown } from './topbar/PlanetSelectorDropdown';
+import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
@@ -50,6 +55,11 @@ const NAV_GROUPS: NavItem[][] = [
  */
 export function GlobalTopbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  // Contexte planète : sur /planet/:id, la barre intègre retour + sélecteur
+  // + ressources — une seule barre, plus d'étage empilé.
+  const planetMatch = location.pathname.match(/^\/planet\/([0-9a-f-]{36})/);
+  const contextPlanetId = planetMatch?.[1] ?? null;
   // Nav « fantôme » : transparente posée sur l'atmosphère du héro, elle ne
   // devient une surface qu'au scroll (lisibilité). Le scroll vit sur <main>.
   const [scrolled, setScrolled] = useState(false);
@@ -81,6 +91,35 @@ export function GlobalTopbar() {
     (g) => g.length > 0,
   );
 
+  const { data: resourceData } = trpc.resource.production.useQuery(
+    { planetId: contextPlanetId! },
+    { enabled: !!contextPlanetId, refetchInterval: 300_000 },
+  );
+  const liveResources = useResourceCounter(
+    contextPlanetId && resourceData
+      ? {
+          minerai: resourceData.minerai,
+          silicium: resourceData.silicium,
+          hydrogene: resourceData.hydrogene,
+          resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
+          mineraiPerHour: resourceData.rates.mineraiPerHour,
+          siliciumPerHour: resourceData.rates.siliciumPerHour,
+          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
+          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
+          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
+          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
+        }
+      : undefined,
+  );
+  const energyBalance = resourceData
+    ? resourceData.rates.energyProduced - resourceData.rates.energyConsumed
+    : 0;
+
+  const switchPlanet = (id: string) => {
+    const sub = location.pathname.split('/').slice(3).join('/');
+    navigate(sub ? `/planet/${id}/${sub}` : `/planet/${id}`);
+  };
+
   return (
     <header
       className={cn(
@@ -88,9 +127,27 @@ export function GlobalTopbar() {
         scrolled ? 'border-border bg-surface' : 'border-transparent bg-transparent',
       )}
     >
-      <NavLink to="/" viewTransition className="justify-self-start text-base font-semibold text-primary shrink-0">
-        Exilium
-      </NavLink>
+      {contextPlanetId ? (
+        <div className="justify-self-start flex min-w-0 items-center gap-1.5">
+          <NavLink
+            to="/"
+            viewTransition
+            className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-fast"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden xl:inline">Empire</span>
+          </NavLink>
+          <PlanetSelectorDropdown
+            planetId={contextPlanetId}
+            planets={planets ?? []}
+            onSelect={switchPlanet}
+          />
+        </div>
+      ) : (
+        <NavLink to="/" viewTransition className="justify-self-start text-base font-semibold text-primary shrink-0">
+          Exilium
+        </NavLink>
+      )}
 
       <nav aria-label="Navigation principale" className="justify-self-center flex min-w-0 items-center overflow-x-auto">
         {groups.map((group, gi) => (
@@ -130,7 +187,16 @@ export function GlobalTopbar() {
         ))}
       </nav>
 
-      <div className="justify-self-end shrink-0">
+      <div className="justify-self-end flex shrink-0 items-center gap-3">
+        {contextPlanetId && resourceData && (
+          <div className="hidden xl:flex items-center gap-3 tabular-nums">
+            <span className="flex items-center gap-1 text-sm font-semibold text-minerai"><MineraiIcon size={13} />{liveResources.minerai.toLocaleString('fr-FR')}</span>
+            <span className="flex items-center gap-1 text-sm font-semibold text-silicium"><SiliciumIcon size={13} />{liveResources.silicium.toLocaleString('fr-FR')}</span>
+            <span className="flex items-center gap-1 text-sm font-semibold text-hydrogene"><HydrogeneIcon size={13} />{liveResources.hydrogene.toLocaleString('fr-FR')}</span>
+            <span className={cn('flex items-center gap-1 text-sm font-semibold', energyBalance >= 0 ? 'text-energy' : 'text-destructive')}><EnergieIcon size={13} />{energyBalance.toLocaleString('fr-FR')}</span>
+            <ImportResourcesButton targetPlanetId={contextPlanetId} size="sm" />
+          </div>
+        )}
         <TopBarActions />
       </div>
     </header>
