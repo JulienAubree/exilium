@@ -16,6 +16,7 @@ import ColonizationProgress from './ColonizationProgress';
 import { OverviewHero } from '@/components/overview/OverviewHero';
 import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
 import { VocationCard } from '@/components/overview/VocationCard';
+import { GovernorCard } from '@/components/overview/GovernorCard';
 
 // Below-the-fold: split into separate chunks, fetched after the initial paint.
 // Placeholder is a subtle skeleton — users rarely notice since the hero is
@@ -490,6 +491,12 @@ export default function Overview() {
           planetClassId={planet.planetClassId}
           vocation={(planet as { vocation?: string | null }).vocation ?? null}
           vocationChangedAt={(planet as { vocationChangedAt?: string | null }).vocationChangedAt ?? null}
+        />
+
+        {/* 4c. Gouverneur (délégation) */}
+        <GovernorCard
+          planetId={planet.id}
+          governor={(planet as { governor?: string | null }).governor ?? null}
         />
 
         {/* 5. Attack alert */}

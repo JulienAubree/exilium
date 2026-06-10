@@ -188,6 +188,34 @@ export function createPlanetService(
       return { vocation, firstChoice: isFirstChoice };
     },
 
+    /** Gouverneurs v1 : activer/désactiver une directive d'auto-construction. */
+    async setGovernor(userId: string, planetId: string, governor: 'extraction' | null) {
+      const [planet] = await db
+        .select()
+        .from(planets)
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
+        .limit(1);
+      if (!planet) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (planet.status !== 'active') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette planète n\'est pas active.' });
+      }
+      if (governor !== null) {
+        const config = await gameConfigService.getFullConfig();
+        const unlockLevel = Number(config.universe.governor_unlock_level) || 8;
+        const [progression] = await db
+          .select({ level: empireProgression.level })
+          .from(empireProgression)
+          .where(byUser(empireProgression.userId, userId))
+          .limit(1);
+        const level = progression?.level ?? 1;
+        if (level < unlockLevel) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Nommer un gouverneur requiert le niveau d'empire ${unlockLevel} (actuel : ${level}).` });
+        }
+      }
+      await db.update(planets).set({ governor }).where(eq(planets.id, planetId));
+      return { governor };
+    },
+
     async createHomePlanet(userId: string, txArg?: DbOrTx) {
       const config = await gameConfigService.getFullConfig();
       const homeworldType = findPlanetTypeByRole(config, 'homeworld');

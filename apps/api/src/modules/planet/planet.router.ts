@@ -26,6 +26,15 @@ export function createPlanetRouter(
         return planetService.setVocation(ctx.userId!, input.planetId, input.vocation);
       }),
 
+    setGovernor: protectedProcedure
+      .input(z.object({
+        planetId: z.string().uuid(),
+        governor: z.enum(['extraction']).nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return planetService.setGovernor(ctx.userId!, input.planetId, input.governor);
+      }),
+
     list: protectedProcedure.query(async ({ ctx }) => {
       return planetService.listPlanets(ctx.userId!);
     }),

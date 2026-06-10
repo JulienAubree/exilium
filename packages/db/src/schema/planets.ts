@@ -56,6 +56,8 @@ export const planets = pgTable(
     // Spécialisation des mondes (null = équilibrée ; homeworld jamais spécialisé)
     vocation: varchar('vocation', { length: 32 }),
     vocationChangedAt: timestamp('vocation_changed_at', { withTimezone: true }),
+    // Gouverneur (délégation) : directive d'auto-construction, null = manuel
+    governor: varchar('governor', { length: 32 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

@@ -30,6 +30,7 @@ import { startColonizationWorker } from './colonization.worker.js';
 import { createAllianceLogService } from '../modules/alliance/alliance-log.service.js';
 import { eventCatchup } from '../cron/event-catchup.js';
 import { resourceTick } from '../cron/resource-tick.js';
+import { governorTick } from '../cron/governor-tick.js';
 import { rankingUpdate } from '../cron/ranking-update.js';
 import { eventCleanup } from '../cron/event-cleanup.js';
 import { allianceLogPurge } from '../cron/alliance-log-purge.js';
@@ -92,6 +93,12 @@ console.log('[worker] Event catchup cron started (30s)');
 
 scheduleCron(redis, () => resourceTick(db, gameConfigService), { name: 'resource-tick', intervalMs: 15 * 60_000 });
 console.log('[worker] Resource tick cron started (15min)');
+
+scheduleCron(redis, async () => { await governorTick(db, gameConfigService, buildingService, resourceService); }, {
+  name: 'governor-tick',
+  intervalMs: 5 * 60_000,
+});
+console.log('[worker] Governor tick cron started (5min)');
 
 scheduleCron(redis, () => rankingUpdate(db, gameConfigService), { name: 'ranking-update', intervalMs: 30 * 60_000 });
 console.log('[worker] Ranking update cron started (30min)');
