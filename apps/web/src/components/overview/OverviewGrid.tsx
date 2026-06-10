@@ -148,7 +148,7 @@ export function OverviewGrid({
       </GridCard>
 
       {/* Defenses — col-span-2 on mobile, normal on desktop */}
-      <GridCard onClick={() => navigate('/defense')} className="col-span-2 lg:col-span-1">
+      <GridCard onClick={() => navigate('/production?tab=defenses')} className="col-span-2 lg:col-span-1">
         <GridHeader icon={DefenseIcon} label="Défenses" color="text-emerald-400" count={totalDefenses} />
         {shieldLevel > 0 && (
           <div className="flex items-center gap-1.5 px-1.5 py-1 rounded bg-cyan-500/[0.06] border border-cyan-500/10 mb-1.5 text-[10px]">
@@ -172,7 +172,7 @@ export function OverviewGrid({
       </GridCard>
 
       {/* Flagship — col-span-2 on mobile, normal on desktop */}
-      <GridCard onClick={() => navigate('/flagship')} className="col-span-2 lg:col-span-1">
+      <GridCard onClick={() => navigate('/fleet/flagship')} className="col-span-2 lg:col-span-1">
         <GridHeader icon={FlagshipIcon} label="Vaisseau amiral" color="text-yellow-400" />
         {flagship ? (
           flagship.planetId === currentPlanetId ? (

@@ -48,7 +48,7 @@ export function TopBarActions() {
         <NotificationsBell />
 
         <Link
-          to="/reports"
+          to="/fleet/reports"
           className="relative rounded-lg p-2 lg:p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           title="Rapports"
         >

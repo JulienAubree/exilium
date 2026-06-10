@@ -144,12 +144,12 @@ export function TutorialPanel() {
         if (condition.targetId === 'interceptor') {
           return {
             label: 'Aller au Centre de commandement \u2192',
-            action: () => navigate('/command-center'),
+            action: () => navigate('/production?tab=combat'),
           };
         }
-        return { label: 'Aller au Chantier \u2192', action: () => navigate('/shipyard') };
+        return { label: 'Aller au Chantier \u2192', action: () => navigate('/production?tab=utilitaires') };
       case 'defense_count':
-        return { label: 'Aller aux D\u00e9fenses \u2192', action: () => navigate('/defense') };
+        return { label: 'Aller aux D\u00e9fenses \u2192', action: () => navigate('/production?tab=defenses') };
       case 'mission_complete':
         return { label: 'Aller aux Missions \u2192', action: () => navigate('/missions') };
       default:

@@ -72,7 +72,7 @@ export function startBuildCompletionWorker(db: Database, redis: Redis, services:
         await services.pushService.sendToUser(result.userId, pushCategory, {
           title: `${titlePrefix}${labels[pushCategory]}`,
           body: `${name}${level}`,
-          url: pushCategory === 'building' ? '/buildings' : pushCategory === 'research' ? '/research' : '/shipyard',
+          url: pushCategory === 'building' ? '/resources' : pushCategory === 'research' ? '/research' : '/production',
         }, result.eventType);
       }
 

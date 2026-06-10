@@ -55,7 +55,7 @@ export function AbsenceSummaryModal() {
     const friendRequests = g['friend-request'] ?? 0;
 
     return ([
-      { key: 'combats', count: data.combats, label: 'Combats', icon: <Swords className="h-4 w-4" />, accent: 'text-red-300 border-red-500/40 bg-red-950/30', navigateTo: '/reports' },
+      { key: 'combats', count: data.combats, label: 'Combats', icon: <Swords className="h-4 w-4" />, accent: 'text-red-300 border-red-500/40 bg-red-950/30', navigateTo: '/fleet/reports' },
       { key: 'builds', count: builds, label: 'Constructions et vaisseaux terminés', icon: <Hammer className="h-4 w-4" />, accent: 'text-orange-300 border-orange-500/40 bg-orange-950/30', navigateTo: '/' },
       { key: 'research', count: research, label: 'Recherches terminées', icon: <FlaskConical className="h-4 w-4" />, accent: 'text-cyan-300 border-cyan-500/40 bg-cyan-950/30', navigateTo: '/research' },
       { key: 'fleets', count: fleets, label: 'Mouvements de flotte', icon: <Rocket className="h-4 w-4" />, accent: 'text-blue-300 border-blue-500/40 bg-blue-950/30', navigateTo: '/fleet' },

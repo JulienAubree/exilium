@@ -15,18 +15,16 @@ const afterTutorial: SidebarVisibilityRule = (ctx) => ctx.isComplete;
 const afterTutorialWithColonies = (min: number): SidebarVisibilityRule =>
   (ctx) => ctx.isComplete && ctx.colonyCount >= min;
 
-/** Source of truth: path → visibility rule. Order reflects the sidebar layout. */
+/** Source of truth: path → visibility rule. Order reflects the hub layout
+ * (refonte IA 2026-06 : Empire / Galaxie / Flotte / Social + bloc planète). */
 export const SIDEBAR_VISIBILITY_RULES = {
   '/empire': afterTutorialWithColonies(2),
   '/research': atChapter(2),
-  '/flagship': atChapter(3),
   '/': always,
   '/energy': always,
   '/resources': always,
   '/infrastructures': always,
-  '/shipyard': atChapter(2),
-  '/command-center': atChapter(4),
-  '/defense': atChapter(4),
+  '/production': atChapter(2),
   '/galaxy': atChapter(3),
   '/fleet': atChapter(3),
   '/missions': atChapter(3),
@@ -34,7 +32,6 @@ export const SIDEBAR_VISIBILITY_RULES = {
   '/messages': always,
   '/alliance': afterTutorial,
   '/ranking': afterTutorial,
-  '/alliance-ranking': afterTutorial,
   '/changelog': always,
   '/feedback': always,
 } as const satisfies Record<string, SidebarVisibilityRule>;

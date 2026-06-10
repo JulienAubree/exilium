@@ -1,23 +1,18 @@
 import { useMemo } from 'react';
 import { NavLink } from 'react-router';
 import { cn } from '@/lib/utils';
-import { MessageSquarePlus } from 'lucide-react';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import {
   ResearchIcon,
   FleetIcon,
-  FlagshipIcon,
   GalaxyIcon,
   MarketIcon,
   MissionsIcon,
-  MessagesIcon,
   RankingIcon,
   AllianceIcon,
-  AllianceRankingIcon,
   EmpireIcon,
-  HistoryIcon,
 } from '@/lib/icons';
 
 interface NavItem {
@@ -32,32 +27,27 @@ const sections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Empire', path: '/empire', icon: EmpireIcon },
       { label: 'Recherche', path: '/research', icon: ResearchIcon },
-      { label: 'Vaisseau amiral', path: '/flagship', icon: FlagshipIcon },
     ],
   },
   {
-    title: 'Espace',
+    title: 'Galaxie',
     items: [
       { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
-      { label: 'Flotte', path: '/fleet', icon: FleetIcon },
       { label: 'Missions', path: '/missions', icon: MissionsIcon },
       { label: 'Marché', path: '/market', icon: MarketIcon },
     ],
   },
   {
-    title: 'Communauté',
+    title: 'Flotte',
     items: [
-      { label: 'Messages', path: '/messages', icon: MessagesIcon },
-      { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
-      { label: 'Classement', path: '/ranking', icon: RankingIcon },
-      { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },
+      { label: 'Flotte', path: '/fleet', icon: FleetIcon },
     ],
   },
   {
-    title: 'Développement',
+    title: 'Social',
     items: [
-      { label: 'Nouveautés', path: '/changelog', icon: HistoryIcon },
-      { label: 'Feedback', path: '/feedback', icon: MessageSquarePlus as any },
+      { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
+      { label: 'Classement', path: '/ranking', icon: RankingIcon },
     ],
   },
 ];

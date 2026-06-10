@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronDown, Settings, LogOut } from 'lucide-react';
+import { ChevronDown, Settings, LogOut, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePlanetStore } from '@/stores/planet.store';
@@ -74,6 +74,20 @@ export function ProfileMenu() {
             >
               <HistoryIcon width={16} height={16} />
               Historique
+            </button>
+            <button
+              onClick={() => { navigate('/changelog'); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <HistoryIcon width={16} height={16} />
+              Nouveautés
+            </button>
+            <button
+              onClick={() => { navigate('/feedback'); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              Feedback
             </button>
           </div>
           <div className="mx-2 border-t border-white/5" />

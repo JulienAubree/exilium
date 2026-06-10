@@ -129,19 +129,21 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
-        path: 'shipyard',
-        lazy: lazyLoad(() => import('./pages/Shipyard')),
+        path: 'production',
+        lazy: lazyLoad(() => import('./pages/Production')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
+        path: 'shipyard',
+        element: <Navigate to="/production?tab=utilitaires" replace />,
       },
       {
         path: 'command-center',
-        lazy: lazyLoad(() => import('./pages/CommandCenter')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/production?tab=combat" replace />,
       },
       {
         path: 'defense',
-        lazy: lazyLoad(() => import('./pages/Defense')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/production?tab=defenses" replace />,
       },
       {
         path: 'galaxy',
@@ -150,32 +152,48 @@ export const router = createBrowserRouter([
       },
       {
         path: 'fleet',
-        lazy: lazyLoad(() => import('./pages/FleetDashboard')),
+        lazy: lazyLoad(() => import('./pages/FleetHub')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'fleet/overview',
-        element: <Navigate to="/empire" replace />,
-      },
-      {
-        path: 'fleet/send',
-        lazy: lazyLoad(() => import('./pages/Fleet')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'fleet/stationed',
-        lazy: lazyLoad(() => import('./pages/StationedFleet')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
-      },
-      {
-        path: 'fleet/movements',
-        lazy: lazyLoad(() => import('./pages/Movements')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        children: [
+          {
+            index: true,
+            lazy: lazyLoad(() => import('./pages/FleetDashboard')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'send',
+            lazy: lazyLoad(() => import('./pages/Fleet')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'stationed',
+            lazy: lazyLoad(() => import('./pages/StationedFleet')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'movements',
+            lazy: lazyLoad(() => import('./pages/Movements')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'flagship',
+            lazy: lazyLoad(() => import('./pages/FlagshipProfile')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'reports',
+            lazy: lazyLoad(() => import('./pages/Reports')),
+            errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+          },
+          {
+            path: 'overview',
+            element: <Navigate to="/empire" replace />,
+          },
+        ],
       },
       {
         path: 'flagship',
-        lazy: lazyLoad(() => import('./pages/FlagshipProfile')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/fleet/flagship" replace />,
       },
       {
         path: 'missions',
@@ -198,8 +216,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'reports',
-        lazy: lazyLoad(() => import('./pages/Reports')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/fleet/reports" replace />,
       },
       {
         path: 'reports/:reportId',

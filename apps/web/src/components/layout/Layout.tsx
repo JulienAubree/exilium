@@ -21,7 +21,7 @@ import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
 // Pages that are planet-specific and should redirect when the active planet
 // is being colonized.  Empire-wide pages (/empire, /fleet, etc.) are NOT
 // redirected — only pages that operate on a single planet.
-const PLANET_PAGES = ['/', '/resources', '/infrastructures', '/energy', '/shipyard', '/command-center', '/defense'];
+const PLANET_PAGES = ['/', '/resources', '/infrastructures', '/energy', '/production'];
 
 export function Layout() {
   const { data: planets } = trpc.planet.list.useQuery();

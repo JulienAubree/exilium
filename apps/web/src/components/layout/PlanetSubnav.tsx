@@ -15,8 +15,6 @@ import {
   ResourcesIcon,
   BuildingsIcon,
   ShipyardIcon,
-  CommandCenterIcon,
-  DefenseIcon,
 } from '@/lib/icons';
 
 interface PlanetNavItem {
@@ -31,9 +29,7 @@ const PLANET_NAV_ITEMS: PlanetNavItem[] = [
   { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
   { label: 'Énergie', path: '/energy', icon: Zap as React.ComponentType<React.SVGProps<SVGSVGElement>> },
   { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
-  { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
-  { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
-  { label: 'Défense', path: '/defense', icon: DefenseIcon },
+  { label: 'Production', path: '/production', icon: ShipyardIcon },
 ];
 
 function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, warning }: {

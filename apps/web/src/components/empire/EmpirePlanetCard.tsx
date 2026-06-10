@@ -308,14 +308,14 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
           </button>
         )}
         {planet.activeShipyard && (
-          <button onClick={() => goTo(planet.activeShipyard!.facilityId === 'commandCenter' ? '/command-center' : '/shipyard')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
+          <button onClick={() => goTo(planet.activeShipyard!.facilityId === 'commandCenter' ? '/production?tab=combat' : '/production?tab=utilitaires')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20 transition-colors">
             <ShipyardIcon width={12} height={12} />
             <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} x{planet.activeShipyard.quantity}</span>
             <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />
           </button>
         )}
         {planet.activeDefense && (
-          <button onClick={() => goTo('/defense')} className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+          <button onClick={() => goTo('/production?tab=defenses')} className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-400 hover:bg-cyan-500/20 transition-colors">
             <ShieldPlus className="h-3 w-3" />
             <span>{getDefenseName(planet.activeDefense.defenseId, gameConfig)} x{planet.activeDefense.quantity}</span>
             <Timer endTime={new Date(planet.activeDefense.endTime)} className="inline [&>span]:text-cyan-400" />
@@ -360,9 +360,9 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         {viewMode === 'resources' ? (
           [
             { label: 'Bâtiments', icon: Building2, path: '/buildings' },
-            { label: 'Chantier', icon: Wrench, path: '/shipyard' },
+            { label: 'Production', icon: Wrench, path: '/production' },
             { label: 'Flottes', icon: Layers, path: '/fleet' },
-            { label: 'Défenses', icon: Shield, path: '/defense' },
+            { label: 'Défenses', icon: Shield, path: '/production?tab=defenses' },
           ].map((item, i, arr) => (
             <button
               key={item.path}

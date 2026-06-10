@@ -5,8 +5,6 @@ import {
   BuildingsIcon,
   ResearchIcon,
   ShipyardIcon,
-  CommandCenterIcon,
-  DefenseIcon,
   FleetIcon,
   GalaxyIcon,
   MarketIcon,
@@ -14,21 +12,19 @@ import {
   MessagesIcon,
   RankingIcon,
   AllianceIcon,
-  AllianceRankingIcon,
-  FlagshipIcon,
   EmpireIcon,
-  HistoryIcon,
 } from '@/lib/icons';
-import { MessageSquarePlus, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';
 import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
-  empire: ['/empire', '/research', '/flagship'],
-  planete: ['/', '/resources', '/infrastructures', '/energy', '/shipyard', '/command-center', '/defense'],
-  espace: ['/galaxy', '/fleet', '/missions', '/market'],
-  social: ['/messages', '/alliance', '/ranking', '/alliance-ranking', '/changelog', '/feedback'],
+  empire: ['/empire', '/research'],
+  planete: ['/', '/resources', '/infrastructures', '/energy', '/production'],
+  galaxie: ['/galaxy', '/missions', '/market'],
+  flotte: ['/fleet'],
+  social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
 };
 
 type TabGroup = keyof typeof TAB_GROUPS;
@@ -37,30 +33,24 @@ const SHEET_ITEMS = {
   empire: [
     { label: 'Empire', path: '/empire', icon: EmpireIcon },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
-    { label: 'Vaisseau amiral', path: '/flagship', icon: FlagshipIcon },
   ],
   planete: [
     { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
     { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
     { label: 'Énergie', path: '/energy', icon: Zap as any },
     { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
-    { label: 'Chantier spatial', path: '/shipyard', icon: ShipyardIcon },
-    { label: 'Centre de commandement', path: '/command-center', icon: CommandCenterIcon },
-    { label: 'Défense', path: '/defense', icon: DefenseIcon },
+    { label: 'Production', path: '/production', icon: ShipyardIcon },
   ],
-  espace: [
+  galaxie: [
     { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
-    { label: 'Flotte', path: '/fleet', icon: FleetIcon },
     { label: 'Missions', path: '/missions', icon: MissionsIcon },
     { label: 'Marché', path: '/market', icon: MarketIcon },
   ],
+  flotte: [],
   social: [
     { label: 'Messages', path: '/messages', icon: MessagesIcon },
     { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
     { label: 'Classement', path: '/ranking', icon: RankingIcon },
-    { label: 'Classement Alliances', path: '/alliance-ranking', icon: AllianceRankingIcon },
-    { label: 'Nouveautés', path: '/changelog', icon: HistoryIcon },
-    { label: 'Feedback', path: '/feedback', icon: MessageSquarePlus as any },
   ],
 };
 
@@ -95,7 +85,8 @@ export function BottomTabBar() {
   const tabs = [
     { id: 'empire' as const, label: 'Empire', icon: EmpireIcon, action: () => toggleSheet('empire') },
     { id: 'planete' as const, label: 'Planète', icon: OverviewIcon, action: () => toggleSheet('planete') },
-    { id: 'espace' as const, label: 'Espace', icon: GalaxyIcon, action: () => toggleSheet('espace') },
+    { id: 'galaxie' as const, label: 'Galaxie', icon: GalaxyIcon, action: () => toggleSheet('galaxie') },
+    { id: 'flotte' as const, label: 'Flotte', icon: FleetIcon, action: () => { closeSheet(); navigate('/fleet'); } },
     { id: 'social' as const, label: 'Social', icon: MessagesIcon, action: () => toggleSheet('social'), badge: unreadCount ?? 0 },
   ];
 

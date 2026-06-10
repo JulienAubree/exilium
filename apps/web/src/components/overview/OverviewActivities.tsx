@@ -128,11 +128,11 @@ export function OverviewActivities({
           startTime={activeShipyard.startTime}
           totalDuration={Math.floor((new Date(activeShipyard.endTime!).getTime() - new Date(activeShipyard.startTime).getTime()) / 1000)}
           color="#f59e0b"
-          onClick={() => navigate('/shipyard')}
+          onClick={() => navigate('/production?tab=utilitaires')}
           onComplete={onShipyardComplete}
         />
       ) : (
-        <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/shipyard')} />
+        <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/production?tab=utilitaires')} />
       )}
 
       {/* Command center slot */}
@@ -145,11 +145,11 @@ export function OverviewActivities({
           startTime={activeCommandCenter.startTime}
           totalDuration={Math.floor((new Date(activeCommandCenter.endTime!).getTime() - new Date(activeCommandCenter.startTime).getTime()) / 1000)}
           color="#8b5cf6"
-          onClick={() => navigate('/command-center')}
+          onClick={() => navigate('/production?tab=combat')}
           onComplete={onCommandCenterComplete}
         />
       ) : (
-        <EmptySlot label="Commandement libre" cta="Lancer une production" onClick={() => navigate('/command-center')} />
+        <EmptySlot label="Commandement libre" cta="Lancer une production" onClick={() => navigate('/production?tab=combat')} />
       )}
     </div>
   );
