@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { TopBar } from './TopBar';
 import { ResourceBar } from './ResourceBar';
-import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
 import { GlobalTopbar } from './GlobalTopbar';
 import { Toaster } from '@/components/ui/Toaster';
@@ -59,11 +58,9 @@ export function Layout() {
         Aller au contenu
       </a>
 
-      {/* Desktop sidebar */}
-      <Sidebar />
-
-      {/* Main area */}
-      <div className="flex flex-1 flex-col min-h-0 lg:ml-56">
+      {/* Main area — plus de sidebar : la nav vit dans GlobalTopbar (desktop)
+          et BottomTabBar (mobile) */}
+      <div className="flex flex-1 flex-col min-h-0">
         <TopBar planetId={resolvedPlanetId} planets={planets ?? []} />
         <GlobalTopbar />
         <OfflineBanner />
