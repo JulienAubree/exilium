@@ -139,7 +139,7 @@ export default function PlanetLayout() {
   return (
     <div>
       {/* En-tête planète : retour + sélecteur + ressources (desktop) */}
-      <div className="sticky top-0 z-40 border-b border-border bg-surface">
+      <div className="sticky top-0 lg:top-12 z-30 border-b border-border bg-surface">
         <div className="flex items-center justify-between gap-3 px-4 py-1.5 lg:px-6">
           <div className="flex items-center gap-3 min-w-0">
             <Link

@@ -48,10 +48,12 @@ export function EmpireHero({
   const keyArtUrl = homepage.hero.backgroundImage || null;
 
   return (
-    <div className="relative overflow-hidden">
+    // Fusion héro/nav (desktop) : le bloc remonte sous la nav fantôme (-mt-12),
+    // l'atmosphère peint derrière elle ; le contenu se décale d'autant (pt-16).
+    <div className="relative overflow-hidden lg:-mt-12">
       <HeroAtmosphere imageUrl={keyArtUrl} variant="cyan-purple" />
 
-      <div className="relative px-5 pt-5 pb-5 lg:px-8 lg:pt-6 lg:pb-6">
+      <div className="relative px-5 pt-5 pb-5 lg:px-8 lg:pt-16 lg:pb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
           <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
             {/* Round avatar — clickable to open the help overlay */}
