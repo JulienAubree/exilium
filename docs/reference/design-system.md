@@ -1,6 +1,8 @@
 # Design System — Exilium
 
-_Référence pour designers et développeurs front. Mise à jour : 2026-04-25._
+_Référence pour designers et développeurs front. Mise à jour : 2026-06-10 (v2 « calme spatial »)._
+
+> **Vitrine vivante : route `/design`** (non listée). Genèse de la v2 : `docs/proposals/2026-06-10-design-refonte-calme-spatial.md` + `2026-06-10-design-system-as-code.md`. **À lire avant de toucher à l'UI.**
 
 Ce document liste les tokens (couleurs, espacements, typographie), les composants UI réutilisables et les patterns récurrents du jeu. **Source de vérité** :
 - Tokens : `apps/web/tailwind.config.js` + `apps/web/src/styles/global.css`
@@ -9,14 +11,45 @@ Ce document liste les tokens (couleurs, espacements, typographie), les composant
 
 ---
 
-## 1. Philosophie
+## 1. Philosophie — « calme spatial » (v2, 2026-06)
 
-Exilium est un jeu de gestion spatiale au style **rétro-futuriste sombre**. L'interface vise :
+**L'espace est sombre, vaste et silencieux.** L'UI est quasi muette ; la couleur et l'émotion viennent du **contenu** (illustrations, carte, événements). Quand quelque chose s'allume ou bouge, c'est que ça **veut dire quelque chose**.
 
-- **Lisibilité** : fond sombre, texte clair, typographie sans-serif moderne (Inter)
-- **Hiérarchie visuelle** par couleurs sémantiques (chaque ressource a sa teinte)
-- **Effets subtils** : glassmorphism léger, lueurs (glows) sur les ressources, animations courtes
-- **Mobile-first** : tap targets 44px min, animations rapides (200-300ms)
+- **Lisibilité** : fond sombre (thème sombre uniquement), Inter partout, plancher typo **12px**
+- **La couleur appartient au contenu** : UI monochrome + 1 primaire ; couleurs ressources sémantiques **sans glow** ; rouge/ambre = vrais états uniquement
+- **Une seule matière** : `Surface` (fond plein, bordure 1px) — zéro blur, zéro gradient, zéro néon. Glassmorphism et glows = **dépréciés** (suppression en M2)
+- **Mobile-first** : tap targets 44px min, `bg-stars` conservé en touche subtile
+- **Motion système** : `fast 120ms / base 200ms / slow 350ms`, courbes `standard`/`spring`, `prefers-reduced-motion` respecté globalement. Seule l'alerte d'attaque entrante a le droit de pulser en continu.
+
+### Règle d'or
+
+**Une page n'écrit jamais une couleur, une taille de texte ou une durée.** Elle compose des patterns ; les patterns composent des primitives (`components/ui/`) ; les primitives consomment des tokens.
+
+### Primitives v2 (`components/ui/`)
+
+- `<Surface variant="card|raised" interactive padded>` — LA carte. Remplace `glass-card`, `retro-card*` et les cartes ad hoc
+- `<Text variant="display|page|title|body|secondary|caption" tone nums>` — 6 rôles ; `nums` obligatoire pour toute valeur qui change
+- `<Stack gap>` / `<Inline gap align wrap>` — espacement tokenisé (1=4px … 6=32px)
+- `<TabBar items ariaLabel>` — onglets (mode lien ou contrôlé)
+- `<Stat value tone icon suffix animated>` — chiffre de jeu canonique (tabulaire, compteur animé via `useAnimatedNumber`)
+- `<Progress value tone size>` — barres de files/timers (remplissage plein)
+- `<Button>` — `default|secondary|outline|ghost|destructive` (`retro` déprécié)
+
+### Interdits (enforcement ESLint prévu en M3)
+
+Dans `pages/` et `components/` (hors `ui/`) : `text-[10px]` `text-[11px]` · `bg-gradient-*` · `backdrop-blur-*` (2 exceptions : topbar mobile, bottom sheet) · `shadow-[0_0…]` · hex inline · `glow-*` · `glass-card` · `retro-*` · `uppercase` hors en-tête de section (1 max/carte).
+
+### Décisions actées (user, 2026-06-10)
+
+Inter partout (pas de fonte display) · thème sombre uniquement · `bg-stars` gardé en touche subtile dans l'app · pages stats-lourdes (Énergie, Recherche) en **cartes**, pas en tableaux.
+
+### Migration
+
+M0 fondations ✅ → M1 patterns (`EntityCard`, `QueuePanel`, `PageHero` neutre, `AlertBanner`, `DataList`) → M2 page par page (les plus visibles d'abord, screenshots avant/après) → M3 enforcement par dossier → M4 View Transitions + optimistic UI.
+
+---
+
+> Les sections ci-dessous (palette détaillée, icônes, composants historiques) restent une référence d'inventaire valide ; en cas de conflit, la philosophie v2 ci-dessus prime.
 
 ---
 

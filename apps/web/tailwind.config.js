@@ -40,6 +40,11 @@ export default {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          raised: 'hsl(var(--surface-raised))',
+        },
+        'border-strong': 'hsl(var(--border-strong))',
         minerai: '#fb923c',
         silicium: '#34d399',
         hydrogene: '#60a5fa',
@@ -97,6 +102,18 @@ export default {
       },
       spacing: {
         'safe-bottom': 'env(safe-area-inset-bottom)',
+      },
+      transitionDuration: {
+        fast: 'var(--motion-fast)',
+        base: 'var(--motion-base)',
+        slow: 'var(--motion-slow)',
+      },
+      transitionTimingFunction: {
+        standard: 'var(--ease-standard)',
+        spring: 'var(--ease-spring)',
+      },
+      boxShadow: {
+        raised: 'var(--elevation-raised)',
       },
     },
   },

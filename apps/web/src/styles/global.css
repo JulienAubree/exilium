@@ -37,6 +37,30 @@
     --glow-silicium: 0 0 8px rgba(52, 211, 153, 0.3);
     --glow-hydrogene: 0 0 8px rgba(96, 165, 250, 0.3);
     --glow-energy: 0 0 8px rgba(240, 192, 64, 0.3);
+
+    /* ── Design system v2 (« calme spatial ») ─────────────────────────
+       Tokens sémantiques. Les pages ne consomment QUE ces tokens via les
+       primitives ui/. Réf : docs/reference/design-system.md */
+    --surface: 222 45% 8%;
+    --surface-raised: 222 40% 12%;
+    --border-strong: 218 25% 28%;
+    --elevation-raised: 0 8px 24px -8px hsla(220, 55%, 2%, 0.7);
+
+    --motion-fast: 120ms;
+    --motion-base: 200ms;
+    --motion-slow: 350ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Accessibilité motion : neutralise les animations/transitions du jeu.
+     S'applique globalement — pas de cas par cas. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   * {
