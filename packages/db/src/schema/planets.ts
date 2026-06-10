@@ -53,6 +53,9 @@ export const planets = pgTable(
 
     sortOrder: smallint('sort_order').notNull().default(0),
     status: varchar('status', { length: 32 }).notNull().default('active'),
+    // Spécialisation des mondes (null = équilibrée ; homeworld jamais spécialisé)
+    vocation: varchar('vocation', { length: 32 }),
+    vocationChangedAt: timestamp('vocation_changed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

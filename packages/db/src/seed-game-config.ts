@@ -549,6 +549,16 @@ const UNIVERSE_CONFIG = [
   { key: 'empire_xp_pve_victory', value: 15, label: 'XP d\'empire par victoire PvE' },
   { key: 'empire_xp_pvp_victory', value: 40, label: 'XP d\'empire par victoire PvP (attaquant)' },
   { key: 'empire_xp_colonization', value: 150, label: 'XP d\'empire par colonisation aboutie' },
+
+  // ── Spécialisation des mondes (vocations) ──
+  { key: 'vocation_unlock_level', value: 5, label: 'Niveau d\'empire requis pour spécialiser une colonie' },
+  { key: 'vocation_cooldown_hours', value: 168, label: 'Délai entre deux reconversions de vocation (heures)' },
+  { key: 'vocation_reconversion_minerai', value: 50000, label: 'Coût minerai d\'une reconversion de vocation' },
+  { key: 'vocation_reconversion_silicium', value: 25000, label: 'Coût silicium d\'une reconversion de vocation' },
+  { key: 'vocation_miniere_production_bonus', value: 0.20, label: 'Monde minier : bonus de production' },
+  { key: 'vocation_miniere_construction_malus', value: 0.15, label: 'Monde minier : malus de temps de construction' },
+  { key: 'vocation_industrielle_production_malus', value: 0.10, label: 'Monde-forge : malus de production' },
+  { key: 'vocation_industrielle_construction_bonus', value: 0.20, label: 'Monde-forge : bonus de temps de construction' },
   { key: 'pve_deposit_size_base', value: 15000 },
   { key: 'spy_visibility_thresholds', value: [1, 3, 5, 7, 9] },
   { key: 'ranking_points_divisor', value: 1000 },

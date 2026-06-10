@@ -17,6 +17,15 @@ export function createPlanetRouter(
   abandonService: ReturnType<typeof createPlanetAbandonService>,
 ) {
   return router({
+    setVocation: protectedProcedure
+      .input(z.object({
+        planetId: z.string().uuid(),
+        vocation: z.enum(['miniere', 'industrielle']).nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return planetService.setVocation(ctx.userId!, input.planetId, input.vocation);
+      }),
+
     list: protectedProcedure.query(async ({ ctx }) => {
       return planetService.listPlanets(ctx.userId!);
     }),

@@ -7,6 +7,7 @@ import {
   calculateGovernancePenalty,
   buildEmpireLevelConfig,
   empireGovernanceCapacity,
+  vocationEffects,
 } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../lib/config-helpers.js';
 import { buildProductionConfig } from '../lib/production-config.js';
@@ -72,6 +73,7 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
       siliciumMinePercent: planets.siliciumMinePercent,
       hydrogeneSynthPercent: planets.hydrogeneSynthPercent,
       resourcesUpdatedAt: planets.resourcesUpdatedAt,
+      vocation: planets.vocation,
     })
     .from(planets);
 
@@ -191,6 +193,14 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     if (hBonus > 1) talentBonuses['production_hydrogene'] = hBonus - 1;
     const eBonus = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
     if (eBonus < 1) talentBonuses['energy_consumption'] = eBonus - 1;
+
+    // Spécialisation du monde : delta de production (vocation)
+    const vocDelta = vocationEffects(planet.vocation, config.universe).productionDelta;
+    if (vocDelta !== 0) {
+      for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+        talentBonuses[key] = (talentBonuses[key] ?? 0) + vocDelta;
+      }
+    }
 
     // Governance harvest penalty (homeworld exempt)
     if (planet.planetClassId !== homeworldTypeId) {

@@ -15,6 +15,7 @@ import ColonizationProgress from './ColonizationProgress';
 // Above-the-fold: imported eagerly so first paint has the hero + KPIs.
 import { OverviewHero } from '@/components/overview/OverviewHero';
 import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
+import { VocationCard } from '@/components/overview/VocationCard';
 
 // Below-the-fold: split into separate chunks, fetched after the initial paint.
 // Placeholder is a subtle skeleton — users rarely notice since the hero is
@@ -482,6 +483,14 @@ export default function Overview() {
 
         {/* 4. Governance warning */}
         <GovernanceAlert planetClassId={planet.planetClassId} />
+
+        {/* 4b. Spécialisation du monde (chantier Empire) */}
+        <VocationCard
+          planetId={planet.id}
+          planetClassId={planet.planetClassId}
+          vocation={(planet as { vocation?: string | null }).vocation ?? null}
+          vocationChangedAt={(planet as { vocationChangedAt?: string | null }).vocationChangedAt ?? null}
+        />
 
         {/* 5. Attack alert */}
         <AttackAlert

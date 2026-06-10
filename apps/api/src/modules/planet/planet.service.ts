@@ -1,7 +1,7 @@
 import { eq, asc, desc, and, sql, inArray } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetShips, planetDefenses, buildQueue, fleetEvents, flagships, planetBiomes } from '@exilium/db';
+import { planets, planetBuildings, planetShips, planetDefenses, buildQueue, fleetEvents, flagships, planetBiomes, empireProgression } from '@exilium/db';
 import type { Database, DbOrTx } from '@exilium/db';
 import {
   calculateMaxTemp,
@@ -22,6 +22,7 @@ export function createPlanetService(
   resourceService?: {
     materializeResources(planetId: string, userId: string): Promise<any>;
     getProductionRates(planetId: string, planet: any, bonus?: any, userId?: string): Promise<any>;
+    spendResources?(planetId: string, userId: string, cost: { minerai: number; silicium: number; hydrogene: number }): Promise<any>;
   },
 ) {
   /**
@@ -126,6 +127,67 @@ export function createPlanetService(
   }
 
   return {
+    /**
+     * Spécialisation des mondes (vocations) — v1.
+     * Gate : niveau d'empire ; premier choix gratuit, reconversion = coût + cooldown.
+     * Spec : docs/plans/2026-06-10-specialisation-mondes-v1.md
+     */
+    async setVocation(userId: string, planetId: string, vocation: 'miniere' | 'industrielle' | null) {
+      const [planet] = await db
+        .select()
+        .from(planets)
+        .where(and(eq(planets.id, planetId), byUser(planets.userId, userId)))
+        .limit(1);
+      if (!planet) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (planet.status !== 'active') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette planète n\'est pas active.' });
+      }
+      if (planet.planetClassId === 'homeworld') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'La capitale reste équilibrée — elle ne se spécialise pas.' });
+      }
+      if ((planet.vocation ?? null) === vocation) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cette vocation est déjà active.' });
+      }
+
+      const config = await gameConfigService.getFullConfig();
+      const unlockLevel = Number(config.universe.vocation_unlock_level) || 5;
+      const [progression] = await db
+        .select({ level: empireProgression.level })
+        .from(empireProgression)
+        .where(byUser(empireProgression.userId, userId))
+        .limit(1);
+      const level = progression?.level ?? 1;
+      if (level < unlockLevel) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Spécialiser un monde requiert le niveau d'empire ${unlockLevel} (actuel : ${level}).` });
+      }
+
+      const isFirstChoice = planet.vocationChangedAt == null;
+      if (!isFirstChoice) {
+        const cooldownH = Number(config.universe.vocation_cooldown_hours) || 168;
+        const readyAt = new Date(planet.vocationChangedAt!).getTime() + cooldownH * 3600 * 1000;
+        if (Date.now() < readyAt) {
+          const hoursLeft = Math.ceil((readyAt - Date.now()) / 3600 / 1000);
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Reconversion possible dans ${hoursLeft} h.` });
+        }
+        const cost = {
+          minerai: Number(config.universe.vocation_reconversion_minerai) || 50000,
+          silicium: Number(config.universe.vocation_reconversion_silicium) || 25000,
+          hydrogene: 0,
+        };
+        if (!resourceService?.spendResources) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Service de ressources indisponible.' });
+        }
+        await resourceService.spendResources(planetId, userId, cost);
+      }
+
+      await db
+        .update(planets)
+        .set({ vocation, vocationChangedAt: new Date() })
+        .where(eq(planets.id, planetId));
+
+      return { vocation, firstChoice: isFirstChoice };
+    },
+
     async createHomePlanet(userId: string, txArg?: DbOrTx) {
       const config = await gameConfigService.getFullConfig();
       const homeworldType = findPlanetTypeByRole(config, 'homeworld');

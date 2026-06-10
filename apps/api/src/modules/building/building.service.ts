@@ -8,6 +8,7 @@ import { buildingCost, buildingTime, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { vocationEffects } from '@exilium/game-engine';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
@@ -60,6 +61,8 @@ export function createBuildingService(
       // Governance construction penalty (non-homeworld only)
       const govPenalty = await getGovernancePenalty(db, userId, planet.planetClassId, config);
       const govTimeMult = 1 + govPenalty.constructionMalus;
+      // Spécialisation du monde : la forge construit plus vite, la mine plus lentement
+      const vocTimeMult = vocationEffects(planet.vocation, config.universe).constructionTimeMult;
 
       // Fetch cross-planet max building levels for annex prerequisite display
       const hasAnnex = Object.values(config.buildings).some(
@@ -103,7 +106,7 @@ export function createBuildingService(
             1,
             Math.floor(
               buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
-                govTimeMult,
+                govTimeMult * vocTimeMult,
             ),
           );
 
@@ -235,11 +238,12 @@ export function createBuildingService(
         config,
       );
       const govTimeMultUpgrade = 1 + govPenaltyUpgrade.constructionMalus;
+      const vocTimeMultUpgrade = vocationEffects(planet.vocation, config.universe).constructionTimeMult;
       const time = Math.max(
         1,
         Math.floor(
           buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
-            govTimeMultUpgrade,
+            govTimeMultUpgrade * vocTimeMultUpgrade,
         ),
       );
 

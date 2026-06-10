@@ -15,6 +15,7 @@ import {
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { vocationEffects } from '@exilium/game-engine';
 import type { GameConfig, GameConfigService } from '../admin/game-config.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
@@ -181,6 +182,16 @@ export function createResourceService(
         }
       }
 
+      // Spécialisation du monde (vocation) : delta de production
+      {
+        const vocDelta = vocationEffects(planet.vocation, config.universe).productionDelta;
+        if (vocDelta !== 0) {
+          for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+            talentCtx[key] = (talentCtx[key] ?? 0) + vocDelta;
+          }
+        }
+      }
+
       const now = new Date();
       const resources = calculateResources(
         {
@@ -267,6 +278,16 @@ export function createResourceService(
       if (govPenalty.harvestMalus > 0) {
         for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
           talentCtx[key] = (talentCtx[key] ?? 0) - govPenalty.harvestMalus;
+        }
+      }
+
+      // Spécialisation du monde (vocation) : delta de production
+      {
+        const vocDelta = vocationEffects(planet.vocation, config.universe).productionDelta;
+        if (vocDelta !== 0) {
+          for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+            talentCtx[key] = (talentCtx[key] ?? 0) + vocDelta;
+          }
         }
       }
 
