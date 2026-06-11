@@ -174,7 +174,7 @@ function SidebarPulse() {
       : null;
 
   return (
-    <NavLink to="/profile" className="flex h-12 shrink-0 flex-col justify-center gap-1 border-b border-border/60 px-4 hover:bg-accent transition-colors">
+    <NavLink to="/progression" className="flex h-12 shrink-0 flex-col justify-center gap-1 border-b border-border/60 px-4 hover:bg-accent transition-colors">
       <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <Crown className="h-3.5 w-3.5 text-energy" />
         {level != null ? `Empire Nv. ${level}` : 'Exilium'}

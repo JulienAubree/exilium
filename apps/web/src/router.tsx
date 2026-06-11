@@ -311,6 +311,11 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        path: 'progression',
+        lazy: lazyLoad(() => import('./pages/EmpireProgression')),
+        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+      },
+      {
         path: 'player/:userId',
         lazy: lazyLoad(() => import('./pages/PlayerProfile')),
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,

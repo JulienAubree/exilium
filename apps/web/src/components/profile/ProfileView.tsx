@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
+import { Crown } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { Skeleton } from '@/components/common/Skeleton';
 import { useAuthStore } from '@/stores/auth.store';
@@ -92,6 +94,14 @@ function OwnView() {
 
       <div className="px-4 pb-4 lg:px-6 lg:pb-6">
         <div className="mx-auto w-full max-w-[720px] space-y-4">
+          {/* Entrée mobile vers la progression (le pouls de la sidebar est desktop-only) */}
+          <Link
+            to="/progression"
+            className="flex items-center justify-between rounded-lg border border-border/50 bg-card/60 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <span className="flex items-center gap-2"><Crown className="h-4 w-4 text-energy" /> Progression d'empire</span>
+            <span className="text-muted-foreground">→</span>
+          </Link>
           <ProfileStatsCard
             rank={profile.rank}
             totalPoints={profile.totalPoints}
