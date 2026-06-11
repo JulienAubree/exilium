@@ -9,7 +9,13 @@ import {
   empireMissionLevel,
 } from '@exilium/game-engine';
 import { PageHeader } from '@/components/common/PageHeader';
+import { HeroAtmosphere } from '@/components/common/HeroAtmosphere';
 import { cn } from '@/lib/utils';
+
+/** L'illustration du Centre de Pouvoir Impérial — l'ancêtre du niveau
+ *  d'empire (retiré le 2026-06-09, l'image lui survit en figure tutélaire). */
+const IPC_IMAGE = '/assets/buildings/imperial-power-center.webp';
+const IPC_THUMB = '/assets/buildings/imperial-power-center-thumb.webp';
 
 interface Milestone {
   level: number;
@@ -94,39 +100,46 @@ export default function EmpireProgression() {
     : 100;
 
   return (
-    <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-      <PageHeader title="Progression d'empire" />
-
-      {/* Où j'en suis */}
-      <section className="glass-card p-4 lg:p-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-energy/15">
-            <Crown className="h-6 w-6 text-energy" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-3">
-              <h2 className="text-lg font-bold text-foreground">Niveau {level}</h2>
-              <span className="text-xs text-muted-foreground">max {maxLevel}</span>
+    <div className="space-y-4 pb-4 lg:space-y-6 lg:pb-6">
+      {/* Héro illustré — l'image du Centre de Pouvoir Impérial */}
+      <section className="relative overflow-hidden">
+        <HeroAtmosphere imageUrl={IPC_IMAGE} variant="cyan-purple" />
+        <div className="relative px-4 py-6 lg:px-6 lg:py-8">
+          <div className="flex flex-wrap items-center gap-5">
+            <img
+              src={IPC_THUMB}
+              alt="Centre de Pouvoir Impérial"
+              className="h-24 w-24 shrink-0 rounded-xl border border-white/10 object-cover shadow-lg lg:h-28 lg:w-28"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-energy" />
+                <h1 className="text-xl font-bold text-foreground lg:text-2xl">Progression d'empire</h1>
+              </div>
+              <div className="mt-1 flex items-baseline gap-3">
+                <span className="text-lg font-bold text-energy">Niveau {level}</span>
+                <span className="text-xs text-muted-foreground">max {maxLevel}</span>
+              </div>
+              {nextLevelXp != null ? (
+                <p className="text-sm text-muted-foreground tabular-nums">
+                  {(xp - currentLevelXp).toLocaleString('fr-FR')} / {(nextLevelXp - currentLevelXp).toLocaleString('fr-FR')} XP —{' '}
+                  encore {(nextLevelXp - xp).toLocaleString('fr-FR')} XP avant le niveau {level + 1}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Niveau maximum atteint</p>
+              )}
+              <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-muted/80">
+                <div className="h-2 rounded-full bg-energy/80 transition-[width]" style={{ width: `${levelPct}%` }} />
+              </div>
             </div>
-            {nextLevelXp != null ? (
-              <p className="text-sm text-muted-foreground tabular-nums">
-                {(xp - currentLevelXp).toLocaleString('fr-FR')} / {(nextLevelXp - currentLevelXp).toLocaleString('fr-FR')} XP —{' '}
-                encore {(nextLevelXp - xp).toLocaleString('fr-FR')} XP avant le niveau {level + 1}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Niveau maximum atteint</p>
-            )}
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-2 rounded-full bg-energy/80 transition-[width]" style={{ width: `${levelPct}%` }} />
+            <div className="text-right text-xs text-muted-foreground tabular-nums">
+              XP totale<br /><span className="text-sm font-semibold text-foreground">{xp.toLocaleString('fr-FR')}</span>
             </div>
-          </div>
-          <div className="text-right text-xs text-muted-foreground tabular-nums">
-            XP totale<br /><span className="text-sm font-semibold text-foreground">{xp.toLocaleString('fr-FR')}</span>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid gap-4 px-4 lg:grid-cols-2 lg:gap-6 lg:px-6">
         {/* Ce que mes niveaux m'ont donné */}
         <section className="glass-card p-4 lg:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -167,7 +180,7 @@ export default function EmpireProgression() {
       </div>
 
       {/* Les prochains paliers */}
-      <section className="glass-card p-4 lg:p-5">
+      <section className="glass-card mx-4 p-4 lg:mx-6 lg:p-5">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Prochains paliers</h3>
         <ol className="space-y-1.5">
           {data.next.map((m, i) => (
