@@ -212,7 +212,6 @@ export async function getCombatMultipliers(
   db: Database,
   userId: string,
   bonusDefs: BonusDefinition[],
-  talentCtx?: Record<string, number>,
 ): Promise<CombatMultipliers> {
   const [research] = await db
     .select()
@@ -222,15 +221,11 @@ export async function getCombatMultipliers(
 
   const { userId: _, ...levels } = research ?? {};
 
+  // Recherche uniquement — les clés talents combat_* n'ont plus d'émetteur
+  // depuis le retrait de l'arbre de talents (purge 2026-06-10).
   return {
-    weapons:
-      resolveBonus('weapons', null, levels as Record<string, number>, bonusDefs) *
-      (1 + (talentCtx?.['combat_weapons'] ?? 0)),
-    shielding:
-      resolveBonus('shielding', null, levels as Record<string, number>, bonusDefs) *
-      (1 + (talentCtx?.['combat_shield'] ?? 0)),
-    armor:
-      resolveBonus('armor', null, levels as Record<string, number>, bonusDefs) *
-      (1 + (talentCtx?.['combat_armor'] ?? 0)),
+    weapons: resolveBonus('weapons', null, levels as Record<string, number>, bonusDefs),
+    shielding: resolveBonus('shielding', null, levels as Record<string, number>, bonusDefs),
+    armor: resolveBonus('armor', null, levels as Record<string, number>, bonusDefs),
   };
 }

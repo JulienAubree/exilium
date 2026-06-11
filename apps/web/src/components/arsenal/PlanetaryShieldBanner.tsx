@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 interface PlanetaryShieldBannerProps {
   currentLevel: number;
-  levelBonus: number;
   effectiveCapacity?: number;
   shieldPercent?: number;
   shieldingMultiplier?: number;
@@ -29,7 +28,6 @@ interface PlanetaryShieldBannerProps {
 
 export function PlanetaryShieldBanner({
   currentLevel,
-  levelBonus,
   effectiveCapacity,
   shieldPercent,
   shieldingMultiplier,
@@ -47,7 +45,6 @@ export function PlanetaryShieldBanner({
   onCancel,
   onTimerComplete,
 }: PlanetaryShieldBannerProps) {
-  const effectiveLevel = currentLevel + (levelBonus > 0 ? levelBonus : 0);
   const fmt = (n: number) => n.toLocaleString('fr-FR');
   const canAfford =
     resources.minerai >= nextLevelCost.minerai &&
@@ -84,8 +81,6 @@ export function PlanetaryShieldBanner({
               {currentLevel > 0 ? (
                 <span className="text-xs text-cyan-400 font-mono tabular-nums">
                   Niv. {currentLevel}
-                  {levelBonus > 0 && <span className="text-cyan-300 ml-0.5">+{levelBonus}</span>}
-                  {levelBonus > 0 && <span className="text-muted-foreground"> (eff. {effectiveLevel})</span>}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground font-mono">Non construit</span>

@@ -75,7 +75,6 @@ export function createShipyardService(
       const talentCtx = talentService
         ? await talentService.computeTalentContext(userId, planetId)
         : {};
-      const talentTimeMultiplier = 1 / (1 + (talentCtx['ship_build_time'] ?? 0));
 
       // Governance construction penalty
       const govPenalty = await getGovernancePenalty(db, userId, planet.planetClassId, config);
@@ -116,7 +115,6 @@ export function createShipyardService(
             1,
             Math.floor(
               shipTime(def, bonusMultiplier, timeDivisor) *
-                talentTimeMultiplier *
                 hullTimeMultiplier *
                 talentCategoryMultiplier *
                 govTimeMult,
@@ -337,10 +335,6 @@ export function createShipyardService(
       const config = await gameConfigService.getFullConfig();
 
       const buildingLevels = await this.getBuildingLevels(planetId);
-      const talentCtx = talentService
-        ? await talentService.computeTalentContext(userId, planetId)
-        : {};
-      const talentDefenseTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
 
       // Governance construction penalty
       const govPenaltyDef = await getGovernancePenalty(db, userId, planet.planetClassId, config);
@@ -368,7 +362,6 @@ export function createShipyardService(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                talentDefenseTimeMultiplier *
                 govTimeMultDef,
             ),
           );
@@ -478,7 +471,6 @@ export function createShipyardService(
           buildingLevels,
           config.bonuses,
         );
-        const talentTimeMultiplier = 1 / (1 + (talentCtx['ship_build_time'] ?? 0));
         const hullKey =
           buildCategory === 'build_military'
             ? 'hull_combat_build_time_reduction'
@@ -497,7 +489,6 @@ export function createShipyardService(
           1,
           Math.floor(
             shipTime(def, bonusMultiplier, timeDivisor) *
-              talentTimeMultiplier *
               hullTimeMultiplier *
               talentCatMult *
               govTimeMultBuild,
@@ -510,12 +501,10 @@ export function createShipyardService(
           buildingLevels,
           config.bonuses,
         );
-        const talentTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
         unitTime = Math.max(
           1,
           Math.floor(
             defenseTime(def, bonusMultiplier, timeDivisor) *
-              talentTimeMultiplier *
               govTimeMultBuild,
           ),
         );
@@ -740,7 +729,6 @@ export function createShipyardService(
             buildingLevels,
             config.bonuses,
           );
-          const talentTimeMultiplier = 1 / (1 + (talentCtx['ship_build_time'] ?? 0));
           const hullKey =
             buildCategory === 'build_military'
               ? 'hull_combat_build_time_reduction'
@@ -759,7 +747,6 @@ export function createShipyardService(
             1,
             Math.floor(
               shipTime(def, bonusMultiplier, timeDivisor) *
-                talentTimeMultiplier *
                 hullTimeMultiplier *
                 tcMult *
                 govTimeMultUnit,
@@ -772,12 +759,10 @@ export function createShipyardService(
             buildingLevels,
             config.bonuses,
           );
-          const talentTimeMultiplier = 1 / (1 + (talentCtx['defense_build_time'] ?? 0));
           unitTime = Math.max(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                talentTimeMultiplier *
                 govTimeMultUnit,
             ),
           );
@@ -873,7 +858,6 @@ export function createShipyardService(
             buildingLevels,
             config.bonuses,
           );
-          const talentTimeMultiplier = 1 / (1 + (talentCtx2['ship_build_time'] ?? 0));
           const hullKey =
             buildCategory === 'build_military'
               ? 'hull_combat_build_time_reduction'
@@ -892,7 +876,6 @@ export function createShipyardService(
             1,
             Math.floor(
               shipTime(def, bonusMultiplier, timeDivisor) *
-                talentTimeMultiplier *
                 hullTimeMultiplier *
                 talentCatMult *
                 govTimeMultBatch,
@@ -906,12 +889,10 @@ export function createShipyardService(
             buildingLevels,
             config.bonuses,
           );
-          const talentTimeMultiplier = 1 / (1 + (talentCtx2['defense_build_time'] ?? 0));
           unitTime = Math.max(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                talentTimeMultiplier *
                 govTimeMultBatch,
             ),
           );

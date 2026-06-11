@@ -81,7 +81,6 @@ export default function Defense() {
       : undefined,
   );
 
-  const shieldLevelBonus = resourceData?.rates?.shieldLevelBonus ?? 0;
   const shieldPercent = resourceData?.rates?.shieldPercent ?? 100;
 
   const { data: queue } = trpc.shipyard.queue.useQuery(
@@ -312,10 +311,9 @@ export default function Defense() {
         {shieldBuilding && (
           <PlanetaryShieldBanner
             currentLevel={shieldBuilding.currentLevel}
-            levelBonus={shieldLevelBonus}
             effectiveCapacity={shieldBuilding.currentLevel > 0
               ? Math.floor(
-                  calculateShieldCapacity(shieldBuilding.currentLevel + shieldLevelBonus)
+                  calculateShieldCapacity(shieldBuilding.currentLevel)
                   * (shieldPercent / 100)
                   * shieldingMultiplier,
                 )

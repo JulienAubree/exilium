@@ -41,14 +41,8 @@ export async function computeCombatMultipliers(
     ? await ctx.talentService.computeTalentContext(defenderUserId, defenderPlanetId)
     : {};
 
-  const attackerMultipliers = await getCombatMultipliers(ctx.db, attackerUserId, config.bonuses, attackerTalentCtx);
-  const defenderMultipliers = await getCombatMultipliers(ctx.db, defenderUserId, config.bonuses, defenderTalentCtx);
-
-  // Additional defense strength bonus (planet_bonus — only when flagship stationed)
-  const defenseBonus = 1 + (defenderTalentCtx['defense_strength'] ?? 0);
-  defenderMultipliers.weapons *= defenseBonus;
-  defenderMultipliers.shielding *= defenseBonus;
-  defenderMultipliers.armor *= defenseBonus;
+  const attackerMultipliers = await getCombatMultipliers(ctx.db, attackerUserId, config.bonuses);
+  const defenderMultipliers = await getCombatMultipliers(ctx.db, defenderUserId, config.bonuses);
 
   return { attackerMultipliers, defenderMultipliers, attackerTalentCtx, defenderTalentCtx };
 }

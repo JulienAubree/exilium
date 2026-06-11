@@ -384,7 +384,6 @@ const BONUS_DEFINITIONS = [
   { id: 'hyperspaceDrive__ship_speed__hyperspaceDrive', sourceType: 'research', sourceId: 'hyperspaceDrive', stat: 'ship_speed', percentPerLevel: 30, category: 'hyperspaceDrive', statLabel: 'Vitesse des vaisseaux' , bonusType: 'asymptotic', softCapMax: 4.5, softCapK: 0.15 },
   { id: 'rockFracturing__mining_extraction', sourceType: 'research', sourceId: 'rockFracturing', stat: 'mining_extraction', percentPerLevel: 15, category: null, statLabel: "Capacité d'extraction" , bonusType: 'asymptotic', softCapMax: 2.25, softCapK: 0.15 },
   { id: 'computerTech__fleet_count', sourceType: 'research', sourceId: 'computerTech', stat: 'fleet_count', percentPerLevel: 100, category: null, statLabel: 'Flottes simultanées' },
-  { id: 'espionageTech__spy_range', sourceType: 'research', sourceId: 'espionageTech', stat: 'spy_range', percentPerLevel: 100, category: null, statLabel: "Portée d'espionnage" },
   { id: 'energyTech__energy_production', sourceType: 'research', sourceId: 'energyTech', stat: 'energy_production', percentPerLevel: 2, category: null, statLabel: "Production d'énergie" },
   { id: 'semiconductors__energy_consumption', sourceType: 'research', sourceId: 'semiconductors', stat: 'energy_consumption', percentPerLevel: -2, category: null, statLabel: "Consommation d'énergie" },
   { id: 'armoredStorage__armored_storage', sourceType: 'research', sourceId: 'armoredStorage', stat: 'armored_storage', percentPerLevel: 5, category: null, statLabel: 'Protection blindée' },

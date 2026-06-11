@@ -242,7 +242,6 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
   const maxTemp = resourceData?.maxTemp ?? 50;
   const productionFactor = resourceData?.rates.productionFactor ?? 1;
   const prodConfig = gameConfig ? buildProductionConfig(gameConfig) : undefined;
-  const shieldLevelBonus = resourceData?.rates?.shieldLevelBonus ?? 0;
 
   const buildingCategories = (gameConfig?.categories ?? [])
     .filter((c) => c.entityType === 'building')
@@ -351,7 +350,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold truncate">{building.name}</span>
                             <span className="ml-2 shrink-0 bg-primary/12 text-primary border border-primary/20 font-mono text-xs font-semibold px-1.5 py-0.5 rounded">
-                              {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-primary ml-0.5">+{shieldLevelBonus}</span>}
+                              {building.currentLevel}
                             </span>
                           </div>
                           {building.isUpgrading && building.upgradeEndTime ? (
@@ -432,12 +431,9 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                       return currentLvl >= p.level;
                     });
 
-                    const effectiveLevel = building.id === 'planetaryShield'
-                      ? building.currentLevel + shieldLevelBonus
-                      : building.currentLevel;
                     const stats = getProductionStats(
                       building.id,
-                      effectiveLevel,
+                      building.currentLevel,
                       maxTemp,
                       productionFactor,
                       prodConfig,
@@ -472,7 +468,7 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
                             {...getBuildingVariantProps(building.id)}
                           />
                           <span className="absolute top-2 right-2 bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                            Niv. {building.currentLevel}{building.id === 'planetaryShield' && shieldLevelBonus > 0 && <span className="text-cyan-300 ml-0.5">+{shieldLevelBonus}</span>}
+                            Niv. {building.currentLevel}
                           </span>
                         </div>
 

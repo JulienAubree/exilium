@@ -241,7 +241,6 @@ export function createResourceService(
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const prodConfig = buildProductionConfig(config);
       const { ctx: talentCtx } = await buildBonusContext(planetId, userId, planet, config);
-      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
       const resources = calculateResources(
@@ -303,7 +302,6 @@ export function createResourceService(
       const levels = await buildPlanetLevels(db, planetId, planet, roleMap);
       const prodConfig = buildProductionConfig(config);
       const { ctx: talentCtx } = await buildBonusContext(planetId, userId, planet, config);
-      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       const now = new Date();
       const produced = calculateResources(
@@ -397,7 +395,6 @@ export function createResourceService(
           storageMineraiCapacity: 0,
           storageSiliciumCapacity: 0,
           storageHydrogeneCapacity: 0,
-          shieldLevelBonus: 0,
           bonuses: [] as BonusBreakdownEntry[],
         };
       }
@@ -413,7 +410,6 @@ export function createResourceService(
       const { ctx: talentCtx, breakdown } = await buildBonusContext(planetId, userId, planet, config, {
         withEnergyResearch: true,
       });
-      levels.planetaryShieldLevel += talentCtx['shield_level_bonus'] ?? 0;
 
       // Type de planète : multiplicatif côté moteur (param bonus), converti en
       // delta dans le détail pour que l'affichage soit complet.
@@ -429,7 +425,7 @@ export function createResourceService(
       }
 
       const rates = calculateProductionRates(levels, bonus, prodConfig, talentCtx);
-      return { ...rates, shieldLevelBonus: talentCtx['shield_level_bonus'] ?? 0, bonuses: breakdown };
+      return { ...rates, bonuses: breakdown };
     },
   };
 }

@@ -13,7 +13,6 @@ interface Consumer {
   name: string;
   icon: ReactNode;
   level: number;
-  levelBonus?: number;
   colorHex: string;
   colorClass: string;
   percent: number;
@@ -72,7 +71,7 @@ export function TableView({
             </div>
             <div>
               <div className="text-sm font-medium text-foreground">{c.name}</div>
-              <div className="text-xs text-muted-foreground">Niv. {c.level}{c.levelBonus ? <span className="text-xs text-primary ml-1">+{c.levelBonus} coque</span> : null}</div>
+              <div className="text-xs text-muted-foreground">Niv. {c.level}</div>
             </div>
           </div>
           <div className="px-1">
