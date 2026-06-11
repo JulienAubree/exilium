@@ -45,7 +45,7 @@ export default function EmpireProgression() {
 
   const data = useMemo(() => {
     if (!progression) return null;
-    const { level, xp, missionLevel } = progression;
+    const { level, missionLevel } = progression;
     // Niveau de mission de base (le serveur ne renvoie que la valeur courante).
     const missionDefault = missionLevel - Math.floor(Math.max(0, level - 1) / cfg.missionLevelsPerBonus);
 
