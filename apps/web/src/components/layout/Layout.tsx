@@ -91,7 +91,9 @@ export function Layout() {
             below is a flex sibling, so it is anchored naturally at the
             bottom of the viewport without position:fixed. */}
         <main id="main-content" className="flex-1 overflow-y-auto min-h-0">
-          <div className="mx-auto lg:max-w-6xl">
+          {/* Largeur élargie (retour user 2026-06-11) : screen-2xl au lieu de
+              6xl — le contenu respire sur grand écran sans passer full-bleed. */}
+          <div className="mx-auto w-full lg:max-w-screen-2xl">
             <Outlet context={{ planetId: resolvedPlanetId, planetClassId: activePlanet?.planetClassId ?? null }} />
           </div>
         </main>
