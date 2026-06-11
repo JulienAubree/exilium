@@ -128,8 +128,11 @@ export function PlanetSubnav() {
       aria-label="Bloc planète"
       className="sticky top-0 z-40 hidden lg:block border-b border-border bg-surface"
     >
-      {/* Row 1 : planet selector + resources + global actions */}
-      <div className="flex items-center justify-between gap-4 px-4 py-1.5 border-b border-white/5">
+      {/* Row 1 : planet selector + resources + global actions — h-12 et
+          border-border/60 alignés sur l'en-tête de la sidebar (jonction
+          continue), contenu calé sur le conteneur central (max-w-screen-2xl). */}
+      <div className="border-b border-border/60">
+        <div className="mx-auto flex h-12 w-full items-center justify-between gap-4 px-4 lg:max-w-screen-2xl lg:px-6">
         <div className="flex items-center gap-6 min-w-0">
           <PlanetSelectorDropdown
             planetId={activePlanetId}
@@ -176,12 +179,14 @@ export function PlanetSubnav() {
           </div>
         </div>
 
-        <TopBarActions />
+          <TopBarActions />
+        </div>
       </div>
 
-      {/* Row 2 : navigation tabs */}
+      {/* Row 2 : navigation tabs — même gabarit que le contenu : les onglets
+          démarrent au même x que le héro. */}
       <nav aria-label="Navigation planète">
-        <ul className="flex items-center gap-1 px-4 py-1.5 overflow-x-auto">
+        <ul className="mx-auto flex w-full items-center gap-1 px-4 py-1.5 overflow-x-auto lg:max-w-screen-2xl lg:px-6">
           {items.map((item) => (
             <li key={item.path} className="shrink-0">
               <NavLink

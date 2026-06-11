@@ -3,6 +3,8 @@ import { NavLink } from 'react-router';
 import { cn } from '@/lib/utils';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
+import { ShieldAlert, Crown } from 'lucide-react';
+import { Timer } from '@/components/common/Timer';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import {
   ResearchIcon,
@@ -80,10 +82,8 @@ export function Sidebar() {
     .filter((section) => section.items.length > 0);
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-surface border-r border-white/10">
-      <div className="flex h-14 items-center border-b border-border/50 px-4">
-        <span className="text-lg font-bold text-primary">Exilium</span>
-      </div>
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-surface border-r border-border/60">
+      <SidebarPulse />
       <nav className="flex-1 overflow-y-auto p-2">
         {renderedSections.map((section, idx) => (
           <div key={section.title} className="sidebar-section-fade-in">
@@ -127,5 +127,63 @@ export function Sidebar() {
         ))}
       </nav>
     </aside>
+  );
+}
+
+
+/**
+ * Le pouls de l'empire — l'en-tête de la sidebar montre du jeu, pas un logo
+ * (retour user 2026-06-11) : attaque entrante > prochaine flotte en approche >
+ * niveau d'empire. h-12 + border-border/60 : la ligne court d'un seul tenant
+ * avec la rangée ressources de la sous-nav.
+ */
+function SidebarPulse() {
+  const { data: inbound } = trpc.fleet.inbound.useQuery(undefined, { refetchInterval: 60_000 });
+  const { data: progression } = trpc.empireProgression.get.useQuery();
+
+  const byArrival = [...(inbound ?? [])].sort(
+    (a, b) => new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime(),
+  );
+  const hostile = byArrival.find((f) => f.hostile);
+  const friendly = byArrival.find((f) => !f.hostile);
+
+  if (hostile) {
+    return (
+      <NavLink to="/fleet" className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 px-4 text-destructive hover:bg-destructive/10 transition-colors">
+        <ShieldAlert className="h-4 w-4 animate-pulse" />
+        <span className="text-sm font-semibold">Attaque</span>
+        <Timer endTime={new Date(hostile.arrivalTime)} className="ml-auto" />
+      </NavLink>
+    );
+  }
+
+  if (friendly) {
+    return (
+      <NavLink to="/fleet" className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 px-4 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+        <FleetIcon width={15} height={15} className="text-primary" />
+        <span className="text-sm font-medium">Flotte</span>
+        <Timer endTime={new Date(friendly.arrivalTime)} className="ml-auto" />
+      </NavLink>
+    );
+  }
+
+  const level = progression?.level;
+  const xpPct =
+    progression && progression.nextLevelXp != null
+      ? Math.min(100, Math.round(((progression.xp - progression.currentLevelXp) / Math.max(1, progression.nextLevelXp - progression.currentLevelXp)) * 100))
+      : null;
+
+  return (
+    <NavLink to="/profile" className="flex h-12 shrink-0 flex-col justify-center gap-1 border-b border-border/60 px-4 hover:bg-accent transition-colors">
+      <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <Crown className="h-3.5 w-3.5 text-energy" />
+        {level != null ? `Empire Nv. ${level}` : 'Exilium'}
+      </span>
+      {xpPct != null && (
+        <span className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <span className="block h-1 rounded-full bg-energy/70" style={{ width: `${xpPct}%` }} />
+        </span>
+      )}
+    </NavLink>
   );
 }
