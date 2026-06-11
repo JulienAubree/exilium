@@ -2,30 +2,31 @@ import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router';
 import { cn } from '@/lib/utils';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
-import { ShipyardIcon, CommandCenterIcon, DefenseIcon } from '@/lib/icons';
+import { ShipyardIcon, DefenseIcon } from '@/lib/icons';
 
 const Shipyard = lazy(() => import('./Shipyard'));
-const CommandCenter = lazy(() => import('./CommandCenter'));
 const Defense = lazy(() => import('./Defense'));
 
-type ProductionTab = 'utilitaires' | 'combat' | 'defenses';
+type ProductionTab = 'vaisseaux' | 'defenses';
 
 const TABS: { id: ProductionTab; label: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
-  { id: 'utilitaires', label: 'Utilitaires', icon: ShipyardIcon },
-  { id: 'combat', label: 'Combat', icon: CommandCenterIcon },
+  { id: 'vaisseaux', label: 'Vaisseaux', icon: ShipyardIcon },
   { id: 'defenses', label: 'Défenses', icon: DefenseIcon },
 ];
 
+/** Anciennes URLs (?tab=utilitaires / ?tab=combat) : le chantier fusionné. */
+const LEGACY_TABS: Record<string, ProductionTab> = { utilitaires: 'vaisseaux', combat: 'vaisseaux' };
+
 /**
- * Page Production : le Chantier spatial (onglets Utilitaires/Combat) + Défense
- * réunis sous une seule entrée de navigation (refonte IA, lot 2).
- * Les bâtiments restent des prérequis distincts ; seule la page fusionne.
+ * Page Production : Vaisseaux (le Chantier spatial fusionné, catalogue
+ * complet par rôles) + Défenses (l'Arsenal).
  * L'onglet vit dans ?tab= pour que les anciennes URLs redirigées tombent juste.
  */
 export default function Production() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') as ProductionTab | null;
-  const tab: ProductionTab = TABS.some((t) => t.id === tabParam) ? (tabParam as ProductionTab) : 'utilitaires';
+  const rawTab = searchParams.get('tab');
+  const tabParam = (rawTab && LEGACY_TABS[rawTab]) || rawTab;
+  const tab: ProductionTab = TABS.some((t) => t.id === tabParam) ? (tabParam as ProductionTab) : 'vaisseaux';
 
   return (
     <div>
@@ -51,8 +52,7 @@ export default function Production() {
         </ul>
       </nav>
       <Suspense fallback={<div className="p-4 lg:p-6"><CardGridSkeleton count={4} /></div>}>
-        {tab === 'utilitaires' && <Shipyard />}
-        {tab === 'combat' && <CommandCenter />}
+        {tab === 'vaisseaux' && <Shipyard />}
         {tab === 'defenses' && <Defense />}
       </Suspense>
     </div>

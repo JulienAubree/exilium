@@ -141,13 +141,7 @@ export function TutorialPanel() {
       case 'research_level':
         return { label: 'Aller \u00e0 la Recherche \u2192', action: () => navigate('/research') };
       case 'ship_count':
-        if (condition.targetId === 'interceptor') {
-          return {
-            label: 'Aller aux vaisseaux de combat \u2192',
-            action: () => navigate('/production?tab=combat'),
-          };
-        }
-        return { label: 'Aller au Chantier \u2192', action: () => navigate('/production?tab=utilitaires') };
+        return { label: 'Aller au Chantier \u2192', action: () => navigate('/production?tab=vaisseaux') };
       case 'defense_count':
         return { label: 'Aller aux D\u00e9fenses \u2192', action: () => navigate('/production?tab=defenses') };
       case 'mission_complete':

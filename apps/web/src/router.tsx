@@ -135,11 +135,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'shipyard',
-        element: <Navigate to="/production?tab=utilitaires" replace />,
+        element: <Navigate to="/production?tab=vaisseaux" replace />,
       },
       {
         path: 'command-center',
-        element: <Navigate to="/production?tab=combat" replace />,
+        element: <Navigate to="/production?tab=vaisseaux" replace />,
       },
       {
         path: 'defense',

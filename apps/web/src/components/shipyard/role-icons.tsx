@@ -93,12 +93,23 @@ export function RoleEnergyIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function RoleCombatIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
+      <path d="M13 19l6-6" />
+      <path d="M16 16l4 4" />
+      <path d="M19 21l2-2" />
+    </svg>
+  );
+}
+
 // ── Role definitions ────────────────────────────────────────────────────
-// Canonical order for displaying ship roles in the shipyard. Any ship whose
-// `role` isn't in this list is dropped (e.g. combat ships built at the
-// Command Center).
+// Canonical order for displaying ship roles in the shipyard — fusion des
+// chantiers (0099) : les vaisseaux de combat font partie du catalogue.
 
 export type ShipyardRoleId =
+  | 'combat'
   | 'transport'
   | 'mining'
   | 'recycling'
@@ -112,6 +123,7 @@ export const SHIPYARD_ROLES: {
   label: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
 }[] = [
+  { id: 'combat', label: 'Combat', Icon: RoleCombatIcon },
   { id: 'transport', label: 'Transport', Icon: RoleTransportIcon },
   { id: 'mining', label: 'Minier', Icon: RoleMiningIcon },
   { id: 'recycling', label: 'Recyclage', Icon: RoleRecyclingIcon },

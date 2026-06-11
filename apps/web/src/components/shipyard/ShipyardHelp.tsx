@@ -14,11 +14,12 @@ export function ShipyardHelp({ level, planetClassId }: ShipyardHelpProps) {
         icon={<LayoutGrid className="h-3.5 w-3.5 text-cyan-400" />}
         title="Rôles de mission"
       >
-        Les vaisseaux sont regroupés par rôle&nbsp;: <span className="text-foreground font-medium">transport</span>,
-        <span className="text-foreground font-medium"> minier</span>, <span className="text-foreground font-medium">recyclage</span>,
-        <span className="text-foreground font-medium"> colonisation</span>, <span className="text-foreground font-medium">exploration</span>,
-        <span className="text-foreground font-medium"> espionnage</span> et <span className="text-foreground font-medium">énergie</span>.
-        Les vaisseaux de combat se construisent ici aussi, dans l'onglet Combat.
+        Les vaisseaux sont regroupés par rôle&nbsp;: <span className="text-foreground font-medium">combat</span>,
+        <span className="text-foreground font-medium"> transport</span>, <span className="text-foreground font-medium">minier</span>,
+        <span className="text-foreground font-medium"> recyclage</span>, <span className="text-foreground font-medium">colonisation</span>,
+        <span className="text-foreground font-medium"> exploration</span>, <span className="text-foreground font-medium">espionnage</span> et
+        <span className="text-foreground font-medium"> énergie</span>. Les classes de combat&nbsp;: <span className="text-foreground font-medium">légère</span> (intercepteur),
+        <span className="text-foreground font-medium"> moyenne</span> (frégate) et <span className="text-foreground font-medium">lourde</span> (croiseur, cuirassé) — les plus lourdes exigent une recherche en propulsion avancée.
       </FacilityHelpSection>
 
       <FacilityHelpSection

@@ -99,8 +99,7 @@ function OnboardingDropdown({ data, onClose, showNamingModal }: {
       case 'building_level': return { label: 'Aller aux B\u00e2timents \u2192', action: () => { navigate('/buildings'); onClose(); } };
       case 'research_level': return { label: 'Aller \u00e0 la Recherche \u2192', action: () => { navigate('/research'); onClose(); } };
       case 'ship_count':
-        if (condition.targetId === 'interceptor') return { label: 'Aller aux vaisseaux de combat \u2192', action: () => { navigate('/production?tab=combat'); onClose(); } };
-        return { label: 'Aller au Chantier \u2192', action: () => { navigate('/production?tab=utilitaires'); onClose(); } };
+        return { label: 'Aller au Chantier \u2192', action: () => { navigate('/production?tab=vaisseaux'); onClose(); } };
       case 'defense_count': return { label: 'Aller aux Défenses \u2192', action: () => { navigate('/production?tab=defenses'); onClose(); } };
       case 'mission_complete': return { label: 'Aller aux Missions \u2192', action: () => { navigate('/missions'); onClose(); } };
       default: return null;

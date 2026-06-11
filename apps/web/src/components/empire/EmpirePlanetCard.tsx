@@ -308,7 +308,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
           </button>
         )}
         {planet.activeShipyard && (
-          <button onClick={() => goTo(gameConfig?.ships?.[planet.activeShipyard!.shipId]?.categoryId === 'ship_combat' ? '/production?tab=combat' : '/production?tab=utilitaires')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20 transition-colors">
+          <button onClick={() => goTo('/production?tab=vaisseaux')} className="flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20 transition-colors">
             <ShipyardIcon width={12} height={12} />
             <span>{getShipName(planet.activeShipyard.shipId, gameConfig)} x{planet.activeShipyard.quantity}</span>
             <Timer endTime={new Date(planet.activeShipyard.endTime)} className="inline [&>span]:text-primary" />

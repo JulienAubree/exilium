@@ -97,8 +97,7 @@ export function OverviewActivities({
 
   // Fusion des chantiers : une seule file, jusqu'à plusieurs cales actives.
   const activeShipBatches = shipyardQueue.filter((q) => q.status === 'active' && q.endTime);
-  const tabFor = (itemId: string, type: string) =>
-    type !== 'defense' && gameConfig?.ships?.[itemId]?.categoryId === 'ship_combat' ? 'combat' : 'utilitaires';
+  const tabFor = (type: string) => (type === 'defense' ? 'defenses' : 'vaisseaux');
 
   return (
     <div className="flex gap-3 overflow-x-auto">
@@ -130,12 +129,12 @@ export function OverviewActivities({
             startTime={batch.startTime}
             totalDuration={Math.floor((new Date(batch.endTime!).getTime() - new Date(batch.startTime).getTime()) / 1000)}
             color="#f59e0b"
-            onClick={() => navigate(`/production?tab=${tabFor(batch.itemId, batch.type)}`)}
+            onClick={() => navigate(`/production?tab=${tabFor(batch.type)}`)}
             onComplete={onShipyardComplete}
           />
         ))
       ) : (
-        <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/production?tab=utilitaires')} />
+        <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/production?tab=vaisseaux')} />
       )}
     </div>
   );
