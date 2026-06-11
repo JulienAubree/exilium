@@ -12,6 +12,7 @@ Jeu de stratégie spatiale **4X** (français), monorepo pnpm/turbo. Dev solo, on
 2. **Implémenter** sur la branche. Vérifier au fil de l'eau : `pnpm typecheck` après **chaque lot** d'edits ; `pnpm lint` + `pnpm test` en fin (parité CI). Ne jamais enchaîner 20 edits sans vérif intermédiaire.
 3. **Commit** : conventional commits FR (`feat(market): …`, `fix(web): …`, `chore(db): …`). Finir par `Co-Authored-By: Claude …`.
 4. **Présenter pour validation** — **NE PAS déployer** tant que le user n'a pas dit go. Signaler explicitement : décisions produit (équilibrage, **compensation des joueurs** quand on retire/transforme un système), et **migrations destructives**.
+   **Exception (accordée 2026-06-11)** : les **petits changements front purs** (pas de migration, pas de seed, pas de décision d'équilibrage, pas de changement de paradigme UI — cf. leçon du rollback Passerelle) peuvent être **poussés + déployés sans go explicite**, en le signalant après coup. Dans le doute → demander.
 5. **Sur go → merge + déploiement** (ci-dessous).
 
 ---
