@@ -42,14 +42,15 @@ interface OverviewHeroProps {
   planet: OverviewHeroPlanet;
   flagshipOnPlanet: boolean;
   planetTypeName?: string;
-  planetTypeBonus?: { mineraiBonus: number; siliciumBonus: number; hydrogeneBonus: number };
+  /** Détail des bonus appliqués par le serveur (rates.bonuses) — source de vérité unique. */
+  bonuses?: { source: string; stat: string; modifier: number }[];
   governance?: GovernanceData | null;
   allPlanets: AbandonModalPlanet[];
   renderBiomeBadge: (biome: OverviewHeroBiome) => React.ReactNode;
   renderPlanetDetail: (planet: OverviewHeroPlanet) => React.ReactNode;
 }
 
-export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetTypeBonus, governance, allPlanets, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
+export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses, governance, allPlanets, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
   const utils = trpc.useUtils();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
@@ -83,28 +84,19 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, planetT
 
   const biomes = planet.biomes ?? [];
 
-  // Cumulate type + biome bonuses per resource
-  const cumulatedBonuses: Record<string, number> = {};
-  if (planetTypeBonus) {
-    if (planetTypeBonus.mineraiBonus !== 1) cumulatedBonuses['minerai'] = (planetTypeBonus.mineraiBonus - 1);
-    if (planetTypeBonus.siliciumBonus !== 1) cumulatedBonuses['silicium'] = (planetTypeBonus.siliciumBonus - 1);
-    if (planetTypeBonus.hydrogeneBonus !== 1) cumulatedBonuses['hydrogene'] = (planetTypeBonus.hydrogeneBonus - 1);
-  }
-  const biomeStat2Resource: Record<string, string> = {
+  // Chips de bonus par ressource — cumul du détail serveur (rates.bonuses),
+  // la même source de vérité que la bannière : aucun recalcul côté front.
+  const stat2Resource: Record<string, string> = {
     production_minerai: 'minerai', production_silicium: 'silicium', production_hydrogene: 'hydrogene',
     energy_production: 'energy',
   };
-  for (const biome of biomes) {
-    for (const e of biome.effects ?? []) {
-      const key = biomeStat2Resource[e.stat];
-      if (key) cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) + e.modifier;
-    }
+  const cumulatedBonuses: Record<string, number> = {};
+  for (const b of bonuses ?? []) {
+    const key = stat2Resource[b.stat];
+    if (key) cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) + b.modifier;
   }
-  // Apply governance harvest malus to resource bonuses
-  if (governance && governance.harvestMalus > 0) {
-    for (const key of ['minerai', 'silicium', 'hydrogene']) {
-      cumulatedBonuses[key] = (cumulatedBonuses[key] ?? 0) - governance.harvestMalus;
-    }
+  for (const key of Object.keys(cumulatedBonuses)) {
+    if (Math.abs(cumulatedBonuses[key]) < 0.005) delete cumulatedBonuses[key];
   }
   const hasBonuses = Object.keys(cumulatedBonuses).length > 0;
 

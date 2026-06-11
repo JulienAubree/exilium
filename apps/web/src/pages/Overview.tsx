@@ -410,7 +410,7 @@ export default function Overview() {
         planet={planet as any}
         flagshipOnPlanet={flagship?.planetId === planet.id}
         planetTypeName={resourceData?.planetTypeName}
-        planetTypeBonus={resourceData?.planetTypeBonus}
+        bonuses={resourceData?.rates?.bonuses}
         governance={effectiveGovernance}
         allPlanets={planets.map((p) => ({
           id: p.id,
@@ -452,13 +452,8 @@ export default function Overview() {
       />
 
       <Suspense fallback={<LazySkel />}>
-        {/* 2b. Active bonuses (type + biomes + governance malus) */}
-        <OverviewBonuses
-          planet={planet as any}
-          resourceData={resourceData as any}
-          gameConfig={gameConfig as any}
-          governance={effectiveGovernance}
-        />
+        {/* 2b. Bonus actifs — le détail exact appliqué par le serveur (rates.bonuses) */}
+        <OverviewBonuses bonuses={resourceData?.rates?.bonuses} />
 
         {/* 3. Activities */}
         <OverviewActivities
