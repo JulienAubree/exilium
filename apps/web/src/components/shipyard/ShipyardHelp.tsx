@@ -18,14 +18,14 @@ export function ShipyardHelp({ level, planetClassId }: ShipyardHelpProps) {
         <span className="text-foreground font-medium"> minier</span>, <span className="text-foreground font-medium">recyclage</span>,
         <span className="text-foreground font-medium"> colonisation</span>, <span className="text-foreground font-medium">exploration</span>,
         <span className="text-foreground font-medium"> espionnage</span> et <span className="text-foreground font-medium">énergie</span>.
-        Les vaisseaux de combat sont construits au Centre de commandement.
+        Les vaisseaux de combat se construisent ici aussi, dans l'onglet Combat.
       </FacilityHelpSection>
 
       <FacilityHelpSection
         icon={<Sun className="h-3.5 w-3.5 text-amber-400" />}
         title="Slots parallèles"
       >
-        Par défaut, vous disposez d'un seul slot de production. Le <span className="text-foreground font-medium">passif coque industrielle</span> ou un <span className="text-foreground font-medium">Chantier spatial niveau 10</span> sur la planète du vaisseau amiral débloque un slot supplémentaire, permettant d'assembler plusieurs vaisseaux simultanément.
+        Le chantier dispose de <span className="text-foreground font-medium">deux cales de production</span>. Sur la planète du vaisseau amiral, un <span className="text-foreground font-medium">Chantier niveau 10</span> en débloque une troisième, et le <span className="text-foreground font-medium">niveau 20</span> une quatrième.
       </FacilityHelpSection>
 
       <FacilityHelpSection

@@ -143,7 +143,7 @@ export function TutorialPanel() {
       case 'ship_count':
         if (condition.targetId === 'interceptor') {
           return {
-            label: 'Aller au Centre de commandement \u2192',
+            label: 'Aller aux vaisseaux de combat \u2192',
             action: () => navigate('/production?tab=combat'),
           };
         }

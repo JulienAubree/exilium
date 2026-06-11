@@ -35,8 +35,8 @@ export default function CommandCenter() {
     { planetId: planetId! },
     { enabled: !!planetId },
   );
-  const commandCenterBuilding = buildings?.find((b) => b.id === 'commandCenter');
-  const commandCenterLevel = commandCenterBuilding?.currentLevel ?? 0;
+  const shipyardBuilding = buildings?.find((b) => b.id === 'shipyard');
+  const shipyardLevel = shipyardBuilding?.currentLevel ?? 0;
 
   const { data: ships, isLoading } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
@@ -66,7 +66,7 @@ export default function CommandCenter() {
   );
 
   const { data: queue } = trpc.shipyard.queue.useQuery(
-    { planetId: planetId!, facilityId: 'commandCenter' },
+    { planetId: planetId!, facilityId: 'shipyard' },
     { enabled: !!planetId },
   );
 
@@ -88,7 +88,7 @@ export default function CommandCenter() {
   const buildMutation = trpc.shipyard.buildShip.useMutation({
     onSuccess: () => {
       utils.shipyard.ships.invalidate({ planetId: planetId! });
-      utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
+      utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
       utils.resource.production.invalidate({ planetId: planetId! });
       utils.planet.empire.invalidate();
       utils.tutorial.getCurrent.invalidate();
@@ -97,7 +97,7 @@ export default function CommandCenter() {
 
   const cancelMutation = trpc.shipyard.cancelBatch.useMutation({
     onSuccess: () => {
-      utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
+      utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
       utils.shipyard.ships.invalidate({ planetId: planetId! });
       utils.resource.production.invalidate({ planetId: planetId! });
       utils.planet.empire.invalidate();
@@ -142,30 +142,30 @@ export default function CommandCenter() {
   if (isLoading || !ships) {
     return (
       <div className="space-y-4 p-4 lg:space-y-6 lg:p-6">
-        <PageHeader title="Centre de commandement" />
+        <PageHeader title="Vaisseaux de combat" />
         <CardGridSkeleton count={6} />
       </div>
     );
   }
 
   // ── Locked state ──────────────────────────────────────────────────────
-  if (buildings && commandCenterLevel < 1) {
+  if (buildings && shipyardLevel < 1) {
     return (
       <FacilityLockedHero
-        buildingId="commandCenter"
-        title="Centre de commandement"
+        buildingId="shipyard"
+        title="Vaisseaux de combat"
         planetClassId={planetClassId}
-        description={<>Construisez le <span className="text-foreground font-semibold">Centre de commandement</span> pour assembler les vaisseaux militaires de votre flotte.</>}
+        description={<>Améliorez le <span className="text-foreground font-semibold">Chantier spatial</span> pour assembler les vaisseaux militaires de votre flotte.</>}
       >
-        {commandCenterBuilding && (
+        {shipyardBuilding && (
           <BuildingUpgradeCard
-            currentLevel={commandCenterBuilding.currentLevel}
-            maxLevel={commandCenterBuilding.maxLevel}
-            nextLevelCost={commandCenterBuilding.nextLevelCost}
-            nextLevelTime={commandCenterBuilding.nextLevelTime}
-            prerequisites={commandCenterBuilding.prerequisites as any}
-            isUpgrading={!!commandCenterBuilding.isUpgrading}
-            upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
+            currentLevel={shipyardBuilding.currentLevel}
+            maxLevel={shipyardBuilding.maxLevel}
+            nextLevelCost={shipyardBuilding.nextLevelCost}
+            nextLevelTime={shipyardBuilding.nextLevelTime}
+            prerequisites={shipyardBuilding.prerequisites as any}
+            isUpgrading={!!shipyardBuilding.isUpgrading}
+            upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
             resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
@@ -173,7 +173,7 @@ export default function CommandCenter() {
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
             rates={resourceData?.rates}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {
               utils.building.list.invalidate({ planetId: planetId! });
@@ -209,21 +209,21 @@ export default function CommandCenter() {
   return (
     <div className="space-y-4">
       <FacilityHero
-        buildingId="commandCenter"
-        title="Centre de commandement"
-        level={commandCenterLevel}
+        buildingId="shipyard"
+        title="Vaisseaux de combat"
+        level={shipyardLevel}
         planetClassId={resourceData?.planetClassId}
         planetImageIndex={resourceData?.planetImageIndex}
         onOpenHelp={() => setHelpOpen(true)}
-        upgradeCard={commandCenterBuilding && (
+        upgradeCard={shipyardBuilding && (
           <BuildingUpgradeCard
-            currentLevel={commandCenterBuilding.currentLevel}
-            maxLevel={commandCenterBuilding.maxLevel}
-            nextLevelCost={commandCenterBuilding.nextLevelCost}
-            nextLevelTime={commandCenterBuilding.nextLevelTime}
-            prerequisites={commandCenterBuilding.prerequisites as any}
-            isUpgrading={!!commandCenterBuilding.isUpgrading}
-            upgradeEndTime={commandCenterBuilding.upgradeEndTime ?? null}
+            currentLevel={shipyardBuilding.currentLevel}
+            maxLevel={shipyardBuilding.maxLevel}
+            nextLevelCost={shipyardBuilding.nextLevelCost}
+            nextLevelTime={shipyardBuilding.nextLevelTime}
+            prerequisites={shipyardBuilding.prerequisites as any}
+            isUpgrading={!!shipyardBuilding.isUpgrading}
+            upgradeEndTime={shipyardBuilding.upgradeEndTime ?? null}
             resources={{ minerai: resources.minerai, silicium: resources.silicium, hydrogene: resources.hydrogene }}
             buildingLevels={buildingLevels}
             isAnyUpgrading={isAnyBuildingUpgrading}
@@ -231,7 +231,7 @@ export default function CommandCenter() {
             cancelPending={buildingCancelMutation.isPending}
             gameConfig={gameConfig}
             rates={resourceData?.rates}
-            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'commandCenter' as any })}
+            onUpgrade={() => upgradeMutation.mutate({ planetId: planetId!, buildingId: 'shipyard' as any })}
             onCancel={() => buildingCancelMutation.mutate({ planetId: planetId! })}
             onTimerComplete={() => {
               utils.building.list.invalidate({ planetId: planetId! });
@@ -247,7 +247,7 @@ export default function CommandCenter() {
           itemNoun="vaisseau"
           itemNounPlural="vaisseaux"
           onTimerComplete={() => {
-            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
+            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
             utils.shipyard.ships.invalidate({ planetId: planetId! });
           }}
           onReduce={(batchId) => reduceMutation.mutate({ planetId: planetId!, batchId, removeCount: 1 })}
@@ -326,8 +326,8 @@ export default function CommandCenter() {
       </EntityDetailOverlay>
 
       {/* Help overlay */}
-      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Centre de commandement">
-        <CommandCenterHelp level={commandCenterLevel} planetClassId={planetClassId} />
+      <EntityDetailOverlay open={helpOpen} onClose={() => setHelpOpen(false)} title="Vaisseaux de combat">
+        <CommandCenterHelp level={shipyardLevel} planetClassId={planetClassId} />
       </EntityDetailOverlay>
 
       <ConfirmDialog

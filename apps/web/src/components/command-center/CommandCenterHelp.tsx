@@ -9,26 +9,26 @@ interface CommandCenterHelpProps {
 
 export function CommandCenterHelp({ level, planetClassId }: CommandCenterHelpProps) {
   return (
-    <FacilityHelp buildingId="commandCenter" level={level} planetClassId={planetClassId}>
+    <FacilityHelp buildingId="shipyard" level={level} planetClassId={planetClassId}>
       <FacilityHelpSection
         icon={<Layers className="h-3.5 w-3.5 text-cyan-400" />}
         title="Rôle"
       >
-        Le Centre de commandement assemble les <span className="text-foreground font-medium">vaisseaux militaires</span> de votre empire&nbsp;: intercepteurs, frégates, croiseurs et cuirassés. Les vaisseaux industriels (transport, prospecteurs, sondes…) sont produits au <span className="text-foreground font-medium">Chantier spatial</span>.
+        Le <span className="text-foreground font-medium">Chantier spatial</span> assemble tous les vaisseaux de l'empire. Cet onglet regroupe les <span className="text-foreground font-medium">vaisseaux militaires</span>&nbsp;: intercepteurs, frégates, croiseurs et cuirassés. Les vaisseaux industriels (transport, prospecteurs, sondes…) sont dans l'onglet Utilitaires.
       </FacilityHelpSection>
 
       <FacilityHelpSection
         icon={<Swords className="h-3.5 w-3.5 text-rose-400" />}
         title="Classes de combat"
       >
-        Chaque niveau du Centre débloque ou améliore des unités&nbsp;: <span className="text-foreground font-medium">légères</span> (intercepteur), <span className="text-foreground font-medium">moyennes</span> (frégate) et <span className="text-foreground font-medium">lourdes</span> (croiseur, cuirassé). Les classes plus lourdes exigent une recherche en propulsion avancée.
+        Chaque niveau du Chantier débloque ou améliore des unités&nbsp;: <span className="text-foreground font-medium">légères</span> (intercepteur), <span className="text-foreground font-medium">moyennes</span> (frégate) et <span className="text-foreground font-medium">lourdes</span> (croiseur, cuirassé). Les classes plus lourdes exigent une recherche en propulsion avancée.
       </FacilityHelpSection>
 
       <FacilityHelpSection
         icon={<Sun className="h-3.5 w-3.5 text-amber-400" />}
         title="Slots parallèles"
       >
-        Par défaut, un seul slot de production est actif. Un <span className="text-foreground font-medium">Centre de commandement niveau 10</span> sur la planète du vaisseau amiral débloque un slot supplémentaire.
+        Le chantier dispose de <span className="text-foreground font-medium">deux cales de production</span>. Sur la planète du vaisseau amiral, un <span className="text-foreground font-medium">Chantier niveau 10</span> en débloque une troisième, et le <span className="text-foreground font-medium">niveau 20</span> une quatrième.
       </FacilityHelpSection>
 
       <FacilityHelpSection

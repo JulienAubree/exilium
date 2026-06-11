@@ -26,13 +26,11 @@ interface QueueItem {
 interface OverviewActivitiesProps {
   activeBuilding: BuildingActivity | undefined;
   shipyardQueue: QueueItem[];
-  commandCenterQueue: QueueItem[];
   planetId: string;
   planetClassId?: string | null;
   gameConfig: any;
   onBuildingComplete: () => void;
   onShipyardComplete: () => void;
-  onCommandCenterComplete: () => void;
 }
 
 function ActiveSlot({ icon, label, sublabel, endTime, startTime, totalDuration, color, onClick, onComplete }: {
@@ -92,13 +90,15 @@ function EmptySlot({ label, cta, onClick }: { label: string; cta: string; onClic
 }
 
 export function OverviewActivities({
-  activeBuilding, shipyardQueue, commandCenterQueue, planetId: _planetId, planetClassId, gameConfig,
-  onBuildingComplete, onShipyardComplete, onCommandCenterComplete,
+  activeBuilding, shipyardQueue, planetId: _planetId, planetClassId, gameConfig,
+  onBuildingComplete, onShipyardComplete,
 }: OverviewActivitiesProps) {
   const navigate = useNavigate();
 
-  const activeShipyard = shipyardQueue.find((q) => q.status === 'active' && q.endTime);
-  const activeCommandCenter = commandCenterQueue.find((q) => q.status === 'active' && q.endTime);
+  // Fusion des chantiers : une seule file, jusqu'à plusieurs cales actives.
+  const activeShipBatches = shipyardQueue.filter((q) => q.status === 'active' && q.endTime);
+  const tabFor = (itemId: string, type: string) =>
+    type !== 'defense' && gameConfig?.ships?.[itemId]?.categoryId === 'ship_combat' ? 'combat' : 'utilitaires';
 
   return (
     <div className="flex gap-3 overflow-x-auto">
@@ -118,38 +118,24 @@ export function OverviewActivities({
         <EmptySlot label="Aucune construction" cta="Lancer" onClick={() => navigate('/buildings')} />
       )}
 
-      {/* Shipyard slot */}
-      {activeShipyard ? (
-        <ActiveSlot
-          icon={<GameImage category={activeShipyard.type === 'defense' ? 'defenses' : 'ships'} id={activeShipyard.itemId} size="icon" alt={getUnitName(activeShipyard.itemId, gameConfig)} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
-          label={getUnitName(activeShipyard.itemId, gameConfig)}
-          sublabel={`x${activeShipyard.quantity - (activeShipyard.completedCount ?? 0)}`}
-          endTime={activeShipyard.endTime!}
-          startTime={activeShipyard.startTime}
-          totalDuration={Math.floor((new Date(activeShipyard.endTime!).getTime() - new Date(activeShipyard.startTime).getTime()) / 1000)}
-          color="#f59e0b"
-          onClick={() => navigate('/production?tab=utilitaires')}
-          onComplete={onShipyardComplete}
-        />
+      {/* Cales du chantier (file unique, jusqu'à plusieurs productions actives) */}
+      {activeShipBatches.length > 0 ? (
+        activeShipBatches.map((batch) => (
+          <ActiveSlot
+            key={batch.id}
+            icon={<GameImage category={batch.type === 'defense' ? 'defenses' : 'ships'} id={batch.itemId} size="icon" alt={getUnitName(batch.itemId, gameConfig)} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
+            label={getUnitName(batch.itemId, gameConfig)}
+            sublabel={`x${batch.quantity - (batch.completedCount ?? 0)}`}
+            endTime={batch.endTime!}
+            startTime={batch.startTime}
+            totalDuration={Math.floor((new Date(batch.endTime!).getTime() - new Date(batch.startTime).getTime()) / 1000)}
+            color="#f59e0b"
+            onClick={() => navigate(`/production?tab=${tabFor(batch.itemId, batch.type)}`)}
+            onComplete={onShipyardComplete}
+          />
+        ))
       ) : (
         <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/production?tab=utilitaires')} />
-      )}
-
-      {/* Command center slot */}
-      {activeCommandCenter ? (
-        <ActiveSlot
-          icon={<GameImage category={activeCommandCenter.type === 'defense' ? 'defenses' : 'ships'} id={activeCommandCenter.itemId} size="icon" alt={getUnitName(activeCommandCenter.itemId, gameConfig)} planetClassId={planetClassId} className="w-5 h-5 rounded flex-shrink-0" />}
-          label={getUnitName(activeCommandCenter.itemId, gameConfig)}
-          sublabel={`x${activeCommandCenter.quantity - (activeCommandCenter.completedCount ?? 0)}`}
-          endTime={activeCommandCenter.endTime!}
-          startTime={activeCommandCenter.startTime}
-          totalDuration={Math.floor((new Date(activeCommandCenter.endTime!).getTime() - new Date(activeCommandCenter.startTime).getTime()) / 1000)}
-          color="#8b5cf6"
-          onClick={() => navigate('/production?tab=combat')}
-          onComplete={onCommandCenterComplete}
-        />
-      ) : (
-        <EmptySlot label="Commandement libre" cta="Lancer une production" onClick={() => navigate('/production?tab=combat')} />
       )}
     </div>
   );

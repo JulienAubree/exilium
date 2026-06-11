@@ -17,7 +17,7 @@ const TABS: { id: ProductionTab; label: string; icon: React.ComponentType<React.
 ];
 
 /**
- * Page Production : Chantier spatial + Centre de commandement + Défense
+ * Page Production : le Chantier spatial (onglets Utilitaires/Combat) + Défense
  * réunis sous une seule entrée de navigation (refonte IA, lot 2).
  * Les bâtiments restent des prérequis distincts ; seule la page fusionne.
  * L'onglet vit dans ?tab= pour que les anciennes URLs redirigées tombent juste.

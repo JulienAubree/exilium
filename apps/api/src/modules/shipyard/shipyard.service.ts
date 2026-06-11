@@ -32,32 +32,32 @@ export function createShipyardService(
   },
   flagshipService?: { addUnlockedShip(userId: string, shipId: string): Promise<void> },
 ) {
-  function getShipBuildCategory(
-    shipDef: {
-      prerequisites: {
-        buildings: { buildingId: string; level: number }[];
-        research: { researchId: string; level: number }[];
-      };
-    },
-    bonuses: { stat: string; sourceId: string; category: string | null }[],
-  ): string | null {
-    const firstBuildingPrereq = shipDef.prerequisites?.buildings?.[0]?.buildingId;
-    if (!firstBuildingPrereq) return null;
-    const bonus = bonuses.find(
-      (b) => b.stat === 'ship_build_time' && b.sourceId === firstBuildingPrereq,
-    );
-    return bonus?.category ?? null;
+  /** Fusion des chantiers (0099) : la catégorie de build vient du vaisseau
+   *  lui-même — avant, du bâtiment-prérequis, mais ils partagent désormais
+   *  tous le Chantier spatial. 'support' = industriel, le reste = militaire.
+   *  Les coques (combat/industrielle) et le bonus de temps par catégorie
+   *  continuent de s'appliquer comme avant. */
+  function getShipBuildCategory(shipDef: { combatCategoryId?: string | null }): string | null {
+    if (!shipDef.combatCategoryId) return null;
+    return shipDef.combatCategoryId === 'support' ? 'build_industrial' : 'build_military';
   }
 
   function getFacilityId(
     type: 'ship' | 'defense',
-    itemId: string,
-    config: { ships: Record<string, any>; defenses: Record<string, any> },
+    _itemId: string,
+    _config: { ships: Record<string, any>; defenses: Record<string, any> },
   ): string {
     if (type === 'defense') return 'arsenal';
-    const shipDef = config.ships[itemId];
-    const firstBuildingPrereq = shipDef?.prerequisites?.buildings?.[0]?.buildingId;
-    return firstBuildingPrereq ?? 'shipyard';
+    // Fusion des chantiers (0099) : tous les vaisseaux sortent du Chantier spatial.
+    return 'shipyard';
+  }
+
+  /** Cales du chantier fusionné : 2 de base (l'ancien 1+1 des deux bâtiments),
+   *  + les paliers du bâtiment (shipyard_parallel_build : +1 au niv 10, +1 au
+   *  niv 20 — talent.service). L'arsenal (défenses) garde sa cale unique. */
+  function computeMaxSlots(facilityId: string | null | undefined, talentCtx: Record<string, number>): number {
+    if (facilityId === 'shipyard') return 2 + Math.floor(talentCtx['shipyard_parallel_build'] ?? 0);
+    return 1;
   }
 
   return {
@@ -87,7 +87,7 @@ export function createShipyardService(
           const prereqCheck = checkShipPrerequisites(def.prerequisites, buildingLevels, research);
           const cost = shipCost(def);
 
-          const buildCategory = getShipBuildCategory(def, config.bonuses);
+          const buildCategory = getShipBuildCategory(def);
           const bonusMultiplier = resolveBonus(
             'ship_build_time',
             buildCategory,
@@ -464,7 +464,7 @@ export function createShipyardService(
 
       let unitTime: number;
       if (type === 'ship') {
-        const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+        const buildCategory = getShipBuildCategory(def as any);
         const bonusMultiplier = resolveBonus(
           'ship_build_time',
           buildCategory,
@@ -511,13 +511,7 @@ export function createShipyardService(
       }
 
       // Compute parallel build slots for this facility
-      let maxSlots = 1;
-      if (facilityId === 'shipyard') {
-        maxSlots += Math.floor(talentCtx['industrial_parallel_build'] ?? 0);
-      }
-      if (facilityId === 'commandCenter') {
-        maxSlots += Math.floor(talentCtx['military_parallel_build'] ?? 0);
-      }
+      const maxSlots = computeMaxSlots(facilityId, talentCtx);
       const activeCount = sameTypeQueue.filter((e) => e.status === 'active').length;
       const freeSlots = Math.max(0, maxSlots - activeCount);
 
@@ -649,14 +643,10 @@ export function createShipyardService(
           .where(eq(buildQueue.id, buildQueueId));
 
         // Compute maxSlots here where we have full context
-        let maxSlots = 1;
-        if (talentService) {
-          const tc = await talentService.computeTalentContext(entry.userId, entry.planetId);
-          if (entry.facilityId === 'shipyard')
-            maxSlots += Math.floor(tc['industrial_parallel_build'] ?? 0);
-          if (entry.facilityId === 'commandCenter')
-            maxSlots += Math.floor(tc['military_parallel_build'] ?? 0);
-        }
+        const maxSlots = computeMaxSlots(
+          entry.facilityId,
+          talentService ? await talentService.computeTalentContext(entry.userId, entry.planetId) : {},
+        );
 
         await this.activateNextBatch(
           entry.planetId,
@@ -722,7 +712,7 @@ export function createShipyardService(
       let unitTime = 60;
       if (def) {
         if (entry.type === 'ship') {
-          const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+          const buildCategory = getShipBuildCategory(def as any);
           const bonusMultiplier = resolveBonus(
             'ship_build_time',
             buildCategory,
@@ -851,7 +841,7 @@ export function createShipyardService(
         let unitTime: number;
         if (type === 'ship') {
           const def = config.ships[nextBatch.itemId];
-          const buildCategory = getShipBuildCategory(def as any, config.bonuses);
+          const buildCategory = getShipBuildCategory(def as any);
           const bonusMultiplier = resolveBonus(
             'ship_build_time',
             buildCategory,
@@ -1048,14 +1038,10 @@ export function createShipyardService(
 
       // Activate next queued batch if we cancelled the active one
       if (entry.status === 'active') {
-        let maxSlots = 1;
-        if (talentService) {
-          const tc = await talentService.computeTalentContext(entry.userId, planetId);
-          if (entry.facilityId === 'shipyard')
-            maxSlots += Math.floor(tc['industrial_parallel_build'] ?? 0);
-          if (entry.facilityId === 'commandCenter')
-            maxSlots += Math.floor(tc['military_parallel_build'] ?? 0);
-        }
+        const maxSlots = computeMaxSlots(
+          entry.facilityId,
+          talentService ? await talentService.computeTalentContext(entry.userId, planetId) : {},
+        );
         await this.activateNextBatch(
           planetId,
           entry.type as 'ship' | 'defense',

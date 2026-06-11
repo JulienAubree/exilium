@@ -27,7 +27,7 @@ const INFRASTRUCTURE_CATEGORY_IDS = [
   'building_defense',
 ];
 
-const EXCLUDED_BUILDINGS = ['shipyard', 'arsenal', 'commandCenter'];
+const EXCLUDED_BUILDINGS = ['shipyard', 'arsenal'];
 
 const ANNEX_LAB_BY_BIOME: Record<string, string> = {
   volcanic: 'labVolcanic',

@@ -98,74 +98,60 @@ describe('talentService.computeTalentContext (post-talents-removal)', () => {
     });
   });
 
-  describe('parallel_build via buildings', () => {
-    it('returns +1 mil slot when commandCenter ≥10 and flagship attached', async () => {
+  describe('parallel_build via le chantier fusionné (0099)', () => {
+    it('+1 cale quand le chantier est ≥10 et le flagship posé', async () => {
       const svc = makeService(
         { id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' },
-        [{ buildingId: 'commandCenter', level: 10 }, { buildingId: 'shipyard', level: 5 }],
+        [{ buildingId: 'shipyard', level: 12 }],
       );
       const ctx = await svc.computeTalentContext('user1', 'p1');
-      expect(ctx.military_parallel_build).toBe(1);
-      expect(ctx.industrial_parallel_build).toBeUndefined();
+      expect(ctx.shipyard_parallel_build).toBe(1);
     });
 
-    it('returns +1 ind slot when shipyard ≥10 and flagship attached', async () => {
+    it('+2 cales quand le chantier est ≥20', async () => {
       const svc = makeService(
         { id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' },
-        [{ buildingId: 'shipyard', level: 12 }, { buildingId: 'commandCenter', level: 9 }],
+        [{ buildingId: 'shipyard', level: 20 }],
       );
       const ctx = await svc.computeTalentContext('user1', 'p1');
-      expect(ctx.industrial_parallel_build).toBe(1);
-      expect(ctx.military_parallel_build).toBeUndefined();
+      expect(ctx.shipyard_parallel_build).toBe(2);
     });
 
-    it('returns no slot bonus when commandCenter <10', async () => {
+    it('aucun bonus quand le chantier est <10', async () => {
       const svc = makeService(
         { id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' },
-        [{ buildingId: 'commandCenter', level: 9 }],
+        [{ buildingId: 'shipyard', level: 9 }],
       );
       const ctx = await svc.computeTalentContext('user1', 'p1');
-      expect(ctx.military_parallel_build).toBeUndefined();
+      expect(ctx.shipyard_parallel_build).toBeUndefined();
     });
 
-    it('returns no slot bonus when flagship on a different planet', async () => {
+    it('aucun bonus quand le flagship est sur une autre planète', async () => {
       // pbRows not queried because planetId !== flagship.planetId
       const svc = makeService({ id: 'f1', planetId: 'p_other', status: 'active', hullId: 'industrial' });
       const ctx = await svc.computeTalentContext('user1', 'p1');
-      expect(ctx.military_parallel_build).toBeUndefined();
+      expect(ctx.shipyard_parallel_build).toBeUndefined();
     });
 
-    it('returns no slot bonus when planetId not provided', async () => {
+    it('aucun bonus quand planetId est absent', async () => {
       const svc = makeService({ id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' });
       const ctx = await svc.computeTalentContext('user1');
-      expect(ctx.military_parallel_build).toBeUndefined();
-      expect(ctx.industrial_parallel_build).toBeUndefined();
-    });
-
-    it('combines both slot bonuses when both buildings ≥10', async () => {
-      const svc = makeService(
-        { id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' },
-        [{ buildingId: 'commandCenter', level: 10 }, { buildingId: 'shipyard', level: 11 }],
-      );
-      const ctx = await svc.computeTalentContext('user1', 'p1');
-      expect(ctx.military_parallel_build).toBe(1);
-      expect(ctx.industrial_parallel_build).toBe(1);
+      expect(ctx.shipyard_parallel_build).toBeUndefined();
     });
   });
 
   describe('combined output', () => {
-    it('industrial hull on its own planet with both buildings ≥10', async () => {
+    it('industrial hull on its own planet with the merged shipyard ≥10', async () => {
       const svc = makeService(
         { id: 'f1', planetId: 'p1', status: 'active', hullId: 'industrial' },
-        [{ buildingId: 'commandCenter', level: 10 }, { buildingId: 'shipyard', level: 10 }],
+        [{ buildingId: 'shipyard', level: 10 }],
       );
       const ctx = await svc.computeTalentContext('user1', 'p1');
       expect(ctx).toEqual({
         hull_industrial_build_time_reduction: 0.20,
         mining_speed: 0.45,
         prospection_speed: 0.45,
-        military_parallel_build: 1,
-        industrial_parallel_build: 1,
+        shipyard_parallel_build: 1,
       });
     });
   });

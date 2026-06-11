@@ -328,11 +328,6 @@ export default function Overview() {
     { enabled: !!planetId },
   );
 
-  const { data: commandCenterQueue } = trpc.shipyard.queue.useQuery(
-    { planetId: planetId!, facilityId: 'commandCenter' },
-    { enabled: !!planetId },
-  );
-
   const { data: ships } = trpc.shipyard.ships.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
@@ -459,7 +454,6 @@ export default function Overview() {
         <OverviewActivities
           activeBuilding={activeBuilding as any}
           shipyardQueue={(shipyardQueue ?? []) as any[]}
-          commandCenterQueue={(commandCenterQueue ?? []) as any[]}
           planetId={planetId!}
           planetClassId={planet.planetClassId}
           gameConfig={gameConfig}
@@ -469,10 +463,6 @@ export default function Overview() {
           }}
           onShipyardComplete={() => {
             utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'shipyard' });
-            utils.shipyard.ships.invalidate({ planetId: planetId! });
-          }}
-          onCommandCenterComplete={() => {
-            utils.shipyard.queue.invalidate({ planetId: planetId!, facilityId: 'commandCenter' });
             utils.shipyard.ships.invalidate({ planetId: planetId! });
           }}
         />

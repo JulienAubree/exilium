@@ -9,7 +9,7 @@ import type { GameConfigService } from '../admin/game-config.service.js';
  * archived; only the `computeTalentContext` API is preserved to avoid
  * touching the 30 call sites that consume it. The implementation now
  * returns only hull passive bonuses + parallel_build slot bonuses
- * (commandCenter ≥10 / shipyard ≥10 on the flagship's planet).
+ * (chantier fusionné : shipyard ≥10 et ≥20 on the flagship's planet).
  *
  * The other methods (list / invest / respec / resetAll / activate /
  * getStatBonuses / getActiveBuffs / getGlobalBonuses / getPlanetBonuses)
@@ -74,10 +74,10 @@ export function createTalentService(
           .select({ buildingId: planetBuildings.buildingId, level: planetBuildings.level })
           .from(planetBuildings)
           .where(eq(planetBuildings.planetId, planetId));
-        const cmdLevel = pbRows.find((pb) => pb.buildingId === 'commandCenter')?.level ?? 0;
         const shyLevel = pbRows.find((pb) => pb.buildingId === 'shipyard')?.level ?? 0;
-        if (cmdLevel >= 10) ctx['military_parallel_build']   = (ctx['military_parallel_build']   ?? 0) + 1;
-        if (shyLevel >= 10) ctx['industrial_parallel_build'] = (ctx['industrial_parallel_build'] ?? 0) + 1;
+        // Fusion des chantiers (0099) : paliers du bâtiment unique.
+        if (shyLevel >= 10) ctx['shipyard_parallel_build'] = (ctx['shipyard_parallel_build'] ?? 0) + 1;
+        if (shyLevel >= 20) ctx['shipyard_parallel_build'] = (ctx['shipyard_parallel_build'] ?? 0) + 1;
       }
 
       return ctx;
