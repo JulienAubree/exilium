@@ -32,9 +32,11 @@ Chaque **axe** a 2–3 **postures** ; `neutre` = défaut sans effet. Valeurs = d
 | **Fiscalité** | `rendement` | +12 % production ressources · −10 % gain d'**exilium** |
 | | `frugalite` | −8 % production · +15 % gain d'**exilium** |
 | | `neutre` | — |
-| **Posture militaire** | `mobilisation` | +1 slot de flotte · +10 % temps construction bâtiments civils |
-| | `retranchement` | +15 % réparation défenses · −10 % vitesse de flotte |
+| **Logistique** | `mobilisation` | +1 slot de flotte · +10 % temps construction bâtiments |
+| | `industrialisation` | −18 % temps construction bâtiments · −5 % production |
 | | `neutre` | — |
+
+> **Livré en v1** sur les leviers à intégration propre (production, temps de construction par catégorie, gains d'exilium, slots de flotte). Les effets *réparation des défenses* et *vitesse de flotte* (idée « retranchement ») sont reportés en **v2** (points d'intégration plus invasifs).
 
 > Les magnitudes ci-dessus sont des **points de départ à équilibrer** (cf. §7, décision). On garde 3 axes max en v1 pour la lisibilité mobile.
 
