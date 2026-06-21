@@ -40,7 +40,8 @@ Règles de production :
 - "recommendation" doit être CONCRÈTE et actionnable côté produit (quoi changer),
   jamais une généralité ("améliorer l'UX" est interdit).
 - "evidence" : cite la friction / l'erreur / le parcours qui justifie la reco.
-- N'invente pas de findings hors de ce qu'on te donne (rubric + sessions).
+- N'invente pas de findings hors de ce qu'on te donne (rubric + audit + sessions).
+- Donne AU PLUS 8 recommandations, les plus prioritaires (fusionne les doublons).
 
 Réponds STRICTEMENT en JSON valide :
 {
@@ -62,11 +63,13 @@ Réponds STRICTEMENT en JSON valide :
 
 function loadRuns() {
   if (!existsSync(REPORTS)) return [];
-  const dirs = readdirSync(REPORTS).filter((d) => {
-    if (d.startsWith('_')) return false;
-    const p = join(REPORTS, d);
-    return statSync(p).isDirectory() && existsSync(join(p, 'run.json'));
-  });
+  const dirs = readdirSync(REPORTS)
+    .filter((d) => {
+      if (d.startsWith('_')) return false;
+      const p = join(REPORTS, d);
+      return statSync(p).isDirectory() && existsSync(join(p, 'run.json'));
+    })
+    .sort();
   const runs = [];
   for (const d of dirs) {
     try {
@@ -89,11 +92,25 @@ function loadRuns() {
   return runs;
 }
 
+function loadLatestAudit() {
+  const dir = join(REPORTS, '_audit');
+  if (!existsSync(dir)) return null;
+  const jsons = readdirSync(dir)
+    .filter((f) => f.startsWith('audit-') && f.endsWith('.json'))
+    .sort();
+  if (!jsons.length) return null;
+  try {
+    return JSON.parse(readFileSync(join(dir, jsons[jsons.length - 1]), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 function severityRank(s) {
   return { bloquant: 0, majeur: 1, mineur: 2 }[s] ?? 3;
 }
 
-function renderMarkdown({ result, runs, usage }) {
+function renderMarkdown({ result, runs, usage, audit }) {
   const recs = (result.recommendations || []).slice().sort((a, b) => {
     return (a.priority ?? 99) - (b.priority ?? 99) || severityRank(a.severity) - severityRank(b.severity);
   });
@@ -104,6 +121,11 @@ function renderMarkdown({ result, runs, usage }) {
   L.push(`- Date : ${new Date().toISOString()}`);
   L.push(`- Agent-designer (modèle) : \`${DESIGNER_MODEL}\``);
   L.push(`- Sessions de bots analysées : ${runs.length} (${totalFrictions} friction(s) brute(s))`);
+  if (audit) {
+    L.push(
+      `- Audit déterministe : ${audit.findings.length} finding(s) · ${audit.metrics.pagesWithUrlState}/${audit.metrics.pages} pages avec état d'URL · route \`:planetId\` : ${audit.metrics.hasPlanetParamRoute ? 'oui' : 'non'}`,
+    );
+  }
   L.push(`- Recommandations : ${recs.length}`);
   L.push(`- Tokens : prompt ${usage?.prompt_tokens ?? '?'} · completion ${usage?.completion_tokens ?? '?'}`);
   L.push('');
@@ -136,29 +158,37 @@ async function main() {
   if (!existsSync(RUBRIC_PATH)) throw new Error(`Rubric introuvable : ${RUBRIC_PATH}`);
   const rubric = readFileSync(RUBRIC_PATH, 'utf8');
 
-  const runs = loadRuns();
-  console.log(`[designer] modèle=${DESIGNER_MODEL} · ${runs.length} session(s) chargée(s)`);
-  if (runs.length === 0) {
-    console.warn('[designer] Aucune session de bot trouvée — la synthèse ne reposera que sur les baselines du rubric.');
+  const runs = loadRuns().slice(-6); // les 6 sessions les plus récentes (borne la taille du prompt)
+  const audit = loadLatestAudit();
+  console.log(
+    `[designer] modèle=${DESIGNER_MODEL} · ${runs.length} session(s) · audit déterministe : ${audit ? `${audit.findings.length} finding(s)` : 'absent'}`,
+  );
+  if (runs.length === 0 && !audit) {
+    console.warn('[designer] Ni session de bot ni audit — la synthèse ne reposera que sur les baselines du rubric.');
   }
+
+  const auditBlock = audit
+    ? `=== AUDIT DÉTERMINISTE (findings CONFIRMÉS par le code, à inclure d'office) ===\n${JSON.stringify({ metrics: audit.metrics, findings: audit.findings }, null, 2)}`
+    : `=== AUDIT DÉTERMINISTE ===\n(aucun audit trouvé — lance d'abord audit.mjs)`;
 
   const user = [
     `=== RUBRIC (règles de design) ===\n${rubric}`,
-    `=== FINDINGS BRUTS (sessions de bots) ===\n${JSON.stringify(runs, null, 2).slice(0, 12000)}`,
-    `Produis les recommandations de design en JSON selon le format demandé.`,
+    auditBlock,
+    `=== FINDINGS BRUTS (sessions de bots) ===\n${JSON.stringify(runs, null, 2).slice(0, 11000)}`,
+    `Produis les recommandations de design en JSON selon le format demandé. Les findings de l'AUDIT DÉTERMINISTE sont confirmés : intègre-les comme recommandations à part entière.`,
   ].join('\n\n');
 
   const { parsed, usage } = await chatJSON({
     system: SYSTEM_PROMPT,
     user,
     model: DESIGNER_MODEL,
-    maxTokens: 3500,
+    maxTokens: 8000,
   });
 
   const outDir = join(REPORTS, '_designer');
   mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const md = renderMarkdown({ result: parsed, runs, usage });
+  const md = renderMarkdown({ result: parsed, runs, usage, audit });
   const mdPath = join(outDir, `reco-design-${stamp}.md`);
   writeFileSync(mdPath, md);
   writeFileSync(join(outDir, `reco-design-${stamp}.json`), JSON.stringify(parsed, null, 2));

@@ -37,13 +37,25 @@ async function postChat({ model, system, user, maxTokens }) {
   }
 
   const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content ?? '{}';
-  let parsed;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
+  const choice = data?.choices?.[0];
+  const content = choice?.message?.content ?? '{}';
+  const finish = choice?.finish_reason;
+
+  const tryParse = (s) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return undefined;
+    }
+  };
+  let parsed = tryParse(content);
+  if (parsed === undefined) {
     const m = content.match(/\{[\s\S]*\}/);
-    parsed = m ? JSON.parse(m[0]) : {};
+    parsed = m ? tryParse(m[0]) : undefined;
+  }
+  if (parsed === undefined) {
+    const hint = finish === 'length' ? ' → réponse tronquée, augmente max_tokens' : '';
+    throw new Error(`Réponse JSON invalide (finish_reason=${finish}${hint}). Début : ${content.slice(0, 120)}`);
   }
   return { parsed, usage: data?.usage ?? null };
 }

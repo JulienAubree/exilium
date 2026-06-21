@@ -36,12 +36,22 @@ Deux étages :
 
 ## Lancer
 
+### Pipeline complet (une commande)
+
 ```bash
-bash /opt/exilium/scripts/run-friction-bot.sh
-# voir le navigateur :
-FRICTION_BOT_HEADFUL=1 bash /opt/exilium/scripts/run-friction-bot.sh
-# budget plus court :
-FRICTION_BOT_MAX_STEPS=10 bash /opt/exilium/scripts/run-friction-bot.sh
+bash /opt/exilium/scripts/run-pipeline.sh
+# en regardant le navigateur, budget plus large :
+FRICTION_BOT_HEADFUL=1 FRICTION_BOT_MAX_STEPS=18 bash /opt/exilium/scripts/run-pipeline.sh
+```
+
+Enchaîne : **audit déterministe → session bot → agent-designer** → `reco-design.md`.
+
+### Étage par étage
+
+```bash
+node /opt/exilium/apps/web/e2e/bots/audit.mjs   # 1. audit déterministe (sans LLM)
+bash /opt/exilium/scripts/run-friction-bot.sh   # 2. session bot-persona
+bash /opt/exilium/scripts/run-designer.sh        # 3. synthèse → recos
 ```
 
 Pré-requis : API staging up (`curl localhost:3001/trpc/health`), build web
@@ -74,25 +84,29 @@ Ne touche ni la prod ni la base (lecture seule des rapports).
 - `run.json` — même chose, mangé par l'agent-designer.
 - `step-NN.png` — captures de chaque étape.
 
+`reports/_audit/` : `audit-<date>.md` + `.json` (findings déterministes).
 `reports/_designer/` : `reco-design-<date>.md` + `.json` (le livrable pour le designer humain).
 
 ## Fichiers
 
 | Fichier | Rôle |
 |---|---|
-| `friction-bot.mjs` | boucle d'agent-persona + rapport |
-| `designer.mjs` | agent-designer : synthèse rubric + sessions → recos priorisées |
+| `audit.mjs` | auditeur déterministe (sans LLM) : R6/R7 adressabilité URL, R3 profondeur |
+| `friction-bot.mjs` | boucle d'agent-persona ; frictions **taguées par règle** (R1…R13) |
+| `designer.mjs` | agent-designer : synthèse audit + sessions + rubric → recos priorisées |
 | `design-rules.md` | rubric des règles de design (R1…R13) + baselines mesurées |
 | `personas.mjs` | définition des personas (1 pour l'instant) |
 | `perceive.mjs` | extraction de l'arbre interactif d'une page |
 | `llm.mjs` | client DeepSeek (compatible OpenAI), modèle pilotable par env |
 | `serve.mjs` | mini-serveur statique du build staging + proxy `/trpc` |
 
+Orchestration : `scripts/run-pipeline.sh` (audit → bot → designer).
+
 ## Suite
 
-- **Instrumenter le rubric** : injecter `design-rules.md` dans le prompt des bots
-  (findings tagués par règle) + auditeur déterministe (URL R6/R7, clics R4, profondeur R3).
 - Personas : joueur mobile (PWA), min-maxer, revenant.
+- Anti-boucle bot : détecter la répétition d'une même action ratée et nudger / abandonner.
+- Compteur de clics par tâche (R4) mesuré pendant la session.
 - Étage « crawlers déterministes ×N » (pur Playwright, sans LLM, à chaque deploy).
 - Agrégation des `run.json` / recos → table `feedbacks` (taggé `bot`) ou dashboard admin.
 - Bascule provider Claude pour les passes profondes.

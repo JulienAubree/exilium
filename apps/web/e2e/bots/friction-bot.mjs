@@ -7,7 +7,7 @@
 //
 // Lancer : bash /opt/exilium/scripts/run-friction-bot.sh
 import { chromium } from '@playwright/test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startStagingServer } from './serve.mjs';
@@ -23,24 +23,38 @@ const STAGING_DIST = process.env.FRICTION_BOT_DIST || '/opt/exilium-staging/apps
 const API_TARGET = process.env.E2E_STAGING_URL || 'http://localhost:3001';
 const HEADLESS = !process.env.FRICTION_BOT_HEADFUL;
 
+// Digest des règles de design (R1…R13) extrait du rubric, injecté dans le prompt
+// pour que le bot RATTACHE chaque friction à une ou plusieurs règles.
+const RULES_DIGEST = (() => {
+  try {
+    const txt = readFileSync(join(__dirname, 'design-rules.md'), 'utf8');
+    return [...txt.matchAll(/\*\*(R\d+)\s+—\s+([^*]+?)\*\*/g)].map((m) => `${m[1]} — ${m[2].trim()}`).join('\n');
+  } catch {
+    return '';
+  }
+})();
+
 const SYSTEM_PROMPT = `Tu es un testeur UX qui incarne un persona en jouant à un jeu web, dans un navigateur piloté.
 À chaque tour tu reçois l'état de la page (url, titre, intitulés, liste d'éléments interactifs avec leur "ref", texte visible) et l'historique de tes actions.
 Tu choisis UNE seule action pour progresser vers ton objectif, en raisonnant comme le persona — pas comme un dev.
-Si quelque chose te ralentit, te perd, te surprend ou est ambigu, signale-le dans "friction" (du point de vue du persona).
+Si quelque chose te ralentit, te perd, te surprend ou est ambigu, signale-le dans "friction" (du point de vue du persona) ET rattache-le à au moins une RÈGLE DE DESIGN (Rn) listée plus bas.
 
 Réponds STRICTEMENT en JSON valide, sans texte autour :
 {
   "thought": "ce que tu comprends / décides, 1 phrase",
-  "friction": null OU { "severity": "bloquant" | "majeur" | "mineur", "note": "ce qui cloche, concrètement" },
+  "friction": null OU { "severity": "bloquant" | "majeur" | "mineur", "rules": ["R4"], "note": "ce qui cloche, concrètement" },
   "action": { "type": "click" | "type" | "goto" | "done" | "give_up", "ref": <number si click/type>, "text": "<si type>", "url": "<chemin relatif si goto>" }
 }
 
-Règles :
+Règles d'action :
 - "click": donne le "ref" d'un élément présent dans la liste interactables.
 - "type": donne le "ref" d'un champ + le "text" à saisir.
 - "goto": "url" relative (ex: "/overview"). À n'utiliser qu'en dernier recours, un vrai joueur clique.
 - "done": l'objectif est RÉELLEMENT atteint et le confirme à l'écran — ne déclare jamais "done" juste après avoir soumis un formulaire ou cliqué un bouton, attends d'OBSERVER le résultat au tour suivant. "give_up": tu es bloqué et ne vois plus quoi tenter.
-- N'invente JAMAIS un "ref" absent de la liste. Une seule action par tour.`;
+- N'invente JAMAIS un "ref" absent de la liste. Une seule action par tour.
+
+RÈGLES DE DESIGN (le champ "friction.rules" doit citer ≥1 de ces identifiants) :
+${RULES_DIGEST}`;
 
 function ts() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -93,7 +107,8 @@ function writeReport({ outDir, persona, creds, history, frictions, consoleErrors
     L.push('Aucune friction signalée par le persona sur ce parcours.', '');
   } else {
     frictions.forEach((f, i) => {
-      L.push(`### ${i + 1}. [${f.severity}] étape ${f.step} — \`${f.url}\``);
+      const rules = (f.rules || []).join(', ') || '—';
+      L.push(`### ${i + 1}. \`[${rules}]\` ${f.severity} — étape ${f.step} — \`${f.url}\``);
       L.push('', f.note, '', `Capture : \`${f.shot}\``, '');
     });
   }
@@ -198,7 +213,14 @@ async function main() {
 
     const { thought = '', friction = null, action = {} } = resp.parsed || {};
     if (friction && friction.note) {
-      frictions.push({ step, url: snapshot.url, severity: friction.severity || 'mineur', note: friction.note, shot });
+      frictions.push({
+        step,
+        url: snapshot.url,
+        severity: friction.severity || 'mineur',
+        rules: Array.isArray(friction.rules) ? friction.rules : [],
+        note: friction.note,
+        shot,
+      });
     }
     console.log(`[${step}] ${action.type ?? '?'} ${action.ref ?? ''} — ${String(thought).slice(0, 120)}`);
 
@@ -236,6 +258,7 @@ async function main() {
         step,
         url: snapshot.url,
         severity: 'majeur',
+        rules: ['R11'],
         note: `Action "${action.type}" sur l'élément ${action.ref} a échoué (${entry.result}). Intention du persona : "${thought}".`,
         shot,
       });
