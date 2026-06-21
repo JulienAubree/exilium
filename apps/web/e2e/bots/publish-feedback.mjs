@@ -76,6 +76,19 @@ function mapType(rec) {
   return 'idea';
 }
 
+// Signature stable d'une reco = ses règles triées (le titre libre, lui, est
+// reformulé par le LLM à chaque run → inutilisable pour dédupliquer).
+function ruleKey(rec) {
+  return (rec.rules || []).slice().sort().join('+') || 'Rx';
+}
+function botTitle(rec) {
+  return `[bot][${ruleKey(rec)}] ${rec.title}`.slice(0, 200);
+}
+function titleSig(title) {
+  const m = String(title || '').match(/^\[bot\]\[([^\]]*)\]/);
+  return m ? m[1] : null;
+}
+
 function pickPagePath(rec) {
   const blob = `${rec.recommendation} ${(rec.evidence || []).join(' ')}`;
   const m = blob.match(/\/[a-zA-Z][\w-]*(?:\/[a-zA-Z:][\w-]*)*/);
@@ -109,12 +122,15 @@ async function main() {
 
   const token = await ensureReporterToken();
 
-  // Dédup : titres déjà présents (page récente).
-  let existing = new Set();
+  // Dédup par SIGNATURE de règles ([bot][R6+R7] …) — stable d'un run à l'autre.
+  const existingSigs = new Set();
   try {
     const page = await trpc('feedback.list', { sort: 'recent' }, { token, method: 'GET' });
     const items = Array.isArray(page) ? page : page?.items || page?.feedbacks || [];
-    existing = new Set(items.map((i) => i.title));
+    for (const it of items) {
+      const s = titleSig(it.title);
+      if (s) existingSigs.add(s);
+    }
   } catch (e) {
     console.warn(`[feedback] dédup indisponible (${e.message.slice(0, 60)}) — on poste quand même.`);
   }
@@ -126,10 +142,11 @@ async function main() {
       console.log(`  ⏹  plafond ${MAX_PUBLISH} atteint — le reste passera au prochain run.`);
       break;
     }
-    const title = `[bot] ${rec.title}`.slice(0, 200);
-    if (existing.has(title)) {
+    const sig = ruleKey(rec);
+    const title = botTitle(rec);
+    if (existingSigs.has(sig)) {
       skipped++;
-      console.log(`  ⏭  déjà présent : ${title}`);
+      console.log(`  ⏭  déjà présent (${sig}) : ${title}`);
       continue;
     }
     const input = { type: mapType(rec), title, description: buildDescription(rec) };
@@ -138,6 +155,7 @@ async function main() {
     try {
       await trpc('feedback.create', input, { token });
       posted++;
+      existingSigs.add(sig);
       console.log(`  ✅ [${input.type}] ${title}`);
       await new Promise((r) => setTimeout(r, 400));
     } catch (e) {
