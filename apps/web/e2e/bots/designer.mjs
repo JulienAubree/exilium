@@ -17,7 +17,7 @@ import { chatJSON } from './llm.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(__dirname, 'reports');
 const RUBRIC_PATH = join(__dirname, 'design-rules.md');
-const DESIGNER_MODEL = process.env.DESIGNER_MODEL || 'deepseek-reasoner';
+const DESIGNER_MODEL = process.env.DESIGNER_MODEL || 'deepseek-chat';
 
 const SYSTEM_PROMPT = `Tu es un designer produit / UX senior. On te confie une revue de design.
 

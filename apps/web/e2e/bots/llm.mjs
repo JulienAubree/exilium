@@ -38,7 +38,13 @@ async function postChat({ model, system, user, maxTokens }) {
 
   const data = await res.json();
   const choice = data?.choices?.[0];
-  const content = choice?.message?.content ?? '{}';
+  const raw = choice?.message?.content ?? '{}';
+  // Certains modèles emballent le JSON dans des fences ```json … ``` malgré
+  // response_format — on les retire avant de parser.
+  const content = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '');
   const finish = choice?.finish_reason;
 
   const tryParse = (s) => {
@@ -65,7 +71,13 @@ export function decide({ system, user }) {
   return postChat({ model: MODEL_NAME, system, user, maxTokens: 800 });
 }
 
-/** Synthèse libre (agent-designer) — modèle et budget tokens réglables. */
-export function chatJSON({ system, user, model = MODEL_NAME, maxTokens = 800 }) {
-  return postChat({ model, system, user, maxTokens });
+/** Synthèse libre (agent-designer) — modèle et budget tokens réglables.
+ *  1 retry : la sortie JSON est parfois mal formée (modèle stochastique). */
+export async function chatJSON({ system, user, model = MODEL_NAME, maxTokens = 800 }) {
+  try {
+    return await postChat({ model, system, user, maxTokens });
+  } catch (e) {
+    console.warn(`[llm] retry synthèse (${e.message.slice(0, 80)})`);
+    return await postChat({ model, system, user, maxTokens });
+  }
 }

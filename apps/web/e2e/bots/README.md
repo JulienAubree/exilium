@@ -12,19 +12,20 @@ le LLM choisit **une** action en raisonnant comme le persona, et signale toute
 friction. Boucle jusqu'à objectif atteint / abandon / budget épuisé.
 
 ```
-règles de design ┐
-persona (objectif)┴→ [perçoit la page] → DeepSeek décide 1 action → l'exécute → … → run.json
-                                                                                       │
-                          rubric (design-rules.md) + tous les run.json → AGENT-DESIGNER ┘
-                                                                          → reco-design.md priorisé
+audit déterministe ┐
+règles de design   ┤
+persona (objectif) ┴→ bot joue → run.json ┐
+                                           ├→ AGENT-DESIGNER → reco-design.md ┐
+                       audit + rubric ─────┘                                  │
+                                            PUBLICATION → partie feedback in-game (table feedbacks) ┘
 ```
 
-Deux étages :
+Quatre étages :
 
-1. **Bots-personas** — jouent et remontent des frictions brutes (modèle éco, volume).
-2. **Agent-designer** (`designer.mjs`) — synthétise toutes les sessions + le rubric
-   `design-rules.md` en recommandations priorisées (impact × effort), façon design
-   critique. Tourne une fois par lot, donc on lui met un modèle plus fort.
+1. **Audit déterministe** (`audit.mjs`) — sans LLM, mesure les règles vérifiables par code (R6/R7/R3).
+2. **Bots-personas** (`friction-bot.mjs`) — jouent, frictions **taguées par règle** (modèle éco, volume).
+3. **Agent-designer** (`designer.mjs`) — synthétise audit + sessions + rubric en recos priorisées.
+4. **Publication** (`publish-feedback.mjs`) — poste les recos dans la partie feedback in-game.
 
 ## Sécurité
 
@@ -72,9 +73,22 @@ Ne touche ni la prod ni la base (lecture seule des rapports).
 ## Choix de modèle (mesuré)
 
 - **Bots** (`FRICTION_BOT_MODEL`, def `deepseek-chat`) : éco suffit pour explorer.
-- **Designer** (`DESIGNER_MODEL`, def `deepseek-reasoner`) : le modèle éco a **raté**
-  la baseline R7 (planète hors URL) ; le reasoner l'attrape et la classe bloquant.
-  La synthèse profonde justifie le modèle fort (1 appel par lot).
+- **Designer** (`DESIGNER_MODEL`, def `deepseek-chat`) : sans audit, l'éco ratait la
+  baseline R7 (planète hors URL) — mais l'**auditeur déterministe** la fournit
+  désormais comme finding confirmé, donc l'éco (JSON fiable) suffit. `deepseek-reasoner`
+  l'attrape aussi mais rend parfois du JSON invalide → fallback retry dans `llm.mjs`.
+
+## Publication dans le feedback in-game
+
+```bash
+bash /opt/exilium/scripts/run-feedback.sh
+```
+
+Poste les recos du designer dans la table `feedbacks` du staging via la mutation
+tRPC `feedback.create`, sous un compte **reporter dédié** `frictionbot-reporter@staging.local`
+(sans « + » → épargné par le cleanup des comptes jetables `frictionbot+...`). Titres
+préfixés `[bot]`, dédup par titre. `feedback.create` est **rate-limité (~5/h)** → on
+trie par priorité, plafonne à `FEEDBACK_MAX` (def 5) par run, et on s'arrête sur 429.
 
 ## Sortie
 
@@ -94,13 +108,14 @@ Ne touche ni la prod ni la base (lecture seule des rapports).
 | `audit.mjs` | auditeur déterministe (sans LLM) : R6/R7 adressabilité URL, R3 profondeur |
 | `friction-bot.mjs` | boucle d'agent-persona ; frictions **taguées par règle** (R1…R13) |
 | `designer.mjs` | agent-designer : synthèse audit + sessions + rubric → recos priorisées |
+| `publish-feedback.mjs` | poste les recos dans la table `feedbacks` (staging) via tRPC |
 | `design-rules.md` | rubric des règles de design (R1…R13) + baselines mesurées |
 | `personas.mjs` | définition des personas (1 pour l'instant) |
 | `perceive.mjs` | extraction de l'arbre interactif d'une page |
 | `llm.mjs` | client DeepSeek (compatible OpenAI), modèle pilotable par env |
 | `serve.mjs` | mini-serveur statique du build staging + proxy `/trpc` |
 
-Orchestration : `scripts/run-pipeline.sh` (audit → bot → designer).
+Orchestration : `scripts/run-pipeline.sh` (audit → bot → designer → feedback).
 
 ## Suite
 
