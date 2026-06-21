@@ -4,6 +4,20 @@ import { TRPCError } from '@trpc/server';
 import { userExilium, exiliumLog } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
+import { getPolicyEffects } from '../../lib/empire-policy.js';
+
+/** Sources de revenu « gameplay » modulées par la fiscalité (politiques d'empire).
+ *  Les remboursements/ajustements (respec, talent_unlock, flagship_repair, admin)
+ *  sont crédités tels quels. */
+const POLICY_TAXED_SOURCES = new Set([
+  'daily_quest',
+  'expedition',
+  'pvp',
+  'pve',
+  'market',
+  'recycling',
+  'tutorial',
+]);
 
 export type ExiliumSource =
   | 'daily_quest'
@@ -51,21 +65,28 @@ export function createExiliumService(db: Database, gameConfigService: GameConfig
     async earn(userId: string, amount: number, source: ExiliumSource, details?: unknown) {
       if (amount <= 0) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le montant doit etre positif' });
 
+      // Fiscalité (politiques d'empire) : module les revenus de gameplay.
+      let credited = amount;
+      if (POLICY_TAXED_SOURCES.has(source)) {
+        const mult = (await getPolicyEffects(db, userId)).exiliumGainMult;
+        if (mult !== 1) credited = Math.max(1, Math.round(amount * mult));
+      }
+
       await getOrCreate(userId);
 
       await db.transaction(async (tx) => {
         await tx
           .update(userExilium)
           .set({
-            balance: sql`${userExilium.balance} + ${amount}`,
-            totalEarned: sql`${userExilium.totalEarned} + ${amount}`,
+            balance: sql`${userExilium.balance} + ${credited}`,
+            totalEarned: sql`${userExilium.totalEarned} + ${credited}`,
             updatedAt: new Date(),
           })
           .where(byUser(userExilium.userId, userId));
 
         await tx
           .insert(exiliumLog)
-          .values({ userId, amount, source, details: details ?? null });
+          .values({ userId, amount: credited, source, details: details ?? null });
       });
     },
 

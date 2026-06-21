@@ -8,6 +8,7 @@ import { buildingCost, buildingTime, resolveBonus } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { getPolicyEffects } from '../../lib/empire-policy.js';
 import { vocationEffects } from '@exilium/game-engine';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
@@ -63,6 +64,8 @@ export function createBuildingService(
       const govTimeMult = 1 + govPenalty.constructionMalus;
       // Spécialisation du monde : la forge construit plus vite, la mine plus lentement
       const vocTimeMult = vocationEffects(planet.vocation, config.universe).constructionTimeMult;
+      // Politiques d'empire : cadence de construction des bâtiments
+      const polTimeMult = (await getPolicyEffects(db, userId)).buildTimeMult.building;
 
       // Fetch cross-planet max building levels for annex prerequisite display
       const hasAnnex = Object.values(config.buildings).some(
@@ -106,7 +109,7 @@ export function createBuildingService(
             1,
             Math.floor(
               buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
-                govTimeMult * vocTimeMult,
+                govTimeMult * vocTimeMult * polTimeMult,
             ),
           );
 
@@ -239,11 +242,12 @@ export function createBuildingService(
       );
       const govTimeMultUpgrade = 1 + govPenaltyUpgrade.constructionMalus;
       const vocTimeMultUpgrade = vocationEffects(planet.vocation, config.universe).constructionTimeMult;
+      const polTimeMultUpgrade = (await getPolicyEffects(db, userId)).buildTimeMult.building;
       const time = Math.max(
         1,
         Math.floor(
           buildingTime(def, nextLevel, bonusMultiplier * talentTimeMultiplier, phaseMap) *
-            govTimeMultUpgrade * vocTimeMultUpgrade,
+            govTimeMultUpgrade * vocTimeMultUpgrade * polTimeMultUpgrade,
         ),
       );
 

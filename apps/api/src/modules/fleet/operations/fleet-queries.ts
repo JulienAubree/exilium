@@ -12,6 +12,7 @@ import {
 import type { ShipStats } from '@exilium/game-engine';
 import { buildFleetConfig, buildSpeedMultipliers } from '../fleet.helpers.js';
 import { buildShipStatsMap } from '../fleet.types.js';
+import { getPolicyEffects } from '../../../lib/empire-policy.js';
 import type { planets } from '@exilium/db';
 import type { GameConfigService } from '../../admin/game-config.service.js';
 import type { createFlagshipService } from '../../flagship/flagship.service.js';
@@ -47,7 +48,8 @@ export function createFleetQueries(deps: FleetQueriesDeps) {
   async function getFleetSlots(userId: string) {
     const config = await gameConfigService.getFullConfig();
     const researchLevels = await getResearchLevels(userId);
-    const max = Math.floor(resolveBonus('fleet_count', null, researchLevels, config.bonuses));
+    const slotBonus = (await getPolicyEffects(db, userId)).fleetSlotBonus;
+    const max = Math.floor(resolveBonus('fleet_count', null, researchLevels, config.bonuses)) + slotBonus;
     const [{ count: current }] = await db
       .select({ count: dbCount() })
       .from(fleetEvents)

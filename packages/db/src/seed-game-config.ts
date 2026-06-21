@@ -619,6 +619,9 @@ const UNIVERSE_CONFIG = [
   { key: 'colonization_raid_garrison_pillage', value: 0.33 },
   { key: 'governance_penalty_harvest', value: [0.15, 0.35, 0.60] },
   { key: 'governance_penalty_construction', value: [0.15, 0.35, 0.60] },
+  // Politiques d'empire (chantier Empire §5.2)
+  { key: 'empire_policy_levels_per_slot', value: 10 },
+  { key: 'policy_switch_cooldown_hours', value: 12 },
   { key: 'colonization_difficulty_temperate', value: 1.0 },
   { key: 'colonization_difficulty_arid', value: 0.95 },
   { key: 'colonization_difficulty_glacial', value: 0.95 },

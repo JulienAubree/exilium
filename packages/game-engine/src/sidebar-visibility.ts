@@ -19,6 +19,7 @@ const afterTutorialWithColonies = (min: number): SidebarVisibilityRule =>
  * (refonte IA 2026-06 : Empire / Galaxie / Flotte / Social + bloc planète). */
 export const SIDEBAR_VISIBILITY_RULES = {
   '/empire': afterTutorialWithColonies(2),
+  '/politiques': afterTutorialWithColonies(2),
   '/research': atChapter(2),
   '/': always,
   '/energy': always,

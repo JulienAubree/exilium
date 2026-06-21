@@ -15,6 +15,7 @@ import {
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { getPolicyEffects } from '../../lib/empire-policy.js';
 import { vocationEffects } from '@exilium/game-engine';
 import type { GameConfig, GameConfigService } from '../admin/game-config.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
@@ -27,7 +28,7 @@ import type { createDailyQuestService } from '../daily-quest/daily-quest.service
  * en delta pour l'affichage.
  */
 export interface BonusBreakdownEntry {
-  source: 'talents' | 'biomes' | 'recherche' | 'gouvernance' | 'vocation' | 'type_planete';
+  source: 'talents' | 'biomes' | 'recherche' | 'gouvernance' | 'vocation' | 'type_planete' | 'politique';
   stat: string;
   modifier: number;
 }
@@ -209,6 +210,16 @@ export function createResourceService(
     if (vocDelta !== 0) {
       for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
         add('vocation', stat, vocDelta);
+      }
+    }
+
+    // Politiques d'empire : delta de production global (par joueur)
+    if (userId) {
+      const polDelta = (await getPolicyEffects(db, userId)).productionDelta;
+      if (polDelta !== 0) {
+        for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+          add('politique', stat, polDelta);
+        }
       }
     }
 

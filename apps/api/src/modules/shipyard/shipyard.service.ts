@@ -18,6 +18,7 @@ import type { FPConfig, UnitCombatStats } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { getGovernancePenalty } from '../../lib/governance.js';
+import { getPolicyEffects } from '../../lib/empire-policy.js';
 import { buildShipCombatConfigs } from '../fleet/fleet.types.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
@@ -79,6 +80,8 @@ export function createShipyardService(
       // Governance construction penalty
       const govPenalty = await getGovernancePenalty(db, userId, planet.planetClassId, config);
       const govTimeMult = 1 + govPenalty.constructionMalus;
+      // Politiques d'empire : cadence de construction militaire (vaisseaux de combat)
+      const polShipMult = (await getPolicyEffects(db, userId)).buildTimeMult.ship;
 
       return Object.values(config.ships)
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -117,7 +120,8 @@ export function createShipyardService(
               shipTime(def, bonusMultiplier, timeDivisor) *
                 hullTimeMultiplier *
                 talentCategoryMultiplier *
-                govTimeMult,
+                govTimeMult *
+                (buildCategory === 'build_military' ? polShipMult : 1),
             ),
           );
 
@@ -339,6 +343,8 @@ export function createShipyardService(
       // Governance construction penalty
       const govPenaltyDef = await getGovernancePenalty(db, userId, planet.planetClassId, config);
       const govTimeMultDef = 1 + govPenaltyDef.constructionMalus;
+      // Politiques d'empire : cadence de construction des défenses
+      const polDefenseMult = (await getPolicyEffects(db, userId)).buildTimeMult.defense;
 
       return Object.values(config.defenses)
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -362,7 +368,8 @@ export function createShipyardService(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                govTimeMultDef,
+                govTimeMultDef *
+                polDefenseMult,
             ),
           );
 
@@ -461,6 +468,7 @@ export function createShipyardService(
       // Governance construction penalty
       const govPenaltyBuild = await getGovernancePenalty(db, userId, planet.planetClassId, config);
       const govTimeMultBuild = 1 + govPenaltyBuild.constructionMalus;
+      const polEffBuild = (await getPolicyEffects(db, userId)).buildTimeMult;
 
       let unitTime: number;
       if (type === 'ship') {
@@ -491,7 +499,8 @@ export function createShipyardService(
             shipTime(def, bonusMultiplier, timeDivisor) *
               hullTimeMultiplier *
               talentCatMult *
-              govTimeMultBuild,
+              govTimeMultBuild *
+              (buildCategory === 'build_military' ? polEffBuild.ship : 1),
           ),
         );
       } else {
@@ -505,7 +514,8 @@ export function createShipyardService(
           1,
           Math.floor(
             defenseTime(def, bonusMultiplier, timeDivisor) *
-              govTimeMultBuild,
+              govTimeMultBuild *
+              polEffBuild.defense,
           ),
         );
       }
@@ -609,6 +619,7 @@ export function createShipyardService(
         config,
       );
       const govTimeMultUnit = 1 + govPenaltyUnit.constructionMalus;
+      const polEffUnit = (await getPolicyEffects(db, entry.userId)).buildTimeMult;
 
       if (entry.type === 'ship') {
         const shipDef = config.ships[entry.itemId];
@@ -739,7 +750,8 @@ export function createShipyardService(
               shipTime(def, bonusMultiplier, timeDivisor) *
                 hullTimeMultiplier *
                 tcMult *
-                govTimeMultUnit,
+                govTimeMultUnit *
+                (buildCategory === 'build_military' ? polEffUnit.ship : 1),
             ),
           );
         } else {
@@ -753,7 +765,8 @@ export function createShipyardService(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                govTimeMultUnit,
+                govTimeMultUnit *
+                polEffUnit.defense,
             ),
           );
         }
@@ -797,6 +810,7 @@ export function createShipyardService(
         .where(eq(planets.id, planetId))
         .limit(1);
       let govTimeMultBatch = 1;
+      let polEffBatch = { building: 1, ship: 1, defense: 1 };
       if (batchPlanet) {
         const govPenaltyBatch = await getGovernancePenalty(
           db,
@@ -805,6 +819,7 @@ export function createShipyardService(
           config,
         );
         govTimeMultBatch = 1 + govPenaltyBatch.constructionMalus;
+        polEffBatch = (await getPolicyEffects(db, batchPlanet.userId)).buildTimeMult;
       }
 
       for (;;) {
@@ -868,7 +883,8 @@ export function createShipyardService(
               shipTime(def, bonusMultiplier, timeDivisor) *
                 hullTimeMultiplier *
                 talentCatMult *
-                govTimeMultBatch,
+                govTimeMultBatch *
+                (buildCategory === 'build_military' ? polEffBatch.ship : 1),
             ),
           );
         } else {
@@ -883,7 +899,8 @@ export function createShipyardService(
             1,
             Math.floor(
               defenseTime(def, bonusMultiplier, timeDivisor) *
-                govTimeMultBatch,
+                govTimeMultBatch *
+                polEffBatch.defense,
             ),
           );
         }
