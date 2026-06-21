@@ -25,6 +25,8 @@ import { createFleetRouter } from '../modules/fleet/fleet.router.js';
 import { createContactService } from '../modules/fleet/contact.service.js';
 import { createFleetPresetService } from '../modules/fleet-preset/fleet-preset.service.js';
 import { createFleetPresetRouter } from '../modules/fleet-preset/fleet-preset.router.js';
+import { createCombatService } from '../modules/combat/combat.service.js';
+import { createCombatRouter } from '../modules/combat/combat.router.js';
 import { createMessageService } from '../modules/message/message.service.js';
 import { createMessageRouter } from '../modules/message/message.router.js';
 import { createRankingService } from '../modules/ranking/ranking.service.js';
@@ -233,6 +235,8 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const fleetRouter = createFleetRouter(fleetService, contactService);
   const fleetPresetService = createFleetPresetService(db);
   const fleetPresetRouter = createFleetPresetRouter(fleetPresetService);
+  const combatService = createCombatService(db, gameConfigService);
+  const combatRouter = createCombatRouter(combatService);
   const messageRouter = createMessageRouter(messageService);
   const rankingRouter = createRankingRouter(rankingService);
   const allianceRouter = createAllianceRouter(allianceService);
@@ -275,6 +279,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     galaxy: galaxyRouter,
     fleet: fleetRouter,
     fleetPreset: fleetPresetRouter,
+    combat: combatRouter,
     message: messageRouter,
     ranking: rankingRouter,
     alliance: allianceRouter,

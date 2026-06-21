@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useOutletContext } from 'react-router';
 import { cn } from '@/lib/utils';
 import { FleetIcon, FlagshipIcon } from '@/lib/icons';
-import { Send, Radar, Anchor, FileText } from 'lucide-react';
+import { Send, Radar, Anchor, FileText, Swords } from 'lucide-react';
 
 interface HubTab {
   label: string;
@@ -16,6 +16,7 @@ const TABS: HubTab[] = [
   { label: 'Mouvements', path: '/fleet/movements', icon: Radar as HubTab['icon'] },
   { label: 'Stationnées', path: '/fleet/stationed', icon: Anchor as HubTab['icon'] },
   { label: 'Vaisseau amiral', path: '/fleet/flagship', icon: FlagshipIcon },
+  { label: 'Simulateur', path: '/fleet/simulator', icon: Swords as HubTab['icon'] },
   { label: 'Rapports', path: '/fleet/reports', icon: FileText as HubTab['icon'] },
 ];
 
