@@ -14,7 +14,7 @@ const FEEDBACK_COMMENT_WINDOW_SECONDS = 3600;
 export function createFeedbackService(db: Database, redis: Redis) {
   return {
     async list(options?: {
-      type?: 'bug' | 'idea' | 'feedback';
+      type?: 'bug' | 'idea' | 'feedback' | 'debug';
       status?: 'new' | 'in_progress' | 'resolved' | 'rejected';
       sort?: 'recent' | 'popular';
       cursor?: string;
@@ -135,7 +135,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
       return { ...feedback, hasVoted, comments };
     },
 
-    async create(userId: string, input: { type: 'bug' | 'idea' | 'feedback'; title: string; description: string; pagePath?: string }) {
+    async create(userId: string, input: { type: 'bug' | 'idea' | 'feedback' | 'debug'; title: string; description: string; pagePath?: string }) {
       await enforceRateLimit(redis, {
         key: `ratelimit:feedback:create:${userId}`,
         limit: FEEDBACK_CREATE_LIMIT,
@@ -285,7 +285,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
     },
 
     async adminExport(options?: {
-      type?: 'bug' | 'idea' | 'feedback';
+      type?: 'bug' | 'idea' | 'feedback' | 'debug';
       status?: 'new' | 'in_progress' | 'resolved' | 'rejected';
     }) {
       const conditions = [];
@@ -313,7 +313,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
     },
 
     async adminList(options?: {
-      type?: 'bug' | 'idea' | 'feedback';
+      type?: 'bug' | 'idea' | 'feedback' | 'debug';
       status?: 'new' | 'in_progress' | 'resolved' | 'rejected';
       offset?: number;
       limit?: number;

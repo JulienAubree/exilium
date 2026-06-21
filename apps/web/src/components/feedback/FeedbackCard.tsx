@@ -8,6 +8,7 @@ const TYPE_CONFIG = {
   bug: { label: 'Bug', emoji: '🐛', className: 'bg-red-500/20 text-red-400' },
   idea: { label: 'Idée', emoji: '💡', className: 'bg-amber-500/20 text-amber-400' },
   feedback: { label: 'Feedback', emoji: '💬', className: 'bg-blue-500/20 text-blue-400' },
+  debug: { label: 'Debug', emoji: '🛠️', className: 'bg-purple-500/20 text-purple-400' },
 } as const;
 
 const STATUS_CONFIG = {
@@ -20,7 +21,7 @@ const STATUS_CONFIG = {
 interface FeedbackCardProps {
   feedback: {
     id: string;
-    type: 'bug' | 'idea' | 'feedback';
+    type: 'bug' | 'idea' | 'feedback' | 'debug';
     title: string;
     description?: string | null;
     status: 'new' | 'in_progress' | 'resolved' | 'rejected';

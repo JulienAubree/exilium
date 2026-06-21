@@ -17,6 +17,7 @@ const TYPE_OPTIONS = [
   { label: 'Bugs', value: 'bug' as const },
   { label: 'Idées', value: 'idea' as const },
   { label: 'Feedbacks', value: 'feedback' as const },
+  { label: 'Debug', value: 'debug' as const },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,6 +31,7 @@ const TYPE_EMOJIS: Record<string, string> = {
   bug: '🐛',
   idea: '💡',
   feedback: '💬',
+  debug: '🛠️',
 };
 
 function timeAgo(date: string | Date): string {
@@ -45,7 +47,7 @@ function timeAgo(date: string | Date): string {
 
 export default function Feedbacks() {
   const [statusFilter, setStatusFilter] = useState<'new' | 'in_progress' | 'resolved' | 'rejected' | undefined>();
-  const [typeFilter, setTypeFilter] = useState<'bug' | 'idea' | 'feedback' | undefined>();
+  const [typeFilter, setTypeFilter] = useState<'bug' | 'idea' | 'feedback' | 'debug' | undefined>();
   const [offset, setOffset] = useState(0);
   const limit = 30;
   const [deleteId, setDeleteId] = useState<string | null>(null);

@@ -12,3 +12,4 @@ test-results/
 playwright-report/
 blob-report/
 uploads/
+.debug-bot-password

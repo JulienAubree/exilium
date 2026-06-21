@@ -14,6 +14,7 @@ const TYPE_FILTERS = [
   { label: '🐛 Bugs', value: 'bug' as const },
   { label: '💡 Idées', value: 'idea' as const },
   { label: '💬 Feedbacks', value: 'feedback' as const },
+  { label: '🛠️ Debug', value: 'debug' as const },
 ];
 
 const SORT_OPTIONS = [
@@ -23,7 +24,7 @@ const SORT_OPTIONS = [
 
 export default function Feedback() {
   const [tab, setTab] = useState<'active' | 'resolved'>('active');
-  const [typeFilter, setTypeFilter] = useState<'bug' | 'idea' | 'feedback' | undefined>();
+  const [typeFilter, setTypeFilter] = useState<'bug' | 'idea' | 'feedback' | 'debug' | undefined>();
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
   const [formOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState('');

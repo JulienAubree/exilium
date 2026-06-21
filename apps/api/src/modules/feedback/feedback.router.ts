@@ -11,7 +11,7 @@ export function createFeedbackRouter(
   const adminRouter = router({
     list: adminProcedure
       .input(z.object({
-        type: z.enum(['bug', 'idea', 'feedback']).optional(),
+        type: z.enum(['bug', 'idea', 'feedback', 'debug']).optional(),
         status: z.enum(['new', 'in_progress', 'resolved', 'rejected']).optional(),
         offset: nonNegativeInt.default(0),
         limit: z.number().int().min(1).max(100).default(30),
@@ -22,7 +22,7 @@ export function createFeedbackRouter(
 
     export: adminProcedure
       .input(z.object({
-        type: z.enum(['bug', 'idea', 'feedback']).optional(),
+        type: z.enum(['bug', 'idea', 'feedback', 'debug']).optional(),
         status: z.enum(['new', 'in_progress', 'resolved', 'rejected']).optional(),
       }).optional())
       .query(async ({ input }) => {
@@ -55,7 +55,7 @@ export function createFeedbackRouter(
   return router({
     list: protectedProcedure
       .input(z.object({
-        type: z.enum(['bug', 'idea', 'feedback']).optional(),
+        type: z.enum(['bug', 'idea', 'feedback', 'debug']).optional(),
         status: z.enum(['new', 'in_progress', 'resolved', 'rejected']).optional(),
         excludeResolved: z.boolean().optional(),
         sort: z.enum(['recent', 'popular']).default('recent'),
@@ -73,7 +73,7 @@ export function createFeedbackRouter(
 
     create: protectedProcedure
       .input(z.object({
-        type: z.enum(['bug', 'idea', 'feedback']),
+        type: z.enum(['bug', 'idea', 'feedback', 'debug']),
         title: z.string().min(1).max(200),
         description: z.string().min(1).max(2000),
         /** Page path the user was on (e.g. "/empire", "/missions"). Optional. */

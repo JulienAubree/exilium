@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, index, integer, unique } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 
-export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'idea', 'feedback']);
+export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'idea', 'feedback', 'debug']);
 export const feedbackStatusEnum = pgEnum('feedback_status', ['new', 'in_progress', 'resolved', 'rejected']);
 
 export const feedbacks = pgTable('feedbacks', {

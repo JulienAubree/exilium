@@ -1,28 +1,45 @@
 // publish-feedback.mjs — pousse les recommandations de l'agent-designer dans la
-// partie FEEDBACK in-game (table feedbacks), par le vrai chemin tRPC authentifié.
+// partie FEEDBACK in-game, par le vrai chemin tRPC authentifié, sous la catégorie
+// « debug » et le compte superviseur « Debug bot ».
 //
-// On poste les recos CURÉES du designer (pas les frictions brutes, trop bruyantes),
-// sous un compte « reporter » dédié et PERSISTANT (frictionbot-reporter@staging.local,
-// sans « + » → épargné par le cleanup des comptes jetables frictionbot+...).
-// Dédup par titre pour ne pas spammer à chaque run.
+// Cible par défaut : la PROD (localhost:3000) — c'est là que Julien lit ses
+// retours. Les bots, eux, JOUENT sur le staging ; seules les recos remontent ici.
+// Surcharge : FEEDBACK_API (doit rester en localhost).
 //
-// STAGING-ONLY. Lancer : bash /opt/exilium/scripts/run-feedback.sh
+// Pré-requis : le compte Debug bot existe sur la cible (créé par
+// scripts/ensure-debug-bot.sh). Le publieur ne fait que se connecter.
+//
+// Lancer : bash /opt/exilium/scripts/run-feedback.sh
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(__dirname, 'reports');
-const API = process.env.E2E_STAGING_URL || 'http://localhost:3001';
+const API = process.env.FEEDBACK_API || 'http://localhost:3000';
 
-const REPORTER = {
-  email: 'frictionbot-reporter@staging.local',
-  username: 'frictionbot_reporter',
-  password: 'FrictionBotReporter1!',
+const BOT = {
+  email: 'debug-bot@exilium-game.com',
+  username: 'DebugBot',
 };
 
-if (/:3000|\/\/exilium-game\.com|\.exilium-game\.com/.test(API)) {
-  throw new Error(`Refus : E2E_STAGING_URL (${API}) ressemble à la prod. Feedback bot = staging only.`);
+// Mot de passe : env, sinon fichier gitignoré (créé par ensure-debug-bot.sh).
+// Jamais hardcodé dans le source.
+function botPassword() {
+  if (process.env.DEBUG_BOT_PASSWORD) return process.env.DEBUG_BOT_PASSWORD;
+  try {
+    return readFileSync('/opt/exilium/.debug-bot-password', 'utf8').trim();
+  } catch {
+    throw new Error(
+      'Mot de passe Debug bot introuvable. Pose DEBUG_BOT_PASSWORD ou lance scripts/ensure-debug-bot.sh.',
+    );
+  }
+}
+
+// Sécurité : on n'écrit que sur une API locale (prod ou staging de ce VPS),
+// jamais une URL distante arbitraire.
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) {
+  throw new Error(`Refus : FEEDBACK_API (${API}) doit être une API locale (localhost).`);
 }
 
 // --- mini client tRPC (format httpBatchLink, sans superjson) ---
@@ -42,19 +59,17 @@ async function trpc(proc, input = {}, { token, method = 'POST' } = {}) {
   return entry?.result?.data;
 }
 
-async function ensureReporterToken() {
+async function ensureBotToken() {
   try {
-    const r = await trpc('auth.login', { email: REPORTER.email, password: REPORTER.password });
+    const r = await trpc('auth.login', { email: BOT.email, password: botPassword() });
     return r.accessToken;
-  } catch {
-    // Pas encore créé → on l'inscrit (register auto-login → renvoie les tokens).
-    const r = await trpc('auth.register', {
-      email: REPORTER.email,
-      username: REPORTER.username,
-      password: REPORTER.password,
-    });
-    console.log(`[feedback] compte reporter créé : ${REPORTER.email}`);
-    return r.accessToken;
+  } catch (e) {
+    // Pas de register ici : sur la prod ça créerait une planète mère (empire
+    // fantôme). Le compte doit être créé hors-ligne, admin, sans planète.
+    throw new Error(
+      `Connexion Debug bot impossible (${e.message.slice(0, 80)}). ` +
+        `Crée le compte d'abord : bash scripts/ensure-debug-bot.sh <db>.`,
+    );
   }
 }
 
@@ -66,14 +81,6 @@ function loadLatestReco() {
     .sort();
   if (!jsons.length) return null;
   return JSON.parse(readFileSync(join(dir, jsons[jsons.length - 1]), 'utf8'));
-}
-
-function mapType(rec) {
-  const blob = `${(rec.rules || []).join(' ')} ${rec.recommendation} ${(rec.evidence || []).join(' ')}`.toLowerCase();
-  if (rec.rules?.includes('R11') || rec.rules?.includes('R13') || /404|erreur|échec|bug|cassé|plante/.test(blob)) {
-    return 'bug';
-  }
-  return 'idea';
 }
 
 // Signature stable d'une reco = ses règles triées (le titre libre, lui, est
@@ -120,7 +127,7 @@ async function main() {
   const recs = (reco.recommendations || []).slice().sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
   console.log(`[feedback] ${recs.length} reco(s) (plafond ${MAX_PUBLISH}/run) → ${API}`);
 
-  const token = await ensureReporterToken();
+  const token = await ensureBotToken();
 
   // Dédup par SIGNATURE de règles ([bot][R6+R7] …) — stable d'un run à l'autre.
   const existingSigs = new Set();
@@ -149,7 +156,7 @@ async function main() {
       console.log(`  ⏭  déjà présent (${sig}) : ${title}`);
       continue;
     }
-    const input = { type: mapType(rec), title, description: buildDescription(rec) };
+    const input = { type: 'debug', title, description: buildDescription(rec) };
     const pagePath = pickPagePath(rec);
     if (pagePath) input.pagePath = pagePath;
     try {
@@ -168,7 +175,7 @@ async function main() {
   }
 
   console.log(`\n[feedback] ${posted} publié(s), ${skipped} ignoré(s) (déjà présents).`);
-  console.log(`[feedback] auteur : ${REPORTER.email} · visible dans la page Feedback du staging.`);
+  console.log(`[feedback] auteur : ${BOT.username} (catégorie debug) · cible ${API} · visible dans la page Feedback.`);
 }
 
 main().catch((e) => {
