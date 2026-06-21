@@ -1,20 +1,19 @@
 // Couche LLM — provider DeepSeek via son endpoint compatible OpenAI.
-// Tout est pilotable par env pour pouvoir basculer sur Claude plus tard
-// (l'« interrupteur » du studio-podcast) sans toucher au code du bot.
+// Tout est pilotable par env pour basculer sur Claude plus tard (l'« interrupteur »
+// du studio-podcast) sans toucher au code.
 //
 //   DEEPSEEK_API_KEY   (requis)
 //   DEEPSEEK_BASE_URL  (def: https://api.deepseek.com)
-//   FRICTION_BOT_MODEL (def: deepseek-chat)
+//   FRICTION_BOT_MODEL (def: deepseek-chat)  — modèle des bots-personas
+//
+// Deux usages :
+//   decide()   — une décision courte (action du bot), JSON strict.
+//   chatJSON() — synthèse plus longue (agent-designer), modèle + budget réglables.
 
 const BASE = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com';
 export const MODEL_NAME = process.env.FRICTION_BOT_MODEL || 'deepseek-chat';
 
-/**
- * Demande une décision au LLM. Renvoie l'objet JSON parsé + l'usage tokens.
- * @param {{ system: string, user: string }} param0
- * @returns {Promise<{ parsed: any, usage: { prompt_tokens?: number, completion_tokens?: number } | null }>}
- */
-export async function decide({ system, user }) {
+async function postChat({ model, system, user, maxTokens }) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error('DEEPSEEK_API_KEY manquant');
 
@@ -22,14 +21,14 @@ export async function decide({ system, user }) {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model: MODEL_NAME,
+      model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.4,
-      max_tokens: 800,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -47,4 +46,14 @@ export async function decide({ system, user }) {
     parsed = m ? JSON.parse(m[0]) : {};
   }
   return { parsed, usage: data?.usage ?? null };
+}
+
+/** Décision courte d'un bot-persona (1 action). */
+export function decide({ system, user }) {
+  return postChat({ model: MODEL_NAME, system, user, maxTokens: 800 });
+}
+
+/** Synthèse libre (agent-designer) — modèle et budget tokens réglables. */
+export function chatJSON({ system, user, model = MODEL_NAME, maxTokens = 800 }) {
+  return postChat({ model, system, user, maxTokens });
 }
