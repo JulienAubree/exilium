@@ -23,7 +23,7 @@ export function EmailVerificationBanner() {
       <span className="flex-1 text-center">
         {sent
           ? 'Email de vérification envoyé. Pensez à vérifier vos spams.'
-          : 'Votre adresse email n\u2019est pas vérifiée.'}
+          : 'Votre adresse email n\u2019est pas vérifiée. Vous pouvez jouer, mais certaines fonctionnalités resteront limitées.'}
         {error && ` — ${error}`}
       </span>
       {!sent && (

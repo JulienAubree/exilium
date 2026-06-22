@@ -134,7 +134,7 @@ export function OverviewActivities({
           />
         ))
       ) : (
-        <EmptySlot label="Chantier libre" cta="Lancer une production" onClick={() => navigate('/production?tab=vaisseaux')} />
+        <EmptySlot label="Aucune production en cours" cta="Lancer une production" onClick={() => navigate('/production?tab=vaisseaux')} />
       )}
     </div>
   );

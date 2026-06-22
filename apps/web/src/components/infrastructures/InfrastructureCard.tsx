@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowUp, Lock, Home } from 'lucide-react';
+import { ArrowUp, Lock, Home, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ResourceCost } from '@/components/common/ResourceCost';
@@ -36,6 +36,8 @@ interface InfrastructureCardProps {
   buildingLevels: Record<string, number>;
   isAnyUpgrading: boolean;
   upgradePending: boolean;
+  /** True only for the card whose construction/upgrade is currently in flight. */
+  isProcessing?: boolean;
   cancelPending: boolean;
   gameConfig: GameConfigData;
   onUpgrade: () => void;
@@ -59,6 +61,7 @@ export function InfrastructureCard({
   buildingLevels,
   isAnyUpgrading,
   upgradePending,
+  isProcessing,
   cancelPending,
   gameConfig,
   onUpgrade,
@@ -216,14 +219,23 @@ export function InfrastructureCard({
                 />
               ) : (
                 <Button
-                 
                   size="sm"
                   className="w-full h-8 text-xs"
                   onClick={onUpgrade}
                   disabled={!canAfford || isAnyUpgrading || upgradePending}
                 >
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  {isConstruction ? 'Construire' : 'Améliorer'}
+                  {isProcessing ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <ArrowUp className="h-3 w-3 mr-1" />
+                  )}
+                  {isProcessing
+                    ? isConstruction
+                      ? 'Construction…'
+                      : 'Amélioration…'
+                    : isConstruction
+                      ? 'Construire'
+                      : 'Améliorer'}
                 </Button>
               )}
             </div>

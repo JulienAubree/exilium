@@ -9,6 +9,8 @@ import { estimateRefund } from '@/lib/refund';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { usePlanetStore } from '@/stores/planet.store';
+import { useToastStore } from '@/stores/toast.store';
+import { formatApiError } from '@/lib/error';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { BuildingQueuePanel } from '@/components/common/BuildingQueuePanel';
@@ -97,6 +99,8 @@ export default function Infrastructures() {
     { enabled: !!planetId },
   );
 
+  const addToast = useToastStore((s) => s.addToast);
+
   const cancelMutation = trpc.building.cancel.useMutation({
     onSuccess: () => {
       utils.building.list.invalidate({ planetId: planetId! });
@@ -112,6 +116,7 @@ export default function Infrastructures() {
       utils.planet.empire.invalidate();
       utils.tutorial.getCurrent.invalidate();
     },
+    onError: (err) => addToast(formatApiError(err.message), 'error'),
   });
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -188,7 +193,14 @@ export default function Infrastructures() {
 
   const handleUpgrade = (id: string) => () => {
     if (!planetId) return;
-    upgradeMutation.mutate({ planetId, buildingId: id as never });
+    const isConstruction = (buildingLevels[id] ?? 0) === 0;
+    upgradeMutation.mutate(
+      { planetId, buildingId: id as never },
+      {
+        onSuccess: () =>
+          addToast(isConstruction ? 'Construction lancée' : 'Amélioration lancée', 'success'),
+      },
+    );
   };
 
   const handleCancel = () => setCancelConfirm(true);
@@ -301,6 +313,7 @@ export default function Infrastructures() {
               buildingLevels={buildingLevels}
               isAnyUpgrading={isAnyBuildingUpgrading}
               upgradePending={upgradeMutation.isPending}
+              isProcessing={upgradeMutation.isPending && upgradeMutation.variables?.buildingId === slot.id}
               cancelPending={cancelMutation.isPending}
               gameConfig={gameConfig}
               onUpgrade={handleUpgrade(slot.id)}
