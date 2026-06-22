@@ -16,7 +16,11 @@ import { registerAssetUploadRoute } from './modules/admin/asset-upload.route.js'
 const isProd = env.NODE_ENV === 'production';
 
 const server = Fastify({
-  routerOptions: { maxParamLength: 500 },
+  // tRPC batches many queries into a single GET whose path is the comma-joined
+  // procedure list (captured as one route param). The home load alone is ~511
+  // chars and grows as queries are added — Fastify's default cap (100) and even
+  // 500 reject it with a 404. 5000 leaves comfortable headroom (~250 procs).
+  routerOptions: { maxParamLength: 5000 },
   logger: {
     level: isProd ? 'warn' : 'info',
     // Redact anything that might contain a bearer token or short-lived SSE
