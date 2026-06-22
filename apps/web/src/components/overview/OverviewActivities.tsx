@@ -114,7 +114,7 @@ export function OverviewActivities({
           onComplete={onBuildingComplete}
         />
       ) : (
-        <EmptySlot label="Aucune construction" cta="Lancer" onClick={() => navigate('/buildings')} />
+        <EmptySlot label="Aucune construction" cta="Construire un bâtiment" onClick={() => navigate('/buildings')} />
       )}
 
       {/* Cales du chantier (file unique, jusqu'à plusieurs productions actives) */}
