@@ -69,7 +69,10 @@ function loadRuns() {
       const p = join(REPORTS, d);
       return statSync(p).isDirectory() && existsSync(join(p, 'run.json'));
     })
-    .sort();
+    // Trier par date de run (mtime), pas par nom : le tri alphabétique mélange
+    // les personas et, avec `.slice(-8)` en aval, zappe des sessions récentes au
+    // profit de vieux runs (bug observé : 5 personas sur 8 ignorés).
+    .sort((a, b) => statSync(join(REPORTS, a)).mtimeMs - statSync(join(REPORTS, b)).mtimeMs);
   const runs = [];
   for (const d of dirs) {
     try {

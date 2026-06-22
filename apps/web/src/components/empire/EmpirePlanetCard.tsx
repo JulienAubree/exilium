@@ -193,7 +193,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               aria-label="Actions"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <span className="text-base leading-none">{'\u22EF'}</span>
             </button>
