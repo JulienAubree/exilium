@@ -11,7 +11,20 @@ const FEEDBACK_CREATE_WINDOW_SECONDS = 3600;
 const FEEDBACK_COMMENT_LIMIT = 20;
 const FEEDBACK_COMMENT_WINDOW_SECONDS = 3600;
 
+/** Comptes pilotés exemptés du rate limit feedback (bots de debug). */
+const RATE_LIMIT_EXEMPT_USERNAMES = new Set(['debugbot']);
+
 export function createFeedbackService(db: Database, redis: Redis) {
+  /** Le compte bot de debug n'est pas soumis au rate limit feedback. */
+  async function isRateLimitExempt(userId: string): Promise<boolean> {
+    const [u] = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(byUser(users.id, userId))
+      .limit(1);
+    return !!u && RATE_LIMIT_EXEMPT_USERNAMES.has(u.username.toLowerCase());
+  }
+
   return {
     async list(options?: {
       type?: 'bug' | 'idea' | 'feedback' | 'debug';
@@ -136,11 +149,13 @@ export function createFeedbackService(db: Database, redis: Redis) {
     },
 
     async create(userId: string, input: { type: 'bug' | 'idea' | 'feedback' | 'debug'; title: string; description: string; pagePath?: string }) {
-      await enforceRateLimit(redis, {
-        key: `ratelimit:feedback:create:${userId}`,
-        limit: FEEDBACK_CREATE_LIMIT,
-        windowSeconds: FEEDBACK_CREATE_WINDOW_SECONDS,
-      });
+      if (!(await isRateLimitExempt(userId))) {
+        await enforceRateLimit(redis, {
+          key: `ratelimit:feedback:create:${userId}`,
+          limit: FEEDBACK_CREATE_LIMIT,
+          windowSeconds: FEEDBACK_CREATE_WINDOW_SECONDS,
+        });
+      }
       const [created] = await db
         .insert(feedbacks)
         .values({
@@ -190,7 +205,7 @@ export function createFeedbackService(db: Database, redis: Redis) {
     },
 
     async comment(userId: string, feedbackId: string, content: string, isAdmin: boolean = false) {
-      if (!isAdmin) {
+      if (!isAdmin && !(await isRateLimitExempt(userId))) {
         await enforceRateLimit(redis, {
           key: `ratelimit:feedback:comment:${userId}`,
           limit: FEEDBACK_COMMENT_LIMIT,
