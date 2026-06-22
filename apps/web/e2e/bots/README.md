@@ -110,7 +110,7 @@ trie par priorité, plafonne à `FEEDBACK_MAX` (def 5) par run, et on s'arrête 
 | `designer.mjs` | agent-designer : synthèse audit + sessions + rubric → recos priorisées |
 | `publish-feedback.mjs` | poste les recos dans la table `feedbacks` (staging) via tRPC |
 | `design-rules.md` | rubric des règles de design (R1…R13) + baselines mesurées |
-| `personas.mjs` | définition des personas (1 pour l'instant) |
+| `personas.mjs` | 5 personas (nouveau-joueur, mobile, optimisateur, revenant, explorateur) · modes register/login |
 | `perceive.mjs` | extraction de l'arbre interactif d'une page |
 | `llm.mjs` | client DeepSeek (compatible OpenAI), modèle pilotable par env |
 | `serve.mjs` | mini-serveur statique du build staging + proxy `/trpc` |
@@ -119,7 +119,6 @@ Orchestration : `scripts/run-pipeline.sh` (audit → bot → designer → feedba
 
 ## Suite
 
-- Personas : joueur mobile (PWA), min-maxer, revenant.
 - Anti-boucle bot : détecter la répétition d'une même action ratée et nudger / abandonner.
 - Compteur de clics par tâche (R4) mesuré pendant la session.
 - Étage « crawlers déterministes ×N » (pur Playwright, sans LLM, à chaque deploy).

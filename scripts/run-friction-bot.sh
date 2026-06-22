@@ -44,5 +44,12 @@ if ! curl -s -m 5 "$E2E_STAGING_URL/trpc/health" >/dev/null; then
   exit 1
 fi
 
+# Identifiants pour les personas en mode "login" (compte STAGING établi, avec un
+# empire). Tous les comptes @staging.local partagent le mot de passe du refresh.
+export LOGIN_EMAIL="${LOGIN_EMAIL:-zecharia@staging.local}"
+if [[ -z "${LOGIN_PASSWORD:-}" && -r /opt/exilium-staging/.staging-password ]]; then
+  export LOGIN_PASSWORD="$(tr -d '\n\r' < /opt/exilium-staging/.staging-password)"
+fi
+
 cd "$REPO/apps/web"
 exec node e2e/bots/friction-bot.mjs "$@"

@@ -76,7 +76,9 @@ function buildUserPrompt({ persona, creds, step, max, snapshot, history, console
   return [
     `PERSONA : ${persona.label}`,
     `OBJECTIF :\n${persona.goal}`,
-    `IDENTIFIANTS à utiliser pour l'inscription : email=${creds.email} | pseudo=${creds.username} | mot de passe=${creds.password}`,
+    creds.mode === 'login'
+      ? `IDENTIFIANTS de connexion : email=${creds.email} | mot de passe=${creds.password}`
+      : `IDENTIFIANTS à utiliser pour l'inscription : email=${creds.email} | pseudo=${creds.username} | mot de passe=${creds.password}`,
     `ÉTAPE ${step}/${max}`,
     `ÉTAT DE LA PAGE (JSON) :\n${JSON.stringify(snapshot)}`,
     `ERREURS CONSOLE RÉCENTES :\n${errs}`,
@@ -143,11 +145,18 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
 
   const stamp = Date.now();
-  const creds = {
-    email: `frictionbot+${stamp}@staging.local`,
-    username: `fbot_${String(stamp).slice(-10)}`,
-    password: 'FrictionBot1234!',
-  };
+  const isLogin = persona.auth === 'login';
+  const creds = isLogin
+    ? { mode: 'login', email: process.env.LOGIN_EMAIL || '', password: process.env.LOGIN_PASSWORD || '' }
+    : {
+        mode: 'register',
+        email: `frictionbot+${stamp}@staging.local`,
+        username: `fbot_${String(stamp).slice(-10)}`,
+        password: 'FrictionBot1234!',
+      };
+  if (isLogin && (!creds.email || !creds.password)) {
+    throw new Error('Persona en mode login : LOGIN_EMAIL et LOGIN_PASSWORD requis (cf. run-friction-bot.sh).');
+  }
 
   console.log(`[friction-bot] persona=${persona.id} modèle=${MODEL_NAME} étapes≤${MAX_STEPS}`);
   console.log(`[friction-bot] compte de test : ${creds.email}`);
@@ -279,7 +288,11 @@ async function main() {
   console.log(`[friction-bot] ${frictions.length} friction(s), ${history.length} étape(s), ${consoleErrors.length} erreur(s) console`);
   console.log(`[friction-bot] tokens ~ prompt:${usage.prompt_tokens} completion:${usage.completion_tokens}`);
   console.log(`[friction-bot] rapport : ${join(outDir, 'rapport.md')}`);
-  console.log(`[friction-bot] ⚠ compte de test créé en base STAGING : ${creds.email} (à nettoyer)`);
+  if (creds.mode === 'register') {
+    console.log(`[friction-bot] ⚠ compte de test créé en base STAGING : ${creds.email} (à nettoyer)`);
+  } else {
+    console.log(`[friction-bot] (login sur compte existant : ${creds.email})`);
+  }
 }
 
 main().catch((e) => {
