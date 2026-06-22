@@ -1,7 +1,7 @@
 import { RARITY_HEX, RARITY_LABEL } from '@/lib/rarity';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, useSearchParams } from 'react-router';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -104,7 +104,18 @@ export default function Energy() {
   const { planetId, planetClassId } = useOutletContext<{ planetId?: string; planetClassId?: string | null }>();
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
-  const [activeView, setActiveView] = useState<View>('flux');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView: View = searchParams.get('view') === 'table' ? 'table' : 'flux';
+  const setActiveView = (view: View) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (view === 'flux') next.delete('view');
+        else next.set('view', view);
+        return next;
+      },
+      { replace: true },
+    );
   const [detailId, setDetailId] = useState<string | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
 

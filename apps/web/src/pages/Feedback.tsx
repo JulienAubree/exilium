@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -23,9 +24,34 @@ const SORT_OPTIONS = [
 ];
 
 export default function Feedback() {
-  const [tab, setTab] = useState<'active' | 'resolved'>('active');
-  const [typeFilter, setTypeFilter] = useState<'bug' | 'idea' | 'feedback' | 'debug' | undefined>();
-  const [sort, setSort] = useState<'recent' | 'popular'>('recent');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: 'active' | 'resolved' = searchParams.get('tab') === 'resolved' ? 'resolved' : 'active';
+  const typeFilter: 'bug' | 'idea' | 'feedback' | 'debug' | undefined = (() => {
+    const t = searchParams.get('type');
+    return t === 'bug' || t === 'idea' || t === 'feedback' || t === 'debug' ? t : undefined;
+  })();
+  const sort: 'recent' | 'popular' = searchParams.get('sort') === 'popular' ? 'popular' : 'recent';
+
+  const updateParams = (
+    mutate: (next: URLSearchParams) => void,
+    opts?: { replace?: boolean },
+  ) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      mutate(next);
+      return next;
+    }, opts);
+
+  // `tab` is a real sub-view → push history so the Back button restores it.
+  const setTab = (value: 'active' | 'resolved') =>
+    updateParams((p) => (value === 'active' ? p.delete('tab') : p.set('tab', value)));
+  // `type`/`sort` are refinements → replace, to avoid polluting history.
+  const setTypeFilter = (value: 'bug' | 'idea' | 'feedback' | 'debug' | undefined) =>
+    updateParams((p) => (value ? p.set('type', value) : p.delete('type')), { replace: true });
+  const setSort = (value: 'recent' | 'popular') =>
+    updateParams((p) => (value === 'recent' ? p.delete('sort') : p.set('sort', value)), {
+      replace: true,
+    });
   const [formOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);

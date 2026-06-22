@@ -14,6 +14,7 @@ import { FloatingFeedbackButton } from '@/components/feedback/FloatingFeedbackBu
 import { AbsenceSummaryModal } from '@/components/AbsenceSummaryModal';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
+import { useActivePlanetUrl } from '@/hooks/useActivePlanetUrl';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { HostileAlertBanner } from '@/components/fleet/HostileAlertBanner';
@@ -41,6 +42,10 @@ export function Layout() {
       setActivePlanet(resolvedPlanetId);
     }
   }, [resolvedPlanetId, activePlanetId, setActivePlanet]);
+
+  // Keep the active planet addressable in the URL (?planet=<id>) so refresh,
+  // shared links and the Back button preserve which planet you're viewing.
+  useActivePlanetUrl(planets, resolvedPlanetId);
 
   // Redirect planet-specific pages to Overview when active planet is colonizing.
   // Overview itself handles the ColonizationProgress display.
