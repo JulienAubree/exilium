@@ -68,6 +68,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
         <input
           ref={galaxyRef}
           type="number"
+          aria-label="Galaxie"
           min={1}
           max={maxGalaxy}
           value={galaxy || ''}
@@ -86,6 +87,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
         <input
           ref={systemRef}
           type="number"
+          aria-label="Système"
           min={1}
           max={maxSystem}
           value={system || ''}
@@ -106,6 +108,7 @@ export function CoordinateInput({ galaxy, system, position, onChange, disabled, 
             <input
               ref={positionRef}
               type="number"
+              aria-label="Position"
               min={1}
               max={maxPosition}
               value={position || ''}

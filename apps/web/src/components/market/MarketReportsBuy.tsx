@@ -90,6 +90,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
           <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Galaxie</label>
           <input
             type="number"
+            aria-label="Galaxie"
             min={1}
             value={galaxyFilter}
             onChange={(e) => setGalaxyFilter(e.target.value)}
@@ -101,6 +102,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
           <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Systeme</label>
           <input
             type="number"
+            aria-label="Système"
             min={1}
             value={systemFilter}
             onChange={(e) => setSystemFilter(e.target.value)}
@@ -112,6 +114,7 @@ export function MarketReportsBuy({ planetId: _planetId }: MarketReportsBuyProps)
           <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Rarete min.</label>
           <select
             value={minRarityFilter}
+            aria-label="Rareté minimale"
             onChange={(e) => setMinRarityFilter(e.target.value)}
             className="w-32 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-xs focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors"
           >

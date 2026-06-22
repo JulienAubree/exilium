@@ -49,6 +49,7 @@ export function QuantityStepper({
     <div className={cn('flex items-center gap-0.5', className)}>
       <button
         type="button"
+        aria-label="Diminuer la quantité"
         onClick={() => onChange(clamp(value - 1))}
         disabled={value <= min}
         className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
@@ -60,6 +61,7 @@ export function QuantityStepper({
         <input
           ref={inputRef}
           type="number"
+          aria-label="Quantité"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={commitEdit}
@@ -81,6 +83,7 @@ export function QuantityStepper({
 
       <button
         type="button"
+        aria-label="Augmenter la quantité"
         onClick={() => onChange(clamp(value + 1))}
         disabled={value >= max}
         className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"

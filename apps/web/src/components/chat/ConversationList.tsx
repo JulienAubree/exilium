@@ -82,6 +82,7 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
             />
             <button
               onClick={() => setSearchMode(true)}
+              aria-label="Nouvelle conversation"
               className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary hover:bg-primary/30 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />

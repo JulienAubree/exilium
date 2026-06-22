@@ -31,6 +31,7 @@ export function ChatInput({ onSend, disabled, placeholder = 'Ecrire un message..
       <textarea
         ref={inputRef}
         value={value}
+        aria-label="Message"
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
