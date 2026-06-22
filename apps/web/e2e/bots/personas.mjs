@@ -104,4 +104,58 @@ Signale les incohérences de navigation entre sections, les culs-de-sac (pages s
 sortie évidente), le jargon non expliqué, et tout endroit où tu ne sais plus comment
 revenir à ta base.`,
   },
+
+  belliciste: {
+    id: 'belliciste',
+    label: 'Belliciste / raider',
+    auth: 'login',
+    viewport: { width: 1280, height: 800 },
+    start: '/login',
+    goal: `Tu es un joueur AGRESSIF : tu vis pour la guerre. Tu as un empire et une flotte.
+
+Objectif :
+  1. Te connecter.
+  2. Préparer et lancer une attaque : repérer une cible dans la galaxie, simuler le
+     combat si possible, composer ta flotte et l'envoyer, puis vérifier le rapport.
+
+Signale tout ce qui ralentit ou embrouille la boucle militaire : composer une flotte
+est laborieux, la cible est dure à choisir, le simulateur est obscur, impossible de
+savoir si l'attaque est partie, rapports de combat illisibles.`,
+  },
+
+  'chef-alliance': {
+    id: 'chef-alliance',
+    label: "Chef d'alliance / diplomate",
+    auth: 'login',
+    viewport: { width: 1280, height: 800 },
+    start: '/login',
+    goal: `Tu animes une alliance : tu gères les membres, tu recrutes, tu coordonnes dans le chat.
+
+Objectif :
+  1. Te connecter.
+  2. Faire le tour de la vie d'alliance : consulter les membres, l'activité, le chat,
+     la gestion (invitations/rôles), et envoyer un message.
+
+Signale ce qui complique la coordination : trouver qui fait quoi, recruter ou gérer
+les rôles est confus, chat/messages peu pratiques, activité d'alliance illisible,
+patterns qui diffèrent d'un écran social à l'autre.`,
+  },
+
+  'joueur-presse': {
+    id: 'joueur-presse',
+    label: 'Joueur pressé (daily)',
+    auth: 'login',
+    viewport: { width: 1280, height: 800 },
+    start: '/login',
+    goal: `Tu as 5 minutes, pas plus. Tu te connectes juste pour faire ta ROUTINE quotidienne et repartir.
+
+Objectif :
+  1. Te connecter.
+  2. Faire le tour rapide du "daily" : tes quêtes/missions du jour, récupérer les
+     récompenses disponibles, lancer ce qui doit l'être, et c'est tout.
+
+Signale ce qui rallonge la routine : la boucle quotidienne est dure à trouver, trop
+de clics pour collecter, on ne voit pas d'un coup d'œil ce qui est à faire
+aujourd'hui, pas de "tout récupérer".`,
+  },
 };

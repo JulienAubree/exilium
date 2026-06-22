@@ -92,11 +92,11 @@ function loadRuns() {
   return runs;
 }
 
-function loadLatestAudit() {
-  const dir = join(REPORTS, '_audit');
+function loadLatestJson(subdir, prefix) {
+  const dir = join(REPORTS, subdir);
   if (!existsSync(dir)) return null;
   const jsons = readdirSync(dir)
-    .filter((f) => f.startsWith('audit-') && f.endsWith('.json'))
+    .filter((f) => f.startsWith(prefix) && f.endsWith('.json'))
     .sort();
   if (!jsons.length) return null;
   try {
@@ -105,12 +105,14 @@ function loadLatestAudit() {
     return null;
   }
 }
+const loadLatestAudit = () => loadLatestJson('_audit', 'audit-');
+const loadLatestA11y = () => loadLatestJson('_a11y', 'a11y-');
 
 function severityRank(s) {
   return { bloquant: 0, majeur: 1, mineur: 2 }[s] ?? 3;
 }
 
-function renderMarkdown({ result, runs, usage, audit }) {
+function renderMarkdown({ result, runs, usage, audit, a11y }) {
   const recs = (result.recommendations || []).slice().sort((a, b) => {
     return (a.priority ?? 99) - (b.priority ?? 99) || severityRank(a.severity) - severityRank(b.severity);
   });
@@ -123,8 +125,11 @@ function renderMarkdown({ result, runs, usage, audit }) {
   L.push(`- Sessions de bots analysées : ${runs.length} (${totalFrictions} friction(s) brute(s))`);
   if (audit) {
     L.push(
-      `- Audit déterministe : ${audit.findings.length} finding(s) · ${audit.metrics.pagesWithUrlState}/${audit.metrics.pages} pages avec état d'URL · route \`:planetId\` : ${audit.metrics.hasPlanetParamRoute ? 'oui' : 'non'}`,
+      `- Audit code : ${audit.findings.length} finding(s) · ${audit.metrics.pagesWithUrlState}/${audit.metrics.pages} pages avec état d'URL · route \`:planetId\` : ${audit.metrics.hasPlanetParamRoute ? 'oui' : 'non'}`,
     );
+  }
+  if (a11y) {
+    L.push(`- Audit a11y (axe-core) : ${a11y.findings.length} violation(s) sur ${a11y.metrics.pages} pages · ${JSON.stringify(a11y.metrics.byImpact)}`);
   }
   L.push(`- Recommandations : ${recs.length}`);
   L.push(`- Tokens : prompt ${usage?.prompt_tokens ?? '?'} · completion ${usage?.completion_tokens ?? '?'}`);
@@ -158,18 +163,24 @@ async function main() {
   if (!existsSync(RUBRIC_PATH)) throw new Error(`Rubric introuvable : ${RUBRIC_PATH}`);
   const rubric = readFileSync(RUBRIC_PATH, 'utf8');
 
-  const runs = loadRuns().slice(-6); // les 6 sessions les plus récentes (borne la taille du prompt)
+  const runs = loadRuns().slice(-8); // les 8 sessions les plus récentes (borne la taille du prompt)
   const audit = loadLatestAudit();
+  const a11y = loadLatestA11y();
+  const auditFindings = [...(audit?.findings || []), ...(a11y?.findings || [])];
   console.log(
-    `[designer] modèle=${DESIGNER_MODEL} · ${runs.length} session(s) · audit déterministe : ${audit ? `${audit.findings.length} finding(s)` : 'absent'}`,
+    `[designer] modèle=${DESIGNER_MODEL} · ${runs.length} session(s) · audit code : ${audit ? audit.findings.length : 0} · audit a11y : ${a11y ? a11y.findings.length : 0}`,
   );
-  if (runs.length === 0 && !audit) {
+  if (runs.length === 0 && !auditFindings.length) {
     console.warn('[designer] Ni session de bot ni audit — la synthèse ne reposera que sur les baselines du rubric.');
   }
 
-  const auditBlock = audit
-    ? `=== AUDIT DÉTERMINISTE (findings CONFIRMÉS par le code, à inclure d'office) ===\n${JSON.stringify({ metrics: audit.metrics, findings: audit.findings }, null, 2)}`
-    : `=== AUDIT DÉTERMINISTE ===\n(aucun audit trouvé — lance d'abord audit.mjs)`;
+  const auditBlock = auditFindings.length
+    ? `=== AUDIT DÉTERMINISTE (findings CONFIRMÉS par le code + axe-core, à inclure d'office) ===\n${JSON.stringify(
+        { code: audit?.metrics ?? null, a11y: a11y?.metrics ?? null, findings: auditFindings },
+        null,
+        2,
+      )}`
+    : `=== AUDIT DÉTERMINISTE ===\n(aucun audit trouvé — lance audit.mjs / a11y-audit.mjs)`;
 
   const user = [
     `=== RUBRIC (règles de design) ===\n${rubric}`,
@@ -188,7 +199,7 @@ async function main() {
   const outDir = join(REPORTS, '_designer');
   mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const md = renderMarkdown({ result: parsed, runs, usage, audit });
+  const md = renderMarkdown({ result: parsed, runs, usage, audit, a11y });
   const mdPath = join(outDir, `reco-design-${stamp}.md`);
   writeFileSync(mdPath, md);
   writeFileSync(join(outDir, `reco-design-${stamp}.json`), JSON.stringify(parsed, null, 2));

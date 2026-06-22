@@ -20,12 +20,13 @@ persona (objectif) ┴→ bot joue → run.json ┐
                                             PUBLICATION → partie feedback in-game (table feedbacks) ┘
 ```
 
-Quatre étages :
+Cinq étages :
 
-1. **Audit déterministe** (`audit.mjs`) — sans LLM, mesure les règles vérifiables par code (R6/R7/R3).
-2. **Bots-personas** (`friction-bot.mjs`) — jouent, frictions **taguées par règle** (modèle éco, volume).
-3. **Agent-designer** (`designer.mjs`) — synthétise audit + sessions + rubric en recos priorisées.
-4. **Publication** (`publish-feedback.mjs`) — poste les recos dans la partie feedback in-game.
+1. **Audit code** (`audit.mjs`) — sans LLM, règles vérifiables par code (R6/R7/R3).
+2. **Audit accessibilité** (`a11y-audit.mjs`) — axe-core WCAG 2.1 AA sur les pages clés (R13).
+3. **Bots-personas** (`friction-bot.mjs`) — jouent, frictions **taguées par règle** (modèle éco, volume).
+4. **Agent-designer** (`designer.mjs`) — synthétise les 2 audits + sessions + rubric en recos priorisées.
+5. **Publication** (`publish-feedback.mjs`) — poste les recos dans la partie feedback in-game.
 
 ## Sécurité
 
@@ -106,11 +107,12 @@ trie par priorité, plafonne à `FEEDBACK_MAX` (def 5) par run, et on s'arrête 
 | Fichier | Rôle |
 |---|---|
 | `audit.mjs` | auditeur déterministe (sans LLM) : R6/R7 adressabilité URL, R3 profondeur |
+| `a11y-audit.mjs` | auditeur accessibilité axe-core (WCAG 2.1 AA) → findings R13 |
 | `friction-bot.mjs` | boucle d'agent-persona ; frictions **taguées par règle** (R1…R13) |
 | `designer.mjs` | agent-designer : synthèse audit + sessions + rubric → recos priorisées |
 | `publish-feedback.mjs` | poste les recos dans la table `feedbacks` (staging) via tRPC |
 | `design-rules.md` | rubric des règles de design (R1…R13) + baselines mesurées |
-| `personas.mjs` | 5 personas (nouveau-joueur, mobile, optimisateur, revenant, explorateur) · modes register/login |
+| `personas.mjs` | 8 personas (nouveau-joueur, mobile, optimisateur, revenant, explorateur, belliciste, chef-alliance, joueur-pressé) · modes register/login |
 | `perceive.mjs` | extraction de l'arbre interactif d'une page |
 | `llm.mjs` | client DeepSeek (compatible OpenAI), modèle pilotable par env |
 | `serve.mjs` | mini-serveur statique du build staging + proxy `/trpc` |

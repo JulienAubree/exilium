@@ -14,22 +14,26 @@
 set -euo pipefail
 REPO="/opt/exilium"
 
-echo "═══ 1/4 · Audit déterministe ═══"
+echo "═══ 1/5 · Audit code (déterministe) ═══"
 node "$REPO/apps/web/e2e/bots/audit.mjs"
 
 echo
-echo "═══ 2/4 · Session bot-persona ═══"
+echo "═══ 2/5 · Audit accessibilité (axe-core) ═══"
+bash "$REPO/scripts/run-a11y.sh"
+
+echo
+echo "═══ 3/5 · Session bot-persona ═══"
 bash "$REPO/scripts/run-friction-bot.sh" "$@"
 
 echo
-echo "═══ 3/4 · Agent-designer ═══"
+echo "═══ 4/5 · Agent-designer ═══"
 bash "$REPO/scripts/run-designer.sh"
 
 echo
 if [[ -n "${NO_FEEDBACK:-}" ]]; then
-  echo "═══ 4/4 · Publication feedback — SAUTÉE (NO_FEEDBACK) ═══"
+  echo "═══ 5/5 · Publication feedback — SAUTÉE (NO_FEEDBACK) ═══"
 else
-  echo "═══ 4/4 · Publication dans le feedback in-game ═══"
+  echo "═══ 5/5 · Publication dans le feedback in-game ═══"
   bash "$REPO/scripts/run-feedback.sh"
 fi
 
