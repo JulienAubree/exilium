@@ -149,3 +149,21 @@ admin-staging.exilium-game.com {
 		file_server
 	}
 }
+
+# HSD Rework (refonte Hearthstone-Decks) — SvelteKit SSR sur PM2, port 3002.
+# Pas de snippet security_headers ici : SvelteKit injecte un script inline
+# d'hydratation que le CSP script-src 'self' d'Exilium bloquerait.
+hsd.julien-aubree.space {
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	encode gzip zstd
+	reverse_proxy localhost:3002
+}
+
+# CoffeeGearHQ staging (isolated)
+import /etc/caddy/coffee-gear.conf
+
+import /etc/caddy/d4db-fr.conf
