@@ -6,10 +6,10 @@ import { loadBuildings, loadProductionConfig } from './config.js';
 import { initState } from './state.js';
 
 describe('EcoPolicy', () => {
-  it('commence par un producteur (mine de minerai)', () => {
+  it('commence par une centrale solaire (énergie d\'abord — sine qua non de la production)', () => {
     const buildings = loadBuildings();
     const engine = new SimEngine(buildings, loadProductionConfig());
     const action = new EcoPolicy().decide(initState(), engine, buildings);
-    expect(action).toEqual({ type: 'build', buildingId: 'mineraiMine' });
+    expect(action).toEqual({ type: 'build', buildingId: 'solarPlant' });
   });
 });

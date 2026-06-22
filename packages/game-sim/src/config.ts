@@ -8,7 +8,13 @@ export interface BuildingDef {
   role: string | null;
   prerequisites: { buildingId: string; level: number }[];
 }
-export interface ProductionConfig { baseProduction: number; exponentBase: number; energyConsumption: number | null }
+export interface ProductionConfig {
+  baseProduction: number;
+  exponentBase: number;
+  energyConsumption: number | null;
+  tempCoeffA: number | null;
+  tempCoeffB: number | null;
+}
 
 export function loadBuildings(): Map<string, BuildingDef> {
   const m = new Map<string, BuildingDef>();
@@ -31,7 +37,13 @@ export function loadBuildings(): Map<string, BuildingDef> {
 export function loadProductionConfig(): Map<string, ProductionConfig> {
   const m = new Map<string, ProductionConfig>();
   for (const p of PRODUCTION_CONFIG as any[]) {
-    m.set(p.id, { baseProduction: p.baseProduction, exponentBase: p.exponentBase, energyConsumption: p.energyConsumption ?? null });
+    m.set(p.id, {
+      baseProduction: p.baseProduction,
+      exponentBase: p.exponentBase,
+      energyConsumption: p.energyConsumption ?? null,
+      tempCoeffA: p.tempCoeffA ?? null,
+      tempCoeffB: p.tempCoeffB ?? null,
+    });
   }
   return m;
 }

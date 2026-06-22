@@ -37,7 +37,12 @@ export class SimEngine {
     return {
       minerai: mineraiProduction(lvl('mineraiMine'), f, cfg('mineraiMine')),
       silicium: siliciumProduction(lvl('siliciumMine'), f, cfg('siliciumMine')),
-      hydrogene: hydrogeneProduction(lvl('hydrogeneSynth'), DEFAULT_MAX_TEMP, f, cfg('hydrogeneSynth') as any),
+      hydrogene: hydrogeneProduction(lvl('hydrogeneSynth'), DEFAULT_MAX_TEMP, f, {
+        baseProduction: cfg('hydrogeneSynth').baseProduction,
+        exponentBase: cfg('hydrogeneSynth').exponentBase,
+        tempCoeffA: cfg('hydrogeneSynth').tempCoeffA ?? 1.36,
+        tempCoeffB: cfg('hydrogeneSynth').tempCoeffB ?? 0.004,
+      }),
     };
   }
 
