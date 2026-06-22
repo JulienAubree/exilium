@@ -9,9 +9,11 @@ interface EnergyBarProps {
   totalConsumed: number;
   segments: EnergySegment[];
   productionFactor: number;
+  /** La centrale solaire est-elle déjà au niveau max ? (évite de la suggérer) */
+  solarMaxed?: boolean;
 }
 
-export function EnergyBar({ totalProduced, totalConsumed, segments, productionFactor }: EnergyBarProps) {
+export function EnergyBar({ totalProduced, totalConsumed, segments, productionFactor, solarMaxed }: EnergyBarProps) {
   const available = totalProduced - totalConsumed;
   const sufficient = available >= 0;
 
@@ -59,7 +61,10 @@ export function EnergyBar({ totalProduced, totalConsumed, segments, productionFa
 
       {!sufficient && (
         <p className="mt-1.5 text-xs text-destructive font-medium">
-          Production réduite à {(productionFactor * 100).toFixed(0)}% — Construisez une centrale solaire ou des satellites !
+          Production réduite à {(productionFactor * 100).toFixed(0)}% —{' '}
+          {solarMaxed
+            ? 'construisez des satellites ou réduisez votre consommation.'
+            : 'construisez une centrale solaire ou des satellites !'}
         </p>
       )}
     </div>

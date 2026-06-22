@@ -72,6 +72,7 @@ export function InfrastructureCard({
   const currentLevel = building?.currentLevel ?? 0;
   const nextLevel = currentLevel + 1;
   const isConstruction = currentLevel === 0;
+  const isMaxed = building != null && building.maxLevel != null && currentLevel >= building.maxLevel;
 
   const canAfford = building
     ? resources.minerai >= building.nextLevelCost.minerai &&
@@ -184,6 +185,10 @@ export function InfrastructureCard({
               >
                 Annuler
               </Button>
+            </div>
+          ) : isMaxed ? (
+            <div className="mt-auto rounded-md bg-primary/10 px-2 py-1.5 text-xs text-primary font-medium text-center">
+              Niveau maximum atteint ({building.maxLevel})
             </div>
           ) : (
             <div className="mt-auto space-y-1.5">

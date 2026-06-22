@@ -159,6 +159,10 @@ export default function Energy() {
     upgradeMutation.mutate({ planetId, buildingId: buildingId as never });
   }, [planetId, upgradeMutation]);
 
+  const solarPlant = buildings?.find((b) => b.id === SOLAR_PLANT_ID);
+  const solarMaxed =
+    solarPlant != null && solarPlant.maxLevel != null && solarPlant.currentLevel >= solarPlant.maxLevel;
+
   const handleCancel = useCallback(() => setCancelConfirm(true), []);
   const handleTimerComplete = useCallback(() => {
     if (planetId) utils.building.list.invalidate({ planetId });
@@ -509,6 +513,7 @@ export default function Energy() {
           totalConsumed={data.rates.energyConsumed}
           segments={energySegments}
           productionFactor={data.rates.productionFactor}
+          solarMaxed={solarMaxed}
         />
       </div>
 

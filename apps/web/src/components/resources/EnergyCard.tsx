@@ -71,6 +71,7 @@ export function EnergyCard({
 
   const nextLevel = building ? building.currentLevel + 1 : null;
   const isConstruction = building?.currentLevel === 0;
+  const isMaxed = building != null && building.maxLevel != null && building.currentLevel >= building.maxLevel;
 
   const canAfford = building
     ? resources.minerai >= building.nextLevelCost.minerai &&
@@ -148,11 +149,16 @@ export function EnergyCard({
               </span>
               <span className="font-mono text-xs text-muted-foreground">Niv. {building.currentLevel}</span>
             </button>
-            {nextLevelGain != null && nextLevelGain > 0 && (
-              <div className="text-xs text-energy">
-                <span className="font-mono">+{formatCompact(nextLevelGain)}</span>
-                <span className="text-muted-foreground"> au niv. {nextLevel}</span>
-              </div>
+            {isMaxed ? (
+              <div className="text-xs text-muted-foreground">Niveau max atteint</div>
+            ) : (
+              nextLevelGain != null &&
+              nextLevelGain > 0 && (
+                <div className="text-xs text-energy">
+                  <span className="font-mono">+{formatCompact(nextLevelGain)}</span>
+                  <span className="text-muted-foreground"> au niv. {nextLevel}</span>
+                </div>
+              )
             )}
           </div>
         )}
@@ -182,6 +188,10 @@ export function EnergyCard({
                 >
                   Annuler
                 </Button>
+              </div>
+            ) : isMaxed ? (
+              <div className="rounded-md bg-energy/10 px-2 py-1.5 text-xs text-energy font-medium text-center">
+                Niveau maximum atteint ({building.maxLevel})
               </div>
             ) : (
               <div className="space-y-1.5">

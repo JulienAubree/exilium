@@ -18,6 +18,7 @@ type BuildingPrereq = { buildingId: string; level: number; currentLevel?: number
 export interface BuildingForCard {
   id: string;
   currentLevel: number;
+  maxLevel: number | null;
   nextLevelCost: { minerai: number; silicium: number; hydrogene: number };
   nextLevelTime: number;
   prerequisites: BuildingPrereq[];
@@ -136,6 +137,7 @@ export function ResourceCard({
 
   const nextLevel = building ? building.currentLevel + 1 : null;
   const isConstruction = building?.currentLevel === 0;
+  const isMaxed = building != null && building.maxLevel != null && building.currentLevel >= building.maxLevel;
 
   const canAfford = building
     ? resources.minerai >= building.nextLevelCost.minerai &&
@@ -259,11 +261,16 @@ export function ResourceCard({
                 Niv. {building.currentLevel}
               </span>
             </button>
-            {nextLevelGain != null && nextLevelGain > 0 && (
-              <div className={cn('text-xs', accentColor)}>
-                <span className="font-mono">+{formatCompact(nextLevelGain)}/h</span>
-                <span className="text-muted-foreground"> au niv. {nextLevel}</span>
-              </div>
+            {isMaxed ? (
+              <div className="text-xs text-muted-foreground">Niveau max atteint</div>
+            ) : (
+              nextLevelGain != null &&
+              nextLevelGain > 0 && (
+                <div className={cn('text-xs', accentColor)}>
+                  <span className="font-mono">+{formatCompact(nextLevelGain)}/h</span>
+                  <span className="text-muted-foreground"> au niv. {nextLevel}</span>
+                </div>
+              )
             )}
 
             {building.isUpgrading && building.upgradeEndTime ? (
@@ -288,6 +295,10 @@ export function ResourceCard({
                 >
                   Annuler
                 </Button>
+              </div>
+            ) : isMaxed ? (
+              <div className="rounded-md bg-primary/10 px-2 py-1.5 text-xs text-primary font-medium text-center">
+                Niveau maximum atteint ({building.maxLevel})
               </div>
             ) : (
               <div className="space-y-1.5">
