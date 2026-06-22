@@ -54,3 +54,22 @@ export function calculateCraftEtaHours(
     etaFor(missingH, rates.hydrogenePerHour),
   );
 }
+
+export type CraftResource = 'minerai' | 'silicium' | 'hydrogene';
+
+/**
+ * Resources that make a craft unreachable: still missing from stock AND with
+ * zero/negative net production. Used to tell the player *which* resource is
+ * the bottleneck instead of a vague "production insuffisante".
+ */
+export function getCraftEtaBlockers(
+  cost: CraftCost,
+  stock: CraftStock,
+  rates: CraftRates,
+): CraftResource[] {
+  const blockers: CraftResource[] = [];
+  if (cost.minerai - stock.minerai > 0 && rates.mineraiPerHour <= 0) blockers.push('minerai');
+  if (cost.silicium - stock.silicium > 0 && rates.siliciumPerHour <= 0) blockers.push('silicium');
+  if (cost.hydrogene - stock.hydrogene > 0 && rates.hydrogenePerHour <= 0) blockers.push('hydrogene');
+  return blockers;
+}

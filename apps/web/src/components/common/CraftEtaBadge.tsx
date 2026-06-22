@@ -1,10 +1,17 @@
 import { Hourglass } from 'lucide-react';
 import {
   calculateCraftEtaHours,
+  getCraftEtaBlockers,
   type CraftCost,
   type CraftStock,
   type CraftRates,
 } from '@/lib/craft-eta';
+
+const RESOURCE_LABELS: Record<string, string> = {
+  minerai: 'minerai',
+  silicium: 'silicium',
+  hydrogene: 'hydrogène',
+};
 import { formatHoursMinutes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -40,16 +47,22 @@ export function CraftEtaBadge({ cost, stock, rates, quantity = 1, className }: C
   if (etaHours === null) return null;
 
   if (etaHours === Infinity) {
+    const blockers = getCraftEtaBlockers(totalCost, stock, rates);
+    const names = blockers.map((b) => RESOURCE_LABELS[b]).join(', ');
     return (
       <span
         className={cn(
           'inline-flex items-center gap-1 font-mono text-xs text-destructive/80',
           className,
         )}
-        title="Production insuffisante pour atteindre ce coût avec les rates actuels"
+        title={
+          names
+            ? `Production de ${names} à l'arrêt ou négative — augmentez-la pour pouvoir atteindre ce coût`
+            : 'Production insuffisante pour atteindre ce coût avec la production actuelle'
+        }
       >
         <Hourglass className="h-3 w-3" />
-        Production insuffisante
+        {names ? `Production de ${names} insuffisante` : 'Production insuffisante'}
       </span>
     );
   }

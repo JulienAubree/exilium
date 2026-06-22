@@ -24,6 +24,7 @@ export function OnboardingButton({ showNamingModal }: Props) {
         className="relative flex items-center gap-1 rounded-lg px-2 py-1.5 text-muted-foreground touch-feedback hover:bg-accent"
       >
         <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+        <span className="hidden text-sm font-medium text-amber-400 sm:inline">Objectifs</span>
         {tutorialData.chapter && (
           <span className="text-sm font-medium tabular-nums text-amber-400">
             {tutorialData.chapter.completedInChapter}/{tutorialData.chapter.questCount}
