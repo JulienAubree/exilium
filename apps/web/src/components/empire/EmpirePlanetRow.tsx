@@ -184,7 +184,7 @@ export function EmpirePlanetRow({ planet, isFirst, isLast, allPlanets, fleet, vi
               aria-label="Actions"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <span className="text-base leading-none">{'\u22EF'}</span>
             </button>

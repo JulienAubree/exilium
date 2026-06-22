@@ -236,7 +236,15 @@ async function main() {
     const entry = { step, url: snapshot.url, thought, action, shot, result: 'ok' };
     try {
       if (action.type === 'click') {
-        await page.locator(`[data-bot-ref="${action.ref}"]`).first().click({ timeout: 5000 });
+        const target = page.locator(`[data-bot-ref="${action.ref}"]`).first();
+        // Un timeout de clic sur un contrôle (correctement) désactivé — ex. le
+        // bouton « Construire » quand les ressources manquent — est un artefact
+        // du bot, pas une friction UX. On l'ignore au lieu de polluer R11.
+        if (await target.isDisabled().catch(() => false)) {
+          entry.result = 'élément désactivé — clic ignoré (pas une friction)';
+        } else {
+          await target.click({ timeout: 5000 });
+        }
       } else if (action.type === 'type') {
         await page.locator(`[data-bot-ref="${action.ref}"]`).first().fill(String(action.text ?? ''), { timeout: 5000 });
       } else if (action.type === 'goto') {

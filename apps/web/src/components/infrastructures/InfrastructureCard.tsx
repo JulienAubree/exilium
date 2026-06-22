@@ -235,9 +235,7 @@ export function InfrastructureCard({
                     <ArrowUp className="h-3 w-3 mr-1" />
                   )}
                   {isProcessing
-                    ? isConstruction
-                      ? 'Construction…'
-                      : 'Amélioration…'
+                    ? 'En cours…'
                     : isConstruction
                       ? 'Construire'
                       : 'Améliorer'}
