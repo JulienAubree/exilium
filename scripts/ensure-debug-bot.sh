@@ -28,12 +28,14 @@ fi
 HASH="$(cd /opt/exilium/apps/api && P="$PASS" node -e "import('argon2').then(a=>a.hash(process.env.P)).then(h=>process.stdout.write(h))")"
 [ -n "$HASH" ] || { echo "FATAL: hash argon2 vide" >&2; exit 1; }
 
+# SQL via stdin (et non -c) : c'est là que psql interpole les variables :'var'.
 sudo -u postgres psql -d "$DB" -v ON_ERROR_STOP=1 \
-  -v email="$EMAIL" -v username="$USERNAME" -v hash="$HASH" -c \
-"INSERT INTO users (email, username, password_hash, is_admin, email_verified_at)
- VALUES (:'email', :'username', :'hash', true, now())
- ON CONFLICT (email) DO UPDATE
-   SET password_hash = EXCLUDED.password_hash, is_admin = true, email_verified_at = now()
- RETURNING id, username, is_admin;"
+  -v email="$EMAIL" -v username="$USERNAME" -v hash="$HASH" <<'SQL'
+INSERT INTO users (email, username, password_hash, is_admin, email_verified_at)
+VALUES (:'email', :'username', :'hash', true, now())
+ON CONFLICT (email) DO UPDATE
+  SET password_hash = EXCLUDED.password_hash, is_admin = true, email_verified_at = now()
+RETURNING id, username, is_admin;
+SQL
 
 echo "[ensure-debug-bot] OK sur $DB : $USERNAME ($EMAIL) — admin, sans planète."
