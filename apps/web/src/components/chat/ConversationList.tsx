@@ -130,18 +130,27 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
             </div>
           ) : (
             filtered.map((conv) => (
-              <button
+              <div
                 key={conv.threadId}
-                onClick={() => onSelectThread(conv.threadId, conv.otherUser.username, conv.otherUser.id, conv.otherUser.avatarId)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setDeleteConfirm(conv.threadId);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left group ${
+                className={`relative flex items-center gap-3 px-4 py-3 transition-colors text-left group ${
                   activeThreadId === conv.threadId ? 'bg-primary/10' : 'hover:bg-muted/30'
                 }`}
               >
-                <div className="relative">
+                {/* Action principale étirée sur toute la ligne (ouvre la conversation).
+                    Sœur du <Link> profil ci-dessous → plus de contrôle imbriqué dans
+                    un bouton. Le contenu est pointer-events-none ; seul le lien
+                    profil reprend les events (pointer-events-auto + z-10). */}
+                <button
+                  type="button"
+                  onClick={() => onSelectThread(conv.threadId, conv.otherUser.username, conv.otherUser.id, conv.otherUser.avatarId)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setDeleteConfirm(conv.threadId);
+                  }}
+                  aria-label={`Ouvrir la conversation avec ${conv.otherUser.username}`}
+                  className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                />
+                <div className="relative pointer-events-none">
                   <UserAvatar username={conv.otherUser.username} avatarId={conv.otherUser.avatarId} size="md" />
                   {conv.unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center">
@@ -149,12 +158,11 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
                     </span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="relative flex-1 min-w-0 pointer-events-none">
                   <div className="flex justify-between items-baseline">
                     <Link
                       to={`/player/${conv.otherUser.id}`}
-                      className={`text-sm hover:underline ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
-                      onClick={(e) => e.stopPropagation()}
+                      className={`relative z-10 pointer-events-auto text-sm hover:underline ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                     >
                       {conv.otherUser.username}
                     </Link>
@@ -166,7 +174,7 @@ export function ConversationList({ activeThreadId, onSelectThread, onNewConversa
                     {conv.lastMessage.body}
                   </p>
                 </div>
-              </button>
+              </div>
             ))
           )}
         </div>

@@ -82,44 +82,58 @@ export function ShipCategoryGrid({
               {visibleShips.map((ship) => {
                 const isClickable = !!onShipClick;
                 const isSelected = selectedIds?.has(ship.id) ?? false;
-                const Tag = isClickable ? 'button' : 'div';
+
+                // Visuel (image + badges) — déclencheur de sélection dédié quand
+                // la carte est cliquable. La carte n'est plus un <button> englobant
+                // pour ne pas imbriquer les contrôles de renderActions.
+                const visual = (
+                  <>
+                    <GameImage
+                      category="ships"
+                      id={ship.id}
+                      size="full"
+                      alt={ship.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded-full ">
+                      x{ship.count.toLocaleString()}
+                    </span>
+                    {isSelected && (
+                      <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                        <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+                      </div>
+                    )}
+                  </>
+                );
 
                 return (
-                  <Tag
+                  <div
                     key={ship.id}
-                    {...(isClickable
-                      ? { onClick: () => onShipClick(ship.id), type: 'button' }
-                      : {})}
                     className={cn(
                       'retro-card overflow-hidden flex flex-col text-left',
                       isSelected && 'border-primary',
-                      isClickable && 'cursor-pointer',
                     )}
                   >
-                    <div className="relative h-24 overflow-hidden">
-                      <GameImage
-                        category="ships"
-                        id={ship.id}
-                        size="full"
-                        alt={ship.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute top-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded-full ">
-                        x{ship.count.toLocaleString()}
-                      </span>
-                      {isSelected && (
-                        <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                          <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
+                    {isClickable ? (
+                      <button
+                        type="button"
+                        onClick={() => onShipClick(ship.id)}
+                        aria-label={ship.name}
+                        aria-pressed={isSelected}
+                        className="relative block h-24 w-full overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                      >
+                        {visual}
+                      </button>
+                    ) : (
+                      <div className="relative h-24 overflow-hidden">{visual}</div>
+                    )}
                     <div className="p-2.5 flex flex-col gap-1.5">
                       <span className="text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
                         {ship.name}
                       </span>
                       {renderActions && renderActions(ship)}
                     </div>
-                  </Tag>
+                  </div>
                 );
               })}
             </div>

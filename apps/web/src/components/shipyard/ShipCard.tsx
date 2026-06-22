@@ -55,12 +55,9 @@ export function ShipCard({
   onOpenDetail,
 }: ShipCardProps) {
   return (
-    <button
-      type="button"
-      onClick={onOpenDetail}
+    <div
       className={cn(
-        'retro-card relative text-left cursor-pointer overflow-hidden flex flex-col',
-        !ship.prerequisitesMet && 'opacity-50',
+        'retro-card relative overflow-hidden flex flex-col',
         highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
       )}
     >
@@ -69,21 +66,37 @@ export function ShipCard({
           Objectif
         </span>
       )}
-      <div className="relative h-[130px] overflow-hidden">
+      {/* Zone cliquable dédiée (image) — ouvre le détail. La carte n'est plus un
+          <button> englobant : les contrôles ci-dessous ne sont plus imbriqués. */}
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        aria-label={`Voir le détail : ${ship.name}`}
+        className="relative block h-[130px] w-full overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      >
         <GameImage
           category="ships"
           id={ship.id}
           size="full"
           alt={ship.name}
-          className="w-full h-full object-cover"
+          className={cn(
+            'w-full h-full object-cover',
+            !ship.prerequisitesMet && 'opacity-40 grayscale',
+          )}
         />
         <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
           x{ship.count}
         </span>
-      </div>
+      </button>
 
       <div className="p-3 flex flex-col flex-1 gap-1.5">
-        <div className="text-[13px] font-semibold text-foreground truncate">{ship.name}</div>
+        <button
+          type="button"
+          onClick={onOpenDetail}
+          className="text-[13px] font-semibold text-foreground truncate text-left w-full cursor-pointer transition-colors hover:text-primary focus-visible:outline-none focus-visible:underline"
+        >
+          {ship.name}
+        </button>
         <div className="flex-1" />
 
         <ResourceCost
@@ -112,16 +125,12 @@ export function ShipCard({
             missingOnly
           />
         ) : (
-          <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          <div className="space-y-1.5">
             <QuantityStepper value={quantity} onChange={onQuantityChange} max={maxAffordable} />
             <Button
-             
               size="sm"
               className="w-full"
-              onClick={(e) => {
-                e.stopPropagation();
-                onBuild();
-              }}
+              onClick={onBuild}
               disabled={!canAfford || buildPending}
             >
               Construire
@@ -129,6 +138,6 @@ export function ShipCard({
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 }

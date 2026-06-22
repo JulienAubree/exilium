@@ -414,7 +414,7 @@ export function OrbitalCanvas({
       viewBox={`${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`}
       preserveAspectRatio="xMidYMid meet"
       className="w-full h-full block"
-      role="img"
+      role="group"
       aria-label={ariaLabel}
       onPointerDown={handlePointerDown}
       onClickCapture={handleClickCapture}

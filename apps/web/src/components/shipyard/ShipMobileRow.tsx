@@ -44,12 +44,9 @@ export function ShipMobileRow({
   onOpenDetail,
 }: ShipMobileRowProps) {
   return (
-    <button
-      type="button"
-      onClick={onOpenDetail}
+    <div
       className={cn(
-        'relative flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-accent/50 transition-colors',
-        !ship.prerequisitesMet && 'opacity-50',
+        'relative flex w-full items-center gap-3 rounded-lg p-2 hover:bg-accent/50 transition-colors',
         highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
       )}
     >
@@ -58,34 +55,43 @@ export function ShipMobileRow({
           Objectif
         </span>
       )}
-      <GameImage
-        category="ships"
-        id={ship.id}
-        size="icon"
-        alt={ship.name}
-        className="h-8 w-8 rounded"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium truncate">{ship.name}</span>
-          <span className="text-xs text-muted-foreground">x{ship.count}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <ResourceCost
-            minerai={ship.cost.minerai}
-            silicium={ship.cost.silicium}
-            hydrogene={ship.cost.hydrogene}
-          />
-          <span className="font-mono text-xs shrink-0">{formatDuration(ship.timePerUnit)}</span>
-        </div>
-        {rates && resources && !canAfford && ship.prerequisitesMet && (
-          <div className="mt-1">
-            <CraftEtaBadge cost={ship.cost} stock={resources} rates={rates} quantity={quantity} />
+      {/* Image + infos = zone cliquable dédiée (ouvre le détail). Le stepper et le
+          bouton OK ne sont plus imbriqués dans un <button>. */}
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        aria-label={`Voir le détail : ${ship.name}`}
+        className="flex flex-1 items-center gap-3 min-w-0 text-left rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <GameImage
+          category="ships"
+          id={ship.id}
+          size="icon"
+          alt={ship.name}
+          className={cn('h-8 w-8 rounded', !ship.prerequisitesMet && 'opacity-40 grayscale')}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium truncate">{ship.name}</span>
+            <span className="text-xs text-muted-foreground">x{ship.count}</span>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+            <ResourceCost
+              minerai={ship.cost.minerai}
+              silicium={ship.cost.silicium}
+              hydrogene={ship.cost.hydrogene}
+            />
+            <span className="font-mono text-xs shrink-0">{formatDuration(ship.timePerUnit)}</span>
+          </div>
+          {rates && resources && !canAfford && ship.prerequisitesMet && (
+            <div className="mt-1">
+              <CraftEtaBadge cost={ship.cost} stock={resources} rates={rates} quantity={quantity} />
+            </div>
+          )}
+        </div>
+      </button>
       {ship.prerequisitesMet && (
-        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1 shrink-0">
           <QuantityStepper
             value={quantity}
             onChange={onQuantityChange}
@@ -95,16 +101,13 @@ export function ShipMobileRow({
           <Button
             size="sm"
             className="h-7 px-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              onBuild();
-            }}
+            onClick={onBuild}
             disabled={!canAfford || buildPending}
           >
             OK
           </Button>
         </div>
       )}
-    </button>
+    </div>
   );
 }

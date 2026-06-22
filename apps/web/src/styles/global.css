@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Surcharge ciblée a11y : le texte rouge (.text-destructive) doit passer WCAG AA
+   sur les surfaces sombres. --destructive (51%) en TEXTE ne fait que ~3.93:1 sur
+   --card. On repointe l'utilitaire vers --destructive-text (plus clair, ~5.2:1)
+   SANS toucher bg-destructive / border-destructive (qui gardent --destructive :
+   fond rouge plein + texte blanc = 4.80:1, déjà AA). Règle hors @layer, après
+   @tailwind utilities → l'emporte sur l'utilitaire généré par ordre source. */
+.text-destructive {
+  color: hsl(var(--destructive-text));
+}
+
 @layer base {
   :root {
     --background: 220 55% 3%;
@@ -19,15 +29,22 @@
     --secondary-foreground: 210 20% 90%;
     --muted: 222 30% 14%;
     --muted-foreground: 215 15% 55%;
-    /* Softer secondary text — still WCAG AA (~4.5:1) on the dark background.
-       Use INSTEAD of text-muted-foreground/60 which falls below contrast. */
-    --muted-foreground-soft: 215 14% 45%;
+    /* Softer secondary text — WCAG AA (≥4.5:1) sur les surfaces sombres (--card
+       à 8% = pire cas). À utiliser AU LIEU de text-muted-foreground/60 qui passe
+       sous le seuil. NB : 45% mesurait 3.75:1 sur --card → remonté à 51%
+       (≈4.66:1) pour passer AA tout en restant plus discret que --muted-foreground. */
+    --muted-foreground-soft: 215 14% 51%;
     /* Decorative-only — fails AA. Reserve for non-essential glyphs / separators. */
     --muted-foreground-faint: 215 12% 35%;
     --accent: 222 30% 18%;
     --accent-foreground: 210 20% 90%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+    /* Rouge pour TEXTE sur surfaces sombres. --destructive (51%) en texte ne fait
+       que 3.93:1 sur --card ; ce token plus clair (≈5.2:1) est appliqué à
+       l'utilitaire .text-destructive (cf. surcharge en tête de fichier). Le fond
+       plein bg-destructive continue d'utiliser --destructive (blanc dessus = AA). */
+    --destructive-text: 0 72% 62%;
     --border: 222 30% 18%;
     --input: 222 30% 18%;
     --ring: 210 80% 55%;
