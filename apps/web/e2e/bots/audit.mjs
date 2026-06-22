@@ -37,11 +37,23 @@ function main() {
   const findings = [];
   const metrics = {};
 
+  // La planète active est-elle MIROITÉE dans l'URL (?planet=<id>) ? Si oui, le
+  // localStorage du store n'est plus un problème d'adressabilité (store = source
+  // de vérité, URL = pont adressable). Détecté par le hook useActivePlanetUrl ou
+  // tout usage de searchParams avec une clé "planet" lié au store planète.
+  const planetUrlMirror = files.some((f) => {
+    if (/activePlanetUrl/i.test(f)) return true;
+    const c = read(f);
+    return /useSearchParams/.test(c) && /['"]planet['"]/.test(c) && /planet\.store|activePlanet/i.test(c);
+  });
+
   // R7 — état de vue persisté en localStorage dans un store (au lieu de l'URL).
   const storeFiles = files.filter((f) => /\/stores\//.test(f));
   for (const f of storeFiles) {
     const c = read(f);
     if (/localStorage/.test(c) && /(active|selected|current)/i.test(c)) {
+      const isPlanet = /planet/i.test(f);
+      if (isPlanet && planetUrlMirror) continue; // adressable via ?planet= → plus une violation
       const m = c.match(/localStorage\.\w+\(\s*['"]([^'"]+)['"]/);
       findings.push({
         rule: 'R7',
@@ -60,16 +72,19 @@ function main() {
   metrics.routes = paths.length;
   metrics.paramRoutes = paths.filter((p) => p.includes(':')).length;
   metrics.hasPlanetParamRoute = paths.some((p) => /:planet/i.test(p));
+  metrics.planetUrlMirror = planetUrlMirror;
+  // Adressable par route param (:planetId) OU par searchParam (?planet=).
+  metrics.planetAddressable = metrics.hasPlanetParamRoute || planetUrlMirror;
 
-  // R7 — multi-planètes sans :planetId dans l'URL.
+  // R7 — multi-planètes dont la planète affichée n'est PAS dans l'URL (ni route, ni searchParam).
   const hasPlanetStore = storeFiles.some((f) => /planet/i.test(f));
-  if (hasPlanetStore && !metrics.hasPlanetParamRoute) {
+  if (hasPlanetStore && !metrics.planetAddressable) {
     findings.push({
       rule: 'R7',
       severity: 'majeur',
       area: routerFile ? rel(routerFile) : 'router',
-      detail: `Aucune route ne porte d'identifiant de planète (:planetId) alors que le jeu est multi-planètes — l'écran affiché dépend d'un état caché, pas de l'URL. Même URL pour la planète A et la planète B.`,
-      evidence: `${paths.length} routes, 0 avec :planetId`,
+      detail: `La planète affichée n'est pas portée par l'URL (ni route :planetId, ni searchParam ?planet=) alors que le jeu est multi-planètes — même URL pour la planète A et la planète B, refresh/partage/Retour perdent le contexte.`,
+      evidence: `${paths.length} routes, 0 avec :planetId, pas de miroir ?planet=`,
     });
   }
 
@@ -108,7 +123,7 @@ function main() {
   L.push('# Audit déterministe — Exilium', '');
   L.push(`- Date : ${out.date}`);
   L.push(`- Source : \`${SRC}\``);
-  L.push(`- Routes : ${metrics.routes} (dont ${metrics.paramRoutes} paramétrées) · route planète \`:planetId\` : ${metrics.hasPlanetParamRoute ? 'oui' : '**NON**'}`);
+  L.push(`- Routes : ${metrics.routes} (dont ${metrics.paramRoutes} paramétrées) · planète adressable : ${metrics.planetAddressable ? `oui (${metrics.hasPlanetParamRoute ? ':planetId' : '?planet='})` : '**NON**'}`);
   L.push(`- Pages : ${metrics.pages} · avec état d'URL : ${metrics.pagesWithUrlState} · avec sous-vues locales : ${metrics.pagesWithLocalSubviews}`);
   L.push('');
   L.push(`## Findings confirmés (${findings.length})`, '');
@@ -119,7 +134,7 @@ function main() {
   writeFileSync(join(REPORTS, '_audit', `audit-${stamp}.md`), L.join('\n'));
 
   console.log(
-    `[audit] ${findings.length} finding(s) · routes:${metrics.routes} pages:${metrics.pages} url-state:${metrics.pagesWithUrlState}/${metrics.pages} :planetId:${metrics.hasPlanetParamRoute}`,
+    `[audit] ${findings.length} finding(s) · routes:${metrics.routes} pages:${metrics.pages} url-state:${metrics.pagesWithUrlState}/${metrics.pages} planète-adressable:${metrics.planetAddressable}${metrics.planetUrlMirror ? ' (?planet=)' : ''}`,
   );
   findings.forEach((f) => console.log(`  [${f.rule}/${f.severity}] ${f.area} — ${f.detail.slice(0, 70)}…`));
   console.log(`[audit] → reports/_audit/audit-${stamp}.md`);

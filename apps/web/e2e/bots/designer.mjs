@@ -125,7 +125,7 @@ function renderMarkdown({ result, runs, usage, audit, a11y }) {
   L.push(`- Sessions de bots analysées : ${runs.length} (${totalFrictions} friction(s) brute(s))`);
   if (audit) {
     L.push(
-      `- Audit code : ${audit.findings.length} finding(s) · ${audit.metrics.pagesWithUrlState}/${audit.metrics.pages} pages avec état d'URL · route \`:planetId\` : ${audit.metrics.hasPlanetParamRoute ? 'oui' : 'non'}`,
+      `- Audit code : ${audit.findings.length} finding(s) · ${audit.metrics.pagesWithUrlState}/${audit.metrics.pages} pages avec état d'URL · planète adressable : ${audit.metrics.planetAddressable ? 'oui' : 'non'}`,
     );
   }
   if (a11y) {
