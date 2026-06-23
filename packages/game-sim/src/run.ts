@@ -16,13 +16,15 @@ export const MILESTONES: Milestone[] = [
   { id: 'robotics', reach: (s) => (s.levels.get('robotics') ?? 0) >= 1 },
   { id: 'firstResearch', reach: (s) => [...s.techLevels.values()].some((v) => v >= 1) },
   { id: 'energyTech', reach: (s) => (s.techLevels.get('energyTech') ?? 0) >= 1 },
+  { id: 'firstShip', reach: (s) => [...s.ships.values()].some((v) => v >= 1) },
 ];
 
 /** Exported for testing: runs a given policy and returns a RunResult. */
 export function runPolicy(policy: Policy): RunResult {
   const buildings = loadBuildings();
   const research = loadResearch();
-  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses(), research, loadShips());
+  const ships = loadShips();
+  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses(), research, ships);
   const rec = new Recorder(MILESTONES);
   const s = initState();
 
@@ -39,12 +41,24 @@ export function runPolicy(policy: Policy): RunResult {
       }
     }
 
+    // --- Ship queue: fill if idle and shipyard is available ---
+    if (s.shipBuild === null && (s.levels.get('shipyard') ?? 0) >= 1) {
+      const sa = policy.decideShip(s, engine, ships);
+      if (sa !== null) {
+        try {
+          engine.startShip(s, sa.shipId);
+        } catch (_e) {
+          // prereqs or cost not reachable — skip silently
+        }
+      }
+    }
+
     // --- Build queue: fill if idle ---
     const action = policy.decide(s, engine, buildings);
 
     if (action.type === 'stop') {
-      // No more builds. If research is still running, advance to finish it.
-      if (s.research === null) break;
+      // No more builds. If research or shipBuild is still running, advance to finish it.
+      if (s.research === null && s.shipBuild === null) break;
       const delta = engine.nextEventIn(s);
       if (delta <= 0) break; // guard against stall
       engine.advance(s, delta);
@@ -59,7 +73,7 @@ export function runPolicy(policy: Policy): RunResult {
       engine.startBuild(s, action.buildingId);
     }
 
-    // Advance to the next event (whichever finishes first: build or research)
+    // Advance to the next event (whichever finishes first: build, research, or shipBuild)
     const delta = engine.nextEventIn(s);
     if (delta <= 0) break; // guard against stall
 

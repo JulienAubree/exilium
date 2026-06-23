@@ -27,7 +27,7 @@
 import { buildingTime, researchTime } from '@exilium/game-engine';
 import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
-import type { BuildingDef, ResearchDef } from './config.js';
+import type { BuildingDef, ResearchDef, ShipDef } from './config.js';
 import type { Action, Policy } from './policy.js';
 
 // Non-producers that unlock milestones — given a virtual production value
@@ -36,6 +36,17 @@ const MILESTONE_PREREQS = new Set(['robotics', 'researchLab', 'shipyard', 'arsen
 
 // Eco-relevant researches for OptimalPolicy fallback priority order.
 const ECO_RESEARCH_ORDER = ['energyTech', 'semiconductors', 'temperateProduction'];
+
+/** Returns true if all prerequisites for a ship are met by the given state. Pure. */
+function shipPrereqsMet(state: SimState, def: ShipDef): boolean {
+  for (const prereq of def.prereqBuildings) {
+    if ((state.levels.get(prereq.buildingId) ?? 0) < prereq.level) return false;
+  }
+  for (const prereq of def.prereqResearch) {
+    if ((state.techLevels.get(prereq.researchId) ?? 0) < prereq.level) return false;
+  }
+  return true;
+}
 
 /** Returns true if all prerequisites for a research are met by the given state. Pure. */
 function researchPrereqsMet(state: SimState, def: ResearchDef): boolean {
@@ -239,5 +250,29 @@ export class OptimalPolicy implements Policy {
     }
 
     return bestId !== null ? { type: 'research', researchId: bestId } : null;
+  }
+
+  decideShip(
+    state: SimState,
+    _engine: SimEngine,
+    ships: Map<string, ShipDef>,
+  ): { type: 'buildShip'; shipId: string } | null {
+    // MVP: build the first ship only if no ship has been produced yet
+    const anyShipProduced = [...state.ships.values()].some((v) => v >= 1);
+    if (anyShipProduced) return null;
+    // Need shipyard at level ≥ 2 (prospector prereq)
+    if ((state.levels.get('shipyard') ?? 0) < 2) return null;
+    // Prefer prospector; fall back to any eligible ship with prereqs met
+    const prospector = ships.get('prospector');
+    if (prospector && shipPrereqsMet(state, prospector)) {
+      return { type: 'buildShip', shipId: 'prospector' };
+    }
+    // Fallback: find any eligible ship
+    for (const [id, def] of ships) {
+      if (shipPrereqsMet(state, def)) {
+        return { type: 'buildShip', shipId: id };
+      }
+    }
+    return null;
   }
 }

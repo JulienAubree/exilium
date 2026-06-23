@@ -1,7 +1,7 @@
 // packages/game-sim/src/policy.ts
 import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
-import type { BuildingDef, ResearchDef } from './config.js';
+import type { BuildingDef, ResearchDef, ShipDef } from './config.js';
 
 export type Action = { type: 'build'; buildingId: string } | { type: 'research'; researchId: string } | { type: 'buildShip'; shipId: string } | { type: 'stop' };
 export interface Policy {
@@ -16,6 +16,16 @@ export interface Policy {
     engine: SimEngine,
     research: Map<string, ResearchDef>,
   ): { type: 'research'; researchId: string } | null;
+  /**
+   * Returns a buildShip action to start, or null if no ship should be built now.
+   * MVP: builds the first eligible ship (prefer prospector) when shipyard ≥ 2 and
+   * no ship has been produced yet. MUST be pure — must NOT mutate the passed state.
+   */
+  decideShip(
+    state: SimState,
+    engine: SimEngine,
+    ships: Map<string, ShipDef>,
+  ): { type: 'buildShip'; shipId: string } | null;
 }
 
 // Ordre de priorité éco MVP : énergie d'abord (sine qua non de la production),
@@ -41,6 +51,17 @@ const ECO_ORDER = [
 
 // Eco-relevant researches in priority order (production/energy boosters only).
 const ECO_RESEARCH_ORDER = ['energyTech', 'semiconductors', 'temperateProduction'];
+
+/** Returns true if all prerequisites for a ship are met by the given state. Pure. */
+function shipPrereqsMet(state: SimState, def: ShipDef): boolean {
+  for (const prereq of def.prereqBuildings) {
+    if ((state.levels.get(prereq.buildingId) ?? 0) < prereq.level) return false;
+  }
+  for (const prereq of def.prereqResearch) {
+    if ((state.techLevels.get(prereq.researchId) ?? 0) < prereq.level) return false;
+  }
+  return true;
+}
 
 /** Returns true if all prerequisites for a research are met by the given state. Pure. */
 function researchPrereqsMet(state: SimState, def: ResearchDef): boolean {
@@ -91,6 +112,30 @@ export class EcoPolicy implements Policy {
       // Skip if prereqs not met
       if (!researchPrereqsMet(state, def)) continue;
       return { type: 'research', researchId: id };
+    }
+    return null;
+  }
+
+  decideShip(
+    state: SimState,
+    _engine: SimEngine,
+    ships: Map<string, ShipDef>,
+  ): { type: 'buildShip'; shipId: string } | null {
+    // MVP: build the first ship only if no ship has been produced yet
+    const anyShipProduced = [...state.ships.values()].some((v) => v >= 1);
+    if (anyShipProduced) return null;
+    // Need shipyard at level ≥ 2 (prospector prereq)
+    if ((state.levels.get('shipyard') ?? 0) < 2) return null;
+    // Prefer prospector; fall back to any eligible ship with prereqs met
+    const prospector = ships.get('prospector');
+    if (prospector && shipPrereqsMet(state, prospector)) {
+      return { type: 'buildShip', shipId: 'prospector' };
+    }
+    // Fallback: find any eligible ship
+    for (const [id, def] of ships) {
+      if (shipPrereqsMet(state, def)) {
+        return { type: 'buildShip', shipId: id };
+      }
     }
     return null;
   }
