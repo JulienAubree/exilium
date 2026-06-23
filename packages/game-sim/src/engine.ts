@@ -5,9 +5,10 @@ import {
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   resolveBonus,
   researchCost, researchTime,
+  unitCost, unitTime,
 } from '@exilium/game-engine';
 import type { BonusDefinition } from '@exilium/game-engine';
-import type { BuildingDef, ProductionConfig, ResearchDef } from './config.js';
+import type { BuildingDef, ProductionConfig, ResearchDef, ShipDef } from './config.js';
 import type { SimState, Resources } from './state.js';
 
 // Default temperature for the simulated home planet (temperate ~50°C).
@@ -20,6 +21,7 @@ export class SimEngine {
     private prod: Map<string, ProductionConfig>,
     private bonuses: BonusDefinition[] = [],
     private research: Map<string, ResearchDef> = new Map(),
+    private ships: Map<string, ShipDef> = new Map(),
   ) {}
 
   /** Converts state.techLevels Map to a plain Record for resolveBonus. */
@@ -135,14 +137,58 @@ export class SimEngine {
     state.research = { researchId, targetLevel: target, completesAt: state.timeSec + dur };
   }
 
-  /** Secondes jusqu'au prochain événement = plus petit délai non-nul parmi build et research (0 si rien). */
+  /** Coût fixe d'un vaisseau (= unitCost). */
+  costOfShip(shipId: string): Resources {
+    const def = this.ships.get(shipId);
+    if (!def) throw new Error(`Vaisseau inconnu : ${shipId}`);
+    return unitCost(def);
+  }
+
+  /** Lance la construction d'un vaisseau (attend les ressources si besoin via advance). */
+  startShip(state: SimState, shipId: string): void {
+    const def = this.ships.get(shipId);
+    if (!def) throw new Error(`Vaisseau inconnu : ${shipId}`);
+
+    // Gate : prérequis bâtiments (principalement shipyard)
+    for (const prereq of def.prereqBuildings) {
+      const actual = state.levels.get(prereq.buildingId) ?? 0;
+      if (actual < prereq.level) {
+        throw new Error(`Prérequis non rempli : ${prereq.buildingId} niv.${prereq.level} (actuel: ${actual})`);
+      }
+    }
+
+    // Gate : prérequis recherches
+    for (const prereq of def.prereqResearch) {
+      const actual = state.techLevels.get(prereq.researchId) ?? 0;
+      if (actual < prereq.level) {
+        throw new Error(`Prérequis recherche non rempli : ${prereq.researchId} niv.${prereq.level} (actuel: ${actual})`);
+      }
+    }
+
+    const cost = this.costOfShip(shipId);
+    const waitH = this.timeToAfford(state, cost);
+    if (!isFinite(waitH)) throw new Error(`inatteignable: vaisseau ${shipId}`);
+    if (waitH > 0) this.advance(state, waitH * 3600);
+
+    state.resources.minerai -= cost.minerai;
+    state.resources.silicium -= cost.silicium;
+    state.resources.hydrogene -= cost.hydrogene;
+
+    // bonusMultiplier=1 for MVP (ship_build_time bonus is a future refinement)
+    const dur = unitTime(def, 1);
+    state.shipBuild = { shipId, completesAt: state.timeSec + dur };
+  }
+
+  /** Secondes jusqu'au prochain événement = plus petit délai non-nul parmi build, research et shipBuild (0 si rien). */
   nextEventIn(state: SimState): number {
     const buildRemaining = state.build ? state.build.completesAt - state.timeSec : null;
     const researchRemaining = state.research ? state.research.completesAt - state.timeSec : null;
+    const shipBuildRemaining = state.shipBuild ? state.shipBuild.completesAt - state.timeSec : null;
 
     const candidates: number[] = [];
     if (buildRemaining !== null && buildRemaining > 0) candidates.push(buildRemaining);
     if (researchRemaining !== null && researchRemaining > 0) candidates.push(researchRemaining);
+    if (shipBuildRemaining !== null && shipBuildRemaining > 0) candidates.push(shipBuildRemaining);
 
     return candidates.length > 0 ? Math.min(...candidates) : 0;
   }
@@ -162,6 +208,11 @@ export class SimEngine {
     if (state.research && state.timeSec >= state.research.completesAt) {
       state.techLevels.set(state.research.researchId, state.research.targetLevel);
       state.research = null;
+    }
+    if (state.shipBuild && state.timeSec >= state.shipBuild.completesAt) {
+      const { shipId } = state.shipBuild;
+      state.ships.set(shipId, (state.ships.get(shipId) ?? 0) + 1);
+      state.shipBuild = null;
     }
   }
 }

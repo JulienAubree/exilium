@@ -1,6 +1,7 @@
 export interface Resources { minerai: number; silicium: number; hydrogene: number }
 export interface BuildOrder { buildingId: string; targetLevel: number; completesAt: number }
 export interface ResearchOrder { researchId: string; targetLevel: number; completesAt: number }
+export interface ShipBuildOrder { shipId: string; completesAt: number }
 export interface SimState {
   timeSec: number;
   resources: Resources;
@@ -8,11 +9,13 @@ export interface SimState {
   techLevels: Map<string, number>;
   build: BuildOrder | null;
   research: ResearchOrder | null;
+  ships: Map<string, number>;
+  shipBuild: ShipBuildOrder | null;
 }
 
 // Dotation de départ (à aligner sur le seed des nouveaux empires ; valeur de départ MVP).
 export const STARTING_RESOURCES: Resources = { minerai: 500, silicium: 500, hydrogene: 0 };
 
 export function initState(): SimState {
-  return { timeSec: 0, resources: { ...STARTING_RESOURCES }, levels: new Map(), techLevels: new Map(), build: null, research: null };
+  return { timeSec: 0, resources: { ...STARTING_RESOURCES }, levels: new Map(), techLevels: new Map(), build: null, research: null, ships: new Map(), shipBuild: null };
 }

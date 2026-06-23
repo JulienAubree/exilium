@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadBuildings, loadProductionConfig, loadBonuses, loadResearch } from './config.js';
+import { loadBuildings, loadProductionConfig, loadBonuses, loadResearch, loadShips } from './config.js';
 import { initState } from './state.js';
 import { SimEngine } from './engine.js';
 import { EcoPolicy, type Policy } from './policy.js';
@@ -22,7 +22,7 @@ export const MILESTONES: Milestone[] = [
 export function runPolicy(policy: Policy): RunResult {
   const buildings = loadBuildings();
   const research = loadResearch();
-  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses(), research);
+  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses(), research, loadShips());
   const rec = new Recorder(MILESTONES);
   const s = initState();
 

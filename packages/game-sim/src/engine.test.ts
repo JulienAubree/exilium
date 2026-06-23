@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { SimEngine } from './engine.js';
-import { loadBuildings, loadProductionConfig, loadBonuses, loadResearch } from './config.js';
+import { loadBuildings, loadProductionConfig, loadBonuses, loadResearch, loadShips } from './config.js';
 import { initState } from './state.js';
 import { mineraiProduction, calculateProductionFactor, solarPlantEnergy, mineraiMineEnergy, resolveBonus } from '@exilium/game-engine';
 
-const engine = () => new SimEngine(loadBuildings(), loadProductionConfig(), loadBonuses(), loadResearch());
+const engine = () => new SimEngine(loadBuildings(), loadProductionConfig(), loadBonuses(), loadResearch(), loadShips());
 
 describe('SimEngine.production', () => {
   it('mine niv.1 + solaire niv.1 : prod minerai = formule du game-engine', () => {
@@ -83,5 +83,46 @@ describe('SimEngine.startResearch + file parallèle', () => {
 
     expect(s.techLevels.get('energyTech')).toBe(1);
     expect(s.research).toBeNull();
+  });
+});
+
+describe('SimEngine.startShip + file parallèle chantier', () => {
+  it('shipyard niv.2 + ressources → startShip(prospector) → après advance, ships.get(prospector)===1, shipBuild null, build/research indépendants', () => {
+    const e = engine();
+    const s = initState();
+    // Prérequis : shipyard niv.2
+    s.levels.set('shipyard', 2);
+    // Donner des ressources suffisantes (prospector coûte 2250 minerai, 750 silicium, 375 hydrogene)
+    s.resources.minerai = 10000;
+    s.resources.silicium = 10000;
+    s.resources.hydrogene = 10000;
+
+    // Lancer la construction du vaisseau
+    e.startShip(s, 'prospector');
+    expect(s.shipBuild).not.toBeNull();
+    expect(s.shipBuild?.shipId).toBe('prospector');
+
+    // Les files build et research sont indépendantes — on peut les lancer en parallèle
+    s.levels.set('researchLab', 1);
+    e.startBuild(s, 'mineraiMine');
+    e.startResearch(s, 'energyTech');
+    expect(s.build).not.toBeNull();
+    expect(s.shipBuild).not.toBeNull(); // shipBuild toujours active
+
+    // nextEventIn inclut les 3 files
+    const wait = e.nextEventIn(s);
+    expect(wait).toBeGreaterThan(0);
+
+    // Avancer jusqu'à ce que le vaisseau soit terminé
+    let iterations = 0;
+    while (s.shipBuild !== null && iterations < 100) {
+      const w = e.nextEventIn(s);
+      if (w <= 0) break;
+      e.advance(s, w);
+      iterations++;
+    }
+
+    expect(s.ships.get('prospector')).toBe(1);
+    expect(s.shipBuild).toBeNull();
   });
 });
