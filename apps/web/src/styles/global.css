@@ -45,7 +45,7 @@
        l'utilitaire .text-destructive (cf. surcharge en tête de fichier). Le fond
        plein bg-destructive continue d'utiliser --destructive (blanc dessus = AA). */
     --destructive-text: 0 72% 62%;
-    --border: 222 30% 18%;
+    --border: 222 28% 25%;
     --input: 222 30% 18%;
     --ring: 210 80% 55%;
     --radius: 0.5rem;
@@ -54,8 +54,8 @@
        Tokens sémantiques. Les pages ne consomment QUE ces tokens via les
        primitives ui/. Réf : docs/reference/design-system.md */
     --surface: 222 45% 8%;
-    --surface-raised: 222 40% 12%;
-    --border-strong: 218 25% 28%;
+    --surface-raised: 222 40% 15%;
+    --border-strong: 218 26% 36%;
     --elevation-raised: 0 8px 24px -8px hsla(220, 55%, 2%, 0.7);
 
     --motion-fast: 120ms;

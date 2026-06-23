@@ -9,6 +9,18 @@ const STAT_LABELS: Record<string, string> = {
   storage_minerai: 'Stockage minerai',
   storage_silicium: 'Stockage silicium',
   storage_hydrogene: 'Stockage hydrogène',
+  // Temps & construction (libellés alignés sur BONUS_DEFINITIONS)
+  building_time: 'Temps de construction',
+  research_time: 'Temps de recherche',
+  ship_build_time: 'Temps de construction des vaisseaux',
+  defense_build_time: 'Temps de construction des défenses',
+  hull_combat_build_time_reduction: 'Construction des coques de combat',
+  flagship_repair_time: 'Réparation du vaisseau amiral',
+  // Combat / flotte
+  weapons: 'Dégâts des armes',
+  shielding: 'Puissance des boucliers',
+  armor: 'Coque et blindage',
+  ship_speed: 'Vitesse des vaisseaux',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
