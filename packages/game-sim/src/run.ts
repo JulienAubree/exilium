@@ -25,12 +25,14 @@ export function runPolicy(policy: Policy): RunResult {
   for (let i = 0; i < 5000 && s.timeSec < HORIZON_SEC; i++) {
     const action = policy.decide(s, engine, buildings);
     if (action.type === 'stop') break;
-    const waitH = engine.timeToAfford(s, engine.costOf(action.buildingId, (s.levels.get(action.buildingId) ?? 0) + 1));
-    if (!isFinite(waitH) || isNaN(waitH)) break;
-    engine.startBuild(s, action.buildingId);
-    engine.advance(s, engine.nextEventIn(s)); // complète la construction → niveaux à jour
-    rec.onAction(s, action, waitH); // …puis horodate les jalons avec l'état post-construction
-                                    // (sinon les temps de jalon sont décalés/manqués)
+    if (action.type === 'build') {
+      const waitH = engine.timeToAfford(s, engine.costOf(action.buildingId, (s.levels.get(action.buildingId) ?? 0) + 1));
+      if (!isFinite(waitH) || isNaN(waitH)) break;
+      engine.startBuild(s, action.buildingId);
+      engine.advance(s, engine.nextEventIn(s)); // complète la construction → niveaux à jour
+      rec.onAction(s, action, waitH); // …puis horodate les jalons avec l'état post-construction
+                                      // (sinon les temps de jalon sont décalés/manqués)
+    }
   }
   return rec.result(policy.name);
 }

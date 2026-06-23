@@ -4,9 +4,10 @@ import {
   calculateProductionFactor,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
   resolveBonus,
+  researchCost, researchTime,
 } from '@exilium/game-engine';
 import type { BonusDefinition } from '@exilium/game-engine';
-import type { BuildingDef, ProductionConfig } from './config.js';
+import type { BuildingDef, ProductionConfig, ResearchDef } from './config.js';
 import type { SimState, Resources } from './state.js';
 
 // Default temperature for the simulated home planet (temperate ~50°C).
@@ -18,6 +19,7 @@ export class SimEngine {
     private buildings: Map<string, BuildingDef>,
     private prod: Map<string, ProductionConfig>,
     private bonuses: BonusDefinition[] = [],
+    private research: Map<string, ResearchDef> = new Map(),
   ) {}
 
   /** Converts state.techLevels Map to a plain Record for resolveBonus. */
@@ -89,12 +91,63 @@ export class SimEngine {
     state.build = { buildingId, targetLevel: target, completesAt: state.timeSec + dur };
   }
 
-  /** Secondes jusqu'au prochain événement = fin de la construction en cours (ou 0 si rien). */
-  nextEventIn(state: SimState): number {
-    return state.build ? Math.max(0, state.build.completesAt - state.timeSec) : 0;
+  /** Coût d'un niveau de recherche. */
+  costOfResearch(id: string, level: number): Resources {
+    const def = this.research.get(id);
+    if (!def) throw new Error(`Recherche inconnue : ${id}`);
+    return researchCost(def.costDef, level);
   }
 
-  /** Avance le temps de `seconds` : accumule les ressources, finalise la construction si due. */
+  /** Lance la recherche du prochain niveau (attend les ressources si besoin via advance). */
+  startResearch(state: SimState, researchId: string): void {
+    const def = this.research.get(researchId);
+    if (!def) throw new Error(`Recherche inconnue : ${researchId}`);
+    const target = (state.techLevels.get(researchId) ?? 0) + 1;
+
+    // Gate : prérequis bâtiments
+    for (const prereq of def.prereqBuildings) {
+      const actual = state.levels.get(prereq.buildingId) ?? 0;
+      if (actual < prereq.level) {
+        throw new Error(`Prérequis non rempli : ${prereq.buildingId} niv.${prereq.level} (actuel: ${actual})`);
+      }
+    }
+
+    // Gate : prérequis recherches
+    for (const prereq of def.prereqResearch) {
+      const actual = state.techLevels.get(prereq.researchId) ?? 0;
+      if (actual < prereq.level) {
+        throw new Error(`Prérequis recherche non rempli : ${prereq.researchId} niv.${prereq.level} (actuel: ${actual})`);
+      }
+    }
+
+    const cost = this.costOfResearch(researchId, target);
+    const waitH = this.timeToAfford(state, cost);
+    if (!isFinite(waitH)) throw new Error(`inatteignable: recherche ${researchId} niv.${target}`);
+    if (waitH > 0) this.advance(state, waitH * 3600);
+
+    state.resources.minerai -= cost.minerai;
+    state.resources.silicium -= cost.silicium;
+    state.resources.hydrogene -= cost.hydrogene;
+
+    const labLevel = state.levels.get('researchLab') ?? 0;
+    const bonusMultiplier = resolveBonus('research_time', null, { researchLab: labLevel }, this.bonuses);
+    const dur = researchTime(def.costDef, target, bonusMultiplier, { timeDivisor: 1000 });
+    state.research = { researchId, targetLevel: target, completesAt: state.timeSec + dur };
+  }
+
+  /** Secondes jusqu'au prochain événement = plus petit délai non-nul parmi build et research (0 si rien). */
+  nextEventIn(state: SimState): number {
+    const buildRemaining = state.build ? state.build.completesAt - state.timeSec : null;
+    const researchRemaining = state.research ? state.research.completesAt - state.timeSec : null;
+
+    const candidates: number[] = [];
+    if (buildRemaining !== null && buildRemaining > 0) candidates.push(buildRemaining);
+    if (researchRemaining !== null && researchRemaining > 0) candidates.push(researchRemaining);
+
+    return candidates.length > 0 ? Math.min(...candidates) : 0;
+  }
+
+  /** Avance le temps de `seconds` : accumule les ressources, finalise chaque file dont completesAt <= timeSec. */
   advance(state: SimState, seconds: number): void {
     if (seconds <= 0) return;
     const rate = this.production(state);
@@ -105,6 +158,10 @@ export class SimEngine {
     if (state.build && state.timeSec >= state.build.completesAt) {
       state.levels.set(state.build.buildingId, state.build.targetLevel);
       state.build = null;
+    }
+    if (state.research && state.timeSec >= state.research.completesAt) {
+      state.techLevels.set(state.research.researchId, state.research.targetLevel);
+      state.research = null;
     }
   }
 }

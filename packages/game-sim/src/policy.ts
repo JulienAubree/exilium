@@ -3,7 +3,7 @@ import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
 import type { BuildingDef } from './config.js';
 
-export type Action = { type: 'build'; buildingId: string } | { type: 'stop' };
+export type Action = { type: 'build'; buildingId: string } | { type: 'research'; researchId: string } | { type: 'stop' };
 export interface Policy {
   name: string;
   decide(state: SimState, engine: SimEngine, buildings: Map<string, BuildingDef>): Action;
