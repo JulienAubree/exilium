@@ -48,7 +48,7 @@ function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, wa
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={cn(
-          'text-sm font-semibold tabular-nums',
+          'font-display text-sm font-semibold tabular-nums',
           overCap ? 'text-amber-400' : colorClass,
           overCap ? '' : glowClass,
         )}
