@@ -1,5 +1,5 @@
-import { BUILDINGS, PRODUCTION_CONFIG } from '@exilium/db';
-import type { BuildingCostDef } from '@exilium/game-engine';
+import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS } from '@exilium/db';
+import type { BuildingCostDef, ResearchCostDef, BonusDefinition } from '@exilium/game-engine';
 
 export interface BuildingDef {
   id: string;
@@ -46,4 +46,33 @@ export function loadProductionConfig(): Map<string, ProductionConfig> {
     });
   }
   return m;
+}
+
+export interface ResearchDef {
+  id: string;
+  costDef: ResearchCostDef;
+  maxLevel: number | null;
+  prereqBuildings: { buildingId: string; level: number }[];
+  prereqResearch: { researchId: string; level: number }[];
+}
+
+export function loadResearch(): Map<string, ResearchDef> {
+  const m = new Map<string, ResearchDef>();
+  for (const r of RESEARCH as any[]) {
+    m.set(r.id, {
+      id: r.id,
+      costDef: {
+        baseCost: { minerai: r.baseCostMinerai, silicium: r.baseCostSilicium, hydrogene: r.baseCostHydrogene },
+        costFactor: r.costFactor,
+      },
+      maxLevel: r.maxLevel ?? null,
+      prereqBuildings: r.prerequisites?.buildings ?? [],
+      prereqResearch: r.prerequisites?.research ?? [],
+    });
+  }
+  return m;
+}
+
+export function loadBonuses(): BonusDefinition[] {
+  return BONUS_DEFINITIONS as BonusDefinition[];
 }
