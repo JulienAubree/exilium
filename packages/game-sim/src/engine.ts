@@ -3,7 +3,9 @@ import {
   mineraiProduction, siliciumProduction, hydrogeneProduction,
   calculateProductionFactor,
   solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
+  resolveBonus,
 } from '@exilium/game-engine';
+import type { BonusDefinition } from '@exilium/game-engine';
 import type { BuildingDef, ProductionConfig } from './config.js';
 import type { SimState, Resources } from './state.js';
 
@@ -15,17 +17,26 @@ export class SimEngine {
   constructor(
     private buildings: Map<string, BuildingDef>,
     private prod: Map<string, ProductionConfig>,
+    private bonuses: BonusDefinition[] = [],
   ) {}
+
+  /** Converts state.techLevels Map to a plain Record for resolveBonus. */
+  private techObj(state: SimState): Record<string, number> {
+    return Object.fromEntries(state.techLevels);
+  }
 
   /** Facteur énergie : solaire produite / énergie consommée (via les formules game-engine). */
   private energyFactor(state: SimState): number {
     const lvl = (id: string) => state.levels.get(id) ?? 0;
+    const tech = this.techObj(state);
     const solarCfg = this.prod.get('solarPlant')!;
-    const produced = solarPlantEnergy(lvl('solarPlant'), { baseProduction: solarCfg.baseProduction, exponentBase: solarCfg.exponentBase });
-    const consumed =
+    const rawProduced = solarPlantEnergy(lvl('solarPlant'), { baseProduction: solarCfg.baseProduction, exponentBase: solarCfg.exponentBase });
+    const produced = rawProduced * resolveBonus('energy_production', null, tech, this.bonuses);
+    const rawConsumed =
       mineraiMineEnergy(lvl('mineraiMine')) +
       siliciumMineEnergy(lvl('siliciumMine')) +
       hydrogeneSynthEnergy(lvl('hydrogeneSynth'));
+    const consumed = rawConsumed * resolveBonus('energy_consumption', null, tech, this.bonuses);
     return calculateProductionFactor(produced, consumed);
   }
 
@@ -34,15 +45,16 @@ export class SimEngine {
     const f = this.energyFactor(state);
     const lvl = (id: string) => state.levels.get(id) ?? 0;
     const cfg = (id: string) => this.prod.get(id)!;
+    const tech = this.techObj(state);
     return {
-      minerai: mineraiProduction(lvl('mineraiMine'), f, cfg('mineraiMine')),
-      silicium: siliciumProduction(lvl('siliciumMine'), f, cfg('siliciumMine')),
-      hydrogene: hydrogeneProduction(lvl('hydrogeneSynth'), DEFAULT_MAX_TEMP, f, {
+      minerai: Math.floor(mineraiProduction(lvl('mineraiMine'), f, cfg('mineraiMine')) * resolveBonus('production_minerai', null, tech, this.bonuses)),
+      silicium: Math.floor(siliciumProduction(lvl('siliciumMine'), f, cfg('siliciumMine')) * resolveBonus('production_silicium', null, tech, this.bonuses)),
+      hydrogene: Math.floor(hydrogeneProduction(lvl('hydrogeneSynth'), DEFAULT_MAX_TEMP, f, {
         baseProduction: cfg('hydrogeneSynth').baseProduction,
         exponentBase: cfg('hydrogeneSynth').exponentBase,
         tempCoeffA: cfg('hydrogeneSynth').tempCoeffA ?? 1.36,
         tempCoeffB: cfg('hydrogeneSynth').tempCoeffB ?? 0.004,
-      }),
+      }) * resolveBonus('production_hydrogene', null, tech, this.bonuses)),
     };
   }
 

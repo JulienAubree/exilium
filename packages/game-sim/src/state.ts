@@ -4,6 +4,7 @@ export interface SimState {
   timeSec: number;
   resources: Resources;
   levels: Map<string, number>;
+  techLevels: Map<string, number>;
   build: BuildOrder | null;
 }
 
@@ -11,5 +12,5 @@ export interface SimState {
 export const STARTING_RESOURCES: Resources = { minerai: 500, silicium: 500, hydrogene: 0 };
 
 export function initState(): SimState {
-  return { timeSec: 0, resources: { ...STARTING_RESOURCES }, levels: new Map(), build: null };
+  return { timeSec: 0, resources: { ...STARTING_RESOURCES }, levels: new Map(), techLevels: new Map(), build: null };
 }

@@ -3,13 +3,13 @@ import { describe, it, expect } from 'vitest';
 import { OptimalPolicy } from './optimal-policy.js';
 import { EcoPolicy } from './policy.js';
 import { SimEngine } from './engine.js';
-import { loadBuildings, loadProductionConfig } from './config.js';
+import { loadBuildings, loadProductionConfig, loadBonuses } from './config.js';
 import { initState } from './state.js';
 import { Recorder } from './recorder.js';
 
 function timeToShipyard(policy: { decide: any; name: string }): number {
   const buildings = loadBuildings();
-  const engine = new SimEngine(buildings, loadProductionConfig());
+  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses());
   const rec = new Recorder([{ id: 'shipyard', reach: (s) => (s.levels.get('shipyard') ?? 0) >= 1 }]);
   const s = initState();
   for (let i = 0; i < 3000 && s.timeSec < 200 * 24 * 3600; i++) {
@@ -36,7 +36,7 @@ describe('OptimalPolicy', () => {
   });
   it('ne propose jamais un bâtiment au max ou aux prérequis non remplis', () => {
     const buildings = loadBuildings();
-    const engine = new SimEngine(buildings, loadProductionConfig());
+    const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses());
     const a = new OptimalPolicy().decide(initState(), engine, buildings);
     expect(a.type).toBe('build');
     if (a.type === 'build') {
