@@ -1,12 +1,21 @@
 // packages/game-sim/src/policy.ts
 import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
-import type { BuildingDef } from './config.js';
+import type { BuildingDef, ResearchDef } from './config.js';
 
 export type Action = { type: 'build'; buildingId: string } | { type: 'research'; researchId: string } | { type: 'stop' };
 export interface Policy {
   name: string;
   decide(state: SimState, engine: SimEngine, buildings: Map<string, BuildingDef>): Action;
+  /**
+   * Returns a research action to start, or null if no research should be started now.
+   * MUST be pure — must NOT mutate the passed state.
+   */
+  decideResearch(
+    state: SimState,
+    engine: SimEngine,
+    research: Map<string, ResearchDef>,
+  ): { type: 'research'; researchId: string } | null;
 }
 
 // Ordre de priorité éco MVP : énergie d'abord (sine qua non de la production),
@@ -30,6 +39,20 @@ const ECO_ORDER = [
   'arsenal',
 ];
 
+// Eco-relevant researches in priority order (production/energy boosters only).
+const ECO_RESEARCH_ORDER = ['energyTech', 'semiconductors', 'temperateProduction'];
+
+/** Returns true if all prerequisites for a research are met by the given state. Pure. */
+function researchPrereqsMet(state: SimState, def: ResearchDef): boolean {
+  for (const prereq of def.prereqBuildings) {
+    if ((state.levels.get(prereq.buildingId) ?? 0) < prereq.level) return false;
+  }
+  for (const prereq of def.prereqResearch) {
+    if ((state.techLevels.get(prereq.researchId) ?? 0) < prereq.level) return false;
+  }
+  return true;
+}
+
 export class EcoPolicy implements Policy {
   name = 'eco';
   decide(state: SimState, _engine: SimEngine, buildings: Map<string, BuildingDef>): Action {
@@ -49,5 +72,26 @@ export class EcoPolicy implements Policy {
     // Pick the candidate with the lowest level (ties broken by priority order)
     candidates.sort((a, b) => a.lvl - b.lvl || a.priority - b.priority);
     return { type: 'build', buildingId: candidates[0].id };
+  }
+
+  decideResearch(
+    state: SimState,
+    _engine: SimEngine,
+    research: Map<string, ResearchDef>,
+  ): { type: 'research'; researchId: string } | null {
+    // Need researchLab at level ≥ 1 to do any research
+    if ((state.levels.get('researchLab') ?? 0) < 1) return null;
+    // Pick first eco-relevant research whose prereqs are met and not yet maxed
+    for (const id of ECO_RESEARCH_ORDER) {
+      const def = research.get(id);
+      if (!def) continue;
+      const currentLevel = state.techLevels.get(id) ?? 0;
+      // Skip if maxed
+      if (def.maxLevel !== null && currentLevel >= def.maxLevel) continue;
+      // Skip if prereqs not met
+      if (!researchPrereqsMet(state, def)) continue;
+      return { type: 'research', researchId: id };
+    }
+    return null;
   }
 }

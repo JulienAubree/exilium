@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadBuildings, loadProductionConfig, loadBonuses } from './config.js';
+import { loadBuildings, loadProductionConfig, loadBonuses, loadResearch } from './config.js';
 import { initState } from './state.js';
 import { SimEngine } from './engine.js';
 import { EcoPolicy, type Policy } from './policy.js';
@@ -9,30 +9,62 @@ import { Recorder, type Milestone, type RunResult } from './recorder.js';
 import { renderReport } from './reporter.js';
 
 const HORIZON_SEC = 120 * 24 * 3600; // 120 jours simulés (horizon suffisant pour shipyard/researchLab)
-const MILESTONES: Milestone[] = [
+export const MILESTONES: Milestone[] = [
   { id: 'firstMine', reach: (s) => (s.levels.get('mineraiMine') ?? 0) >= 1 },
   { id: 'firstShipyard', reach: (s) => (s.levels.get('shipyard') ?? 0) >= 1 },
   { id: 'firstResearchLab', reach: (s) => (s.levels.get('researchLab') ?? 0) >= 1 },
   { id: 'robotics', reach: (s) => (s.levels.get('robotics') ?? 0) >= 1 },
+  { id: 'firstResearch', reach: (s) => [...s.techLevels.values()].some((v) => v >= 1) },
+  { id: 'energyTech', reach: (s) => (s.techLevels.get('energyTech') ?? 0) >= 1 },
 ];
 
 /** Exported for testing: runs a given policy and returns a RunResult. */
 export function runPolicy(policy: Policy): RunResult {
   const buildings = loadBuildings();
-  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses());
+  const research = loadResearch();
+  const engine = new SimEngine(buildings, loadProductionConfig(), loadBonuses(), research);
   const rec = new Recorder(MILESTONES);
   const s = initState();
-  for (let i = 0; i < 5000 && s.timeSec < HORIZON_SEC; i++) {
+
+  for (let i = 0; i < 10000 && s.timeSec < HORIZON_SEC; i++) {
+    // --- Research queue: fill if idle and lab is available ---
+    if (s.research === null && (s.levels.get('researchLab') ?? 0) >= 1) {
+      const ra = policy.decideResearch(s, engine, research);
+      if (ra !== null) {
+        try {
+          engine.startResearch(s, ra.researchId);
+        } catch (_e) {
+          // prereqs or cost not reachable — skip silently
+        }
+      }
+    }
+
+    // --- Build queue: fill if idle ---
     const action = policy.decide(s, engine, buildings);
-    if (action.type === 'stop') break;
+
+    if (action.type === 'stop') {
+      // No more builds. If research is still running, advance to finish it.
+      if (s.research === null) break;
+      const delta = engine.nextEventIn(s);
+      if (delta <= 0) break; // guard against stall
+      engine.advance(s, delta);
+      rec.onAction(s, { type: 'stop' }, 0);
+      continue;
+    }
+
+    let waitH = 0;
     if (action.type === 'build') {
-      const waitH = engine.timeToAfford(s, engine.costOf(action.buildingId, (s.levels.get(action.buildingId) ?? 0) + 1));
+      waitH = engine.timeToAfford(s, engine.costOf(action.buildingId, (s.levels.get(action.buildingId) ?? 0) + 1));
       if (!isFinite(waitH) || isNaN(waitH)) break;
       engine.startBuild(s, action.buildingId);
-      engine.advance(s, engine.nextEventIn(s)); // complète la construction → niveaux à jour
-      rec.onAction(s, action, waitH); // …puis horodate les jalons avec l'état post-construction
-                                      // (sinon les temps de jalon sont décalés/manqués)
     }
+
+    // Advance to the next event (whichever finishes first: build or research)
+    const delta = engine.nextEventIn(s);
+    if (delta <= 0) break; // guard against stall
+
+    engine.advance(s, delta);
+    rec.onAction(s, action, waitH);
   }
   return rec.result(policy.name);
 }

@@ -24,15 +24,29 @@
 //
 // - Storage buildings are excluded from the scoring and only built as last resort.
 
-import { buildingTime } from '@exilium/game-engine';
+import { buildingTime, researchTime } from '@exilium/game-engine';
 import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
-import type { BuildingDef } from './config.js';
+import type { BuildingDef, ResearchDef } from './config.js';
 import type { Action, Policy } from './policy.js';
 
 // Non-producers that unlock milestones — given a virtual production value
 // so they compete with producers once producer ROI declines.
 const MILESTONE_PREREQS = new Set(['robotics', 'researchLab', 'shipyard', 'arsenal']);
+
+// Eco-relevant researches for OptimalPolicy fallback priority order.
+const ECO_RESEARCH_ORDER = ['energyTech', 'semiconductors', 'temperateProduction'];
+
+/** Returns true if all prerequisites for a research are met by the given state. Pure. */
+function researchPrereqsMet(state: SimState, def: ResearchDef): boolean {
+  for (const prereq of def.prereqBuildings) {
+    if ((state.levels.get(prereq.buildingId) ?? 0) < prereq.level) return false;
+  }
+  for (const prereq of def.prereqResearch) {
+    if ((state.techLevels.get(prereq.researchId) ?? 0) < prereq.level) return false;
+  }
+  return true;
+}
 
 // Pure storage — no production gain; skip from ROI scoring.
 const STORAGE = new Set(['storageMinerai', 'storageSilicium', 'storageHydrogene']);
@@ -147,5 +161,83 @@ export class OptimalPolicy implements Policy {
     }
 
     return { type: 'stop' };
+  }
+
+  decideResearch(
+    state: SimState,
+    engine: SimEngine,
+    research: Map<string, ResearchDef>,
+  ): { type: 'research'; researchId: string } | null {
+    // Need researchLab at level ≥ 1
+    if ((state.levels.get('researchLab') ?? 0) < 1) return null;
+
+    const baseProd = engine.production(state);
+    const baseTotal = baseProd.minerai + baseProd.silicium + baseProd.hydrogene;
+
+    let bestId: string | null = null;
+    let bestRoi = 1e-9; // minimum epsilon: only pick if ROI > 0
+
+    for (const id of ECO_RESEARCH_ORDER) {
+      const def = research.get(id);
+      if (!def) continue;
+      const currentLevel = state.techLevels.get(id) ?? 0;
+      if (def.maxLevel !== null && currentLevel >= def.maxLevel) continue;
+      if (!researchPrereqsMet(state, def)) continue;
+
+      const targetLevel = currentLevel + 1;
+
+      // Check if we can afford the research
+      const cost = engine.costOfResearch(id, targetLevel);
+      const waitH = engine.timeToAfford(state, cost);
+      if (!isFinite(waitH)) continue;
+
+      // Estimate research time (seconds), converted to hours.
+      // We pass bonusMultiplier=1.0 (conservative; actual lab bonus makes it faster).
+      const researchSec = researchTime(def.costDef, targetLevel, 1.0, { timeDivisor: 1000 });
+      const researchH = researchSec / 3600;
+
+      const investH = Math.max(waitH + researchH, 1e-6);
+
+      // Compute ΔProduction by cloning state and bumping techLevel
+      const clone: SimState = {
+        ...state,
+        resources: { ...state.resources },
+        levels: new Map(state.levels),
+        techLevels: new Map(state.techLevels),
+      };
+      clone.techLevels.set(id, targetLevel);
+      const newProd = engine.production(clone);
+      const newTotal = newProd.minerai + newProd.silicium + newProd.hydrogene;
+      const deltaProd = newTotal - baseTotal;
+
+      // If research gives no production gain (e.g. semiconductors only saves energy consumption),
+      // fall back to a small virtual gain to keep it in competition
+      const effectiveDelta = deltaProd > 0 ? deltaProd : (baseTotal > 0 ? baseTotal * 0.02 : 0.001);
+
+      const roi = effectiveDelta / investH;
+
+      if (roi > bestRoi) {
+        bestRoi = roi;
+        bestId = id;
+      }
+    }
+
+    // Fallback to priority order if ROI scoring found nothing
+    if (bestId === null) {
+      for (const id of ECO_RESEARCH_ORDER) {
+        const def = research.get(id);
+        if (!def) continue;
+        const currentLevel = state.techLevels.get(id) ?? 0;
+        if (def.maxLevel !== null && currentLevel >= def.maxLevel) continue;
+        if (!researchPrereqsMet(state, def)) continue;
+        const cost = engine.costOfResearch(id, currentLevel + 1);
+        const waitH = engine.timeToAfford(state, cost);
+        if (!isFinite(waitH)) continue;
+        bestId = id;
+        break;
+      }
+    }
+
+    return bestId !== null ? { type: 'research', researchId: bestId } : null;
   }
 }
