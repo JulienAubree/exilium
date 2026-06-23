@@ -90,6 +90,21 @@ Reporter.aggregate(runs) → rapport
 
 Le **jeu de jalons** et le **seuil de « mur »** sont déclarés dans une petite config réglable.
 
+## Diffusion des findings vers le feedback in-game (décision 2026-06-23)
+
+En plus du rapport dev, les findings notables (murs de progression, stratégie dominante,
+bâtiment/recherche inutile…) doivent être **publiés dans la table `feedbacks`** — mais dans la
+catégorie **`idea`** (et non `debug`). Rationale : un finding d'équilibrage/rythme est une
+**suggestion de design**, pas un bug ; ça donne un découpage propre — friction-bots → `debug`
+(problèmes UX), simulateur gameplay → `idea` (suggestions d'équilibrage). Parallèle de
+`publish-feedback.mjs` (cf. [[project_friction_bots]]) : un étage « synthèse → idées » qui
+transforme les findings bruts du rapport en items de feedback discrets, dédupliqués.
+
+⚠️ Considération : la catégorie `idea` est **partagée avec les vraies idées des joueurs**. Pour
+ne pas noyer leur fil, les items générés doivent être **distinguables** : compte auteur dédié
+(p.ex. un `BalanceBot`, ou réutiliser DebugBot) et/ou un préfixe de titre reconnaissable. À
+trancher au moment d'implémenter cet étage (Phase 2b+, une fois les chiffres fiables).
+
 ## Fidélité (que le sim ne mente pas)
 
 1. **Réutiliser, jamais ré-implémenter** les formules (production, coûts, durées, effets) :
