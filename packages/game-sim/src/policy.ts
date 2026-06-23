@@ -15,7 +15,20 @@ export interface Policy {
 // La stratégie équilibre les niveaux : chaque bâtiment est upgradé à tour de rôle
 // (on monte le bâtiment dont le niveau est le plus bas parmi les éligibles),
 // en respectant l'ordre de priorité comme bris d'égalité.
-const ECO_ORDER = ['solarPlant', 'mineraiMine', 'siliciumMine', 'hydrogeneSynth', 'storageMinerai'];
+// Robotics est inclus avant chantier/arsenal (c'est leur prérequis).
+const ECO_ORDER = [
+  'solarPlant',
+  'mineraiMine',
+  'siliciumMine',
+  'hydrogeneSynth',
+  'storageMinerai',
+  'storageSilicium',
+  'storageHydrogene',
+  'robotics',
+  'researchLab',
+  'shipyard',
+  'arsenal',
+];
 
 export class EcoPolicy implements Policy {
   name = 'eco';
