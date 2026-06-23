@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadBuildings, loadProductionConfig, loadResearch, loadBonuses } from './config.js';
+import { loadBuildings, loadProductionConfig, loadResearch, loadBonuses, loadShips } from './config.js';
 
 describe('config', () => {
   it('mappe la mine de minerai vers un BuildingCostDef', () => {
@@ -17,5 +17,10 @@ describe('config', () => {
   });
   it('expose le bonus energyTech→energy_production', () => {
     expect(loadBonuses().some((b) => b.sourceId === 'energyTech' && b.stat === 'energy_production')).toBe(true);
+  });
+  it('charge le prospector (coût + prérequis chantier L2)', () => {
+    const s = loadShips().get('prospector')!;
+    expect(s.cost).toEqual({ minerai: 2250, silicium: 750, hydrogene: 375 });
+    expect(s.prereqBuildings).toContainEqual({ buildingId: 'shipyard', level: 2 });
   });
 });

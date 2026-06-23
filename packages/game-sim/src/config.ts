@@ -1,4 +1,4 @@
-import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS } from '@exilium/db';
+import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS } from '@exilium/db';
 import type { BuildingCostDef, ResearchCostDef, BonusDefinition } from '@exilium/game-engine';
 
 export interface BuildingDef {
@@ -75,4 +75,24 @@ export function loadResearch(): Map<string, ResearchDef> {
 
 export function loadBonuses(): BonusDefinition[] {
   return BONUS_DEFINITIONS as BonusDefinition[];
+}
+
+export interface ShipDef {
+  id: string;
+  cost: { minerai: number; silicium: number; hydrogene: number };
+  prereqBuildings: { buildingId: string; level: number }[];
+  prereqResearch: { researchId: string; level: number }[];
+}
+
+export function loadShips(): Map<string, ShipDef> {
+  const m = new Map<string, ShipDef>();
+  for (const r of SHIPS as any[]) {
+    m.set(r.id, {
+      id: r.id,
+      cost: { minerai: r.costMinerai, silicium: r.costSilicium, hydrogene: r.costHydrogene },
+      prereqBuildings: r.prerequisites?.buildings ?? [],
+      prereqResearch: r.prerequisites?.research ?? [],
+    });
+  }
+  return m;
 }
