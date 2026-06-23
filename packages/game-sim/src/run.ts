@@ -4,6 +4,7 @@ import { loadBuildings, loadProductionConfig } from './config.js';
 import { initState } from './state.js';
 import { SimEngine } from './engine.js';
 import { EcoPolicy, type Policy } from './policy.js';
+import { OptimalPolicy } from './optimal-policy.js';
 import { Recorder, type Milestone, type RunResult } from './recorder.js';
 import { renderReport } from './reporter.js';
 
@@ -15,7 +16,8 @@ const MILESTONES: Milestone[] = [
   { id: 'robotics', reach: (s) => (s.levels.get('robotics') ?? 0) >= 1 },
 ];
 
-function runPolicy(policy: Policy): RunResult {
+/** Exported for testing: runs a given policy and returns a RunResult. */
+export function runPolicy(policy: Policy): RunResult {
   const buildings = loadBuildings();
   const engine = new SimEngine(buildings, loadProductionConfig());
   const rec = new Recorder(MILESTONES);
@@ -38,6 +40,11 @@ export function runEco(): RunResult {
   return runPolicy(new EcoPolicy());
 }
 
+/** Exported for testing: runs all profiles (eco + optimal) and returns their RunResults. */
+export function runAll(): RunResult[] {
+  return [runPolicy(new EcoPolicy()), runPolicy(new OptimalPolicy())];
+}
+
 // Main: write the report to disk when executed directly.
 // Vitest imports this module but does NOT run the top-level side-effects block
 // because it only imports named exports; the block below is guarded by a check
@@ -48,7 +55,7 @@ const isMain =
   (process.argv[1].endsWith('/run.js') || process.argv[1].endsWith('/run.ts'));
 
 if (isMain) {
-  const results = [runEco()];
+  const results = runAll();
   const md = renderReport(results);
   const dir = join(process.cwd(), 'reports', '_sim');
   mkdirSync(dir, { recursive: true });
