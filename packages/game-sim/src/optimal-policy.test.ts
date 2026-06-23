@@ -18,8 +18,8 @@ function timeToShipyard(policy: { decide: any; name: string }): number {
     const waitH = engine.timeToAfford(s, engine.costOf(a.buildingId, (s.levels.get(a.buildingId) ?? 0) + 1));
     if (!isFinite(waitH)) break;
     engine.startBuild(s, a.buildingId);
-    rec.onAction(s, a, waitH);
-    engine.advance(s, engine.nextEventIn(s));
+    engine.advance(s, engine.nextEventIn(s)); // complète la construction → niveaux à jour
+    rec.onAction(s, a, waitH); // …puis on horodate les jalons avec l'état post-construction
     if ((s.levels.get('shipyard') ?? 0) >= 1) break;
   }
   return rec.result(policy.name).milestones.find((m) => m.id === 'shipyard')?.timeSec ?? Infinity;
@@ -27,7 +27,12 @@ function timeToShipyard(policy: { decide: any; name: string }): number {
 
 describe('OptimalPolicy', () => {
   it("atteint le chantier au plus tard aussi vite que l'éco (borne basse)", () => {
-    expect(timeToShipyard(new OptimalPolicy())).toBeLessThanOrEqual(timeToShipyard(new EcoPolicy()));
+    const opt = timeToShipyard(new OptimalPolicy());
+    const eco = timeToShipyard(new EcoPolicy());
+    // Les deux DOIVENT atteindre le jalon (sinon le test passerait trivialement Infinity<=Infinity).
+    expect(opt).toBeLessThan(Infinity);
+    expect(eco).toBeLessThan(Infinity);
+    expect(opt).toBeLessThanOrEqual(eco);
   });
   it('ne propose jamais un bâtiment au max ou aux prérequis non remplis', () => {
     const buildings = loadBuildings();
