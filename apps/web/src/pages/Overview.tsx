@@ -2,7 +2,9 @@ import { RARITY_HEX } from '@/lib/rarity';
 import { useState, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router';
-import { Building2 } from 'lucide-react';
+import { Building2, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
@@ -284,6 +286,44 @@ function PlanetDetailContent({ planet, resourceData, gameConfig, governance }: {
   );
 }
 
+/**
+ * Réglages occasionnels de la planète (vocation + gouverneur), repliés par
+ * défaut : l'Overview met l'état live en avant (héros, production, ressources)
+ * et n'impose plus la configuration — on la déplie quand on veut y toucher.
+ */
+function PlanetConfigSection({ planet }: { planet: any }) {
+  const { isOpen, toggle } = useDisclosure();
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={isOpen}
+        className="glass-card flex min-h-[44px] w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:border-border-strong"
+      >
+        <SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="font-display text-sm font-semibold tracking-tight text-foreground">Configuration de la planète</span>
+        <span className="hidden text-xs text-muted-foreground sm:inline">Vocation · Gouverneur</span>
+        <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', isOpen && 'rotate-180')} />
+      </button>
+      {isOpen && (
+        <>
+          <VocationCard
+            planetId={planet.id}
+            planetClassId={planet.planetClassId}
+            vocation={(planet as { vocation?: string | null }).vocation ?? null}
+            vocationChangedAt={(planet as { vocationChangedAt?: string | null }).vocationChangedAt ?? null}
+          />
+          <GovernorCard
+            planetId={planet.id}
+            governor={(planet as { governor?: string | null }).governor ?? null}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Overview() {
   const { planetId } = useOutletContext<{ planetId?: string }>();
   const utils = trpc.useUtils();
@@ -470,19 +510,8 @@ export default function Overview() {
         {/* 4. Governance warning */}
         <GovernanceAlert planetClassId={planet.planetClassId} />
 
-        {/* 4b. Spécialisation du monde (chantier Empire) */}
-        <VocationCard
-          planetId={planet.id}
-          planetClassId={planet.planetClassId}
-          vocation={(planet as { vocation?: string | null }).vocation ?? null}
-          vocationChangedAt={(planet as { vocationChangedAt?: string | null }).vocationChangedAt ?? null}
-        />
-
-        {/* 4c. Gouverneur (délégation) */}
-        <GovernorCard
-          planetId={planet.id}
-          governor={(planet as { governor?: string | null }).governor ?? null}
-        />
+        {/* 4b. Configuration de la planète (vocation + gouverneur) — repliée par défaut */}
+        <PlanetConfigSection planet={planet} />
 
         {/* 5. Attack alert */}
         <AttackAlert
