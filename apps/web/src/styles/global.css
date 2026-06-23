@@ -126,7 +126,12 @@
      les ~100 usages existants migrent d'un coup. Alias déprécié de Surface,
      à remplacer par <Surface> au fil de l'eau (M2). */
   .glass-card {
-    @apply bg-surface border border-border rounded-lg;
+    @apply border border-border rounded-lg;
+    /* Profondeur : dégradé vers le bas (le haut reste à --surface 8% pour
+       préserver le contraste AA) + liseré de lumière en haut (effet « éclairé
+       d'en haut »), pour que les panneaux se détachent du fond spatial. */
+    background-image: linear-gradient(180deg, hsl(var(--surface)), hsl(220 48% 5%));
+    box-shadow: inset 0 1px 0 0 hsl(200 60% 92% / 0.05);
   }
 
   /* Halo around an icon container — works on non-text elements where
@@ -146,7 +151,9 @@
 
   /* v2 : hovers des retro-cards sans glow — bordure renforcée uniquement. */
   .retro-card {
-    @apply bg-surface border border-border rounded-md transition-colors;
+    @apply border border-border rounded-md transition-colors;
+    background-image: linear-gradient(180deg, hsl(var(--surface)), hsl(220 48% 5%));
+    box-shadow: inset 0 1px 0 0 hsl(200 60% 92% / 0.05);
   }
   .retro-card:hover,
   .retro-card-minerai:hover,

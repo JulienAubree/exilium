@@ -83,7 +83,7 @@ export function Sidebar() {
     .filter((section) => section.items.length > 0);
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col bg-surface border-r border-border/60">
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col border-r border-border/60 bg-gradient-to-b from-surface-raised/40 to-[hsl(220_50%_4%)]">
       <SidebarPulse />
       <nav className="flex-1 overflow-y-auto p-2">
         {renderedSections.map((section, idx) => (

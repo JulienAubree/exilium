@@ -101,7 +101,7 @@ function ResourceCounter({ icon, value, colorClass, suffix, capacity, warning }:
     <div className="flex items-center gap-1">
       {icon}
       <span
-        className={cn('text-sm font-medium tabular-nums', overCap ? 'text-amber-400' : colorClass)}
+        className={cn('font-display text-sm font-semibold tabular-nums', overCap ? 'text-amber-400' : colorClass)}
         title={warning ?? (overCap ? 'Stock au-delà de la capacité (production à l’arrêt)' : undefined)}
       >
         {formatNumber(Math.floor(value))}{suffix}
