@@ -201,7 +201,7 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                 </form>
               ) : (
                 <h1
-                  className={`text-xl lg:text-2xl font-bold text-foreground truncate ${!planet.renamed ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                  className={`font-display tracking-tight text-xl lg:text-2xl font-bold text-foreground truncate ${!planet.renamed ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
                   onClick={!planet.renamed ? () => { setNewName(planet.name); setIsRenaming(true); } : undefined}
                   title={!planet.renamed ? 'Cliquer pour renommer' : undefined}
                 >

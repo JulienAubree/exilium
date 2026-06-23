@@ -19,6 +19,8 @@
     "@exilium/api": "workspace:*",
     "@exilium/game-engine": "workspace:*",
     "@exilium/shared": "workspace:*",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
     "@tanstack/react-query": "^5.64.1",
     "@trpc/client": "^11.0.0-rc.682",
     "@trpc/react-query": "^11.0.0-rc.682",
