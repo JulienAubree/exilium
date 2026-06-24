@@ -16,6 +16,7 @@ import ColonizationProgress from './ColonizationProgress';
 
 // Above-the-fold: imported eagerly so first paint has the hero + KPIs.
 import { OverviewHero } from '@/components/overview/OverviewHero';
+import { OverviewAlerts } from '@/components/overview/OverviewAlerts';
 import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
 import { VocationCard } from '@/components/overview/VocationCard';
 import { GovernorCard } from '@/components/overview/GovernorCard';
@@ -462,6 +463,9 @@ export default function Overview() {
 
       {/* Content with padding */}
       <div className="space-y-3 px-4 pb-4 lg:px-6 lg:pb-6">
+
+      {/* 1b. Cockpit : ce qui demande l'attention (alertes remontées) */}
+      <OverviewAlerts data={resourceData} hostileCount={hostileInbound.length} />
 
       {/* 2. KPI Bar */}
       <OverviewKpiBar

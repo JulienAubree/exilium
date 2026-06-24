@@ -29,7 +29,7 @@ const PLANET_NAV_ITEMS: PlanetNavItem[] = [
   { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
   { label: 'Énergie', path: '/energy', icon: Zap as React.ComponentType<React.SVGProps<SVGSVGElement>> },
   { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
-  { label: 'Production', path: '/production', icon: ShipyardIcon },
+  { label: 'Chantier', path: '/production', icon: ShipyardIcon },
 ];
 
 function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, warning }: {

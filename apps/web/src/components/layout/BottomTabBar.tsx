@@ -39,7 +39,7 @@ const SHEET_ITEMS = {
     { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
     { label: 'Énergie', path: '/energy', icon: Zap as any },
     { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
-    { label: 'Production', path: '/production', icon: ShipyardIcon },
+    { label: 'Chantier', path: '/production', icon: ShipyardIcon },
   ],
   galaxie: [
     { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
