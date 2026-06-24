@@ -267,7 +267,7 @@ function ResourcePanel({
       </div>
       <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t border-border/30">
         Total :{' '}
-        <span className={cn('font-semibold ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
+        <span className={cn('font-display font-semibold tabular-nums ml-1', colorMap[resource])}>{formatRate(total)}/h</span>
       </div>
     </div>
   );
@@ -470,7 +470,7 @@ function MiniCard({ label, value, color }: { label: string; value: string; color
   return (
     <div className="rounded-lg border border-border/30 bg-card/50 px-3 py-1.5">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn('text-sm font-bold', color)}>{value}</div>
+      <div className={cn('font-display tabular-nums text-sm font-bold', color)}>{value}</div>
     </div>
   );
 }

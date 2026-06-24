@@ -81,7 +81,7 @@ export function EmpireHero({
 
             {/* Title + sub-line */}
             <div className="flex-1 min-w-0 pt-1">
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
+              <h1 className="font-display tracking-tight text-xl lg:text-2xl font-bold text-foreground truncate">
                 {username}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">

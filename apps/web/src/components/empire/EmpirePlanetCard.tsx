@@ -112,7 +112,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-foreground">
+            <div className="truncate font-display tracking-tight text-sm font-semibold text-foreground">
               {planet.name}
             </div>
             <div className="text-xs text-muted-foreground">
@@ -168,7 +168,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         </button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <button onClick={() => goTo('/')} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
+            <button onClick={() => goTo('/')} className="truncate font-display tracking-tight text-sm font-semibold text-foreground hover:text-primary transition-colors text-left">
               {planet.name}
             </button>
             {planet.hasFlagship && (
@@ -229,10 +229,10 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
               <div key={r.label} className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between">
                   <span className={cn('text-xs font-bold', r.color)}>{r.label}</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={cn('text-xs font-semibold', r.color)}>{formatRate(r.value)}</span>
-                    <span className="text-xs text-muted-foreground">/ {formatRate(r.max)}</span>
-                    <span className={cn('text-xs', r.color)}>+{formatRate(r.rate)}/h</span>
+                  <div className="flex items-baseline gap-1.5" title={`${r.value.toLocaleString('fr-FR')} / ${r.max.toLocaleString('fr-FR')} · +${Math.round(r.rate).toLocaleString('fr-FR')}/h`}>
+                    <span className={cn('font-display text-sm font-semibold tabular-nums', r.color)}>{formatRate(r.value)}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">/ {formatRate(r.max)}</span>
+                    <span className={cn('text-xs tabular-nums', r.color)}>+{formatRate(r.rate)}/h</span>
                   </div>
                 </div>
                 <div className="h-[4px] overflow-hidden rounded-full bg-muted">
