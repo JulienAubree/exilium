@@ -8,9 +8,18 @@ import { PlanetSelectorDropdown } from './topbar/PlanetSelectorDropdown';
 import { TopBarActions } from './topbar/TopBarActions';
 import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
 
-function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, warning }: {
+/** Taux compact : 7234 → « 7.2k », 1_200_000 → « 1.2M ». */
+function formatRate(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
+function ResourceBadge({ label, value, rate, glowClass, colorClass, icon, capacity, warning }: {
   label: string;
   value: number;
+  rate?: number;
   glowClass: string;
   colorClass: string;
   icon?: React.ReactNode;
@@ -32,6 +41,12 @@ function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, wa
       >
         {value.toLocaleString('fr-FR')}
       </span>
+      {/* Flux fusionné depuis l'ex-barre KPI (refonte « 1 ressource = stock + flux »). */}
+      {rate != null && rate !== 0 && (
+        <span className="text-xs tabular-nums text-muted-foreground/70" title="Production par heure">
+          {rate > 0 ? '+' : ''}{formatRate(rate)}/h
+        </span>
+      )}
       {warning && <AlertTriangle className="h-3 w-3 text-red-400 animate-pulse" />}
     </div>
   );
@@ -100,6 +115,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Minerai"
               value={resources.minerai}
+              rate={resourceData?.rates.mineraiPerHour}
               glowClass=""
               colorClass="text-minerai"
               icon={<MineraiIcon size={14} />}
@@ -108,6 +124,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Silicium"
               value={resources.silicium}
+              rate={resourceData?.rates.siliciumPerHour}
               glowClass=""
               colorClass="text-silicium"
               icon={<SiliciumIcon size={14} />}
@@ -116,6 +133,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Hydrogène"
               value={resources.hydrogene}
+              rate={resourceData?.rates.hydrogenePerHour}
               glowClass=""
               colorClass="text-hydrogene"
               icon={<HydrogeneIcon size={14} />}

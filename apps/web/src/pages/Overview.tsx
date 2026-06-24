@@ -6,7 +6,6 @@ import { Building2, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { cn } from '@/lib/utils';
 import { trpc } from '@/trpc';
-import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { OverviewSkeleton } from '@/components/common/PageSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -18,7 +17,6 @@ import ColonizationProgress from './ColonizationProgress';
 import { OverviewHero } from '@/components/overview/OverviewHero';
 import { OverviewAlerts } from '@/components/overview/OverviewAlerts';
 import { AbsenceSummaryBanner } from '@/components/overview/AbsenceSummaryBanner';
-import { OverviewKpiBar } from '@/components/overview/OverviewKpiBar';
 import { VocationCard } from '@/components/overview/VocationCard';
 import { GovernorCard } from '@/components/overview/GovernorCard';
 
@@ -340,23 +338,6 @@ export default function Overview() {
     { enabled: !!planetId },
   );
 
-  const liveResources = useResourceCounter(
-    resourceData
-      ? {
-          minerai: resourceData.minerai,
-          silicium: resourceData.silicium,
-          hydrogene: resourceData.hydrogene,
-          resourcesUpdatedAt: resourceData.resourcesUpdatedAt,
-          mineraiPerHour: resourceData.rates.mineraiPerHour,
-          siliciumPerHour: resourceData.rates.siliciumPerHour,
-          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
-          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
-          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
-          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
-        }
-      : undefined,
-  );
-
   const { data: buildings } = trpc.building.list.useQuery(
     { planetId: planetId! },
     { enabled: !!planetId },
@@ -471,28 +452,8 @@ export default function Overview() {
       {/* 1c. Bon retour, Commandant — résumé d'absence (bannière, ex-modal bloquant) */}
       <AbsenceSummaryBanner />
 
-      {/* 2. KPI Bar */}
-      <OverviewKpiBar
-        resources={resourceData ? {
-          minerai: resourceData.minerai,
-          silicium: resourceData.silicium,
-          hydrogene: resourceData.hydrogene,
-          mineraiPerHour: resourceData.rates.mineraiPerHour,
-          siliciumPerHour: resourceData.rates.siliciumPerHour,
-          hydrogenePerHour: resourceData.rates.hydrogenePerHour,
-          storageMineraiCapacity: resourceData.rates.storageMineraiCapacity,
-          storageSiliciumCapacity: resourceData.rates.storageSiliciumCapacity,
-          storageHydrogeneCapacity: resourceData.rates.storageHydrogeneCapacity,
-          energyProduced: resourceData.rates.energyProduced,
-          energyConsumed: resourceData.rates.energyConsumed,
-          protectedMinerai: resourceData.protectedMinerai,
-          protectedSilicium: resourceData.protectedSilicium,
-          protectedHydrogene: resourceData.protectedHydrogene,
-        } : undefined}
-        liveResources={liveResources}
-        ships={stationaryShips}
-        levels={resourceData?.levels}
-      />
+      {/* La barre KPI (taux) a fusionné dans la barre ressources de la topbar
+          (refonte « 1 ressource = stock + flux ») → une bande de moins ici. */}
 
       <Suspense fallback={<LazySkel />}>
         {/* 2b. Bonus actifs — le détail exact appliqué par le serveur (rates.bonuses) */}
