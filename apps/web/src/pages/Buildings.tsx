@@ -631,7 +631,56 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
   );
 }
 
-/** Legacy default export — kept for the /buildings legacy route which redirects to /resources. */
+/**
+ * Page « Bâtiments » unifiée (refonte IA P3, option A2) : le catalogue de TOUS
+ * les bâtiments de la planète, avec des puces de filtre par catégorie. Le
+ * chantier (vaisseaux+défenses) reste sur son propre onglet, donc shipyard/
+ * arsenal sont exclus ici.
+ */
 export default function Buildings() {
-  return <BuildingsList title="Bâtiments" />;
+  const { data: gameConfig } = useGameConfig();
+  const [activeCat, setActiveCat] = useState<string | null>(null);
+
+  const cats = useMemo(
+    () =>
+      (gameConfig?.categories ?? [])
+        .filter((c) => c.entityType === 'building')
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [gameConfig],
+  );
+
+  const chipClass = (active: boolean) =>
+    cn(
+      'min-h-[36px] rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+      active
+        ? 'border-primary/40 bg-primary/15 text-primary'
+        : 'border-border bg-card/60 text-muted-foreground hover:border-border-strong hover:text-foreground',
+    );
+
+  return (
+    <div className="space-y-4 p-4 lg:space-y-5 lg:p-6">
+      <PageHeader title="Bâtiments" description="Tous les bâtiments de la planète — filtre par catégorie." />
+
+      {cats.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          <button type="button" onClick={() => setActiveCat(null)} className={chipClass(activeCat === null)}>
+            Tout
+          </button>
+          {cats.map((c) => (
+            <button key={c.id} type="button" onClick={() => setActiveCat(c.id)} className={chipClass(activeCat === c.id)}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <BuildingsList
+        title="Bâtiments"
+        hideHeader
+        categoryIds={activeCat ? [activeCat] : undefined}
+        excludeBuildingIds={['shipyard', 'arsenal']}
+        containerClassName="space-y-4 lg:space-y-6"
+      />
+    </div>
+  );
 }

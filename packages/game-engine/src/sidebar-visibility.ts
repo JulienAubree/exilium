@@ -25,6 +25,7 @@ export const SIDEBAR_VISIBILITY_RULES = {
   '/energy': always,
   '/resources': always,
   '/infrastructures': always,
+  '/buildings': always,
   '/production': atChapter(2),
   '/galaxy': atChapter(3),
   '/fleet': atChapter(3),

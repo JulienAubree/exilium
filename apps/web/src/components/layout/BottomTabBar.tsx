@@ -21,7 +21,7 @@ import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
   empire: ['/empire', '/research'],
-  planete: ['/', '/resources', '/infrastructures', '/energy', '/production'],
+  planete: ['/', '/resources', '/infrastructures', '/buildings', '/energy', '/production'],
   galaxie: ['/galaxy', '/missions', '/market'],
   flotte: ['/fleet'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
@@ -38,7 +38,7 @@ const SHEET_ITEMS = {
     { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
     { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
     { label: 'Énergie', path: '/energy', icon: Zap as any },
-    { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
+    { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
     { label: 'Chantier', path: '/production', icon: ShipyardIcon },
   ],
   galaxie: [

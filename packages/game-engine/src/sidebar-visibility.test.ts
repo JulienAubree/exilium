@@ -8,13 +8,14 @@ describe('getVisibleSidebarPaths', () => {
     expect(visible.has('/')).toBe(true);
     expect(visible.has('/resources')).toBe(true);
     expect(visible.has('/infrastructures')).toBe(true);
+    expect(visible.has('/buildings')).toBe(true);
     expect(visible.has('/energy')).toBe(true);
     expect(visible.has('/messages')).toBe(true);
     expect(visible.has('/changelog')).toBe(true);
     expect(visible.has('/feedback')).toBe(true);
     expect(visible.has('/research')).toBe(false);
     expect(visible.has('/production')).toBe(false);
-    expect(visible.size).toBe(7);
+    expect(visible.size).toBe(8);
   });
 
   it('chapter 2: adds research and production', () => {
@@ -51,9 +52,9 @@ describe('getVisibleSidebarPaths', () => {
     expect(visible.has('/empire')).toBe(false);
   });
 
-  it('fully unlocked state: all 17 items visible', () => {
+  it('fully unlocked state: all 18 items visible', () => {
     const visible = getVisibleSidebarPaths({ chapterOrder: 4, isComplete: true, colonyCount: 2 });
-    expect(visible.size).toBe(17);
+    expect(visible.size).toBe(18);
     expect(visible.has('/politiques')).toBe(true);
   });
 });

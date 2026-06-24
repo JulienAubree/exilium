@@ -28,7 +28,7 @@ const PLANET_NAV_ITEMS: PlanetNavItem[] = [
   { label: "Vue d'ensemble", path: '/', icon: OverviewIcon, end: true },
   { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
   { label: 'Énergie', path: '/energy', icon: Zap as React.ComponentType<React.SVGProps<SVGSVGElement>> },
-  { label: 'Infrastructures', path: '/infrastructures', icon: BuildingsIcon },
+  { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
   { label: 'Chantier', path: '/production', icon: ShipyardIcon },
 ];
 
