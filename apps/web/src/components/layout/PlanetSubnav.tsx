@@ -28,9 +28,8 @@ function ResourceBadge({ label, value, rate, glowClass, colorClass, icon, capaci
 }) {
   const overCap = capacity != null && value > capacity;
   return (
-    <div className="flex items-center gap-2">
-      {icon && <span className={colorClass}>{icon}</span>}
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="flex items-center gap-1.5" title={label}>
+      {icon && <span className={colorClass} aria-label={label}>{icon}</span>}
       <span
         className={cn(
           'font-display text-sm font-semibold tabular-nums',
