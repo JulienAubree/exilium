@@ -73,7 +73,14 @@ export function ShipMobileRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium truncate">{ship.name}</span>
-            <span className="text-xs text-muted-foreground">x{ship.count}</span>
+            <span
+              className={cn(
+                'shrink-0 rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums',
+                ship.count > 0 ? 'bg-emerald-600/90 text-white' : 'text-muted-foreground',
+              )}
+            >
+              ×{ship.count}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
             <ResourceCost

@@ -84,8 +84,16 @@ export function ShipCard({
             !ship.prerequisitesMet && 'opacity-40 grayscale',
           )}
         />
-        <span className="absolute top-2 right-2 bg-slate-700/80 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-          x{ship.count}
+        <span
+          className={cn(
+            'absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-bold tabular-nums shadow-md',
+            ship.count > 0
+              ? 'bg-emerald-600 text-white ring-1 ring-emerald-300/40'
+              : 'bg-slate-900/85 text-slate-300 ring-1 ring-white/10',
+          )}
+          title={`${ship.count} en flotte`}
+        >
+          ×{ship.count}
         </span>
       </button>
 
