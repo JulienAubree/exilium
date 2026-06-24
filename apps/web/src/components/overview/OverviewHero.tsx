@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Building2, HelpCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Building2, HelpCircle, Sparkles } from 'lucide-react';
+import { OverviewBonuses } from './OverviewBonuses';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FlagshipIcon } from '@/lib/icons';
@@ -48,6 +50,56 @@ interface OverviewHeroProps {
   allPlanets: AbandonModalPlanet[];
   renderBiomeBadge: (biome: OverviewHeroBiome) => React.ReactNode;
   renderPlanetDetail: (planet: OverviewHeroPlanet) => React.ReactNode;
+}
+
+/**
+ * Trigger « Détails » au survol → popover avec TOUS les bonus actifs (y compris
+ * les non-production : conso énergie, coques de combat, réparation amiral). En
+ * portal pour échapper à l'overflow-hidden du héros ; réutilise le rendu
+ * d'OverviewBonuses (ex-panneau).
+ */
+function BonusDetailPopover({ bonuses }: { bonuses?: { source: string; stat: string; modifier: number }[] }) {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  if (!bonuses || bonuses.length === 0) return null;
+
+  const handleEnter = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const width = 380;
+      let left = rect.left;
+      if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
+      setCoords({ top: rect.bottom + 6, left });
+    }
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onMouseEnter={handleEnter}
+        onMouseLeave={() => { setOpen(false); setCoords(null); }}
+        className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary/80 transition-colors hover:bg-primary/10"
+        aria-label="Voir tous les bonus actifs de la planète"
+      >
+        <Sparkles className="h-[13px] w-[13px]" />
+        Détails
+      </button>
+      {open && coords && createPortal(
+        <div
+          className="pointer-events-none fixed z-[9999] w-[min(92vw,380px)] rounded-lg bg-popover shadow-xl ring-1 ring-border"
+          style={{ top: coords.top, left: coords.left }}
+        >
+          <OverviewBonuses bonuses={bonuses} />
+        </div>,
+        document.body,
+      )}
+    </>
+  );
 }
 
 export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses, governance, allPlanets, renderBiomeBadge, renderPlanetDetail }: OverviewHeroProps) {
@@ -261,6 +313,7 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                       -{Math.round(governance.harvestMalus * 100)}%
                     </span>
                   )}
+                  <BonusDetailPopover bonuses={bonuses} />
                 </div>
               )}
             </div>
