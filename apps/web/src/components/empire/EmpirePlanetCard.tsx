@@ -360,7 +360,7 @@ export function EmpirePlanetCard({ planet, isFirst, allPlanets, fleet, viewMode 
         {viewMode === 'resources' ? (
           [
             { label: 'Bâtiments', icon: Building2, path: '/buildings' },
-            { label: 'Production', icon: Wrench, path: '/production' },
+            { label: 'Chantier', icon: Wrench, path: '/production' },
             { label: 'Flottes', icon: Layers, path: '/fleet' },
             { label: 'Défenses', icon: Shield, path: '/production?tab=defenses' },
           ].map((item, i, arr) => (
