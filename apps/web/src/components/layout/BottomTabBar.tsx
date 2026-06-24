@@ -31,7 +31,7 @@ type TabGroup = keyof typeof TAB_GROUPS;
 
 const SHEET_ITEMS = {
   empire: [
-    { label: 'Empire', path: '/empire', icon: EmpireIcon },
+    { label: 'Colonies', path: '/empire', icon: EmpireIcon },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
   ],
   planete: [

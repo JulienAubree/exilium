@@ -1,7 +1,38 @@
 import type { ReactNode } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Crown } from 'lucide-react';
+import { Link } from 'react-router';
+import { trpc } from '@/trpc';
 import { HeroAtmosphere } from '@/components/common/HeroAtmosphere';
 import { useHomepageContent } from '@/components/landing/useHomepageContent';
+
+/**
+ * Niveau d'empire intégré à l'en-tête Colonies (refonte IA : un seul résumé
+ * d'empire). Renvoie vers la page Progression d'empire pour le détail (paliers,
+ * XP). Remplace le besoin d'un second « écran résumé ».
+ */
+function EmpireLevelBadge() {
+  const { data } = trpc.empireProgression.get.useQuery();
+  if (data?.level == null) return null;
+  const xpPct =
+    data.nextLevelXp != null
+      ? Math.min(100, Math.round(((data.xp - data.currentLevelXp) / Math.max(1, data.nextLevelXp - data.currentLevelXp)) * 100))
+      : null;
+  return (
+    <Link
+      to="/progression"
+      className="mt-1.5 inline-flex items-center gap-2 rounded-full border border-energy/30 bg-energy/10 px-2.5 py-1 text-xs text-energy transition-colors hover:bg-energy/15"
+      title="Progression d'empire — niveau, XP, paliers"
+    >
+      <Crown className="h-3.5 w-3.5" />
+      <span className="font-display font-semibold">Empire Nv. {data.level}</span>
+      {xpPct != null && (
+        <span className="h-1 w-12 overflow-hidden rounded-full bg-energy/20">
+          <span className="block h-1 rounded-full bg-energy/70" style={{ width: `${xpPct}%` }} />
+        </span>
+      )}
+    </Link>
+  );
+}
 
 interface EmpireHeroProps {
   username: string;
@@ -103,6 +134,7 @@ export function EmpireHero({
                   </>
                 )}
               </p>
+              <EmpireLevelBadge />
             </div>
           </div>
 
