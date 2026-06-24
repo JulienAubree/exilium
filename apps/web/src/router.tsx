@@ -116,9 +116,10 @@ export const router = createBrowserRouter([
         element: <Navigate to="/" replace />,
       },
       {
+        // Ressources fusionnées dans la Vue d'ensemble (refonte IA) — stockage
+        // sur l'Overview, mines dans Bâtiments. /resources redirige vers /.
         path: 'resources',
-        lazy: lazyLoad(() => import('./pages/Resources')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/" replace />,
       },
       {
         path: 'infrastructures',

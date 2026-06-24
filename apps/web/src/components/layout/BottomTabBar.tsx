@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from 'react-router';
 import {
   OverviewIcon,
-  ResourcesIcon,
   BuildingsIcon,
   ResearchIcon,
   ShipyardIcon,
@@ -35,7 +34,6 @@ const SHEET_ITEMS = {
   ],
   planete: [
     { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-    { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
     { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
     { label: 'Chantier', path: '/production', icon: ShipyardIcon },
   ],

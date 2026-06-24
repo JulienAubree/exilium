@@ -15,7 +15,6 @@ import {
   MissionsIcon,
   EmpireIcon,
   OverviewIcon,
-  ResourcesIcon,
   BuildingsIcon,
   ShipyardIcon,
 } from '@/lib/icons';
@@ -31,7 +30,6 @@ const sections: { title: string; items: NavItem[] }[] = [
     title: 'Planète',
     items: [
       { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
-      { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
       { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
       { label: 'Chantier', path: '/production', icon: ShipyardIcon },
     ],
