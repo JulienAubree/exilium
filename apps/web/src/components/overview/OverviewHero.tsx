@@ -215,13 +215,14 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                 [{planet.galaxy}:{planet.system}:{planet.position}]
                 {planetTypeName && <> · <span className="text-foreground/80">{planetTypeName}</span></>}
               </p>
-              {/* Cumulated bonuses (type + biomes) with resource icons */}
+              {/* Bonus de production par ressource — en pills (refonte clarté :
+                  remplace l'ancien panneau « Bonus actifs », redondant). */}
               {hasBonuses && (
-                <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   {cumulatedBonuses['minerai'] != null && (() => {
                     const pct = Math.round(cumulatedBonuses['minerai'] * 100);
                     return (
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${pct > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                         <MineraiIcon size={13} className="text-minerai" />
                         {pct > 0 ? '+' : ''}{pct}%
                       </span>
@@ -230,7 +231,7 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                   {cumulatedBonuses['silicium'] != null && (() => {
                     const pct = Math.round(cumulatedBonuses['silicium'] * 100);
                     return (
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${pct > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                         <SiliciumIcon size={13} className="text-silicium" />
                         {pct > 0 ? '+' : ''}{pct}%
                       </span>
@@ -239,7 +240,7 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                   {cumulatedBonuses['hydrogene'] != null && (() => {
                     const pct = Math.round(cumulatedBonuses['hydrogene'] * 100);
                     return (
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${pct > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                         <HydrogeneIcon size={13} className="text-hydrogene" />
                         {pct > 0 ? '+' : ''}{pct}%
                       </span>
@@ -248,7 +249,7 @@ export function OverviewHero({ planet, flagshipOnPlanet, planetTypeName, bonuses
                   {cumulatedBonuses['energy'] != null && (() => {
                     const pct = Math.round(cumulatedBonuses['energy'] * 100);
                     return (
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${pct > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                         <EnergieIcon size={13} className="text-energy" />
                         {pct > 0 ? '+' : ''}{pct}%
                       </span>

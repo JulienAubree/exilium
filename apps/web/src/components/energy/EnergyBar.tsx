@@ -24,7 +24,7 @@ export function EnergyBar({ totalProduced, totalConsumed, segments, productionFa
           {sufficient ? 'Énergie disponible' : 'Déficit énergétique'}
         </span>
         <span className={`font-mono text-sm font-bold ${sufficient ? 'text-energy' : 'text-destructive'}`}>
-          {available} <span className="text-muted-foreground font-normal">/ {totalProduced}</span>
+          {available}
         </span>
       </div>
 

@@ -99,6 +99,17 @@ export function OverviewActivities({
   const activeShipBatches = shipyardQueue.filter((q) => q.status === 'active' && q.endTime);
   const tabFor = (type: string) => (type === 'defense' ? 'defenses' : 'vaisseaux');
 
+  // Rien en cours : condenser les 2 cartes vides en une seule ligne compacte.
+  if (!activeBuilding && activeShipBatches.length === 0) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border/40 bg-card/40 px-4 py-2.5 text-sm">
+        <span className="text-muted-foreground">Rien en cours —</span>
+        <button type="button" onClick={() => navigate('/buildings')} className="font-medium text-primary transition-colors hover:text-primary/80">Construire un bâtiment →</button>
+        <button type="button" onClick={() => navigate('/production?tab=vaisseaux')} className="font-medium text-primary transition-colors hover:text-primary/80">Lancer une production →</button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-3 overflow-x-auto">
       {/* Construction slot */}

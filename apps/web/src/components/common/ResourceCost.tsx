@@ -1,6 +1,14 @@
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from './ResourceIcons';
 
+/** Coût compact pour la cohérence d'affichage : 1010046 → « 1.0M », 252511 → « 252.5k ». */
+function formatCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
 interface ResourceCostProps {
   minerai: number;
   silicium: number;
@@ -39,12 +47,12 @@ export function ResourceCost({
             )}
             title={
               !canAfford(item.value, item.current) && item.current !== undefined
-                ? `${(item.value - item.current).toLocaleString('fr-FR')} manquant`
-                : undefined
+                ? `${item.value.toLocaleString('fr-FR')} · ${(item.value - item.current).toLocaleString('fr-FR')} manquant`
+                : item.value.toLocaleString('fr-FR')
             }
           >
             {item.icon}
-            {item.value.toLocaleString('fr-FR')}
+            {formatCompact(item.value)}
           </span>
         ) : null,
       )}

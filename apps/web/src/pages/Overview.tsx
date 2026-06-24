@@ -26,7 +26,6 @@ import { GovernorCard } from '@/components/overview/GovernorCard';
 // Placeholder is a subtle skeleton — users rarely notice since the hero is
 // already paintable while these resolve.
 const OverviewActivities = lazy(() => import('@/components/overview/OverviewActivities').then((m) => ({ default: m.OverviewActivities })));
-const OverviewBonuses = lazy(() => import('@/components/overview/OverviewBonuses').then((m) => ({ default: m.OverviewBonuses })));
 const AttackAlert = lazy(() => import('@/components/overview/AttackAlert').then((m) => ({ default: m.AttackAlert })));
 const GovernanceAlert = lazy(() => import('@/components/overview/GovernanceAlert').then((m) => ({ default: m.GovernanceAlert })));
 const OverviewGrid = lazy(() => import('@/components/overview/OverviewGrid').then((m) => ({ default: m.OverviewGrid })));
@@ -458,8 +457,8 @@ export default function Overview() {
           (refonte « 1 ressource = stock + flux ») → une bande de moins ici. */}
 
       <Suspense fallback={<LazySkel />}>
-        {/* 2b. Bonus actifs — le détail exact appliqué par le serveur (rates.bonuses) */}
-        <OverviewBonuses bonuses={resourceData?.rates?.bonuses} />
+        {/* Les bonus de production sont maintenant des pills dans le héros
+            (OverviewHero) — l'ancien panneau « Bonus actifs » a été retiré (clarté). */}
 
         {/* 3. Activities */}
         <OverviewActivities
