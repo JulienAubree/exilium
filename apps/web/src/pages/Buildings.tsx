@@ -631,6 +631,9 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
   );
 }
 
+/** Bâtiments gérés ailleurs (Chantier) → exclus du catalogue. */
+const BUILDINGS_EXCLUDED = ['shipyard', 'arsenal'];
+
 /**
  * Page « Bâtiments » unifiée (refonte IA P3, option A2) : le catalogue de TOUS
  * les bâtiments de la planète, avec des puces de filtre par catégorie. Le
@@ -638,15 +641,33 @@ export function BuildingsList({ title, categoryIds, excludeBuildingIds, hideHead
  * arsenal sont exclus ici.
  */
 export default function Buildings() {
+  const { planetId } = useOutletContext<{ planetId?: string }>();
   const { data: gameConfig } = useGameConfig();
+  const { data: buildings } = trpc.building.list.useQuery(
+    { planetId: planetId! },
+    { enabled: !!planetId },
+  );
   const [activeCat, setActiveCat] = useState<string | null>(null);
+
+  // Catégories réellement présentes (≥1 bâtiment non exclu) — évite les puces
+  // mortes : la catégorie orpheline 'building_energy' (0 bâtiment, doublon de
+  // nom « Énergie ») et 'Militaire' (= arsenal, exclu) ne s'affichent plus.
+  const presentCatIds = useMemo(() => {
+    const ids = new Set<string>();
+    buildings?.forEach((b) => {
+      if (BUILDINGS_EXCLUDED.includes(b.id)) return;
+      const catId = gameConfig?.buildings[b.id]?.categoryId;
+      if (catId) ids.add(catId);
+    });
+    return ids;
+  }, [buildings, gameConfig]);
 
   const cats = useMemo(
     () =>
       (gameConfig?.categories ?? [])
-        .filter((c) => c.entityType === 'building')
+        .filter((c) => c.entityType === 'building' && presentCatIds.has(c.id))
         .sort((a, b) => a.sortOrder - b.sortOrder),
-    [gameConfig],
+    [gameConfig, presentCatIds],
   );
 
   const chipClass = (active: boolean) =>
@@ -678,7 +699,7 @@ export default function Buildings() {
         title="Bâtiments"
         hideHeader
         categoryIds={activeCat ? [activeCat] : undefined}
-        excludeBuildingIds={['shipyard', 'arsenal']}
+        excludeBuildingIds={BUILDINGS_EXCLUDED}
         containerClassName="space-y-4 lg:space-y-6"
       />
     </div>
