@@ -5,6 +5,7 @@ import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
 import { ShieldAlert, Crown, Zap } from 'lucide-react';
 import { Timer } from '@/components/common/Timer';
+import { ExiliumLogo } from '@/components/landing/ExiliumLogo';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import {
   ResearchIcon,
@@ -142,7 +143,6 @@ export function Sidebar() {
  */
 function SidebarPulse() {
   const { data: inbound } = trpc.fleet.inbound.useQuery(undefined, { refetchInterval: 60_000 });
-  const { data: progression } = trpc.empireProgression.get.useQuery();
 
   const byArrival = [...(inbound ?? [])].sort(
     (a, b) => new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime(),
@@ -170,23 +170,12 @@ function SidebarPulse() {
     );
   }
 
-  const level = progression?.level;
-  const xpPct =
-    progression && progression.nextLevelXp != null
-      ? Math.min(100, Math.round(((progression.xp - progression.currentLevelXp) / Math.max(1, progression.nextLevelXp - progression.currentLevelXp)) * 100))
-      : null;
-
+  // État au repos : l'identité de l'app (wordmark EXILIUM) ancre le coin
+  // haut-gauche. Le niveau d'empire vit désormais dans l'en-tête Colonies
+  // (refonte IA — fini le doublon « Empire Nv. » top-left + en-tête).
   return (
-    <NavLink to="/progression" className="flex h-12 shrink-0 flex-col justify-center gap-1 border-b border-border/60 px-4 hover:bg-accent transition-colors">
-      <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Crown className="h-3.5 w-3.5 text-energy" />
-        {level != null ? `Empire Nv. ${level}` : 'Exilium'}
-      </span>
-      {xpPct != null && (
-        <span className="h-1 w-full overflow-hidden rounded-full bg-muted">
-          <span className="block h-1 rounded-full bg-energy/70" style={{ width: `${xpPct}%` }} />
-        </span>
-      )}
+    <NavLink to="/" end className="flex h-12 shrink-0 items-center border-b border-border/60 px-4 hover:bg-accent transition-colors">
+      <ExiliumLogo className="h-5 lg:h-6" />
     </NavLink>
   );
 }

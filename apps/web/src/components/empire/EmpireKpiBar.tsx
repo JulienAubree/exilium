@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Rocket, ShieldAlert, Landmark, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { cn } from '@/lib/utils';
 import { MineraiIcon, SiliciumIcon, HydrogeneIcon } from '@/components/common/ResourceIcons';
 import { trpc } from '@/trpc';
@@ -315,6 +315,13 @@ function GovernancePanel({ governance }: { governance: GovernanceData }) {
             ? `${freeSlots} slot${freeSlots > 1 ? 's' : ''} disponible${freeSlots > 1 ? 's' : ''} pour coloniser sans pénalité.`
             : 'Capacité atteinte. Prochaine colonie = pénalités sur toutes les colonies.'}
       </div>
+      <Link
+        to="/progression"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-energy transition-colors hover:text-energy/80"
+      >
+        <Landmark className="h-3 w-3" />
+        Augmenter la capacité — progression d'empire →
+      </Link>
     </div>
   );
 }
