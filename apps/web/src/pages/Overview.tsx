@@ -16,6 +16,7 @@ import ColonizationProgress from './ColonizationProgress';
 // Above-the-fold: imported eagerly so first paint has the hero + KPIs.
 import { OverviewHero } from '@/components/overview/OverviewHero';
 import { OverviewAlerts } from '@/components/overview/OverviewAlerts';
+import { PlanetEnergyPanel } from '@/components/energy/PlanetEnergyPanel';
 import { AbsenceSummaryBanner } from '@/components/overview/AbsenceSummaryBanner';
 import { VocationCard } from '@/components/overview/VocationCard';
 import { GovernorCard } from '@/components/overview/GovernorCard';
@@ -475,6 +476,9 @@ export default function Overview() {
             utils.shipyard.ships.invalidate({ planetId: planetId! });
           }}
         />
+
+        {/* 3b. Énergie — bilan + sliders (ex-onglet Énergie fusionné ici) */}
+        <PlanetEnergyPanel planetId={planetId!} />
 
         {/* 4. Governance warning */}
         <GovernanceAlert planetClassId={planet.planetClassId} />

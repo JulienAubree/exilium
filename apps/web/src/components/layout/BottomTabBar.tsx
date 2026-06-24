@@ -14,14 +14,13 @@ import {
   AllianceIcon,
   EmpireIcon,
 } from '@/lib/icons';
-import { Zap } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';
 import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
   empire: ['/empire', '/research'],
-  planete: ['/', '/resources', '/infrastructures', '/buildings', '/energy', '/production'],
+  planete: ['/', '/resources', '/infrastructures', '/buildings', '/production'],
   galaxie: ['/galaxy', '/missions', '/market'],
   flotte: ['/fleet'],
   social: ['/messages', '/alliance', '/ranking', '/alliance-ranking'],
@@ -37,7 +36,6 @@ const SHEET_ITEMS = {
   planete: [
     { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
     { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
-    { label: 'Énergie', path: '/energy', icon: Zap as any },
     { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
     { label: 'Chantier', path: '/production', icon: ShipyardIcon },
   ],

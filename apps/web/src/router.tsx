@@ -110,9 +110,10 @@ export const router = createBrowserRouter([
         errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
       },
       {
+        // L'énergie est fusionnée dans la Vue d'ensemble (refonte IA) — l'ancien
+        // onglet /energy redirige vers l'Overview.
         path: 'energy',
-        lazy: lazyLoad(() => import('./pages/Energy')),
-        errorElement: <ErrorBoundary><RouteErrorFallback /></ErrorBoundary>,
+        element: <Navigate to="/" replace />,
       },
       {
         path: 'resources',
