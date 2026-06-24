@@ -3,7 +3,7 @@ import { NavLink } from 'react-router';
 import { cn } from '@/lib/utils';
 import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
 import { trpc } from '@/trpc';
-import { ShieldAlert, Crown } from 'lucide-react';
+import { ShieldAlert, Crown, Zap } from 'lucide-react';
 import { Timer } from '@/components/common/Timer';
 import { useSidebarNewItems } from './useSidebarNewItems';
 import {
@@ -15,6 +15,10 @@ import {
   RankingIcon,
   AllianceIcon,
   EmpireIcon,
+  OverviewIcon,
+  ResourcesIcon,
+  BuildingsIcon,
+  ShipyardIcon,
 } from '@/lib/icons';
 
 interface NavItem {
@@ -24,6 +28,16 @@ interface NavItem {
 }
 
 const sections: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Planète',
+    items: [
+      { label: "Vue d'ensemble", path: '/', icon: OverviewIcon },
+      { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
+      { label: 'Énergie', path: '/energy', icon: Zap as NavItem['icon'] },
+      { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
+      { label: 'Chantier', path: '/production', icon: ShipyardIcon },
+    ],
+  },
   {
     title: 'Empire',
     items: [

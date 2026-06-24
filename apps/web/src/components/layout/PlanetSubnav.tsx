@@ -1,7 +1,4 @@
-import { useMemo } from 'react';
-import { NavLink } from 'react-router';
-import { Zap, AlertTriangle } from 'lucide-react';
-import { getVisibleSidebarPaths, type SidebarPath } from '@exilium/game-engine';
+import { AlertTriangle } from 'lucide-react';
 import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
@@ -10,27 +7,6 @@ import { MineraiIcon, SiliciumIcon, HydrogeneIcon, EnergieIcon } from '@/compone
 import { PlanetSelectorDropdown } from './topbar/PlanetSelectorDropdown';
 import { TopBarActions } from './topbar/TopBarActions';
 import { ImportResourcesButton } from '@/components/resources/ImportResourcesButton';
-import {
-  OverviewIcon,
-  ResourcesIcon,
-  BuildingsIcon,
-  ShipyardIcon,
-} from '@/lib/icons';
-
-interface PlanetNavItem {
-  label: string;
-  path: SidebarPath;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  end?: boolean;
-}
-
-const PLANET_NAV_ITEMS: PlanetNavItem[] = [
-  { label: "Vue d'ensemble", path: '/', icon: OverviewIcon, end: true },
-  { label: 'Ressources', path: '/resources', icon: ResourcesIcon },
-  { label: 'Énergie', path: '/energy', icon: Zap as React.ComponentType<React.SVGProps<SVGSVGElement>> },
-  { label: 'Bâtiments', path: '/buildings', icon: BuildingsIcon },
-  { label: 'Chantier', path: '/production', icon: ShipyardIcon },
-];
 
 function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, warning }: {
   label: string;
@@ -62,35 +38,18 @@ function ResourceBadge({ label, value, glowClass, colorClass, icon, capacity, wa
 }
 
 /**
- * Planet-scoped header (desktop). Groups in a single visually unified block:
- *  - row 1 : planet selector + per-planet resource badges
- *  - row 2 : per-planet navigation tabs
+ * Topbar planète (desktop) : sélecteur de planète + badges de ressources
+ * (montant du stock) + actions de compte.
  *
- * Hosting selector + resources together prevents the topbar resources from
- * being mistaken for empire-wide totals: anything inside this block belongs
- * to the currently selected planet.
+ * Refonte IA « 1 seul menu » : la navigation planète (Vue d'ensemble /
+ * Ressources / Énergie / Bâtiments / Chantier) vit désormais dans la SIDEBAR
+ * (section « Planète »). On a supprimé la rangée d'onglets qui faisait doublon
+ * avec la sidebar — il ne reste qu'une seule barre en haut (les ressources).
  */
 export function PlanetSubnav() {
-  const { data: tutorialData } = trpc.tutorial.getCurrent.useQuery();
   const { data: planets } = trpc.planet.list.useQuery();
   const activePlanetId = usePlanetStore((s) => s.activePlanetId);
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
-
-  const isComplete = tutorialData?.isComplete ?? false;
-  const parsedChapter = tutorialData?.chapter
-    ? Number.parseInt(tutorialData.chapter.id.replace('chapter_', ''), 10)
-    : NaN;
-  const chapterOrder = Number.isFinite(parsedChapter)
-    ? parsedChapter
-    : (isComplete ? 4 : 1);
-  const colonyCount = planets?.length ?? 1;
-
-  const visiblePaths = useMemo(
-    () => getVisibleSidebarPaths({ chapterOrder, isComplete, colonyCount }),
-    [chapterOrder, isComplete, colonyCount],
-  );
-
-  const items = PLANET_NAV_ITEMS.filter((item) => visiblePaths.has(item.path));
 
   const { data: resourceData } = trpc.resource.production.useQuery(
     { planetId: activePlanetId! },
@@ -121,18 +80,15 @@ export function PlanetSubnav() {
   const brownout = productionFactor < 0.999;
   const brownoutPct = Math.round((1 - productionFactor) * 100);
 
-  if (items.length === 0) return null;
-
   return (
     <section
       aria-label="Bloc planète"
       className="sticky top-0 z-40 hidden lg:block border-b border-border bg-surface"
     >
-      {/* Row 1 : planet selector + resources + global actions — h-12 et
-          border-border/60 alignés sur l'en-tête de la sidebar (jonction
-          continue), contenu calé sur le conteneur central (max-w-screen-2xl). */}
-      <div className="border-b border-border/60">
-        <div className="mx-auto flex h-12 w-full items-center justify-between gap-4 px-4 lg:max-w-screen-2xl lg:px-6">
+      {/* Sélecteur de planète + ressources (stock) + actions — h-12 aligné sur
+          l'en-tête de la sidebar (jonction continue), calé sur le conteneur
+          central (max-w-screen-2xl). */}
+      <div className="mx-auto flex h-12 w-full items-center justify-between gap-4 px-4 lg:max-w-screen-2xl lg:px-6">
         <div className="flex items-center gap-6 min-w-0">
           <PlanetSelectorDropdown
             planetId={activePlanetId}
@@ -168,7 +124,7 @@ export function PlanetSubnav() {
             <ResourceBadge
               label="Énergie"
               value={energyBalance}
-              glowClass={energyBalance >= 0 ? '' : ''}
+              glowClass=""
               colorClass={energyBalance >= 0 ? 'text-energy' : 'text-destructive'}
               icon={<EnergieIcon size={14} />}
               warning={brownout ? `Production des mines à ${100 - brownoutPct}% — déficit de ${Math.abs(energyBalance).toLocaleString('fr-FR')} d'énergie.` : undefined}
@@ -179,36 +135,8 @@ export function PlanetSubnav() {
           </div>
         </div>
 
-          <TopBarActions />
-        </div>
+        <TopBarActions />
       </div>
-
-      {/* Row 2 : navigation tabs — même gabarit que le contenu : les onglets
-          démarrent au même x que le héro. */}
-      <nav aria-label="Navigation planète">
-        <ul className="mx-auto flex w-full items-center gap-1 px-4 py-1.5 overflow-x-auto lg:max-w-screen-2xl lg:px-6">
-          {items.map((item) => (
-            <li key={item.path} className="shrink-0">
-              <NavLink
-                viewTransition
-                to={item.path}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap',
-                    isActive
-                      ? 'bg-primary/15 text-primary border border-primary/30'
-                      : 'text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent',
-                  )
-                }
-              >
-                <item.icon width={16} height={16} />
-                <span>{item.label}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
     </section>
   );
 }
