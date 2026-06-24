@@ -12,8 +12,6 @@ import {
   GalaxyIcon,
   MarketIcon,
   MissionsIcon,
-  RankingIcon,
-  AllianceIcon,
   EmpireIcon,
   OverviewIcon,
   ResourcesIcon,
@@ -50,23 +48,13 @@ const sections: { title: string; items: NavItem[] }[] = [
     title: 'Galaxie',
     items: [
       { label: 'Galaxie', path: '/galaxy', icon: GalaxyIcon },
+      { label: 'Flotte', path: '/fleet', icon: FleetIcon },
       { label: 'Missions', path: '/missions', icon: MissionsIcon },
       { label: 'Marché', path: '/market', icon: MarketIcon },
     ],
   },
-  {
-    title: 'Flotte',
-    items: [
-      { label: 'Flotte', path: '/fleet', icon: FleetIcon },
-    ],
-  },
-  {
-    title: 'Social',
-    items: [
-      { label: 'Alliance', path: '/alliance', icon: AllianceIcon },
-      { label: 'Classement', path: '/ranking', icon: RankingIcon },
-    ],
-  },
+  // Alliance + Classement ont migré dans le menu profil (sous l'avatar) pour
+  // raccourcir la sidebar — refonte IA « 1 menu, plus court ».
 ];
 
 export function Sidebar() {

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
-import { ProfileIcon, HistoryIcon } from '@/lib/icons';
+import { ProfileIcon, HistoryIcon, AllianceIcon, RankingIcon } from '@/lib/icons';
 
 export function ProfileMenu() {
   const [open, setOpen] = useState(false);
@@ -53,6 +53,24 @@ export function ProfileMenu() {
 
       {open && (
         <div className="fixed right-2 top-12 z-50 mt-1 w-48 sm:absolute sm:top-full sm:right-0 rounded-lg border border-white/10 bg-surface-raised shadow-lg animate-slide-up">
+          {/* Nav secondaire déplacée ici depuis la sidebar (la rendre plus courte) */}
+          <div className="p-1.5">
+            <button
+              onClick={() => { navigate('/alliance'); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <AllianceIcon width={16} height={16} />
+              Alliance
+            </button>
+            <button
+              onClick={() => { navigate('/ranking'); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <RankingIcon width={16} height={16} />
+              Classement
+            </button>
+          </div>
+          <div className="mx-2 border-t border-white/5" />
           <div className="p-1.5">
             <button
               onClick={() => { navigate('/profile'); setOpen(false); }}
