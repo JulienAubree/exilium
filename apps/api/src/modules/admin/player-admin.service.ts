@@ -15,6 +15,7 @@ import {
   refreshTokens,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { getUserResearchLevels } from '@exilium/db';
 import { setResearchLevel } from '../research/research-levels.repo.js';
 import type { Queue } from 'bullmq';
 import type { createPlanetService } from '../planet/planet.service.js';
@@ -85,7 +86,7 @@ export function createPlayerAdminService(
 
       const [playerPlanets, research, ranking] = await Promise.all([
         db.select().from(planets).where(byUser(planets.userId, userId)),
-        db.select().from(userResearch).where(byUser(userResearch.userId, userId)),
+        getUserResearchLevels(db, userId),
         db.select().from(rankings).where(byUser(rankings.userId, userId)),
       ]);
 
@@ -142,7 +143,7 @@ export function createPlayerAdminService(
           createdAt: user.createdAt,
         },
         planets: planetsWithUnits,
-        research: research[0] ?? null,
+        research: Object.keys(research).length > 0 ? research : null,
         ranking: ranking[0] ?? null,
         flagship: flagshipRow ?? null,
         exilium: exiliumRow ?? null,

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { protectedProcedure, router } from '../../trpc/router.js';
-import { planets, planetShips, userResearch, planetBiomes } from '@exilium/db';
+import { planets, planetShips, planetBiomes, getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createResourceService } from './resource.service.js';
 import type { createPlanetService } from '../planet/planet.service.js';
@@ -61,13 +61,10 @@ export function createResourceRouter(
         const storageSiliciumId = findBuildingByRole(config, 'storage_silicium').id;
         const storageHydrogeneId = findBuildingByRole(config, 'storage_hydrogene').id;
 
-        const [researchRow] = await db.select().from(userResearch)
-          .where(eq(userResearch.userId, ctx.userId!)).limit(1);
+        const levels = await getUserResearchLevels(db, ctx.userId!);
         const researchLevels: Record<string, number> = {};
-        if (researchRow) {
-          for (const [key, rDef] of Object.entries(config.research)) {
-            researchLevels[key] = (researchRow[rDef.levelColumn as keyof typeof researchRow] ?? 0) as number;
-          }
+        for (const [key, rDef] of Object.entries(config.research)) {
+          researchLevels[key] = levels[rDef.levelColumn] ?? 0;
         }
 
         const baseRatio = Number(config.universe['protected_storage_base_ratio']) || 0.05;

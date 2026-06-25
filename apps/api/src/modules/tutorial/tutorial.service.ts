@@ -1,6 +1,6 @@
 import { eq, and, asc, sql } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
-import { tutorialProgress, tutorialChapters, planets, planetBuildings, planetShips, planetDefenses, tutorialQuestDefinitions, userResearch, fleetEvents, pveMissions, flagships } from '@exilium/db';
+import { tutorialProgress, tutorialChapters, planets, planetBuildings, planetShips, planetDefenses, tutorialQuestDefinitions, fleetEvents, pveMissions, flagships, getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createPveService } from '../pve/pve.service.js';
 
@@ -77,15 +77,8 @@ export function createTutorialService(
       return levels[0]?.level ?? 0;
 
     } else if (condition.type === 'research_level') {
-      const [research] = await db
-        .select()
-        .from(userResearch)
-        .where(byUser(userResearch.userId, userId))
-        .limit(1);
-      if (research) {
-        return (research[condition.targetId as keyof typeof research] ?? 0) as number;
-      }
-      return 0;
+      const levels = await getUserResearchLevels(db, userId);
+      return levels[condition.targetId] ?? 0;
 
     } else if (condition.type === 'ship_count') {
       const col = condition.targetId;

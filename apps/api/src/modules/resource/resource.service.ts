@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetShips, userResearch, planetBiomes } from '@exilium/db';
+import { planets, planetBuildings, planetShips, planetBiomes, getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
@@ -176,22 +176,16 @@ export function createResourceService(
     // Recherche : production (toujours) + énergie (rates uniquement — l'accrual
     // historique ne l'applique pas, on préserve ce comportement à l'identique)
     if (userId) {
-      const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
-      if (research) {
-        const researchLevels: Record<string, number> = {};
-        for (const [key, value] of Object.entries(research)) {
-          if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
-        }
-        for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-          const mult = resolveBonus(stat, null, researchLevels, config.bonuses);
-          if (mult > 1) add('recherche', stat, mult - 1);
-        }
-        if (opts?.withEnergyResearch) {
-          const energyMult = resolveBonus('energy_production', null, researchLevels, config.bonuses);
-          if (energyMult > 1) add('recherche', 'energy_production', energyMult - 1);
-          const energyEfficiency = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
-          if (energyEfficiency < 1) add('recherche', 'energy_consumption', energyEfficiency - 1);
-        }
+      const researchLevels = await getUserResearchLevels(db, userId);
+      for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
+        const mult = resolveBonus(stat, null, researchLevels, config.bonuses);
+        if (mult > 1) add('recherche', stat, mult - 1);
+      }
+      if (opts?.withEnergyResearch) {
+        const energyMult = resolveBonus('energy_production', null, researchLevels, config.bonuses);
+        if (energyMult > 1) add('recherche', 'energy_production', energyMult - 1);
+        const energyEfficiency = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
+        if (energyEfficiency < 1) add('recherche', 'energy_consumption', energyEfficiency - 1);
       }
     }
 
