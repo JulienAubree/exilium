@@ -1,6 +1,6 @@
 import { sql, eq } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
-import { users, planets, userResearch, planetShips, planetDefenses, rankings, planetBuildings, allianceMembers, alliances } from '@exilium/db';
+import { users, planets, planetShips, planetDefenses, rankings, planetBuildings, allianceMembers, alliances, getAllUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateBuildingPoints,
@@ -19,11 +19,11 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
 
       // Load every row we need in 5 queries instead of N×M. We group by
       // owner/planet in memory, then score each user from the pre-built maps.
-      const [allUsers, allPlanets, allBuildings, allResearch, allShips, allDefenses] = await Promise.all([
+      const [allUsers, allPlanets, allBuildings, researchByUser, allShips, allDefenses] = await Promise.all([
         db.select({ id: users.id }).from(users),
         db.select({ id: planets.id, userId: planets.userId }).from(planets),
         db.select({ planetId: planetBuildings.planetId, buildingId: planetBuildings.buildingId, level: planetBuildings.level }).from(planetBuildings),
-        db.select().from(userResearch),
+        getAllUserResearchLevels(db),
         db.select().from(planetShips),
         db.select().from(planetDefenses),
       ]);
@@ -43,12 +43,6 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
           buildingsByPlanet.set(row.planetId, levels);
         }
         levels[row.buildingId] = row.level;
-      }
-
-      const researchByUser = new Map<string, Record<string, number>>();
-      for (const row of allResearch) {
-        const { userId, ...levels } = row;
-        researchByUser.set(userId, levels as Record<string, number>);
       }
 
       const shipsByPlanet = new Map<string, Record<string, number>>();
