@@ -1,17 +1,18 @@
 /**
- * Test d'intégration — Task 3 Lot 1 : service branché sur le modèle en lignes
+ * Test d'intégration — service recherche sur le modèle EN LIGNES
  *
  * Vérifie que :
  *   1. `completeResearch` écrit dans `user_research_levels` via `bumpResearchLevel`.
- *   2. `loadResearchLevels` reflète ensuite le bon niveau (lecture via le modèle en lignes).
- *   3. (C1 dual-write) `completeResearch` synchronise aussi `user_research`.
- *   4. (I1 dual-write) `setResearchLevel` / `updatePlayerResearchLevel` synchronisent les deux tables.
+ *   2. `loadResearchLevels` reflète ensuite le bon niveau.
+ *   3. `setResearchLevel` / `updatePlayerResearchLevel` écrivent `user_research_levels`.
+ *
+ * (Lot 2 PR-B : la table large `user_research` a été droppée — plus de dual-write.)
  *
  * Filet de test : base `exilium_test` (séparée de prod). Nettoie ses propres données.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { users, planets, buildQueue, userResearchLevels, userResearch } from '@exilium/db';
+import { users, planets, buildQueue, userResearchLevels } from '@exilium/db';
 import { testDb, closeTestDb } from '../../../test/test-db.js';
 import { createResearchService } from '../research.service.js';
 import { loadResearchLevels, setResearchLevel } from '../research-levels.repo.js';
@@ -87,7 +88,7 @@ afterAll(async () => {
   await closeTestDb();
 });
 
-describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
+describe('research.service — modèle en lignes', () => {
   let buildQueueId: string;
 
   beforeAll(async () => {
@@ -96,7 +97,6 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, TEST_USER_ID));
-    await testDb.delete(userResearch).where(eq(userResearch.userId, TEST_USER_ID));
     await testDb.delete(planets).where(eq(planets.userId, TEST_USER_ID));
     await testDb.delete(users).where(eq(users.id, TEST_USER_ID));
 
@@ -143,7 +143,6 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, TEST_USER_ID));
-    await testDb.delete(userResearch).where(eq(userResearch.userId, TEST_USER_ID));
     await testDb.delete(planets).where(eq(planets.userId, TEST_USER_ID));
     await testDb.delete(users).where(eq(users.id, TEST_USER_ID));
   });
@@ -198,27 +197,14 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
 
     expect(entry?.status).toBe('completed');
   });
-
-  // C1 — dual-write : user_research doit être synchronisée après completeResearch
-  it('C1 dual-write — completeResearch synchronise user_research (filet pour les ~10 lecteurs)', async () => {
-    const [row] = await testDb
-      .select()
-      .from(userResearch)
-      .where(eq(userResearch.userId, TEST_USER_ID));
-
-    expect(row).toBeDefined();
-    // weapons est levelColumn = TEST_RESEARCH_ID
-    expect(row.weapons).toBe(1);
-  });
 });
 
-describe('setResearchLevel / updatePlayerResearchLevel — dual-write admin (I1)', () => {
+describe('setResearchLevel / updatePlayerResearchLevel (modèle en lignes)', () => {
   beforeAll(async () => {
     // Nettoyage préventif pour ADMIN_USER_ID
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, ADMIN_USER_ID));
-    await testDb.delete(userResearch).where(eq(userResearch.userId, ADMIN_USER_ID));
     await testDb.delete(users).where(eq(users.id, ADMIN_USER_ID));
 
     // Utilisateur minimal
@@ -228,16 +214,12 @@ describe('setResearchLevel / updatePlayerResearchLevel — dual-write admin (I1)
       username: 'admin_research_test',
       passwordHash: 'not-a-real-hash',
     });
-
-    // user_research doit exister (la méthode fait un UPDATE sans upsert)
-    await testDb.insert(userResearch).values({ userId: ADMIN_USER_ID });
   });
 
   afterAll(async () => {
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, ADMIN_USER_ID));
-    await testDb.delete(userResearch).where(eq(userResearch.userId, ADMIN_USER_ID));
     await testDb.delete(users).where(eq(users.id, ADMIN_USER_ID));
   });
 
@@ -274,21 +256,11 @@ describe('setResearchLevel / updatePlayerResearchLevel — dual-write admin (I1)
     expect(row?.level).toBe(7);
   });
 
-  it('I1 dual-write — updatePlayerResearchLevel synchronise user_research ET user_research_levels', async () => {
+  it('updatePlayerResearchLevel écrit user_research_levels', async () => {
     const adminService = createPlayerAdminService(testDb);
 
     await adminService.updatePlayerResearchLevel(ADMIN_USER_ID, TEST_RESEARCH_ID, 10);
 
-    // user_research (colonne weapons)
-    const [urRow] = await testDb
-      .select()
-      .from(userResearch)
-      .where(eq(userResearch.userId, ADMIN_USER_ID));
-
-    expect(urRow).toBeDefined();
-    expect(urRow.weapons).toBe(10);
-
-    // user_research_levels (ligne)
     const [urlRow] = await testDb
       .select()
       .from(userResearchLevels)

@@ -1,7 +1,7 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, userResearch, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
+import { planets, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getPlanetBuildingLevels } from '@exilium/db';
 import {
@@ -461,14 +461,6 @@ export function createResearchService(
 
       const newLevel = await bumpResearchLevel(db, entry.userId, entry.itemId);
 
-      // Dual-write : maintenir user_research synchronisée tant que les ~10
-      // autres sous-systèmes lisent encore depuis cette table (filet Lot 1).
-      await this.getOrCreateResearch(entry.userId);
-      await db
-        .update(userResearch)
-        .set({ [def.levelColumn]: newLevel })
-        .where(eq(userResearch.userId, entry.userId));
-
       await db
         .update(buildQueue)
         .set({ status: 'completed' })
@@ -507,20 +499,6 @@ export function createResearchService(
           targetValue: newLevel,
         },
       };
-    },
-
-    async getOrCreateResearch(userId: string) {
-      const [existing] = await db
-        .select()
-        .from(userResearch)
-        .where(byUser(userResearch.userId, userId))
-        .limit(1);
-
-      if (existing) return existing;
-
-      const [created] = await db.insert(userResearch).values({ userId }).returning();
-
-      return created;
     },
 
     async getOwnedPlanet(userId: string, planetId: string) {

@@ -4,7 +4,6 @@ import { TRPCError } from '@trpc/server';
 import {
   users,
   planets,
-  userResearch,
   planetShips,
   planetDefenses,
   rankings,
@@ -168,13 +167,7 @@ export function createPlayerAdminService(
     },
 
     async updatePlayerResearchLevel(userId: string, levelColumn: string, level: number) {
-      // user_research (filet existant — lue par les ~10 sous-systèmes)
-      await db
-        .update(userResearch)
-        .set({ [levelColumn]: level })
-        .where(byUser(userResearch.userId, userId));
-      // Dual-write : user_research_levels (nouveau modèle en lignes)
-      // levelColumn === researchId dans le schéma actuel (ex: 'weapons')
+      // levelColumn === researchId (ex: 'weapons') → modèle en lignes
       await setResearchLevel(db, userId, levelColumn, level);
     },
 
