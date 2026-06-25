@@ -1,6 +1,6 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch, allianceMembers, alliances } from '@exilium/db';
+import { planets, planetShips, planetDefenses, planetBuildings, allianceMembers, alliances, getUserResearchLevels } from '@exilium/db';
 import { simulateCombat, totalCargoCapacity, calculateShieldCapacity, calculateProtectedResources } from '@exilium/game-engine';
 import type { CombatInput, RoundResult } from '@exilium/game-engine';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
@@ -351,17 +351,10 @@ export class AttackHandler implements MissionHandler {
         const storageSiliciumId = findBuildingIdByRole(config.buildings, 'storage_silicium');
         const storageHydrogeneId = findBuildingIdByRole(config.buildings, 'storage_hydrogene');
 
-        const [defenderResearchRow] = await ctx.db
-          .select()
-          .from(userResearch)
-          .where(eq(userResearch.userId, targetPlanet.userId))
-          .limit(1);
-
+        const defenderLevels = await getUserResearchLevels(ctx.db, targetPlanet.userId);
         const defenderResearchLevels: Record<string, number> = {};
-        if (defenderResearchRow) {
-          for (const [key, rDef] of Object.entries(config.research)) {
-            defenderResearchLevels[key] = (defenderResearchRow[rDef.levelColumn as keyof typeof defenderResearchRow] ?? 0) as number;
-          }
+        for (const [key, rDef] of Object.entries(config.research)) {
+          defenderResearchLevels[key] = defenderLevels[rDef.levelColumn] ?? 0;
         }
 
         const baseRatio = Number(config.universe['protected_storage_base_ratio']) || 0.05;

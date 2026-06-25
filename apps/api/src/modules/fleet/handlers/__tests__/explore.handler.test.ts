@@ -17,6 +17,17 @@ vi.mock('@exilium/db', () => ({
     __t: 'userResearch',
     userId: { __c: 'userId' },
   },
+  getUserResearchLevels: async (db: any, userId: string) => {
+    const rows = await db.select().from({ __t: 'userResearch' });
+    const levels: Record<string, number> = {};
+    for (const r of rows) {
+      if (r.userId !== userId) continue;
+      for (const [k, v] of Object.entries(r)) {
+        if (k !== 'userId' && typeof v === 'number') levels[k] = v as number;
+      }
+    }
+    return levels;
+  },
   discoveredBiomes: {
     __t: 'discoveredBiomes',
     userId: { __c: 'userId' },

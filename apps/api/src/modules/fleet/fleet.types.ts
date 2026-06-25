@@ -1,5 +1,4 @@
-import { byUser } from '../../lib/db-helpers.js';
-import { userResearch } from '@exilium/db';
+import { getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { resolveBonus } from '@exilium/game-engine';
 import type {
@@ -213,19 +212,13 @@ export async function getCombatMultipliers(
   userId: string,
   bonusDefs: BonusDefinition[],
 ): Promise<CombatMultipliers> {
-  const [research] = await db
-    .select()
-    .from(userResearch)
-    .where(byUser(userResearch.userId, userId))
-    .limit(1);
-
-  const { userId: _, ...levels } = research ?? {};
+  const levels = await getUserResearchLevels(db, userId);
 
   // Recherche uniquement — les clés talents combat_* n'ont plus d'émetteur
   // depuis le retrait de l'arbre de talents (purge 2026-06-10).
   return {
-    weapons: resolveBonus('weapons', null, levels as Record<string, number>, bonusDefs),
-    shielding: resolveBonus('shielding', null, levels as Record<string, number>, bonusDefs),
-    armor: resolveBonus('armor', null, levels as Record<string, number>, bonusDefs),
+    weapons: resolveBonus('weapons', null, levels, bonusDefs),
+    shielding: resolveBonus('shielding', null, levels, bonusDefs),
+    armor: resolveBonus('armor', null, levels, bonusDefs),
   };
 }

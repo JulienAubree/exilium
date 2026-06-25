@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, planets, userResearch, discoveredBiomes, discoveredPositions } from '@exilium/db';
+import { fleetEvents, planets, discoveredBiomes, discoveredPositions, getUserResearchLevels } from '@exilium/db';
 import { biomeDiscoveryProbability, scanDuration, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, calculateMaxTemp, type BiomeDefinition } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { findShipsByRole } from '../../../lib/config-helpers.js';
@@ -38,9 +38,8 @@ export class ExploreHandler implements PhasedMissionHandler {
   async processArrival(fleetEvent: FleetEvent, ctx: MissionHandlerContext): Promise<ArrivalResult> {
     const config = await ctx.gameConfigService.getFullConfig();
 
-    const [research] = await ctx.db.select().from(userResearch)
-      .where(eq(userResearch.userId, fleetEvent.userId)).limit(1);
-    const researchLevel = (research as any)?.planetaryExploration ?? 0;
+    const levels = await getUserResearchLevels(ctx.db, fleetEvent.userId);
+    const researchLevel = levels.planetaryExploration ?? 0;
 
     const scanMs = scanDuration(researchLevel) * 1000;
     const now = new Date();

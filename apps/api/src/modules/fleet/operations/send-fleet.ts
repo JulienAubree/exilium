@@ -1,7 +1,7 @@
 import { eq, and, count as dbCount, sql } from 'drizzle-orm';
 import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, fleetEvents, userResearch, pveMissions, users, marketOffers } from '@exilium/db';
+import { planets, planetShips, fleetEvents, pveMissions, users, marketOffers, getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   fleetSpeed,
@@ -351,13 +351,8 @@ export function createSendFleet(deps: SendFleetDeps) {
 
       // Schedule attack detection for dangerous missions targeting other players
       if (missionDef?.dangerous && targetPlanet?.userId && targetPlanet.userId !== userId) {
-        const [defenderResearch] = await db
-          .select({ sensorNetwork: userResearch.sensorNetwork })
-          .from(userResearch)
-          .where(eq(userResearch.userId, targetPlanet.userId))
-          .limit(1);
-
-        const defSensor = defenderResearch?.sensorNetwork ?? 0;
+        const defenderLevels = await getUserResearchLevels(db, targetPlanet.userId);
+        const defSensor = defenderLevels.sensorNetwork ?? 0;
         const atkStealth = researchLevels.stealthTech ?? 0;
 
         const { scoreThresholds, timingPercents } = config.attackDetection;

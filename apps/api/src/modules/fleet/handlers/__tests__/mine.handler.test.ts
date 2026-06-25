@@ -5,6 +5,17 @@ vi.mock('@exilium/db', () => ({
   pveMissions: { __t: 'pveMissions' },
   asteroidDeposits: { __t: 'asteroidDeposits' },
   userResearch: { __t: 'userResearch' },
+  getUserResearchLevels: async (db: any, userId: string) => {
+    const rows = await db.select().from({ __t: 'userResearch' });
+    const levels: Record<string, number> = {};
+    for (const r of rows) {
+      if (r.userId !== userId) continue;
+      for (const [k, v] of Object.entries(r)) {
+        if (k !== 'userId' && typeof v === 'number') levels[k] = v as number;
+      }
+    }
+    return levels;
+  },
   planets: { __t: 'planets' },
 }));
 

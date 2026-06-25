@@ -1,7 +1,7 @@
 import { eq, asc, and, sql } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { flagships, planets, users, flagshipCooldowns, userResearch, planetShips, planetDefenses, planetBuildings, fleetEvents } from '@exilium/db';
+import { flagships, planets, users, flagshipCooldowns, planetShips, planetDefenses, planetBuildings, fleetEvents, getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import type { createExiliumService } from '../exilium/exilium.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
@@ -512,8 +512,8 @@ export function createFlagshipService(
       const espionageBonus = Number((scanAbility as any).params?.espionageBonus ?? 5);
 
       // 4. Get attacker tech
-      const [research] = await db.select().from(userResearch).where(byUser(userResearch.userId, userId)).limit(1);
-      const attackerTech = (research?.espionageTech ?? 0) + espionageBonus;
+      const attackerLevels = await getUserResearchLevels(db, userId);
+      const attackerTech = (attackerLevels.espionageTech ?? 0) + espionageBonus;
 
       // 5. Find target planet
       const [targetPlanet] = await db.select().from(planets)
@@ -522,8 +522,8 @@ export function createFlagshipService(
       if (!targetPlanet) throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucune planete a ces coordonnees' });
 
       // 6. Defender tech
-      const [defResearch] = await db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
-      const defenderTech = defResearch?.espionageTech ?? 0;
+      const defLevels = await getUserResearchLevels(db, targetPlanet.userId);
+      const defenderTech = defLevels.espionageTech ?? 0;
 
       // 7. Calculate spy report (1 virtual probe, no detection)
       const spyThresholds = (config.universe['spy_visibility_thresholds'] as number[] | undefined) ?? [1, 3, 5, 7, 9];
@@ -593,14 +593,11 @@ export function createFlagshipService(
       }
 
       if (visibility.research) {
-        if (defResearch) {
-          const researchData: Record<string, number> = {};
-          for (const [key, val] of Object.entries(defResearch)) {
-            if (key === 'userId') continue;
-            if (typeof val === 'number' && val > 0) researchData[key] = val;
-          }
-          reportResult.research = researchData;
+        const researchData: Record<string, number> = {};
+        for (const [key, val] of Object.entries(defLevels)) {
+          if (val > 0) researchData[key] = val;
         }
+        reportResult.research = researchData;
       }
 
       // 9. Attach scanner flagship info to report
