@@ -1,7 +1,6 @@
 import { eq, and, inArray } from 'drizzle-orm';
-import { byUser } from '../../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, planetShips, planetDefenses, planetBuildings, userResearch, flagships, allianceMembers, alliances } from '@exilium/db';
+import { planets, planetShips, planetDefenses, planetBuildings, flagships, allianceMembers, alliances, getUserResearchLevels } from '@exilium/db';
 import { calculateSpyReport, calculateDetectionChance, totalCargoCapacity, simulateCombat } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
 import type { CombatInput } from '@exilium/game-engine';
@@ -271,17 +270,12 @@ export class SpyHandler implements MissionHandler {
     }
 
     if (visibility.research) {
-      const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, targetPlanet.userId)).limit(1);
-      if (research) {
-        const researchData: Record<string, number> = {};
-        for (const [key, val] of Object.entries(research)) {
-          if (key === 'userId') continue;
-          if (typeof val === 'number' && val > 0) {
-            researchData[key] = val;
-          }
-        }
-        reportResult.research = researchData;
+      const levels = await getUserResearchLevels(ctx.db, targetPlanet.userId);
+      const researchData: Record<string, number> = {};
+      for (const [key, val] of Object.entries(levels)) {
+        if (val > 0) researchData[key] = val;
       }
+      reportResult.research = researchData;
     }
 
     // Fetch origin planet for report
@@ -558,12 +552,7 @@ export class SpyHandler implements MissionHandler {
   }
 
   private async getEspionageTech(db: Database, userId: string): Promise<number> {
-    const [research] = await db
-      .select({ espionageTech: userResearch.espionageTech })
-      .from(userResearch)
-      .where(byUser(userResearch.userId, userId))
-      .limit(1);
-
-    return research?.espionageTech ?? 0;
+    const levels = await getUserResearchLevels(db, userId);
+    return levels.espionageTech ?? 0;
   }
 }

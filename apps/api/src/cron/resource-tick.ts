@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { planets, planetTypes, planetBuildings, planetShips, userResearch, empireProgression } from '@exilium/db';
+import { planets, planetTypes, planetBuildings, planetShips, empireProgression, getAllUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
@@ -116,16 +116,8 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     satCountMap.set(row.planetId, row.solarSatellite);
   }
 
-  // Pre-load user research levels
-  const allResearch = await db.select().from(userResearch);
-  const researchByUser = new Map<string, Record<string, number>>();
-  for (const r of allResearch) {
-    const levels: Record<string, number> = {};
-    for (const [key, value] of Object.entries(r)) {
-      if (key !== 'userId' && typeof value === 'number') levels[key] = value;
-    }
-    researchByUser.set(r.userId, levels);
-  }
+  // Pre-load user research levels (modèle en lignes — Lot 2)
+  const researchByUser = await getAllUserResearchLevels(db);
 
   // Resolve building IDs by role
   const config = await gameConfigService.getFullConfig();

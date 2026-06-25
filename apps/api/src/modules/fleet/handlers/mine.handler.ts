@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, pveMissions, asteroidDeposits, userResearch, planets } from '@exilium/db';
+import { fleetEvents, pveMissions, asteroidDeposits, planets, getUserResearchLevels } from '@exilium/db';
 import { prospectionDuration, miningDuration, totalCargoCapacity, totalMiningExtraction, resolveBonus, computeSlagRate, computeMiningExtraction } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
@@ -86,13 +86,7 @@ export class MineHandler implements PhasedMissionHandler {
     }
 
     // Transition to mining phase
-    const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, fleetEvent.userId)).limit(1);
-    const researchLevels: Record<string, number> = {};
-    if (research) {
-      for (const [key, value] of Object.entries(research)) {
-        if (key !== 'userId' && typeof value === 'number') researchLevels[key] = value;
-      }
-    }
+    const researchLevels = await getUserResearchLevels(ctx.db, fleetEvent.userId);
     const config = await ctx.gameConfigService.getFullConfig();
     const shipStatsMap = buildShipStatsMap(config);
 
@@ -184,17 +178,11 @@ export class MineHandler implements PhasedMissionHandler {
     // Single slag rate
     const baseSlagRate = Number(config.universe.slag_rate ?? 0.5);
 
-    const [research] = await ctx.db.select().from(userResearch).where(eq(userResearch.userId, fleetEvent.userId)).limit(1);
-    const refiningLevel = research?.deepSpaceRefining ?? 0;
+    const researchLevelsForExtraction = await getUserResearchLevels(ctx.db, fleetEvent.userId);
+    const refiningLevel = researchLevelsForExtraction.deepSpaceRefining ?? 0;
     const slagRate = computeSlagRate(baseSlagRate, refiningLevel);
 
     // Apply rock fracturing extraction bonus
-    const researchLevelsForExtraction: Record<string, number> = {};
-    if (research) {
-      for (const [key, value] of Object.entries(research)) {
-        if (key !== 'userId' && typeof value === 'number') researchLevelsForExtraction[key] = value;
-      }
-    }
     const extractionMultiplier = resolveBonus('mining_extraction', null, researchLevelsForExtraction, config.bonuses);
     const fleetExtr = Math.floor(baseFleetExtr * extractionMultiplier);
 

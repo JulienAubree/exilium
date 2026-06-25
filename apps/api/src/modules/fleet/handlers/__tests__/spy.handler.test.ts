@@ -6,6 +6,17 @@ vi.mock('@exilium/db', () => ({
   planetDefenses: { __t: 'planetDefenses', planetId: { __c: 'planetId' } },
   planetBuildings: { __t: 'planetBuildings', planetId: { __c: 'planetId' }, buildingId: { __c: 'buildingId' }, level: { __c: 'level' } },
   userResearch: { __t: 'userResearch', userId: { __c: 'userId' }, espionageTech: { __c: 'espionageTech' } },
+  getUserResearchLevels: async (db: any, userId: string) => {
+    const rows = await db.select().from({ __t: 'userResearch' });
+    const levels: Record<string, number> = {};
+    for (const r of rows) {
+      if (r.userId !== userId) continue;
+      for (const [k, v] of Object.entries(r)) {
+        if (k !== 'userId' && typeof v === 'number') levels[k] = v as number;
+      }
+    }
+    return levels;
+  },
   flagships: { __t: 'flagships', userId: { __c: 'userId' }, planetId: { __c: 'planetId' }, status: { __c: 'status' } },
   flagshipTalents: { __t: 'flagshipTalents', flagshipId: { __c: 'flagshipId' }, talentId: { __c: 'talentId' }, currentRank: { __c: 'currentRank' } },
   allianceMembers: { __t: 'allianceMembers', userId: { __c: 'userId' }, allianceId: { __c: 'allianceId' } },
