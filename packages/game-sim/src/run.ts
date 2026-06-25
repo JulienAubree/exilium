@@ -35,7 +35,7 @@ export function runPolicy(policy: Policy): RunResult {
       if (ra !== null) {
         try {
           engine.startResearch(s, ra.researchId);
-        } catch (_e) {
+        } catch {
           // prereqs or cost not reachable — skip silently
         }
       }
@@ -47,7 +47,7 @@ export function runPolicy(policy: Policy): RunResult {
       if (sa !== null) {
         try {
           engine.startShip(s, sa.shipId);
-        } catch (_e) {
+        } catch {
           // prereqs or cost not reachable — skip silently
         }
       }
