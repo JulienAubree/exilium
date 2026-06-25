@@ -5,6 +5,10 @@ import { planets, userResearch, buildQueue, planetBuildings, planetBiomes } from
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getPlanetBuildingLevels } from '@exilium/db';
 import {
+  loadResearchLevels,
+  bumpResearchLevel,
+} from './research-levels.repo.js';
+import {
   researchCost,
   researchTime,
   checkResearchPrerequisites,
@@ -106,7 +110,7 @@ export function createResearchService(
     async listResearch(userId: string) {
       const homeworld = await this.getHomeworld(userId);
       const planetId = homeworld.id;
-      const research = await this.getOrCreateResearch(userId);
+      const levels = await loadResearchLevels(db, userId);
       const config = await gameConfigService.getFullConfig();
       const buildingLevels = await getPlanetBuildingLevels(db, planetId);
 
@@ -152,8 +156,7 @@ export function createResearchService(
         Object.values(config.research)
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(async (def) => {
-            const currentLevel = (research[def.levelColumn as keyof typeof research] ??
-              0) as number;
+            const currentLevel = levels[def.id] ?? 0;
             const nextLevel = currentLevel + 1;
             const cost = researchCost(def, nextLevel, phaseMap);
             const time = Math.max(
@@ -169,9 +172,8 @@ export function createResearchService(
             );
 
             const researchLevels: Record<string, number> = {};
-            for (const [key, rDef] of Object.entries(config.research)) {
-              researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ??
-                0) as number;
+            for (const [key] of Object.entries(config.research)) {
+              researchLevels[key] = levels[key] ?? 0;
             }
             const prereqCheck = checkResearchPrerequisites(
               def.prerequisites,
@@ -239,7 +241,7 @@ export function createResearchService(
       }
 
       const planetId = homeworld.id;
-      const research = await this.getOrCreateResearch(userId);
+      const levels = await loadResearchLevels(db, userId);
       const config = await gameConfigService.getFullConfig();
       const def = config.research[researchId];
       if (!def) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Recherche invalide' });
@@ -262,8 +264,8 @@ export function createResearchService(
 
       const buildingLevels = await getPlanetBuildingLevels(db, planetId);
       const researchLevels: Record<string, number> = {};
-      for (const [key, rDef] of Object.entries(config.research)) {
-        researchLevels[key] = (research[rDef.levelColumn as keyof typeof research] ?? 0) as number;
+      for (const [key] of Object.entries(config.research)) {
+        researchLevels[key] = levels[key] ?? 0;
       }
       const prereqCheck = checkResearchPrerequisites(
         def.prerequisites,
@@ -289,7 +291,7 @@ export function createResearchService(
         }
       }
 
-      const currentLevel = (research[def.levelColumn as keyof typeof research] ?? 0) as number;
+      const currentLevel = levels[researchId] ?? 0;
       const nextLevel = currentLevel + 1;
       if (def.maxLevel != null && nextLevel > def.maxLevel) {
         throw new TRPCError({
@@ -393,10 +395,8 @@ export function createResearchService(
       const config = await gameConfigService.getFullConfig();
       const cancelRefundRatio = Number(config.universe.cancel_refund_ratio) || 0.7;
       const def = config.research[activeResearch.itemId];
-      const research = await this.getOrCreateResearch(userId);
-      const currentLevel = def
-        ? ((research[def.levelColumn as keyof typeof research] ?? 0) as number)
-        : 0;
+      const levels = await loadResearchLevels(db, userId);
+      const currentLevel = def ? (levels[activeResearch.itemId] ?? 0) : 0;
       const phaseMap = config.universe.phase_multiplier
         ? Object.fromEntries(
             Object.entries(config.universe.phase_multiplier as Record<string, number>).map(
@@ -459,13 +459,14 @@ export function createResearchService(
       const def = config.research[entry.itemId];
       if (!def) return null;
 
-      const columnKey = def.levelColumn;
-      const research = await this.getOrCreateResearch(entry.userId);
-      const newLevel = ((research[columnKey as keyof typeof research] ?? 0) as number) + 1;
+      const newLevel = await bumpResearchLevel(db, entry.userId, entry.itemId);
 
+      // Dual-write : maintenir user_research synchronisée tant que les ~10
+      // autres sous-systèmes lisent encore depuis cette table (filet Lot 1).
+      await this.getOrCreateResearch(entry.userId);
       await db
         .update(userResearch)
-        .set({ [columnKey]: newLevel })
+        .set({ [def.levelColumn]: newLevel })
         .where(eq(userResearch.userId, entry.userId));
 
       await db
