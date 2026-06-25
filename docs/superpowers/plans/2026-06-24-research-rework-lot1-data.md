@@ -22,7 +22,9 @@ ils seront retirés dans un lot ultérieur une fois la bascule validée en prod.
 - **Repo PARTAGÉ avec Julien** → `git add` **chemins précis** uniquement ; vérifier `git rev-parse --abbrev-ref HEAD` avant chaque commit. ⚠️ **NE JAMAIS lister un fichier supprimé (`git rm`) dans un `git add <chemins>` suivant** (ça avorte tout l'add → commit incomplet → build cassé ; bug vu 2× aujourd'hui). Vérifier `git status --short` APRÈS chaque commit.
 - Branche de travail : `feat/research-lot1-data` (basée sur `main`).
 - Vérif après CHAQUE tâche : `pnpm typecheck` (doit rester 11/11) + `pnpm --filter @exilium/api test` (les tests recherche) + `pnpm --filter @exilium/web lint` (0 erreur). Le **gate final CI** = `pnpm typecheck && pnpm -r lint && pnpm -r test && pnpm -r build` vert.
-- Migrations Drizzle : générées dans `packages/db` (cf. les migrations existantes + `scripts/` d'apply). Le backfill se fait en SQL dans la migration (ou un script de migration data dédié), idempotent.
+- Migrations Drizzle : `pnpm --filter @exilium/db db:generate` génère un fichier SQL dans `packages/db/drizzle/`. Le backfill (INSERT…SELECT idempotent, `ON CONFLICT DO NOTHING`) s'ajoute au fichier de migration généré. La migration s'applique à **prod + staging au déploiement** (`scripts/deploy.sh` → apply-migrations) — **JAMAIS à la main**.
+- ⚠️ **SÉCURITÉ DB** : `exilium` = la base de **PROD** (Caddy sert le live). Ne JAMAIS y appliquer/tester quoi que ce soit. ⚠️ `db:migrate` est **cassé sur une DB vierge** (vieille migration jsonb/numeric) → ne pas l'utiliser pour tester.
+- **Filet de test (déjà en place)** : base `exilium_test`, schéma poussé par `bash scripts/setup-test-db.sh` (à RELANCER après tout changement de schéma Drizzle pour synchroniser la nouvelle table). Les tests DB importent `testDb` (+ `closeTestDb` en `afterAll`) depuis `apps/api/src/test/test-db.ts`, et **nettoient leurs propres données** (la DB est partagée entre tests — utiliser des IDs uniques + supprimer en fin de test, ou TRUNCATE des tables touchées).
 - **Comportement inchangé** : aucune route tRPC, aucun type exposé, aucune UI ne change. Seul le stockage interne bascule. Les tests existants de la recherche doivent passer sans modification de leurs assertions.
 - ESM `.js` dans les imports (convention du repo).
 
@@ -46,8 +48,9 @@ ils seront retirés dans un lot ultérieur une fois la bascule validée en prod.
 - [ ] **Step 1** — Écrire la def de table `userResearchLevels` (pgTable `user_research_levels`, PK composite `(user_id, research_id)`, FK `user_id`→users cascade). Exporter depuis `schema/index.ts`. `cd /opt/exilium && pnpm --filter @exilium/db typecheck` → PASS.
 - [ ] **Step 2** — Générer la migration (drizzle-kit, comme les migrations existantes de `packages/db`). Vérifier le SQL généré (CREATE TABLE).
 - [ ] **Step 3** — Ajouter au même fichier de migration (ou un script de migration data idempotent) le **backfill** : pour chaque recherche (les 21 `research_id` connus, qui = les noms de colonnes camelCase ou la valeur `level_column` de `research_definitions`), `INSERT INTO user_research_levels (user_id, research_id, level) SELECT user_id, '<researchId>', <colonne> FROM user_research ON CONFLICT DO NOTHING`. Idempotent (ON CONFLICT). Source du mapping researchId↔colonne : `research_definitions.level_column` (= researchId ici) ou la liste en dur des 21.
-- [ ] **Step 4** — Appliquer la migration en local (`exilium` dev DB) et vérifier le backfill : `SELECT count(*) FROM user_research_levels;` doit valoir `nb_users × 21` (ou ≥ ce qui existait). Coller le résultat.
-- [ ] **Step 5** — Commit (`git add packages/db/src/schema/user-research-levels.ts packages/db/src/schema/index.ts packages/db/<migration>` — chemins précis).
+- [ ] **Step 4** — Synchroniser la base de TEST : `cd /opt/exilium && bash scripts/setup-test-db.sh` (pousse la nouvelle table dans `exilium_test`). Vérifier qu'elle existe : `sudo -u postgres psql -d exilium_test -c "\d user_research_levels"`. **NE PAS toucher la prod `exilium`.**
+- [ ] **Step 5** — Test d'intégration du **backfill** contre le filet. Créer `apps/api/src/modules/research/__tests__/backfill-research-levels.test.ts` : avec `testDb` (de `apps/api/src/test/test-db.ts`), insérer un `users` minimal + une ligne `user_research` avec quelques niveaux non nuls (ex. `weapons: 3`, `energyTech: 2`), exécuter la **même requête de backfill** que la migration (`INSERT INTO user_research_levels … SELECT … ON CONFLICT DO NOTHING`), puis asserter que `user_research_levels` contient bien `(user, 'weapons', 3)` et `(user, 'energyTech', 2)`. `afterEach`/`afterAll` : nettoyer les lignes créées + `closeTestDb()`. Lancer : `pnpm --filter @exilium/api test backfill-research-levels` → PASS.
+- [ ] **Step 6** — Commit (`git add packages/db/src/schema/user-research-levels.ts packages/db/src/schema/index.ts packages/db/drizzle/<migration> apps/api/src/modules/research/__tests__/backfill-research-levels.test.ts` — chemins précis, vérifier `git status` après).
 
 ---
 
@@ -59,8 +62,8 @@ ils seront retirés dans un lot ultérieur une fois la bascule validée en prod.
 - `loadResearchLevels(db, userId): Promise<Record<string, number>>` — map `researchId → level` (défaut 0 pour les absents) depuis `user_research_levels`.
 - `bumpResearchLevel(db, userId, researchId): Promise<number>` — upsert `level = level + 1` (ON CONFLICT (user_id, research_id) DO UPDATE), retourne le nouveau niveau.
 
-- [ ] **Step 1** — Test (échoue) : `loadResearchLevels` retourne `{}` (ou tous 0) pour un user neuf ; après `bumpResearchLevel(db, u, 'weapons')` deux fois, `loadResearchLevels` donne `weapons: 2`.
-- [ ] **Step 2** — Run → FAIL.
+- [ ] **Step 1** — Test (échoue) avec le filet : `research-levels.repo.test.ts` importe `testDb` + `closeTestDb` (`apps/api/src/test/test-db.ts`). Crée un `users` minimal (id unique) ; assert `loadResearchLevels(testDb, u)` → `{}` ou tous 0 ; après `bumpResearchLevel(testDb, u, 'weapons')` ×2, `loadResearchLevels(testDb, u)` donne `weapons: 2`. `afterEach`/`afterAll` : nettoyer les lignes créées (`user`, `user_research_levels`) + `closeTestDb()`.
+- [ ] **Step 2** — Run → FAIL (`pnpm --filter @exilium/api test research-levels.repo`).
 - [ ] **Step 3** — Implémenter les 2 helpers (Drizzle : select rows → reduce en Record ; upsert via `.onConflictDoUpdate` sur la PK composite avec `level: sql\`${userResearchLevels.level} + 1\``).
 - [ ] **Step 4** — Run → PASS + `pnpm --filter @exilium/api typecheck`.
 - [ ] **Step 5** — Commit (chemins précis).
@@ -75,9 +78,9 @@ ils seront retirés dans un lot ultérieur une fois la bascule validée en prod.
 
 - [ ] **Step 1** — Remplacer chaque lecture `research[def.levelColumn as keyof typeof research]` par une lecture dans la map `levels` chargée via `loadResearchLevels(db, userId)` (charger une fois par méthode, en tête). Les ~6 sites : lignes ~155, 173, 266, 292, 398, 464. `def.levelColumn` n'est plus utilisé pour la LECTURE (mais le champ reste en base).
 - [ ] **Step 2** — Remplacer l'écriture `.update(userResearch).set({[columnKey]: newLevel})` (à la complétion) par `bumpResearchLevel(db, entry.userId, entry.itemId)`. Retirer la dépendance à la ligne `userResearch` chargée si elle ne sert plus qu'à ça.
-- [ ] **Step 3** — `pnpm --filter @exilium/api typecheck` → PASS. Lancer les tests recherche existants : `pnpm --filter @exilium/api test research` → **PASS sans modifier les assertions** (preuve d'iso-comportement).
-- [ ] **Step 4** — Vérif manuelle de cohérence : une recherche complétée incrémente bien `user_research_levels` (et le `listResearch` renvoie le bon niveau). Coller un extrait de test ou un log.
-- [ ] **Step 5** — Commit (chemins précis).
+- [ ] **Step 3** — Test de service avec le filet (`research.service.levels.test.ts`, `testDb`) : il n'existe AUCUN test recherche préalable — c'est le premier. Monter le minimum (user + planète + une recherche menée à complétion, ou appeler directement la méthode de complétion), puis asserter que `user_research_levels` est incrémentée ET que `listResearch` renvoie le bon niveau via le modèle en lignes. Nettoyer les données + `closeTestDb()`.
+- [ ] **Step 4** — `pnpm --filter @exilium/api typecheck` → PASS, puis `pnpm --filter @exilium/api test` → **toute la suite verte** (nouveaux tests DB + les 336 existants), preuve de non-régression.
+- [ ] **Step 5** — Commit (chemins précis, vérifier `git status` après).
 
 ---
 
