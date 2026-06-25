@@ -4,7 +4,7 @@ import type { BuildingCostDef, ResearchCostDef, BonusDefinition } from '@exilium
 export interface BuildingDef {
   id: string;
   costDef: BuildingCostDef;
-  maxLevel: number;
+  maxLevel: number | null;
   role: string | null;
   prerequisites: { buildingId: string; level: number }[];
 }
