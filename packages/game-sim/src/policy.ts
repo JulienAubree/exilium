@@ -84,7 +84,7 @@ export class EcoPolicy implements Policy {
       const def = buildings.get(id);
       if (!def) continue;
       const lvl = state.levels.get(id) ?? 0;
-      if (lvl >= def.maxLevel) continue;
+      if (def.maxLevel !== null && lvl >= def.maxLevel) continue;
       const prereqOk = def.prerequisites.every((p) => (state.levels.get(p.buildingId) ?? 0) >= p.level);
       if (!prereqOk) continue;
       candidates.push({ id, lvl, priority: i });
