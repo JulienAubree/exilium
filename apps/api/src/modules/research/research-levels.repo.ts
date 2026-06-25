@@ -62,3 +62,24 @@ export async function bumpResearchLevel(
 
   return row.level;
 }
+
+/**
+ * Écrit un niveau arbitraire (SET, pas +1) pour une recherche donnée (upsert).
+ *
+ * Utilisé par l'admin pour synchroniser `user_research_levels` quand il
+ * modifie directement un niveau dans `user_research`.
+ */
+export async function setResearchLevel(
+  db: DbOrTx,
+  userId: string,
+  researchId: string,
+  level: number,
+): Promise<void> {
+  await db
+    .insert(userResearchLevels)
+    .values({ userId, researchId, level })
+    .onConflictDoUpdate({
+      target: [userResearchLevels.userId, userResearchLevels.researchId],
+      set: { level },
+    });
+}

@@ -461,6 +461,14 @@ export function createResearchService(
 
       const newLevel = await bumpResearchLevel(db, entry.userId, entry.itemId);
 
+      // Dual-write : maintenir user_research synchronisée tant que les ~10
+      // autres sous-systèmes lisent encore depuis cette table (filet Lot 1).
+      await this.getOrCreateResearch(entry.userId);
+      await db
+        .update(userResearch)
+        .set({ [def.levelColumn]: newLevel })
+        .where(eq(userResearch.userId, entry.userId));
+
       await db
         .update(buildQueue)
         .set({ status: 'completed' })

@@ -15,6 +15,7 @@ import {
   refreshTokens,
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
+import { setResearchLevel } from '../research/research-levels.repo.js';
 import type { Queue } from 'bullmq';
 import type { createPlanetService } from '../planet/planet.service.js';
 import type { GameConfigService } from './game-config.service.js';
@@ -166,10 +167,14 @@ export function createPlayerAdminService(
     },
 
     async updatePlayerResearchLevel(userId: string, levelColumn: string, level: number) {
+      // user_research (filet existant — lue par les ~10 sous-systèmes)
       await db
         .update(userResearch)
         .set({ [levelColumn]: level })
         .where(byUser(userResearch.userId, userId));
+      // Dual-write : user_research_levels (nouveau modèle en lignes)
+      // levelColumn === researchId dans le schéma actuel (ex: 'weapons')
+      await setResearchLevel(db, userId, levelColumn, level);
     },
 
     async banPlayer(userId: string) {

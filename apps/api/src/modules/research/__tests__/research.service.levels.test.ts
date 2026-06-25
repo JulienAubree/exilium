@@ -4,21 +4,27 @@
  * Vérifie que :
  *   1. `completeResearch` écrit dans `user_research_levels` via `bumpResearchLevel`.
  *   2. `loadResearchLevels` reflète ensuite le bon niveau (lecture via le modèle en lignes).
+ *   3. (C1 dual-write) `completeResearch` synchronise aussi `user_research`.
+ *   4. (I1 dual-write) `setResearchLevel` / `updatePlayerResearchLevel` synchronisent les deux tables.
  *
  * Filet de test : base `exilium_test` (séparée de prod). Nettoie ses propres données.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { users, planets, buildQueue, userResearchLevels } from '@exilium/db';
+import { users, planets, buildQueue, userResearchLevels, userResearch } from '@exilium/db';
 import { testDb, closeTestDb } from '../../../test/test-db.js';
 import { createResearchService } from '../research.service.js';
-import { loadResearchLevels } from '../research-levels.repo.js';
+import { loadResearchLevels, setResearchLevel } from '../research-levels.repo.js';
+import { createPlayerAdminService } from '../../admin/player-admin.service.js';
 import type { GameConfig } from '../../admin/game-config.types.js';
 
 // IDs uniques pour ce run (évite les collisions avec d'autres tests)
 const TEST_USER_ID = '00000000-0000-0000-0000-000000000099';
 const TEST_PLANET_ID = '00000000-0000-0000-0000-000000000098';
 const TEST_RESEARCH_ID = 'weapons';
+
+// ID dédié pour les tests admin (évite les interférences avec le bloc completeResearch)
+const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000097';
 
 // ---- Mocks minimaux ----
 
@@ -76,6 +82,11 @@ const mockResourceService = {} as ReturnType<
   typeof import('../../resource/resource.service.js').createResourceService
 >;
 
+// Fermeture globale — une seule fois pour tout le fichier
+afterAll(async () => {
+  await closeTestDb();
+});
+
 describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
   let buildQueueId: string;
 
@@ -85,6 +96,7 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, TEST_USER_ID));
+    await testDb.delete(userResearch).where(eq(userResearch.userId, TEST_USER_ID));
     await testDb.delete(planets).where(eq(planets.userId, TEST_USER_ID));
     await testDb.delete(users).where(eq(users.id, TEST_USER_ID));
 
@@ -131,9 +143,9 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
     await testDb
       .delete(userResearchLevels)
       .where(eq(userResearchLevels.userId, TEST_USER_ID));
+    await testDb.delete(userResearch).where(eq(userResearch.userId, TEST_USER_ID));
     await testDb.delete(planets).where(eq(planets.userId, TEST_USER_ID));
     await testDb.delete(users).where(eq(users.id, TEST_USER_ID));
-    await closeTestDb();
   });
 
   it("aucun niveau avant la complétion (user_research_levels vide pour l'utilisateur)", async () => {
@@ -185,5 +197,109 @@ describe('research.service — modèle en lignes (Task 3 Lot 1)', () => {
       .where(eq(buildQueue.id, buildQueueId));
 
     expect(entry?.status).toBe('completed');
+  });
+
+  // C1 — dual-write : user_research doit être synchronisée après completeResearch
+  it('C1 dual-write — completeResearch synchronise user_research (filet pour les ~10 lecteurs)', async () => {
+    const [row] = await testDb
+      .select()
+      .from(userResearch)
+      .where(eq(userResearch.userId, TEST_USER_ID));
+
+    expect(row).toBeDefined();
+    // weapons est levelColumn = TEST_RESEARCH_ID
+    expect(row.weapons).toBe(1);
+  });
+});
+
+describe('setResearchLevel / updatePlayerResearchLevel — dual-write admin (I1)', () => {
+  beforeAll(async () => {
+    // Nettoyage préventif pour ADMIN_USER_ID
+    await testDb
+      .delete(userResearchLevels)
+      .where(eq(userResearchLevels.userId, ADMIN_USER_ID));
+    await testDb.delete(userResearch).where(eq(userResearch.userId, ADMIN_USER_ID));
+    await testDb.delete(users).where(eq(users.id, ADMIN_USER_ID));
+
+    // Utilisateur minimal
+    await testDb.insert(users).values({
+      id: ADMIN_USER_ID,
+      email: 'admin-research-test@exilium.test',
+      username: 'admin_research_test',
+      passwordHash: 'not-a-real-hash',
+    });
+
+    // user_research doit exister (la méthode fait un UPDATE sans upsert)
+    await testDb.insert(userResearch).values({ userId: ADMIN_USER_ID });
+  });
+
+  afterAll(async () => {
+    await testDb
+      .delete(userResearchLevels)
+      .where(eq(userResearchLevels.userId, ADMIN_USER_ID));
+    await testDb.delete(userResearch).where(eq(userResearch.userId, ADMIN_USER_ID));
+    await testDb.delete(users).where(eq(users.id, ADMIN_USER_ID));
+  });
+
+  it('setResearchLevel upsert crée la ligne user_research_levels au niveau demandé', async () => {
+    await setResearchLevel(testDb, ADMIN_USER_ID, TEST_RESEARCH_ID, 5);
+
+    const [row] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(
+        and(
+          eq(userResearchLevels.userId, ADMIN_USER_ID),
+          eq(userResearchLevels.researchId, TEST_RESEARCH_ID),
+        ),
+      );
+
+    expect(row).toBeDefined();
+    expect(row.level).toBe(5);
+  });
+
+  it('setResearchLevel met à jour la ligne existante (SET idempotent)', async () => {
+    await setResearchLevel(testDb, ADMIN_USER_ID, TEST_RESEARCH_ID, 7);
+
+    const [row] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(
+        and(
+          eq(userResearchLevels.userId, ADMIN_USER_ID),
+          eq(userResearchLevels.researchId, TEST_RESEARCH_ID),
+        ),
+      );
+
+    expect(row?.level).toBe(7);
+  });
+
+  it('I1 dual-write — updatePlayerResearchLevel synchronise user_research ET user_research_levels', async () => {
+    const adminService = createPlayerAdminService(testDb);
+
+    await adminService.updatePlayerResearchLevel(ADMIN_USER_ID, TEST_RESEARCH_ID, 10);
+
+    // user_research (colonne weapons)
+    const [urRow] = await testDb
+      .select()
+      .from(userResearch)
+      .where(eq(userResearch.userId, ADMIN_USER_ID));
+
+    expect(urRow).toBeDefined();
+    expect(urRow.weapons).toBe(10);
+
+    // user_research_levels (ligne)
+    const [urlRow] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(
+        and(
+          eq(userResearchLevels.userId, ADMIN_USER_ID),
+          eq(userResearchLevels.researchId, TEST_RESEARCH_ID),
+        ),
+      );
+
+    expect(urlRow).toBeDefined();
+    expect(urlRow.level).toBe(10);
   });
 });
