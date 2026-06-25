@@ -18,8 +18,10 @@ else
   TEST_URL=$(grep '^DATABASE_URL=' .env | cut -d= -f2- | sed -E 's#/exilium($|\?)#/exilium_test\1#')
 fi
 
-# Crée la DB si absente (local : via le superuser postgres).
-if command -v sudo >/dev/null 2>&1 && sudo -n -u postgres true 2>/dev/null; then
+# Crée la DB si absente — LOCAL uniquement (via le superuser postgres).
+# En CI, `exilium_test` est fournie par le service postgres du workflow
+# (TEST_DATABASE_URL est défini), donc on ne crée rien ici.
+if [[ -z "${TEST_DATABASE_URL:-}" ]] && command -v sudo >/dev/null 2>&1 && sudo -n -u postgres true 2>/dev/null; then
   sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='exilium_test'" | grep -q 1 \
     || sudo -u postgres psql -c "CREATE DATABASE exilium_test OWNER exilium;"
 fi

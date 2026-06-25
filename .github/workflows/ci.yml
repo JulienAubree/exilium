@@ -9,6 +9,9 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      # Base de TEST isolée (jamais la prod), fournie par le service postgres ci-dessous.
+      TEST_DATABASE_URL: postgresql://exilium:exilium@localhost:5432/exilium_test
     services:
       redis:
         image: redis:7-alpine
@@ -16,6 +19,19 @@ jobs:
           - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: exilium
+          POSTGRES_PASSWORD: exilium
+          POSTGRES_DB: exilium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
           --health-interval 5s
           --health-timeout 3s
           --health-retries 5
@@ -29,4 +45,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo lint
       - run: pnpm turbo typecheck
+      # Prépare la base de test (pousse le schéma Drizzle dans exilium_test).
+      - run: bash scripts/setup-test-db.sh
       - run: pnpm turbo test
