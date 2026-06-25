@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`).
 
+> **STATUT (2026-06-25) — PR-A TERMINÉE** sur branche `feat/research-lot2-repointage` (non poussée, non déployée). Tasks 1→5 faites : plus aucune feature ne lit `user_research` (preuve : seul `research.service.ts:515` getOrCreate subsiste = filet d'écriture). Gate complet vert (typecheck 11/11 · lint 0 err · test 849 verts · build exit 0). **Suite : Julien déploie prod+staging ensemble + valide → puis PR-B (Task 6, drop table).**
+
 **Goal:** Re-pointer **toutes les lectures** des niveaux de recherche des ~10
 sous-systèmes (« features ») de la table large `user_research` vers le modèle en
 lignes `user_research_levels` (via helpers), **puis retirer le dual-write et
