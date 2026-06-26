@@ -40,3 +40,4 @@ export * from './fleet-presets.js';
 export * from './empire-progression.js';
 export * from './empire-policies.js';
 export * from './user-research-levels.js';
+export * from './user-research-choices.js';

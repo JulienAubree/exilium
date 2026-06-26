@@ -74,6 +74,10 @@ export const researchDefinitions = pgTable('research_definitions', {
   effectDescription: text('effect_description'),
   maxLevel: smallint('max_level'),
   requiredAnnexType: varchar('required_annex_type', { length: 64 }),
+  branchId: varchar('branch_id', { length: 32 }),
+  tier: smallint('tier'),
+  forkId: varchar('fork_id', { length: 64 }),
+  forkPath: varchar('fork_path', { length: 32 }),
 });
 
 export const researchPrerequisites = pgTable('research_prerequisites', {
