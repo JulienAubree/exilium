@@ -16,10 +16,6 @@ const BRANCH_OPTIONS = [
   { value: 'intel', label: 'Intel' },
 ];
 
-const FORK_PATH_OPTIONS = [
-  { value: 'A', label: 'A' },
-  { value: 'B', label: 'B' },
-];
 
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
@@ -35,7 +31,7 @@ const FIELDS = [
   { key: 'branchId', label: 'Branche (arbre)', type: 'select' as const, options: BRANCH_OPTIONS, allowEmpty: true },
   { key: 'tier', label: 'Tier (arbre, 1–5, vide = aucun)', type: 'number' as const },
   { key: 'forkId', label: 'Fork ID (ex: armament_spec, vide = aucun)', type: 'text' as const },
-  { key: 'forkPath', label: 'Fork Path (A ou B, vide = aucun)', type: 'select' as const, options: FORK_PATH_OPTIONS, allowEmpty: true },
+  { key: 'forkPath', label: 'Fork Path (ex: shields, armor, vide = aucun)', type: 'text' as const },
 ];
 
 const CREATE_FIELDS = [
