@@ -83,6 +83,42 @@ export function resolveBonus(
 }
 
 /**
+ * S1 — résout la stat combat `shield_pierce` comme une **fraction** 0..softCapMax
+ * (et NON un multiplicateur × comme `resolveBonus`). C'est la fraction de
+ * l'absorption bouclier ennemie que les tirs ignorent (fork Armement
+ * « Anti-bouclier »).
+ *
+ * Contrairement à `resolveBonus` qui renvoie `1 + bonus` (modificateur ×), ce
+ * helper renvoie directement `bonus = softCapMax × (1 - exp(-softCapK × level))`
+ * pour les recherches `shield_pierce` à soft-cap, et somme les contributions
+ * multiples (additif, capé au plus grand `softCapMax` rencontré).
+ *
+ * Mapping : la stat est définie via un bonus `bonusType:'asymptotic'` avec
+ * `softCapMax` = fraction max (ex. 0.6) et `softCapK` la vitesse de montée.
+ * Sans soft-cap valide sur une def, sa contribution est ignorée (fail-safe :
+ * une stat de fraction n'a pas de sens en linéaire non borné).
+ *
+ * @returns fraction ∈ [0, softCapMax], 0 si aucune def `shield_pierce` ne matche.
+ */
+export function resolveShieldPierce(
+  userLevels: Record<string, number>,
+  bonusDefs: BonusDefinition[],
+): number {
+  let fraction = 0;
+  let cap = 0;
+  for (const def of bonusDefs) {
+    if (def.stat !== 'shield_pierce') continue;
+    if (!def.softCapMax || !def.softCapK) continue;
+    const level = userLevels[def.sourceId] ?? 0;
+    if (level <= 0) continue;
+    fraction += softCapBonus(level, def.softCapMax, def.softCapK);
+    cap = Math.max(cap, def.softCapMax);
+  }
+  // Borne dure : ne jamais dépasser le plus grand soft-cap déclaré.
+  return cap > 0 ? Math.min(fraction, cap) : 0;
+}
+
+/**
  * Compute the building bonus multiplier for a single level.
  * Used for UI display of bonus progression.
  */

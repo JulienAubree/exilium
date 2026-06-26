@@ -1,6 +1,6 @@
 import { getUserResearchLevels } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import { resolveBonus } from '@exilium/game-engine';
+import { resolveBonus, resolveShieldPierce } from '@exilium/game-engine';
 import type {
   BonusDefinition,
   CombatMultipliers,
@@ -216,9 +216,15 @@ export async function getCombatMultipliers(
 
   // Recherche uniquement — les clés talents combat_* n'ont plus d'émetteur
   // depuis le retrait de l'arbre de talents (purge 2026-06-10).
+  //
+  // ⚠️ weapons/shielding/armor = MULTIPLICATEURS × (resolveBonus → 1 + bonus).
+  // shieldPierce = FRACTION 0..softCapMax (fork Armement « Anti-bouclier ») :
+  // on NE passe PAS par resolveBonus (qui renverrait un ×) mais par le helper
+  // dédié resolveShieldPierce qui renvoie directement la fraction soft-capée.
   return {
     weapons: resolveBonus('weapons', null, levels, bonusDefs),
     shielding: resolveBonus('shielding', null, levels, bonusDefs),
     armor: resolveBonus('armor', null, levels, bonusDefs),
+    shieldPierce: resolveShieldPierce(levels, bonusDefs),
   };
 }

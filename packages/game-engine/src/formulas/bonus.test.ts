@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBonus, buildingBonusAtLevel, researchAnnexBonus, researchBiomeBonus, softCapBonus, type BonusDefinition } from './bonus.js';
+import { resolveBonus, buildingBonusAtLevel, researchAnnexBonus, researchBiomeBonus, softCapBonus, resolveShieldPierce, type BonusDefinition } from './bonus.js';
 
 const bonusDefs: BonusDefinition[] = [
   { sourceType: 'building', sourceId: 'robotics', stat: 'building_time', percentPerLevel: -15, category: null },
@@ -214,5 +214,46 @@ describe('resolveBonus with asymptotic bonusType', () => {
     const result = resolveBonus('energy_consumption', null, { semiconductors: 20 }, [neg]);
     expect(result).toBeCloseTo(1 - 0.5 * (1 - Math.exp(-4)), 4);
     expect(result).toBeGreaterThan(0.5); // jamais en-dessous de 1 - softCapMax
+  });
+});
+
+describe('resolveShieldPierce (fraction, not multiplier)', () => {
+  // Reflète le seed T2 : shieldBreaker → shield_pierce asymptotique.
+  const pierceDef: BonusDefinition = {
+    sourceType: 'research',
+    sourceId: 'shieldBreaker',
+    stat: 'shield_pierce',
+    percentPerLevel: 4,
+    category: null,
+    bonusType: 'asymptotic',
+    softCapMax: 0.6,
+    softCapK: 0.15,
+  };
+
+  it('renvoie 0 quand aucun niveau / aucune def', () => {
+    expect(resolveShieldPierce({}, [])).toBe(0);
+    expect(resolveShieldPierce({ shieldBreaker: 0 }, [pierceDef])).toBe(0);
+    expect(resolveShieldPierce({ weapons: 10 }, [pierceDef])).toBe(0); // autre stat
+  });
+
+  it('renvoie une FRACTION = softCapMax × (1 - exp(-softCapK × level)), pas 1+x', () => {
+    // niv 5 → 0.6 × (1 - e^(-0.75)) ≈ 0.3165
+    const lvl5 = resolveShieldPierce({ shieldBreaker: 5 }, [pierceDef]);
+    expect(lvl5).toBeCloseTo(0.6 * (1 - Math.exp(-0.15 * 5)), 6);
+    expect(lvl5).toBeGreaterThan(0);
+    expect(lvl5).toBeLessThan(1); // c'est une fraction, jamais un multiplicateur
+    // identique à softCapBonus direct (= pas de +1)
+    expect(lvl5).toBeCloseTo(softCapBonus(5, 0.6, 0.15), 10);
+  });
+
+  it('borne dure : ne dépasse jamais softCapMax même à haut niveau', () => {
+    const lvl1000 = resolveShieldPierce({ shieldBreaker: 1000 }, [pierceDef]);
+    expect(lvl1000).toBeLessThanOrEqual(0.6);
+    expect(lvl1000).toBeGreaterThan(0.59);
+  });
+
+  it('ignore une def shield_pierce sans soft-cap (fail-safe)', () => {
+    const noCap: BonusDefinition = { ...pierceDef, softCapMax: null, softCapK: null };
+    expect(resolveShieldPierce({ shieldBreaker: 5 }, [noCap])).toBe(0);
   });
 });

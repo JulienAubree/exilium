@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { planetShips, planetDefenses, debrisFields, users } from '@exilium/db';
 import { computeFleetFP, COMBAT_CATEGORIES, buildCombatConfig } from '@exilium/game-engine';
-import type { RoundResult, UnitCombatStats, FPConfig, ShipCombatConfig } from '@exilium/game-engine';
+import type { RoundResult, UnitCombatStats, FPConfig, ShipCombatConfig, CombatMultipliers } from '@exilium/game-engine';
 import type { Database } from '@exilium/db';
 import type { GameConfig, MissionHandlerContext } from './fleet.types.js';
 import { buildShipCombatConfigs, buildShipCosts, getCombatMultipliers } from './fleet.types.js';
@@ -29,8 +29,10 @@ export async function computeCombatMultipliers(
   defenderUserId: string,
   defenderPlanetId?: string,
 ): Promise<{
-  attackerMultipliers: { weapons: number; shielding: number; armor: number };
-  defenderMultipliers: { weapons: number; shielding: number; armor: number };
+  // CombatMultipliers inclut désormais `shieldPierce` (fraction, fork Armement) ;
+  // il doit survivre jusqu'à simulateCombat via attackerMultipliers.
+  attackerMultipliers: CombatMultipliers;
+  defenderMultipliers: CombatMultipliers;
   attackerTalentCtx: Record<string, number>;
   defenderTalentCtx: Record<string, number>;
 }> {

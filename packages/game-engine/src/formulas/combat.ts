@@ -59,6 +59,15 @@ export interface CombatMultipliers {
   weapons: number;
   shielding: number;
   armor: number;
+  /**
+   * S1 — fraction ∈ [0, softCapMax] de l'absorption bouclier ENNEMIE ignorée
+   * par les tirs de ce camp (fork Armement « Anti-bouclier », stat
+   * `shield_pierce`). C'est une **fraction additive**, PAS un multiplicateur ×
+   * comme weapons/shielding/armor. Optionnel → défaut 0 (= comportement V9
+   * inchangé). En S1 seul l'attaquant perce : seul `attackerMultipliers
+   * .shieldPierce` est consommé par le moteur (cf. simulateCombat).
+   */
+  shieldPierce?: number;
 }
 
 /**
@@ -338,6 +347,13 @@ function emptySideStats(): CombatSideStats {
 interface BossRuntimeCtx {
   /** % d'armure ignorée quand un attaquant tape un défenseur (armor_pierce). */
   defenderArmorPierce: number;
+  /**
+   * S1 — fraction de l'absorption bouclier de la cible ignorée quand un
+   * attaquant (côté 'attacker') tape un défenseur (stat `shield_pierce`,
+   * fork Armement). Symétrique à `defenderArmorPierce` mais issu des
+   * multiplicateurs ATTAQUANT, pas d'un bossSkill défenseur. 0 = inactif.
+   */
+  attackerShieldPierce: number;
   /** % chance de miss quand un attaquant tape un défenseur (evasion). */
   defenderEvasion: number;
   /** Set d'unités défenseuses bénéficiant d'un last_stand non encore consommé. */
@@ -388,8 +404,19 @@ function fireShot(
     return false;
   }
 
+  // S1 — shield_pierce : l'attaquant ignore une fraction de l'absorption
+  // bouclier de la cible. `effShield` = bouclier EFFECTIF qui absorbe encore ;
+  // la part percée (`target.shield - effShield`) ne stoppe rien et le bouclier
+  // est consommé sur ce shot. Gaté côté attaquant uniquement (S1). À 0, on
+  // retombe exactement sur le comportement V9 (effShield === target.shield).
+  const shieldPierce = (bossCtx && attackerSide === 'attacker') ? bossCtx.attackerShieldPierce : 0;
+  const effShield = shieldPierce > 0 ? target.shield * (1 - shieldPierce) : target.shield;
+
   // Shield absorbs first
-  if (target.shield >= damage) {
+  if (effShield >= damage) {
+    // Tout le damage est absorbé par le bouclier effectif. Le bouclier garde le
+    // surplus non percé : `damage` retiré de `effShield`, et la part percée
+    // (target.shield - effShield) reste intacte → shield restant = target.shield - damage.
     target.shield -= damage;
     defenderStats.shieldAbsorbed += damage;
     entry.shieldDamage += damage;
@@ -412,13 +439,14 @@ function fireShot(
 
   let surplus = damage;
   let shotShieldAbsorbed = 0;
-  if (target.shield > 0) {
-    surplus = damage - target.shield;
-    defenderStats.shieldAbsorbed += target.shield;
-    entry.shieldDamage += target.shield;
-    shotShieldAbsorbed = target.shield;
-    target.shield = 0;
+  if (effShield > 0) {
+    surplus = damage - effShield;
+    defenderStats.shieldAbsorbed += effShield;
+    entry.shieldDamage += effShield;
+    shotShieldAbsorbed = effShield;
   }
+  // Le bouclier est consommé sur ce shot (la part percée ne se reporte pas).
+  target.shield = 0;
 
   // V9 Boss — armor_pierce : ignore une fraction de l'armure cible quand
   // un attaquant tape un défenseur boss. Calculé sur l'armure courante de
@@ -688,8 +716,14 @@ export function simulateCombat(input: CombatInput): CombatResult {
       }
     }
   }
+  // S1 — shield_pierce porté par les multiplicateurs ATTAQUANT (fork Armement).
+  // Fraction 0..softCapMax, clampée par sûreté à [0, 1) pour éviter un bouclier
+  // effectif négatif. Threadé via bossCtx (gaté attackerSide==='attacker').
+  const attackerShieldPierce = Math.min(0.999, Math.max(0, attackerMultipliers.shieldPierce ?? 0));
+
   const bossCtx: BossRuntimeCtx = {
     defenderArmorPierce,
+    attackerShieldPierce,
     defenderEvasion,
     lastStandActive,
     rng,
