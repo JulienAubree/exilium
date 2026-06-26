@@ -155,6 +155,10 @@ export function createGameConfigRouter(
           levelColumn: nonEmptyString,
           categoryId: optionalNullableString,
           sortOrder: optionalInt,
+          branchId: optionalNullableString,
+          tier: optionalNullableInt,
+          forkId: optionalNullableString,
+          forkPath: optionalNullableString,
         }),
       )
       .mutation(async ({ input }) => {
@@ -185,6 +189,10 @@ export function createGameConfigRouter(
             effectDescription: optionalNullableString,
             categoryId: optionalNullableString,
             sortOrder: optionalInt,
+            branchId: optionalNullableString,
+            tier: optionalNullableInt,
+            forkId: optionalNullableString,
+            forkPath: optionalNullableString,
           }),
         }),
       )

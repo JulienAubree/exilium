@@ -8,6 +8,19 @@ import { PrerequisitesEditor, type MixedPrereq } from '@/components/ui/Prerequis
 import { Pencil, Plus, Trash2, Link } from 'lucide-react';
 import { AdminImageUpload } from '@/components/ui/AdminImageUpload';
 
+const BRANCH_OPTIONS = [
+  { value: 'economy', label: 'Économie' },
+  { value: 'propulsion', label: 'Propulsion' },
+  { value: 'armament', label: 'Armement' },
+  { value: 'defense', label: 'Défense' },
+  { value: 'intel', label: 'Intel' },
+];
+
+const FORK_PATH_OPTIONS = [
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+];
+
 const FIELDS = [
   { key: 'name', label: 'Nom', type: 'text' as const },
   { key: 'description', label: 'Description', type: 'textarea' as const },
@@ -19,6 +32,10 @@ const FIELDS = [
   { key: 'flavorText', label: "Texte d'ambiance", type: 'textarea' as const },
   { key: 'effectDescription', label: "Description d'effet", type: 'textarea' as const },
   { key: 'sortOrder', label: 'Ordre', type: 'number' as const },
+  { key: 'branchId', label: 'Branche (arbre)', type: 'select' as const, options: BRANCH_OPTIONS, allowEmpty: true },
+  { key: 'tier', label: 'Tier (arbre, 1–5, vide = aucun)', type: 'number' as const },
+  { key: 'forkId', label: 'Fork ID (ex: armament_spec, vide = aucun)', type: 'text' as const },
+  { key: 'forkPath', label: 'Fork Path (A ou B, vide = aucun)', type: 'select' as const, options: FORK_PATH_OPTIONS, allowEmpty: true },
 ];
 
 const CREATE_FIELDS = [
@@ -332,12 +349,20 @@ export default function Research() {
             flavorText: editingResearch.flavorText ?? '',
             effectDescription: editingResearch.effectDescription ?? '',
             sortOrder: editingResearch.sortOrder,
+            branchId: editingResearch.branchId ?? '',
+            tier: editingResearch.tier ?? '',
+            forkId: editingResearch.forkId ?? '',
+            forkPath: editingResearch.forkPath ?? '',
           }}
           onSave={(values) => {
             const ml = values.maxLevel;
             const maxLevel = ml === '' || ml === null || ml === undefined
               ? null
               : Number(ml);
+            const tierVal = values.tier;
+            const tier = tierVal === '' || tierVal === null || tierVal === undefined
+              ? null
+              : Number(tierVal);
             updateMutation.mutate({
               id: editing!,
               data: {
@@ -351,6 +376,10 @@ export default function Research() {
                 flavorText: (values.flavorText as string) || null,
                 effectDescription: (values.effectDescription as string) || null,
                 sortOrder: values.sortOrder as number,
+                branchId: (values.branchId as string) || null,
+                tier,
+                forkId: (values.forkId as string) || null,
+                forkPath: (values.forkPath as string) || null,
               },
             });
           }}
@@ -377,12 +406,20 @@ export default function Research() {
             flavorText: '',
             effectDescription: '',
             sortOrder: 0,
+            branchId: '',
+            tier: '',
+            forkId: '',
+            forkPath: '',
           }}
           onSave={(values) => {
             const ml = values.maxLevel;
             const maxLevel = ml === '' || ml === null || ml === undefined
               ? null
               : Number(ml);
+            const tierVal = values.tier;
+            const tier = tierVal === '' || tierVal === null || tierVal === undefined
+              ? null
+              : Number(tierVal);
             createMutation.mutate({
               id: values.id as string,
               name: values.name as string,
@@ -396,6 +433,10 @@ export default function Research() {
               effectDescription: (values.effectDescription as string) || null,
               levelColumn: values.levelColumn as string,
               sortOrder: values.sortOrder as number,
+              branchId: (values.branchId as string) || null,
+              tier,
+              forkId: (values.forkId as string) || null,
+              forkPath: (values.forkPath as string) || null,
             });
           }}
           onClose={() => setCreating(false)}

@@ -216,6 +216,10 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       levelColumn: string;
       categoryId?: string | null;
       sortOrder?: number;
+      branchId?: string | null;
+      tier?: number | null;
+      forkId?: string | null;
+      forkPath?: string | null;
     }) {
       await db.insert(researchDefinitions).values({
         id: data.id,
@@ -231,6 +235,10 @@ export function createGameConfigService(db: Database, redis?: Redis) {
         levelColumn: data.levelColumn,
         categoryId: data.categoryId ?? null,
         sortOrder: data.sortOrder ?? 0,
+        branchId: data.branchId ?? null,
+        tier: data.tier ?? null,
+        forkId: data.forkId ?? null,
+        forkPath: data.forkPath ?? null,
       });
       invalidateCache();
     },
@@ -276,6 +284,10 @@ export function createGameConfigService(db: Database, redis?: Redis) {
       effectDescription: string | null;
       categoryId: string | null;
       sortOrder: number;
+      branchId: string | null;
+      tier: number | null;
+      forkId: string | null;
+      forkPath: string | null;
     }>) {
       await db.update(researchDefinitions).set(data).where(eq(researchDefinitions.id, id));
       invalidateCache();
