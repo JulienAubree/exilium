@@ -15,6 +15,7 @@ import { Timer } from '@/components/common/Timer';
 import { ClockIcon } from '@/components/icons/utility-icons';
 import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
 import { useGameConfig } from '@/hooks/useGameConfig';
+import { useTutorialTargetId } from '@/hooks/useTutorialHighlight';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/format';
 import { Lock } from 'lucide-react';
@@ -46,6 +47,8 @@ export function ResearchNode({
 }: ResearchNodeProps) {
   const { data: gameConfig } = useGameConfig();
   const utils = trpc.useUtils();
+  const tutorialTargetId = useTutorialTargetId();
+  const highlighted = tutorialTargetId === tech.id;
 
   const startMutation = trpc.research.start.useMutation({
     onSuccess: () => {
@@ -78,8 +81,16 @@ export function ResearchNode({
       className={cn(
         'retro-card relative text-left cursor-pointer overflow-hidden flex flex-col w-full',
         (locked || !tech.prerequisitesMet) && 'opacity-60',
+        highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
       )}
     >
+      {/* Tutorial objective badge */}
+      {highlighted && (
+        <span className="absolute top-2 right-2 z-10 rounded bg-amber-500/20 border border-amber-500/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
+          Objectif
+        </span>
+      )}
+
       {/* Lock badge */}
       {lockReason && (
         <span className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded bg-black/60 border border-border/50 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">

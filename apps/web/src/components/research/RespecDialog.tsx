@@ -50,6 +50,8 @@ export function RespecDialog({
     onSuccess: () => {
       utils.research.list.invalidate();
       utils.exilium.getBalance.invalidate();
+      utils.planet.empire.invalidate();
+      utils.resource.production.invalidate();
       onSuccess();
       onClose();
     },
