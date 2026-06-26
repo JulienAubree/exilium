@@ -27,7 +27,7 @@
 
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import {
-  type Database,
+  type DbOrTx,
   createDb,
   userResearchLevels,
   userResearchChoices,
@@ -100,7 +100,7 @@ export interface MigrateForkResult {
  *   skipped because they had both-path investment but no homeworld planet.
  */
 export async function migrateResearchForks(
-  db: Database,
+  db: DbOrTx,
   opts: MigrateForkOptions = {},
 ): Promise<MigrateForkResult> {
   const homeworldClassId = opts.homeworldClassId ?? 'homeworld';
@@ -164,6 +164,29 @@ export async function migrateResearchForks(
     forkPathDefs[def.forkId] ??= {};
     forkPathDefs[def.forkId][def.forkPath] ??= [];
     forkPathDefs[def.forkId][def.forkPath].push(def);
+  }
+
+  // ── 1b. Pre-flight guard: abort if fork columns are not seeded ──────────
+  //
+  // research_definitions.fork_id / fork_path are populated by the seed (not
+  // migration 0104).  If the seed has not been run yet, every user would bucket
+  // as "no investment → skip" and the script would exit 0 with a silently
+  // wrong result on prod player data.  Throw early with a human-readable
+  // message so the operator knows to seed first.
+  //
+  // We deliberately query the full table (not scoped by researchIds) so a
+  // test-scoped run that limits researchIds does not trigger the guard even
+  // though the seed data exists.
+
+  const [{ seededCount }] = await db
+    .select({ seededCount: sql<number>`count(*)::int` })
+    .from(researchDefinitions)
+    .where(sql`${researchDefinitions.forkId} IS NOT NULL`);
+
+  if (seededCount === 0) {
+    throw new Error(
+      'research_definitions fork columns are not seeded — run the seed before the fork bascule',
+    );
   }
 
   // ── 2. Load target users ─────────────────────────────────────────────────

@@ -82,8 +82,8 @@ export function ForkChoice({
         </div>
       </div>
 
-      {/* Two paths side by side */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Two paths side by side — stacked on mobile, two-column at lg+ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {pathEntries.map(([pathId, items]) => {
           const isChosen = chosenPath === pathId;
           const isOtherChosen = chosenPath !== null && !isChosen;

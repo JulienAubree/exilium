@@ -276,6 +276,49 @@ afterAll(async () => {
 // ── Tests ───────────────────────────────────────────────────────────────────
 
 describe('migrateResearchForks', () => {
+  it('(f) pre-flight guard: throws when no forked research_definitions exist', async () => {
+    const { migrateResearchForks } = await import('../../../scripts/migrate-research-forks.js');
+
+    // Temporarily clear all fork columns by using a fake forkId scope that has
+    // no rows in research_definitions with fork_id IS NOT NULL.
+    // The guard queries the FULL table (not scoped), so we need to actually have
+    // an empty table.  We achieve isolation by deleting our test rows, running the
+    // guard, then verifying it throws before we restore them in afterAll.
+    // To avoid disrupting other tests, we run this in a transaction that we roll back.
+    let caughtError: Error | undefined;
+    try {
+      await testDb.transaction(async (tx) => {
+        // Remove all fork-tagged rows so the count lands at 0
+        await tx
+          .update(researchDefinitions)
+          .set({ forkId: null, forkPath: null })
+          .where(
+            inArray(researchDefinitions.id, [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID]),
+          );
+
+        // Now the guard should fire and throw
+        // tx is DbOrTx — migrateResearchForks accepts DbOrTx
+        await migrateResearchForks(tx, {
+          userIds: [USER_A],
+          forkIds: [FORK_ID],
+          researchIds: [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID],
+          homeworldClassId: PLANET_TYPE_ID,
+        });
+
+        // If we reach here, force the tx to roll back anyway
+        throw new Error('__ROLLBACK__');
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message !== '__ROLLBACK__') {
+        caughtError = err;
+      }
+      // __ROLLBACK__ sentinel means the guard did NOT throw — caughtError stays undefined
+    }
+
+    expect(caughtError).toBeDefined();
+    expect(caughtError!.message).toMatch(/not seeded/i);
+  });
+
   it('(a) both-paths: armor wins (more cumulative resources), shields levels zeroed, refund on homeworld', async () => {
     const { migrateResearchForks } = await import('../../../scripts/migrate-research-forks.js');
 
