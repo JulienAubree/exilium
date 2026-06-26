@@ -137,7 +137,7 @@ export async function migrateResearchForks(
   );
   const activeForkIds = activeForks.map((f) => f.forkId);
 
-  let defQuery = db
+  const defQuery = db
     .select({
       id: researchDefinitions.id,
       forkId: researchDefinitions.forkId,
@@ -342,7 +342,7 @@ export async function migrateResearchForks(
       // forever — never zero levels without crediting the refund.
       if (losingPath !== null && !homeworldMap[userId]) {
         log(`[migrate-forks] WARNING: ${userId} / ${forkId} — both paths invested but no homeworld (${homeworldClassId}). Skipping entire fork — needs manual follow-up.`);
-        if (!needsManualFollowUp.includes(`${userId}:${forkId}`)) {
+        if (!needsManualFollowUp.includes(userId)) {
           needsManualFollowUp.push(userId);
         }
         continue;

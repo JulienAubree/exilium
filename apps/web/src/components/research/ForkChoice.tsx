@@ -4,11 +4,14 @@
  * Comportements :
  * - Aucun choix → les deux voies affichent « Choisir cette voie » (→ chooseFork).
  * - Choix fait → voie active normale, voie adverse grisée + bouton « Respec ».
+ * - showAction=false → rendu cards seulement, sans contrôle choose/respec
+ *   (utilisé pour les tiers supérieurs d'un fork multi-tier comme defense_doctrine).
  */
 import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useGameConfig } from '@/hooks/useGameConfig';
 import { RespecDialog } from './RespecDialog';
 import { ResearchNode } from './ResearchNode';
 import type { ResearchItem, ForkChoices } from './research-tree.types';
@@ -25,6 +28,8 @@ interface ForkChoiceProps {
   researchLevels: Record<string, number>;
   onStartSuccess: () => void;
   onDetailOpen: (id: string) => void;
+  /** Si false, masque les boutons Choisir/Respec (fork déjà contrôlé à un tier inférieur). */
+  showAction?: boolean;
 }
 
 export function ForkChoice({
@@ -38,8 +43,10 @@ export function ForkChoice({
   researchLevels,
   onStartSuccess,
   onDetailOpen,
+  showAction = true,
 }: ForkChoiceProps) {
   const utils = trpc.useUtils();
+  const { data: gameConfig } = useGameConfig();
   const [respecTarget, setRespecTarget] = useState<{
     currentPath: string;
     newPath: string;
@@ -58,6 +65,9 @@ export function ForkChoice({
   // All items across both paths (for reset list in RespecDialog)
   const allForkItems = pathEntries.flatMap(([, items]) => items);
 
+  // Resolve fork + path labels from ui_labels seed
+  const forkLabel = gameConfig?.labels[`research.fork.${forkId}`] ?? forkId;
+
   return (
     <>
       {/* Fork header */}
@@ -67,7 +77,7 @@ export function ForkChoice({
         </div>
         <div className="relative flex justify-center">
           <span className="bg-card px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-            Choix exclusif
+            {forkLabel}
           </span>
         </div>
       </div>
@@ -78,6 +88,9 @@ export function ForkChoice({
           const isChosen = chosenPath === pathId;
           const isOtherChosen = chosenPath !== null && !isChosen;
           const isUndecided = chosenPath === null;
+
+          const pathLabel =
+            gameConfig?.labels[`research.fork.${forkId}.${pathId}`] ?? pathId;
 
           return (
             <div
@@ -97,7 +110,7 @@ export function ForkChoice({
                     isChosen ? 'text-primary' : 'text-muted-foreground',
                   )}
                 >
-                  {pathId}
+                  {pathLabel}
                 </span>
                 {isChosen && (
                   <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
@@ -124,32 +137,34 @@ export function ForkChoice({
                 ))}
               </div>
 
-              {/* Fork action button */}
-              <div className="mt-2 px-1">
-                {isUndecided && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-xs"
-                    onClick={() => chooseForkMutation.mutate({ forkId, path: pathId })}
-                    disabled={chooseForkMutation.isPending}
-                  >
-                    {chooseForkMutation.isPending ? 'En cours…' : 'Choisir cette voie'}
-                  </Button>
-                )}
-                {isOtherChosen && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                    onClick={() =>
-                      setRespecTarget({ currentPath: chosenPath!, newPath: pathId })
-                    }
-                  >
-                    Respec
-                  </Button>
-                )}
-              </div>
+              {/* Fork action button — only at the first (lowest) tier of this fork */}
+              {showAction && (
+                <div className="mt-2 px-1">
+                  {isUndecided && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                      onClick={() => chooseForkMutation.mutate({ forkId, path: pathId })}
+                      disabled={chooseForkMutation.isPending}
+                    >
+                      {chooseForkMutation.isPending ? 'En cours…' : 'Choisir cette voie'}
+                    </Button>
+                  )}
+                  {isOtherChosen && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                      onClick={() =>
+                        setRespecTarget({ currentPath: chosenPath!, newPath: pathId })
+                      }
+                    >
+                      Respec
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

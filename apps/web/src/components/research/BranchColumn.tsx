@@ -69,6 +69,11 @@ export function BranchColumn({
   const tierGroups = useMemo(() => buildTierGroups(items), [items]);
   const sortedTiers = [...tierGroups.keys()].sort((a, b) => a - b);
 
+  // Track which forkIds have already rendered their choose/respec control
+  // so multi-tier forks (e.g. defense_doctrine at T1+T2) only show the
+  // action buttons once, at the lowest tier.
+  const renderedForkActions = new Set<string>();
+
   return (
     <div className="flex flex-col">
       {/* Branch header */}
@@ -98,18 +103,25 @@ export function BranchColumn({
               </div>
 
               {group.kind === 'fork' ? (
-                <ForkChoice
-                  forkId={group.forkId}
-                  paths={group.paths}
-                  forkChoices={forkChoices}
-                  resources={resources}
-                  craftRates={craftRates}
-                  isAnyResearching={isAnyResearching}
-                  buildingLevels={buildingLevels}
-                  researchLevels={researchLevels}
-                  onStartSuccess={onStartSuccess}
-                  onDetailOpen={onDetailOpen}
-                />
+                (() => {
+                  const showAction = !renderedForkActions.has(group.forkId);
+                  renderedForkActions.add(group.forkId);
+                  return (
+                    <ForkChoice
+                      forkId={group.forkId}
+                      paths={group.paths}
+                      forkChoices={forkChoices}
+                      resources={resources}
+                      craftRates={craftRates}
+                      isAnyResearching={isAnyResearching}
+                      buildingLevels={buildingLevels}
+                      researchLevels={researchLevels}
+                      onStartSuccess={onStartSuccess}
+                      onDetailOpen={onDetailOpen}
+                      showAction={showAction}
+                    />
+                  );
+                })()
               ) : (
                 <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
                   {group.items.map((tech) => (

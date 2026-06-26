@@ -81,12 +81,6 @@ function sumCosts(baseMinerai: number, baseSilicium: number, baseHydrogene: numb
   return { minerai: m, silicium: s, hydrogene: h };
 }
 
-// Test research definitions (minimally seeded)
-const BASE_COST_MINERAI = 200;
-const BASE_COST_SILICIUM = 600;
-const BASE_COST_HYDROGENE = 0;
-const COST_FACTOR = 2;
-
 // User A: shielding=4, glacialShielding=2 (shields path); armor=6 (armor path)
 // Cumulative shields cost = sum(shielding 1..4) + sum(glacialShielding 1..2)
 // Cumulative armor cost = sum(armor 1..6)
@@ -102,9 +96,6 @@ function computeShieldsTotal() {
     silicium: s1.silicium + s2.silicium,
     hydrogene: 0,
   };
-}
-function computeArmorTotal() {
-  return sumCosts(1000, 0, 0, 2, 6); // armor l1..6
 }
 
 const PLANET_TYPE_ID = 't6_homeworld_type';
