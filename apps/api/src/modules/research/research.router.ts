@@ -22,5 +22,23 @@ export function createResearchRouter(researchService: ReturnType<typeof createRe
       .mutation(async ({ ctx }) => {
         return researchService.cancelResearch(ctx.userId!);
       }),
+
+    chooseFork: protectedProcedure
+      .input(z.object({
+        forkId: z.string(),
+        path: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return researchService.chooseFork(ctx.userId!, input.forkId, input.path);
+      }),
+
+    respec: protectedProcedure
+      .input(z.object({
+        forkId: z.string(),
+        newPath: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return researchService.respecFork(ctx.userId!, input.forkId, input.newPath);
+      }),
   });
 }
