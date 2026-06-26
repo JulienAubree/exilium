@@ -6,6 +6,8 @@
  *       refund credited to homeworld, respecCount = 0
  *   (b) one-path (shields only) → chosenPath = shields, no refund
  *   (c) idempotent re-run → no-op (existing choice row skipped)
+ *   (d) both-paths + no homeworld → atomic skip: no choice row, levels unchanged, userId in needsManualFollowUp
+ *   (e) tuned phase_multiplier in universe_config → refund amount uses configured multiplier
  *
  * Filet : exilium_test. IDs uniques pour éviter collisions.
  */
@@ -18,6 +20,7 @@ import {
   userResearchChoices,
   userResearchLevels,
   researchDefinitions,
+  universeConfig,
 } from '@exilium/db';
 import { testDb, closeTestDb } from '../../../test/test-db.js';
 
@@ -25,9 +28,13 @@ import { testDb, closeTestDb } from '../../../test/test-db.js';
 
 const USER_A = '00000000-0000-0000-0001-000000000006'; // both paths invested
 const USER_B = '00000000-0000-0000-0002-000000000006'; // one path (shields) only
+const USER_C = '00000000-0000-0000-0003-000000000006'; // both paths, NO homeworld (test d)
+const USER_D = '00000000-0000-0000-0004-000000000006'; // both paths, for phase-multiplier test (test e)
 
 const PLANET_A = '10000000-0000-0000-0001-000000000006';
 const PLANET_B = '10000000-0000-0000-0002-000000000006';
+// USER_C has no planet — intentionally omitted
+const PLANET_D = '10000000-0000-0000-0004-000000000006';
 
 // Minimal fork IDs (reuse real fork names so the script picks them up)
 const FORK_ID = 'defense_doctrine';
@@ -106,10 +113,10 @@ const PLANET_TYPE_ID = 't6_homeworld_type';
 
 beforeAll(async () => {
   // Clean up from any prior run
-  await testDb.delete(userResearchChoices).where(inArray(userResearchChoices.userId, [USER_A, USER_B]));
-  await testDb.delete(userResearchLevels).where(inArray(userResearchLevels.userId, [USER_A, USER_B]));
-  await testDb.delete(planets).where(inArray(planets.id, [PLANET_A, PLANET_B]));
-  await testDb.delete(users).where(inArray(users.id, [USER_A, USER_B]));
+  await testDb.delete(userResearchChoices).where(inArray(userResearchChoices.userId, [USER_A, USER_B, USER_C, USER_D]));
+  await testDb.delete(userResearchLevels).where(inArray(userResearchLevels.userId, [USER_A, USER_B, USER_C, USER_D]));
+  await testDb.delete(planets).where(inArray(planets.id, [PLANET_A, PLANET_B, PLANET_D]));
+  await testDb.delete(users).where(inArray(users.id, [USER_A, USER_B, USER_C, USER_D]));
   await testDb.delete(researchDefinitions).where(
     inArray(researchDefinitions.id, [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID]),
   );
@@ -128,11 +135,14 @@ beforeAll(async () => {
   await testDb.insert(users).values([
     { id: USER_A, email: 't6-user-a@exilium.test', username: 't6_user_a', passwordHash: 'x' },
     { id: USER_B, email: 't6-user-b@exilium.test', username: 't6_user_b', passwordHash: 'x' },
+    { id: USER_C, email: 't6-user-c@exilium.test', username: 't6_user_c', passwordHash: 'x' }, // no homeworld
+    { id: USER_D, email: 't6-user-d@exilium.test', username: 't6_user_d', passwordHash: 'x' }, // for phase-multiplier test
   ]);
 
   // Insert homeworld planets (planetClassId = PLANET_TYPE_ID)
   // The migration script will detect homeworld by planetClassId = 'homeworld'.
   // For the test, we use a custom type ID and pass it explicitly to the migration function.
+  // USER_C intentionally has no homeworld planet.
   await testDb.insert(planets).values([
     {
       id: PLANET_A,
@@ -156,6 +166,21 @@ beforeAll(async () => {
       galaxy: 9,
       system: 999,
       position: 7,
+      planetClassId: PLANET_TYPE_ID,
+      diameter: 10000,
+      minTemp: 0,
+      maxTemp: 50,
+      minerai: '500',
+      silicium: '500',
+      hydrogene: '0',
+    },
+    {
+      id: PLANET_D,
+      userId: USER_D,
+      name: 'HomeD',
+      galaxy: 9,
+      system: 999,
+      position: 8,
       planetClassId: PLANET_TYPE_ID,
       diameter: 10000,
       minTemp: 0,
@@ -229,17 +254,31 @@ beforeAll(async () => {
   await testDb.insert(userResearchLevels).values([
     { userId: USER_B, researchId: RES_SHIELDING, level: 3 },
   ]);
+
+  // USER_C: both paths invested, but no homeworld (test d)
+  await testDb.insert(userResearchLevels).values([
+    { userId: USER_C, researchId: RES_SHIELDING, level: 2 },
+    { userId: USER_C, researchId: RES_ARMOR, level: 3 },
+  ]);
+
+  // USER_D: both paths invested, has homeworld — used to test phase-multiplier effect (test e)
+  await testDb.insert(userResearchLevels).values([
+    { userId: USER_D, researchId: RES_SHIELDING, level: 3 },
+    { userId: USER_D, researchId: RES_ARMOR, level: 4 },
+  ]);
 });
 
 afterAll(async () => {
-  await testDb.delete(userResearchChoices).where(inArray(userResearchChoices.userId, [USER_A, USER_B]));
-  await testDb.delete(userResearchLevels).where(inArray(userResearchLevels.userId, [USER_A, USER_B]));
-  await testDb.delete(planets).where(inArray(planets.id, [PLANET_A, PLANET_B]));
-  await testDb.delete(users).where(inArray(users.id, [USER_A, USER_B]));
+  await testDb.delete(userResearchChoices).where(inArray(userResearchChoices.userId, [USER_A, USER_B, USER_C, USER_D]));
+  await testDb.delete(userResearchLevels).where(inArray(userResearchLevels.userId, [USER_A, USER_B, USER_C, USER_D]));
+  await testDb.delete(planets).where(inArray(planets.id, [PLANET_A, PLANET_B, PLANET_D]));
+  await testDb.delete(users).where(inArray(users.id, [USER_A, USER_B, USER_C, USER_D]));
   await testDb.delete(researchDefinitions).where(
     inArray(researchDefinitions.id, [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID]),
   );
   await testDb.delete(planetTypes).where(eq(planetTypes.id, PLANET_TYPE_ID));
+  // Clean up any test universe_config rows inserted during tests
+  await testDb.delete(universeConfig).where(eq(universeConfig.key, 't6_test_phase_multiplier'));
   await closeTestDb();
 });
 
@@ -358,5 +397,118 @@ describe('migrateResearchForks', () => {
     // Still 500 + refund (not 500 + 2*refund)
     expect(Number(planetARow.minerai)).toBe(500 + shieldsRefund.minerai);
     expect(Number(planetARow.silicium)).toBe(500 + shieldsRefund.silicium);
+  });
+
+  it('(d) both-paths + no homeworld: atomic skip — no choice row, levels unchanged, userId in needsManualFollowUp', async () => {
+    const { migrateResearchForks } = await import('../../../scripts/migrate-research-forks.js');
+
+    // USER_C has both shields(2) and armor(3) invested, but no homeworld planet
+    const result = await migrateResearchForks(testDb, {
+      userIds: [USER_C],
+      forkIds: [FORK_ID],
+      researchIds: [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID],
+      homeworldClassId: PLANET_TYPE_ID,
+    });
+
+    // Must appear in the follow-up list
+    expect(result.needsManualFollowUp).toContain(USER_C);
+
+    // No choice row inserted
+    const choiceC = await testDb
+      .select()
+      .from(userResearchChoices)
+      .where(and(eq(userResearchChoices.userId, USER_C), eq(userResearchChoices.forkId, FORK_ID)));
+    expect(choiceC).toHaveLength(0);
+
+    // Levels must be UNCHANGED (not zeroed)
+    const [shieldingC] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(and(eq(userResearchLevels.userId, USER_C), eq(userResearchLevels.researchId, RES_SHIELDING)));
+    expect(shieldingC?.level ?? 0).toBe(2); // unchanged
+
+    const [armorC] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(and(eq(userResearchLevels.userId, USER_C), eq(userResearchLevels.researchId, RES_ARMOR)));
+    expect(armorC?.level ?? 0).toBe(3); // unchanged
+
+    // Re-run must still skip (same behaviour — idempotent skip when not yet committed)
+    const result2 = await migrateResearchForks(testDb, {
+      userIds: [USER_C],
+      forkIds: [FORK_ID],
+      researchIds: [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID],
+      homeworldClassId: PLANET_TYPE_ID,
+    });
+    expect(result2.needsManualFollowUp).toContain(USER_C);
+    const choiceC2 = await testDb
+      .select()
+      .from(userResearchChoices)
+      .where(and(eq(userResearchChoices.userId, USER_C), eq(userResearchChoices.forkId, FORK_ID)));
+    expect(choiceC2).toHaveLength(0);
+  });
+
+  it('(e) tuned phase_multiplier in universe_config changes the refund amount', async () => {
+    const { migrateResearchForks } = await import('../../../scripts/migrate-research-forks.js');
+
+    // Seed a flat phase_multiplier (all levels = 1.0) into universe_config.
+    // With this map every level costs exactly floor(baseCost * factor^(level-1)).
+    // USER_D: shielding=3, armor=4 → armor total > shields total → armor wins → shields refunded.
+    const flatPhaseMap = { '1': 1.0, '2': 1.0, '3': 1.0, '4': 1.0, '5': 1.0, '6': 1.0, '7': 1.0 };
+
+    // Upsert the phase multiplier so the script reads it
+    await testDb
+      .insert(universeConfig)
+      .values({ key: 'phase_multiplier', value: flatPhaseMap })
+      .onConflictDoUpdate({ target: universeConfig.key, set: { value: flatPhaseMap } });
+
+    // Compute expected refund with flat multiplier (shields path, shielding l1..3)
+    // floor(200 * 1^(l-1)) * 1.0 for minerai; floor(600 * 1^(l-1)) * 1.0 for silicium
+    // l=1: factor=1^0*1=1 → m=200, s=600
+    // l=2: factor=2^1*1=2 → m=400, s=1200
+    // l=3: factor=2^2*1=4 → m=800, s=2400
+    // total shields = m: 1400, s: 4200
+    const expectedMineraiRefund = 1400;
+    const expectedSiliciumRefund = 4200;
+
+    // Contrast: with default phase map (0.35 at l=1) the refund would be much less
+    // (floor(200*0.35)=70, floor(200*2*0.45)=180, floor(200*4*0.55)=440 → total 690)
+    // Verifying the flat-map refund amount proves the script uses the configured map.
+
+    const result = await migrateResearchForks(testDb, {
+      userIds: [USER_D],
+      forkIds: [FORK_ID],
+      researchIds: [RES_SHIELDING, RES_GLACIAL, RES_ARMOR, RES_ARID],
+      homeworldClassId: PLANET_TYPE_ID,
+    });
+
+    // No follow-up needed (has homeworld)
+    expect(result.needsManualFollowUp).not.toContain(USER_D);
+
+    // Choice row inserted: armor wins (armor=4 levels with baseCostMinerai=1000 > shields)
+    const [choiceD] = await testDb
+      .select()
+      .from(userResearchChoices)
+      .where(and(eq(userResearchChoices.userId, USER_D), eq(userResearchChoices.forkId, FORK_ID)));
+    expect(choiceD).toBeDefined();
+    expect(choiceD.chosenPath).toBe(PATH_ARMOR);
+
+    // Shields levels zeroed
+    const [shieldingD] = await testDb
+      .select()
+      .from(userResearchLevels)
+      .where(and(eq(userResearchLevels.userId, USER_D), eq(userResearchLevels.researchId, RES_SHIELDING)));
+    expect(shieldingD?.level ?? 0).toBe(0);
+
+    // Refund on planet D matches the flat-phase-map calculation
+    const [planetDRow] = await testDb
+      .select({ minerai: planets.minerai, silicium: planets.silicium })
+      .from(planets)
+      .where(eq(planets.id, PLANET_D));
+    expect(Number(planetDRow.minerai)).toBe(500 + expectedMineraiRefund);
+    expect(Number(planetDRow.silicium)).toBe(500 + expectedSiliciumRefund);
+
+    // Restore: remove the test phase_multiplier so we don't pollute other tests
+    await testDb.delete(universeConfig).where(eq(universeConfig.key, 'phase_multiplier'));
   });
 });

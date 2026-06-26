@@ -34,6 +34,7 @@ import {
   researchDefinitions,
   planets,
   users,
+  universeConfig,
 } from '@exilium/db';
 import { researchCost } from '@exilium/game-engine';
 
@@ -81,20 +82,51 @@ export interface MigrateForkOptions {
 
 // ── Core function (exported for testing) ──────────────────────────────────
 
+export interface MigrateForkResult {
+  /**
+   * User IDs that had investment on BOTH paths of a fork but had no homeworld
+   * planet at migration time. These users were fully skipped (no choice row
+   * inserted, no levels zeroed) and require manual follow-up.
+   */
+  needsManualFollowUp: string[];
+}
+
 /**
  * Runs the fork migration on the provided database connection.
  *
  * @param db - Drizzle database instance (can be a transaction or top-level connection).
  * @param opts - Optional scoping options (for tests or partial runs).
+ * @returns An object with a `needsManualFollowUp` list of user IDs that were
+ *   skipped because they had both-path investment but no homeworld planet.
  */
 export async function migrateResearchForks(
   db: Database,
   opts: MigrateForkOptions = {},
-): Promise<void> {
+): Promise<MigrateForkResult> {
   const homeworldClassId = opts.homeworldClassId ?? 'homeworld';
   const verbose = opts.verbose ?? false;
 
   const log = verbose ? console.log : () => {};
+
+  // Collect users that need manual follow-up (both-path + no homeworld)
+  const needsManualFollowUp: string[] = [];
+
+  // ── 0. Load phase multiplier from universe_config ────────────────────────
+  //
+  // Every other consumer threads this from config; we do the same so refund
+  // amounts match actual spend even when an admin has tuned the curve.
+
+  const universeRows = await db.select({ key: universeConfig.key, value: universeConfig.value }).from(universeConfig);
+  const universeMap: Record<string, unknown> = {};
+  for (const row of universeRows) universeMap[row.key] = row.value;
+
+  const phaseMap: Record<number, number> | undefined = universeMap['phase_multiplier']
+    ? Object.fromEntries(
+        Object.entries(universeMap['phase_multiplier'] as Record<string, number>).map(
+          ([k, v]) => [Number(k), v],
+        ),
+      )
+    : undefined;
 
   // ── 1. Load all relevant research definitions ────────────────────────────
   //
@@ -142,7 +174,7 @@ export async function migrateResearchForks(
 
   if (allUserIds.length === 0) {
     log('[migrate-forks] No users found — nothing to do.');
-    return;
+    return { needsManualFollowUp };
   }
 
   log(`[migrate-forks] Processing ${allUserIds.length} user(s), ${activeForks.length} fork(s).`);
@@ -251,7 +283,7 @@ export async function migrateResearchForks(
                   costFactor: def.costFactor,
                 },
                 l,
-                // No phaseMap → uses default phase multipliers from game-engine
+                phaseMap,
               );
               minerai += cost.minerai;
               silicium += cost.silicium;
@@ -303,6 +335,19 @@ export async function migrateResearchForks(
 
       // ── Mutations ──────────────────────────────────────────────────────
 
+      // Fix 2: For both-paths users that need a refund, the homeworld MUST exist.
+      // If it doesn't, skip the entire user×fork (no choice row, no level zeroing)
+      // and record the userId for manual follow-up. This prevents a situation where
+      // the choice row is inserted (locking idempotency) but the refund is lost
+      // forever — never zero levels without crediting the refund.
+      if (losingPath !== null && !homeworldMap[userId]) {
+        log(`[migrate-forks] WARNING: ${userId} / ${forkId} — both paths invested but no homeworld (${homeworldClassId}). Skipping entire fork — needs manual follow-up.`);
+        if (!needsManualFollowUp.includes(`${userId}:${forkId}`)) {
+          needsManualFollowUp.push(userId);
+        }
+        continue;
+      }
+
       await db.transaction(async (tx) => {
         // Insert fork choice
         await tx.insert(userResearchChoices).values({
@@ -328,27 +373,33 @@ export async function migrateResearchForks(
           }
 
           // Refund losing path's cumulative resources to homeworld
+          // (homeworld is guaranteed to exist at this point — checked above)
           const homeworld = homeworldMap[userId];
-          if (homeworld) {
-            const refund = pathCosts[losingPath];
-            await tx
-              .update(planets)
-              .set({
-                minerai: sql`${planets.minerai} + ${refund.minerai}`,
-                silicium: sql`${planets.silicium} + ${refund.silicium}`,
-                hydrogene: sql`${planets.hydrogene} + ${refund.hydrogene}`,
-              })
-              .where(eq(planets.id, homeworld.id));
-            log(`[migrate-forks] ${userId} / ${forkId} — refunded ${refund.minerai}M/${refund.silicium}S/${refund.hydrogene}H to planet ${homeworld.id}.`);
-          } else {
-            log(`[migrate-forks] WARNING: ${userId} has no homeworld (${homeworldClassId}), refund skipped.`);
-          }
+          const refund = pathCosts[losingPath];
+          await tx
+            .update(planets)
+            .set({
+              minerai: sql`${planets.minerai} + ${refund.minerai}`,
+              silicium: sql`${planets.silicium} + ${refund.silicium}`,
+              hydrogene: sql`${planets.hydrogene} + ${refund.hydrogene}`,
+            })
+            .where(eq(planets.id, homeworld.id));
+          log(`[migrate-forks] ${userId} / ${forkId} — refunded ${refund.minerai}M/${refund.silicium}S/${refund.hydrogene}H to planet ${homeworld.id}.`);
         }
       });
     }
   }
 
+  if (needsManualFollowUp.length > 0) {
+    log(`[migrate-forks] NEEDS MANUAL FOLLOW-UP (${needsManualFollowUp.length} user(s) with both-path investment but no homeworld):`);
+    for (const id of needsManualFollowUp) {
+      log(`  - ${id}`);
+    }
+  }
+
   log('[migrate-forks] Done.');
+
+  return { needsManualFollowUp };
 }
 
 // ── CLI entry-point ────────────────────────────────────────────────────────
@@ -370,8 +421,15 @@ if (process.argv[1]?.endsWith('migrate-research-forks.ts') || process.argv[1]?.e
   console.log(`[migrate-forks] Target DB: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
 
   migrateResearchForks(db, { verbose: true })
-    .then(() => {
+    .then((result) => {
       console.log('[migrate-forks] Migration complete.');
+      if (result.needsManualFollowUp.length > 0) {
+        console.warn(
+          `[migrate-forks] ⚠️  ${result.needsManualFollowUp.length} user(s) need manual follow-up ` +
+          `(both-path investment, no homeworld): ${result.needsManualFollowUp.join(', ')}`,
+        );
+        process.exit(2);
+      }
       process.exit(0);
     })
     .catch((err) => {
