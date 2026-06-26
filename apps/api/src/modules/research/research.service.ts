@@ -242,6 +242,8 @@ export function createResearchService(
             talentTimeMultiplier *
             hullTimeMultiplier,
         },
+        // Fork choices keyed by forkId — used by UI to compute respec cost and show chosen path.
+        forkChoices: choices as Record<string, { path: string; respecCount: number }>,
       };
     },
 

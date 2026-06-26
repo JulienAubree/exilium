@@ -4,33 +4,19 @@ import { trpc } from '@/trpc';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useResourceCounter } from '@/hooks/useResourceCounter';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ResourceCost } from '@/components/common/ResourceCost';
-import { CraftEtaBadge } from '@/components/common/CraftEtaBadge';
-import { Timer } from '@/components/common/Timer';
-import { GameImage } from '@/components/common/GameImage';
-import { ClockIcon } from '@/components/icons/utility-icons';
-import { formatDuration } from '@/lib/format';
 import { CardGridSkeleton } from '@/components/common/PageSkeleton';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EntityDetailOverlay } from '@/components/common/EntityDetailOverlay';
 import { ResearchDetailContent } from '@/components/entity-details/ResearchDetailContent';
 import { useGameConfig } from '@/hooks/useGameConfig';
-import { PrerequisiteList, buildPrerequisiteItems } from '@/components/common/PrerequisiteList';
-import { cn } from '@/lib/utils';
-import { useTutorialTargetId } from '@/hooks/useTutorialHighlight';
 import { FacilityHero } from '@/components/common/FacilityHero';
 import { FacilityLockedHero } from '@/components/common/FacilityLockedHero';
 import { BuildingUpgradeCard } from '@/components/common/BuildingUpgradeCard';
 import { ResearchActivePanel } from '@/components/research/ResearchActivePanel';
-import { ResearchRoleFilter, type ResearchFilter } from '@/components/research/ResearchRoleFilter';
 import { ResearchHelp } from '@/components/research/ResearchHelp';
-import {
-  RESEARCH_CATEGORIES,
-  RESEARCH_CATEGORY_MAP,
-  type ResearchCategoryId,
-} from '@/components/research/research-icons';
+import { BranchColumn } from '@/components/research/BranchColumn';
+import { BRANCHES } from '@/components/research/research-tree.types';
 
 const ANNEX_LAB_BY_PLANET_CLASS: Record<string, { id: string; name: string }> = {
   volcanic: { id: 'labVolcanic', name: 'Forge Volcanique' },
@@ -45,16 +31,15 @@ export default function Research() {
   const setActivePlanet = usePlanetStore((s) => s.setActivePlanet);
   const utils = trpc.useUtils();
   const { data: gameConfig } = useGameConfig();
-  const tutorialTargetId = useTutorialTargetId();
 
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [filter, setFilter] = useState<ResearchFilter>('all');
 
   const { data: researchData, isLoading } = trpc.research.list.useQuery();
   const techs = researchData?.items;
   const bonuses = researchData?.bonuses;
+  const forkChoices = researchData?.forkChoices ?? {};
   const labLevel = bonuses?.labLevel ?? 0;
 
   // ── Home planet (researchLab lives there) ─────────────────────────────
@@ -103,15 +88,6 @@ export default function Research() {
         hydrogenePerHour: resourceData.rates.hydrogenePerHour,
       }
     : undefined;
-
-  const startMutation = trpc.research.start.useMutation({
-    onSuccess: () => {
-      utils.research.list.invalidate();
-      if (planetId) utils.resource.production.invalidate({ planetId });
-      utils.planet.empire.invalidate();
-      utils.tutorial.getCurrent.invalidate();
-    },
-  });
 
   const cancelMutation = trpc.research.cancel.useMutation({
     onSuccess: () => {
@@ -298,20 +274,33 @@ export default function Research() {
   const researchingTech = techs.find((t) => t.isResearching && t.researchEndTime);
   const isAnyResearching = techs.some((t) => t.isResearching);
 
-  // ── Group techs by category ───────────────────────────────────────────
-  const techsByCategory = new Map<ResearchCategoryId, typeof techs>();
-  for (const tech of techs) {
-    const catId = gameConfig?.research[tech.id]?.categoryId as ResearchCategoryId | undefined;
-    if (!catId || !RESEARCH_CATEGORY_MAP[catId]) continue;
-    const list = techsByCategory.get(catId) ?? [];
-    list.push(tech);
-    techsByCategory.set(catId, list);
-  }
-  const availableCategories = RESEARCH_CATEGORIES.filter((c) => techsByCategory.has(c.id)).map(
-    (c) => c.id,
+  // ── Group techs by branchId ───────────────────────────────────────────
+  const techsByBranch = useMemo(() => {
+    const map = new Map<string, typeof techs>();
+    for (const tech of techs) {
+      if (!tech.branchId) continue;
+      const list = map.get(tech.branchId) ?? [];
+      list.push(tech);
+      map.set(tech.branchId, list);
+    }
+    return map;
+  }, [techs]);
+
+  // Techs without branchId (legacy) — render in a fallback flat section
+  const legacyTechs = useMemo(
+    () => techs.filter((t) => !t.branchId),
+    [techs],
   );
-  const visibleCategories =
-    filter === 'all' ? availableCategories : availableCategories.filter((id) => id === filter);
+
+  const resourcesObj = {
+    minerai: resources.minerai,
+    silicium: resources.silicium,
+    hydrogene: resources.hydrogene,
+  };
+
+  const handleStartSuccess = () => {
+    if (planetId) utils.resource.production.invalidate({ planetId });
+  };
 
   // ── Main layout ───────────────────────────────────────────────────────
   return (
@@ -334,11 +323,7 @@ export default function Research() {
               prerequisites={researchLabBuilding.prerequisites as any}
               isUpgrading={!!researchLabBuilding.isUpgrading}
               upgradeEndTime={researchLabBuilding.upgradeEndTime ?? null}
-              resources={{
-                minerai: resources.minerai,
-                silicium: resources.silicium,
-                hydrogene: resources.hydrogene,
-              }}
+              resources={resourcesObj}
               buildingLevels={buildingLevels}
               isAnyUpgrading={isAnyBuildingUpgrading}
               upgradePending={upgradeMutation.isPending}
@@ -374,246 +359,56 @@ export default function Research() {
         )}
       </FacilityHero>
 
-      <div className="space-y-4 px-4 pb-4 lg:px-6 lg:pb-6">
-        <ResearchRoleFilter
-          value={filter}
-          onChange={setFilter}
-          availableCategories={availableCategories}
-        />
-
+      <div className="space-y-6 px-4 pb-4 lg:px-6 lg:pb-6">
+        {/* ── Branch tree view ── */}
         <section className="glass-card p-4 lg:p-5 space-y-8">
-          {visibleCategories.map((categoryId) => {
-            const categoryTechs = techsByCategory.get(categoryId) ?? [];
-            if (categoryTechs.length === 0) return null;
-            const category = RESEARCH_CATEGORY_MAP[categoryId];
-            const { Icon: CategoryIcon, label } = category;
-
+          {BRANCHES.map((branch) => {
+            const branchItems = techsByBranch.get(branch.id);
+            if (!branchItems || branchItems.length === 0) return null;
             return (
-              <div key={categoryId}>
-                {filter === 'all' && (
-                  <h3 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                    <CategoryIcon className="h-3.5 w-3.5" />
-                    {label}
-                  </h3>
-                )}
-
-                {/* Mobile compact list */}
-                <div className="space-y-1 lg:hidden">
-                  {categoryTechs.map((tech) => {
-                    const canAfford =
-                      resources.minerai >= tech.nextLevelCost.minerai &&
-                      resources.silicium >= tech.nextLevelCost.silicium &&
-                      resources.hydrogene >= tech.nextLevelCost.hydrogene;
-                    const highlighted = tutorialTargetId === tech.id;
-
-                    return (
-                      <button
-                        key={tech.id}
-                        onClick={() => setDetailId(tech.id)}
-                        className={cn(
-                          'relative flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-accent/50 transition-colors',
-                          !tech.prerequisitesMet && 'opacity-50',
-                          highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
-                        )}
-                      >
-                        {highlighted && (
-                          <span className="absolute top-2 right-2 z-10 rounded bg-amber-500/20 border border-amber-500/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
-                            Objectif
-                          </span>
-                        )}
-                        <GameImage
-                          category="research"
-                          id={tech.id}
-                          size="icon"
-                          alt={tech.name}
-                          className="h-8 w-8 rounded"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium truncate">{tech.name}</span>
-                            <Badge variant="secondary" className="text-xs ml-2">
-                              Niv. {tech.currentLevel}{tech.maxLevel != null && `/${tech.maxLevel}`}
-                            </Badge>
-                          </div>
-                          {tech.isResearching && tech.researchEndTime ? (
-                            <div className="mt-1">
-                              <Timer
-                                endTime={new Date(tech.researchEndTime)}
-                                totalDuration={tech.nextLevelTime}
-                                onComplete={() => {
-                                  utils.research.list.invalidate();
-                                  utils.tutorial.getCurrent.invalidate();
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                <ResourceCost
-                                  minerai={tech.nextLevelCost.minerai}
-                                  silicium={tech.nextLevelCost.silicium}
-                                  hydrogene={tech.nextLevelCost.hydrogene}
-                                  currentMinerai={resources.minerai}
-                                  currentSilicium={resources.silicium}
-                                  currentHydrogene={resources.hydrogene}
-                                />
-                                <span className="font-mono text-xs shrink-0">
-                                  {formatDuration(tech.nextLevelTime)}
-                                </span>
-                              </div>
-                              {craftRates && !canAfford && tech.prerequisitesMet && (
-                                <div className="mt-0.5">
-                                  <CraftEtaBadge
-                                    cost={tech.nextLevelCost}
-                                    stock={{
-                                      minerai: resources.minerai,
-                                      silicium: resources.silicium,
-                                      hydrogene: resources.hydrogene,
-                                    }}
-                                    rates={craftRates}
-                                  />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                        {!tech.isResearching && (
-                          <Button
-                            size="sm"
-                            className="shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startMutation.mutate({ researchId: tech.id as any });
-                            }}
-                            disabled={
-                              !canAfford ||
-                              !tech.prerequisitesMet ||
-                              isAnyResearching ||
-                              startMutation.isPending
-                            }
-                          >
-                            ↑
-                          </Button>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop: vertical card grid */}
-                <div className="hidden lg:grid lg:gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
-                  {categoryTechs.map((tech) => {
-                    const canAfford =
-                      resources.minerai >= tech.nextLevelCost.minerai &&
-                      resources.silicium >= tech.nextLevelCost.silicium &&
-                      resources.hydrogene >= tech.nextLevelCost.hydrogene;
-                    const highlighted = tutorialTargetId === tech.id;
-
-                    return (
-                      <button
-                        key={tech.id}
-                        onClick={() => setDetailId(tech.id)}
-                        className={cn(
-                          'retro-card relative text-left cursor-pointer overflow-hidden flex flex-col',
-                          !tech.prerequisitesMet && 'opacity-50',
-                          highlighted && 'ring-2 ring-amber-500/60 shadow-lg shadow-amber-500/10',
-                        )}
-                      >
-                        {highlighted && (
-                          <span className="absolute top-2 right-2 z-10 rounded bg-amber-500/20 border border-amber-500/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
-                            Objectif
-                          </span>
-                        )}
-                        <div className="relative h-[130px] overflow-hidden">
-                          <GameImage
-                            category="research"
-                            id={tech.id}
-                            size="full"
-                            alt={tech.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-2 right-2 bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                            Niv. {tech.currentLevel}{tech.maxLevel != null && `/${tech.maxLevel}`}
-                          </span>
-                        </div>
-
-                        <div className="p-3 flex flex-col flex-1 gap-1.5">
-                          <div className="text-[13px] font-semibold text-foreground truncate">
-                            {tech.name}
-                          </div>
-
-                          <div className="flex-1" />
-
-                          {tech.isResearching && tech.researchEndTime ? (
-                            <Timer
-                              endTime={new Date(tech.researchEndTime)}
-                              totalDuration={tech.nextLevelTime}
-                              onComplete={() => {
-                                utils.research.list.invalidate();
-                                utils.tutorial.getCurrent.invalidate();
-                              }}
-                            />
-                          ) : (
-                            <>
-                              <ResourceCost
-                                minerai={tech.nextLevelCost.minerai}
-                                silicium={tech.nextLevelCost.silicium}
-                                hydrogene={tech.nextLevelCost.hydrogene}
-                                currentMinerai={resources.minerai}
-                                currentSilicium={resources.silicium}
-                                currentHydrogene={resources.hydrogene}
-                              />
-                              <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-                                <ClockIcon className="h-3 w-3" />
-                                {formatDuration(tech.nextLevelTime)}
-                              </div>
-                              {craftRates && !canAfford && tech.prerequisitesMet && (
-                                <CraftEtaBadge
-                                  cost={tech.nextLevelCost}
-                                  stock={{
-                                    minerai: resources.minerai,
-                                    silicium: resources.silicium,
-                                    hydrogene: resources.hydrogene,
-                                  }}
-                                  rates={craftRates}
-                                />
-                              )}
-                              {!tech.prerequisitesMet ? (
-                                <PrerequisiteList
-                                  items={buildPrerequisiteItems(
-                                    gameConfig?.research[tech.id]?.prerequisites ?? {},
-                                    buildingLevels,
-                                    researchLevels,
-                                    gameConfig,
-                                  )}
-                                  missingOnly
-                                />
-                              ) : (
-                                <Button
-                                 
-                                  size="sm"
-                                  className="w-full"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    startMutation.mutate({ researchId: tech.id as any });
-                                  }}
-                                  disabled={
-                                    !canAfford || isAnyResearching || startMutation.isPending
-                                  }
-                                >
-                                  Rechercher
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <BranchColumn
+                key={branch.id}
+                branch={branch}
+                items={branchItems}
+                forkChoices={forkChoices}
+                resources={resourcesObj}
+                craftRates={craftRates}
+                isAnyResearching={isAnyResearching}
+                buildingLevels={buildingLevels}
+                researchLevels={researchLevels}
+                onStartSuccess={handleStartSuccess}
+                onDetailOpen={setDetailId}
+              />
             );
           })}
+
+          {/* Fallback for legacy techs without branchId */}
+          {legacyTechs.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <span className="h-px flex-1 bg-border/50" />
+                Autres
+                <span className="h-px flex-1 bg-border/50" />
+              </h3>
+              <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
+                {legacyTechs.map((tech) => (
+                  <BranchColumn
+                    key={tech.id}
+                    branch={{ id: '_legacy', label: '' }}
+                    items={[tech]}
+                    forkChoices={forkChoices}
+                    resources={resourcesObj}
+                    craftRates={craftRates}
+                    isAnyResearching={isAnyResearching}
+                    buildingLevels={buildingLevels}
+                    researchLevels={researchLevels}
+                    onStartSuccess={handleStartSuccess}
+                    onDetailOpen={setDetailId}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
