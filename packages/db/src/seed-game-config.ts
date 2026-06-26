@@ -22,7 +22,7 @@ import { tutorialQuestDefinitions } from './schema/tutorial-quest-definitions.js
 import { tutorialChapters } from './schema/tutorial-chapters.js';
 import { missionDefinitions } from './schema/mission-definitions.js';
 import { uiLabels } from './schema/ui-labels.js';
-import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS } from './game-config-data.js';
+import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS, UNIVERSE_CONFIG_ADDITIONS, UI_LABEL_ADDITIONS } from './game-config-data.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://exilium:exilium@localhost:5432/exilium';
 const client = postgres(DATABASE_URL);
@@ -349,6 +349,8 @@ const UI_LABELS = [
   { key: 'outcome.attacker', label: 'Victoire' },
   { key: 'outcome.defender', label: 'Défaite' },
   { key: 'outcome.draw', label: 'Match nul' },
+  // Research fork labels (S1)
+  ...UI_LABEL_ADDITIONS,
 ];
 
 // ── Universe config data ──
@@ -520,6 +522,8 @@ const UNIVERSE_CONFIG = [
   // ── Daily Quests ──
   { key: 'daily_quest_count', value: 3 },
   { key: 'daily_quest_miner_threshold', value: 5000 },
+  // ── Research respec (S1) ──
+  ...UNIVERSE_CONFIG_ADDITIONS,
 ];
 
 // ── Hull Definitions ──
