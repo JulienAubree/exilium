@@ -80,6 +80,24 @@ export interface MigrateForkOptions {
   verbose?: boolean;
 }
 
+// ── Pure guard (exported for unit testing) ────────────────────────────────
+
+/**
+ * Throws a human-readable error when `forkedCount` is 0, indicating that the
+ * seed populating `research_definitions.fork_id / fork_path` has not been run.
+ *
+ * Extracted as a pure function so it can be unit-tested without a DB connection.
+ * The script computes the count from the DB and calls this function; production
+ * behaviour is unchanged.
+ */
+export function assertForkColumnsSeeded(forkedCount: number): void {
+  if (forkedCount === 0) {
+    throw new Error(
+      'research_definitions fork columns are not seeded — run the seed before the fork bascule',
+    );
+  }
+}
+
 // ── Core function (exported for testing) ──────────────────────────────────
 
 export interface MigrateForkResult {
@@ -183,11 +201,7 @@ export async function migrateResearchForks(
     .from(researchDefinitions)
     .where(sql`${researchDefinitions.forkId} IS NOT NULL`);
 
-  if (seededCount === 0) {
-    throw new Error(
-      'research_definitions fork columns are not seeded — run the seed before the fork bascule',
-    );
-  }
+  assertForkColumnsSeeded(seededCount);
 
   // ── 2. Load target users ─────────────────────────────────────────────────
 
