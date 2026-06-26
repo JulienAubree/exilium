@@ -536,7 +536,12 @@ export function createResearchService(
      * - Remet à 0 les `user_research_levels` de TOUTES les recherches de l'ancienne voie
      *   (même `forkId` et ancienne `forkPath`)
      * - Upsert `chosenPath = newPath` + `respecCount++`
-     * - Transactionnel
+     * - Transactionnel pour les mutations DB ; le débit exilium est effectué APRÈS
+     *   la transaction pour éviter la direction charge-sans-changement en cas de crash.
+     *   La seule fenêtre résiduelle est « chemin changé mais exilium pas encore débité »
+     *   (favorable au joueur / fuite économique, auto-résolution).
+     *   NOTE : atomicité complète nécessiterait de passer `tx` dans exiliumService.spend
+     *   (TODO différé).
      */
     async respecFork(userId: string, forkId: string, newPath: string): Promise<void> {
       if (!exiliumService) {
@@ -550,36 +555,39 @@ export function createResearchService(
       const respecBase = Number(config.universe['research_respec_base']) || 5;
       const respecFactor = Number(config.universe['research_respec_factor']) || 2;
 
-      await db.transaction(async (tx) => {
-        // 1. Load current choice (for-update)
-        const choices = await loadChoices(tx, userId);
-        const current = choices[forkId];
+      // 1. Load current choice to compute cost and validate state
+      const choicesBefore = await loadChoices(db, userId);
+      const current = choicesBefore[forkId];
 
-        if (!current) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Aucun choix de fork enregistré pour forkId=${forkId}. Utilisez chooseFork d'abord.`,
-          });
-        }
-
-        if (current.path === newPath) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Vous êtes déjà sur la voie ${newPath}.`,
-          });
-        }
-
-        const { respecCount, path: oldPath } = current;
-
-        // 2. Compute cost and debit exilium (uses its own internal transaction)
-        const cost = Math.round(respecBase * Math.pow(respecFactor, respecCount));
-        await exiliumService.spend(userId, cost, 'respec', {
-          forkId,
-          fromPath: oldPath,
-          toPath: newPath,
+      if (!current) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Aucun choix de fork enregistré pour forkId=${forkId}. Utilisez chooseFork d'abord.`,
         });
+      }
 
-        // 3. Find all research definitions belonging to the OLD path of this fork
+      if (current.path === newPath) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Vous êtes déjà sur la voie ${newPath}.`,
+        });
+      }
+
+      const { respecCount, path: oldPath } = current;
+      const cost = Math.round(respecBase * Math.pow(respecFactor, respecCount));
+
+      // 2. Pre-check balance — abort before any mutation if insufficient funds
+      const { balance } = await exiliumService.getBalance(userId);
+      if (balance < cost) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Solde Exilium insuffisant (${balance} disponible, ${cost} requis)`,
+        });
+      }
+
+      // 3. DB mutations inside a transaction (path change + level reset)
+      await db.transaction(async (tx) => {
+        // Find all research definitions belonging to the OLD path of this fork
         const oldPathResearches = await tx
           .select({ id: researchDefinitions.id })
           .from(researchDefinitions)
@@ -590,7 +598,7 @@ export function createResearchService(
             ),
           );
 
-        // 4. Zero out user_research_levels for the old path researches
+        // Zero out user_research_levels for the old path researches
         if (oldPathResearches.length > 0) {
           const oldIds = oldPathResearches.map((r) => r.id);
           await tx
@@ -604,22 +612,29 @@ export function createResearchService(
             );
         }
 
-        // 5. Upsert the fork choice with new path and incremented respecCount
+        // Upsert the fork choice with new path and incremented respecCount
         await tx
           .insert(userResearchChoices)
           .values({
             userId,
             forkId,
             chosenPath: newPath,
-            respecCount: (respecCount + 1) as number,
+            respecCount: respecCount + 1,
           })
           .onConflictDoUpdate({
             target: [userResearchChoices.userId, userResearchChoices.forkId],
             set: {
               chosenPath: newPath,
-              respecCount: (respecCount + 1) as number,
+              respecCount: respecCount + 1,
             },
           });
+      });
+
+      // 4. Debit exilium AFTER the DB transaction has committed
+      await exiliumService.spend(userId, cost, 'respec', {
+        forkId,
+        fromPath: oldPath,
+        toPath: newPath,
       });
     },
 
