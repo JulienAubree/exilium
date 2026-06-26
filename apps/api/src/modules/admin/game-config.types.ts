@@ -171,6 +171,11 @@ export interface ResearchConfig {
   sortOrder: number;
   maxLevel: number | null;
   requiredAnnexType: string | null;
+  /** Arbre de recherche — ajoutés par T1/T4 (S1 research-trees). */
+  branchId: string | null;
+  tier: number | null;
+  forkId: string | null;
+  forkPath: string | null;
   prerequisites: {
     buildings: { buildingId: string; level: number }[];
     research: { researchId: string; level: number }[];

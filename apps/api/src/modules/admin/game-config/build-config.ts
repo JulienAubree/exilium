@@ -139,6 +139,10 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
       sortOrder: r.sortOrder,
       maxLevel: r.maxLevel ?? null,
       requiredAnnexType: (r.requiredAnnexType as string | null) ?? null,
+      branchId: r.branchId ?? null,
+      tier: r.tier ?? null,
+      forkId: r.forkId ?? null,
+      forkPath: r.forkPath ?? null,
       prerequisites: splitPrereqs(prereqs),
     };
   }

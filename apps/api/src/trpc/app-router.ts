@@ -128,6 +128,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
     gameConfigService,
     talentService,
     dailyQuestService,
+    exiliumService,
   );
   const galaxyService = createGalaxyService(db, gameConfigService);
   const pushService = createPushService(db);

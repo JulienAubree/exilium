@@ -1,13 +1,18 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, buildQueue, planetBuildings, planetBiomes } from '@exilium/db';
+import { planets, buildQueue, planetBuildings, planetBiomes, userResearchLevels, userResearchChoices, researchDefinitions } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getPlanetBuildingLevels } from '@exilium/db';
 import {
   loadResearchLevels,
   bumpResearchLevel,
 } from './research-levels.repo.js';
+import {
+  loadChoices,
+  chooseFork,
+  isResearchLocked,
+} from './research-choices.repo.js';
 import {
   researchCost,
   researchTime,
@@ -22,6 +27,7 @@ import { getGovernancePenalty } from '../../lib/governance.js';
 import type { Queue } from 'bullmq';
 import type { BuildCompletionResult } from '../../workers/completion.types.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
+import type { createExiliumService } from '../exilium/exilium.service.js';
 
 const ANNEX_BUILDING_IDS = ['labVolcanic', 'labArid', 'labTemperate', 'labGlacial', 'labGaseous'];
 
@@ -94,6 +100,7 @@ export function createResearchService(
     computeTalentContext(userId: string, planetId?: string): Promise<Record<string, number>>;
   },
   dailyQuestService?: ReturnType<typeof createDailyQuestService>,
+  exiliumService?: ReturnType<typeof createExiliumService>,
 ) {
   return {
     async getHomeworld(userId: string) {
@@ -111,6 +118,7 @@ export function createResearchService(
       const homeworld = await this.getHomeworld(userId);
       const planetId = homeworld.id;
       const levels = await loadResearchLevels(db, userId);
+      const choices = await loadChoices(db, userId);
       const config = await gameConfigService.getFullConfig();
       const buildingLevels = await getPlanetBuildingLevels(db, planetId);
 
@@ -188,6 +196,7 @@ export function createResearchService(
               annexMet = await hasAnnexOfType(db, userId, requiredAnnex);
             }
 
+            const locked = isResearchLocked(def, choices);
             return {
               id: def.id,
               name: def.name,
@@ -205,6 +214,12 @@ export function createResearchService(
               isResearching: activeResearch?.itemId === def.id,
               researchEndTime:
                 activeResearch?.itemId === def.id ? activeResearch.endTime.toISOString() : null,
+              // Arbre de recherche (S1 research-trees)
+              branchId: def.branchId ?? null,
+              tier: def.tier ?? null,
+              forkId: def.forkId ?? null,
+              forkPath: def.forkPath ?? null,
+              locked,
             };
           }),
       );
@@ -245,6 +260,15 @@ export function createResearchService(
       const config = await gameConfigService.getFullConfig();
       const def = config.research[researchId];
       if (!def) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Recherche invalide' });
+
+      // Fork gating — reject if this research belongs to a fork path not chosen by this user
+      const choices = await loadChoices(db, userId);
+      if (isResearchLocked(def, choices)) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: `Recherche verrouillée : vous avez choisi une voie différente pour le fork ${def.forkId}.`,
+        });
+      }
 
       const [activeResearch] = await db
         .select()
@@ -499,6 +523,104 @@ export function createResearchService(
           targetValue: newLevel,
         },
       };
+    },
+
+    async chooseFork(userId: string, forkId: string, path: string): Promise<void> {
+      await chooseFork(db, userId, forkId, path);
+    },
+
+    /**
+     * Respec d'un fork de recherche.
+     *
+     * - Coût = `research_respec_base × research_respec_factor ^ respecCount`
+     * - Remet à 0 les `user_research_levels` de TOUTES les recherches de l'ancienne voie
+     *   (même `forkId` et ancienne `forkPath`)
+     * - Upsert `chosenPath = newPath` + `respecCount++`
+     * - Transactionnel
+     */
+    async respecFork(userId: string, forkId: string, newPath: string): Promise<void> {
+      if (!exiliumService) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'ExiliumService non disponible (respecFork)',
+        });
+      }
+
+      const config = await gameConfigService.getFullConfig();
+      const respecBase = Number(config.universe['research_respec_base']) || 5;
+      const respecFactor = Number(config.universe['research_respec_factor']) || 2;
+
+      await db.transaction(async (tx) => {
+        // 1. Load current choice (for-update)
+        const choices = await loadChoices(tx, userId);
+        const current = choices[forkId];
+
+        if (!current) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Aucun choix de fork enregistré pour forkId=${forkId}. Utilisez chooseFork d'abord.`,
+          });
+        }
+
+        if (current.path === newPath) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Vous êtes déjà sur la voie ${newPath}.`,
+          });
+        }
+
+        const { respecCount, path: oldPath } = current;
+
+        // 2. Compute cost and debit exilium (uses its own internal transaction)
+        const cost = Math.round(respecBase * Math.pow(respecFactor, respecCount));
+        await exiliumService.spend(userId, cost, 'respec', {
+          forkId,
+          fromPath: oldPath,
+          toPath: newPath,
+        });
+
+        // 3. Find all research definitions belonging to the OLD path of this fork
+        const oldPathResearches = await tx
+          .select({ id: researchDefinitions.id })
+          .from(researchDefinitions)
+          .where(
+            and(
+              eq(researchDefinitions.forkId, forkId),
+              eq(researchDefinitions.forkPath, oldPath),
+            ),
+          );
+
+        // 4. Zero out user_research_levels for the old path researches
+        if (oldPathResearches.length > 0) {
+          const oldIds = oldPathResearches.map((r) => r.id);
+          await tx
+            .update(userResearchLevels)
+            .set({ level: 0 })
+            .where(
+              and(
+                eq(userResearchLevels.userId, userId),
+                inArray(userResearchLevels.researchId, oldIds),
+              ),
+            );
+        }
+
+        // 5. Upsert the fork choice with new path and incremented respecCount
+        await tx
+          .insert(userResearchChoices)
+          .values({
+            userId,
+            forkId,
+            chosenPath: newPath,
+            respecCount: (respecCount + 1) as number,
+          })
+          .onConflictDoUpdate({
+            target: [userResearchChoices.userId, userResearchChoices.forkId],
+            set: {
+              chosenPath: newPath,
+              respecCount: (respecCount + 1) as number,
+            },
+          });
+      });
     },
 
     async getOwnedPlanet(userId: string, planetId: string) {
