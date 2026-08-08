@@ -99,13 +99,3 @@ export function getBuildingIllustrationUrl(
 ): string {
   return getEntityIllustrationUrl(gameConfig, 'buildings', buildingId, planetClassId, size);
 }
-
-/** Defense-specific shortcut around getEntityIllustrationUrl. */
-export function getDefenseIllustrationUrl(
-  gameConfig: EntityVariantConfig | null | undefined,
-  defenseId: string,
-  planetClassId: string | null | undefined,
-  size: AssetSize = 'full',
-): string {
-  return getEntityIllustrationUrl(gameConfig, 'defenses', defenseId, planetClassId, size);
-}

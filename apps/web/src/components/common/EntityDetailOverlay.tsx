@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { Info, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDialogA11y } from '@/hooks/useDialogA11y';
 
@@ -54,66 +54,6 @@ export function EntityDetailOverlay({ open, onClose, title, children }: EntityDe
           {children}
         </div>
       </div>
-    </div>
-  );
-}
-
-export function InfoButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      className="absolute top-2 right-2 rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-      title="Plus d'informations"
-    >
-      <Info className="h-4 w-4" />
-    </button>
-  );
-}
-
-export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-export function StatRow({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono">{typeof value === 'number' ? value.toLocaleString('fr-FR') : value}</span>
-    </div>
-  );
-}
-
-export function DataTable({ headers, rows }: { headers: string[]; rows: (string | number)[][] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            {headers.map((h) => (
-              <th key={h} className="px-2 py-1">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i} className="border-b border-border/30">
-              {row.map((cell, j) => (
-                <td key={j} className="px-2 py-1 font-mono">
-                  {typeof cell === 'number' ? cell.toLocaleString('fr-FR') : cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

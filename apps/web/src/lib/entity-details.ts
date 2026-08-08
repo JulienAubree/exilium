@@ -1,10 +1,3 @@
-import {
-  mineraiProduction, siliciumProduction, hydrogeneProduction,
-  solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
-  storageCapacity,
-} from '@exilium/game-engine';
-import { buildProductionConfig } from './production-config';
-
 // GameConfig shape from the API
 interface GameConfigData {
   buildings: Record<string, { id: string; name: string; description: string; flavorText?: string | null; baseCost: { minerai: number; silicium: number; hydrogene: number }; costFactor: number; prerequisites: { buildingId: string; level: number }[] }>;
@@ -16,22 +9,6 @@ interface GameConfigData {
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export interface BuildingDetails {
-  type: 'building';
-  id: string;
-  name: string;
-  description: string;
-  flavorText: string;
-  baseCost: { minerai: number; silicium: number; hydrogene: number };
-  costFactor: number;
-  prerequisites: { buildingId: string; level: number }[];
-  productionTable?: { level: number; value: number }[];
-  productionLabel?: string;
-  energyTable?: { level: number; value: number }[];
-  energyLabel?: string;
-  storageTable?: { level: number; value: number }[];
-}
 
 export interface ResearchDetails {
   type: 'research';
@@ -107,13 +84,6 @@ export function resolveResearchName(id: string, config?: GameConfigData): string
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildTable(fn: (level: number) => number, levels = 15): { level: number; value: number }[] {
-  return Array.from({ length: levels }, (_, i) => ({
-    level: i + 1,
-    value: fn(i + 1),
-  }));
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -121,55 +91,6 @@ function buildTable(fn: (level: number) => number, levels = 15): { level: number
 export interface PlanetContext {
   maxTemp: number;
   productionFactor: number;
-}
-
-export function getBuildingDetails(id: string, config?: GameConfigData, planet?: PlanetContext, fullConfig?: Parameters<typeof buildProductionConfig>[0]): BuildingDetails {
-  const cfgDef = config?.buildings[id];
-  const pf = planet?.productionFactor ?? 1;
-  const maxTemp = planet?.maxTemp ?? 50;
-  const prodConfig = fullConfig ? buildProductionConfig(fullConfig) : undefined;
-  const details: BuildingDetails = {
-    type: 'building',
-    id,
-    name: cfgDef?.name ?? humanize(id),
-    description: cfgDef?.description ?? '',
-    flavorText: cfgDef?.flavorText ?? '',
-    baseCost: cfgDef?.baseCost ?? { minerai: 0, silicium: 0, hydrogene: 0 },
-    costFactor: cfgDef?.costFactor ?? 1,
-    prerequisites: cfgDef?.prerequisites ?? [],
-  };
-
-  switch (id) {
-    case 'mineraiMine':
-      details.productionTable = buildTable((lvl) => mineraiProduction(lvl, pf, prodConfig?.minerai));
-      details.productionLabel = pf < 1 ? `Production minerai/h (energie: ${Math.round(pf * 100)}%)` : 'Production minerai/h';
-      details.energyTable = buildTable((lvl) => mineraiMineEnergy(lvl, prodConfig?.mineraiEnergy));
-      details.energyLabel = 'Consommation energie';
-      break;
-    case 'siliciumMine':
-      details.productionTable = buildTable((lvl) => siliciumProduction(lvl, pf, prodConfig?.silicium));
-      details.productionLabel = pf < 1 ? `Production silicium/h (energie: ${Math.round(pf * 100)}%)` : 'Production silicium/h';
-      details.energyTable = buildTable((lvl) => siliciumMineEnergy(lvl, prodConfig?.siliciumEnergy));
-      details.energyLabel = 'Consommation energie';
-      break;
-    case 'hydrogeneSynth':
-      details.productionTable = buildTable((lvl) => hydrogeneProduction(lvl, maxTemp, pf, prodConfig?.hydrogene));
-      details.productionLabel = `Production H\u2082/h (temp. ${maxTemp}${pf < 1 ? `, energie: ${Math.round(pf * 100)}%` : ''})`;
-      details.energyTable = buildTable((lvl) => hydrogeneSynthEnergy(lvl, prodConfig?.hydrogeneEnergy));
-      details.energyLabel = 'Consommation energie';
-      break;
-    case 'solarPlant':
-      details.energyTable = buildTable((lvl) => solarPlantEnergy(lvl, prodConfig?.solar));
-      details.energyLabel = 'Production energie';
-      break;
-    case 'storageMinerai':
-    case 'storageSilicium':
-    case 'storageHydrogene':
-      details.storageTable = buildTable((lvl) => storageCapacity(lvl, prodConfig?.storage), 10);
-      break;
-  }
-
-  return details;
 }
 
 export function getResearchDetails(id: string, config?: GameConfigData): ResearchDetails {

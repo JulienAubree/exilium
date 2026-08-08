@@ -69,18 +69,6 @@ export function fmtRound(value: number): string {
 }
 
 /**
- * Date courte FR : `12 mai`, `12 mai 2026` si une autre année.
- */
-export function formatDateShort(date: string | Date): string {
-  const d = new Date(date);
-  const now = new Date();
-  if (d.getFullYear() === now.getFullYear()) {
-    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  }
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-/**
  * Date + heure FR : `12/05/2026 14:32`.
  */
 export function formatDateTime(date: string | Date): string {

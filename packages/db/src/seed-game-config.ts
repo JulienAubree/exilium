@@ -569,8 +569,8 @@ const HULLS = [
       mining_speed_bonus:              0.45,  // ex ind_mining_speed max (3 rangs × 15%)
       prospection_speed_bonus:         0.45,  // ex ind_prospect_speed max (3 rangs × 15%)
     },
-    // V7-WeaponProfiles : profil basique anti-medium, sans rafale (le mineur
-    // n'est pas un combattant — l'arsenal vient des modules d'armes).
+    // V7-WeaponProfiles : profil basique anti-medium, sans rafale — la coque
+    // industrielle n'est pas un combattant.
     defaultWeaponProfile: {
       targetCategory: 'medium' as const,
     },

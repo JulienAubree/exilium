@@ -1,4 +1,3 @@
-import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCountdownString } from '@/hooks/useCountdown';
 
@@ -49,9 +48,4 @@ export function DeadlineCountdown({ target, tone }: { target: Date; tone: 'warn'
       {display}
     </span>
   );
-}
-
-/** Petit chevron rotatif pour les sections expandable. */
-export function IconChevron({ open, className }: { open: boolean; className?: string }) {
-  return <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180', className)} />;
 }

@@ -9,19 +9,6 @@
  * Pick this convention and do not flip it later or everything will mirror.
  */
 
-export function polarToCartesian(
-  cx: number,
-  cy: number,
-  radius: number,
-  angleDeg: number,
-): { x: number; y: number } {
-  const rad = (angleDeg * Math.PI) / 180;
-  return {
-    x: cx + radius * Math.cos(rad),
-    y: cy + radius * Math.sin(rad),
-  };
-}
-
 /**
  * Deterministic hash → angle in [0, 360) for a given orbital slot.
  *
@@ -63,24 +50,4 @@ export function hash01(seed: number, i: number): number {
   h = Math.imul(h, 0xc2b2ae35);
   h ^= h >>> 16;
   return ((h >>> 0) % 1_000_000) / 1_000_000;
-}
-
-/**
- * Radius of the orbit for a given position (1..totalPositions).
- *
- * Strictly monotone increasing in `position`. Inner orbits are packed slightly
- * tighter than outer ones (gentle power easing, exponent > 1) to mimic real
- * planetary systems. Guaranteed to stay within `canvasSize / 2 - margin`.
- */
-export function orbitRadius(position: number, totalPositions: number, canvasSize: number): number {
-  const margin = 24;
-  const maxRadius = canvasSize / 2 - margin;
-  const minRadius = Math.min(40, maxRadius * 0.2);
-  const n = Math.max(totalPositions, 1);
-  // t in (0, 1], using position so position=1 is innermost.
-  const t = position / n;
-  // Power easing with exponent > 1 → inner orbits packed tighter,
-  // outer orbits spaced more generously.
-  const eased = Math.pow(t, 1.4);
-  return minRadius + (maxRadius - minRadius) * eased;
 }
