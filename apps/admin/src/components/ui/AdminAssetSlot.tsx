@@ -6,7 +6,7 @@ import type { AssetCategory } from '@exilium/shared';
 interface AdminAssetSlotProps {
   /**
    * Catégorie d'asset (voir AssetCategory dans @exilium/shared) :
-   * 'anomaly', 'expedition', 'landing', 'module', 'avatars', etc.
+   * 'landing', 'avatars', 'buildings', 'ships', etc.
    * Détermine le sous-dossier `/assets/<category>/` côté serveur.
    */
   category: AssetCategory;

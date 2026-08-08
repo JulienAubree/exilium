@@ -110,25 +110,6 @@ export function createAsteroidBeltService(db: Database) {
       await db.insert(asteroidDeposits).values(values);
     },
 
-    async getDeposits(beltId: string) {
-      return db.select().from(asteroidDeposits)
-        .where(eq(asteroidDeposits.beltId, beltId));
-    },
-
-    async getSystemDeposits(galaxy: number, system: number) {
-      const belts = await db.select().from(asteroidBelts)
-        .where(and(
-          eq(asteroidBelts.galaxy, galaxy),
-          eq(asteroidBelts.system, system),
-        ));
-
-      const result: Record<number, typeof asteroidDeposits.$inferSelect[]> = {};
-      for (const belt of belts) {
-        result[belt.position] = await this.getDeposits(belt.id);
-      }
-      return result;
-    },
-
     async generateDiscoveredDeposit(
       beltId: string,
       totalQuantity: number,

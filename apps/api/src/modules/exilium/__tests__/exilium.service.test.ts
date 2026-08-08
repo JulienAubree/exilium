@@ -210,12 +210,12 @@ describe('ExiliumService', () => {
   describe('tryDrop', () => {
     it('donne toujours un drop avec rate=1', async () => {
       gameConfigService = createMockGameConfigService({
-        exilium_drop_rate_expedition: 1,
+        exilium_drop_rate_pve: 1,
         exilium_drop_amount: 3,
       });
       service = createExiliumService(db, gameConfigService);
 
-      const result = await service.tryDrop('user-1', 'expedition');
+      const result = await service.tryDrop('user-1', 'pve');
       expect(result.dropped).toBe(true);
       expect(result.amount).toBe(3);
     });

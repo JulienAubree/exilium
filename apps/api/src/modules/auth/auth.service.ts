@@ -1,7 +1,7 @@
 import { eq, sql, and, isNull, gt, desc, notInArray } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { hash, verify } from 'argon2';
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT } from 'jose';
 import { randomBytes, createHash } from 'crypto';
 import { TRPCError } from '@trpc/server';
 import { users, refreshTokens, loginEvents, passwordResetTokens, emailVerificationTokens } from '@exilium/db';
@@ -536,13 +536,5 @@ export function createAuthService(db: Database, redis: Redis, mailer: MailerServ
       return userId;
     },
 
-    async verifyAccessToken(token: string): Promise<{ userId: string }> {
-      try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
-        return { userId: payload.userId as string };
-      } catch {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid token' });
-      }
-    },
   };
 }

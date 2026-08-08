@@ -43,12 +43,6 @@ export function createPlanetRouter(
       return planetService.getSummaries(ctx.userId!);
     }),
 
-    get: protectedProcedure
-      .input(z.object({ planetId: z.string().uuid() }))
-      .query(async ({ ctx, input }) => {
-        return planetService.getPlanet(ctx.userId!, input.planetId);
-      }),
-
     rename: protectedProcedure
       .input(z.object({
         planetId: z.string().uuid(),

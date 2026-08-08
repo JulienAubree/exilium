@@ -6,7 +6,7 @@ import type { GameConfigService } from '../admin/game-config.service.js';
 
 export function createPveRouter(
   pveService: ReturnType<typeof createPveService>,
-  asteroidBeltService: ReturnType<typeof createAsteroidBeltService>,
+  _asteroidBeltService: ReturnType<typeof createAsteroidBeltService>,
   _gameConfigService: GameConfigService,
 ) {
   return router({
@@ -42,15 +42,6 @@ export function createPveRouter(
       .mutation(async ({ ctx, input }) => {
         await pveService.dismissMission(ctx.userId!, input.missionId);
         return { success: true };
-      }),
-
-    getSystemBelts: protectedProcedure
-      .input(z.object({
-        galaxy: z.number().int().min(1).max(9),
-        system: z.number().int().min(1).max(499),
-      }))
-      .query(async ({ input }) => {
-        return asteroidBeltService.getSystemDeposits(input.galaxy, input.system);
       }),
   });
 }

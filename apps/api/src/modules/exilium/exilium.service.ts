@@ -11,7 +11,6 @@ import { getPolicyEffects } from '../../lib/empire-policy.js';
  *  sont crédités tels quels. */
 const POLICY_TAXED_SOURCES = new Set([
   'daily_quest',
-  'expedition',
   'pvp',
   'pve',
   'market',
@@ -21,7 +20,6 @@ const POLICY_TAXED_SOURCES = new Set([
 
 export type ExiliumSource =
   | 'daily_quest'
-  | 'expedition'
   | 'pvp'
   | 'pve'
   | 'market'

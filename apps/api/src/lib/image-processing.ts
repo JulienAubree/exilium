@@ -15,7 +15,7 @@ function safeOutPath(dir: string, filename: string): string {
   return resolved;
 }
 
-const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships', 'avatars', 'landing', 'anomaly', 'module', 'expedition'];
+const VALID_CATEGORIES: AssetCategory[] = ['buildings', 'research', 'ships', 'defenses', 'planets', 'flagships', 'avatars', 'landing'];
 
 const SIZES: readonly { suffix: string; width: number; height?: number; quality: number; label: string }[] = [
   { suffix: '', width: 1200, quality: 85, label: 'hero' },
@@ -203,102 +203,6 @@ export async function processLandingImage(
 
   const files: string[] = [];
   for (const size of LANDING_SIZES) {
-    const filename = `${slot}${size.suffix}.webp`;
-    const outPath = safeOutPath(outputDir, filename);
-    await sharp(buffer)
-      .resize({ width: size.width, withoutEnlargement: true })
-      .webp({ quality: size.quality })
-      .toFile(outPath);
-    files.push(filename);
-  }
-  return files;
-}
-
-/**
- * Anomaly content images — depth illustrations and (later) random-event
- * cards. Cinematic format, narrower than landing because they sit inside
- * an in-game card. Two outputs: 1280px hero + 640px thumb.
- *
- * Slot is a free-form key (e.g. "depth-1", "depth-2", "event-<id>").
- * Files written under `assets/anomaly/<slot>{,-thumb}.webp`.
- */
-const ANOMALY_SIZES: readonly { suffix: string; width: number; quality: number }[] = [
-  { suffix: '', width: 1280, quality: 82 },
-  { suffix: '-thumb', width: 640, quality: 78 },
-];
-
-export async function processAnomalyImage(
-  buffer: Buffer,
-  slot: string,
-  assetsDir: string,
-): Promise<string[]> {
-  if (!isSafeAssetSegment(slot)) {
-    throw new Error(`Invalid anomaly slot "${slot}"`);
-  }
-
-  const outputDir = path.join(assetsDir, 'anomaly');
-  fs.mkdirSync(outputDir, { recursive: true });
-
-  const files: string[] = [];
-  for (const size of ANOMALY_SIZES) {
-    const filename = `${slot}${size.suffix}.webp`;
-    const outPath = safeOutPath(outputDir, filename);
-    await sharp(buffer)
-      .resize({ width: size.width, withoutEnlargement: true })
-      .webp({ quality: size.quality })
-      .toFile(outPath);
-    files.push(filename);
-  }
-  return files;
-}
-
-/**
- * Images des Missions d'exploration en espace profond.
- * Slot libre (ex: `sector-theta-7`, `event-epave-recyclable`).
- * Mêmes tailles que les anomalies pour cohérence visuelle.
- */
-export async function processExpeditionImage(
-  buffer: Buffer,
-  slot: string,
-  assetsDir: string,
-): Promise<string[]> {
-  if (!isSafeAssetSegment(slot)) {
-    throw new Error(`Invalid expedition slot "${slot}"`);
-  }
-
-  const outputDir = path.join(assetsDir, 'expedition');
-  fs.mkdirSync(outputDir, { recursive: true });
-
-  const files: string[] = [];
-  for (const size of ANOMALY_SIZES) {
-    const filename = `${slot}${size.suffix}.webp`;
-    const outPath = safeOutPath(outputDir, filename);
-    await sharp(buffer)
-      .resize({ width: size.width, withoutEnlargement: true })
-      .webp({ quality: size.quality })
-      .toFile(outPath);
-    files.push(filename);
-  }
-  return files;
-}
-
-const MODULE_SIZES: readonly { suffix: string; width: number; quality: number }[] = [
-  { suffix: '', width: 800, quality: 85 },
-  { suffix: '-thumb', width: 200, quality: 80 },
-];
-
-export async function processModuleImage(
-  buffer: Buffer,
-  slot: string,
-  assetsDir: string,
-): Promise<string[]> {
-  if (!isSafeAssetSegment(slot)) {
-    throw new Error(`Invalid module slot "${slot}"`);
-  }
-  const outputDir = path.join(assetsDir, 'module');
-  fs.mkdirSync(outputDir, { recursive: true });
-  const files: string[] = [];
-  for (const size of MODULE_SIZES) {
     const filename = `${slot}${size.suffix}.webp`;
     const outPath = safeOutPath(outputDir, filename);
     await sharp(buffer)
