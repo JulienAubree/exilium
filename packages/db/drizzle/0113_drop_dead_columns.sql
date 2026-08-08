@@ -1,0 +1,33 @@
+-- Retrait de deux colonnes que plus aucun code ne lit ni n'ecrit.
+--
+--   mission_center_state.last_dismiss_at  (4 valeurs non nulles / 13 lignes)
+--   pve_missions.expires_at               (68 valeurs non nulles / 3646 lignes)
+--
+-- Verifie avant ecriture, avec controle de validite du motif :
+--   `pveMissions.expiresAt`          -> 0 occurrence   (`pveMissions.status` -> 5, le grep fonctionne)
+--   `missionCenterState.lastDismissAt` -> 0 occurrence
+--   aucun insert ne renseigne expires_at
+-- Les valeurs restantes sont un residu d'avant l'abandon de la feature
+-- d'expiration des missions PvE : le cron correspondant n'a jamais ete planifie
+-- (`expireOldMissions` n'est appelee nulle part, cf. lot 3C).
+--
+-- /!\ ATTENTION AU NOM PARTAGE : `expiresAt` compte 38 references dans le
+-- depot, mais elles portent sur d'AUTRES tables — flagship_cooldowns, users
+-- (tokens de session et de reset), market_offers. Toutes vivantes. Ne jamais
+-- conclure sur le symbole nu, toujours qualifier par la table.
+--
+-- =====================================================================
+-- /!\ DEPLOIEMENT INDIVISIBLE, dans cet ordre, JAMAIS via deploy.sh :
+--   1. retirer les champs des schemas Drizzle
+--   2. rm -rf apps/api/dist packages/db/dist && pnpm build
+--   3. verifier que les .js compiles ne citent plus les colonnes
+--   4. pm2 reload + health
+--   5. SEULEMENT ENSUITE cette migration
+-- Drizzle enumere explicitement les colonnes : un DDL joue pendant que
+-- l'ancien binaire tourne fait echouer toute requete sur ces tables.
+-- Rollback a sens unique : revenir au code precedent sans ADD COLUMN rejoue
+-- la meme panne.
+-- =====================================================================
+
+ALTER TABLE mission_center_state DROP COLUMN last_dismiss_at;
+ALTER TABLE pve_missions DROP COLUMN expires_at;

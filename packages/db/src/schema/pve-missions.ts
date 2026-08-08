@@ -10,7 +10,6 @@ export const pveMissions = pgTable('pve_missions', {
   difficultyTier: varchar('difficulty_tier', { length: 16 }),  // 'easy' | 'medium' | 'hard' (combat only)
   status: varchar('status', { length: 16 }).notNull().default('available'),  // available | in_progress | completed | expired
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
 }, (table) => [
   index('pve_missions_user_status_idx').on(table.userId, table.status),
 ]);
