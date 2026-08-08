@@ -5,7 +5,9 @@ import type { PlayerAdminService } from './player-admin.service.js';
 
 /**
  * Whitelist des colonnes de `user_research` modifiables par l'admin.
- * Doit rester synchronisée avec `packages/db/src/schema/user-research.ts`.
+ * Doit rester synchronisée avec la colonne `level_column` de
+ * `research_definitions` (la table `user_research` a ete remplacee par
+ * `user_research_levels` lors du rework de juin 2026).
  * Empêche le mass-assignment si un attaquant interne envoie une colonne
  * arbitraire (ex: une colonne ajoutée plus tard avec un sens privilégié).
  */
@@ -31,6 +33,10 @@ const RESEARCH_KEYS = [
   'temperateProduction',
   'glacialShielding',
   'gaseousPropulsion',
+  // Forks S1 (fork Armement) — oublies lors du rework de juin 2026, ce qui
+  // rendait ces 2 recherches non editables depuis le back-office.
+  'firepower',
+  'shieldBreaker',
 ] as const;
 
 export function createPlayerAdminRouter(

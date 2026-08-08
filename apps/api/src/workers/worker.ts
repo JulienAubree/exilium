@@ -92,11 +92,20 @@ console.log('[worker] Event catchup cron started (30s)');
 scheduleCron(redis, () => resourceTick(db, gameConfigService), { name: 'resource-tick', intervalMs: 15 * 60_000 });
 console.log('[worker] Resource tick cron started (15min)');
 
+// `governor_tick_minutes` est editable depuis le back-office : on lit la valeur
+// au lieu de la coder en dur. Avant ce correctif, un admin qui passait le
+// reglage a 15 min croyait ralentir les gouverneurs alors que rien ne changeait.
+// La valeur est lue au demarrage du worker : une modification prend effet au
+// prochain redemarrage (donc a chaque deploiement). Repli sur 5 min.
+const governorTickMinutes = Math.max(
+  1,
+  Number((await gameConfigService.getFullConfig()).universe.governor_tick_minutes) || 5,
+);
 scheduleCron(redis, async () => { await governorTick(db, gameConfigService, buildingService, resourceService); }, {
   name: 'governor-tick',
-  intervalMs: 5 * 60_000,
+  intervalMs: governorTickMinutes * 60_000,
 });
-console.log('[worker] Governor tick cron started (5min)');
+console.log(`[worker] Governor tick cron started (${governorTickMinutes}min)`);
 
 scheduleCron(redis, () => rankingUpdate(db, gameConfigService), { name: 'ranking-update', intervalMs: 30 * 60_000 });
 console.log('[worker] Ranking update cron started (30min)');

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePlanetStore } from '@/stores/planet.store';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
+import { trpc } from '@/trpc';
 import { ProfileIcon, HistoryIcon, AllianceIcon, RankingIcon } from '@/lib/icons';
 
 export function ProfileMenu() {
@@ -14,10 +15,20 @@ export function ProfileMenu() {
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const clearActivePlanet = usePlanetStore((s) => s.clearActivePlanet);
+  const logoutMutation = trpc.auth.logout.useMutation();
 
   useOutsideClick(ref, open, () => setOpen(false));
 
   const handleLogout = () => {
+    // Revoque le refresh token cote serveur AVANT de vider le stockage local :
+    // sans cela le token restait valide jusqu a son expiration naturelle, et se
+    // deconnecter ne protegeait donc pas un appareil perdu ou partage.
+    const refreshToken = useAuthStore.getState().refreshToken;
+    if (refreshToken) {
+      // On n attend pas la reponse et on ignore l echec : la deconnexion locale
+      // ne doit jamais etre bloquee par un probleme reseau.
+      logoutMutation.mutate({ refreshToken });
+    }
     clearActivePlanet();
     clearAuth();
   };

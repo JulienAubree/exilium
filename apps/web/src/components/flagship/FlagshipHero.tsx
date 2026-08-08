@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { HelpCircle, ImageIcon, AlertTriangle } from 'lucide-react';
+import { HelpCircle, ImageIcon, AlertTriangle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getFlagshipImageUrl } from '@/lib/assets';
@@ -37,6 +37,7 @@ interface FlagshipHeroProps {
   onOpenImagePicker: () => void;
   onOpenHullChange: () => void;
   onOpenHelp: () => void;
+  onOpenRename: () => void;
 }
 
 const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
@@ -56,6 +57,7 @@ export function FlagshipHero({
   onOpenImagePicker,
   onOpenHullChange,
   onOpenHelp,
+  onOpenRename,
 }: FlagshipHeroProps) {
   const styles = getHullCardStyles(flagship.hullId);
 
@@ -133,9 +135,20 @@ export function FlagshipHero({
 
           {/* Center : name + planet */}
           <div className="flex-1 min-w-0 pt-0.5 lg:pt-1">
-            <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-foreground truncate">
-              {flagship.name}
-            </h1>
+            <div className="group flex items-center gap-1.5 min-w-0">
+              <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-foreground truncate">
+                {flagship.name}
+              </h1>
+              <button
+                type="button"
+                onClick={onOpenRename}
+                aria-label="Renommer le vaisseau amiral"
+                title="Renommer"
+                className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-violet-950/40 hover:text-violet-300 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
             {/* Stationed planet */}
             {stationedPlanet && (

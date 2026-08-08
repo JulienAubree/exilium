@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { trpc } from '@/trpc';
 import { HullChangeModal } from '@/components/flagship/HullChangeModal';
+import { FlagshipRenameModal } from '@/components/flagship/FlagshipRenameModal';
 import { IncapacitatedBanner } from '@/components/flagship/IncapacitatedBanner';
 import { HullRefitBanner } from '@/components/flagship/HullRefitBanner';
 import { HullAbilitiesPanel } from '@/components/flagship/HullAbilitiesPanel';
@@ -35,6 +36,7 @@ export default function FlagshipProfile() {
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showHullChange, setShowHullChange] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [showRename, setShowRename] = useState(false);
 
   const imageMutation = trpc.flagship.updateImage.useMutation({
     onSuccess: () => utils.flagship.get.invalidate(),
@@ -83,6 +85,7 @@ export default function FlagshipProfile() {
         onOpenImagePicker={() => setShowImagePicker(true)}
         onOpenHullChange={() => setShowHullChange(true)}
         onOpenHelp={() => setHelpOpen(true)}
+        onOpenRename={() => setShowRename(true)}
       />
 
       {(isIncapacitated || isHullRefit) && (
@@ -143,6 +146,13 @@ export default function FlagshipProfile() {
         open={showHullChange}
         onClose={() => setShowHullChange(false)}
         flagship={flagship}
+      />
+
+      <FlagshipRenameModal
+        open={showRename}
+        onClose={() => setShowRename(false)}
+        currentName={flagship.name}
+        currentDescription={flagship.description ?? ''}
       />
 
       <FlagshipHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
