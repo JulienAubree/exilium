@@ -1,4 +1,9 @@
-# Migrations du lot 2 — nettoyage du code mort (brouillons)
+# Migrations du lot 2 — nettoyage du code mort (TOUTES APPLIQUÉES)
+
+> ✅ **Les 4 migrations ont été appliquées en prod et en staging le 2026-08-08**
+> (`0106`→`0109`). Ce dossier ne conserve plus que ce README, pour la trace du
+> raisonnement et des deux pièges décrits plus bas — les fichiers `.sql` sont
+> désormais dans `packages/db/drizzle/`.
 
 > Écrites le 2026-08-08, **non appliquées**. Elles sont volontairement rangées ici
 > et **pas** dans `packages/db/drizzle/` : `apply-migrations.sh` exécute tout
