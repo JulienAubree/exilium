@@ -65,7 +65,7 @@ const colonizationService = createColonizationService(db, gameConfigService, emp
 
 const allianceLogService = createAllianceLogService(db, redis);
 
-const fleetService = createFleetService(db, resourceService, fleetQueue, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService, empireProgressionService);
+const fleetService = createFleetService(db, resourceService, fleetQueue, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, talentService, gameEventService, colonizationService, allianceLogService, empireProgressionService);
 
 // Market service
 const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);

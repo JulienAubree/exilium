@@ -52,7 +52,20 @@ echo "==> Saving PM2 process list..."
 pm2 save
 
 echo "==> Reloading Caddy config..."
-sudo caddy reload --config "$PROJECT_DIR/Caddyfile" 2>/dev/null || echo "    (Caddy reload skipped — not running or no permission)"
+# On recharge /etc/caddy/Caddyfile — le fichier que le service Caddy charge
+# reellement (cf. `systemctl show caddy -p ExecStart`) — et NON celui du depot.
+#
+# Les deux ont diverge : /etc/caddy/Caddyfile est une COPIE, pas un lien, et il
+# porte un `import /etc/caddy/cartes.conf` absent du depot. Recharger la version
+# du depot mettait donc cartes.julien-aubree.space hors ligne a chaque
+# deploiement d Exilium — une panne sur un autre projet, declenchee par un
+# deploiement qui ne touche meme pas a la conf du serveur web.
+#
+# Un deploiement de code ne change jamais la configuration Caddy : ce reload est
+# un no-op de securite. Si tu modifies /opt/exilium/Caddyfile, reporte le
+# changement dans /etc/caddy/Caddyfile a la main (en preservant ses imports),
+# puis `sudo caddy reload --config /etc/caddy/Caddyfile`.
+sudo caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || echo "    (Caddy reload skipped — not running or no permission)"
 
 echo ""
 echo "==> Deploying staging from the freshly-deployed main..."
