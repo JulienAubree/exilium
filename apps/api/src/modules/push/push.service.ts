@@ -55,9 +55,8 @@ export function createPushService(db: Database) {
 
       for (const sub of subs) {
         // Plus de filtrage par-abonnement ici : les préférences vivent dans
-        // `notification_preferences` (filtrées plus haut). La colonne
-        // `push_subscriptions.preferences` est figée à sa valeur par défaut
-        // sur les 15 abonnements et n'est plus jamais écrite.
+        // `notification_preferences`, filtrées plus haut. La colonne
+        // `push_subscriptions.preferences` a été supprimée (migration 0109).
         try {
           await webpush.sendNotification(
             {
