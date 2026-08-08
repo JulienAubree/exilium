@@ -9,7 +9,13 @@ module.exports = {
       name: 'exilium-api',
       script: 'apps/api/dist/index.js',
       cwd: __dirname,
-      node_args: '--env-file=.env',
+      // Absolute path: in cluster mode the worker is `cluster.fork()`ed from
+      // the PM2 daemon, and Node resolves --env-file at bootstrap — before
+      // PM2 can chdir to `cwd`. A relative '.env' therefore resolves against
+      // the daemon's cwd (often `/`), and the API dies with
+      // `node: .env: not found` (exit 9). Fork-mode apps are unaffected
+      // because PM2 spawns them with `cwd` already set.
+      node_args: `--env-file=${__dirname}/.env`,
       exec_mode: 'cluster',
       instances: 4, // VPS has 4 cores
       autorestart: true,
@@ -22,7 +28,7 @@ module.exports = {
       name: 'exilium-worker',
       script: 'apps/api/dist/workers/worker.js',
       cwd: __dirname,
-      node_args: '--env-file=.env',
+      node_args: `--env-file=${__dirname}/.env`,
       exec_mode: 'fork',
       instances: 1,
       autorestart: true,
