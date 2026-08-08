@@ -345,10 +345,6 @@ const UI_LABELS = [
   { key: 'spy_visibility.defenses', label: 'Défenses' },
   { key: 'spy_visibility.buildings', label: 'Bâtiments' },
   { key: 'spy_visibility.research', label: 'Recherches' },
-  // Combat outcomes
-  { key: 'outcome.attacker', label: 'Victoire' },
-  { key: 'outcome.defender', label: 'Défaite' },
-  { key: 'outcome.draw', label: 'Match nul' },
   // Research fork labels (S1)
   ...UI_LABEL_ADDITIONS,
 ];

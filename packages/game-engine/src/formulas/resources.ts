@@ -97,10 +97,6 @@ export function calculateProductionRates(
   bonus?: PlanetTypeBonus,
   prodConfig: ProductionConfig = DEFAULT_PRODUCTION_CONFIG,
   talentBonuses?: Record<string, number>,
-  /** @deprecated reverted on 2026-05-14 — storage uses the historical
-   *  exponential formula. Parameter kept for API compatibility with callers
-   *  that pass it explicitly; the value is ignored. */
-  _storageCapHoursFactor: number = 24,
 ): ProductionRates {
   const mineraiPct = (planet.mineraiMinePercent ?? 100) / 100;
   const siliciumPct = (planet.siliciumMinePercent ?? 100) / 100;

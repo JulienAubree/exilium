@@ -1,0 +1,24 @@
+-- ui_labels : retrait des 3 libelles `outcome.*`.
+--
+-- Leur unique consommateur a disparu le 2026-03-27 (757d4cf1, reecriture de
+-- Reports.tsx). Verifie : 0 occurrence de 'outcome.' dans les sources et dans
+-- les bundles servis (prod et admin).
+--
+-- /!\ GESTE INDISSOCIABLE : le bloc `// Combat outcomes` de
+-- packages/db/src/seed-game-config.ts est retire dans le MEME commit. Sans
+-- cela, le `db:seed` que deploy.sh rejoue APRES les migrations les recree
+-- immediatement par upsert — c'est ce qui a rendu sans effet les DELETE des
+-- migrations 0008 et 0020.
+--
+-- /!\ NE PAS toucher aux 14 lignes `event.*` : elles sont VIVANTES, lues deux
+-- fois — par prefixe dans pages/History.tsx pour les puces de filtre, et par
+-- cle construite dans lib/game-events.ts. Les embarquer viderait les filtres
+-- de la page Historique et y afficherait des types bruts.
+--
+-- Consequence assumee : le wording 'Victoire'/'Defaite'/'Match nul' reste
+-- duplique dans ~9 fichiers. Le rebranchement n'est pas un remplacement
+-- 1-pour-1 (deux variantes semantiques coexistent : attacker/defender/draw
+-- cote API, victory/defeat/draw cote alliance, plus des booleens cote web).
+-- Reversible en 10 s via l'ecran /labels de l'admin.
+
+DELETE FROM ui_labels WHERE key IN ('outcome.attacker', 'outcome.defender', 'outcome.draw');

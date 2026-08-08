@@ -1,0 +1,25 @@
+-- universe_config : retrait de `storage_cap_hours_factor`.
+--
+-- Ce n'est pas un chantier a moitie cable qu'on abandonnerait : c'est une
+-- feature d'equilibrage (lier la capacite de stockage a une duree de
+-- production) livree par la migration 0090, puis **deliberement annulee** le
+-- 2026-05-14 par le commit 095a8478 « retablir le storage cap historique
+-- (exponentiel) ». La cle et la formule sont restees orphelines depuis.
+--
+-- Retire dans le meme commit, cote code :
+--   - packages/game-engine/src/formulas/production.ts : la fonction
+--     `effectiveStorageCapacity` (zero appelant dans tout le depot).
+--     /!\ `storageCapacity`, juste au-dessus, est TRES vivante — ne pas
+--     confondre les deux.
+--   - packages/game-engine/src/formulas/resources.ts : le 5e parametre
+--     `_storageCapHoursFactor`, deja marque @deprecated et jamais passe (les
+--     deux appelants sont a 4 arguments).
+--
+-- La cle n'est PAS dans seed-game-config.ts -> le DELETE est durable et ne
+-- sera pas ressuscite par le `db:seed` que deploy.sh rejoue apres migration.
+--
+-- /!\ Ne PAS toucher au reste de 0090 : building_definitions.max_level et
+-- bonus_definitions.bonus_type / soft_cap_max / soft_cap_k sont l'autre moitie
+-- du Sprint 1, elle bien en place.
+
+DELETE FROM universe_config WHERE key = 'storage_cap_hours_factor';

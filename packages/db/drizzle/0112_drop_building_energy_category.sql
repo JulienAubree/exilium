@@ -1,0 +1,22 @@
+-- entity_categories : retrait de la categorie orpheline `building_energy`.
+--
+-- UNE SEULE ligne du cluster « categories orphelines » est morte — les 4 autres
+-- (defense_boucliers, build_industrial, build_military, build_defense) sont
+-- vivantes et ne doivent pas etre touchees.
+--
+-- Verifie : 0 entite rattachee (building 0/17, research 0/23, ship 0/13,
+-- defense 0/5), et un scan de toutes les colonnes textuelles et jsonb de la
+-- base ne trouve qu'un seul hit : sa propre ligne.
+--
+-- Les 4 FK entrantes sont en ON DELETE SET NULL -> aucune erreur d'integrite
+-- possible. `entity_categories.entity_type` est un varchar(32), pas un enum
+-- Postgres : le verdict « ne jamais retirer une valeur d'enum » ne s'applique
+-- pas ici.
+--
+-- Absente du seed (19 entrees) -> suppression definitive, aucun fichier a
+-- modifier. Gain : fin d'un doublon « Energie » a 0 entite dans le back-office
+-- (sort_order=2, en collision avec building_industrie — signature d'un ajout
+-- manuel via l'admin). Cote joueur, les 3 sites de rendu filtrent deja les
+-- categories vides.
+
+DELETE FROM entity_categories WHERE id = 'building_energy';
