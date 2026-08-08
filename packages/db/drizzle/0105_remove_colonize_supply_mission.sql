@@ -1,0 +1,34 @@
+-- Termine le retrait de la mission « Ravitaillement colonie », commence le
+-- 2026-04-16 par 670c4079 (« redesign colonization events — colonie vivante »).
+--
+-- Ce commit a supprime le handler serveur `colonize_supply` et deplace le
+-- ravitaillement vers la mission `transport` ordinaire (une livraison pose
+-- `outpostEstablished` des que les seuils sont atteints — voir
+-- transport.handler.ts). Mais il a laisse la ligne dans `mission_definitions`,
+-- et il a retire 'colonize_supply' de COLONIZATION_MISSIONS dans
+-- MissionSelector.tsx, ce qui a produit l'effet INVERSE de l'intention :
+-- ce set liste les missions affichees UNIQUEMENT pendant une colonisation
+-- active. En sortir la mission l'a rendue affichee EN PERMANENCE.
+--
+-- Consequence pour les joueurs : le bouton restait clicable, les ressources et
+-- le carburant etaient debites, `handlers['colonize_supply']` etait undefined,
+-- la flotte revenait a vide, et la colonisation echouait au bout de 24 h faute
+-- d'avant-poste — pendant que l'UI affichait un ravitaillement « en approche ».
+-- Un joueur l'a utilisee le 2026-05-09, 23 jours apres le retrait du handler.
+--
+-- Verifie avant ecriture :
+--   - 7 lignes fleet_events avec mission='colonize_supply', toutes en 'completed'
+--     (0 active) — aucune flotte en vol ne sera orpheline.
+--   - la cle est absente de seed-game-config.ts -> le DELETE est durable et ne
+--     sera pas ressuscite par le `db:seed` que deploy.sh rejoue apres migration.
+--
+-- NOTE : on ne touche PAS a la valeur d'enum `fleet_mission = 'colonize_supply'`.
+-- Postgres n'a pas de ALTER TYPE ... DROP VALUE ; la retirer imposerait de
+-- recreer le type sous verrou exclusif sur fleet_events et mission_reports, et
+-- detruirait les 7 lignes d'historique. Une valeur d'enum orpheline est inerte.
+--
+-- Le retrait de `MissionType.ColonizeSupply` dans packages/shared se fera dans
+-- un SECOND temps, apres deploiement de cette migration. L'ordre inverse
+-- transformerait le no-op actuel en BAD_REQUEST visible pour le joueur.
+
+DELETE FROM mission_definitions WHERE id = 'colonize_supply';
