@@ -36,28 +36,6 @@ export interface MissionConfig {
   requiresPveMission: boolean;
 }
 
-export interface TalentBranchConfig {
-  id: string;
-  name: string;
-  description: string;
-  color: string;
-  sortOrder: number;
-}
-
-export interface TalentConfig {
-  id: string;
-  branchId: string;
-  tier: number;
-  position: string;
-  name: string;
-  description: string;
-  maxRanks: number;
-  prerequisiteId: string | null;
-  effectType: string;
-  effectParams: Record<string, unknown>;
-  sortOrder: number;
-}
-
 export interface HullAbility {
   id: string;
   name: string;
@@ -126,8 +104,6 @@ export interface GameConfig {
   bonuses: BonusConfig[];
   missions: Record<string, MissionConfig>;
   labels: Record<string, string>;
-  talentBranches: TalentBranchConfig[];
-  talents: Record<string, TalentConfig>;
   hulls: Record<string, HullConfig>;
   biomes: BiomeConfig[];
   /**

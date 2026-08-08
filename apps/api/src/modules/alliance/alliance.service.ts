@@ -6,7 +6,6 @@ import type { Database } from '@exilium/db';
 import type Redis from 'ioredis';
 import type { Blason } from '@exilium/shared';
 import {
-  AllianceLogCategorySchema as _AllianceLogCategorySchema,
   type AllianceLog,
   type AllianceLogCategory,
   type AllianceLogType,

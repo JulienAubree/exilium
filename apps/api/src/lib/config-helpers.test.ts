@@ -17,8 +17,6 @@ function makeConfig(overrides: Partial<GameConfig> = {}): GameConfig {
     bonuses: [],
     missions: {},
     labels: {},
-    talentBranches: [],
-    talents: {},
     hulls: {},
     biomes: [],
     attackDetection: { scoreThresholds: [0, 1, 3, 5, 7], timingPercents: [20, 40, 60, 80, 100] },

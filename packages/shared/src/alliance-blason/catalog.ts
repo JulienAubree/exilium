@@ -15,7 +15,7 @@ export const BLASON_ICONS = [
 ] as const;
 export type BlasonIcon = typeof BLASON_ICONS[number];
 
-export const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
 
 export const BlasonSchema = z.object({
   shape: z.enum(BLASON_SHAPES),

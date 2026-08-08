@@ -62,8 +62,6 @@ const mockGameConfigService = {
       bonuses: [],
       missions: {},
       labels: {},
-      talentBranches: [],
-      talents: {},
       hulls: {},
       biomes: [],
     } as unknown as GameConfig;

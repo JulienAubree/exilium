@@ -305,11 +305,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                     </th>
                   </>
                 )}
-                {tableData.type === 'market' && (
-                  <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-amber-400">
-                    Offres max
-                  </th>
-                )}
                 {tableData.type === 'shield' && (
                   <>
                     <th className="px-2 py-1.5 border-b border-[#1e293b] text-right text-cyan-400">
@@ -370,18 +365,6 @@ export function BuildingDetailContent({ buildingId, buildings, planetContext, pl
                       {row.gain != null ? `+${fmt(row.gain)}` : '\u2014'}
                     </td>
                     <td className="px-2 py-1.5 text-right text-green-500">{fmt(row.armored)}</td>
-                  </tr>
-                ))}
-              {tableData.type === 'market' &&
-                tableData.rows.map((row, i) => (
-                  <tr
-                    key={row.level}
-                    className={i % 2 === 0 ? 'bg-[#1e293b]' : ''}
-                  >
-                    <td className={`px-2 py-1.5 ${i === 0 ? 'font-semibold text-emerald-400' : ''}`}>
-                      {row.level}{i === 0 ? ' \u25C4' : ''}
-                    </td>
-                    <td className="px-2 py-1.5 text-right text-amber-400">{row.maxOffers}</td>
                   </tr>
                 ))}
               {tableData.type === 'shield' &&

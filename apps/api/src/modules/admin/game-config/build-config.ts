@@ -33,8 +33,6 @@ import type {
   ProductionConfigEntry,
   ResearchConfig,
   ShipConfig,
-  TalentBranchConfig,
-  TalentConfig,
   TutorialQuestConfig,
 } from '../game-config.types.js';
 
@@ -287,12 +285,6 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
   const labels: Record<string, string> = {};
   for (const l of labelsRows) labels[l.key] = l.label;
 
-  // Talent system removed (2026-05-03). Empty constants kept so the GameConfig
-  // shape stays stable for any front consumer reading config.talents /
-  // config.talentBranches — they get an empty list rather than a runtime crash.
-  const talentBranches: TalentBranchConfig[] = [];
-  const talents: Record<string, TalentConfig> = {};
-
   // Hulls live as a JSON blob in universe_config keyed 'hulls'
   const hulls: Record<string, HullConfig> = {};
   const hullsRaw = universe['hulls'] as HullConfig[] | undefined;
@@ -323,8 +315,6 @@ export async function buildConfigFromDb(db: Database): Promise<GameConfig> {
     bonuses,
     missions,
     labels,
-    talentBranches,
-    talents,
     hulls,
     biomes,
     attackDetection: {

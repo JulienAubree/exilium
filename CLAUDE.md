@@ -47,6 +47,8 @@ Vérifier : `curl -s localhost:3001/trpc/health` et `HEAD` staging == prod.
 - `apply-migrations.sh` utilise `DATABASE_URL` (user `exilium`) → bon ownership. **NE PAS** appliquer une migration via `sudo -u postgres psql` (tables OWNED par `postgres` → permission denied pour l'app ; sinon `ALTER TABLE … OWNER TO exilium`).
 - DB prod : `sudo -u postgres psql -d exilium`. Staging : `exilium_staging`.
 - FK `building_prerequisites` → `building_definitions` en `ON DELETE CASCADE` (supprimer un bâtiment nettoie ses prérequis). `planet_buildings`/`build_queue` n'ont pas de FK config → suppression explicite en migration.
+- **Les migrations s'écrivent à la main en SQL** dans `packages/db/drizzle/` et s'appliquent via `scripts/apply-migrations.sh`. **`drizzle-kit generate` n'est pas le workflow de ce projet** : il numérote depuis `drizzle/meta/`, en ignorant les noms de fichiers sur disque, et produirait un fichier qui se trierait *avant* les migrations existantes dans le glob — donc appliqué hors ordre.
+- **⚠️ `scripts/` ne contient QUE des scripts d'exploitation réentrants.** Tout backfill ponctuel passe par `packages/db/drizzle/` (+ un marqueur dans `_migrations`), jamais par un `.sql` dans `scripts/`. Raison : un backfill qui traîne devient un piège armé. `backfill-flagship-stats.sql` s'annonçait « idempotent » et, rejoué le 2026-08-08, aurait modifié **13 vaisseaux amiraux sur 14 et fait perdre des déblocages permanents à 11 joueurs** — il reconstruisait `unlocked_ships` (registre permanent) depuis les vaisseaux *actuellement possédés*. Supprimé le 2026-08-08 ; son travail est conservé dans la migration `0025`.
 
 ## Infra
 - Prod : PM2 `exilium-api` (cluster ×4) + `exilium-worker`, API `:3000`, config `ecosystem.config.cjs`.

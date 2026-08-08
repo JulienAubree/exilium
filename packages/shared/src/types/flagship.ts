@@ -10,8 +10,7 @@
  * snapshot that omitted hullId.
  */
 export const DEFAULT_HULL_ID = 'industrial' as const;
-export type DefaultHullId = typeof DEFAULT_HULL_ID;
 
-/** Ordered list of hull ids understood by the game-engine + admin. */
-export const HULL_IDS = ['combat', 'scientific', 'industrial'] as const;
-export type HullId = (typeof HULL_IDS)[number];
+// `HULL_IDS` / `HullId` / `DefaultHullId` ont ete retires : c etait un doublon
+// fige de la cle DB `universe_config.hulls`, qui est la source vivante (lue par
+// flagship.service.ts). Aucun consommateur.

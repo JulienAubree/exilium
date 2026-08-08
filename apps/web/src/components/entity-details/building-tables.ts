@@ -14,14 +14,12 @@ import { buildProductionConfig } from '@/lib/production-config';
 export interface MineRow { level: number; production: number; gain: number | null; energy: number }
 export interface SolarRow { level: number; production: number; gain: number | null }
 export interface StorageRow { level: number; capacity: number; gain: number | null; armored: number }
-export interface MarketRow { level: number; maxOffers: number }
 export interface ShieldRow { level: number; shield: number; energy: number }
 
 export type TableData =
   | { type: 'mine'; title: string; rows: MineRow[] }
   | { type: 'solar'; title: string; rows: SolarRow[] }
   | { type: 'storage'; title: string; rows: StorageRow[] }
-  | { type: 'market'; title: string; rows: MarketRow[] }
   | { type: 'shield'; title: string; rows: ShieldRow[] };
 
 export function getContextualTable(
