@@ -13,8 +13,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate",
-    "db:migrate": "tsx node_modules/drizzle-kit/bin.cjs migrate",
     "db:push": "tsx node_modules/drizzle-kit/bin.cjs push",
     "db:studio": "tsx node_modules/drizzle-kit/bin.cjs studio",
     "db:seed": "tsx src/seed-game-config.ts",

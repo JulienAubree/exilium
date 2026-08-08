@@ -43,7 +43,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/busboy": "^1.5.4",
     "@types/node": "^22.10.7",
     "@types/web-push": "^3.6.4",
     "tsx": "^4.19.2",
