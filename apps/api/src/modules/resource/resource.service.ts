@@ -225,6 +225,22 @@ export function createResourceService(
       return getBuildingLevels(db, planetId);
     },
 
+    /**
+     * Contexte de bonus fusionné (talents + biomes + recherche + gouvernance +
+     * vocation) d'une planète, expose pour les appelants exterieurs a ce
+     * service qui doivent raisonner sur la MEME capacite de stockage que la
+     * production — en particulier le calcul des ressources protegees lors d'un
+     * pillage. Sans lui, `attack.handler` ne voyait que le contexte talent brut
+     * et ignorait le bonus de stockage des biomes.
+     */
+    async getBonusContext(planetId: string, userId: string): Promise<Record<string, number>> {
+      const [planet] = await db.select().from(planets).where(eq(planets.id, planetId)).limit(1);
+      if (!planet) return {};
+      const config = await gameConfigService.getFullConfig();
+      const { ctx } = await buildBonusContext(planetId, userId, planet, config);
+      return ctx;
+    },
+
     async materializeResources(planetId: string, userId: string) {
       const [planet] = await db
         .select()

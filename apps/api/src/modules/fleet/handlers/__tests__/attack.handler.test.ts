@@ -178,6 +178,7 @@ function makeCtx(overrides: Partial<MissionHandlerContext> = {}): MissionHandler
     assetsDir: '/tmp',
     resourceService: {
       materializeResources: vi.fn().mockResolvedValue(undefined),
+      getBonusContext: vi.fn().mockResolvedValue({}),
     } as any,
     ...overrides,
   } as MissionHandlerContext;
@@ -297,6 +298,7 @@ describe('AttackHandler', () => {
         resourceService: {
           materializeResources: vi.fn().mockResolvedValue(undefined),
           getBuildingLevels: vi.fn().mockResolvedValue({}),
+          getBonusContext: vi.fn().mockResolvedValue({}),
         } as any,
       });
 

@@ -361,6 +361,16 @@ export class AttackHandler implements MissionHandler {
         const storageConfig = config.universe['storage_config'] as
           { storageBase: number; coeffA: number; coeffB: number; coeffC: number } | undefined;
 
+        // Le bonus de stockage des biomes doit proteger davantage, au meme titre
+        // que celui des talents : on passe le contexte FUSIONNE (talents +
+        // biomes + …), pas le contexte talent brut. Avant ce correctif, un
+        // defenseur ayant investi dans un biome de stockage voyait sa capacite
+        // augmenter pour la production mais PAS pour la protection anti-pillage.
+        const defenderBonusCtx = await ctx.resourceService.getBonusContext(
+          targetPlanet.id,
+          targetPlanet.userId,
+        );
+
         protectedResources = calculateProtectedResources(
           {
             storageMineraiLevel: storageMineraiId ? (defenderBuildingLevels[storageMineraiId] ?? 0) : 0,
@@ -374,7 +384,7 @@ export class AttackHandler implements MissionHandler {
           defenderResearchLevels,
           config.bonuses,
           storageConfig,
-          defenderTalentCtx,
+          defenderBonusCtx,
         );
 
         // Pillage: subtract protected resources, apply ratio (33% max) then talent protection (capped at 90%)
