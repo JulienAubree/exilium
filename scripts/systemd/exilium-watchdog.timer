@@ -1,0 +1,16 @@
+[Unit]
+Description=Exilium — declenche la sonde de disponibilite toutes les 2 minutes
+Documentation=file:///opt/exilium/docs/reference/uptime-monitoring.md
+
+[Timer]
+# Au demarrage, on laisse 3 min a pm2-ubuntu.service pour ressusciter les process
+# avant de sonder — sinon le watchdog alerterait sur chaque reboot normal.
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=15s
+Unit=exilium-watchdog.service
+# Si la machine etait eteinte au moment prevu, on sonde des le retour.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

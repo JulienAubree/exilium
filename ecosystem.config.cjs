@@ -19,6 +19,13 @@ module.exports = {
       exec_mode: 'cluster',
       instances: 4, // VPS has 4 cores
       autorestart: true,
+      // Sans backoff, un échec *instantané* au démarrage (dépendance pas encore
+      // prête après un reboot) consomme les 15 redémarrages autorisés en quelques
+      // millisecondes, puis PM2 passe le process en "errored" et n'y revient
+      // jamais. C'est ce qui a transformé le reboot du 08/07/2026 en panne d'un
+      // mois. Avec le backoff exponentiel, PM2 espace ses tentatives et laisse
+      // le temps à Postgres/Redis de démarrer.
+      exp_backoff_restart_delay: 200,
       max_memory_restart: '1G',
     },
     {
@@ -32,6 +39,7 @@ module.exports = {
       exec_mode: 'fork',
       instances: 1,
       autorestart: true,
+      exp_backoff_restart_delay: 200,
       max_memory_restart: '1G',
     },
   ],

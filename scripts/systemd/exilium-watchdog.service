@@ -1,0 +1,17 @@
+[Unit]
+Description=Exilium — sonde de disponibilite, auto-reparation et alerte
+Documentation=file:///opt/exilium/docs/reference/uptime-monitoring.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+# pm2 stocke son etat dans $HOME/.pm2 : sans HOME, `pm2 jlist` ne voit rien.
+Environment=HOME=/home/ubuntu
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/exilium/scripts/health-watchdog.sh
+# La sonde publique a un timeout de 15s et l'auto-reparation attend 12s :
+# on laisse de la marge, mais on ne veut pas d'execution zombie.
+TimeoutStartSec=180

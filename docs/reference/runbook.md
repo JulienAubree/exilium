@@ -106,15 +106,25 @@ Ne JAMAIS rejouer les migrations sur prod depuis zéro (`apply-migrations.sh` es
 
 ### 🟠 PM2 ne démarre pas au reboot
 
+Depuis le 2026-08-08, l'unit systemd **`pm2-ubuntu.service`** est installée et `enabled` :
+PM2 ressuscite tout seul au boot. Son absence est ce qui a transformé le reboot du
+08/07/2026 en panne d'un mois — voir [`uptime-monitoring.md`](uptime-monitoring.md).
+
 ```bash
-pm2 resurrect
-# Si ça échoue, reconstruit la config :
+systemctl is-enabled pm2-ubuntu     # doit répondre "enabled"
+sudo systemctl start pm2-ubuntu     # relance manuelle (fait `pm2 resurrect`)
+
+# Si la résurrection échoue, reconstruire depuis la config :
 cd /opt/exilium && pm2 start ecosystem.config.cjs
 cd /opt/exilium-staging && pm2 start ecosystem.config.cjs
 pm2 save
-# Et s'assurer que pm2-startup est bien configuré :
-pm2 startup  # affichage d'une commande sudo à lancer
 ```
+
+> ⚠️ `pm2 resurrect` restaure **`~/.pm2/dump.pm2`**, pas `ecosystem.config.cjs`. Fais
+> `pm2 save` après tout changement de process, sinon tu ressuscites un état périmé.
+
+**Détection** : le watchdog (`exilium-watchdog.timer`, toutes les 2 min) sonde
+`/health`, tente une relance automatique et envoie un mail. `journalctl -u exilium-watchdog.service`.
 
 ### 🟠 Rate limit global déclenché à tort
 
