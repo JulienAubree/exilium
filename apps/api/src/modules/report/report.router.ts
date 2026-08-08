@@ -33,12 +33,9 @@ export function createReportRouter(reportService: ReturnType<typeof createReport
         return reportService.getDetailedLog(ctx.userId!, input.reportId);
       }),
 
-    byMessage: protectedProcedure
-      .input(z.object({ messageId: z.string().uuid() }))
-      .query(async ({ ctx, input }) => {
-        return reportService.getByMessageId(ctx.userId!, input.messageId);
-      }),
-
+    // `byMessage` servait le modele par-message de la messagerie, remplace par
+    // les fils de conversation. `report.list` / `report.detail` restent vivants
+    // et continuent de lire `mission_reports.message_id`.
     delete: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {

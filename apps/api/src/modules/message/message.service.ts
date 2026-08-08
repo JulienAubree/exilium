@@ -171,26 +171,6 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
       return msg;
     },
 
-    async createSystemMessage(
-      recipientId: string,
-      type: 'system' | 'colonization' | 'espionage' | 'combat' | 'alliance' | 'mission',
-      subject: string,
-      body: string,
-    ) {
-      const [msg] = await db
-        .insert(messages)
-        .values({
-          senderId: null,
-          recipientId,
-          type,
-          subject,
-          body,
-        })
-        .returning();
-
-      return msg;
-    },
-
     async listMessages(
       userId: string,
       options?: { page?: number; limit?: number; type?: 'system' | 'colonization' | 'player' | 'espionage' | 'combat' | 'alliance' | 'mission' },
@@ -224,36 +204,10 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
         .offset(offset);
     },
 
-    async listSentMessages(
-      userId: string,
-      options?: { page?: number; limit?: number },
-    ) {
-      const page = options?.page ?? 1;
-      const limit = options?.limit ?? 20;
-      const offset = (page - 1) * limit;
+    // Le modele par-message (listSentMessages / getMessage / markAsRead /
+    // deleteMessage) a ete remplace par les conversations et les fils.
+    // Ces methodes n avaient plus aucun appelant depuis le rework.
 
-      // Alias for the recipient user
-      const recipientUser = users;
-
-      return db
-        .select({
-          id: messages.id,
-          recipientId: messages.recipientId,
-          recipientUsername: recipientUser.username,
-          type: messages.type,
-          subject: messages.subject,
-          readBySender: messages.readBySender,
-          read: messages.read,
-          threadId: messages.threadId,
-          createdAt: messages.createdAt,
-        })
-        .from(messages)
-        .leftJoin(recipientUser, eq(recipientUser.id, messages.recipientId))
-        .where(and(eq(messages.senderId, userId), eq(messages.type, 'player')))
-        .orderBy(desc(messages.createdAt))
-        .limit(limit)
-        .offset(offset);
-    },
 
     async getThread(userId: string, threadId: string) {
       // Mark all unread messages in this thread where user is recipient as read
@@ -306,80 +260,6 @@ export function createMessageService(db: Database, redis: Redis, pushService: Re
         .orderBy(messages.createdAt);
     },
 
-    async getMessage(userId: string, messageId: string) {
-      const [msg] = await db
-        .select({
-          id: messages.id,
-          senderId: messages.senderId,
-          senderUsername: users.username,
-          senderAvatarId: users.avatarId,
-          recipientId: messages.recipientId,
-          type: messages.type,
-          subject: messages.subject,
-          body: messages.body,
-          read: messages.read,
-          readBySender: messages.readBySender,
-          threadId: messages.threadId,
-          createdAt: messages.createdAt,
-        })
-        .from(messages)
-        .leftJoin(users, eq(users.id, messages.senderId))
-        .where(
-          and(
-            eq(messages.id, messageId),
-            or(eq(messages.recipientId, userId), eq(messages.senderId, userId)),
-          ),
-        )
-        .limit(1);
-
-      if (!msg) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Message introuvable' });
-      }
-
-      // Mark as read by recipient
-      if (msg.recipientId === userId && !msg.read) {
-        await db
-          .update(messages)
-          .set({ read: true })
-          .where(eq(messages.id, messageId));
-      }
-
-      // Mark as read by sender (when sender views the message detail)
-      if (msg.senderId === userId && !msg.readBySender) {
-        await db
-          .update(messages)
-          .set({ readBySender: true })
-          .where(eq(messages.id, messageId));
-      }
-
-      return {
-        ...msg,
-        read: msg.recipientId === userId ? true : msg.read,
-        readBySender: msg.senderId === userId ? true : msg.readBySender,
-      };
-    },
-
-    async markAsRead(userId: string, messageId: string) {
-      await db
-        .update(messages)
-        .set({ read: true })
-        .where(and(eq(messages.id, messageId), eq(messages.recipientId, userId)));
-
-      return { success: true };
-    },
-
-    async deleteMessage(userId: string, messageId: string) {
-      await db
-        .delete(messages)
-        .where(
-          and(
-            eq(messages.id, messageId),
-            or(eq(messages.recipientId, userId), eq(messages.senderId, userId)),
-          ),
-        );
-
-      return { success: true };
-    },
 
     async countUnread(userId: string) {
       const [result] = await db

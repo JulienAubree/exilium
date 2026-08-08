@@ -334,34 +334,6 @@ export function createMarketService(
       });
     },
 
-    // Called by market worker on reservation expiration
-    async processReservationExpiration(offerId: string) {
-      const [offer] = await db
-        .select()
-        .from(marketOffers)
-        .where(and(eq(marketOffers.id, offerId), eq(marketOffers.status, 'reserved')))
-        .limit(1);
-
-      if (!offer || offer.fleetEventId) return; // Fleet already sent or offer no longer reserved
-
-      await db
-        .update(marketOffers)
-        .set({
-          status: 'active',
-          reservedBy: null,
-          reservedAt: null,
-        })
-        .where(eq(marketOffers.id, offerId));
-
-      // Notify buyer
-      if (offer.reservedBy) {
-        publishNotification(redis, offer.reservedBy, {
-          type: 'market-reservation-expired',
-          payload: { offerId: offer.id },
-        });
-      }
-    },
-
     // ── Report offer methods ────────────────────────────────────────────
 
     async listReportOffers(userId: string, options?: {

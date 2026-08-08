@@ -21,29 +21,10 @@ export function createPushRouter(pushService: ReturnType<typeof createPushServic
         return { ok: true };
       }),
 
-    unsubscribe: protectedProcedure
-      .input(z.object({ endpoint: z.string().url() }))
-      .mutation(async ({ ctx, input }) => {
-        await pushService.unsubscribe(ctx.userId, input.endpoint);
-        return { ok: true };
-      }),
-
-    getPreferences: protectedProcedure.query(async ({ ctx }) => {
-      return pushService.getPreferences(ctx.userId);
-    }),
-
-    updatePreferences: protectedProcedure
-      .input(z.object({
-        building: z.boolean().optional(),
-        research: z.boolean().optional(),
-        shipyard: z.boolean().optional(),
-        fleet: z.boolean().optional(),
-        combat: z.boolean().optional(),
-        message: z.boolean().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await pushService.updatePreferences(ctx.userId, input);
-        return { ok: true };
-      }),
+    // Les préférences push par-abonnement ont été remplacées par la table
+    // `notification_preferences` (UI retirée le 2026-03-31). Les procédures
+    // unsubscribe/getPreferences/updatePreferences n'avaient plus aucun
+    // appelant. L'élagage des abonnements morts se fait via l'auto-delete
+    // sur 404/410 dans `sendToUser`.
   });
 }

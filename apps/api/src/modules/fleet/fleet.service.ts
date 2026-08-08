@@ -4,7 +4,6 @@ import { planets, planetShips, fleetEvents, fleetPhaseEnum } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import { findOwnedPlanet, getUserResearchLevels } from '@exilium/db';
 import type { createResourceService } from '../resource/resource.service.js';
-import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { Queue } from 'bullmq';
 import type { createPveService } from '../pve/pve.service.js';
@@ -49,7 +48,6 @@ export function createFleetService(
   db: Database,
   resourceService: ReturnType<typeof createResourceService>,
   fleetQueue: Queue,
-  messageService: ReturnType<typeof createMessageService> | undefined,
   gameConfigService: GameConfigService,
   redis: Redis,
   pveService?: ReturnType<typeof createPveService>,
@@ -94,7 +92,6 @@ export function createFleetService(
     db,
     resourceService,
     gameConfigService,
-    messageService,
     pveService,
     asteroidBeltService,
     pirateService,

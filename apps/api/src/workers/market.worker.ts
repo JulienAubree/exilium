@@ -15,12 +15,10 @@ export function startMarketWorker(marketService: ReturnType<typeof createMarketS
           console.log(`[market] Offer ${offerId} expired`);
           break;
         }
-        case 'market-reservation-expire': {
-          const { offerId } = job.data as { offerId: string };
-          await marketService.processReservationExpiration(offerId);
-          console.log(`[market] Reservation for ${offerId} expired`);
-          break;
-        }
+        // Il n'y a plus d'étape de réservation séparée depuis le 2026-03-25
+        // (9da2195d) : l'achat réserve et libère en quelques millisecondes.
+        // Le job 'market-reservation-expire' n'a plus aucun producteur — on ne
+        // retire pas un filet de sécurité, il n'y en a plus depuis mars.
         default:
           console.error(`[market] Unknown job name: ${job.name}`);
       }

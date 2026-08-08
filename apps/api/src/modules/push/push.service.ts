@@ -36,39 +36,6 @@ export function createPushService(db: Database) {
         });
     },
 
-    async unsubscribe(userId: string, endpoint: string) {
-      await db
-        .delete(pushSubscriptions)
-        .where(eq(pushSubscriptions.endpoint, endpoint));
-    },
-
-    async updatePreferences(userId: string, preferences: Partial<Record<PushCategory, boolean>>) {
-      const subs = await db
-        .select()
-        .from(pushSubscriptions)
-        .where(byUser(pushSubscriptions.userId, userId));
-
-      for (const sub of subs) {
-        const current = (sub.preferences ?? {}) as Record<string, boolean>;
-        await db
-          .update(pushSubscriptions)
-          .set({ preferences: { ...current, ...preferences } })
-          .where(eq(pushSubscriptions.id, sub.id));
-      }
-    },
-
-    async getPreferences(userId: string) {
-      const [sub] = await db
-        .select({ preferences: pushSubscriptions.preferences })
-        .from(pushSubscriptions)
-        .where(byUser(pushSubscriptions.userId, userId))
-        .limit(1);
-      return (sub?.preferences ?? {
-        building: true, research: true, shipyard: true,
-        fleet: true, combat: true, message: true,
-      }) as Record<PushCategory, boolean>;
-    },
-
     async sendToUser(userId: string, category: PushCategory, payload: { title: string; body: string; url?: string }, eventType?: string) {
       if (!env.VAPID_PUBLIC_KEY) return;
 
@@ -87,9 +54,10 @@ export function createPushService(db: Database) {
         .where(byUser(pushSubscriptions.userId, userId));
 
       for (const sub of subs) {
-        const prefs = (sub.preferences ?? {}) as Record<string, boolean>;
-        if (prefs[category] === false) continue;
-
+        // Plus de filtrage par-abonnement ici : les préférences vivent dans
+        // `notification_preferences` (filtrées plus haut). La colonne
+        // `push_subscriptions.preferences` est figée à sa valeur par défaut
+        // sur les 15 abonnements et n'est plus jamais écrite.
         try {
           await webpush.sendNotification(
             {

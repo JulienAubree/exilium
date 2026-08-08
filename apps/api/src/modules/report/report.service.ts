@@ -174,31 +174,6 @@ export function createReportService(db: Database) {
       return decompressDetailedLog(report?.detailedLog);
     },
 
-    async getByMessageId(userId: string, messageId: string) {
-      const [report] = await db
-        .select({
-          id: missionReports.id,
-          userId: missionReports.userId,
-          fleetEventId: missionReports.fleetEventId,
-          pveMissionId: missionReports.pveMissionId,
-          messageId: missionReports.messageId,
-          missionType: missionReports.missionType,
-          title: missionReports.title,
-          coordinates: missionReports.coordinates,
-          originCoordinates: missionReports.originCoordinates,
-          fleet: missionReports.fleet,
-          departureTime: missionReports.departureTime,
-          completionTime: missionReports.completionTime,
-          result: missionReports.result,
-          read: missionReports.read,
-          createdAt: missionReports.createdAt,
-        })
-        .from(missionReports)
-        .where(and(eq(missionReports.messageId, messageId), byUser(missionReports.userId, userId)))
-        .limit(1);
-      return report ?? null;
-    },
-
     async deleteReport(userId: string, reportId: string) {
       await db
         .delete(missionReports)

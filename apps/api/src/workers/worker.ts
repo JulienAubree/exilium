@@ -8,7 +8,6 @@ import { createShipyardService } from '../modules/shipyard/shipyard.service.js';
 import { createFleetService } from '../modules/fleet/fleet.service.js';
 import { createGameConfigService } from '../modules/admin/game-config.service.js';
 import { createTutorialService } from '../modules/tutorial/tutorial.service.js';
-import { createMessageService } from '../modules/message/message.service.js';
 import { createAsteroidBeltService } from '../modules/pve/asteroid-belt.service.js';
 import { createPirateService } from '../modules/pve/pirate.service.js';
 import { createPveService } from '../modules/pve/pve.service.js';
@@ -45,7 +44,6 @@ const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfig
 const empireProgressionService = createEmpireProgressionService(db, gameConfigService, redis);
 const resourceService = createResourceService(db, gameConfigService, dailyQuestService);
 const pushService = createPushService(db);
-const messageService = createMessageService(db, redis, pushService);
 const asteroidBeltService = createAsteroidBeltService(db);
 const pirateService = createPirateService(db, gameConfigService);
 const pveService = createPveService(db, asteroidBeltService, pirateService, gameConfigService);
@@ -67,7 +65,7 @@ const colonizationService = createColonizationService(db, gameConfigService, emp
 
 const allianceLogService = createAllianceLogService(db, redis);
 
-const fleetService = createFleetService(db, resourceService, fleetQueue, messageService, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService, empireProgressionService);
+const fleetService = createFleetService(db, resourceService, fleetQueue, gameConfigService, redis, pveService, asteroidBeltService, pirateService, reportService, exiliumService, dailyQuestService, flagshipService, undefined, gameEventService, colonizationService, allianceLogService, empireProgressionService);
 
 // Market service
 const marketService = createMarketService(db, resourceService, gameConfigService, marketQueue, redis, dailyQuestService, exiliumService);

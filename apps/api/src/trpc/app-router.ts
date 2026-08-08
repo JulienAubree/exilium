@@ -170,7 +170,6 @@ export function buildAppRouter(db: Database, redis: Redis) {
     db,
     resourceService,
     fleetQueue,
-    messageService,
     gameConfigService,
     redis,
     pveService,

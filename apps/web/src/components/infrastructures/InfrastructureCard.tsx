@@ -11,7 +11,7 @@ import { formatDuration } from '@/lib/format';
 import type { CraftRates } from '@/lib/craft-eta';
 import { useGameConfig } from '@/hooks/useGameConfig';
 import { getBuildingIllustrationUrl } from '@/lib/assets';
-import type { BuildingForCard } from '@/components/resources/ResourceCard';
+import type { BuildingForCard } from './types';
 
 type GameConfigData = ReturnType<typeof useGameConfig>['data'];
 

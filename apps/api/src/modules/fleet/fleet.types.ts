@@ -8,7 +8,6 @@ import type {
   ShipCombatConfig,
 } from '@exilium/game-engine';
 import type { createResourceService } from '../resource/resource.service.js';
-import type { createMessageService } from '../message/message.service.js';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import type { createPveService } from '../pve/pve.service.js';
 import type { createAsteroidBeltService } from '../pve/asteroid-belt.service.js';
@@ -79,7 +78,6 @@ export interface MissionHandlerContext {
   db: Database;
   resourceService: ReturnType<typeof createResourceService>;
   gameConfigService: GameConfigService;
-  messageService?: ReturnType<typeof createMessageService>;
   pveService?: ReturnType<typeof createPveService>;
   asteroidBeltService?: ReturnType<typeof createAsteroidBeltService>;
   pirateService?: ReturnType<typeof createPirateService>;
