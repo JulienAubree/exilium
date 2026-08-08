@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   RESOURCE_COLORS,
-  RESOURCE_GLOWS,
   RESOURCE_CARD_CLASS,
   RESOURCE_BORDER_ACTIVE,
   RESOURCE_LABELS,
@@ -91,7 +90,7 @@ export function ResourceBuy({ planetId }: ResourceBuyProps) {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className={cn('text-lg font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType], RESOURCE_GLOWS[offer.resourceType])}>
+                  <span className={cn('text-lg font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType])}>
                     {offer.quantity.toLocaleString('fr-FR')}
                   </span>
                   <span className={cn('ml-1.5 text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>

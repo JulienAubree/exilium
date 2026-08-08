@@ -4,12 +4,6 @@ export const RESOURCE_COLORS: Record<string, string> = {
   hydrogene: 'text-blue-400',
 };
 
-export const RESOURCE_GLOWS: Record<string, string> = {
-  minerai: 'glow-minerai',
-  silicium: 'glow-silicium',
-  hydrogene: 'glow-hydrogene',
-};
-
 export const RESOURCE_CARD_CLASS: Record<string, string> = {
   minerai: 'retro-card-minerai',
   silicium: 'retro-card-silicium',

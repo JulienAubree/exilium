@@ -5,7 +5,6 @@ import { useToastStore } from '@/stores/toast.store';
 import { cn } from '@/lib/utils';
 import {
   RESOURCE_COLORS,
-  RESOURCE_GLOWS,
   RESOURCE_CARD_CLASS,
   RESOURCE_LABELS,
   STATUS_STYLES,
@@ -57,7 +56,7 @@ export function ResourceMyOffers({ planetId: _planetId, statuses }: ResourceMyOf
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className={cn('font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType], RESOURCE_GLOWS[offer.resourceType])}>
+                  <span className={cn('font-bold tabular-nums', RESOURCE_COLORS[offer.resourceType])}>
                     {Number(offer.quantity).toLocaleString('fr-FR')}
                   </span>
                   <span className={cn('text-sm font-medium', RESOURCE_COLORS[offer.resourceType])}>
