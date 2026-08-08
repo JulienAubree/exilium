@@ -34,7 +34,6 @@ const SECTIONS: { id: string; label: string; keys: string[] }[] = [
       'pve_search_radius', 'pve_tier_medium_unlock', 'pve_tier_hard_unlock',
       'pve_deposit_variance_min', 'pve_deposit_variance_max',
       'pve_discovery_cooldown_base', 'pve_deposit_size_base',
-      'slag_rate.pos8', 'slag_rate.pos16',
     ],
   },
   {
