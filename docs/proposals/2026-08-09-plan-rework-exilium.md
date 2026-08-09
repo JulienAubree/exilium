@@ -188,8 +188,8 @@ décision de groupe, elle se débat, et les deux systèmes nécessaires existent
 
 > Décidé avec Julien le 2026-08-09, après la fiction. Ce recentrage ne contredit pas les actes :
 > il déplace l'emphase. **Les missions ne sont pas l'aboutissement du plan, elles en sont la
-> boucle.** Et le périmètre se resserre volontairement sur deux activités approfondies plutôt que
-> cinq survolées.
+> boucle.** Deux activités portent le jeu — miner et combattre les pirates — et tout le reste les
+> soutient sans rien perdre de sa place.
 
 Le jeu tient en quatre choses :
 
@@ -223,20 +223,26 @@ Les trois quarts de cette boucle existent. Le constat est vérifié dans le code
 
 **Réellement neuf** : l'as de pilotage. Rien dans la base ne parle de pilote ni d'équipage.
 
-### 4.2 Ce qui sort du périmètre
+### 4.2 Le reste devient du soutien, pas du cœur
 
-Au-delà de la liste de la section 8. Les usages sont mesurés sur 8 317 missions réellement envoyées :
+Rien de plus ne sort — le recentrage est une affaire d'**emphase, pas d'amputation**. Marché,
+alliances, espionnage, recyclage, transport et colonisation restent tous. Ce qui change : aucun
+d'eux n'est une activité de premier plan. Ce sont les organes autour du cœur, et le cœur, ce sont
+les missions.
 
-| Système | Envois | Sort |
+Concrètement, sur 8 317 missions réellement envoyées :
+
+| Système | Envois | Rôle dans le jeu recentré |
 |---|---:|---|
-| Transport | 1 628 | Reste — c'est de la plomberie, pas une activité |
-| Recyclage | 1 187 | ⚠️ 3ᵉ activité du jeu. À fondre dans le combat comme butin automatique, sinon c'est une perte réelle |
-| Exploration | 661 | Rétrogradée : les biomes restent une propriété de planète, plus une activité |
-| Espionnage | 327 | Sort, ou revient comme le renseignement d'avant-assaut |
-| Marché | 53 | Sort |
-| Alliances | — | Sort |
+| Transport | 1 628 | Plomberie entre ses planètes |
+| Recyclage | 1 187 | Le ramassage après combat — nourri par les missions, pas concurrent |
+| Exploration | 661 | Trouver ses biomes et ses cibles — au service du reste |
+| Espionnage | 327 | Le renseignement d'avant-mission (la sonde sur la flotte pirate, c'est lui) |
+| Marché | 53 | L'échange entre amis que la divergence des biomes rend nécessaire |
+| Alliances | — | Le cadre du jeu de groupe |
 
-La colonisation **reste** : les planètes sont au pluriel.
+Le critère pour les décisions futures : **on développe les missions, on entretient le reste.** Un
+système de soutien a le droit d'être simple ; il n'a pas le droit de réclamer son propre chantier.
 
 ### 4.3 Ce que le recentrage ne change pas
 
@@ -292,7 +298,8 @@ On ne construit pas une couche qui **montre** des choses au-dessus d'une économ
 528 423/h et en verse 425 740. Afficher un faux chiffre est pire que ne rien afficher.
 
 - Chemin de crédit unique : l'affiché égale le versé, au centime, avec un test qui l'assertent.
-- Les biomes et les politiques retrouvent un effet réel — prérequis direct de l'acte 2.
+- Les biomes retrouvent un effet réel — prérequis direct de l'acte 2. (Les politiques d'empire,
+  elles, sont jetées en section 8 : on ne répare pas ce qu'on supprime.)
 - Snapshot de config par partie : le back-office cesse d'être écrasé par le seed à chaque
   déploiement.
 
@@ -399,12 +406,12 @@ comme super-ressource rare, détenue par eux · **les Premiers tiennent des syst
 capitaine par système** · les trois types de secteurs, emboîtés dedans · le silo qui se prend ou
 s'achète.
 
-Et, depuis la section 4 : **le périmètre se resserre sur planètes + deux flottes + missions** ·
-les missions sont la boucle, pas l'aboutissement · les récompenses sont qualitatives (as de
-pilotage, vaisseaux spéciaux à poser) et non chiffrées · **les planètes restent au pluriel**, donc
-la colonisation reste · le vaisseau amiral n'est pas supprimé mais multiplié · marché, alliances et
-espionnage sortent · le recyclage se fond dans le combat · l'exploration est rétrogradée en
-propriété de planète.
+Et, depuis la section 4 : **le cœur du jeu, c'est planètes + deux flottes + missions** · les
+missions sont la boucle, pas l'aboutissement · les récompenses sont qualitatives (as de pilotage,
+vaisseaux spéciaux à poser) et non chiffrées · **les planètes restent au pluriel**, donc la
+colonisation reste · le vaisseau amiral n'est pas supprimé mais multiplié · rien d'autre ne sort :
+marché, alliances, espionnage, recyclage et exploration restent **en soutien** — on développe les
+missions, on entretient le reste.
 
 **Ouvert** — à trancher avant ou pendant :
 - Combien d'amis reviennent, et le dimensionnement de la carte qui en découle.
