@@ -99,8 +99,8 @@ plusieurs d'entre elles réparent un système existant au lieu d'en ajouter un.
 | L'exilium est rare et permet d'aller loin | La monnaie morte devient la super-ressource ; voyager et débloquer en coûtent |
 | L'exilium est chez eux | Boucle complète : il m'en faut → il est occupé → j'y vais à plusieurs → j'en rapporte → je vais plus loin |
 | On a oublié, eux non | L'arbre de recherche n'invente pas, il **rend** — un nœud = une capacité retrouvée |
-| Ils tiennent nos archives | Le PvE territorial rapporte de la mémoire, pas seulement du butin |
-| Ce sont des pirates, et ils parlent | Un silo se **prend ou s'achète** : une décision collective à débattre, sur deux systèmes qui existent déjà |
+| Ils tiennent les zones riches | Reprendre un système débloque un bonus ou des zones de minage exceptionnelles — puis ils reviennent |
+| Ce sont des pirates, et ils parlent | Des capitaines nommés et récurrents — du récit au prix de lignes de dialogue, pas de systèmes |
 | Ils viennent parce qu'on vaut enfin le déplacement | La menace naît de la réussite du groupe — auto-équilibrée, et ça date le début de la partie |
 
 Deux conséquences valent d'être notées explicitement :
@@ -149,8 +149,8 @@ semaines et de plusieurs joueurs — **c'est le palier visible que le plan cherc
 formuler**. Et surtout, ça se planifie tout seul dans le groupe : « on tape Varek ce week-end » dit
 où, combien de temps, et avec qui.
 
-Les trois types de secteurs (3.5) ne sont pas concurrents de ce découpage : **ils s'emboîtent
-dedans**. Un système contient ses ports, ses prises et ses silos.
+Ce que contient un système reste volontairement simple pour l'ouverture : **un capitaine, ses
+planètes, sa flotte**. Son cycle de vie est décrit en 3.5.
 
 > 🔧 **Décision technique à prendre au début, pas après.** `planets.userId` est `notNull` avec clé
 > étrangère vers `users` : une planète sans propriétaire n'existe pas dans le schéma actuel. Deux
@@ -166,21 +166,27 @@ dedans**. Un système contient ses ports, ses prises et ses silos.
 > classements, le fil de l'univers, le compteur de joueurs et l'admin compteront les pirates parmi
 > les amis. Dette bornée, mais seulement si elle est posée au départ.
 
-### 3.5 Les trois secteurs
+### 3.5 Le cycle d'un système
 
-« Reprendre un secteur » ne veut pas dire la même chose partout. Trois formes, trois gains, trois
-façons de jouer :
+Décision de Julien (2026-08-09) : **pas de sous-typologie de secteurs à l'ouverture.** Un système
+pirate, c'est un capitaine, ses planètes, sa flotte — et il vit en cycle :
 
-| Secteur | Ce qu'ils y ont | Ce qu'on y gagne |
-|---|---|---|
-| **Les ports** | Un repaire, des équipages — ils y reviennent toujours | De l'exilium en flux tant qu'on tient. Le rendez-vous répétable du groupe. |
-| **Les prises** | Une cache, une épave qu'ils démontent, peu de monde | Le gisement ou l'épave, définitivement. La progression franche et lisible sur la carte. |
-| **Les silos** | Nos archives, au fond d'une soute, mélangées au reste du butin | Un souvenir rendu à **tout le monde**. Rare, à l'unité, événement de serveur. |
+1. **Tenu.** Le système est aux Premiers, visible sur la carte.
+2. **Repris**, à plusieurs.
+3. **La récompense s'ouvre** : un bonus d'empire et/ou des zones de minage exceptionnelles,
+   pendant une fenêtre.
+4. **Les Premiers reviennent.** Le système redevient une cible.
 
-Le silo est la pièce maîtresse : **le seul contenu dont le gain est collectif par nature**, donc le
-seul qui rende la coopération évidente sans avoir à l'imposer. Et comme les Premiers parlent, il
-se **prend ou s'achète** — payer en exilium ce qu'on pourrait prendre au prix du sang est une
-décision de groupe, elle se débat, et les deux systèmes nécessaires existent déjà.
+Le retour n'est pas un échec de conception, c'est le moteur : le rendez-vous répétable du groupe
+est structurel, et la carte ne se « finit » jamais — cohérent avec le monde persistant sans fin.
+
+À régler au plan d'implémentation : la durée de la fenêtre, la forme du bonus (cumulable entre
+systèmes ?), et la courbe du retour (reviennent-ils plus forts, plus nombreux, ailleurs ?).
+
+**Remisé, pas jeté** : les trois types de secteurs (ports / prises / silos) et le silo « se prend
+ou s'achète ». Si le cycle simple s'use à la longue, c'est la première extension naturelle — et le
+silo (un nœud de recherche rendu à **tout le monde**) reste la meilleure idée coopérative en
+réserve.
 
 ---
 
@@ -247,7 +253,7 @@ système de soutien a le droit d'être simple ; il n'a pas le droit de réclamer
 ### 4.3 Ce que le recentrage ne change pas
 
 La fiction tient intacte. Un système des Premiers devient simplement **la plus grosse mission du
-centre**, et les trois types de secteurs (3.5) en sont les variantes. L'exilium reste ce qu'on
+centre**, et son cycle (3.5) donne au groupe son rendez-vous répétable. L'exilium reste ce qu'on
 rapporte de chez eux.
 
 > ⚠️ **Conséquence d'interface, à ne pas traiter à la légère.** Si les missions sont le cœur, le
@@ -258,7 +264,9 @@ rapporte de chez eux.
 ### 4.4 En attente de conception
 
 - Combien de vaisseaux spéciaux, à quelle rareté, et est-ce que leurs bonus se cumulent.
-- Ce qu'est un as de pilotage : attaché à un vaisseau, à une flotte, ou indépendant.
+- **Décidé (2026-08-09)** : l'as de pilotage est **le pilote de son vaisseau spécial** — une seule
+  entité, un nom, une histoire, pas de gestion séparée. Reste à trancher : ce qui arrive à l'as si
+  son vaisseau est détruit.
 - Comment le centre de missions alimente le joueur — aujourd'hui : 3 missions concurrentes max,
   rayon de recherche 5, découverte sur cooldown, expiration à 7 jours.
 - La profondeur du minage (dureté de roche, sonde préalable) : **au frigo jusqu'après le test de
@@ -345,9 +353,10 @@ Des systèmes entiers tenus par les Premiers, chacun au nom d'un capitaine, repr
 Choisi parmi quatre formes de PvE parce que c'est la seule qui soit à la fois **collective**,
 **visible sur la carte** et compatible avec l'écart de rythme.
 
-La fiction (section 3) a depuis précisé la forme : un système = un capitaine = un objectif, avec
-ses ports, ses prises et ses silos à l'intérieur. Et la boucle qui rend les vaisseaux de guerre
-nécessaires vient de l'économie et non d'un système parallèle : **l'exilium est chez eux.**
+La fiction (section 3) a depuis précisé la forme : un système = un capitaine = **une cible
+cyclique** — repris, il ouvre un bonus ou des zones de minage exceptionnelles pendant une fenêtre,
+puis les Premiers reviennent. Et la boucle qui rend les vaisseaux de guerre nécessaires vient de
+l'économie et non d'un système parallèle : **l'exilium est chez eux.**
 
 Les trois autres formes évoquées — vagues, cibles de difficulté croissante, événements
 marquants — ne sont pas abandonnées : elles se greffent sur ce socle une fois qu'il tient.
@@ -403,8 +412,11 @@ Et, depuis la section 3 : la catastrophe (une guerre que l'humanité s'est faite
 l'occupant (**les Premiers**, pirates, la branche qui n'a pas arrêté — et qui parlent) · le ton
 (space opera, panache des deux côtés) · l'époque (assez de temps pour avoir oublié) · l'exilium
 comme super-ressource rare, détenue par eux · **les Premiers tiennent des systèmes entiers, un
-capitaine par système** · les trois types de secteurs, emboîtés dedans · le silo qui se prend ou
-s'achète.
+capitaine par système** · **le cycle d'un système : repris → bonus ou zones de minage
+exceptionnelles pendant une fenêtre → les Premiers reviennent** (les trois types de secteurs sont
+remisés) · **capitaines = lignes `users` avec `isNpc` (voie 1)** · **l'as de pilotage est le pilote
+de son vaisseau spécial** · le dimensionnement de la carte est différé — il sera paramétrable, on
+le tranchera plus tard.
 
 Et, depuis la section 4 : **le cœur du jeu, c'est planètes + deux flottes + missions** · les
 missions sont la boucle, pas l'aboutissement · les récompenses sont qualitatives (as de pilotage,
@@ -414,22 +426,19 @@ marché, alliances, espionnage, recyclage et exploration restent **en soutien** 
 missions, on entretient le reste.
 
 **Ouvert** — à trancher avant ou pendant :
-- Combien d'amis reviennent, et le dimensionnement de la carte qui en découle.
-- La forme de jeu concrète d'une prise — les trois gains sont fixés (flux, gisement, souvenir), la
-  confrontation elle-même reste à concevoir.
-- **Ce qu'on fait d'un système repris** : on s'y installe, ou il s'ouvre simplement au passage ?
-  Question ouverte depuis que les Premiers tiennent du territoire.
+- La forme de jeu concrète d'une prise de système : la confrontation elle-même (un assaut ?
+  plusieurs vagues ? un siège à plusieurs flottes ?).
+- Le réglage du cycle : durée de la fenêtre de bonus, forme du bonus (cumul entre systèmes ?),
+  courbe du retour des Premiers.
 - Comment les faits d'armes se déclenchent, et lesquels valent la peine.
 - Les capitaines : combien, comment ils reviennent, ce qu'ils disent.
 - Si les Premiers sont toute l'histoire ou la couche visible de quelque chose de plus gros
   (cf. l'encadré 3.3 sur le plafond des enjeux).
-- **Voie 1 ou voie 2 pour la propriété des planètes pirates** (encadré 3.4) — à décider avant
-  la première migration de la carte neuve, pas après.
 - Le critère d'arrêt du rééquilibrage des unités, **écrit avant d'ouvrir le fichier** — un
   chantier sans fin naturelle est ce qui tue un projet solo.
 - Quelle est la première chose qu'un joueur voit à sa première connexion sur la carte neuve.
-- Les questions de conception du recentrage, listées en 4.4 (vaisseaux spéciaux, as de pilotage,
-  alimentation du centre de missions).
+- Les questions de conception du recentrage, listées en 4.4 (vaisseaux spéciaux, sort de l'as à la
+  destruction du vaisseau, alimentation du centre de missions).
 
 ---
 
