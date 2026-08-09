@@ -1,9 +1,49 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { fleetEvents, planets, discoveredBiomes, discoveredPositions, getUserResearchLevels } from '@exilium/db';
+import { fleetEvents, planets, planetBiomes, discoveredBiomes, discoveredPositions, getUserResearchLevels } from '@exilium/db';
 import { biomeDiscoveryProbability, scanDuration, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, calculateMaxTemp, type BiomeDefinition } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
 import { findShipsByRole } from '../../../lib/config-helpers.js';
+
+/**
+ * Active les liens planet_biomes d'une planète possédée par l'explorateur, pour
+ * les biomes qu'il vient de découvrir à ces coordonnées.
+ *
+ * Pendant de `colonization.service`, qui fait l'inverse (activer, à la fin
+ * d'une colonisation, les biomes déjà découverts). Sans ce pendant, l'ordre
+ * « je colonise, puis j'explore » laissait le bonus inerte.
+ */
+async function activateDiscoveredBiomesOnOwnedPlanet(
+  ctx: MissionHandlerContext,
+  userId: string,
+  galaxy: number,
+  system: number,
+  position: number,
+  biomeIds: string[],
+): Promise<void> {
+  if (biomeIds.length === 0) return;
+
+  const [owned] = await ctx.db
+    .select({ id: planets.id })
+    .from(planets)
+    .where(and(
+      eq(planets.userId, userId),
+      eq(planets.galaxy, galaxy),
+      eq(planets.system, system),
+      eq(planets.position, position),
+    ))
+    .limit(1);
+  if (!owned) return;
+
+  await ctx.db
+    .update(planetBiomes)
+    .set({ active: true })
+    .where(and(
+      eq(planetBiomes.planetId, owned.id),
+      inArray(planetBiomes.biomeId, biomeIds),
+      eq(planetBiomes.active, false),
+    ));
+}
 
 export class ExploreHandler implements PhasedMissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -137,6 +177,24 @@ export class ExploreHandler implements PhasedMissionHandler {
           biomeId: b.id,
         })),
       ).onConflictDoNothing();
+
+      // Si l'explorateur possède DÉJÀ la planète sondée, la découverte doit
+      // activer ses biomes tout de suite.
+      //
+      // L'activation n'existait que dans un sens : à la fin d'une
+      // colonisation, on activait les biomes déjà découverts
+      // (colonization.service). Explorer APRÈS avoir colonisé n'activait rien
+      // — le biome était su, inscrit sur la planète, et restait inerte. En
+      // base de production, 7 liens planet_biomes se trouvaient dans cet état :
+      // des bonus acquis par le joueur, jamais versés.
+      await activateDiscoveredBiomesOnOwnedPlanet(
+        ctx,
+        fleetEvent.userId,
+        fleetEvent.targetGalaxy,
+        fleetEvent.targetSystem,
+        fleetEvent.targetPosition,
+        newlyDiscovered.map((b) => b.id),
+      );
     }
 
     const remaining = undiscovered.length - newlyDiscovered.length;
