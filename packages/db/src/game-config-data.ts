@@ -178,6 +178,13 @@ export const UNIVERSE_CONFIG = [
   // Seul levier de rythme mesure comme homothetique : raidir les exposants est
   // non-monotone et peut RALENTIR le jeu. A monter au moment du wipe si la
   // carte neuve doit demarrer plus vite.
+  // Le cycle d'un systeme des Premiers. Fenetre = duree pendant laquelle une
+  // prise rapporte ; retour = delai avant que les Premiers reviennent, compte
+  // depuis la liberation (les deux partent du meme instant, pas en cascade).
+  // 48 h et 7 jours sont un point de depart a regler EN JOUANT : c'est
+  // exactement le genre de nombre qu'on ne peut pas deviner a la table.
+  { key: 'premier_window_hours', value: 48 },
+  { key: 'premier_return_hours', value: 168 },
   { key: 'economy_speed', value: 1 },
   { key: 'topology', value: 'ring' },
   { key: 'world_seed', value: 0 },
