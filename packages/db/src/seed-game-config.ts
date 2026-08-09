@@ -24,7 +24,62 @@ import { missionDefinitions } from './schema/mission-definitions.js';
 import { uiLabels } from './schema/ui-labels.js';
 import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS, UNIVERSE_CONFIG, UI_LABEL_ADDITIONS } from './game-config-data.js';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://exilium:exilium@localhost:5432/exilium';
+// ── Garde-fou de cible ──
+//
+// Ce script ECRIT en base. Il n'a donc PAS de valeur par defaut : un
+// `pnpm db:seed` lance sans DATABASE_URL retombait auparavant sur la chaine de
+// connexion de PRODUCTION, ce qui transformait un seed de developpement en
+// ecrasement de la config du jeu en ligne. deploy-staging.sh documente
+// explicitement ce piege (il surcharge DATABASE_URL pour l'eviter).
+//
+// Deux verrous :
+//   1. DATABASE_URL absent  -> on s'arrete, on n'invente pas de cible.
+//   2. Cible = base de prod -> il faut `--allow-prod` pour l'assumer.
+//
+// La cible est toujours affichee avant la moindre ecriture.
+
+const PROD_DB_NAMES = ['exilium'];
+
+function nomDeBase(url: string): string {
+  try {
+    // pathname vaut « /exilium » ; on enleve le slash de tete.
+    return new URL(url).pathname.replace(/^\//, '');
+  } catch {
+    return '';
+  }
+}
+
+function hoteDeBase(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '?';
+  }
+}
+
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error('[seed] ERREUR : DATABASE_URL absent.');
+  console.error('[seed] Ce script ecrit en base et refuse de deviner sa cible.');
+  console.error('[seed] Exemples :');
+  console.error('[seed]   DATABASE_URL=postgresql://exilium:…@localhost:5432/exilium_staging pnpm --filter @exilium/db db:seed');
+  console.error('[seed]   DATABASE_URL=postgresql://exilium:…@localhost:5432/exilium pnpm --filter @exilium/db db:seed -- --allow-prod');
+  process.exit(1);
+}
+
+const CIBLE_DB = nomDeBase(DATABASE_URL);
+const CIBLE_HOTE = hoteDeBase(DATABASE_URL);
+const ALLOW_PROD = process.argv.includes('--allow-prod');
+
+if (PROD_DB_NAMES.includes(CIBLE_DB) && !ALLOW_PROD) {
+  console.error(`[seed] ERREUR : la cible est la base de PRODUCTION (${CIBLE_HOTE}/${CIBLE_DB}).`);
+  console.error('[seed] Relance avec --allow-prod si c\'est bien l\'intention.');
+  process.exit(1);
+}
+
+console.log(`[seed] cible : ${CIBLE_HOTE}/${CIBLE_DB}${ALLOW_PROD ? ' (--allow-prod)' : ''}`);
+
 const client = postgres(DATABASE_URL);
 const db = drizzle(client);
 

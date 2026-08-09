@@ -43,7 +43,20 @@ echo "==> Applying pending database migrations..."
 "$PROJECT_DIR/scripts/apply-migrations.sh"
 
 echo "==> Seeding game config..."
-pnpm --filter @exilium/db db:seed
+# On extrait DATABASE_URL du .env local plutot que de compter sur
+# l'environnement ambiant, pour la meme raison qu'apply-migrations.sh : le
+# `export` de la ligne 22 fuit dans les sous-processus, et une variable heritee
+# d'ailleurs ferait seeder la mauvaise base. Le seed n'a plus de valeur par
+# defaut (il refusait autrefois de s'arreter et retombait sur la prod), donc la
+# cible doit etre explicite — et assumee par --allow-prod puisque c'est la prod.
+SEED_DB_URL=$(grep -E '^DATABASE_URL=' "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2-)
+SEED_DB_URL="${SEED_DB_URL%\"}"; SEED_DB_URL="${SEED_DB_URL#\"}"
+SEED_DB_URL="${SEED_DB_URL%\'}"; SEED_DB_URL="${SEED_DB_URL#\'}"
+if [ -z "$SEED_DB_URL" ]; then
+  echo "ERROR: DATABASE_URL introuvable dans $PROJECT_DIR/.env" >&2
+  exit 1
+fi
+DATABASE_URL="$SEED_DB_URL" pnpm --filter @exilium/db db:seed -- --allow-prod
 
 echo "==> Reloading PM2 processes..."
 pm2 reload ecosystem.config.cjs --update-env
