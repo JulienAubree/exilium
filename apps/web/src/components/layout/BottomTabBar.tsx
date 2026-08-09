@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router';
+import { Crown } from 'lucide-react';
 import {
   OverviewIcon,
   BuildingsIcon,
@@ -18,7 +19,7 @@ import { trpc } from '@/trpc';
 import { BottomSheet } from './BottomSheet';
 
 const TAB_GROUPS = {
-  empire: ['/empire', '/research'],
+  empire: ['/empire', '/politiques', '/research'],
   planete: ['/', '/resources', '/infrastructures', '/buildings', '/production'],
   galaxie: ['/galaxy', '/missions', '/market'],
   flotte: ['/fleet'],
@@ -30,6 +31,9 @@ type TabGroup = keyof typeof TAB_GROUPS;
 const SHEET_ITEMS = {
   empire: [
     { label: 'Colonies', path: '/empire', icon: EmpireIcon },
+    // Livre le 2026-06 avec la barre laterale desktop, mais oublie ici : l ecran
+    // etait donc inatteignable sur telephone. Detecte par D3.
+    { label: 'Politiques', path: '/politiques', icon: Crown },
     { label: 'Recherche', path: '/research', icon: ResearchIcon },
   ],
   planete: [
