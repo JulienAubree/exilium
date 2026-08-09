@@ -28,6 +28,7 @@ import { buildingTime, researchTime } from '@exilium/game-engine';
 import type { SimState } from './state.js';
 import type { SimEngine } from './engine.js';
 import type { BuildingDef, ResearchDef, ShipDef } from './config.js';
+import { RESEARCH_TIME_DIVISOR } from './config.js';
 import type { Action, Policy } from './policy.js';
 
 // Non-producers that unlock milestones — given a virtual production value
@@ -204,7 +205,7 @@ export class OptimalPolicy implements Policy {
 
       // Estimate research time (seconds), converted to hours.
       // We pass bonusMultiplier=1.0 (conservative; actual lab bonus makes it faster).
-      const researchSec = researchTime(def.costDef, targetLevel, 1.0, { timeDivisor: 1000 });
+      const researchSec = researchTime(def.costDef, targetLevel, 1.0, { timeDivisor: RESEARCH_TIME_DIVISOR });
       const researchH = researchSec / 3600;
 
       const investH = Math.max(waitH + researchH, 1e-6);

@@ -9,6 +9,7 @@ import {
 } from '@exilium/game-engine';
 import type { BonusDefinition } from '@exilium/game-engine';
 import type { BuildingDef, ProductionConfig, ResearchDef, ShipDef } from './config.js';
+import { SHIPYARD_TIME_DIVISOR, RESEARCH_TIME_DIVISOR } from './config.js';
 import type { SimState, Resources } from './state.js';
 
 // Default temperature for the simulated home planet (temperate ~50°C).
@@ -133,7 +134,7 @@ export class SimEngine {
 
     const labLevel = state.levels.get('researchLab') ?? 0;
     const bonusMultiplier = resolveBonus('research_time', null, { researchLab: labLevel }, this.bonuses);
-    const dur = researchTime(def.costDef, target, bonusMultiplier, { timeDivisor: 1000 });
+    const dur = researchTime(def.costDef, target, bonusMultiplier, { timeDivisor: RESEARCH_TIME_DIVISOR });
     state.research = { researchId, targetLevel: target, completesAt: state.timeSec + dur };
   }
 
@@ -175,7 +176,9 @@ export class SimEngine {
     state.resources.hydrogene -= cost.hydrogene;
 
     // bonusMultiplier=1 for MVP (ship_build_time bonus is a future refinement)
-    const dur = unitTime(def, 1);
+    // Sans ce diviseur explicite, unitTime retombait sur son defaut de 2500
+    // alors que le jeu tourne a 4500 : le simulateur construisait 1,8x trop vite.
+    const dur = unitTime(def, 1, SHIPYARD_TIME_DIVISOR);
     state.shipBuild = { shipId, completesAt: state.timeSec + dur };
   }
 

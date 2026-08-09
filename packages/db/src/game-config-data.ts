@@ -154,3 +154,180 @@ export const UI_LABEL_ADDITIONS = [
   { key: 'research.fork.intel_warfare.detection', label: 'Détection' },
   { key: 'research.fork.intel_warfare.stealth', label: 'Furtivité' },
 ];
+
+/**
+ * Source de verite des cles d univers. Exporte pour que packages/game-sim
+ * simule avec les MEMES valeurs que le jeu : il retombait sinon sur les defauts
+ * en dur du moteur, et construisait les vaisseaux 1,8x trop vite
+ * (timeDivisor 2500 au lieu de 4500) — donc sous-estimait les murs qu il mesure.
+ */
+export const UNIVERSE_CONFIG = [
+  // ── Existing keys (untouched) ──
+  { key: 'name', value: 'Universe 1' },
+  { key: 'speed', value: 1 },
+  { key: 'galaxies', value: 9 },
+  { key: 'systems', value: 499 },
+  { key: 'positions', value: 16 },
+  { key: 'debrisRatio', value: 0.3 },
+  { key: 'lootRatio', value: 0.5 },
+  { key: 'startingMinerai', value: 500 },
+  { key: 'startingSilicium', value: 300 },
+  { key: 'startingHydrogene', value: 100 },
+  { key: 'slag_rate', value: 0.5 },
+
+  // ── Economy & general rules ──
+  { key: 'cancel_refund_ratio', value: 0.7 },
+  { key: 'belt_positions', value: [8, 16] },
+  { key: 'homePlanetDiameter', value: 12000 },
+  { key: 'home_planet_position_min', value: 4 },
+  { key: 'home_planet_position_max', value: 12 },
+
+  // ── Combat ──
+  { key: 'combat_max_rounds', value: 6 },
+  { key: 'combat_debris_ratio', value: 0.35 },
+  { key: 'combat_defense_repair_rate', value: 0.5 },
+  { key: 'combat_pillage_ratio', value: 0.33 },
+  { key: 'protected_storage_base_ratio', value: 0.05 },
+  { key: 'combat_min_damage_per_hit', value: 1 },
+  { key: 'combat_research_bonus_per_level', value: 0.1 },
+
+  // ── PvE ──
+  { key: 'pve_max_concurrent_missions', value: 3 },
+  { key: 'pve_hydrogene_cap', value: 1500 },
+  { key: 'pve_dismiss_cooldown_hours', value: 24 },
+  { key: 'pve_mission_expiry_days', value: 7 },
+  { key: 'pve_search_radius', value: 5 },
+  { key: 'pve_tier_medium_unlock', value: 4 },
+  { key: 'pve_tier_hard_unlock', value: 6 },
+  { key: 'pve_deposit_variance_min', value: 0.6 },
+  { key: 'pve_deposit_variance_max', value: 1.6 },
+  { key: 'pve_loot_multiplier', value: 0.1 },
+
+  // ── FP (Facteur de Puissance) ──
+  { key: 'fp_shotcount_exponent', value: 1.5 },
+  { key: 'fp_divisor', value: 100 },
+  { key: 'pirate_fp_easy_min', value: 2 },
+  { key: 'pirate_fp_easy_max', value: 5 },
+  { key: 'pirate_fp_medium_min', value: 5 },
+  { key: 'pirate_fp_medium_max', value: 12 },
+  { key: 'pirate_fp_hard_min', value: 15 },
+  { key: 'pirate_fp_hard_max', value: 30 },
+  { key: 'pirate_fp_player_cap_ratio', value: 0.8 },
+
+  // ── Fleet ──
+  { key: 'fleet_distance_galaxy_factor', value: 20000 },
+  { key: 'fleet_distance_system_base', value: 2700 },
+  { key: 'fleet_distance_system_factor', value: 95 },
+  { key: 'fleet_distance_position_base', value: 1000 },
+  { key: 'fleet_distance_position_factor', value: 5 },
+  { key: 'fleet_same_position_distance', value: 5 },
+  { key: 'fleet_speed_factor', value: 35000 },
+
+  // ── Formulas (consumed by SP3, created here) ──
+  { key: 'pve_discovery_cooldown_base', value: 7 },
+  { key: 'mission_default_level', value: 3, label: 'Niveau de missions de base (cadence + scaling) ; bonus via le niveau d\'empire' },
+
+  // ── Niveau d'empire (remplace le Centre de Pouvoir Impérial) ──
+  { key: 'empire_xp_curve_base', value: 100, label: 'Base de la courbe d\'XP d\'empire (XP pour niveau L = base × (L-1) × L / 2)' },
+  { key: 'empire_level_max', value: 100, label: 'Niveau d\'empire maximum' },
+  { key: 'empire_capacity_levels_per_colony', value: 2, label: 'Niveaux d\'empire requis par +1 de capacité de gouvernance' },
+  { key: 'empire_mission_levels_per_bonus', value: 5, label: 'Niveaux d\'empire requis par +1 de niveau de missions' },
+  { key: 'empire_xp_per_building_level', value: 2, label: 'XP d\'empire par niveau de bâtiment construit' },
+  { key: 'empire_xp_per_research_level', value: 5, label: 'XP d\'empire par niveau de recherche terminé' },
+  { key: 'empire_xp_pve_victory', value: 15, label: 'XP d\'empire par victoire PvE' },
+  { key: 'empire_xp_pvp_victory', value: 40, label: 'XP d\'empire par victoire PvP (attaquant)' },
+  { key: 'empire_xp_colonization', value: 150, label: 'XP d\'empire par colonisation aboutie' },
+
+  // ── Spécialisation des mondes (vocations) ──
+  { key: 'vocation_unlock_level', value: 5, label: 'Niveau d\'empire requis pour spécialiser une colonie' },
+  { key: 'vocation_cooldown_hours', value: 168, label: 'Délai entre deux reconversions de vocation (heures)' },
+  { key: 'vocation_reconversion_minerai', value: 50000, label: 'Coût minerai d\'une reconversion de vocation' },
+  { key: 'vocation_reconversion_silicium', value: 25000, label: 'Coût silicium d\'une reconversion de vocation' },
+  { key: 'vocation_miniere_production_bonus', value: 0.20, label: 'Monde minier : bonus de production' },
+  { key: 'vocation_miniere_construction_malus', value: 0.15, label: 'Monde minier : malus de temps de construction' },
+  { key: 'vocation_industrielle_production_malus', value: 0.10, label: 'Monde-forge : malus de production' },
+  { key: 'vocation_industrielle_construction_bonus', value: 0.20, label: 'Monde-forge : bonus de temps de construction' },
+
+  // ── Gouverneurs (délégation) ──
+  { key: 'governor_unlock_level', value: 8, label: 'Niveau d\'empire requis pour nommer un gouverneur' },
+  { key: 'governor_tick_minutes', value: 5, label: 'Cadence du tick des gouverneurs (minutes)' },
+  { key: 'pve_deposit_size_base', value: 15000 },
+  { key: 'spy_visibility_thresholds', value: [1, 3, 5, 7, 9] },
+  { key: 'ranking_points_divisor', value: 1000 },
+  { key: 'shipyard_time_divisor', value: 4500 },
+  { key: 'research_time_divisor', value: 1000 },
+  { key: 'storage_base', value: 5000 },
+  { key: 'storage_coeff_a', value: 2.5 },
+  { key: 'storage_coeff_b', value: 20 },
+  { key: 'storage_coeff_c', value: 33 },
+  { key: 'satellite_home_planet_energy', value: 50 },
+  { key: 'satellite_base_divisor', value: 4 },
+  { key: 'satellite_base_offset', value: 20 },
+  { key: 'phase_multiplier', value: {"1":0.35,"2":0.45,"3":0.55,"4":0.65,"5":0.78,"6":0.90,"7":0.95} },
+
+  // ── Market ──
+  { key: 'market_commission_percent', value: 5, label: 'Commission du marché galactique (%)' },
+  { key: 'market_offer_duration_hours', value: 48, label: 'Durée de vie des offres du marché (heures)' },
+  { key: 'market_reservation_minutes', value: 60, label: 'Temps de réservation avant expiration (minutes)' },
+  { key: 'market_max_offers', value: 10, label: "Nombre maximum d'offres simultanées par joueur" },
+  { key: 'report_creation_base_cost', value: '200' },
+  { key: 'report_creation_biome_costs', value: '{"common":50,"uncommon":100,"rare":250,"epic":600,"legendary":1000}' },
+
+  // ── Exilium ──
+  { key: 'exilium_daily_quest_reward', value: 1 },
+  { key: 'exilium_drop_amount', value: 1 },
+  { key: 'exilium_drop_rate_pvp', value: 0.03 },
+  { key: 'exilium_drop_rate_pve', value: 0.04 },
+  { key: 'exilium_drop_rate_market', value: 0.02 },
+  { key: 'exilium_drop_rate_recycling', value: 0.02 },
+
+  // ── Flagship ──
+  { key: 'flagship_repair_duration_seconds', value: 7200 },
+  { key: 'flagship_instant_repair_exilium_cost', value: 2 },
+
+  // ── Colonization & Governance ──
+  { key: 'colonization_passive_rate', value: 0.11 },
+  { key: 'colonization_consumption_minerai', value: 200 },
+  { key: 'colonization_consumption_silicium', value: 100 },
+  { key: 'colonization_outpost_threshold_minerai', value: 500 },
+  { key: 'colonization_outpost_threshold_silicium', value: 250 },
+  { key: 'colonization_grace_period_hours', value: 1 },
+  { key: 'colonization_outpost_timeout_hours', value: 24 },
+  { key: 'colonization_raid_interval_min', value: 3600 },
+  { key: 'colonization_raid_interval_max', value: 5400 },
+  { key: 'colonization_raid_travel_min', value: 1800 },
+  { key: 'colonization_raid_travel_max', value: 3600 },
+  { key: 'colonization_raid_stationed_fp_ratio', value: 0.001 },
+  { key: 'colonization_raid_base_start_fp', value: 10 },
+  { key: 'colonization_raid_ipc_start_exponent', value: 1.4 },
+  { key: 'colonization_raid_base_cap_fp', value: 35 },
+  { key: 'colonization_raid_ipc_cap_exponent', value: 1.8 },
+  { key: 'colonization_raid_wave_growth', value: 2.0 },
+  { key: 'colonization_raid_stationed_max_bonus', value: 0.5 },
+  { key: 'colonization_raid_base_penalty', value: 0.08 },
+  { key: 'colonization_raid_no_garrison_pillage', value: 0.50 },
+  { key: 'colonization_raid_garrison_pillage', value: 0.33 },
+  { key: 'governance_penalty_harvest', value: [0.15, 0.35, 0.60] },
+  { key: 'governance_penalty_construction', value: [0.15, 0.35, 0.60] },
+  // Politiques d'empire (chantier Empire §5.2)
+  { key: 'empire_policy_levels_per_slot', value: 10 },
+  { key: 'policy_switch_cooldown_hours', value: 12 },
+  { key: 'colonization_difficulty_temperate', value: 1.0 },
+  { key: 'colonization_difficulty_arid', value: 0.95 },
+  { key: 'colonization_difficulty_glacial', value: 0.95 },
+  { key: 'colonization_difficulty_volcanic', value: 0.90 },
+  { key: 'colonization_difficulty_gaseous', value: 0.90 },
+  { key: 'colonization_distance_penalty_per_hop', value: 0.01 },
+  { key: 'colonization_distance_floor', value: 0.90 },
+  { key: 'colonization_rate_garrison_fp_threshold', value: 50 },
+  { key: 'colonization_rate_garrison_bonus', value: 0.05 },
+  { key: 'colonization_rate_convoy_bonus', value: 0.05 },
+  { key: 'colonization_rate_convoy_window_hours', value: 2 },
+  { key: 'colonization_rate_bonus_cap', value: 0.10 },
+
+  // ── Daily Quests ──
+  { key: 'daily_quest_count', value: 3 },
+  { key: 'daily_quest_miner_threshold', value: 5000 },
+  // ── Research respec (S1) ──
+  ...UNIVERSE_CONFIG_ADDITIONS,
+];

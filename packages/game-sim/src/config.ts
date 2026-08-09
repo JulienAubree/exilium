@@ -1,4 +1,4 @@
-import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS } from '@exilium/db';
+import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS, UNIVERSE_CONFIG } from '@exilium/db';
 import type { BuildingCostDef, ResearchCostDef, BonusDefinition } from '@exilium/game-engine';
 
 export interface BuildingDef {
@@ -15,6 +15,29 @@ export interface ProductionConfig {
   tempCoeffA: number | null;
   tempCoeffB: number | null;
 }
+
+/**
+ * Valeurs d univers du seed, indexees par cle.
+ *
+ * Avant cet ajout, le simulateur ne lisait AUCUNE de ces cles : il retombait sur
+ * les defauts en dur du moteur. Le plus penalisant etait `timeDivisor = 2500`
+ * pour la construction de vaisseaux, alors que le jeu tourne a 4500 — le
+ * simulateur construisait donc 1,8x trop vite et **sous-estimait les murs de
+ * progression qu il a justement pour mission de mesurer**.
+ */
+const UNIVERS = new Map(UNIVERSE_CONFIG.map((e) => [e.key, e.value]));
+
+/** Lit une cle d univers numerique, avec repli explicite si absente du seed. */
+export function universeNumber(cle: string, repli: number): number {
+  const v = UNIVERS.get(cle);
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : repli;
+}
+
+/** Diviseur de temps de construction des vaisseaux et defenses. */
+export const SHIPYARD_TIME_DIVISOR = universeNumber('shipyard_time_divisor', 4500);
+/** Diviseur de temps de recherche. */
+export const RESEARCH_TIME_DIVISOR = universeNumber('research_time_divisor', 1000);
 
 export function loadBuildings(): Map<string, BuildingDef> {
   const m = new Map<string, BuildingDef>();
