@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { sql } from 'drizzle-orm';
+import type { PgTable } from 'drizzle-orm/pg-core';
 import {
   entityCategories,
   buildingDefinitions,
@@ -78,7 +79,69 @@ if (PROD_DB_NAMES.includes(CIBLE_DB) && !ALLOW_PROD) {
   process.exit(1);
 }
 
-console.log(`[seed] cible : ${CIBLE_HOTE}/${CIBLE_DB}${ALLOW_PROD ? ' (--allow-prod)' : ''}`);
+// ── Mode d'écriture ──
+//
+// Par défaut, le seed INITIALISE : il crée ce qui manque et ne touche jamais à
+// ce qui existe. C'est le comportement qu'exige un back-office : l'admin règle
+// des valeurs en jeu, et un déploiement ne doit pas les balayer.
+//
+// Auparavant, chaque ligne était un upsert (`onConflictDoUpdate`) et
+// `deploy.sh` lance le seed après chaque déploiement : tout réglage fait
+// depuis l'admin était donc écrasé par les valeurs du dépôt, silencieusement.
+//
+// `--force-overwrite` rétablit l'ancien comportement, pour les cas où l'on
+// veut délibérément republier les valeurs du dépôt.
+const FORCE_OVERWRITE = process.argv.includes('--force-overwrite');
+
+console.log(
+  `[seed] cible : ${CIBLE_HOTE}/${CIBLE_DB}${ALLOW_PROD ? ' (--allow-prod)' : ''}` +
+    ` — mode ${FORCE_OVERWRITE ? 'ECRASEMENT (--force-overwrite)' : 'init (n ecrase rien)'}`,
+);
+
+/**
+ * Insère une ligne de configuration selon le mode courant.
+ *
+ * En mode init : `DO NOTHING` — la ligne existante est préservée telle quelle.
+ * En mode écrasement : `DO UPDATE` — les valeurs du dépôt reprennent la main.
+ */
+function seedInsert<
+  Q extends { onConflictDoUpdate(cfg: never): unknown; onConflictDoNothing(): unknown },
+>(requete: Q, cfg: unknown): Promise<unknown> {
+  return (
+    FORCE_OVERWRITE
+      ? requete.onConflictDoUpdate(cfg as never)
+      : requete.onConflictDoNothing()
+  ) as Promise<unknown>;
+}
+
+/**
+ * Prépare la reconstruction d'une table de prérequis, et dit si elle doit
+ * avoir lieu.
+ *
+ * Ces tables n'ont pas de clé métier stable : le seed les reconstruit en
+ * entier (vider puis réinsérer). En mode écrasement, on garde ce comportement.
+ * En mode init, vider serait destructeur — on ne reconstruit donc que si la
+ * table est VIDE, c'est-à-dire si la base n'a jamais été initialisée.
+ *
+ * Conséquence assumée : sur une base déjà peuplée, un nouveau prérequis ajouté
+ * au dépôt n'arrive pas tout seul. Il faut `--force-overwrite`, ou une
+ * migration ciblée — ce qui est de toute façon la bonne façon de faire évoluer
+ * une donnée que l'admin peut avoir modifiée.
+ */
+async function preparerPrerequis(table: PgTable): Promise<boolean> {
+  const [{ n }] = (await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(table)) as unknown as [{ n: number }];
+
+  if (FORCE_OVERWRITE) {
+    await db.delete(table);
+    return true;
+  }
+  if (n === 0) return true;
+
+  console.log(`  · prérequis déjà en base (${n}) — conservés (mode init)`);
+  return false;
+}
 
 const client = postgres(DATABASE_URL);
 const db = drizzle(client);
@@ -521,21 +584,19 @@ async function seed() {
 
   // 0. Entity categories (upsert)
   for (const c of CATEGORIES) {
-    await db.insert(entityCategories).values(c)
-      .onConflictDoUpdate({ target: entityCategories.id, set: { ...c } });
+    await seedInsert(db.insert(entityCategories).values(c), { target: entityCategories.id, set: { ...c } });
   }
   console.log(`  ✓ ${CATEGORIES.length} entity categories`);
 
   // 1. Building definitions (upsert)
   for (const b of BUILDINGS) {
     const { prerequisites: _prereqs, ...row } = b;
-    await db.insert(buildingDefinitions).values(row)
-      .onConflictDoUpdate({ target: buildingDefinitions.id, set: { ...row } });
+    await seedInsert(db.insert(buildingDefinitions).values(row), { target: buildingDefinitions.id, set: { ...row } });
   }
   console.log(`  ✓ ${BUILDINGS.length} building definitions`);
 
   // 2. Building prerequisites (delete + re-insert for simplicity)
-  await db.delete(buildingPrerequisites);
+  const buildingPrerequisitesARebatir = await preparerPrerequis(buildingPrerequisites);
   const bPrereqs = BUILDINGS.flatMap(b =>
     b.prerequisites.map(p => ({
       buildingId: b.id,
@@ -543,7 +604,7 @@ async function seed() {
       requiredLevel: p.level,
     }))
   );
-  if (bPrereqs.length > 0) {
+  if (buildingPrerequisitesARebatir && bPrereqs.length > 0) {
     await db.insert(buildingPrerequisites).values(bPrereqs);
   }
   console.log(`  ✓ ${bPrereqs.length} building prerequisites`);
@@ -551,21 +612,19 @@ async function seed() {
   // 2b. Bonus definitions (upsert)
   for (const bd of BONUS_DEFINITIONS) {
     const { id: _id, ...bdData } = bd;
-    await db.insert(bonusDefinitions).values(bd)
-      .onConflictDoUpdate({ target: bonusDefinitions.id, set: bdData });
+    await seedInsert(db.insert(bonusDefinitions).values(bd), { target: bonusDefinitions.id, set: bdData });
   }
   console.log(`  ✓ ${BONUS_DEFINITIONS.length} bonus definitions`);
 
   // 3. Research definitions
   for (const r of RESEARCH) {
     const { prerequisites: _prereqs, ...row } = r;
-    await db.insert(researchDefinitions).values(row)
-      .onConflictDoUpdate({ target: researchDefinitions.id, set: { ...row } });
+    await seedInsert(db.insert(researchDefinitions).values(row), { target: researchDefinitions.id, set: { ...row } });
   }
   console.log(`  ✓ ${RESEARCH.length} research definitions`);
 
   // 4. Research prerequisites
-  await db.delete(researchPrerequisites);
+  const researchPrerequisitesARebatir = await preparerPrerequis(researchPrerequisites);
   const rPrereqs: { researchId: string; requiredBuildingId: string | null; requiredResearchId: string | null; requiredLevel: number }[] = [];
   for (const r of RESEARCH) {
     for (const b of r.prerequisites.buildings) {
@@ -575,7 +634,7 @@ async function seed() {
       rPrereqs.push({ researchId: r.id, requiredBuildingId: null, requiredResearchId: res.researchId, requiredLevel: res.level });
     }
   }
-  if (rPrereqs.length > 0) {
+  if (researchPrerequisitesARebatir && rPrereqs.length > 0) {
     await db.insert(researchPrerequisites).values(rPrereqs);
   }
   console.log(`  ✓ ${rPrereqs.length} research prerequisites`);
@@ -591,13 +650,12 @@ async function seed() {
   for (const s of SHIPS) {
     const { prerequisites: _prereqs, ...row } = s;
     const values = { isStationary: false, ...row };
-    await db.insert(shipDefinitions).values(values)
-      .onConflictDoUpdate({ target: shipDefinitions.id, set: values });
+    await seedInsert(db.insert(shipDefinitions).values(values), { target: shipDefinitions.id, set: values });
   }
   console.log(`  ✓ ${SHIPS.length} ship definitions`);
 
   // 6. Ship prerequisites
-  await db.delete(shipPrerequisites);
+  const shipPrerequisitesARebatir = await preparerPrerequis(shipPrerequisites);
   const sPrereqs: { shipId: string; requiredBuildingId: string | null; requiredResearchId: string | null; requiredLevel: number }[] = [];
   for (const s of SHIPS) {
     for (const b of s.prerequisites.buildings) {
@@ -607,7 +665,7 @@ async function seed() {
       sPrereqs.push({ shipId: s.id, requiredBuildingId: null, requiredResearchId: r.researchId, requiredLevel: r.level });
     }
   }
-  if (sPrereqs.length > 0) {
+  if (shipPrerequisitesARebatir && sPrereqs.length > 0) {
     await db.insert(shipPrerequisites).values(sPrereqs);
   }
   console.log(`  ✓ ${sPrereqs.length} ship prerequisites`);
@@ -615,13 +673,12 @@ async function seed() {
   // 7. Defense definitions
   for (const d of DEFENSES) {
     const { prerequisites: _prereqs, ...row } = d;
-    await db.insert(defenseDefinitions).values(row)
-      .onConflictDoUpdate({ target: defenseDefinitions.id, set: { ...row } });
+    await seedInsert(db.insert(defenseDefinitions).values(row), { target: defenseDefinitions.id, set: { ...row } });
   }
   console.log(`  ✓ ${DEFENSES.length} defense definitions`);
 
   // 8. Defense prerequisites
-  await db.delete(defensePrerequisites);
+  const defensePrerequisitesARebatir = await preparerPrerequis(defensePrerequisites);
   const dPrereqs: { defenseId: string; requiredBuildingId: string | null; requiredResearchId: string | null; requiredLevel: number }[] = [];
   for (const d of DEFENSES) {
     for (const b of d.prerequisites.buildings) {
@@ -631,66 +688,59 @@ async function seed() {
       dPrereqs.push({ defenseId: d.id, requiredBuildingId: null, requiredResearchId: r.researchId, requiredLevel: r.level });
     }
   }
-  if (dPrereqs.length > 0) {
+  if (defensePrerequisitesARebatir && dPrereqs.length > 0) {
     await db.insert(defensePrerequisites).values(dPrereqs);
   }
   console.log(`  ✓ ${dPrereqs.length} defense prerequisites`);
 
   // 9. Production config
   for (const p of PRODUCTION_CONFIG) {
-    await db.insert(productionConfig).values(p)
-      .onConflictDoUpdate({ target: productionConfig.id, set: { ...p } });
+    await seedInsert(db.insert(productionConfig).values(p), { target: productionConfig.id, set: { ...p } });
   }
   console.log(`  ✓ ${PRODUCTION_CONFIG.length} production configs`);
 
   // 11. Planet types
   for (const pt of PLANET_TYPES) {
-    await db.insert(planetTypes).values(pt)
-      .onConflictDoUpdate({ target: planetTypes.id, set: { ...pt } });
+    await seedInsert(db.insert(planetTypes).values(pt), { target: planetTypes.id, set: { ...pt } });
   }
   console.log(`  ✓ ${PLANET_TYPES.length} planet types`);
 
   // Biome definitions
   for (const biome of BIOME_DEFINITIONS) {
-    await db.insert(biomeDefinitions).values(biome)
-      .onConflictDoUpdate({ target: biomeDefinitions.id, set: { ...biome } });
+    await seedInsert(db.insert(biomeDefinitions).values(biome), { target: biomeDefinitions.id, set: { ...biome } });
   }
   console.log(`  ✓ ${BIOME_DEFINITIONS.length} biome definitions`);
 
   // 12. Universe config
   for (const u of UNIVERSE_CONFIG) {
-    await db.insert(universeConfig).values(u)
-      .onConflictDoUpdate({ target: universeConfig.key, set: { value: u.value } });
+    await seedInsert(db.insert(universeConfig).values(u), { target: universeConfig.key, set: { value: u.value } });
   }
   console.log(`  ✓ ${UNIVERSE_CONFIG.length} universe config entries`);
 
   // 13. Pirate templates
   for (const pt of PIRATE_TEMPLATES) {
     const { id: _id, ...ptData } = pt;
-    await db.insert(pirateTemplates).values(pt)
-      .onConflictDoUpdate({ target: pirateTemplates.id, set: ptData });
+    await seedInsert(db.insert(pirateTemplates).values(pt), { target: pirateTemplates.id, set: ptData });
   }
   console.log(`  ✓ ${PIRATE_TEMPLATES.length} pirate templates`);
 
   // 14b. Mission definitions
   for (const m of MISSION_DEFINITIONS) {
     const { id: _id, ...mData } = m;
-    await db.insert(missionDefinitions).values(m)
-      .onConflictDoUpdate({ target: missionDefinitions.id, set: mData });
+    await seedInsert(db.insert(missionDefinitions).values(m), { target: missionDefinitions.id, set: mData });
   }
   console.log(`  ✓ ${MISSION_DEFINITIONS.length} mission definitions`);
 
   // 14c. UI labels
   for (const l of UI_LABELS) {
     const { key: _key, ...lData } = l;
-    await db.insert(uiLabels).values(l)
-      .onConflictDoUpdate({ target: uiLabels.key, set: lData });
+    await seedInsert(db.insert(uiLabels).values(l), { target: uiLabels.key, set: lData });
   }
   console.log(`  ✓ ${UI_LABELS.length} UI labels`);
 
   // 14. Tutorial chapters
   for (const chapter of TUTORIAL_CHAPTERS) {
-    await db.insert(tutorialChapters).values(chapter).onConflictDoUpdate({
+    await seedInsert(db.insert(tutorialChapters).values(chapter), {
       target: tutorialChapters.id,
       set: {
         title: chapter.title,
@@ -709,8 +759,7 @@ async function seed() {
   // 14b. Tutorial quest definitions
   for (const tq of TUTORIAL_QUESTS) {
     const { id: _id, ...tqData } = tq;
-    await db.insert(tutorialQuestDefinitions).values(tq)
-      .onConflictDoUpdate({ target: tutorialQuestDefinitions.id, set: tqData });
+    await seedInsert(db.insert(tutorialQuestDefinitions).values(tq), { target: tutorialQuestDefinitions.id, set: tqData });
   }
   console.log(`  ✓ ${TUTORIAL_QUESTS.length} tutorial quest definitions`);
 
@@ -727,8 +776,7 @@ async function seed() {
   console.log(`  ✓ Migrated home planets to homeworld type`);
 
   // 16. Hull definitions (stored as JSON in universe_config)
-  await db.insert(universeConfig).values({ key: 'hulls', value: HULLS })
-    .onConflictDoUpdate({ target: universeConfig.key, set: { value: HULLS } });
+  await seedInsert(db.insert(universeConfig).values({ key: 'hulls', value: HULLS }), { target: universeConfig.key, set: { value: HULLS } });
   console.log(`  ✓ ${HULLS.length} hull definitions`);
 
   // 17. Migrate existing flagships to industrial hull (idempotent)

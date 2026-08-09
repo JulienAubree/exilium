@@ -56,6 +56,9 @@ if [ -z "$SEED_DB_URL" ]; then
   echo "ERROR: DATABASE_URL introuvable dans $PROJECT_DIR/.env" >&2
   exit 1
 fi
+# Mode init : le seed cree ce qui manque et ne touche pas a ce qui existe,
+# pour que les reglages faits depuis le back-office survivent au deploiement.
+# Pour republier deliberement les valeurs du depot : ajouter --force-overwrite.
 DATABASE_URL="$SEED_DB_URL" pnpm --filter @exilium/db db:seed -- --allow-prod
 
 echo "==> Reloading PM2 processes..."
