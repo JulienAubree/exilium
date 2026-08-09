@@ -77,6 +77,16 @@ sinon coder tel quel)** :
 | D18 | Agrégation des bonus spéciaux | Via `computeTalentContext` étendu — les ~30 consommateurs marchent sans modification et le test D2 reconnaît déjà ce producteur |
 | D19 | Diffusion du fil de l'univers | Polling 30-60 s en v1 (le rythme du jeu ne justifie pas un canal SSE broadcast) |
 | D20 | Faits d'armes | Catalogue typé (table de définitions, payloads Zod façon `alliance_logs`) — pas un flux libre |
+| D21 | **Effectif de départ** | **20 joueurs** (décision de Julien, 2026-08-09, explicitement provisoire — « puis on verra ») |
+
+### Dimensionnement dérivé des 20 joueurs
+
+Le chiffre n'est pas une prévision, c'est un paramètre : deux clés de config, changeables jusqu'au moment du reset.
+
+- **1 galaxie.** Un saut de galaxie coûte 20 000 de distance contre ~8 300 pour traverser 60 systèmes : à plusieurs galaxies, les joueurs seraient injoignables entre eux. La carte tient donc dans une seule.
+- **~60 systèmes**, en topologie `bounded` : les exilés aux deux bords, les Premiers au centre — la fiction devient une lecture de la carte.
+- **~540 emplacements habitables** (60 systèmes × 9 positions hors ceintures), soit 27 par joueur. Large sans être vide : le défaut mesuré de la carte actuelle, ce sont 91 planètes perdues dans 9 × 499 systèmes.
+- ⚠️ À changer **en base ET dans `game-config-data.ts`** (cf. le script de reset).
 
 ---
 
@@ -346,7 +356,6 @@ Lot 0 (fondations) ──┬── Lot 1 (carte)    ──┐
 ## 10. Ce qui reste à trancher avec Julien (au bon moment, pas avant)
 
 - Veto éventuel sur les défauts D1-D20 (section 1).
-- Dimensionnement de la carte (différé volontairement — paramètre).
 - Réglage du cycle : durée de fenêtre, forme du bonus, courbe de retour (clés config, en jouant).
 - Le critère d'arrêt d'équilibrage proposé en 4.9 (à valider tel quel ou amender).
 - Combien de vaisseaux spéciaux au lancement, lesquels, leurs noms d'as (créatif — pitchs à
