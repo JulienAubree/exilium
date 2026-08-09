@@ -31,11 +31,14 @@ HASH="$(cd /opt/exilium/apps/api && P="$PASS" node -e "import('argon2').then(a=>
 # SQL via stdin (et non -c) : c'est là que psql interpole les variables :'var'.
 sudo -u postgres psql -d "$DB" -v ON_ERROR_STOP=1 \
   -v email="$EMAIL" -v username="$USERNAME" -v hash="$HASH" <<'SQL'
-INSERT INTO users (email, username, password_hash, is_admin, email_verified_at)
+-- is_npc plutot que is_admin : le robot avait les pleins droits
+-- d'administration uniquement parce qu'il n'existait aucun moyen de le
+-- marquer comme non-joueur. Le drapeau existe depuis la migration 0114.
+INSERT INTO users (email, username, password_hash, is_npc, email_verified_at)
 VALUES (:'email', :'username', :'hash', true, now())
 ON CONFLICT (email) DO UPDATE
-  SET password_hash = EXCLUDED.password_hash, is_admin = true, email_verified_at = now()
-RETURNING id, username, is_admin;
+  SET password_hash = EXCLUDED.password_hash, is_npc = true, is_admin = false, email_verified_at = now()
+RETURNING id, username, is_npc;
 SQL
 
 echo "[ensure-debug-bot] OK sur $DB : $USERNAME ($EMAIL) — admin, sans planète."

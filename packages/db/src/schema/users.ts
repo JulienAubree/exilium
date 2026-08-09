@@ -8,6 +8,19 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 64 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   isAdmin: boolean('is_admin').notNull().default(false),
+  /**
+   * Compte non-joueur : capitaine des Premiers, robot de debug.
+   *
+   * Les systèmes tenus par les Premiers sont de vrais empires — planètes,
+   * flottes, défenses — et `planets.userId` est NOT NULL : un capitaine DOIT
+   * donc être une ligne `users` pour que le code de flotte, de combat et
+   * d'espionnage fonctionne sans chemin parallèle. Ce drapeau est le prix de
+   * ce choix : sans lui, un pirate apparaîtrait dans les classements, le fil
+   * de l'univers, le compteur de joueurs et le back-office.
+   *
+   * ⚠️ Toute requête qui énumère des JOUEURS doit filtrer `NOT isNpc`.
+   */
+  isNpc: boolean('is_npc').notNull().default(false),
   bannedAt: timestamp('banned_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   bio: text('bio'),

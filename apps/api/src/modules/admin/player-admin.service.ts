@@ -48,9 +48,15 @@ export function createPlayerAdminService(
 
   return {
     async listPlayers(offset: number, limit: number, search?: string) {
-      const conditions = search
+      // Le back-office liste des JOUEURS. Les comptes non-joueurs (capitaines
+      // des Premiers, robot de debug) sont exclus, sinon ils faussent le
+      // compteur et noient les vrais comptes dans la pagination.
+      const recherche = search
         ? or(like(users.username, `%${search}%`), like(users.email, `%${search}%`))
         : undefined;
+      const conditions = recherche
+        ? and(eq(users.isNpc, false), recherche)
+        : eq(users.isNpc, false);
 
       const [playerRows, [countResult]] = await Promise.all([
         db

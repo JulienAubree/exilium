@@ -20,7 +20,10 @@ export function createRankingService(db: Database, gameConfigService: GameConfig
       // Load every row we need in 5 queries instead of N×M. We group by
       // owner/planet in memory, then score each user from the pre-built maps.
       const [allUsers, allPlanets, allBuildings, researchByUser, allShips, allDefenses] = await Promise.all([
-        db.select({ id: users.id }).from(users),
+        // `NOT is_npc` : le classement note les JOUEURS. Sans ce filtre, les
+        // capitaines des Premiers — qui possedent planetes, flottes et
+        // defenses — trusteraient le haut du tableau des amis de Julien.
+        db.select({ id: users.id }).from(users).where(eq(users.isNpc, false)),
         db.select({ id: planets.id, userId: planets.userId }).from(planets),
         db.select({ planetId: planetBuildings.planetId, buildingId: planetBuildings.buildingId, level: planetBuildings.level }).from(planetBuildings),
         getAllUserResearchLevels(db),

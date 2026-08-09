@@ -18,6 +18,9 @@ export function createUserService(db: Database, assetsDir: string) {
         .where(and(
           ilike(users.username, `%${escaped}%`),
           ne(users.id, currentUserId),
+          // Les capitaines des Premiers sont des lignes `users` : sans ce
+          // filtre, la recherche proposerait d'ajouter un pirate en ami.
+          eq(users.isNpc, false),
         ))
         .limit(10);
     },
