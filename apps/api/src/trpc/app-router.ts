@@ -134,7 +134,7 @@ export function buildAppRouter(db: Database, redis: Redis) {
   const pushService = createPushService(db);
   const messageService = createMessageService(db, redis, pushService);
   const rankingService = createRankingService(db, gameConfigService);
-  const asteroidBeltService = createAsteroidBeltService(db);
+  const asteroidBeltService = createAsteroidBeltService(db, gameConfigService);
   const pirateService = createPirateService(db, gameConfigService);
   const pveService = createPveService(
     db,

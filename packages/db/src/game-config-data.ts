@@ -189,6 +189,20 @@ export const UNIVERSE_CONFIG = [
   // ── Economy & general rules ──
   { key: 'cancel_refund_ratio', value: 0.7 },
   { key: 'belt_positions', value: [8, 16] },
+  // Ce que chaque position de ceinture produit. Les valeurs ci-dessous sont
+  // celles qui etaient codees en dur dans asteroid-belt.service, ou la
+  // position etait meme typee litteralement `8 | 16`. Les sortir ici permet de
+  // deplacer les ceintures, d'en ajouter, et surtout d'en poser de riches dans
+  // les systemes tenus par les Premiers. Une position sans profil retombe sur
+  // une ceinture equilibree plutot que de planter.
+  { key: 'belt_profiles', value: {
+    '8':  { presence: { minerai: 0.95, silicium: 0.90, hydrogene: 0.25 },
+            weights:  { minerai: 0.45, silicium: 0.45, hydrogene: 0.10 },
+            quantity: { min: 20000, max: 40000 } },
+    '16': { presence: { minerai: 0.60, silicium: 0.65, hydrogene: 0.90 },
+            weights:  { minerai: 0.25, silicium: 0.25, hydrogene: 0.50 },
+            quantity: { min: 40000, max: 80000 } },
+  } },
   { key: 'homePlanetDiameter', value: 12000 },
   { key: 'home_planet_position_min', value: 4 },
   { key: 'home_planet_position_max', value: 12 },

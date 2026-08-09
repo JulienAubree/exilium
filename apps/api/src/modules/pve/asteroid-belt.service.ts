@@ -4,31 +4,53 @@ import type { Database } from '@exilium/db';
 
 const DEPOSITS_PER_BELT = { min: 3, max: 5 };
 
-// Probability that each resource is present in a deposit
-const PRESENCE_PROBABILITY = {
-  8:  { minerai: 0.95, silicium: 0.90, hydrogene: 0.25 },
-  16: { minerai: 0.60, silicium: 0.65, hydrogene: 0.90 },
-} as const;
-
-// Distribution weights (normalized to present resources)
-const DISTRIBUTION_WEIGHTS = {
-  8:  { minerai: 0.45, silicium: 0.45, hydrogene: 0.10 },
-  16: { minerai: 0.25, silicium: 0.25, hydrogene: 0.50 },
-} as const;
-
-const QUANTITY_RANGE = {
-  8:  { min: 20000, max: 40000 },
-  16: { min: 40000, max: 80000 },
-} as const;
-
 type ResourceKey = 'minerai' | 'silicium' | 'hydrogene';
 const ALL_RESOURCES: ResourceKey[] = ['minerai', 'silicium', 'hydrogene'];
 
-function rollPresentResources(position: 8 | 16): ResourceKey[] {
-  const probs = PRESENCE_PROBABILITY[position];
+/** Ce qu'une position de ceinture produit. */
+export interface BeltProfile {
+  /** Probabilité de présence de chaque ressource dans un gisement. */
+  presence: Record<ResourceKey, number>;
+  /** Poids de répartition, normalisés sur les ressources présentes. */
+  weights: Record<ResourceKey, number>;
+  /** Fourchette de quantité totale d'un gisement. */
+  quantity: { min: number; max: number };
+}
+
+/**
+ * Profils par défaut — les valeurs historiques des positions 8 et 16.
+ *
+ * ⚠️ Elles étaient codées en dur, et la position typée littéralement `8 | 16` :
+ * déplacer ou ajouter une ceinture demandait de modifier ce fichier, pas la
+ * config. Or la carte neuve a besoin de ceintures ailleurs — notamment des
+ * gisements riches dans les systèmes tenus par les Premiers. Les profils
+ * viennent donc désormais de `universe_config.belt_profiles`, et ceux-ci ne
+ * servent plus que de repli.
+ */
+const PROFILS_PAR_DEFAUT: Record<string, BeltProfile> = {
+  8: {
+    presence: { minerai: 0.95, silicium: 0.90, hydrogene: 0.25 },
+    weights: { minerai: 0.45, silicium: 0.45, hydrogene: 0.10 },
+    quantity: { min: 20000, max: 40000 },
+  },
+  16: {
+    presence: { minerai: 0.60, silicium: 0.65, hydrogene: 0.90 },
+    weights: { minerai: 0.25, silicium: 0.25, hydrogene: 0.50 },
+    quantity: { min: 40000, max: 80000 },
+  },
+};
+
+/** Repli d'ultime recours : une ceinture équilibrée, jamais vide. */
+const PROFIL_NEUTRE: BeltProfile = {
+  presence: { minerai: 0.8, silicium: 0.8, hydrogene: 0.5 },
+  weights: { minerai: 0.4, silicium: 0.4, hydrogene: 0.2 },
+  quantity: { min: 20000, max: 40000 },
+};
+
+function rollPresentResources(profil: BeltProfile): ResourceKey[] {
   let present: ResourceKey[];
   do {
-    present = ALL_RESOURCES.filter(r => Math.random() < probs[r]);
+    present = ALL_RESOURCES.filter(r => Math.random() < profil.presence[r]);
   } while (present.length < 2);
   return present;
 }
@@ -36,19 +58,18 @@ function rollPresentResources(position: 8 | 16): ResourceKey[] {
 function distributeQuantity(
   totalQty: number,
   present: ResourceKey[],
-  position: 8 | 16,
+  profil: BeltProfile,
 ): Record<ResourceKey, number> {
-  const weights = DISTRIBUTION_WEIGHTS[position];
-  const totalWeight = present.reduce((sum, r) => sum + weights[r], 0);
+  const totalWeight = present.reduce((sum, r) => sum + profil.weights[r], 0);
   const result: Record<ResourceKey, number> = { minerai: 0, silicium: 0, hydrogene: 0 };
   for (const r of present) {
-    result[r] = Math.floor(totalQty * weights[r] / totalWeight);
+    result[r] = Math.floor(totalQty * profil.weights[r] / totalWeight);
   }
   return result;
 }
 
-function randomQuantity(position: 8 | 16, centerLevel: number): number {
-  const { min, max } = QUANTITY_RANGE[position];
+function randomQuantity(profil: BeltProfile, centerLevel: number): number {
+  const { min, max } = profil.quantity;
   const levelMultiplier = 1 + 0.15 * (centerLevel - 1);
   const base = min + Math.random() * (max - min);
   return Math.floor(base * levelMultiplier);
@@ -58,9 +79,24 @@ function randomRegenDelay(): number {
   return (4 + Math.random() * 4) * 60 * 60 * 1000;
 }
 
-export function createAsteroidBeltService(db: Database) {
+interface GameConfigLike {
+  getFullConfig(): Promise<{ universe: Record<string, unknown> }>;
+}
+
+export function createAsteroidBeltService(db: Database, gameConfigService?: GameConfigLike) {
+  /** Profil d'une position : config d'abord, valeurs historiques ensuite. */
+  async function profilDe(position: number): Promise<BeltProfile> {
+    if (gameConfigService) {
+      const config = await gameConfigService.getFullConfig();
+      const profils = config.universe.belt_profiles as Record<string, BeltProfile> | undefined;
+      const p = profils?.[String(position)];
+      if (p?.presence && p?.weights && p?.quantity) return p;
+    }
+    return PROFILS_PAR_DEFAUT[String(position)] ?? PROFIL_NEUTRE;
+  }
+
   return {
-    async getOrCreateBelt(galaxy: number, system: number, position: 8 | 16) {
+    async getOrCreateBelt(galaxy: number, system: number, position: number) {
       const existing = await db.select().from(asteroidBelts)
         .where(and(
           eq(asteroidBelts.galaxy, galaxy),
@@ -90,13 +126,14 @@ export function createAsteroidBeltService(db: Database) {
       return belt;
     },
 
-    async generateDeposits(beltId: string, position: 8 | 16, centerLevel: number) {
+    async generateDeposits(beltId: string, position: number, centerLevel: number) {
+      const profil = await profilDe(position);
       const count = DEPOSITS_PER_BELT.min + Math.floor(Math.random() * (DEPOSITS_PER_BELT.max - DEPOSITS_PER_BELT.min + 1));
       const values = [];
       for (let i = 0; i < count; i++) {
-        const totalQty = randomQuantity(position, centerLevel);
-        const present = rollPresentResources(position);
-        const dist = distributeQuantity(totalQty, present, position);
+        const totalQty = randomQuantity(profil, centerLevel);
+        const present = rollPresentResources(profil);
+        const dist = distributeQuantity(totalQty, present, profil);
         values.push({
           beltId,
           mineraiTotal: String(dist.minerai),
@@ -190,10 +227,10 @@ export function createAsteroidBeltService(db: Database) {
         ));
 
       for (const { deposit, belt } of depleted) {
-        const pos = belt.position as 8 | 16;
-        const totalQty = randomQuantity(pos, 1);
-        const present = rollPresentResources(pos);
-        const dist = distributeQuantity(totalQty, present, pos);
+        const profil = await profilDe(belt.position);
+        const totalQty = randomQuantity(profil, 1);
+        const present = rollPresentResources(profil);
+        const dist = distributeQuantity(totalQty, present, profil);
         await db.update(asteroidDeposits)
           .set({
             mineraiTotal: String(dist.minerai),
