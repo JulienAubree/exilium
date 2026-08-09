@@ -1,37 +1,31 @@
 import { eq, and } from 'drizzle-orm';
 import { byUser } from '../../lib/db-helpers.js';
 import { TRPCError } from '@trpc/server';
-import { planets, planetBuildings, planetShips, planetBiomes, getUserResearchLevels } from '@exilium/db';
+import { planets, planetBuildings, planetShips } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
   calculateResources,
   calculateProductionRates,
-  resolveBonus,
-  aggregateBiomeBonuses,
   type ResourceCost,
   type PlanetTypeBonus,
-  type BiomeEffect,
 } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import { buildProductionConfig } from '../../lib/production-config.js';
-import { getGovernancePenalty } from '../../lib/governance.js';
-import { getPolicyEffects } from '../../lib/empire-policy.js';
-import { vocationEffects } from '@exilium/game-engine';
+import {
+  assembleBonusContext,
+  createPerPlanetBonusLoader,
+  type BonusBreakdownEntry,
+} from './bonus-context.js';
 import type { GameConfig, GameConfigService } from '../admin/game-config.service.js';
 import type { createDailyQuestService } from '../daily-quest/daily-quest.service.js';
 
 /**
- * Une ligne du détail des bonus appliqués à une planète — exposée par
- * getProductionRates pour que le front AFFICHE ce que le serveur APPLIQUE,
- * sans jamais re-calculer de son côté (source de vérité unique).
- * Le bonus de type de planète (multiplicatif côté moteur) y figure converti
- * en delta pour l'affichage.
+ * Le détail des bonus appliqués à une planète — pour que le front AFFICHE ce
+ * que le serveur APPLIQUE, sans jamais re-calculer de son côté.
+ * Défini dans `bonus-context.ts` (la source de vérité de l'assemblage) et
+ * ré-exporté ici pour les appelants historiques.
  */
-export interface BonusBreakdownEntry {
-  source: 'talents' | 'biomes' | 'recherche' | 'gouvernance' | 'vocation' | 'type_planete' | 'politique';
-  stat: string;
-  modifier: number;
-}
+export type { BonusBreakdownEntry };
 
 function lookupPlanetTypeBonus(config: GameConfig, planetClassId: string | null): PlanetTypeBonus | undefined {
   if (!planetClassId) return undefined;
@@ -63,17 +57,6 @@ async function getSolarSatelliteCount(db: Database, planetId: string): Promise<n
     .where(eq(planetShips.planetId, planetId))
     .limit(1);
   return row?.solarSatellite ?? 0;
-}
-
-async function loadBiomeBonuses(db: Database, planetId: string, config: GameConfig): Promise<Record<string, number>> {
-  const rows = await db
-    .select({ biomeId: planetBiomes.biomeId })
-    .from(planetBiomes)
-    .where(and(eq(planetBiomes.planetId, planetId), eq(planetBiomes.active, true)));
-
-  const effectsByBiome = new Map(config.biomes.map((b) => [b.id, b.effects as unknown as BiomeEffect[]]));
-  const allEffects: BiomeEffect[] = rows.flatMap((r) => effectsByBiome.get(r.biomeId) ?? []);
-  return aggregateBiomeBonuses(allEffects);
 }
 
 async function buildPlanetLevels(
@@ -142,82 +125,23 @@ export function createResourceService(
   }
 
   /**
-   * Assemble le contexte de bonus additifs (ex-talentCtx) — l'UNIQUE endroit
-   * où talents, biomes, recherche, gouvernance et vocation se cumulent.
-   * Utilisé par materializeResources, spendResources et getProductionRates :
-   * accumulation réelle et taux affichés ne peuvent plus diverger.
-   * Retourne aussi le détail par source (BonusBreakdownEntry) pour l'affichage.
+   * Assemble le contexte de bonus additifs — délégué à `bonus-context.ts`,
+   * l'UNIQUE endroit où talents, biomes, recherche, gouvernance, vocation et
+   * politiques se cumulent, partagé avec le tick du worker.
+   *
+   * materializeResources, spendResources et getProductionRates passent tous
+   * par ici : l'accumulation réelle et les taux affichés ne peuvent plus
+   * diverger. La recherche énergie n'est plus conditionnelle (décision D1).
    */
   async function buildBonusContext(
     planetId: string,
     userId: string | undefined,
     planet: { planetClassId?: string | null; vocation?: string | null },
     config: GameConfig,
-    opts?: { withEnergyResearch?: boolean },
   ): Promise<{ ctx: Record<string, number>; breakdown: BonusBreakdownEntry[] }> {
-    const ctx: Record<string, number> = {};
-    const breakdown: BonusBreakdownEntry[] = [];
-    const add = (source: BonusBreakdownEntry['source'], stat: string, modifier: number) => {
-      if (!modifier) return;
-      ctx[stat] = (ctx[stat] ?? 0) + modifier;
-      breakdown.push({ source, stat, modifier });
-    };
-
-    // Talents (par joueur, éventuellement par planète)
-    if (talentService && userId) {
-      const talentCtx = await talentService.computeTalentContext(userId, planetId);
-      for (const [stat, mod] of Object.entries(talentCtx)) add('talents', stat, mod);
-    }
-
-    // Biomes actifs (additifs)
-    const biomeBonuses = await loadBiomeBonuses(db, planetId, config);
-    for (const [stat, mod] of Object.entries(biomeBonuses)) add('biomes', stat, mod);
-
-    // Recherche : production (toujours) + énergie (rates uniquement — l'accrual
-    // historique ne l'applique pas, on préserve ce comportement à l'identique)
-    if (userId) {
-      const researchLevels = await getUserResearchLevels(db, userId);
-      for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-        const mult = resolveBonus(stat, null, researchLevels, config.bonuses);
-        if (mult > 1) add('recherche', stat, mult - 1);
-      }
-      if (opts?.withEnergyResearch) {
-        const energyMult = resolveBonus('energy_production', null, researchLevels, config.bonuses);
-        if (energyMult > 1) add('recherche', 'energy_production', energyMult - 1);
-        const energyEfficiency = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
-        if (energyEfficiency < 1) add('recherche', 'energy_consumption', energyEfficiency - 1);
-      }
-    }
-
-    // Gouvernance : malus de récolte (hors planète-mère)
-    if (userId) {
-      const govPenalty = await getGovernancePenalty(db, userId, planet.planetClassId ?? null, config);
-      if (govPenalty.harvestMalus > 0) {
-        for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-          add('gouvernance', stat, -govPenalty.harvestMalus);
-        }
-      }
-    }
-
-    // Spécialisation du monde (vocation) : delta de production
-    const vocDelta = vocationEffects(planet.vocation, config.universe).productionDelta;
-    if (vocDelta !== 0) {
-      for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-        add('vocation', stat, vocDelta);
-      }
-    }
-
-    // Politiques d'empire : delta de production global (par joueur)
-    if (userId) {
-      const polDelta = (await getPolicyEffects(db, userId)).productionDelta;
-      if (polDelta !== 0) {
-        for (const stat of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-          add('politique', stat, polDelta);
-        }
-      }
-    }
-
-    return { ctx, breakdown };
+    const loadFacts = createPerPlanetBonusLoader(db, config, talentService);
+    const facts = await loadFacts(planetId, userId, planet);
+    return assembleBonusContext(facts, config);
   }
 
   return {
@@ -425,12 +349,9 @@ export function createResourceService(
       const config = await gameConfigService.getFullConfig();
       const prodConfig = buildProductionConfig(config);
 
-      // Même assemblage que l'accrual (materialize/spend) — y compris la
-      // vocation, qui manquait ici : les taux affichés divergeaient de la
-      // production réelle des mondes spécialisés.
-      const { ctx: talentCtx, breakdown } = await buildBonusContext(planetId, userId, planet, config, {
-        withEnergyResearch: true,
-      });
+      // Exactement le même assemblage que l'accrual (materialize/spend) et que
+      // le tick du worker — c'est la garantie du « affiché = versé ».
+      const { ctx: talentCtx, breakdown } = await buildBonusContext(planetId, userId, planet, config);
 
       // Type de planète : multiplicatif côté moteur (param bonus), converti en
       // delta dans le détail pour que l'affichage soit complet.

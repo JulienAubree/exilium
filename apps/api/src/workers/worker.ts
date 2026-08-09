@@ -42,7 +42,27 @@ const gameConfigService = createGameConfigService(db, redis);
 const exiliumService = createExiliumService(db, gameConfigService);
 const dailyQuestService = createDailyQuestService(db, exiliumService, gameConfigService, redis);
 const empireProgressionService = createEmpireProgressionService(db, gameConfigService, redis);
-const resourceService = createResourceService(db, gameConfigService, dailyQuestService);
+
+// Talent & flagship services.
+// talentService est declare AVANT resourceService et flagshipService parce que
+// les deux le consomment :
+//   - resourceService s'en sert pour assembler le contexte de bonus. Le worker
+//     le composait SANS, si bien que materializeResources cote worker versait
+//     des ressources sans les bonus de talent que l'API affichait avec. Clefs
+//     de production vides depuis le retrait des talents (2026-05-03), donc la
+//     divergence etait dormante — mais elle se serait reveillee au premier
+//     passif de production, silencieusement.
+//   - flagshipService : `incapacitate` (atteint depuis le worker quand un
+//     vaisseau amiral tombe au combat) lit `repair_time_reduction` dans le
+//     contexte talent. Sans lui, le bonus de coque — pourtant AFFICHE au
+//     joueur — etait ignore et la reparation durait 7200 s au lieu de 4966 s
+//     sur une coque combat.
+// assetsDir / resourceService / reportService ne sont volontairement pas
+// passes a flagshipService : ils ne servent que dans
+// create/listImages/changeHull/scan, qui ne sont pas atteignables depuis le
+// worker.
+const talentService = createTalentService(db, gameConfigService);
+const resourceService = createResourceService(db, gameConfigService, dailyQuestService, talentService);
 const pushService = createPushService(db);
 const asteroidBeltService = createAsteroidBeltService(db);
 const pirateService = createPirateService(db, gameConfigService);
@@ -50,16 +70,6 @@ const pveService = createPveService(db, asteroidBeltService, pirateService, game
 const reportService = createReportService(db);
 const tutorialService = createTutorialService(db, pveService);
 
-// Talent & flagship services.
-// talentService est declare AVANT flagshipService parce que ce dernier le
-// consomme : `incapacitate` (atteint depuis le worker quand un vaisseau amiral
-// tombe au combat) lit `repair_time_reduction` dans le contexte talent. Sans
-// lui, le bonus de coque — pourtant AFFICHE au joueur — etait ignore et la
-// reparation durait 7200 s au lieu de 4966 s sur une coque combat.
-// assetsDir / resourceService / reportService ne sont volontairement pas
-// passes ici : ils ne servent que dans create/listImages/changeHull/scan, qui
-// ne sont pas atteignables depuis le worker.
-const talentService = createTalentService(db, gameConfigService);
 const flagshipService = createFlagshipService(db, exiliumService, gameConfigService, talentService);
 
 // Build services (receive the unified build queue)

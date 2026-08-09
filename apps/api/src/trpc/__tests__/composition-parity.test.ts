@@ -59,16 +59,6 @@ const ECARTS_CONNUS: Record<string, Ecart> = {
       'atteignable depuis le worker (get / incapacitate / setInMission / returnFromMission). ' +
       'talentService, lui, EST requis par incapacitate et a ete ajoute en 2940bb93.',
   },
-  createResourceService: {
-    manquantsCoteWorker: ['talentService'],
-    statut: 'a_trancher',
-    raison:
-      'LE PLUS INQUIETANT des six. buildBonusContext saute son bloc talents quand talentService est ' +
-      'absent, donc materializeResources cote worker accumule SANS les bonus de talent alors que ' +
-      "l API en affiche AVEC. C est la divergence « l affiche et le verse » que le lot L2 doit ancrer. " +
-      'Note : resourceTick ne passe pas par resourceService, il a son propre chemin — il y a donc ' +
-      'potentiellement TROIS calculs de production distincts. A instruire avant de corriger.',
-  },
   createBuildingService: {
     manquantsCoteWorker: ['talentService', 'dailyQuestService'],
     statut: 'a_trancher',

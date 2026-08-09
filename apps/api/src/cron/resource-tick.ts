@@ -1,16 +1,10 @@
 import { sql } from 'drizzle-orm';
-import { planets, planetTypes, planetBuildings, planetShips, empireProgression, getAllUserResearchLevels } from '@exilium/db';
+import { planets, planetTypes, planetBuildings, planetShips } from '@exilium/db';
 import type { Database } from '@exilium/db';
-import {
-  calculateResources,
-  resolveBonus,
-  calculateGovernancePenalty,
-  buildEmpireLevelConfig,
-  empireGovernanceCapacity,
-  vocationEffects,
-} from '@exilium/game-engine';
+import { calculateResources } from '@exilium/game-engine';
 import { findBuildingByRole, findPlanetTypeByRole } from '../lib/config-helpers.js';
 import { buildProductionConfig } from '../lib/production-config.js';
+import { assembleBonusContext, createBatchBonusLoader } from '../modules/resource/bonus-context.js';
 import type { GameConfigService } from '../modules/admin/game-config.service.js';
 
 /**
@@ -29,6 +23,7 @@ async function batchUpdateResources(
     silicium: string;
     hydrogene: string;
     updatedAt: string;
+    prevUpdatedAt: string;
   }>,
 ): Promise<void> {
   if (rows.length === 0) return;
@@ -38,18 +33,26 @@ async function batchUpdateResources(
     const values = sql.join(
       slice.map(
         (r) =>
-          sql`(${r.id}::uuid, ${r.minerai}::numeric, ${r.silicium}::numeric, ${r.hydrogene}::numeric, ${r.updatedAt}::timestamptz)`,
+          sql`(${r.id}::uuid, ${r.minerai}::numeric, ${r.silicium}::numeric, ${r.hydrogene}::numeric, ${r.updatedAt}::timestamptz, ${r.prevUpdatedAt}::timestamptz)`,
       ),
       sql`, `,
     );
+    // `AND p.resources_updated_at = v.prev` ferme la course avec l'accrual de
+    // l'API : entre la lecture du lot et son écriture, un joueur peut avoir
+    // dépensé (spendResources matérialise et avance resources_updated_at). Sans
+    // ce garde, le tick réécrivait un solde calculé sur un état périmé et
+    // effaçait la dépense. Les lignes perdantes sont simplement sautées — elles
+    // viennent d'être matérialisées par l'API, donc elles sont déjà à jour, et
+    // le tick suivant les reprendra normalement.
     await db.execute(sql`
       UPDATE ${planets} AS p
       SET minerai = v.minerai,
           silicium = v.silicium,
           hydrogene = v.hydrogene,
           resources_updated_at = v.t
-      FROM (VALUES ${values}) AS v(id, minerai, silicium, hydrogene, t)
+      FROM (VALUES ${values}) AS v(id, minerai, silicium, hydrogene, t, prev)
       WHERE p.id = v.id
+        AND p.resources_updated_at = v.prev
     `);
   }
 }
@@ -74,6 +77,11 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
       hydrogeneSynthPercent: planets.hydrogeneSynthPercent,
       resourcesUpdatedAt: planets.resourcesUpdatedAt,
       vocation: planets.vocation,
+      // Le bouclier planétaire consomme de l'énergie. Le tick l'ignorait, donc
+      // il calculait un facteur d'énergie trop favorable et SURPAYAIT les
+      // planètes protégées — l'unique poste où il était plus généreux que
+      // l'affichage.
+      shieldPercent: planets.shieldPercent,
     })
     .from(planets);
 
@@ -116,9 +124,6 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     satCountMap.set(row.planetId, row.solarSatellite);
   }
 
-  // Pre-load user research levels (modèle en lignes — Lot 2)
-  const researchByUser = await getAllUserResearchLevels(db);
-
   // Resolve building IDs by role
   const config = await gameConfigService.getFullConfig();
   const prodConfig = buildProductionConfig(config);
@@ -131,34 +136,19 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
   const storageHydrogeneId = findBuildingByRole(config, 'storage_hydrogene').id;
   const homeworldTypeId = findPlanetTypeByRole(config, 'homeworld').id;
 
-  // Pre-compute governance data per user
-  const activePlanetCountByUser = new Map<string, number>();
-  for (const planet of allPlanets) {
-    if (planet.status === 'active') {
-      activePlanetCountByUser.set(
-        planet.userId,
-        (activePlanetCountByUser.get(planet.userId) ?? 0) + 1,
-      );
-    }
-  }
-
-  // Capacité de gouvernance par user : niveau d'empire.
-  // Les users sans ligne empire_progression sont niveau 1 (capacité formule).
-  const levelConfig = buildEmpireLevelConfig(config.universe);
-  const allProgressions = await db
-    .select({ userId: empireProgression.userId, level: empireProgression.level })
-    .from(empireProgression);
-  const capacityByUser = new Map<string, number>();
-  for (const row of allProgressions) {
-    capacityByUser.set(row.userId, empireGovernanceCapacity(row.level, levelConfig));
-  }
-  const defaultCapacity = empireGovernanceCapacity(1, levelConfig);
-  const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [
-    0.15, 0.35, 0.6,
-  ];
-  const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [
-    0.15, 0.35, 0.6,
-  ];
+  // Le contexte de bonus vient désormais de l'assembleur partagé avec l'API
+  // (modules/resource/bonus-context.ts) : recherche production ET énergie,
+  // biomes actifs, politiques d'empire, gouvernance et vocation, calculés par
+  // le MÊME code que materializeResources et getProductionRates.
+  //
+  // Ce qui manquait ici et que le tick verse enfin : les biomes actifs, les
+  // politiques d'empire et la production d'énergie de la recherche. Comme le
+  // tick est le créditeur dominant, c'est l'essentiel de la fuite de ~19,4 %
+  // entre l'affiché et le versé.
+  //
+  // Le chargeur précharge tout l'univers en 4 requêtes — le contrat de perf du
+  // fichier (50k planètes, O(requêtes constantes)) est préservé.
+  const factsFor = await createBatchBonusLoader(db, config);
 
   const nowIso = now.toISOString();
   const pendingUpdates: Array<{
@@ -167,52 +157,26 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
     silicium: string;
     hydrogene: string;
     updatedAt: string;
+    prevUpdatedAt: string;
   }> = [];
+  let skippedColonizing = 0;
   for (const planet of allPlanets) {
+    // Parité avec materializeResources : une planète en cours de colonisation
+    // ne produit rien. Le tick la traitait comme les autres et réécrivait son
+    // resources_updated_at, ce qui escamotait silencieusement le temps écoulé
+    // avant la fin de la colonisation.
+    if (planet.status === 'colonizing') {
+      skippedColonizing++;
+      continue;
+    }
+
     const bonus = planet.planetClassId ? ptMap.get(planet.planetClassId) : undefined;
     const buildingLevels = buildingLevelsMap.get(planet.id) ?? {};
 
-    // Build talentBonuses with research production bonuses + governance penalty
-    const talentBonuses: Record<string, number> = {};
-    const researchLevels = researchByUser.get(planet.userId) ?? {};
-
-    // Research production bonuses
-    const mBonus = resolveBonus('production_minerai', null, researchLevels, config.bonuses);
-    if (mBonus > 1) talentBonuses['production_minerai'] = mBonus - 1;
-    const sBonus = resolveBonus('production_silicium', null, researchLevels, config.bonuses);
-    if (sBonus > 1) talentBonuses['production_silicium'] = sBonus - 1;
-    const hBonus = resolveBonus('production_hydrogene', null, researchLevels, config.bonuses);
-    if (hBonus > 1) talentBonuses['production_hydrogene'] = hBonus - 1;
-    const eBonus = resolveBonus('energy_consumption', null, researchLevels, config.bonuses);
-    if (eBonus < 1) talentBonuses['energy_consumption'] = eBonus - 1;
-
-    // Spécialisation du monde : delta de production (vocation)
-    const vocDelta = vocationEffects(planet.vocation, config.universe).productionDelta;
-    if (vocDelta !== 0) {
-      for (const key of ['production_minerai', 'production_silicium', 'production_hydrogene'] as const) {
-        talentBonuses[key] = (talentBonuses[key] ?? 0) + vocDelta;
-      }
-    }
-
-    // Governance harvest penalty (homeworld exempt)
-    if (planet.planetClassId !== homeworldTypeId) {
-      const colonyCount = Math.max(0, (activePlanetCountByUser.get(planet.userId) ?? 1) - 1);
-      const capacity = capacityByUser.get(planet.userId) ?? defaultCapacity;
-      const penalty = calculateGovernancePenalty(
-        colonyCount,
-        capacity,
-        harvestPenalties,
-        constructionPenalties,
-      );
-      if (penalty.harvestMalus > 0) {
-        talentBonuses['production_minerai'] =
-          (talentBonuses['production_minerai'] ?? 0) - penalty.harvestMalus;
-        talentBonuses['production_silicium'] =
-          (talentBonuses['production_silicium'] ?? 0) - penalty.harvestMalus;
-        talentBonuses['production_hydrogene'] =
-          (talentBonuses['production_hydrogene'] ?? 0) - penalty.harvestMalus;
-      }
-    }
+    const { ctx: talentBonuses } = assembleBonusContext(
+      factsFor(planet.id, planet.userId, planet),
+      config,
+    );
 
     const resources = calculateResources(
       {
@@ -232,6 +196,11 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
         mineraiMinePercent: planet.mineraiMinePercent,
         siliciumMinePercent: planet.siliciumMinePercent,
         hydrogeneSynthPercent: planet.hydrogeneSynthPercent,
+        // Même clé littérale que buildPlanetLevels côté API — c'est ce que le
+        // tick omettait, d'où un facteur d'énergie surestimé sur les planètes
+        // protégées.
+        planetaryShieldLevel: buildingLevels['planetaryShield'] ?? 0,
+        shieldPercent: planet.shieldPercent ?? 100,
       },
       planet.resourcesUpdatedAt,
       now,
@@ -246,9 +215,13 @@ export async function resourceTick(db: Database, gameConfigService: GameConfigSe
       silicium: String(resources.silicium),
       hydrogene: String(resources.hydrogene),
       updatedAt: nowIso,
+      prevUpdatedAt: planet.resourcesUpdatedAt.toISOString(),
     });
   }
 
   await batchUpdateResources(db, pendingUpdates);
-  console.log(`[resource-tick] Materialized resources for ${pendingUpdates.length} planets`);
+  console.log(
+    `[resource-tick] Materialized resources for ${pendingUpdates.length} planets` +
+      (skippedColonizing > 0 ? ` (${skippedColonizing} colonizing skipped)` : ''),
+  );
 }
