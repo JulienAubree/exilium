@@ -43,6 +43,29 @@ import { renderReport } from './reporter.js';
  * rapport production/consommation au moment du premier vaisseau, donc la
  * troncature par poste ne les pénalise pas dans le même sens.
  *
+ * ## Déplacement du 2026-08-09 (lot 1) — le mur d'hydrogène tombe
+ *
+ * Le prospecteur, vaisseau d'amorçage du minage, coûtait 375 d'hydrogène —
+ * alors que c'est LUI qui en rapporte, et que la dotation de départ n'en donne
+ * que 100. Il fallait donc faire tourner un synthétiseur d'hydrogène lent et
+ * gourmand en énergie avant de pouvoir aller chercher de l'hydrogène. Un
+ * verrou de ressource, pas une courbe : c'est pour ça qu'un kit de départ
+ * n'aurait rien réglé, le mur serait revenu au deuxième vaisseau.
+ *
+ * L'hydrogène sort donc du coût du prospecteur et du satellite solaire (même
+ * verrou : il produit l'énergie qui manque et coûtait ce qu'on ne peut pas
+ * encore extraire).
+ *
+ * Mesure : **optimal 512,5 → 299,4 h, soit −41,6 %** — de trois semaines à
+ * douze jours et demi avant le premier vaisseau. **eco reste à 3596,0 h,
+ * inchangé** : à ce rythme-là le prospecteur arrive si tard que l'hydrogène
+ * n'est plus la contrainte. Le mur ne mordait que le joueur qui pousse.
+ *
+ * Une première version compensait le retrait par +750 silicium sur le
+ * prospecteur : elle dégradait l'eco à 3624,8 h sans rien apporter à
+ * l'optimal (303 h contre 299,4). Écartée — elle ne faisait que punir le
+ * joueur lent, ce que les principes du plan interdisent.
+ *
  * ⚠️ Ce déplacement n'est PAS la mesure de la fuite de 19,4 %, contrairement à
  * ce que le plan d'implémentation annonçait. Le simulateur n'a jamais modélisé
  * le tick du worker, ni les biomes, ni les politiques : la fuite n'existait pas
@@ -68,7 +91,7 @@ const JALONS_ATTENDUS: Record<string, Record<string, number>> = {
     firstShipyard: 218.3,
     firstResearch: 26.7,
     energyTech: 26.7,
-    firstShip: 512.5,
+    firstShip: 299.4,
   },
 };
 

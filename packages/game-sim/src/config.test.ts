@@ -20,7 +20,10 @@ describe('config', () => {
   });
   it('charge le prospector (coût + prérequis chantier L2)', () => {
     const s = loadShips().get('prospector')!;
-    expect(s.cost).toEqual({ minerai: 2250, silicium: 750, hydrogene: 375 });
+    // L'hydrogène a été retiré du coût du vaisseau d'amorçage : il en coûtait
+    // 375 alors que c'est lui qui en rapporte, et que la dotation de départ en
+    // donne 100. Mur mesuré à −41,6 % sur le profil optimal.
+    expect(s.cost).toEqual({ minerai: 2250, silicium: 750, hydrogene: 0 });
     expect(s.prereqBuildings).toContainEqual({ buildingId: 'shipyard', level: 2 });
   });
 });
