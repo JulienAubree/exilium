@@ -12,8 +12,12 @@
 
 ## 1. Le jeu, en une phrase
 
-**Un 4X coopératif où des exilés dispersés reprennent, ensemble, un territoire occupé — et
-où le monde sur lequel on est tombé décide de ce qu'on devient.**
+**Un 4X coopératif où des exilés développent leurs mondes et arment deux flottes — une pour miner,
+une pour se battre — au rythme de missions qui reprennent, pièce par pièce, un territoire tenu par
+des pirates.**
+
+Et ce qu'on en rapporte n'est pas un chiffre qui monte : ce sont des vaisseaux et des équipages qui
+changent ce qu'on peut faire. Le détail du périmètre est en section 4.
 
 ---
 
@@ -174,13 +178,89 @@ façons de jouer :
 | **Les silos** | Nos archives, au fond d'une soute, mélangées au reste du butin | Un souvenir rendu à **tout le monde**. Rare, à l'unité, événement de serveur. |
 
 Le silo est la pièce maîtresse : **le seul contenu dont le gain est collectif par nature**, donc le
-seul qui rende la coopération évidente sans avoir à l'imposer. Et comme les Premiers parlent, elle
+seul qui rende la coopération évidente sans avoir à l'imposer. Et comme les Premiers parlent, il
 se **prend ou s'achète** — payer en exilium ce qu'on pourrait prendre au prix du sang est une
 décision de groupe, elle se débat, et les deux systèmes nécessaires existent déjà.
 
 ---
 
-## 4. Les principes de conception
+## 4. Le recentrage — ce que le jeu est, concrètement
+
+> Décidé avec Julien le 2026-08-09, après la fiction. Ce recentrage ne contredit pas les actes :
+> il déplace l'emphase. **Les missions ne sont pas l'aboutissement du plan, elles en sont la
+> boucle.** Et le périmètre se resserre volontairement sur deux activités approfondies plutôt que
+> cinq survolées.
+
+Le jeu tient en quatre choses :
+
+1. **Des planètes.** Ressources et bâtiments. Le socle, gardé simple, et **au pluriel** — c'est ce
+   qui rend le placement des vaisseaux spéciaux intéressant.
+2. **Une flotte industrielle**, pour miner.
+3. **Quelques chasseurs**, pour combattre.
+4. **Des missions, qui sont le cœur.** Elles paient en récompenses qualitatives — as de pilotage,
+   vaisseaux spéciaux qui bonifient la flotte ou la planète où ils sont posés — et non en chiffres
+   qui montent.
+
+Le point 4 est celui qui répond au « on ne savait pas vers où ça allait » : une collection se voit,
+se compare et se raconte, là où une courbe de production ne dit rien.
+
+### 4.1 Ce qui est déjà câblé
+
+Les trois quarts de cette boucle existent. Le constat est vérifié dans le code, pas supposé :
+
+- **Les vaisseaux en récompense de mission fonctionnent déjà.** `pirate.handler.ts:61` lit
+  `{ shipId, count, chance }[]` dans les récompenses, `fleet.service.ts:567` les crédite au retour
+  de flotte. Il leur manque seulement d'être *spéciaux* plutôt qu'ordinaires.
+- **Les sept leviers de bonus morts sont la liste de courses.** `fleet_cargo`, `fleet_fuel`,
+  `fleet_speed`, `military_build_time`, `industrial_build_time`, `pve_loot`, `market_fee` sont lus
+  par le code mais **produits par rien** (cf. le détecteur `bonus-levers.test.ts`). Cinq des sept
+  sont littéralement « un bonus à la flotte ou à la planète ». Un vaisseau spécial stationné est le
+  producteur manquant : ce qui était à supprimer devient l'ossature du système.
+- **Le vaisseau amiral est le prototype du vaisseau spécial.** La table `flagships` porte déjà un
+  `planetId`, un nom, une image, des stats de base, une coque à capacités, des talents et des
+  cooldowns. Le plan disait « à décider séparément » — la décision se prend d'elle-même : il n'est
+  pas supprimé, **il est multiplié**.
+
+**Réellement neuf** : l'as de pilotage. Rien dans la base ne parle de pilote ni d'équipage.
+
+### 4.2 Ce qui sort du périmètre
+
+Au-delà de la liste de la section 8. Les usages sont mesurés sur 8 317 missions réellement envoyées :
+
+| Système | Envois | Sort |
+|---|---:|---|
+| Transport | 1 628 | Reste — c'est de la plomberie, pas une activité |
+| Recyclage | 1 187 | ⚠️ 3ᵉ activité du jeu. À fondre dans le combat comme butin automatique, sinon c'est une perte réelle |
+| Exploration | 661 | Rétrogradée : les biomes restent une propriété de planète, plus une activité |
+| Espionnage | 327 | Sort, ou revient comme le renseignement d'avant-assaut |
+| Marché | 53 | Sort |
+| Alliances | — | Sort |
+
+La colonisation **reste** : les planètes sont au pluriel.
+
+### 4.3 Ce que le recentrage ne change pas
+
+La fiction tient intacte. Un système des Premiers devient simplement **la plus grosse mission du
+centre**, et les trois types de secteurs (3.5) en sont les variantes. L'exilium reste ce qu'on
+rapporte de chez eux.
+
+> ⚠️ **Conséquence d'interface, à ne pas traiter à la légère.** Si les missions sont le cœur, le
+> centre de missions devient l'écran principal et la planète cesse de l'être. C'est un changement
+> de paradigme — et la Passerelle avait été livrée puis annulée le jour même. Celui-ci passe par
+> staging et par les retours des amis avant d'être mêlé au gameplay ou à la base.
+
+### 4.4 En attente de conception
+
+- Combien de vaisseaux spéciaux, à quelle rareté, et est-ce que leurs bonus se cumulent.
+- Ce qu'est un as de pilotage : attaché à un vaisseau, à une flotte, ou indépendant.
+- Comment le centre de missions alimente le joueur — aujourd'hui : 3 missions concurrentes max,
+  rayon de recherche 5, découverte sur cooldown, expiration à 7 jours.
+- La profondeur du minage (dureté de roche, sonde préalable) : **au frigo jusqu'après le test de
+  l'acte 1**, cf. section 6.
+
+---
+
+## 5. Les principes de conception
 
 Dérivés directement des réponses de l'entretien. Ils arbitrent les décisions futures.
 
@@ -202,7 +282,7 @@ Dérivés directement des réponses de l'entretien. Ils arbitrent les décisions
 
 ---
 
-## 5. Le plan, en actes
+## 6. Le plan, en actes
 
 ### Acte 0 — Rendre les chiffres honnêtes
 
@@ -278,9 +358,33 @@ un projet dont le carburant est le plaisir.
 fil de l'eau et non d'une décision : les capitaines et ce qu'ils disent, le texte d'un nœud de
 recherche retrouvé, les noms des systèmes.
 
+### Au frigo — la profondeur du minage
+
+*Bonne idée, mauvais moment. Datée pour être reprise, pas perdue.*
+
+L'idée : donner aux gisements une **résistance de roche**, et exiger une sonde avant de miner. Elle
+est écartée de l'ouverture pour trois raisons qui viennent de ce document — le diagnostic (les amis
+ne sont pas partis parce que le minage manquait de profondeur), le principe 6 (dureté contre
+puissance de forage est un équilibrage à deux variables sans critère d'arrêt naturel), et le test
+de l'acte 1, que rien là-dedans ne sert mais que tout retarde.
+
+**À reprendre après le test de l'acte 1**, avec ce qui a été trouvé en explorant le terrain et qui
+la rendra bon marché le jour venu :
+
+- La phase `prospecting` **existe déjà** dans `mine.handler.ts` — mais c'est une minuterie
+  proportionnelle à la taille du gisement, et le `depositId` est choisi avant le départ. La
+  cérémonie est là, il lui manque l'objet.
+- `asteroid_deposits` n'a **aucune notion de dureté** : uniquement totaux, restes et régénération.
+- Le talent `prospection_speed` accélère déjà une étape sans contenu informatif.
+
+> ⚠️ **La règle qui sépare la profondeur de la lourdeur**, si on la reprend : la sonde produit une
+> connaissance **qui dure et qui se partage**, jamais une autorisation à usage unique. On peut miner
+> à l'aveugle et récolter mal. Sinon on pose un péage sur l'activité la plus jouée du jeu
+> (2 631 minages sur 8 317 missions), dans un jeu dont le défaut mesuré numéro un est la lenteur.
+
 ---
 
-## 6. Ce qui est décidé, ce qui reste ouvert
+## 7. Ce qui est décidé, ce qui reste ouvert
 
 **Décidé** — 23 réponses d'entretien, puis 7 de plus sur la fiction :
 jeu coopératif · pas de PvP entre joueurs, conflit sur objectifs neutres et sur l'occupant ·
@@ -294,6 +398,13 @@ l'occupant (**les Premiers**, pirates, la branche qui n'a pas arrêté — et qu
 comme super-ressource rare, détenue par eux · **les Premiers tiennent des systèmes entiers, un
 capitaine par système** · les trois types de secteurs, emboîtés dedans · le silo qui se prend ou
 s'achète.
+
+Et, depuis la section 4 : **le périmètre se resserre sur planètes + deux flottes + missions** ·
+les missions sont la boucle, pas l'aboutissement · les récompenses sont qualitatives (as de
+pilotage, vaisseaux spéciaux à poser) et non chiffrées · **les planètes restent au pluriel**, donc
+la colonisation reste · le vaisseau amiral n'est pas supprimé mais multiplié · marché, alliances et
+espionnage sortent · le recyclage se fond dans le combat · l'exploration est rétrogradée en
+propriété de planète.
 
 **Ouvert** — à trancher avant ou pendant :
 - Combien d'amis reviennent, et le dimensionnement de la carte qui en découle.
@@ -310,10 +421,12 @@ s'achète.
 - Le critère d'arrêt du rééquilibrage des unités, **écrit avant d'ouvrir le fichier** — un
   chantier sans fin naturelle est ce qui tue un projet solo.
 - Quelle est la première chose qu'un joueur voit à sa première connexion sur la carte neuve.
+- Les questions de conception du recentrage, listées en 4.4 (vaisseaux spéciaux, as de pilotage,
+  alimentation du centre de missions).
 
 ---
 
-## 7. Ce qu'on jette
+## 8. Ce qu'on jette
 
 Zéro utilisateur est une donnée, pas un accident. Ces systèmes n'ont jamais été touchés et les
 traîner coûtera la même douleur plus tard, avec des intérêts :
