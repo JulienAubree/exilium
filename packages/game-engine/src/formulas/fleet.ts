@@ -18,6 +18,11 @@ export interface FleetConfig {
   speedFactor: number;
   maxSystems?: number;
   maxGalaxies?: number;
+  /**
+   * `ring` (defaut historique) : la carte se referme, le trajet le plus court
+   * peut passer par le repli. `bounded` : la carte a des bords, pas de repli.
+   */
+  topology?: 'ring' | 'bounded';
 }
 
 const DEFAULT_FLEET_CONFIG: FleetConfig = {
@@ -54,18 +59,39 @@ export function fleetSpeed(
   return minSpeed === Infinity ? 0 : minSpeed;
 }
 
+/**
+ * Distance entre deux coordonnées.
+ *
+ * ## Topologie : anneau ou carte bornée
+ *
+ * En topologie `ring` (historique), la carte se referme sur elle-même :
+ * aller de la galaxie 1 à la galaxie 9 coûte un saut, pas huit. Le repli
+ * (`wrapped`) suppose que `maxGalaxies`/`maxSystems` décrivent la VRAIE
+ * taille de l'univers.
+ *
+ * ⚠️ Ces deux valeurs étaient codées en dur à 9 et 499, et `buildFleetConfig`
+ * ne les transmettait jamais depuis `universe_config`. Sur une carte
+ * redimensionnée, le repli se serait calculé sur 499 systèmes inexistants :
+ * `wrappedS` serait devenu plus grand que `linearS` partout, l'anneau n'aurait
+ * plus jamais raccourci un trajet — une topologie silencieusement cassée.
+ *
+ * En topologie `bounded`, il n'y a pas de repli : la carte a des bords. C'est
+ * ce que demande la fiction — les exilés se sont posés *au bord*, les Premiers
+ * tiennent le centre — et ça rend la distance lisible pour le joueur.
+ */
 export function distance(origin: Coordinates, target: Coordinates, config: FleetConfig = DEFAULT_FLEET_CONFIG): number {
+  const borne = config.topology === 'bounded';
   if (origin.galaxy !== target.galaxy) {
     const maxG = config.maxGalaxies ?? 9;
     const linearG = Math.abs(origin.galaxy - target.galaxy);
     const wrappedG = maxG - linearG;
-    return config.galaxyFactor * Math.min(linearG, wrappedG);
+    return config.galaxyFactor * (borne ? linearG : Math.min(linearG, wrappedG));
   }
   if (origin.system !== target.system) {
     const maxS = config.maxSystems ?? 499;
     const linearS = Math.abs(origin.system - target.system);
     const wrappedS = maxS - linearS;
-    return config.systemBase + config.systemFactor * Math.min(linearS, wrappedS);
+    return config.systemBase + config.systemFactor * (borne ? linearS : Math.min(linearS, wrappedS));
   }
   if (origin.position !== target.position) {
     return config.positionBase + config.positionFactor * Math.abs(origin.position - target.position);

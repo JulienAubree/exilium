@@ -13,6 +13,9 @@ describe('buildFleetConfig', () => {
         fleet_distance_position_factor: 6,
         fleet_same_position_distance: 7,
         fleet_speed_factor: 40000,
+        galaxies: 3,
+        systems: 50,
+        topology: 'bounded',
       },
     });
     expect(cfg).toEqual({
@@ -23,6 +26,12 @@ describe('buildFleetConfig', () => {
       positionFactor: 6,
       samePositionDistance: 7,
       speedFactor: 40000,
+      // Les dimensions de la carte n'étaient PAS transmises : le moteur
+      // retombait sur 9/499 en dur et le repli de l'anneau se calculait sur
+      // des systèmes inexistants.
+      maxGalaxies: 3,
+      maxSystems: 50,
+      topology: 'bounded',
     });
   });
 
@@ -36,6 +45,11 @@ describe('buildFleetConfig', () => {
       positionFactor: 5,
       samePositionDistance: 5,
       speedFactor: 35000,
+      maxGalaxies: 9,
+      maxSystems: 499,
+      // L'anneau reste le défaut : l'univers en cours ne change pas de
+      // topologie au déploiement.
+      topology: 'ring',
     });
   });
 });

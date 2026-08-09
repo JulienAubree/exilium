@@ -115,3 +115,39 @@ describe('wrap-around distance', () => {
     expect(d1).toBe(d2); // galaxy 1 to 9 = 1 galaxy apart via wrapping
   });
 });
+
+describe('topologie de la carte', () => {
+  const base = {
+    galaxyFactor: 20000, systemBase: 2700, systemFactor: 95,
+    positionBase: 1000, positionFactor: 5, samePositionDistance: 5,
+    speedFactor: 35000, maxGalaxies: 9, maxSystems: 499,
+  };
+
+  it('en anneau, le repli raccourcit les trajets aux extremites', () => {
+    // Galaxie 1 -> 9 : 8 sauts en ligne, 1 par le repli.
+    const d = distance({ galaxy: 1, system: 1, position: 1 }, { galaxy: 9, system: 1, position: 1 }, { ...base, topology: 'ring' });
+    expect(d).toBe(20000 * 1);
+  });
+
+  it('en carte bornee, il n y a pas de repli', () => {
+    const d = distance({ galaxy: 1, system: 1, position: 1 }, { galaxy: 9, system: 1, position: 1 }, { ...base, topology: 'bounded' });
+    expect(d).toBe(20000 * 8);
+  });
+
+  it('l anneau est le defaut, pour ne rien changer a l univers en cours', () => {
+    const sansTopologie = distance({ galaxy: 1, system: 1, position: 1 }, { galaxy: 9, system: 1, position: 1 }, base);
+    const enAnneau = distance({ galaxy: 1, system: 1, position: 1 }, { galaxy: 9, system: 1, position: 1 }, { ...base, topology: 'ring' });
+    expect(sansTopologie).toBe(enAnneau);
+  });
+
+  it('une carte redimensionnee sans maxSystems correct casse le repli — le cablage evite ca', () => {
+    // Carte a 50 systemes. Avec maxSystems reste a 499 (l ancien defaut en
+    // dur), le repli vaudrait 499-40 = 459 > 40 : l anneau ne raccourcirait
+    // plus jamais rien, silencieusement.
+    const casse = distance({ galaxy: 1, system: 5, position: 1 }, { galaxy: 1, system: 45, position: 1 }, { ...base, maxSystems: 499, topology: 'ring' });
+    const correct = distance({ galaxy: 1, system: 5, position: 1 }, { galaxy: 1, system: 45, position: 1 }, { ...base, maxSystems: 50, topology: 'ring' });
+    expect(casse).toBe(2700 + 95 * 40);
+    expect(correct).toBe(2700 + 95 * 10);
+    expect(correct).toBeLessThan(casse);
+  });
+});

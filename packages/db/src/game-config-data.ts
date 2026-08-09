@@ -170,6 +170,11 @@ export const UNIVERSE_CONFIG = [
   // case par case. On pose une valeur non nulle au moment du wipe pour que la
   // carte neuve en soit vraiment une — le contenu de l'ancienne ne doit pas
   // etre deja connu de ceux qui l'ont jouee.
+  // Topologie de la carte. 'ring' = historique, la carte se referme sur
+  // elle-meme. 'bounded' = la carte a des bords : ce que demande la fiction
+  // (les exiles se sont poses AU BORD, les Premiers tiennent le centre).
+  // A basculer au moment du wipe, avec world_seed.
+  { key: 'topology', value: 'ring' },
   { key: 'world_seed', value: 0 },
   { key: 'galaxies', value: 9 },
   { key: 'systems', value: 499 },

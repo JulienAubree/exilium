@@ -14,6 +14,13 @@ export function buildFleetConfig(config: { universe: Record<string, unknown> }):
     positionFactor: Number(config.universe.fleet_distance_position_factor) || 5,
     samePositionDistance: Number(config.universe.fleet_same_position_distance) || 5,
     speedFactor: Number(config.universe.fleet_speed_factor) || 35000,
+    // Ces deux-la n'etaient PAS transmis : le moteur retombait sur 9 et 499 en
+    // dur. Sur une carte redimensionnee, le repli de l'anneau se serait
+    // calcule sur des systemes inexistants et n'aurait plus jamais raccourci
+    // un trajet.
+    maxGalaxies: Number(config.universe.galaxies) || 9,
+    maxSystems: Number(config.universe.systems) || 499,
+    topology: config.universe.topology === 'bounded' ? 'bounded' : 'ring',
   };
 }
 
