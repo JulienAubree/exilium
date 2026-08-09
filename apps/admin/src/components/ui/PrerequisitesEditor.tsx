@@ -53,13 +53,12 @@ export function PrerequisitesEditor({
   }, [buildingPrereqs, mixedPrereqs, mode]);
 
   useEffect(() => {
-    if (open) {
-      const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handleEsc);
-      return () => document.removeEventListener('keydown', handleEsc);
-    }
+    if (!open) return undefined;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
   }, [open, onClose]);
 
   if (!open) return null;

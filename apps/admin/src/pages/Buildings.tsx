@@ -156,9 +156,10 @@ export default function Buildings() {
   const deleteBonusMutation = trpc.gameConfig.admin.deleteBonus.useMutation({
     onSuccess: () => refetch(),
   });
-  const updateBonusMutation = trpc.gameConfig.admin.updateBonus.useMutation({
-    onSuccess: () => refetch(),
-  });
+  // NOTE : `trpc.gameConfig.admin.updateBonus` existe cote API mais aucune UI ne
+  // l appelle — l admin peut CREER un bonus et le SUPPRIMER, pas le MODIFIER.
+  // La mutation etait declaree ici sans jamais servir. Retiree pour ne pas
+  // laisser croire que la capacite existe ; la reinstaurer, c est 3 lignes.
 
   const [addingBonusFor, setAddingBonusFor] = useState<string | null>(null);
   const [newBonusStat, setNewBonusStat] = useState('building_time');

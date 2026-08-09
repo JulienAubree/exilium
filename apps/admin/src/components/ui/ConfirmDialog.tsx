@@ -37,13 +37,12 @@ export function ConfirmDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) {
-      const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onCancel();
-      };
-      document.addEventListener('keydown', handleEsc);
-      return () => document.removeEventListener('keydown', handleEsc);
-    }
+    if (!open) return undefined;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
   }, [open, onCancel]);
 
   if (!open) return null;

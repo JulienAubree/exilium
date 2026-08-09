@@ -41,7 +41,9 @@ function defaultForm(): Record<string, string | number> {
 
 function PlanetImagePool({ planetClassId }: { planetClassId: string }) {
   const [images, setImages] = useState<{ index: number; thumbUrl: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+  // `loading` n etait jamais lu — seul setLoading sert. Elision plutot que
+  // variable morte, pour garder le setter.
+  const [, setLoading] = useState(true);
 
   const loadImages = async () => {
     try {

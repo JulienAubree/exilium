@@ -58,8 +58,10 @@ function templateToForm(t: any): Record<string, string | number> {
 function formToMutationData(values: Record<string, string | number>) {
   let ships: Record<string, number> = {};
   let bonusShips: { shipId: string; count: number; chance: number }[] = [];
-  try { ships = JSON.parse(String(values.ships)); } catch {}
-  try { bonusShips = JSON.parse(String(values.bonusShips)); } catch {}
+  // JSON malforme dans le formulaire : on retombe volontairement sur la valeur
+  // par defaut plutot que de bloquer la saisie.
+  try { ships = JSON.parse(String(values.ships)); } catch { /* valeur par defaut conservee */ }
+  try { bonusShips = JSON.parse(String(values.bonusShips)); } catch { /* idem */ }
 
   return {
     name: String(values.name),

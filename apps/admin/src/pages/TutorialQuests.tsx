@@ -76,7 +76,8 @@ function formToCreateData(values: Record<string, string | number>) {
 }
 
 function formToUpdateData(values: Record<string, string | number>) {
-  const { id, ...rest } = formToCreateData(values);
+  // `id` est extrait uniquement pour etre exclu de la charge de mise a jour.
+  const { id: _id, ...rest } = formToCreateData(values);
   return rest;
 }
 

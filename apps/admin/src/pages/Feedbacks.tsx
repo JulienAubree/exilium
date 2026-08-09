@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/trpc';
 import { PageSkeleton } from '@/components/ui/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Search, Trash2, MessageSquare, Download } from 'lucide-react';
+import { Trash2, Download } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { label: 'Tous', value: undefined },
@@ -19,13 +19,6 @@ const TYPE_OPTIONS = [
   { label: 'Feedbacks', value: 'feedback' as const },
   { label: 'Debug', value: 'debug' as const },
 ];
-
-const STATUS_LABELS: Record<string, string> = {
-  new: 'Nouveau',
-  in_progress: 'En cours',
-  resolved: 'Résolu',
-  rejected: 'Rejeté',
-};
 
 const TYPE_EMOJIS: Record<string, string> = {
   bug: '🐛',
