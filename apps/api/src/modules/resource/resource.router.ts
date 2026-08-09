@@ -84,6 +84,13 @@ export function createResourceRouter(
           researchLevels,
           config.bonuses,
           storageConfig,
+          // Meme contexte fusionne que le calcul reel du pillage
+          // (attack.handler). Sans lui, l ecran affichait des ressources
+          // protegees calculees sans les bonus de stockage des talents NI des
+          // biomes — donc un chiffre inferieur a ce que le jeu protege
+          // vraiment depuis cd87a52e. 40 planetes a biome de stockage etaient
+          // concernees.
+          await resourceService.getBonusContext(input.planetId, ctx.userId!),
         );
 
         return {
