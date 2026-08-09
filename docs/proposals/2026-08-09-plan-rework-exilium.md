@@ -96,7 +96,7 @@ plusieurs d'entre elles réparent un système existant au lieu d'en ajouter un.
 | L'exilium est chez eux | Boucle complète : il m'en faut → il est occupé → j'y vais à plusieurs → j'en rapporte → je vais plus loin |
 | On a oublié, eux non | L'arbre de recherche n'invente pas, il **rend** — un nœud = une capacité retrouvée |
 | Ils tiennent nos archives | Le PvE territorial rapporte de la mémoire, pas seulement du butin |
-| Ce sont des pirates, et ils parlent | Une cale se **prend ou s'achète** : une décision collective à débattre, sur deux systèmes qui existent déjà |
+| Ce sont des pirates, et ils parlent | Un silo se **prend ou s'achète** : une décision collective à débattre, sur deux systèmes qui existent déjà |
 | Ils viennent parce qu'on vaut enfin le déplacement | La menace naît de la réussite du groupe — auto-équilibrée, et ça date le début de la partie |
 
 Deux conséquences valent d'être notées explicitement :
@@ -146,7 +146,7 @@ formuler**. Et surtout, ça se planifie tout seul dans le groupe : « on tape Va
 où, combien de temps, et avec qui.
 
 Les trois types de secteurs (3.5) ne sont pas concurrents de ce découpage : **ils s'emboîtent
-dedans**. Un système contient ses ports, ses prises et ses cales.
+dedans**. Un système contient ses ports, ses prises et ses silos.
 
 > 🔧 **Décision technique à prendre au début, pas après.** `planets.userId` est `notNull` avec clé
 > étrangère vers `users` : une planète sans propriétaire n'existe pas dans le schéma actuel. Deux
@@ -171,9 +171,9 @@ façons de jouer :
 |---|---|---|
 | **Les ports** | Un repaire, des équipages — ils y reviennent toujours | De l'exilium en flux tant qu'on tient. Le rendez-vous répétable du groupe. |
 | **Les prises** | Une cache, une épave qu'ils démontent, peu de monde | Le gisement ou l'épave, définitivement. La progression franche et lisible sur la carte. |
-| **Les cales** | Nos archives, au fond d'une soute, mélangées au reste du butin | Un souvenir rendu à **tout le monde**. Rare, à l'unité, événement de serveur. |
+| **Les silos** | Nos archives, au fond d'une soute, mélangées au reste du butin | Un souvenir rendu à **tout le monde**. Rare, à l'unité, événement de serveur. |
 
-La cale est la pièce maîtresse : **le seul contenu dont le gain est collectif par nature**, donc le
+Le silo est la pièce maîtresse : **le seul contenu dont le gain est collectif par nature**, donc le
 seul qui rende la coopération évidente sans avoir à l'imposer. Et comme les Premiers parlent, elle
 se **prend ou s'achète** — payer en exilium ce qu'on pourrait prendre au prix du sang est une
 décision de groupe, elle se débat, et les deux systèmes nécessaires existent déjà.
@@ -259,7 +259,7 @@ Choisi parmi quatre formes de PvE parce que c'est la seule qui soit à la fois *
 **visible sur la carte** et compatible avec l'écart de rythme.
 
 La fiction (section 3) a depuis précisé la forme : un système = un capitaine = un objectif, avec
-ses ports, ses prises et ses cales à l'intérieur. Et la boucle qui rend les vaisseaux de guerre
+ses ports, ses prises et ses silos à l'intérieur. Et la boucle qui rend les vaisseaux de guerre
 nécessaires vient de l'économie et non d'un système parallèle : **l'exilium est chez eux.**
 
 Les trois autres formes évoquées — vagues, cibles de difficulté croissante, événements
@@ -292,7 +292,7 @@ Et, depuis la section 3 : la catastrophe (une guerre que l'humanité s'est faite
 l'occupant (**les Premiers**, pirates, la branche qui n'a pas arrêté — et qui parlent) · le ton
 (space opera, panache des deux côtés) · l'époque (assez de temps pour avoir oublié) · l'exilium
 comme super-ressource rare, détenue par eux · **les Premiers tiennent des systèmes entiers, un
-capitaine par système** · les trois types de secteurs, emboîtés dedans · la cale qui se prend ou
+capitaine par système** · les trois types de secteurs, emboîtés dedans · le silo qui se prend ou
 s'achète.
 
 **Ouvert** — à trancher avant ou pendant :
