@@ -174,6 +174,11 @@ export const UNIVERSE_CONFIG = [
   // elle-meme. 'bounded' = la carte a des bords : ce que demande la fiction
   // (les exiles se sont poses AU BORD, les Premiers tiennent le centre).
   // A basculer au moment du wipe, avec world_seed.
+  // Multiplicateur plat de la production horaire. 1 = rythme historique.
+  // Seul levier de rythme mesure comme homothetique : raidir les exposants est
+  // non-monotone et peut RALENTIR le jeu. A monter au moment du wipe si la
+  // carte neuve doit demarrer plus vite.
+  { key: 'economy_speed', value: 1 },
   { key: 'topology', value: 'ring' },
   { key: 'world_seed', value: 0 },
   { key: 'galaxies', value: 9 },

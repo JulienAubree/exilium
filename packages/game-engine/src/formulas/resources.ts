@@ -22,6 +22,16 @@ export interface ProductionConfig {
   hydrogeneEnergy: { baseConsumption: number; exponentBase: number };
   storage: { storageBase: number; coeffA: number; coeffB: number; coeffC: number };
   satellite: { homePlanetEnergy: number; baseDivisor: number; baseOffset: number };
+  /**
+   * Multiplicateur plat de la production horaire. 1 = rythme historique.
+   *
+   * C'est le SEUL levier de rythme mesure comme homothetique : raidir les
+   * exposants de cout ou de production est non-monotone et peut *ralentir* le
+   * jeu au lieu de l'accelerer. Applique ici, dans l'unique fonction de calcul
+   * des taux, il vaut pour l'affichage, l'accrual, le tick et le simulateur a
+   * la fois.
+   */
+  economySpeed?: number;
 }
 
 export const DEFAULT_PRODUCTION_CONFIG: ProductionConfig = {
@@ -34,6 +44,7 @@ export const DEFAULT_PRODUCTION_CONFIG: ProductionConfig = {
   hydrogeneEnergy: { baseConsumption: 20, exponentBase: 1.1 },
   storage: { storageBase: 5000, coeffA: 2.5, coeffB: 20, coeffC: 33 },
   satellite: { homePlanetEnergy: 50, baseDivisor: 4, baseOffset: 20 },
+  economySpeed: 1,
 };
 
 export interface PlanetTypeBonus {
@@ -124,9 +135,10 @@ export function calculateProductionRates(
 
   const factor = calculateProductionFactor(energyProduced, energyConsumed);
 
-  const mineraiPerHour = Math.floor(mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor, prodConfig.minerai) * mBonus * tMinerai);
-  const siliciumPerHour = Math.floor(siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor, prodConfig.silicium) * sBonus * tSilicium);
-  const hydrogenePerHour = Math.floor(hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor, prodConfig.hydrogene) * hBonus * tHydrogene);
+  const eco = prodConfig.economySpeed ?? 1;
+  const mineraiPerHour = Math.floor(mineraiProduction(planet.mineraiMineLevel, mineraiPct * factor, prodConfig.minerai) * mBonus * tMinerai * eco);
+  const siliciumPerHour = Math.floor(siliciumProduction(planet.siliciumMineLevel, siliciumPct * factor, prodConfig.silicium) * sBonus * tSilicium * eco);
+  const hydrogenePerHour = Math.floor(hydrogeneProduction(planet.hydrogeneSynthLevel, planet.maxTemp, hydrogenePct * factor, prodConfig.hydrogene) * hBonus * tHydrogene * eco);
 
   return {
     mineraiPerHour,

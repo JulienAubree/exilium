@@ -165,3 +165,54 @@ describe('calculateProductionRates with custom config', () => {
     expect(rates.mineraiPerHour).toBe(66);
   });
 });
+
+describe('economySpeed — le multiplicateur plat de rythme', () => {
+  const planete = {
+    mineraiMineLevel: 15,
+    siliciumMineLevel: 12,
+    hydrogeneSynthLevel: 8,
+    solarPlantLevel: 16,
+    storageMineraiLevel: 10,
+    storageSiliciumLevel: 10,
+    storageHydrogeneLevel: 10,
+    maxTemp: 60,
+    solarSatelliteCount: 0,
+  };
+
+  const cfg = (economySpeed?: number): ProductionConfig => ({
+    minerai: { baseProduction: 30, exponentBase: 1.1 },
+    silicium: { baseProduction: 20, exponentBase: 1.1 },
+    hydrogene: { baseProduction: 10, exponentBase: 1.1, tempCoeffA: 1.36, tempCoeffB: 0.004 },
+    solar: { baseProduction: 20, exponentBase: 1.1 },
+    mineraiEnergy: { baseConsumption: 10, exponentBase: 1.1 },
+    siliciumEnergy: { baseConsumption: 10, exponentBase: 1.1 },
+    hydrogeneEnergy: { baseConsumption: 20, exponentBase: 1.1 },
+    storage: { storageBase: 5000, coeffA: 2.5, coeffB: 20, coeffC: 33 },
+    satellite: { homePlanetEnergy: 50, baseDivisor: 4, baseOffset: 20 },
+    economySpeed,
+  });
+
+  it('absent ou a 1, ne change rien — le rythme historique est preserve', () => {
+    const sans = calculateProductionRates(planete, undefined, cfg(undefined));
+    const aUn = calculateProductionRates(planete, undefined, cfg(1));
+    expect(aUn).toEqual(sans);
+  });
+
+  it('est homothetique sur les trois ressources', () => {
+    const base = calculateProductionRates(planete, undefined, cfg(1));
+    const double = calculateProductionRates(planete, undefined, cfg(2));
+    // Tolerance de 1 : la troncature a l'entier inferieur s'applique apres.
+    expect(double.mineraiPerHour).toBeGreaterThanOrEqual(base.mineraiPerHour * 2 - 1);
+    expect(double.siliciumPerHour).toBeGreaterThanOrEqual(base.siliciumPerHour * 2 - 1);
+    expect(double.hydrogenePerHour).toBeGreaterThanOrEqual(base.hydrogenePerHour * 2 - 1);
+  });
+
+  it('ne touche NI l energie NI le stockage — seule la production accelere', () => {
+    const base = calculateProductionRates(planete, undefined, cfg(1));
+    const double = calculateProductionRates(planete, undefined, cfg(2));
+    expect(double.energyProduced).toBe(base.energyProduced);
+    expect(double.energyConsumed).toBe(base.energyConsumed);
+    expect(double.productionFactor).toBe(base.productionFactor);
+    expect(double.storageMineraiCapacity).toBe(base.storageMineraiCapacity);
+  });
+});

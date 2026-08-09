@@ -35,5 +35,6 @@ export function buildProductionConfig(gameConfig: { production: Record<string, P
       baseDivisor: Number(gameConfig.universe.satellite_base_divisor) || 4,
       baseOffset: Number(gameConfig.universe.satellite_base_offset) || 20,
     },
+    economySpeed: Number(gameConfig.universe.economy_speed) || 1,
   };
 }
