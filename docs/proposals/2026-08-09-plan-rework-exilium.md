@@ -298,6 +298,10 @@ Dérivés directement des réponses de l'entretien. Ils arbitrent les décisions
 
 ## 6. Le plan, en actes
 
+> Le détail d'exécution — lots, fichiers, migrations, tests, ordre — vit dans
+> `2026-08-09-plan-implementation.md`, adossé aux cartographies techniques de
+> `docs/reference/cartographie-technique-2026-08-09/`.
+
 ### Acte 0 — Rendre les chiffres honnêtes
 
 *Invisible pour les joueurs. Prérequis de tout le reste.*
