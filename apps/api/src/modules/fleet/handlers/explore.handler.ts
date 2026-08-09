@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { fleetEvents, planets, planetBiomes, discoveredBiomes, discoveredPositions, getUserResearchLevels } from '@exilium/db';
 import { biomeDiscoveryProbability, scanDuration, seededRandom, coordinateSeed, generateBiomeCount, pickBiomes, pickPlanetTypeForPosition, calculateMaxTemp, type BiomeDefinition } from '@exilium/game-engine';
 import type { PhasedMissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult, PhaseResult } from '../fleet.types.js';
-import { findShipsByRole } from '../../../lib/config-helpers.js';
+import { findShipsByRole, worldSeed } from '../../../lib/config-helpers.js';
 
 /**
  * Active les liens planet_biomes d'une planète possédée par l'explorateur, pour
@@ -139,10 +139,10 @@ export class ExploreHandler implements PhasedMissionHandler {
     }
 
     const maxTemp = calculateMaxTemp(fleetEvent.targetPosition, 0);
-    const typeRng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition) ^ 0x9E3779B9);
+    const typeRng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, worldSeed(config)) ^ 0x9E3779B9);
     const planetClassId = pickPlanetTypeForPosition(maxTemp, typeRng);
 
-    const rng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition));
+    const rng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, worldSeed(config)));
     const biomeCount = generateBiomeCount(rng);
     const allBiomes = pickBiomes(biomeCatalogue, planetClassId, biomeCount, rng);
 

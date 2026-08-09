@@ -13,6 +13,7 @@ import {
   pickPlanetTypeForPosition,
   calculateMaxTemp,
 } from '@exilium/game-engine';
+import { worldSeed } from '../../lib/config-helpers.js';
 
 const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 
@@ -88,9 +89,9 @@ export function createExplorationReportService(
   }
 
   /** Compute the deterministic planet class for a position. Must match galaxy.service.ts. */
-  function computePlanetClassId(galaxy: number, system: number, position: number): string {
+  function computePlanetClassId(galaxy: number, system: number, position: number, graine = 0): string {
     const maxTemp = calculateMaxTemp(position, 0);
-    const typeRng = seededRandom(coordinateSeed(galaxy, system, position) ^ 0x9E3779B9);
+    const typeRng = seededRandom(coordinateSeed(galaxy, system, position, graine) ^ 0x9E3779B9);
     return pickPlanetTypeForPosition(maxTemp, typeRng);
   }
 
@@ -101,8 +102,9 @@ export function createExplorationReportService(
     position: number,
     planetClassId: string,
     biomeCatalogue: Parameters<typeof pickBiomes>[0],
+    graine = 0,
   ) {
-    const rng = seededRandom(coordinateSeed(galaxy, system, position));
+    const rng = seededRandom(coordinateSeed(galaxy, system, position, graine));
     const count = generateBiomeCount(rng);
     return pickBiomes(biomeCatalogue, planetClassId, count, rng);
   }
@@ -170,16 +172,22 @@ export function createExplorationReportService(
       const biomes = await snapshotBiomes(userId, input.galaxy, input.system, input.position);
 
       // 4. Compute deterministic planetClassId
-      const planetClassId = computePlanetClassId(input.galaxy, input.system, input.position);
+      //
+      // La graine d'univers doit être la MÊME qu'en vue galaxie et qu'à
+      // l'exploration : sans elle, le rapport décrirait une autre planète que
+      // celle que le joueur ira visiter. La config est donc lue avant.
+      const config = await gameConfigService.getFullConfig();
+      const graine = worldSeed(config);
+      const planetClassId = computePlanetClassId(input.galaxy, input.system, input.position, graine);
 
       // 5. Determine isComplete — compare discovered count to full biome count
-      const config = await gameConfigService.getFullConfig();
       const fullBiomes = computeFullBiomes(
         input.galaxy,
         input.system,
         input.position,
         planetClassId,
         config.biomes,
+        graine,
       );
       const isComplete = biomes.length >= fullBiomes.length;
 

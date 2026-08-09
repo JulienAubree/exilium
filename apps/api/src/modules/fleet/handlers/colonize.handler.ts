@@ -5,7 +5,7 @@ import { calculateMaxTemp, calculateMinTemp, calculateDiameter, totalCargoCapaci
 import { getRandomPlanetImageIndex } from '../../../lib/planet-image.util.js';
 import type { MissionHandler, SendFleetInput, GameConfig, MissionHandlerContext, FleetEvent, ArrivalResult } from '../fleet.types.js';
 import { buildShipStatsMap } from '../fleet.types.js';
-import { findShipsByRole, findPlanetTypeByRole } from '../../../lib/config-helpers.js';
+import { findShipsByRole, findPlanetTypeByRole, worldSeed } from '../../../lib/config-helpers.js';
 
 export class ColonizeHandler implements MissionHandler {
   async validateFleet(input: SendFleetInput, _config: GameConfig, ctx: MissionHandlerContext): Promise<void> {
@@ -109,7 +109,7 @@ export class ColonizeHandler implements MissionHandler {
 
     // Success: create new planet — use seeded temperature-weighted picker (consistent with galaxy view)
     const maxTemp = calculateMaxTemp(fleetEvent.targetPosition, 0);
-    const typeRng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition) ^ 0x9E3779B9);
+    const typeRng = seededRandom(coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, worldSeed(config)) ^ 0x9E3779B9);
     const planetClassId = pickPlanetTypeForPosition(maxTemp, typeRng);
     const planetTypeForPos = config.planetTypes.find((pt) => pt.id === planetClassId) ?? null;
     const minTemp = calculateMinTemp(maxTemp);
@@ -155,7 +155,7 @@ export class ColonizeHandler implements MissionHandler {
 
     let pickedBiomes: BiomeDefinition[] = [];
     if (biomeCatalogue.length > 0 && planetTypeForPos) {
-      const seed = coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition);
+      const seed = coordinateSeed(fleetEvent.targetGalaxy, fleetEvent.targetSystem, fleetEvent.targetPosition, worldSeed(config));
       const rng = seededRandom(seed);
       const biomeCount = generateBiomeCount(rng);
       pickedBiomes = pickBiomes(biomeCatalogue, planetTypeForPos.id, biomeCount, rng);

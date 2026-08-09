@@ -42,10 +42,31 @@ export function seededRandom(seed: number): () => number {
 }
 
 /**
- * Create a coordinate-based seed for deterministic biome generation.
+ * Graine déterministe d'une coordonnée, pour la génération procédurale.
+ *
+ * ⚠️ **`worldSeed` n'est pas décoratif.** Sans lui, la graine est un pur
+ * produit de `galaxy:system:position` : deux univers aux mêmes dimensions
+ * produisent *exactement* les mêmes types de planètes et les mêmes biomes, aux
+ * mêmes endroits. Une « carte neuve » serait donc l'ancienne carte, coordonnée
+ * par coordonnée — le contenu à découvrir serait déjà connu de ceux qui ont
+ * joué la précédente.
+ *
+ * La valeur vient de `universe_config.world_seed`. `0` (ou clé absente)
+ * conserve **exactement** l'ancien comportement, pour que l'univers en cours
+ * ne se réécrive pas sous les pieds des joueurs le jour du déploiement : c'est
+ * en posant la clé, au moment du wipe, qu'on change de monde.
  */
-export function coordinateSeed(galaxy: number, system: number, position: number): number {
-  return galaxy * 1_000_000 + system * 1_000 + position;
+export function coordinateSeed(
+  galaxy: number,
+  system: number,
+  position: number,
+  worldSeed = 0,
+): number {
+  const base = galaxy * 1_000_000 + system * 1_000 + position;
+  if (!worldSeed) return base;
+  // Mélange multiplicatif : deux graines voisines doivent donner des univers
+  // sans parenté, pas des univers décalés d'une case.
+  return (Math.imul(base ^ worldSeed, 0x27d4eb2d) ^ (worldSeed >>> 5)) | 0;
 }
 
 /**

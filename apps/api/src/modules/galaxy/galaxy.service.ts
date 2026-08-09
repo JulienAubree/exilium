@@ -3,6 +3,7 @@ import { planets, users, debrisFields, allianceMembers, alliances, planetBiomes,
 import type { Database } from '@exilium/db';
 import type { GameConfigService } from '../admin/game-config.service.js';
 import { seededRandom, coordinateSeed, generateBiomeCount, pickPlanetTypeForPosition, calculateMaxTemp } from '@exilium/game-engine';
+import { worldSeed } from '../../lib/config-helpers.js';
 
 export function createGalaxyService(db: Database, gameConfigService: GameConfigService) {
   return {
@@ -162,14 +163,14 @@ export function createGalaxyService(db: Database, gameConfigService: GameConfigS
 
         // Pick the planet type using a temperature-weighted distribution
         // Use a separate seed namespace from biomes (XOR with a constant)
-        const typeRng = seededRandom(coordinateSeed(galaxy, system, i) ^ 0x9E3779B9);
+        const typeRng = seededRandom(coordinateSeed(galaxy, system, i, worldSeed(config)) ^ 0x9E3779B9);
         const planetClassId = pickPlanetTypeForPosition(maxTemp, typeRng);
 
         // Compute the TOTAL biome count deterministically (for the
         // "exploration incomplete" indicator). We still regenerate here
         // to know how many biomes EXIST, but the DISPLAYED biomes come
         // from discovered_biomes (persisted, stable across deploys).
-        const rng = seededRandom(coordinateSeed(galaxy, system, i));
+        const rng = seededRandom(coordinateSeed(galaxy, system, i, worldSeed(config)));
         const totalBiomeCount = generateBiomeCount(rng);
 
         // Read discovered biomes from the persisted set (not from the

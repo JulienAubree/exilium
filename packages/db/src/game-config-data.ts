@@ -165,6 +165,12 @@ export const UNIVERSE_CONFIG = [
   // ── Existing keys (untouched) ──
   { key: 'name', value: 'Universe 1' },
   { key: 'speed', value: 1 },
+  // Graine d'univers. 0 = generation historique, fonction des seules
+  // coordonnees : deux univers aux memes dimensions sont alors IDENTIQUES,
+  // case par case. On pose une valeur non nulle au moment du wipe pour que la
+  // carte neuve en soit vraiment une — le contenu de l'ancienne ne doit pas
+  // etre deja connu de ceux qui l'ont jouee.
+  { key: 'world_seed', value: 0 },
   { key: 'galaxies', value: 9 },
   { key: 'systems', value: 499 },
   { key: 'positions', value: 16 },

@@ -107,6 +107,34 @@ describe('coordinateSeed', () => {
     expect(s1).not.toBe(s2);
     expect(s1).not.toBe(s3);
   });
+
+  it('sans world seed, conserve exactement le comportement historique', () => {
+    // L'univers en cours ne doit pas se réécrire au déploiement : la clé
+    // absente ou nulle vaut l'ancienne formule, au bit près.
+    expect(coordinateSeed(1, 100, 5)).toBe(1 * 1_000_000 + 100 * 1_000 + 5);
+    expect(coordinateSeed(1, 100, 5, 0)).toBe(coordinateSeed(1, 100, 5));
+  });
+
+  it('un world seed change la graine de TOUTES les coordonnées', () => {
+    // C'est la raison d'être du paramètre : une carte neuve aux mêmes
+    // dimensions serait sinon identique à l'ancienne, case par case.
+    for (const [g, s, p] of [[1, 100, 5], [4, 250, 12], [9, 499, 16]] as const) {
+      expect(coordinateSeed(g, s, p, 12345)).not.toBe(coordinateSeed(g, s, p));
+    }
+  });
+
+  it('deux world seeds voisins donnent des univers sans parenté', () => {
+    // Un simple décalage additif ferait de l'univers 2 une copie translatée de
+    // l'univers 1 : le joueur qui connaît l'un devinerait l'autre.
+    const a = coordinateSeed(3, 200, 8, 1);
+    const b = coordinateSeed(3, 200, 8, 2);
+    expect(a).not.toBe(b);
+    expect(Math.abs(a - b)).toBeGreaterThan(1000);
+  });
+
+  it('reste déterministe à world seed fixé', () => {
+    expect(coordinateSeed(3, 200, 8, 777)).toBe(coordinateSeed(3, 200, 8, 777));
+  });
 });
 
 describe('pickBiomes with seeded random', () => {

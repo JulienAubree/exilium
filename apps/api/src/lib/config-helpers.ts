@@ -23,3 +23,17 @@ export function findPlanetTypeByRole(config: GameConfig, role: string): PlanetTy
   if (!pt) throw new Error(`No planet type with role "${role}" found in config`);
   return pt;
 }
+
+/**
+ * Graine d'univers, a passer a `coordinateSeed` partout ou l'on genere du
+ * contenu procedural.
+ *
+ * 0 (defaut) = comportement historique : la graine ne depend que des
+ * coordonnees. C'est en posant `universe_config.world_seed` au moment du wipe
+ * qu'on obtient reellement un monde neuf ; sans elle, une carte aux memes
+ * dimensions reproduit l'ancienne case par case.
+ */
+export function worldSeed(config: { universe: Record<string, unknown> }): number {
+  const v = Number(config.universe.world_seed);
+  return Number.isFinite(v) ? v : 0;
+}
