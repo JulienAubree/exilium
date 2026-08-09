@@ -25,7 +25,7 @@ const ColonizeReportDetail = lazy(() => import('@/components/reports/ColonizeRep
 const ColonizeReinforceReportDetail = lazy(() => import('@/components/reports/ColonizeReinforceReportDetail').then((m) => ({ default: m.ColonizeReinforceReportDetail })));
 const ColonizationRaidReportDetail = lazy(() => import('@/components/reports/ColonizationRaidReportDetail').then((m) => ({ default: m.ColonizationRaidReportDetail })));
 
-const ReportSkel = () => <div className="h-40 rounded-md bg-panel-bg/40 animate-pulse" />;
+const ReportSkel = () => <div className="h-40 rounded-md bg-surface/40 animate-pulse" />;
 
 function formatDate(date: string | Date) {
   return new Intl.DateTimeFormat('fr-FR', {

@@ -31,7 +31,7 @@ const GovernanceAlert = lazy(() => import('@/components/overview/GovernanceAlert
 const OverviewGrid = lazy(() => import('@/components/overview/OverviewGrid').then((m) => ({ default: m.OverviewGrid })));
 const OverviewEvents = lazy(() => import('@/components/overview/OverviewEvents').then((m) => ({ default: m.OverviewEvents })));
 
-const LazySkel = () => <div className="h-20 rounded-md bg-panel-bg/40 animate-pulse" />;
+const LazySkel = () => <div className="h-20 rounded-md bg-surface/40 animate-pulse" />;
 
 // ── Rarity / biome constants (used by BiomeBadge) ──
 

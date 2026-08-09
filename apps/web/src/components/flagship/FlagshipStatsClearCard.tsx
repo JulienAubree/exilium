@@ -95,7 +95,7 @@ export function FlagshipStatsClearCard({ flagship }: FlagshipStatsClearCardProps
         <StatTile icon={<ShotsIcon size={14} />} label="Tirs / round" value={computed.shots} tone="text-purple-300" iconTone="text-purple-400" />
       </div>
 
-      <div className="h-px bg-panel-border/50" />
+      <div className="h-px bg-border-strong/50" />
 
       {/* Attack summary */}
       <div>
@@ -126,7 +126,7 @@ function StatTile({
   suffix?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-md bg-[#0f172a]/60 border border-panel-border/50 px-2 py-2 sm:px-2.5">
+    <div className="flex items-center gap-2 rounded-md bg-[#0f172a]/60 border border-border-strong/50 px-2 py-2 sm:px-2.5">
       <span className={cn('shrink-0', iconTone)}>{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="text-[9px] uppercase tracking-wide text-slate-500 truncate">{label}</div>

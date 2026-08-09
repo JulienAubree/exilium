@@ -249,7 +249,7 @@ export class AttackHandler implements MissionHandler {
       ? Math.floor(calculateShieldCapacity(shieldLevel) * (shieldPercent / 100))
       : 0;
 
-    const { attackerMultipliers, defenderMultipliers, defenderTalentCtx } = await computeCombatMultipliers(
+    const { attackerMultipliers, defenderMultipliers } = await computeCombatMultipliers(
       ctx, config, fleetEvent.userId, targetPlanet.userId, targetPlanet.id,
     );
 
@@ -387,12 +387,20 @@ export class AttackHandler implements MissionHandler {
           defenderBonusCtx,
         );
 
-        // Pillage: subtract protected resources, apply ratio (33% max) then talent protection (capped at 90%)
-        const pillageProtection = 1 - Math.min(0.9, defenderTalentCtx['pillage_protection'] ?? 0);
+        // Pillage : on retire les ressources protegees puis on applique le ratio (33 % max).
+        //
+        // Il y avait ici un facteur `pillage_protection` lu dans le contexte
+        // talent. Aucun code ne l a jamais produit — le `?? 0` faisait donc
+        // toujours retomber le multiplicateur sur 1. Retire plutot que laisse
+        // en place : un levier qui ne pilote rien induit en erreur (c est ce
+        // meme motif qui a rendu l audit de code mort si penible).
+        // Pour le reinstaurer : produire la cle dans computeTalentContext ou
+        // dans les bonus de coque, puis remultiplier les trois lignes ci-dessous
+        // par `1 - Math.min(0.9, ctx['pillage_protection'] ?? 0)`.
         const ratio = combatConfig.pillageRatio;
-        const availMinerai = Math.floor(Math.max(0, Number(updatedPlanet.minerai) - protectedResources.minerai) * ratio * pillageProtection);
-        const availSilicium = Math.floor(Math.max(0, Number(updatedPlanet.silicium) - protectedResources.silicium) * ratio * pillageProtection);
-        const availHydrogene = Math.floor(Math.max(0, Number(updatedPlanet.hydrogene) - protectedResources.hydrogene) * ratio * pillageProtection);
+        const availMinerai = Math.floor(Math.max(0, Number(updatedPlanet.minerai) - protectedResources.minerai) * ratio);
+        const availSilicium = Math.floor(Math.max(0, Number(updatedPlanet.silicium) - protectedResources.silicium) * ratio);
+        const availHydrogene = Math.floor(Math.max(0, Number(updatedPlanet.hydrogene) - protectedResources.hydrogene) * ratio);
 
         const thirdCargo = Math.floor(availableCargo / 3);
 
