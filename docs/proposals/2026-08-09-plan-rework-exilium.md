@@ -96,7 +96,7 @@ plusieurs d'entre elles réparent un système existant au lieu d'en ajouter un.
 | L'exilium est chez eux | Boucle complète : il m'en faut → il est occupé → j'y vais à plusieurs → j'en rapporte → je vais plus loin |
 | On a oublié, eux non | L'arbre de recherche n'invente pas, il **rend** — un nœud = une capacité retrouvée |
 | Ils tiennent nos archives | Le PvE territorial rapporte de la mémoire, pas seulement du butin |
-| Ce sont des pirates, et ils parlent | Un silo se **prend ou s'achète** : une décision collective à débattre, sur deux systèmes qui existent déjà |
+| Ce sont des pirates, et ils parlent | Une cale se **prend ou s'achète** : une décision collective à débattre, sur deux systèmes qui existent déjà |
 | Ils viennent parce qu'on vaut enfin le déplacement | La menace naît de la réussite du groupe — auto-équilibrée, et ça date le début de la partie |
 
 Deux conséquences valent d'être notées explicitement :
@@ -135,7 +135,7 @@ Ce que la piraterie apporte, concrètement :
 > mais moins pressant : savoir si les Premiers sont toute l'histoire ou la couche visible d'autre
 > chose.
 
-### 3.3 bis — Un système, un capitaine, un objectif
+### 3.4 Un système, un capitaine, un objectif
 
 C'est la forme que prend la progression territoriale, et elle vient gratuitement du fait qu'ils
 tiennent des systèmes.
@@ -145,7 +145,7 @@ semaines et de plusieurs joueurs — **c'est le palier visible que le plan cherc
 formuler**. Et surtout, ça se planifie tout seul dans le groupe : « on tape Varek ce week-end » dit
 où, combien de temps, et avec qui.
 
-Les trois types de secteurs (3.4) ne sont pas concurrents de ce découpage : **ils s'emboîtent
+Les trois types de secteurs (3.5) ne sont pas concurrents de ce découpage : **ils s'emboîtent
 dedans**. Un système contient ses ports, ses prises et ses cales.
 
 > 🔧 **Décision technique à prendre au début, pas après.** `planets.userId` est `notNull` avec clé
@@ -162,7 +162,7 @@ dedans**. Un système contient ses ports, ses prises et ses cales.
 > classements, le fil de l'univers, le compteur de joueurs et l'admin compteront les pirates parmi
 > les amis. Dette bornée, mais seulement si elle est posée au départ.
 
-### 3.4 Les trois secteurs
+### 3.5 Les trois secteurs
 
 « Reprendre un secteur » ne veut pas dire la même chose partout. Trois formes, trois gains, trois
 façons de jouer :
@@ -305,7 +305,7 @@ s'achète.
 - Les capitaines : combien, comment ils reviennent, ce qu'ils disent.
 - Si les Premiers sont toute l'histoire ou la couche visible de quelque chose de plus gros
   (cf. l'encadré 3.3 sur le plafond des enjeux).
-- **Voie 1 ou voie 2 pour la propriété des planètes pirates** (encadré 3.3 bis) — à décider avant
+- **Voie 1 ou voie 2 pour la propriété des planètes pirates** (encadré 3.4) — à décider avant
   la première migration de la carte neuve, pas après.
 - Le critère d'arrêt du rééquilibrage des unités, **écrit avant d'ouvrir le fichier** — un
   chantier sans fin naturelle est ce qui tue un projet solo.
