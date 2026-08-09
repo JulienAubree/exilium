@@ -1,15 +1,14 @@
 import {
   buildingCost, buildingTime,
-  mineraiProduction, siliciumProduction, hydrogeneProduction,
-  calculateProductionFactor,
-  solarPlantEnergy, mineraiMineEnergy, siliciumMineEnergy, hydrogeneSynthEnergy,
+  calculateProductionRates,
+  assembleBonusContext, emptyBonusFacts,
   resolveBonus,
   researchCost, researchTime,
   unitCost, unitTime,
 } from '@exilium/game-engine';
-import type { BonusDefinition } from '@exilium/game-engine';
+import type { BonusDefinition, ProductionConfig as EngineProductionConfig } from '@exilium/game-engine';
 import type { BuildingDef, ProductionConfig, ResearchDef, ShipDef } from './config.js';
-import { SHIPYARD_TIME_DIVISOR, RESEARCH_TIME_DIVISOR } from './config.js';
+import { SHIPYARD_TIME_DIVISOR, RESEARCH_TIME_DIVISOR, toEngineProductionConfig } from './config.js';
 import type { SimState, Resources } from './state.js';
 
 // Default temperature for the simulated home planet (temperate ~50°C).
@@ -19,48 +18,73 @@ const DEFAULT_MAX_TEMP = 50;
 export class SimEngine {
   constructor(
     private buildings: Map<string, BuildingDef>,
-    private prod: Map<string, ProductionConfig>,
+    prod: Map<string, ProductionConfig>,
     private bonuses: BonusDefinition[] = [],
     private research: Map<string, ResearchDef> = new Map(),
     private ships: Map<string, ShipDef> = new Map(),
-  ) {}
+  ) {
+    this.engineProd = toEngineProductionConfig(prod);
+  }
+
+  /** Config de production dans la forme du moteur — traduite une seule fois. */
+  private engineProd: EngineProductionConfig;
 
   /** Converts state.techLevels Map to a plain Record for resolveBonus. */
   private techObj(state: SimState): Record<string, number> {
     return Object.fromEntries(state.techLevels);
   }
 
-  /** Facteur énergie : solaire produite / énergie consommée (via les formules game-engine). */
-  private energyFactor(state: SimState): number {
+  /**
+   * Les taux horaires du serveur, sur la planète simulée.
+   *
+   * Le simulateur recomposait autrefois les primitives lui-même (production
+   * par ressource, facteur d'énergie, multiplicateurs de recherche appliqués
+   * en produit direct). C'était un QUATRIÈME calcul de production, distinct de
+   * l'affichage, de l'accrual et du tick — autrement dit un simulateur capable
+   * de valider une économie qui n'était pas celle du jeu.
+   *
+   * Il passe désormais par `calculateProductionRates` et par l'assembleur de
+   * bonus partagé, exactement comme le serveur. Deux conséquences mesurables,
+   * qui déplacent les valeurs de référence :
+   *   - le moteur arrondit à l'entier inférieur l'énergie produite ET chaque
+   *     poste de consommation séparément, là où le simulateur arrondissait
+   *     seulement à la fin ;
+   *   - les bonus se cumulent additivement (`1 + Σ deltas`) au lieu d'être
+   *     multipliés entre eux — sans effet tant que la recherche est la seule
+   *     source, mais la règle est maintenant celle du serveur.
+   */
+  private rates(state: SimState) {
     const lvl = (id: string) => state.levels.get(id) ?? 0;
-    const tech = this.techObj(state);
-    const solarCfg = this.prod.get('solarPlant')!;
-    const rawProduced = solarPlantEnergy(lvl('solarPlant'), { baseProduction: solarCfg.baseProduction, exponentBase: solarCfg.exponentBase });
-    const produced = rawProduced * resolveBonus('energy_production', null, tech, this.bonuses);
-    const rawConsumed =
-      mineraiMineEnergy(lvl('mineraiMine')) +
-      siliciumMineEnergy(lvl('siliciumMine')) +
-      hydrogeneSynthEnergy(lvl('hydrogeneSynth'));
-    const consumed = rawConsumed * resolveBonus('energy_consumption', null, tech, this.bonuses);
-    return calculateProductionFactor(produced, consumed);
+    const { ctx } = assembleBonusContext(
+      { ...emptyBonusFacts(), researchLevels: this.techObj(state) },
+      { bonuses: this.bonuses, universe: {} },
+    );
+    return calculateProductionRates(
+      {
+        mineraiMineLevel: lvl('mineraiMine'),
+        siliciumMineLevel: lvl('siliciumMine'),
+        hydrogeneSynthLevel: lvl('hydrogeneSynth'),
+        solarPlantLevel: lvl('solarPlant'),
+        storageMineraiLevel: lvl('storageMinerai'),
+        storageSiliciumLevel: lvl('storageSilicium'),
+        storageHydrogeneLevel: lvl('storageHydrogene'),
+        maxTemp: DEFAULT_MAX_TEMP,
+        // La planète simulée est un monde-mère sans satellites ni bouclier, et
+        // ses curseurs restent à 100 % : le simulateur mesure le rythme de la
+        // progression, pas les arbitrages fins d'un joueur.
+        solarSatelliteCount: 0,
+        isHomePlanet: true,
+      },
+      undefined,
+      this.engineProd,
+      ctx,
+    );
   }
 
   /** Production horaire {minerai, silicium, hydrogene}. */
   production(state: SimState): Resources {
-    const f = this.energyFactor(state);
-    const lvl = (id: string) => state.levels.get(id) ?? 0;
-    const cfg = (id: string) => this.prod.get(id)!;
-    const tech = this.techObj(state);
-    return {
-      minerai: Math.floor(mineraiProduction(lvl('mineraiMine'), f, cfg('mineraiMine')) * resolveBonus('production_minerai', null, tech, this.bonuses)),
-      silicium: Math.floor(siliciumProduction(lvl('siliciumMine'), f, cfg('siliciumMine')) * resolveBonus('production_silicium', null, tech, this.bonuses)),
-      hydrogene: Math.floor(hydrogeneProduction(lvl('hydrogeneSynth'), DEFAULT_MAX_TEMP, f, {
-        baseProduction: cfg('hydrogeneSynth').baseProduction,
-        exponentBase: cfg('hydrogeneSynth').exponentBase,
-        tempCoeffA: cfg('hydrogeneSynth').tempCoeffA ?? 1.36,
-        tempCoeffB: cfg('hydrogeneSynth').tempCoeffB ?? 0.004,
-      }) * resolveBonus('production_hydrogene', null, tech, this.bonuses)),
-    };
+    const r = this.rates(state);
+    return { minerai: r.mineraiPerHour, silicium: r.siliciumPerHour, hydrogene: r.hydrogenePerHour };
   }
 
   costOf(buildingId: string, level: number): Resources {

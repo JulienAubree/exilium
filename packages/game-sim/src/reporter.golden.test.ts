@@ -25,6 +25,29 @@ import { renderReport } from './reporter.js';
  * moteur — `timeDivisor` 2500 au lieu de 4500 — et construisait donc les
  * vaisseaux 1,8× trop vite : **il sous-estimait les murs qu'il a pour mission de
  * mesurer**.
+ *
+ * ## Déplacement du 2026-08-09 (acte 0) — `firstShip` uniquement
+ *
+ * Le simulateur ne recompose plus les primitives de production : il appelle
+ * `calculateProductionRates` et l'assembleur de bonus partagé, comme le
+ * serveur. Deux effets, tous deux dans les arrondis :
+ *   - le moteur tronque l'énergie produite ET chaque poste de consommation
+ *     séparément, là où le simulateur ne tronquait qu'à la fin ;
+ *   - les bonus se cumulent additivement au lieu d'être multipliés (sans effet
+ *     ici, la recherche étant la seule source du simulateur).
+ *
+ * Résultat : seul `firstShip` bouge, et **en sens opposé selon le profil** —
+ * eco 3503,9 → 3596,0 h (+2,6 %), optimal 528,9 → 512,5 h (−3,1 %). Les six
+ * autres jalons sont inchangés : ils tombent avant que le facteur d'énergie ne
+ * pèse. Le signe opposé vient de là : les deux profils n'ont pas le même
+ * rapport production/consommation au moment du premier vaisseau, donc la
+ * troncature par poste ne les pénalise pas dans le même sens.
+ *
+ * ⚠️ Ce déplacement n'est PAS la mesure de la fuite de 19,4 %, contrairement à
+ * ce que le plan d'implémentation annonçait. Le simulateur n'a jamais modélisé
+ * le tick du worker, ni les biomes, ni les politiques : la fuite n'existait pas
+ * chez lui, il n'y a donc rien à y voir se résorber. Ce qui est mesuré ici,
+ * c'est uniquement l'alignement du simulateur sur l'arithmétique du serveur.
  */
 
 /** Jalons figés, en heures. Ordre = ordre d'apparition dans la partie. */
@@ -36,7 +59,7 @@ const JALONS_ATTENDUS: Record<string, Record<string, number>> = {
     firstShipyard: 73.3,
     firstResearch: 73.3,
     energyTech: 73.3,
-    firstShip: 3503.9,
+    firstShip: 3596.0,
   },
   optimal: {
     firstMine: 0.1,
@@ -45,7 +68,7 @@ const JALONS_ATTENDUS: Record<string, Record<string, number>> = {
     firstShipyard: 218.3,
     firstResearch: 26.7,
     energyTech: 26.7,
-    firstShip: 528.9,
+    firstShip: 512.5,
   },
 };
 

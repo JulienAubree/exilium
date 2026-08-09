@@ -1,5 +1,11 @@
 import { BUILDINGS, PRODUCTION_CONFIG, RESEARCH, BONUS_DEFINITIONS, SHIPS, UNIVERSE_CONFIG } from '@exilium/db';
-import type { BuildingCostDef, ResearchCostDef, BonusDefinition } from '@exilium/game-engine';
+import { buildProductionConfig } from '@exilium/game-engine';
+import type {
+  BuildingCostDef,
+  ResearchCostDef,
+  BonusDefinition,
+  ProductionConfig as EngineProductionConfig,
+} from '@exilium/game-engine';
 
 export interface BuildingDef {
   id: string;
@@ -69,6 +75,26 @@ export function loadProductionConfig(): Map<string, ProductionConfig> {
     });
   }
   return m;
+}
+
+/**
+ * Traduit la config de production du simulateur vers la forme attendue par
+ * `calculateProductionRates`, en passant par l'adaptateur CANONIQUE du moteur.
+ *
+ * Le simulateur recomposait auparavant les primitives lui-meme (production,
+ * facteur d'energie), ce qui en faisait un quatrieme calcul de production
+ * distinct de l'affichage, de l'accrual et du tick — un simulateur capable de
+ * valider une economie qui n'etait pas celle du jeu. En reutilisant
+ * `buildProductionConfig`, la traduction de config ne peut pas diverger non
+ * plus.
+ */
+export function toEngineProductionConfig(
+  prod: Map<string, ProductionConfig>,
+): EngineProductionConfig {
+  return buildProductionConfig({
+    production: Object.fromEntries(prod) as any,
+    universe: Object.fromEntries(UNIVERS),
+  });
 }
 
 export interface ResearchDef {

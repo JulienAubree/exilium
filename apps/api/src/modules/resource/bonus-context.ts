@@ -10,15 +10,17 @@ import {
 } from '@exilium/db';
 import type { Database } from '@exilium/db';
 import {
-  resolveBonus,
   aggregateBiomeBonuses,
-  vocationEffects,
+  assembleBonusContext,
+  resolveHarvestMalus,
+  emptyBonusFacts,
   policyEffects,
   neutralPolicyEffects,
-  calculateGovernancePenalty,
   buildEmpireLevelConfig,
   empireGovernanceCapacity,
   type BiomeEffect,
+  type BonusFacts,
+  type BonusBreakdownEntry,
 } from '@exilium/game-engine';
 import { findPlanetTypeByRole } from '../../lib/config-helpers.js';
 import type { GameConfig } from '../admin/game-config.service.js';
@@ -59,115 +61,17 @@ import type { GameConfig } from '../admin/game-config.service.js';
  * par-planète dans une boucle sur les planètes.
  */
 
-/** Une ligne du détail des bonus, pour que l'interface montre ce que le serveur applique. */
-export interface BonusBreakdownEntry {
-  source: 'talents' | 'biomes' | 'recherche' | 'gouvernance' | 'vocation' | 'type_planete' | 'politique';
-  stat: string;
-  modifier: number;
-}
-
-/**
- * Les faits bruts dont l'assemblage a besoin — volontairement sans base de
- * données ni config, pour que les deux chargeurs soient interchangeables et
- * que le cœur reste testable sans Postgres.
- */
-export interface BonusFacts {
-  /** Contexte de talents déjà calculé ({} si le service est absent ou sans joueur). */
-  talentCtx: Record<string, number>;
-  /** Bonus de biomes ACTIFS déjà agrégés ({} si aucun). */
-  biomeBonuses: Record<string, number>;
-  /** Niveaux de recherche du joueur ({} si anonyme). */
-  researchLevels: Record<string, number>;
-  /** Malus de récolte de gouvernance, déjà résolu (0 si exempt ou sous capacité). */
-  governanceHarvestMalus: number;
-  /** Vocation de la planète. */
-  vocation: string | null | undefined;
-  /** Delta de production des politiques d'empire actives (0 si aucune). */
-  policyProductionDelta: number;
-}
-
-const PRODUCTION_STATS = ['production_minerai', 'production_silicium', 'production_hydrogene'] as const;
-
-/**
- * Le cœur pur. À faits identiques, sortie identique — c'est toute la garantie
- * de non-divergence entre l'affichage, l'accrual et le tick.
- *
- * Cumul ADDITIF (`1 + Σ deltas`) : c'est la sémantique historique du serveur,
- * retenue comme canonique (décision D2 du plan d'implémentation).
- */
-export function assembleBonusContext(
-  facts: BonusFacts,
-  config: GameConfig,
-): { ctx: Record<string, number>; breakdown: BonusBreakdownEntry[] } {
-  const ctx: Record<string, number> = {};
-  const breakdown: BonusBreakdownEntry[] = [];
-  const add = (source: BonusBreakdownEntry['source'], stat: string, modifier: number) => {
-    if (!modifier) return;
-    ctx[stat] = (ctx[stat] ?? 0) + modifier;
-    breakdown.push({ source, stat, modifier });
-  };
-
-  // 1. Talents (par joueur, éventuellement par planète)
-  for (const [stat, mod] of Object.entries(facts.talentCtx)) add('talents', stat, mod);
-
-  // 2. Biomes actifs
-  for (const [stat, mod] of Object.entries(facts.biomeBonuses)) add('biomes', stat, mod);
-
-  // 3. Recherche — production ET énergie.
-  //
-  // L'énergie était autrefois conditionnelle : incluse à l'affichage, absente
-  // de l'accrual, et le tick n'appliquait que la consommation sans la
-  // production. Elle est désormais inconditionnelle des deux côtés (décision
-  // D1) : c'est la condition même du « affiché = versé ». Effet de bord assumé,
-  // dans les deux sens — les planètes en pénurie d'énergie voient leur
-  // production réelle monter, celles qui payaient un bouclier cessent d'être
-  // surpayées par le tick.
-  {
-    const levels = facts.researchLevels;
-    for (const stat of PRODUCTION_STATS) {
-      const mult = resolveBonus(stat, null, levels, config.bonuses);
-      if (mult > 1) add('recherche', stat, mult - 1);
-    }
-    const energyMult = resolveBonus('energy_production', null, levels, config.bonuses);
-    if (energyMult > 1) add('recherche', 'energy_production', energyMult - 1);
-    const energyEfficiency = resolveBonus('energy_consumption', null, levels, config.bonuses);
-    if (energyEfficiency < 1) add('recherche', 'energy_consumption', energyEfficiency - 1);
-  }
-
-  // 4. Gouvernance : malus de récolte (la planète-mère en est exemptée en amont)
-  if (facts.governanceHarvestMalus > 0) {
-    for (const stat of PRODUCTION_STATS) add('gouvernance', stat, -facts.governanceHarvestMalus);
-  }
-
-  // 5. Spécialisation du monde (vocation)
-  const vocDelta = vocationEffects(facts.vocation, config.universe).productionDelta;
-  if (vocDelta !== 0) {
-    for (const stat of PRODUCTION_STATS) add('vocation', stat, vocDelta);
-  }
-
-  // 6. Politiques d'empire (par joueur)
-  if (facts.policyProductionDelta !== 0) {
-    for (const stat of PRODUCTION_STATS) add('politique', stat, facts.policyProductionDelta);
-  }
-
-  return { ctx, breakdown };
-}
-
-/**
- * Résolution du malus de gouvernance, partagée par les deux chargeurs pour que
- * l'arithmétique soit littéralement la même ligne de code.
- */
-export function resolveHarvestMalus(
-  isHomeworld: boolean,
-  colonyCount: number,
-  capacity: number,
-  config: GameConfig,
-): number {
-  if (isHomeworld) return 0;
-  const harvestPenalties = (config.universe.governance_penalty_harvest as number[]) ?? [0.15, 0.35, 0.6];
-  const constructionPenalties = (config.universe.governance_penalty_construction as number[]) ?? [0.15, 0.35, 0.6];
-  return calculateGovernancePenalty(colonyCount, capacity, harvestPenalties, constructionPenalties).harvestMalus;
-}
+// Le cœur de l'assemblage vit dans `@exilium/game-engine` : le simulateur de
+// rythme (packages/game-sim) doit l'utiliser aussi, et un paquet applicatif ne
+// peut pas être importé depuis un paquet de formules. Ce module ne garde que
+// ce qui touche la base : les deux chargeurs de faits.
+export {
+  assembleBonusContext,
+  resolveHarvestMalus,
+  emptyBonusFacts,
+  type BonusFacts,
+  type BonusBreakdownEntry,
+};
 
 /** Forme minimale d'une planète attendue par les chargeurs. */
 export interface PlanetBonusInput {
